@@ -15,7 +15,7 @@
         <a href="#" class="group block">
             <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col md:flex-row">
                 <!-- Image Placeholder -->
-                <div class="w-full md:w-1/2 h-64 md:h-auto bg-gray-100 dark:bg-[#1a1a1a] flex items-center justify-center text-gray-400 dark:text-gray-600 relative overflow-hidden">
+                <div class="w-full md:w-1/2 h-64 md:h-auto bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] flex items-center justify-center text-gray-400 dark:text-gray-500 dark:text-gray-600 relative overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-100 dark:from-[#222] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 font-medium">How to Choose the Right Rental Vehicle for Your Trip</span>
                 </div>
@@ -44,7 +44,7 @@
             
             <!-- Blog 1 -->
             <a href="#" class="group block bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
-                <div class="h-48 bg-gray-100 dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-600">
+                <div class="h-48 bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-500 dark:text-gray-600">
                     <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-[#152015] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 text-sm font-medium">10 Safety Tips Every Rider Should Know</span>
                 </div>
@@ -66,7 +66,7 @@
 
             <!-- Blog 2 -->
             <a href="#" class="group block bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
-                <div class="h-48 bg-gray-100 dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-600">
+                <div class="h-48 bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-500 dark:text-gray-600">
                     <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-[#201530] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 text-sm font-medium">How Companies Use RideMyCars for Corporate Travel</span>
                 </div>
@@ -88,7 +88,7 @@
 
             <!-- Blog 3 -->
             <a href="#" class="group block bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
-                <div class="h-48 bg-gray-100 dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-600">
+                <div class="h-48 bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-500 dark:text-gray-600">
                     <div class="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-[#302015] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 text-sm font-medium">How Much Can You Earn as a RideMyCars Driver?</span>
                 </div>
@@ -110,7 +110,7 @@
 
             <!-- Blog 4 -->
             <a href="#" class="group block bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
-                <div class="h-48 bg-gray-100 dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-600">
+                <div class="h-48 bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-500 dark:text-gray-600">
                     <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-[#151a30] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 text-sm font-medium">Ride vs Rental vs Hire a Driver — Which is Right for You?</span>
                 </div>
@@ -132,7 +132,7 @@
             
             <!-- Blog 5 -->
             <a href="#" class="group block bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
-                <div class="h-48 bg-gray-100 dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-600">
+                <div class="h-48 bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-500 dark:text-gray-600">
                     <div class="absolute inset-0 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-[#153028] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 text-sm font-medium">We Are Expanding to 20 New Cities in 2025</span>
                 </div>
