@@ -23,7 +23,7 @@
             <div class="flex h-20 items-center justify-between">
                 <!-- Logo -->
                 <a class="flex items-center gap-2 group" href="/">
-                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-10 md:h-12 w-auto rounded-lg shadow-sm">
+                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-16 md:h-[72px] w-auto mix-blend-multiply dark:mix-blend-normal dark:bg-white dark:rounded-xl dark:p-1">
                 </a>
                 
                 <!-- Desktop Nav -->
@@ -98,7 +98,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                 <div class="col-span-1 md:col-span-1">
                     <a class="flex items-center gap-2 mb-6" href="/">
-                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-10 md:h-12 w-auto rounded-lg shadow-sm">
+                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-16 md:h-[72px] w-auto mix-blend-multiply dark:mix-blend-normal dark:bg-white dark:rounded-xl dark:p-1">
                     </a>
                     <p class="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">
                         Your unified mobility platform. Book rides, rent vehicles, and hire professional drivers — all in one place.

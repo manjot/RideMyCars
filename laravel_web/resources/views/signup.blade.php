@@ -17,7 +17,7 @@
         <div class="hidden lg:flex w-[45%] bg-[#1a1a1a] flex-col justify-between p-12 fixed h-screen left-0 top-0 overflow-hidden">
             <!-- Logo -->
             <a class="flex items-center gap-2 group z-10" href="/">
-                <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-10 md:h-12 w-auto rounded-lg shadow-sm">
+                <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-16 md:h-[72px] w-auto mix-blend-multiply dark:mix-blend-normal dark:bg-white dark:rounded-xl dark:p-1">
             </a>
 
             <!-- Text Content -->
