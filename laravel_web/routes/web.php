@@ -32,6 +32,14 @@ Route::get('/about', function () {
 
 Route::redirect('/company', '/about');
 
+Route::get('/safety', function () {
+    return view('safety');
+});
+
+Route::get('/become-driver', function () {
+    return view('become-driver');
+});
+
 Route::get('/rent', function () {
     $vehicles = \App\Models\Vehicle::all();
     return view('rent', compact('vehicles'));
