@@ -26,6 +26,10 @@ Route::get('/pricing', function () {
     return view('pricing');
 });
 
+Route::get('/about', function () {
+    return view('about');
+});
+
 Route::get('/rent', function () {
     $vehicles = \App\Models\Vehicle::all();
     return view('rent', compact('vehicles'));
