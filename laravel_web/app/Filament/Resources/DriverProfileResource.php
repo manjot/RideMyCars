@@ -29,6 +29,7 @@ class DriverProfileResource extends Resource
                     ->required(),
                 Forms\Components\FileUpload::make('image_url')
                     ->image()
+                    ->disk('public')
                     ->directory('drivers'),
                 Forms\Components\TextInput::make('license_number')
                     ->required(),
@@ -50,6 +51,7 @@ class DriverProfileResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
+                    ->disk('public')
                     ->circular(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->searchable()

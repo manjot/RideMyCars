@@ -25,6 +25,7 @@ class VehicleResource extends Resource
             ->schema([
                 Forms\Components\FileUpload::make('image_url')
                     ->image()
+                    ->disk('public')
                     ->directory('vehicles'),
                 Forms\Components\TextInput::make('make')
                     ->required(),
@@ -59,6 +60,7 @@ class VehicleResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
+                    ->disk('public')
                     ->circular(),
                 Tables\Columns\TextColumn::make('make')
                     ->searchable(),
