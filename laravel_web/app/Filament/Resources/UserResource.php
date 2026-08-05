@@ -32,6 +32,7 @@ class UserResource extends Resource
                     ->options([
                         'customer' => 'Customer',
                         'driver' => 'Driver',
+                        'owner' => 'Vehicle Owner',
                         'admin' => 'Admin',
                     ])
                     ->required()
@@ -57,6 +58,7 @@ class UserResource extends Resource
                     ->color(fn (string $state): string => match ($state) {
                         'admin' => 'danger',
                         'driver' => 'warning',
+                        'owner' => 'info',
                         'customer' => 'success',
                         default => 'gray',
                     }),

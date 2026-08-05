@@ -110,26 +110,26 @@
                     <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Company</h4>
                     <ul class="space-y-4">
                         <li><a href="/about" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">About Us</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Safety</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Blog</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Careers</a></li>
+                        <li><a href="/safety" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Safety</a></li>
+                        <li><a href="/blog" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Blog</a></li>
+                        <li><a href="/careers" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Careers</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Partners</h4>
                     <ul class="space-y-4">
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Become a Driver</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">List Your Vehicle</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Partner Portal</a></li>
+                        <li><a href="/become-driver" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Become a Driver</a></li>
+                        <li><a href="/list-vehicle" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">List Your Vehicle</a></li>
+                        <li><a href="/partner" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Partner Portal</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Support</h4>
                     <ul class="space-y-4">
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Help Center</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Contact Us</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">FAQ</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Support Tickets</a></li>
+                        <li><a href="/help" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="/contact" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="/faq" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="/support" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Support Tickets</a></li>
                     </ul>
                 </div>
                 <div>
@@ -137,8 +137,8 @@
                     <ul class="space-y-4">
                         <li><a href="/terms" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Terms of Service</a></li>
                         <li><a href="/privacy" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Refund Policy</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Cookie Policy</a></li>
+                        <li><a href="/refund" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Refund Policy</a></li>
+                        <li><a href="/cookie" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Cookie Policy</a></li>
                     </ul>
                 </div>
             </div>

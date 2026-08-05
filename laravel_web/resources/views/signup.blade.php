@@ -54,13 +54,14 @@
         <!-- Right Form (White) -->
         <div class="w-full lg:w-[55%] lg:ml-[45%] flex items-center justify-center p-8 lg:py-16 lg:px-24">
             <div class="w-full max-w-lg">
-                <div class="mb-10 text-center lg:text-left">
-                    <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Create your account</h2>
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">Join RideMyCars — it's free forever.</p>
+                <div class="mb-8">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{{ $title ?? 'Create your account' }}</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-lg">{{ $subtitle ?? "Join RideMyCars — it's free forever." }}</p>
                 </div>
 
                 <form action="/signup" method="POST" class="space-y-5">
                     @csrf
+                    <input type="hidden" name="role" value="{{ $role ?? 'customer' }}">
                     
                     <div class="flex gap-4">
                         <div class="flex-1">

@@ -6,10 +6,10 @@
         <h4 class="font-bold text-sm tracking-widest text-orange-500 uppercase mb-4">Become a Driver</h4>
         <h1 class="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">Drive. Earn. Repeat.</h1>
         <p class="text-xl text-gray-500 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto mb-10">
-            Set your own hours. Keep more of every fare. Join 3,200+ drivers already earning with RideMyCars.
+            Join the platform that treats drivers like partners. Enjoy flexible hours, competitive earnings, and dedicated support.
         </p>
-        <a href="/signup" class="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-orange-500/30 mb-4">
-            Start Your Application
+        <a href="/driver-signup" class="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-orange-500/30 mb-4">
+            Become a Driver
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </a>
         <p class="text-sm text-gray-500 dark:text-gray-400">Free to apply. No fees until you earn.</p>
@@ -122,9 +122,13 @@
             </div>
         </div>
 
-        <div class="text-center">
-            <a href="/signup" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-orange-500/30">
-                Apply Now — It's Free
+        <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Ready to hit the road?</h2>
+                <p class="text-gray-500 dark:text-gray-400">Join thousands of drivers earning on RideMyCars.</p>
+            </div>
+            <a href="/driver-signup" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-orange-500/30">
+                Sign Up Now
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </a>
         </div>

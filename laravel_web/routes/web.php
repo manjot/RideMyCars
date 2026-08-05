@@ -30,18 +30,36 @@ Route::get('/signup', function () {
     return view('signup');
 })->name('signup');
 
+Route::get('/driver-signup', function () {
+    return view('signup', [
+        'title' => 'Become a Driver', 
+        'subtitle' => 'Start earning by driving with RideMyCars.',
+        'role' => 'driver'
+    ]);
+});
+
+Route::get('/owner-signup', function () {
+    return view('signup', [
+        'title' => 'List Your Vehicle', 
+        'subtitle' => 'Earn passive income by renting out your car.',
+        'role' => 'owner'
+    ]);
+});
+
 Route::post('/signup', function (\Illuminate\Http\Request $request) {
     $validated = $request->validate([
         'first_name' => ['required', 'string', 'max:255'],
         'last_name' => ['required', 'string', 'max:255'],
         'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
         'password' => ['required', 'string', 'min:8', 'confirmed'],
+        'role' => ['nullable', 'string', 'in:customer,driver,owner'],
     ]);
 
     $user = \App\Models\User::create([
         'name' => $validated['first_name'] . ' ' . $validated['last_name'],
         'email' => $validated['email'],
         'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+        'role' => $validated['role'] ?? 'customer',
     ]);
 
     auth()->login($user);
@@ -136,3 +154,16 @@ Route::get('/hire-driver/{driverProfile}', function (\App\Models\DriverProfile $
     $driverProfile->load('user');
     return view('driver-detail', compact('driverProfile'));
 });
+
+// Generic pages
+$pages = ['safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 'refund', 'cookie', 'pricing', 'list-vehicle'];
+foreach ($pages as $page) {
+    Route::get('/' . $page, function () use ($page) {
+        $title = ucwords(str_replace('-', ' ', $page));
+        // If a specific view exists, it will use that, otherwise fallback to generic page
+        if (view()->exists($page)) {
+            return view($page);
+        }
+        return view('page', ['title' => $title]);
+    });
+}
