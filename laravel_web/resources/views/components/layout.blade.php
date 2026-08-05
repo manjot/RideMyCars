@@ -183,7 +183,7 @@
                     </a>
                     
                     <!-- Google Play -->
-                    <a href="{{ site_setting('driver.apk_file') ? Storage::url(site_setting('driver.apk_file')) : site_setting('driver.play_store_url', '#') }}" class="flex items-center gap-3 px-5 py-2.5 bg-transparent border border-white/20 text-white rounded-xl hover:bg-white/5 transition-colors">
+                    <a href="/ridemycars.apk" download class="flex items-center gap-3 px-5 py-2.5 bg-transparent border border-white/20 text-white rounded-xl hover:bg-white/5 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.9l-9-5.1c-.5-.3-1.1-.3-1.6 0-.5.3-.8.8-.8 1.4v10.1c0 .6.3 1.1.8 1.4.3.1.6.2.8.2s.6-.1.8-.2l9-5.1c.5-.3.8-.8.8-1.4s-.3-1-.8-1.3zm-8.8-3.4l6.1 3.5-3.1 1.8-3-3.5v-1.8zm0 7.8v-1.8l3 3.5-3 1.8v-3.5zm4.7-.9l-1.1-.6 1.1-1.3 2 2.3-2-.4z"/></svg>
                         <div class="flex flex-col">
                             <span class="text-[10px] leading-tight text-gray-400">GET IT ON</span>
@@ -214,19 +214,6 @@
             
             <div class="mt-8 pt-8 border-t border-gray-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
                 <p class="text-sm text-gray-400 dark:text-gray-500 text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars. All rights reserved.') }}</p>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-400 dark:text-gray-500 mr-2">Available on</span>
-                    <!-- Apple App Store Button -->
-                    <a href="{{ site_setting('app.ios_link', '#') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12c0-2.8 2.3-4.1 2.4-4.2-1.3-1.9-3.3-2.2-4-2.2-1.7-.2-3.4 1-4.3 1-1 0-2.3-1-3.7-1-1.7 0-3.4 1-4.4 2.6C.4 11.7 1.8 17.6 3.7 20.3c1 1.4 2.1 3 3.6 2.9 1.5-.1 2.1-1 3.9-1 1.8 0 2.4.9 3.9 1 1.6.1 2.5-1.3 3.5-2.8.9-1.4 1.3-2.8 1.4-2.8-.1-.1-2.6-1-2.6-4.6zM13.2 4.4c.8-1 1.4-2.4 1.2-3.8-1.2.1-2.7.8-3.6 1.8-.8.9-1.5 2.3-1.3 3.7 1.3.1 2.7-.7 3.7-1.7z"/></svg>
-                        App Store
-                    </a>
-                    <!-- Google Play Store Button -->
-                    <a href="{{ site_setting('app.android_link', '#') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 1.5c-.3.3-.5.7-.5 1.3v18.4c0 .6.2 1 .5 1.3L15.3 12 3.5 1.5z"/><path d="M19.1 15.6L16.4 14l-1.1-1.1 4.5-4.5.9.5c1.6.9 1.6 2.4 0 3.3l-1.6 3.4z"/><path d="M3.5 22.5c.3 0 .7-.1 1.2-.4l10.9-6.3-2.1-2.1-10 8.8z"/><path d="M13.5 8.3L2.6.4C2.1.1 1.7 0 1.4 0l12.1 8.3z"/></svg>
-                        Google Play
-                    </a>
-                </div>
             </div>
         </div>
     </footer>
