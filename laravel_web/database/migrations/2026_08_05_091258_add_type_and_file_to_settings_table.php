@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('settings', 'file_path')) {
+        try {
             Schema::table('settings', function (Blueprint $table) {
                 $table->string('file_path')->nullable();
             });
+        } catch (\Exception $e) {
+            // Column might already exist
         }
     }
 

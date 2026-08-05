@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('users', 'role')) {
+        try {
             Schema::table('users', function (Blueprint $table) {
                 $table->string('role')->default('customer');
             });
+        } catch (\Exception $e) {
+            // Column might already exist on SQLite if run previously
         }
     }
 
