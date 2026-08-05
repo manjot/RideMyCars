@@ -17,4 +17,9 @@ class Vehicle extends Model
         'owner_id',
         'image_url',
     ];
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
 }
