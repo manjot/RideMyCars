@@ -49,25 +49,180 @@
     <main class="flex-1">
         
         <!-- Hero Section -->
-        <section class="relative pt-20 pb-24 lg:pt-32 lg:pb-32 overflow-hidden bg-[#fafafa]">
-            <div class="absolute inset-0 bg-gradient-to-br from-orange-50 to-white -z-10"></div>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-                <h1 class="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-6">
-                    Move your way. <br/>
-                    <span class="text-orange-500">Every single day.</span>
-                </h1>
-                <p class="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
-                    Whether you need a quick ride across town, a vehicle for the weekend, or a professional driver for your event — we've got you covered.
-                </p>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="/ride" class="px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-all text-lg w-full sm:w-auto">
-                        Book a Ride
-                    </a>
-                    <a href="/rent" class="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-500/25 text-lg w-full sm:w-auto">
-                        Rent a Vehicle
-                    </a>
+        <section class="relative pt-12 pb-24 lg:pt-20 lg:pb-32 overflow-hidden bg-white">
+            <!-- Background pattern/gradient if needed -->
+            <div class="absolute inset-0 bg-[radial-gradient(#f3f4f6_1px,transparent_1px)] [background-size:20px_20px] opacity-30 -z-10"></div>
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                    
+                    <!-- Left Column: Content & Widget -->
+                    <div class="max-w-2xl">
+                        
+                        <!-- Top Badge -->
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-orange-600 font-medium text-sm mb-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Trusted by 50,000+ riders worldwide
+                        </div>
+
+                        <!-- Heading -->
+                        <h1 class="text-6xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
+                            One App.<br/>
+                            <span class="text-orange-500">Three Ways</span><br/>
+                            to Move.
+                        </h1>
+
+                        <!-- Subheading -->
+                        <p class="text-lg text-gray-500 mb-10 leading-relaxed max-w-lg">
+                            Book a ride, rent a vehicle, or hire a professional driver — all from a single platform built for the modern traveler.
+                        </p>
+
+                        <!-- Tabbed Widget -->
+                        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 p-2 mb-8">
+                            
+                            <!-- Tabs -->
+                            <div class="flex items-center border-b border-gray-100 px-4 pt-2">
+                                <button onclick="switchTab('ride')" id="tab-btn-ride" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-orange-500 border-b-2 border-orange-500 transition-colors">Ride</button>
+                                <button onclick="switchTab('rent')" id="tab-btn-rent" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition-colors">Rent Vehicle</button>
+                                <button onclick="switchTab('hire')" id="tab-btn-hire" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-900 transition-colors">Hire Driver</button>
+                            </div>
+
+                            <!-- Content: Ride -->
+                            <div id="tab-content-ride" class="hero-tab-content p-4">
+                                <form action="/ride" method="GET" class="flex flex-col sm:flex-row gap-3">
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        </div>
+                                        <input type="text" name="destination" placeholder="Where to?" class="w-full bg-gray-50 border-none text-gray-900 text-base rounded-2xl focus:ring-2 focus:ring-orange-500 block pl-12 p-4 outline-none transition-all" required>
+                                    </div>
+                                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        Book Ride
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Content: Rent -->
+                            <div id="tab-content-rent" class="hero-tab-content p-4 hidden">
+                                <form action="/rent" method="GET" class="flex flex-col sm:flex-row gap-3">
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        </div>
+                                        <input type="text" name="search" placeholder="Search vehicles..." class="w-full bg-gray-50 border-none text-gray-900 text-base rounded-2xl focus:ring-2 focus:ring-orange-500 block pl-12 p-4 outline-none transition-all">
+                                    </div>
+                                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        Find Vehicle
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Content: Hire -->
+                            <div id="tab-content-hire" class="hero-tab-content p-4 hidden">
+                                <form action="/hire-driver" method="GET" class="flex flex-col sm:flex-row gap-3">
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        </div>
+                                        <input type="text" name="search" placeholder="Search drivers..." class="w-full bg-gray-50 border-none text-gray-900 text-base rounded-2xl focus:ring-2 focus:ring-orange-500 block pl-12 p-4 outline-none transition-all">
+                                    </div>
+                                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        Find Driver
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div>
+
+                        <!-- Trust indicators -->
+                        <div class="flex flex-wrap items-center gap-6 px-2">
+                            <div class="flex items-center gap-2 text-sm font-medium text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                Fully Insured
+                            </div>
+                            <div class="flex items-center gap-2 text-sm font-medium text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                Verified Drivers
+                            </div>
+                            <div class="flex items-center gap-2 text-sm font-medium text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                24/7 Support
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column: Visual -->
+                    <div class="relative hidden lg:block h-full min-h-[500px]">
+                        
+                        <!-- Outer soft orange background -->
+                        <div class="absolute inset-0 bg-orange-100/60 rounded-[3rem] transform rotate-3 scale-105"></div>
+                        
+                        <!-- Inner solid orange background -->
+                        <div class="absolute inset-0 bg-[#d95d10] rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden">
+                            <!-- Large subtle gradient glow inside -->
+                            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-400/40 to-transparent"></div>
+                            
+                            <!-- Central Car Outline Graphic -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="relative z-10 opacity-90"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                        </div>
+
+                        <!-- Floating Card 1: ETA -->
+                        <div class="absolute top-8 -left-12 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4 animate-bounce" style="animation-duration: 4s;">
+                            <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium mb-0.5">Driver ETA</p>
+                                <p class="text-sm font-bold text-gray-900">3 mins away</p>
+                            </div>
+                        </div>
+
+                        <!-- Floating Card 2: Online Drivers -->
+                        <div class="absolute top-1/2 -translate-y-1/2 -right-12 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4 animate-bounce" style="animation-duration: 5s; animation-delay: 1s;">
+                            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium mb-0.5">Online Drivers</p>
+                                <p class="text-sm font-bold text-gray-900">128 nearby</p>
+                            </div>
+                        </div>
+
+                        <!-- Floating Card 3: Rating -->
+                        <div class="absolute -bottom-6 right-8 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4 animate-bounce" style="animation-duration: 4.5s; animation-delay: 0.5s;">
+                            <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center text-yellow-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium mb-0.5">Avg Rating</p>
+                                <p class="text-sm font-bold text-gray-900">4.9 / 5.0</p>
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
             </div>
+            
+            <script>
+                function switchTab(tab) {
+                    document.querySelectorAll('.hero-tab-btn').forEach(btn => {
+                        btn.classList.remove('text-orange-500', 'border-orange-500');
+                        btn.classList.add('text-gray-500', 'border-transparent');
+                    });
+                    document.getElementById('tab-btn-' + tab).classList.remove('text-gray-500', 'border-transparent');
+                    document.getElementById('tab-btn-' + tab).classList.add('text-orange-500', 'border-orange-500');
+
+                    document.querySelectorAll('.hero-tab-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById('tab-content-' + tab).classList.remove('hidden');
+                }
+            </script>
         </section>
 
         <!-- Stats Section (Screenshot 1) -->
