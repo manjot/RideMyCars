@@ -4,11 +4,11 @@
     <main class="flex-1">
         
         <!-- Hero Section -->
-        <section class="relative pt-12 pb-24 lg:pt-20 lg:pb-32 overflow-hidden bg-white dark:bg-[#111]">
+        <section class="relative pt-8 pb-16 lg:pt-12 lg:pb-20 overflow-hidden bg-white dark:bg-[#111]">
             <!-- Background pattern/gradient if needed -->
             <div class="absolute inset-0 bg-[radial-gradient(#f3f4f6_1px,transparent_1px)] [background-size:20px_20px] opacity-30 -z-10"></div>
             
-            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 md:pt-32 md:pb-24">
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12 md:pt-16 md:pb-16">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
                     
                     <!-- Left Content -->
@@ -175,7 +175,7 @@
         </section>
 
         <!-- Stats Section (Screenshot 1) -->
-        <section class="border-y border-gray-100 dark:border-white/10 bg-white dark:bg-[#111] py-12">
+        <section class="border-y border-gray-100 dark:border-white/10 bg-white dark:bg-[#111] py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x divide-gray-100">
                     <div>
@@ -199,10 +199,10 @@
         </section>
 
         <!-- Services Section (Screenshot 2) -->
-        <section class="py-24 bg-white dark:bg-[#111]">
+        <section class="py-16 bg-white dark:bg-[#111]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <div class="text-center mb-16">
+                <div class="text-center mb-10">
                     <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">Our Services</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Everything you need to move</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Three marketplace modules, one seamless platform. Choose how you want to travel.</p>
@@ -301,10 +301,10 @@
         </section>
 
         <!-- How it Works (Screenshot 3) -->
-        <section class="py-24 bg-white dark:bg-[#111] border-t border-gray-100 dark:border-white/10">
+        <section class="py-16 bg-white dark:bg-[#111] border-t border-gray-100 dark:border-white/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <div class="text-center mb-20">
+                <div class="text-center mb-12">
                     <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">How It Works</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Ready in four steps</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">From search to destination, we've made every step simple and transparent.</p>
@@ -359,10 +359,10 @@
         </section>
 
         <!-- Why RideMyCars (Screenshot 4) -->
-        <section class="py-24 bg-white dark:bg-[#111] border-t border-gray-100 dark:border-white/10">
+        <section class="py-16 bg-white dark:bg-[#111] border-t border-gray-100 dark:border-white/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <div class="text-center mb-16">
+                <div class="text-center mb-10">
                     <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">Why RideMyCars</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Built different. For good reason.</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">We combined three separate markets into one platform and raised the bar on every dimension.</p>
@@ -424,10 +424,10 @@
         </section>
 
         <!-- Platform Features (Screenshot 5) -->
-        <section class="py-24 bg-gray-50 dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-white/10">
+        <section class="py-16 bg-gray-50 dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-white/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <div class="text-center mb-16">
+                <div class="text-center mb-10">
                     <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">Platform Features</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Everything built in</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">No add-ons needed. Every feature you need comes standard.</p>
