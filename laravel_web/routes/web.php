@@ -22,6 +22,10 @@ Route::get('/privacy', function () {
     return view('privacy');
 });
 
+Route::get('/pricing', function () {
+    return view('pricing');
+});
+
 Route::get('/rent', function () {
     $vehicles = \App\Models\Vehicle::all();
     return view('rent', compact('vehicles'));
