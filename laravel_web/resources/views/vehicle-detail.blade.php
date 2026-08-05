@@ -6,7 +6,7 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <li><a href="/rent" class="hover:text-orange-500 transition-colors">Rent</a></li>
+                <li><a href="/rent" class="hover:text-brand-500 transition-colors">Rent</a></li>
                 <li><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></li>
                 <li class="font-medium text-gray-900 dark:text-white">{{ $vehicle->make }} {{ $vehicle->model }}</li>
             </ol>
@@ -32,22 +32,22 @@
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Features & Specifications</h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $vehicle->year }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Year</span>
                         </div>
                         <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             <span class="text-sm font-semibold text-gray-900 dark:text-white">5 Seats</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Capacity</span>
                         </div>
                         <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                             <span class="text-sm font-semibold text-gray-900 dark:text-white">Auto</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Transmission</span>
                         </div>
                         <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
                             <span class="text-sm font-semibold text-gray-900 dark:text-white">AC</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Climate</span>
                         </div>
@@ -91,7 +91,7 @@
                         </div>
                     </div>
 
-                    <a href="/ride" class="w-full block text-center py-4 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-lg transition-colors shadow-sm shadow-orange-500/20">
+                    <a href="/ride" class="w-full block text-center py-4 px-6 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-lg transition-colors shadow-sm shadow-brand-500/20">
                         Continue to Book
                     </a>
                 </div>

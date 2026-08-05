@@ -6,6 +6,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/delivery', function (\Illuminate\Http\Request $request) {
+    return view('delivery', [
+        'pickup' => $request->query('pickup'),
+        'dropoff' => $request->query('dropoff'),
+    ]);
+});
+
 Route::get('/login', function () {
     return view('login');
 })->name('login');

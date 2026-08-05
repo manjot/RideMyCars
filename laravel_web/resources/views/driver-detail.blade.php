@@ -6,7 +6,7 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <li><a href="/hire-driver" class="hover:text-orange-500 transition-colors">Hire a Driver</a></li>
+                <li><a href="/hire-driver" class="hover:text-brand-500 transition-colors">Hire a Driver</a></li>
                 <li><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></li>
                 <li class="font-medium text-gray-900 dark:text-white">{{ $driverProfile->user->name }}</li>
             </ol>
@@ -32,9 +32,9 @@
                         <div>
                             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">{{ $driverProfile->user->name }}</h1>
                             <div class="flex items-center gap-4 mt-2">
-                                <div class="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                    <span class="text-sm font-bold text-orange-700 dark:text-orange-400">{{ $driverProfile->rating }} Rating</span>
+                                <div class="flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/20 px-2.5 py-1 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-500" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    <span class="text-sm font-bold text-brand-700 dark:text-brand-400">{{ $driverProfile->rating }} Rating</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <div class="w-2.5 h-2.5 rounded-full {{ $driverProfile->is_available ? 'bg-green-500' : 'bg-red-500' }}"></div>

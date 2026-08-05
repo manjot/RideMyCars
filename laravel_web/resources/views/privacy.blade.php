@@ -38,7 +38,7 @@
 
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">7. Your Rights</h2>
-                    <p class="leading-relaxed">You have the right to access, correct, or delete your personal data. To exercise these rights, contact <a href="mailto:privacy@ridemycars.com" class="text-orange-500 hover:underline">privacy@ridemycars.com</a> or use the data management tools in your account settings.</p>
+                    <p class="leading-relaxed">You have the right to access, correct, or delete your personal data. To exercise these rights, contact <a href="mailto:privacy@ridemycars.com" class="text-brand-500 hover:underline">privacy@ridemycars.com</a> or use the data management tools in your account settings.</p>
                 </div>
 
                 <div>
@@ -48,7 +48,7 @@
 
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">9. Contact Us</h2>
-                    <p class="leading-relaxed">For privacy inquiries, contact our Data Protection Officer at <a href="mailto:privacy@ridemycars.com" class="text-orange-500 hover:underline">privacy@ridemycars.com</a> or write to RideMyCars Inc., San Francisco, CA 94102.</p>
+                    <p class="leading-relaxed">For privacy inquiries, contact our Data Protection Officer at <a href="mailto:privacy@ridemycars.com" class="text-brand-500 hover:underline">privacy@ridemycars.com</a> or write to RideMyCars Inc., San Francisco, CA 94102.</p>
                 </div>
             </div>
         </main>

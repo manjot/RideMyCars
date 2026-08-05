@@ -13,13 +13,13 @@
                     
                     <!-- Left Content -->
                     <div class="max-w-2xl">
-                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-sm font-bold tracking-wide mb-8">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 text-sm font-bold tracking-wide mb-8">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             Trusted by 50,000+ riders worldwide
                         </div>
                         
                         <h1 class="text-5xl md:text-8xl font-extrabold text-gray-900 dark:text-white tracking-tighter leading-[1.1] mb-6">
-                            {!! site_setting('home.hero.title', 'One App.<br><span class="text-orange-500">Three Ways</span><br>to Move.') !!}
+                            {!! site_setting('home.hero.title', 'One App.<br><span class="text-brand-500">Three Ways</span><br>to Move.') !!}
                         </h1>
                         
                         <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 leading-relaxed mb-10">
@@ -31,9 +31,10 @@
                             
                             <!-- Tabs -->
                             <div class="flex items-center border-b border-gray-100 dark:border-white/10 px-4 pt-2">
-                                <button onclick="switchTab('ride')" id="tab-btn-ride" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-orange-500 border-b-2 border-orange-500 transition-colors">Ride</button>
-                                <button onclick="switchTab('rent')" id="tab-btn-rent" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white transition-colors">Rent Vehicle</button>
+                                <button onclick="switchTab('ride')" id="tab-btn-ride" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-brand-500 border-b-2 border-brand-500 transition-colors">Ride</button>
+                                <button onclick="switchTab('rent')" id="tab-btn-rent" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white transition-colors">Rent</button>
                                 <button onclick="switchTab('hire')" id="tab-btn-hire" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white transition-colors">Hire Driver</button>
+                                <button onclick="switchTab('delivery')" id="tab-btn-delivery" class="hero-tab-btn flex-1 pb-4 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white transition-colors">Delivery</button>
                             </div>
 
                             <!-- Content: Ride -->
@@ -43,9 +44,9 @@
                                         <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                                         </div>
-                                        <input type="text" name="destination" placeholder="Where to?" class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-orange-500 block pl-12 p-4 outline-none transition-all" required>
+                                        <input type="text" name="destination" placeholder="Where to?" class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-brand-500 block pl-12 p-4 outline-none transition-all" required>
                                     </div>
-                                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                    <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                         Book Ride
                                     </button>
@@ -59,9 +60,9 @@
                                         <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                         </div>
-                                        <input type="text" name="search" placeholder="Search vehicles..." class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-orange-500 block pl-12 p-4 outline-none transition-all">
+                                        <input type="text" name="search" placeholder="Search vehicles..." class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-brand-500 block pl-12 p-4 outline-none transition-all">
                                     </div>
-                                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                    <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                         Find Vehicle
                                     </button>
@@ -75,11 +76,33 @@
                                         <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                         </div>
-                                        <input type="text" name="search" placeholder="Search drivers..." class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-orange-500 block pl-12 p-4 outline-none transition-all">
+                                        <input type="text" name="search" placeholder="Search drivers..." class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-brand-500 block pl-12 p-4 outline-none transition-all">
                                     </div>
-                                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                    <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                         Find Driver
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Content: Delivery -->
+                            <div id="tab-content-delivery" class="hero-tab-content p-4 hidden">
+                                <form action="/delivery" method="GET" class="flex flex-col sm:flex-row gap-3">
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                        </div>
+                                        <input type="text" name="pickup" placeholder="Pickup location" class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-brand-500 block pl-12 p-4 outline-none transition-all" required>
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        </div>
+                                        <input type="text" name="dropoff" placeholder="Drop-off location" class="w-full bg-gray-50 dark:bg-[#1a1a1a] border-none text-gray-900 dark:text-white text-base rounded-2xl focus:ring-2 focus:ring-brand-500 block pl-12 p-4 outline-none transition-all" required>
+                                    </div>
+                                    <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 px-8 rounded-2xl transition-colors shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 whitespace-nowrap">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                        Send Package
                                     </button>
                                 </form>
                             </div>
@@ -108,12 +131,12 @@
                     <div class="relative hidden lg:block h-full min-h-[500px]">
                         
                         <!-- Outer soft orange background -->
-                        <div class="absolute inset-0 bg-orange-100/60 rounded-[3rem] transform rotate-3 scale-105"></div>
+                        <div class="absolute inset-0 bg-brand-100/60 rounded-[3rem] transform rotate-3 scale-105"></div>
                         
                         <!-- Inner solid orange background -->
                         <div class="absolute inset-0 bg-[#d95d10] rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden">
                             <!-- Large subtle gradient glow inside -->
-                            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-400/40 to-transparent"></div>
+                            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-400/40 to-transparent"></div>
                             
                             <!-- Central Car Outline Graphic -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="relative z-10 opacity-90"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
@@ -160,11 +183,11 @@
             <script>
                 function switchTab(tab) {
                     document.querySelectorAll('.hero-tab-btn').forEach(btn => {
-                        btn.classList.remove('text-orange-500', 'border-orange-500');
+                        btn.classList.remove('text-brand-500', 'border-brand-500');
                         btn.classList.add('text-gray-500', 'border-transparent');
                     });
                     document.getElementById('tab-btn-' + tab).classList.remove('text-gray-500', 'border-transparent');
-                    document.getElementById('tab-btn-' + tab).classList.add('text-orange-500', 'border-orange-500');
+                    document.getElementById('tab-btn-' + tab).classList.add('text-brand-500', 'border-brand-500');
 
                     document.querySelectorAll('.hero-tab-content').forEach(content => {
                         content.classList.add('hidden');
@@ -203,7 +226,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div class="text-center mb-10">
-                    <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">Our Services</h3>
+                    <h3 class="text-brand-500 font-bold text-sm tracking-widest uppercase mb-3">Our Services</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Everything you need to move</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Three marketplace modules, one seamless platform. Choose how you want to travel.</p>
                 </div>
@@ -211,7 +234,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <!-- Ride Hailing -->
                     <div class="rounded-3xl border border-gray-100 dark:border-white/10 p-8 hover:shadow-xl transition-shadow bg-white dark:bg-[#111] relative overflow-hidden group">
-                        <div class="absolute top-6 right-6 bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">Most Popular</div>
+                        <div class="absolute top-6 right-6 bg-brand-50 text-brand-600 text-xs font-bold px-3 py-1 rounded-full">Most Popular</div>
                         <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
                         </div>
@@ -220,49 +243,49 @@
                         
                         <ul class="space-y-3 mb-8">
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Instant booking
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Instant booking
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Live GPS tracking
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Live GPS tracking
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Fare estimate upfront
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Fare estimate upfront
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Rated drivers
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Rated drivers
                             </li>
                         </ul>
 
-                        <a href="/ride" class="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors">
+                        <a href="/ride" class="inline-flex items-center gap-2 text-brand-500 font-bold hover:text-brand-600 transition-colors">
                             Explore Ride Hailing <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </a>
                     </div>
 
                     <!-- Vehicle Rentals -->
-                    <div class="rounded-3xl border border-orange-200 p-8 shadow-xl shadow-orange-100/50 bg-white dark:bg-[#111] relative overflow-hidden group transform md:-translate-y-4">
-                        <div class="absolute top-6 right-6 bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">Best Value</div>
-                        <div class="w-14 h-14 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <div class="rounded-3xl border border-brand-200 p-8 shadow-xl shadow-brand-100/50 bg-white dark:bg-[#111] relative overflow-hidden group transform md:-translate-y-4">
+                        <div class="absolute top-6 right-6 bg-brand-100 text-brand-600 text-xs font-bold px-3 py-1 rounded-full">Best Value</div>
+                        <div class="w-14 h-14 bg-brand-50 text-brand-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>
                         </div>
-                        <h3 class="text-2xl font-bold text-orange-500 mb-3">Vehicle Rentals</h3>
+                        <h3 class="text-2xl font-bold text-brand-500 mb-3">Vehicle Rentals</h3>
                         <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Rent from a curated fleet of economy, luxury, and specialty vehicles. Daily or weekly rates with full insurance coverage.</p>
                         
                         <ul class="space-y-3 mb-8">
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> 1000+ vehicles
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> 1000+ vehicles
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Flexible rental periods
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Flexible rental periods
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Doorstep delivery
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Doorstep delivery
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Full insurance
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Full insurance
                             </li>
                         </ul>
 
-                        <a href="/rent" class="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors">
+                        <a href="/rent" class="inline-flex items-center gap-2 text-brand-500 font-bold hover:text-brand-600 transition-colors">
                             Explore Vehicle Rentals <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </a>
                     </div>
@@ -278,20 +301,20 @@
                         
                         <ul class="space-y-3 mb-8">
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Background verified
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Background verified
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Experienced & multilingual
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Experienced & multilingual
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Flexible hire periods
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Flexible hire periods
                             </li>
                             <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Corporate packages
+                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Corporate packages
                             </li>
                         </ul>
 
-                        <a href="/hire-driver" class="inline-flex items-center gap-2 text-orange-500 font-bold hover:text-orange-600 transition-colors">
+                        <a href="/hire-driver" class="inline-flex items-center gap-2 text-brand-500 font-bold hover:text-brand-600 transition-colors">
                             Explore Hire a Driver <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </a>
                     </div>
@@ -305,7 +328,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div class="text-center mb-12">
-                    <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">How It Works</h3>
+                    <h3 class="text-brand-500 font-bold text-sm tracking-widest uppercase mb-3">How It Works</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Ready in four steps</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">From search to destination, we've made every step simple and transparent.</p>
                 </div>
@@ -317,7 +340,7 @@
                     <!-- Step 1 -->
                     <div class="text-center relative z-10">
                         <div class="w-24 h-24 mx-auto bg-blue-50 rounded-3xl flex items-center justify-center mb-6 relative">
-                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">1</div>
+                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">1</div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Search & Choose</h4>
@@ -326,9 +349,9 @@
 
                     <!-- Step 2 -->
                     <div class="text-center relative z-10">
-                        <div class="w-24 h-24 mx-auto bg-orange-50 rounded-3xl flex items-center justify-center mb-6 relative">
-                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">2</div>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <div class="w-24 h-24 mx-auto bg-brand-50 rounded-3xl flex items-center justify-center mb-6 relative">
+                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">2</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Book & Pay</h4>
                         <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">Instant booking with secure payments via card or wallet. Get a full receipt and invoice.</p>
@@ -337,7 +360,7 @@
                     <!-- Step 3 -->
                     <div class="text-center relative z-10">
                         <div class="w-24 h-24 mx-auto bg-green-50 rounded-3xl flex items-center justify-center mb-6 relative">
-                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">3</div>
+                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">3</div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Track in Real Time</h4>
@@ -347,7 +370,7 @@
                     <!-- Step 4 -->
                     <div class="text-center relative z-10">
                         <div class="w-24 h-24 mx-auto bg-purple-50 rounded-3xl flex items-center justify-center mb-6 relative">
-                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">4</div>
+                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-500 text-white font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">4</div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Rate Your Experience</h4>
@@ -363,7 +386,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div class="text-center mb-10">
-                    <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">Why RideMyCars</h3>
+                    <h3 class="text-brand-500 font-bold text-sm tracking-widest uppercase mb-3">Why RideMyCars</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Built different. For good reason.</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">We combined three separate markets into one platform and raised the bar on every dimension.</p>
                 </div>
@@ -378,7 +401,7 @@
                         <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">Every driver is background-verified. Vehicles are insured. Your safety is our foundation.</p>
                     </div>
 
-                    <div class="border border-orange-200 rounded-3xl p-8 bg-white dark:bg-[#111] shadow-xl shadow-orange-50/50">
+                    <div class="border border-brand-200 rounded-3xl p-8 bg-white dark:bg-[#111] shadow-xl shadow-brand-50/50">
                         <div class="w-12 h-12 bg-yellow-50 text-yellow-500 rounded-2xl flex items-center justify-center mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                         </div>
@@ -395,7 +418,7 @@
                     </div>
 
                     <div class="border border-gray-100 dark:border-white/10 rounded-3xl p-8 hover:border-gray-200 transition-colors">
-                        <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6">
+                        <div class="w-12 h-12 bg-brand-50 text-brand-500 rounded-2xl flex items-center justify-center mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Transparent Pricing</h4>
@@ -428,7 +451,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div class="text-center mb-10">
-                    <h3 class="text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">Platform Features</h3>
+                    <h3 class="text-brand-500 font-bold text-sm tracking-widest uppercase mb-3">Platform Features</h3>
                     <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Everything built in</h2>
                     <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">No add-ons needed. Every feature you need comes standard.</p>
                 </div>
@@ -437,7 +460,7 @@
                     
                     <!-- Row 1 -->
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Smart Wallet</h4>
@@ -445,7 +468,7 @@
                     </div>
 
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Real-time Notifications</h4>
@@ -453,7 +476,7 @@
                     </div>
 
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Instant Invoices</h4>
@@ -461,7 +484,7 @@
                     </div>
 
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l8.29-8.29c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Coupons & Referrals</h4>
@@ -470,7 +493,7 @@
 
                     <!-- Row 2 -->
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Saved Locations</h4>
@@ -478,15 +501,15 @@
                     </div>
 
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Ratings & Reviews</h4>
                         <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">Two-way reviews build trust. Only book highly-rated drivers and vehicles.</p>
                     </div>
 
-                    <div class="bg-white dark:bg-[#111] border-2 border-orange-200 rounded-2xl p-6 shadow-lg shadow-orange-50">
-                        <div class="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center mb-4">
+                    <div class="bg-white dark:bg-[#111] border-2 border-brand-200 rounded-2xl p-6 shadow-lg shadow-brand-50">
+                        <div class="w-10 h-10 bg-brand-500 text-white rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Identity Verification</h4>
@@ -494,7 +517,7 @@
                     </div>
 
                     <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                        <div class="w-10 h-10 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                         </div>
                         <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Easy Refunds</h4>

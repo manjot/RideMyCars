@@ -3,7 +3,7 @@
 
     <!-- Header Section -->
     <div class="max-w-4xl mx-auto text-center px-4 pt-24 pb-16 dark:text-white">
-        <h4 class="font-bold text-sm tracking-widest text-orange-500 uppercase mb-4">BLOG</h4>
+        <h4 class="font-bold text-sm tracking-widest text-brand-500 uppercase mb-4">BLOG</h4>
         <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">Stories, guides & updates</h1>
         <p class="text-xl text-gray-500 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
             From the team building the future of mobility.
@@ -22,7 +22,7 @@
                 
                 <div class="p-8 md:p-12 w-full md:w-1/2 flex flex-col justify-center">
                     <span class="inline-block px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-6">Guides</span>
-                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-orange-500 transition-colors">How to Choose the Right Rental Vehicle for Your Trip</h2>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-brand-500 transition-colors">How to Choose the Right Rental Vehicle for Your Trip</h2>
                     <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
                         From economy to luxury, here is everything you need to consider when booking a rental vehicle on RideMyCars.
                     </p>
@@ -50,7 +50,7 @@
                 </div>
                 <div class="p-8 flex flex-col flex-1">
                     <span class="inline-block px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-4">Safety</span>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-orange-500 transition-colors">10 Safety Tips Every Rider Should Know</h3>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-brand-500 transition-colors">10 Safety Tips Every Rider Should Know</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
                         Your safety matters more than anything. Follow these best practices on every trip you...
                     </p>
@@ -59,7 +59,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             4 min
                         </div>
-                        <span class="text-sm font-medium text-orange-500 group-hover:text-orange-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                        <span class="text-sm font-medium text-brand-500 group-hover:text-brand-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </div>
                 </div>
             </a>
@@ -72,7 +72,7 @@
                 </div>
                 <div class="p-8 flex flex-col flex-1">
                     <span class="inline-block px-3 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-4">Business</span>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-orange-500 transition-colors">How Companies Use RideMyCars for Corporate Travel</h3>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-brand-500 transition-colors">How Companies Use RideMyCars for Corporate Travel</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
                         Centralized billing, priority service, and no expense reports. Here is why businesses ar...
                     </p>
@@ -81,7 +81,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             6 min
                         </div>
-                        <span class="text-sm font-medium text-orange-500 group-hover:text-orange-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                        <span class="text-sm font-medium text-brand-500 group-hover:text-brand-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </div>
                 </div>
             </a>
@@ -89,12 +89,12 @@
             <!-- Blog 3 -->
             <a href="#" class="group block bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
                 <div class="h-48 bg-gray-100 dark:bg-[#222] dark:bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center p-6 text-center text-gray-400 dark:text-gray-500 dark:text-gray-600">
-                    <div class="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-[#302015] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-50 to-brand-100/50 dark:from-[#302015] dark:to-[#1a1a1a] group-hover:scale-105 transition-transform duration-500"></div>
                     <span class="relative z-10 text-sm font-medium">How Much Can You Earn as a RideMyCars Driver?</span>
                 </div>
                 <div class="p-8 flex flex-col flex-1">
-                    <span class="inline-block px-3 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-4">Drivers</span>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-orange-500 transition-colors">How Much Can You Earn as a RideMyCars Driver?</h3>
+                    <span class="inline-block px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-4">Drivers</span>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-brand-500 transition-colors">How Much Can You Earn as a RideMyCars Driver?</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
                         A transparent look at driver earnings, bonus structures, and how to maximize your incom...
                     </p>
@@ -103,7 +103,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             7 min
                         </div>
-                        <span class="text-sm font-medium text-orange-500 group-hover:text-orange-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                        <span class="text-sm font-medium text-brand-500 group-hover:text-brand-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </div>
                 </div>
             </a>
@@ -116,7 +116,7 @@
                 </div>
                 <div class="p-8 flex flex-col flex-1">
                     <span class="inline-block px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-4">Guides</span>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-orange-500 transition-colors">Ride vs Rental vs Hire a Driver — Which is Right for You?</h3>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-brand-500 transition-colors">Ride vs Rental vs Hire a Driver — Which is Right for You?</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
                         Breaking down the three core services of RideMyCars to help you choose the perfect o...
                     </p>
@@ -125,7 +125,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             3 min
                         </div>
-                        <span class="text-sm font-medium text-orange-500 group-hover:text-orange-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                        <span class="text-sm font-medium text-brand-500 group-hover:text-brand-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </div>
                 </div>
             </a>
@@ -138,7 +138,7 @@
                 </div>
                 <div class="p-8 flex flex-col flex-1">
                     <span class="inline-block px-3 py-1 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-wider rounded-full w-fit mb-4">News</span>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-orange-500 transition-colors">We Are Expanding to 20 New Cities in 2025</h3>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-brand-500 transition-colors">We Are Expanding to 20 New Cities in 2025</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
                         We're bringing unified mobility to more people. See the full list of cities we're lau...
                     </p>
@@ -147,7 +147,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             2 min
                         </div>
-                        <span class="text-sm font-medium text-orange-500 group-hover:text-orange-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                        <span class="text-sm font-medium text-brand-500 group-hover:text-brand-600 flex items-center gap-1">Read more <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </div>
                 </div>
             </a>

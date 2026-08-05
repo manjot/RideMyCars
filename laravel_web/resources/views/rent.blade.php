@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout theme="theme-rent">
     <x-slot:title>Rent a Vehicle — RideMyCars</x-slot>
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
@@ -29,7 +29,7 @@
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </div>
-                <input x-model="search" type="text" placeholder="Search by make, model..." class="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm">
+                <input x-model="search" type="text" placeholder="Search by make, model..." class="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-sm">
             </div>
             <button class="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
@@ -42,7 +42,7 @@
             <template x-for="category in categories" :key="category">
                 <button 
                     @click="selectedCategory = category"
-                    :class="selectedCategory === category ? 'bg-orange-500 text-white border-orange-500' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'"
+                    :class="selectedCategory === category ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'"
                     class="px-5 py-2 border rounded-full font-medium text-sm transition-all shadow-sm"
                     x-text="category">
                 </button>
@@ -79,7 +79,7 @@
                             <div class="font-bold text-lg text-gray-900 dark:text-white" x-text="`$${vehicle.daily_rate}`"><span class="text-sm font-normal text-gray-500 dark:text-gray-400">/day</span></div>
                         </div>
                         <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-4" x-text="vehicle.model"></p>
-                        <a :href="'/rent/' + vehicle.id" class="w-full py-2.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 border border-gray-200 dark:border-white/10 hover:border-orange-200 dark:hover:border-orange-500/30 rounded-xl font-bold transition-colors text-center block">
+                        <a :href="'/rent/' + vehicle.id" class="w-full py-2.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-brand-50 dark:hover:bg-brand-900/20 text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 border border-gray-200 dark:border-white/10 hover:border-brand-200 dark:hover:border-brand-500/30 rounded-xl font-bold transition-colors text-center block">
                             View Details
                         </a>
                     </div>

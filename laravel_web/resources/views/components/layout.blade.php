@@ -15,7 +15,7 @@
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="font-sans antialiased bg-[#fafafa] dark:bg-[#0a0a0a] text-gray-900 dark:text-white min-h-screen flex flex-col transition-colors duration-200">
+<body class="font-sans antialiased bg-[#fafafa] dark:bg-[#0a0a0a] text-gray-900 dark:text-white min-h-screen flex flex-col transition-colors duration-200 {{ $theme ?? '' }}">
     
     <!-- Header -->
     <header class="top-0 left-0 right-0 z-50 bg-white dark:bg-[#111] dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-white/10 transition-colors duration-200">
@@ -23,10 +23,10 @@
             <div class="flex h-20 items-center justify-between">
                 <!-- Logo -->
                 <a class="flex items-center gap-2 group" href="/">
-                    <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-white"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
                     </div>
-                    <span class="font-bold text-xl lg:text-2xl tracking-tight text-gray-900 dark:text-white">Ride<span class="text-orange-500">MyCars</span></span>
+                    <span class="font-bold text-xl lg:text-2xl tracking-tight text-gray-900 dark:text-white">Ride<span class="text-brand-500">MyCars</span></span>
                 </a>
                 
                 <!-- Desktop Nav -->
@@ -34,6 +34,7 @@
                     <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/ride">Ride</a>
                     <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/rent">Rent Vehicle</a>
                     <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/hire-driver">Hire Driver</a>
+                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/delivery">Package Delivery</a>
                     
                     <!-- Company Dropdown -->
                     <div x-data="{ open: false }" class="relative" @click.away="open = false">
@@ -62,7 +63,7 @@
                     @auth
                     <div x-data="{ userMenuOpen: false }" class="relative" @click.away="userMenuOpen = false">
                         <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 focus:outline-none">
-                            <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 flex items-center justify-center font-bold">
+                            <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 flex items-center justify-center font-bold">
                                 {{ substr(auth()->user()->name, 0, 1) }}
                             </div>
                         </button>
@@ -85,7 +86,7 @@
                     </div>
                     @else
                     <a class="whitespace-nowrap text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors" href="/login">Sign In</a>
-                    <a class="whitespace-nowrap px-4 py-2 lg:px-6 lg:py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-orange-500/25" href="/signup">Get Started</a>
+                    <a class="whitespace-nowrap px-4 py-2 lg:px-6 lg:py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-brand-500/25" href="/signup">Get Started</a>
                     @endauth
                 </div>
             </div>
@@ -100,10 +101,10 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                 <div class="col-span-1 md:col-span-1">
                     <a class="flex items-center gap-2 mb-6" href="/">
-                        <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
                         </div>
-                        <span class="font-bold text-2xl tracking-tight text-white">Ride<span class="text-orange-500">MyCars</span></span>
+                        <span class="font-bold text-2xl tracking-tight text-white">Ride<span class="text-brand-500">MyCars</span></span>
                     </a>
                     <p class="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">
                         Your unified mobility platform. Book rides, rent vehicles, and hire professional drivers — all in one place.
