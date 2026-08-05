@@ -12,6 +12,7 @@ class DriverProfile extends Model
         'hourly_rate',
         'is_available',
         'rating',
+        'kyc_status',
         'image_url',
         'bio',
     ];

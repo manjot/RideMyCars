@@ -18,6 +18,9 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
 
     if (auth()->attempt($credentials)) {
         $request->session()->regenerate();
+        if (auth()->user()->role === 'driver') {
+            return redirect('/driver/dashboard');
+        }
         return redirect()->intended('/');
     }
 
@@ -139,6 +142,41 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
     ]);
 
     return redirect('/admin/rides')->with('success', 'Ride booked successfully!');
+});
+Route::prefix('driver')->middleware('auth')->group(function () {
+    Route::get('/dashboard', function () {
+        if (auth()->user()->role !== 'driver') abort(403);
+        
+        $user = auth()->user();
+        
+        // Ensure driver profile exists
+        $profile = $user->driverProfile ?? \App\Models\DriverProfile::create(['user_id' => $user->id, 'license_number' => 'PENDING-' . $user->id]);
+        
+        // Vehicles where driver is owner
+        $vehicles = \App\Models\Vehicle::where('owner_id', $user->id)->get();
+        
+        // Jobs
+        $rides = \App\Models\Ride::where('driver_id', $user->id)->orderBy('created_at', 'desc')->get();
+        
+        $activeRides = $rides->whereIn('status', ['accepted', 'in_progress']);
+        $pendingRides = $rides->where('status', 'pending'); // actually pending rides wait for driver assignment, but let's assume they requested it or were assigned
+        $completedRides = $rides->where('status', 'completed');
+        
+        // Earnings
+        $today = now()->startOfDay();
+        $startOfWeek = now()->startOfWeek();
+        $startOfMonth = now()->startOfMonth();
+        
+        $dailyEarnings = $completedRides->where('updated_at', '>=', $today)->sum('fare');
+        $weeklyEarnings = $completedRides->where('updated_at', '>=', $startOfWeek)->sum('fare');
+        $monthlyEarnings = $completedRides->where('updated_at', '>=', $startOfMonth)->sum('fare');
+        
+        return view('driver.dashboard', compact(
+            'user', 'profile', 'vehicles', 
+            'activeRides', 'pendingRides', 'completedRides',
+            'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings'
+        ));
+    });
 });
 
 Route::get('/hire-driver', function () {

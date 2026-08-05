@@ -142,6 +142,30 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- App Downloads -->
+            <div class="py-12 flex flex-col md:flex-row items-center justify-center gap-6 border-t border-gray-100 dark:border-white/10 mt-12">
+                <span class="text-gray-500 dark:text-gray-400 font-medium">Available on</span>
+                <div class="flex items-center gap-4">
+                    <!-- App Store -->
+                    <a href="{{ site_setting('driver.ios_url', '#') }}" class="flex items-center gap-3 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:scale-105 transition-transform shadow-lg border border-transparent dark:border-white/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 14c-.1-.1-1.5-2.5-1.5-5.1 0-3.2 2.7-4.8 2.8-4.9-1.5-2.2-3.8-2.5-4.6-2.5-1.9-.2-3.8 1.1-4.8 1.1-1 0-2.6-1-4.1-1-2 0-3.9 1.1-4.9 2.9-2 3.6-.5 8.9 1.5 11.8 1 1.4 2.1 3 3.6 2.9 1.5-.1 2.1-1 3.9-1s2.3.9 3.9 1c1.6.1 2.6-1.5 3.5-2.9 1.1-1.7 1.6-3.3 1.6-3.4-.1-.1-2.4-.9-2.5-3.4zM11.9 4.8c.8-1 1.4-2.4 1.3-3.8-1.2.1-2.7.8-3.5 1.8-.7.9-1.4 2.3-1.2 3.8 1.3.1 2.6-.7 3.4-1.8z"/></svg>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] leading-tight">Download on the</span>
+                            <span class="text-sm font-semibold leading-tight">App Store</span>
+                        </div>
+                    </a>
+                    
+                    <!-- Google Play -->
+                    <a href="{{ site_setting('driver.apk_file') ? Storage::url(site_setting('driver.apk_file')) : site_setting('driver.play_store_url', '#') }}" class="flex items-center gap-3 px-5 py-2.5 bg-transparent border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.9l-9-5.1c-.5-.3-1.1-.3-1.6 0-.5.3-.8.8-.8 1.4v10.1c0 .6.3 1.1.8 1.4.3.1.6.2.8.2s.6-.1.8-.2l9-5.1c.5-.3.8-.8.8-1.4s-.3-1-.8-1.3zm-8.8-3.4l6.1 3.5-3.1 1.8-3-3.5v-1.8zm0 7.8v-1.8l3 3.5-3 1.8v-3.5zm4.7-.9l-1.1-.6 1.1-1.3 2 2.3-2-.4z"/></svg>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] leading-tight text-gray-500 dark:text-gray-400">GET IT ON</span>
+                            <span class="text-sm font-semibold leading-tight">Google Play</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
             
             <!-- Bottom Footer -->
             <div class="pt-8 border-t border-gray-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
