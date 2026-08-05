@@ -12,20 +12,34 @@
   --color-brand-700: var(--brand-700);
   --color-brand-800: var(--brand-800);
   --color-brand-900: var(--brand-900);
+  
+  /* Override dark gray with Logo Navy */
+  --color-gray-900: #102b54;
+  --color-gray-800: #1a3c70;
 }
 
 :root {
-  /* Default Yellow (Taxi) */
-  --brand-50: #fefce8;
-  --brand-100: #fef9c3;
-  --brand-200: #fef08a;
-  --brand-300: #fde047;
-  --brand-400: #facc15;
-  --brand-500: #eab308;
-  --brand-600: #ca8a04;
-  --brand-700: #a16207;
-  --brand-800: #854d0e;
-  --brand-900: #713f12;
+  /* Default Yellow (RideMyCars Logo) */
+  --brand-50: #fff8df;
+  --brand-100: #ffecb0;
+  --brand-200: #ffe183;
+  --brand-300: #ffd453;
+  --brand-400: #fbc933;
+  --brand-500: #f9c52a;
+  --brand-600: #dbab21;
+  --brand-700: #a78117;
+  --brand-800: #886711;
+  --brand-900: #71540a;
+
+  /* Logo Secondary Colors */
+  --logo-navy: #102b54;
+  --logo-red: #e40e1b;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-[#102b54] dark:text-white;
+  }
 }
 
 .theme-ride {
