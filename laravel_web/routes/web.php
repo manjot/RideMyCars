@@ -21,3 +21,8 @@ Route::get('/terms', function () {
 Route::get('/privacy', function () {
     return view('privacy');
 });
+
+Route::get('/rent', function () {
+    $vehicles = \App\Models\Vehicle::all();
+    return view('rent', compact('vehicles'));
+});

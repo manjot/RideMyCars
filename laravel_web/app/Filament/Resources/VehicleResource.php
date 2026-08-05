@@ -23,6 +23,9 @@ class VehicleResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\FileUpload::make('image_url')
+                    ->image()
+                    ->directory('vehicles'),
                 Forms\Components\TextInput::make('make')
                     ->required(),
                 Forms\Components\TextInput::make('model')
@@ -31,14 +34,23 @@ class VehicleResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('license_plate')
                     ->required(),
-                Forms\Components\TextInput::make('type')
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'Economy' => 'Economy',
+                        'Compact' => 'Compact',
+                        'Midsize' => 'Midsize',
+                        'SUV' => 'SUV',
+                        'Luxury' => 'Luxury',
+                        'Van' => 'Van',
+                    ])
                     ->required(),
                 Forms\Components\TextInput::make('daily_rate')
                     ->numeric(),
                 Forms\Components\Toggle::make('is_available')
                     ->required(),
-                Forms\Components\TextInput::make('owner_id')
-                    ->numeric(),
+                Forms\Components\Select::make('owner_id')
+                    ->relationship('owner', 'name')
+                    ->searchable(),
             ]);
     }
 
@@ -46,6 +58,8 @@ class VehicleResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('image_url')
+                    ->circular(),
                 Tables\Columns\TextColumn::make('make')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('model')
@@ -55,13 +69,14 @@ class VehicleResource extends Resource
                 Tables\Columns\TextColumn::make('license_plate')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
+                    ->badge()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('daily_rate')
-                    ->numeric()
+                    ->money('USD')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_available')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('owner_id')
+                Tables\Columns\TextColumn::make('owner.name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
