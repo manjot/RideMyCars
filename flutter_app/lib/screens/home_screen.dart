@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: 16.0),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: const Color(0xFFF97316),
                 foregroundColor: Colors.white,
               ),
               onPressed: () {},
@@ -35,10 +35,22 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'One App.\nThree Ways to Move.',
-                style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, height: 1.1),
+              RichText(
                 textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                    height: 1.1,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontFamily: 'Inter',
+                  ),
+                  children: const [
+                    TextSpan(text: 'One App.\n'),
+                    TextSpan(text: 'Three Ways\n', style: TextStyle(color: Color(0xFFF97316))),
+                    TextSpan(text: 'to Move.'),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               const Text(
@@ -99,7 +111,7 @@ class _ServiceCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 48, color: const Color(0xFF6366F1)),
+            Icon(icon, size: 48, color: const Color(0xFFF97316)),
             const SizedBox(height: 12),
             Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],

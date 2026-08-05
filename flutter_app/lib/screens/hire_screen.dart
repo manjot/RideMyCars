@@ -11,7 +11,7 @@ class HireScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_search, size: 80, color: Color(0xFF6366F1)),
+            const Icon(Icons.person_search, size: 80, color: Color(0xFFF97316)),
             const SizedBox(height: 16),
             const Text('Hire Driver UI', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

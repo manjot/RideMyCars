@@ -11,7 +11,7 @@ class RentScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.car_rental, size: 80, color: Color(0xFF6366F1)),
+            const Icon(Icons.car_rental, size: 80, color: Color(0xFFF97316)),
             const SizedBox(height: 16),
             const Text('Vehicle Rental UI', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
