@@ -20,7 +20,7 @@
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Pickup location</label>
-                                <button type="button" class="text-orange-500 hover:text-orange-600 text-sm font-medium flex items-center gap-1 transition-colors">
+                                <button type="button" id="use_my_location_btn" class="text-orange-500 hover:text-orange-600 text-sm font-medium flex items-center gap-1 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                                     Use my location
                                 </button>
@@ -29,7 +29,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-green-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                 </div>
-                                <input type="text" name="pickup_location" required placeholder="Where should the driver meet you?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
+                                <input type="text" id="pickup_location" name="pickup_location" required placeholder="Where should the driver meet you?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
                             </div>
                         </div>
 
@@ -39,7 +39,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-red-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                                 </div>
-                                <input type="text" name="dropoff_location" required placeholder="Where are you going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
+                                <input type="text" id="dropoff_location" name="dropoff_location" required placeholder="Where are you going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
                             </div>
                         </div>
                     </div>
@@ -114,13 +114,9 @@
             <!-- Right Side: Info & Map -->
             <div class="w-full lg:w-[45%] space-y-4">
                 
-                <!-- Map Placeholder -->
-                <div class="bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center text-center h-[300px]">
-                    <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    </div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Map unavailable</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm">Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to show the route. Fares are still estimated from your addresses.</p>
+                <!-- Map Container -->
+                <div class="bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl flex flex-col items-center justify-center text-center h-[300px] overflow-hidden">
+                    <div id="map" class="w-full h-full"></div>
                 </div>
 
                 <!-- Info Cards -->
@@ -162,5 +158,64 @@
 
         </div>
     </main>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof google === 'undefined') return;
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 40.7128, lng: -74.0060 }, // Default to NY
+                zoom: 12,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false
+            });
+            const marker = new google.maps.Marker({ map: map });
+            
+            const pickupInput = document.getElementById("pickup_location");
+            const dropoffInput = document.getElementById("dropoff_location");
+
+            const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
+            const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
+
+            pickupAutocomplete.addListener("place_changed", () => {
+                const place = pickupAutocomplete.getPlace();
+                if (!place.geometry) return;
+                map.setCenter(place.geometry.location);
+                marker.setPosition(place.geometry.location);
+                map.setZoom(15);
+            });
+
+            document.getElementById("use_my_location_btn").addEventListener("click", () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const pos = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                            };
+                            map.setCenter(pos);
+                            marker.setPosition(pos);
+                            map.setZoom(15);
+                            
+                            // Reverse geocoding to fill input
+                            const geocoder = new google.maps.Geocoder();
+                            geocoder.geocode({ location: pos }, (results, status) => {
+                                if (status === "OK" && results[0]) {
+                                    pickupInput.value = results[0].formatted_address;
+                                }
+                            });
+                        },
+                        () => {
+                            alert("Error: The Geolocation service failed.");
+                        }
+                    );
+                } else {
+                    alert("Error: Your browser doesn't support geolocation.");
+                }
+            });
+        });
+    </script>
 
 </x-layout>
