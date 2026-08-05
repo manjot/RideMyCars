@@ -12,7 +12,8 @@
             
             <!-- Left Side: Form -->
             <div class="w-full lg:w-[55%]">
-                <form action="#" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent">
+                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ vehicle_type: 'Economy' }">
+                    @csrf
                     
                     <!-- Locations -->
                     <div class="space-y-5">
@@ -28,7 +29,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-green-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                 </div>
-                                <input type="text" placeholder="Where should the driver meet you?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
+                                <input type="text" name="pickup_location" required placeholder="Where should the driver meet you?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
                             </div>
                         </div>
 
@@ -38,7 +39,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-red-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                                 </div>
-                                <input type="text" placeholder="Where are you going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
+                                <input type="text" name="dropoff_location" required placeholder="Where are you going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
                             </div>
                         </div>
                     </div>
@@ -46,10 +47,13 @@
                     <!-- Vehicle Type -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Vehicle type</label>
+                        <input type="hidden" name="vehicle_type" x-model="vehicle_type">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <!-- Economy -->
-                            <div class="border-2 border-orange-500 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden bg-orange-50/30">
-                                <div class="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                            <div @click="vehicle_type = 'Economy'" 
+                                 :class="vehicle_type === 'Economy' ? 'border-orange-500 bg-orange-50/30' : 'border-gray-200 dark:border-white/10 hover:border-orange-200 hover:bg-orange-50/10'"
+                                 class="border-2 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                <div x-show="vehicle_type === 'Economy'" class="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 </div>
                                 <div class="text-3xl mb-2">🚗</div>
@@ -58,14 +62,24 @@
                             </div>
                             
                             <!-- Comfort -->
-                            <div class="border border-gray-200 dark:border-white/10 rounded-xl p-4 text-center cursor-pointer hover:border-orange-200 hover:bg-orange-50/10 transition-colors">
+                            <div @click="vehicle_type = 'Comfort'" 
+                                 :class="vehicle_type === 'Comfort' ? 'border-orange-500 bg-orange-50/30' : 'border-gray-200 dark:border-white/10 hover:border-orange-200 hover:bg-orange-50/10'"
+                                 class="border-2 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                <div x-show="vehicle_type === 'Comfort'" class="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
                                 <div class="text-3xl mb-2">🚙</div>
                                 <h3 class="font-bold text-gray-900 dark:text-white mb-1">Comfort</h3>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Spacious, newer cars</p>
                             </div>
 
                             <!-- Premium -->
-                            <div class="border border-gray-200 dark:border-white/10 rounded-xl p-4 text-center cursor-pointer hover:border-orange-200 hover:bg-orange-50/10 transition-colors">
+                            <div @click="vehicle_type = 'Premium'" 
+                                 :class="vehicle_type === 'Premium' ? 'border-orange-500 bg-orange-50/30' : 'border-gray-200 dark:border-white/10 hover:border-orange-200 hover:bg-orange-50/10'"
+                                 class="border-2 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                <div x-show="vehicle_type === 'Premium'" class="absolute top-2 right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
                                 <div class="text-3xl mb-2">🏎️</div>
                                 <h3 class="font-bold text-gray-900 dark:text-white mb-1">Premium</h3>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Luxury & top-rated drivers</p>
@@ -76,7 +90,7 @@
                     <!-- Payment -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment method</label>
-                        <select class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all appearance-none cursor-pointer">
+                        <select name="payment_method" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all appearance-none cursor-pointer">
                             <option>Credit / debit card</option>
                             <option>Apple Pay</option>
                             <option>PayPal</option>
@@ -87,10 +101,10 @@
                     <!-- Notes -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes for the driver <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span></label>
-                        <textarea placeholder="Gate code, landmark, luggage..." rows="3" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all resize-none"></textarea>
+                        <textarea name="notes" placeholder="Gate code, landmark, luggage..." rows="3" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all resize-none"></textarea>
                     </div>
 
-                    <button type="button" class="w-full py-4 mt-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md shadow-orange-500/25 active:scale-[0.98]">
+                    <button type="submit" class="w-full py-4 mt-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md shadow-orange-500/25 active:scale-[0.98]">
                         Confirm Ride
                     </button>
                     

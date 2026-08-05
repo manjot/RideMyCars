@@ -57,7 +57,40 @@ Route::get('/ride', function () {
     return view('ride');
 });
 
+Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'pickup_location' => 'required|string|max:255',
+        'dropoff_location' => 'required|string|max:255',
+        'vehicle_type' => 'nullable|string|max:255',
+        'payment_method' => 'nullable|string|max:255',
+        'notes' => 'nullable|string',
+    ]);
+
+    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+
+    \App\Models\Ride::create([
+        'rider_id' => $riderId,
+        'pickup_location' => $request->pickup_location,
+        'dropoff_location' => $request->dropoff_location,
+        'vehicle_type' => $request->vehicle_type,
+        'payment_method' => $request->payment_method,
+        'notes' => $request->notes,
+        'status' => 'pending',
+    ]);
+
+    return redirect('/admin/rides')->with('success', 'Ride booked successfully!');
+});
+
 Route::get('/hire-driver', function () {
     $drivers = \App\Models\DriverProfile::with('user')->get();
     return view('hire-driver', compact('drivers'));
+});
+
+Route::get('/rent/{vehicle}', function (\App\Models\Vehicle $vehicle) {
+    return view('vehicle-detail', compact('vehicle'));
+});
+
+Route::get('/hire-driver/{driverProfile}', function (\App\Models\DriverProfile $driverProfile) {
+    $driverProfile->load('user');
+    return view('driver-detail', compact('driverProfile'));
 });

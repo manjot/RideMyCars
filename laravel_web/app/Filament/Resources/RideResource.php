@@ -23,19 +23,41 @@ class RideResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('rider_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('driver_id')
-                    ->numeric(),
+                Forms\Components\Select::make('rider_id')
+                    ->relationship('rider', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+                Forms\Components\Select::make('driver_id')
+                    ->relationship('driver', 'name')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('pickup_location')
                     ->required(),
                 Forms\Components\TextInput::make('dropoff_location')
                     ->required(),
+                Forms\Components\Select::make('vehicle_type')
+                    ->options([
+                        'Economy' => 'Economy',
+                        'Comfort' => 'Comfort',
+                        'Premium' => 'Premium',
+                    ]),
+                Forms\Components\TextInput::make('payment_method'),
                 Forms\Components\TextInput::make('fare')
-                    ->numeric(),
-                Forms\Components\TextInput::make('status')
-                    ->required(),
+                    ->numeric()
+                    ->prefix('$'),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'driver_assigned' => 'Driver Assigned',
+                        'in_progress' => 'In Progress',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->required()
+                    ->default('pending'),
+                Forms\Components\Textarea::make('notes')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -43,21 +65,30 @@ class RideResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('rider_id')
+                Tables\Columns\TextColumn::make('rider.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('driver_id')
+                Tables\Columns\TextColumn::make('driver.name')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('Unassigned'),
                 Tables\Columns\TextColumn::make('pickup_location')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('dropoff_location')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('vehicle_type')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('fare')
                     ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                    ->sortable()
+                    ->prefix('$'),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->colors([
+                        'warning' => 'pending',
+                        'primary' => 'driver_assigned',
+                        'success' => fn ($state) => in_array($state, ['in_progress', 'completed']),
+                        'danger' => 'cancelled',
+                    ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -42,7 +42,7 @@
             <template x-for="category in categories" :key="category">
                 <button 
                     @click="selectedCategory = category"
-                    :class="selectedCategory === category ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                    :class="selectedCategory === category ? 'bg-orange-500 text-white border-orange-500' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'"
                     class="px-5 py-2 border rounded-full font-medium text-sm transition-all shadow-sm"
                     x-text="category">
                 </button>
@@ -59,17 +59,17 @@
             </template>
 
             <template x-for="vehicle in filteredVehicles" :key="vehicle.id">
-                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer">
+                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" @click="window.location.href = '/rent/' + vehicle.id">
                     <!-- Image -->
                     <div class="w-full h-48 bg-gray-100 dark:bg-[#222] rounded-xl mb-4 overflow-hidden relative">
                         <!-- Fallback for no image -->
-                        <div x-show="!vehicle.image_url" class="absolute inset-0 flex items-center justify-center text-gray-300">
+                        <div x-show="!vehicle.image_url" class="absolute inset-0 flex items-center justify-center text-gray-300 dark:text-gray-600">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
                         </div>
                         <img x-show="vehicle.image_url" :src="vehicle.image_url ? '/storage/' + vehicle.image_url : ''" class="w-full h-full object-cover transition-transform group-hover:scale-105" :alt="vehicle.make + ' ' + vehicle.model">
                         
                         <!-- Badge -->
-                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 dark:text-gray-300 shadow-sm" x-text="vehicle.type"></div>
+                        <div class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 dark:text-gray-300 shadow-sm" x-text="vehicle.type"></div>
                     </div>
                     
                     <!-- Details -->
@@ -79,9 +79,9 @@
                             <div class="font-bold text-lg text-gray-900 dark:text-white" x-text="`$${vehicle.daily_rate}`"><span class="text-sm font-normal text-gray-500 dark:text-gray-400">/day</span></div>
                         </div>
                         <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-4" x-text="vehicle.model"></p>
-                        <button class="w-full py-2.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-orange-50 text-gray-900 dark:text-white hover:text-orange-600 border border-gray-200 dark:border-white/10 hover:border-orange-200 rounded-xl font-bold transition-colors">
+                        <a :href="'/rent/' + vehicle.id" class="w-full py-2.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 border border-gray-200 dark:border-white/10 hover:border-orange-200 dark:hover:border-orange-500/30 rounded-xl font-bold transition-colors text-center block">
                             View Details
-                        </button>
+                        </a>
                     </div>
                 </div>
             </template>

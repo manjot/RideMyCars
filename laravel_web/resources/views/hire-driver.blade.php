@@ -36,17 +36,17 @@
             <!-- Selects -->
             <div class="w-full lg:w-48 border-r border-gray-200 dark:border-white/10 pr-4">
                 <select class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 appearance-none">
-                    <option>All</option>
-                    <option>Available Now</option>
-                    <option>Available Later</option>
+                    <option class="dark:bg-[#111] dark:text-white">All</option>
+                    <option class="dark:bg-[#111] dark:text-white">Available Now</option>
+                    <option class="dark:bg-[#111] dark:text-white">Available Later</option>
                 </select>
             </div>
 
             <div class="w-full lg:w-48 border-r border-gray-200 dark:border-white/10 pr-4">
                 <select class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 appearance-none">
-                    <option>Any</option>
-                    <option>5 Stars Only</option>
-                    <option>4+ Stars</option>
+                    <option class="dark:bg-[#111] dark:text-white">Any</option>
+                    <option class="dark:bg-[#111] dark:text-white">5 Stars Only</option>
+                    <option class="dark:bg-[#111] dark:text-white">4+ Stars</option>
                 </select>
             </div>
 
@@ -71,11 +71,11 @@
             </template>
 
             <template x-for="driver in filteredDrivers" :key="driver.id">
-                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer">
+                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" @click="window.location.href = '/hire-driver/' + driver.id">
                     
                     <div class="flex items-start gap-4 mb-4">
                         <!-- Image -->
-                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] flex items-center justify-center text-gray-300 shrink-0 overflow-hidden relative">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] flex items-center justify-center text-gray-300 dark:text-gray-600 shrink-0 overflow-hidden relative">
                             <svg x-show="!driver.image_url" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <img x-show="driver.image_url" :src="driver.image_url ? '/storage/' + driver.image_url : ''" class="absolute inset-0 w-full h-full object-cover" :alt="driver.user.name">
                         </div>
@@ -109,9 +109,9 @@
                             <div class="w-2 h-2 rounded-full" :class="driver.is_available ? 'bg-green-500' : 'bg-red-500'"></div>
                             <span class="text-xs font-medium text-gray-500 dark:text-gray-400" x-text="driver.is_available ? 'Available' : 'Busy'"></span>
                         </div>
-                        <button class="px-5 py-2 bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold rounded-xl transition-colors text-sm">
+                        <a :href="'/hire-driver/' + driver.id" class="px-5 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 font-bold rounded-xl transition-colors text-sm text-center">
                             View Profile
-                        </button>
+                        </a>
                     </div>
                 </div>
             </template>
