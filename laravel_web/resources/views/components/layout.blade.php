@@ -143,29 +143,39 @@
                 </div>
             </div>
             
-            <!-- Contact Row -->
-            <div class="border-t border-white/10 pt-8 pb-8 flex flex-col md:flex-row gap-8">
-                <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                    support@ridemycars.com
-                </div>
-                <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    +1 800 123 4567
-                </div>
-                <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    San Francisco, CA
+            <!-- Bottom Footer -->
+            <div class="pt-8 border-t border-gray-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+                
+                <div class="flex items-center gap-6">
+                    <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        {{ site_setting('footer.support_email', 'support@ridemycars.com') }}
+                    </a>
+                    <a href="tel:{{ site_setting('footer.support_phone', '+1 800 123 4567') }}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        {{ site_setting('footer.support_phone', '+1 800 123 4567') }}
+                    </a>
+                    <span class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {{ site_setting('footer.location', 'San Francisco, CA') }}
+                    </span>
                 </div>
             </div>
-
-            <!-- Bottom Row -->
-            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-gray-500 dark:text-gray-400 text-sm">© 2026 RideMyCars. All rights reserved.</p>
-                <div class="flex items-center gap-4 text-xs font-medium text-gray-500 dark:text-gray-400">
-                    <span>Available on</span>
-                    <span class="px-3 py-1.5 rounded-full bg-white/5 text-white border border-white/10">iOS — Coming Soon</span>
-                    <span class="px-3 py-1.5 rounded-full bg-white/5 text-white border border-white/10">Android — Coming Soon</span>
+            
+            <div class="mt-8 pt-8 border-t border-gray-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-sm text-gray-400 dark:text-gray-500 text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars. All rights reserved.') }}</p>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400 dark:text-gray-500 mr-2">Available on</span>
+                    <!-- Apple App Store Button -->
+                    <a href="{{ site_setting('app.ios_link', '#') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12c0-2.8 2.3-4.1 2.4-4.2-1.3-1.9-3.3-2.2-4-2.2-1.7-.2-3.4 1-4.3 1-1 0-2.3-1-3.7-1-1.7 0-3.4 1-4.4 2.6C.4 11.7 1.8 17.6 3.7 20.3c1 1.4 2.1 3 3.6 2.9 1.5-.1 2.1-1 3.9-1 1.8 0 2.4.9 3.9 1 1.6.1 2.5-1.3 3.5-2.8.9-1.4 1.3-2.8 1.4-2.8-.1-.1-2.6-1-2.6-4.6zM13.2 4.4c.8-1 1.4-2.4 1.2-3.8-1.2.1-2.7.8-3.6 1.8-.8.9-1.5 2.3-1.3 3.7 1.3.1 2.7-.7 3.7-1.7z"/></svg>
+                        App Store
+                    </a>
+                    <!-- Google Play Store Button -->
+                    <a href="{{ site_setting('app.android_link', '#') }}" target="_blank" class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 1.5c-.3.3-.5.7-.5 1.3v18.4c0 .6.2 1 .5 1.3L15.3 12 3.5 1.5z"/><path d="M19.1 15.6L16.4 14l-1.1-1.1 4.5-4.5.9.5c1.6.9 1.6 2.4 0 3.3l-1.6 3.4z"/><path d="M3.5 22.5c.3 0 .7-.1 1.2-.4l10.9-6.3-2.1-2.1-10 8.8z"/><path d="M13.5 8.3L2.6.4C2.1.1 1.7 0 1.4 0l12.1 8.3z"/></svg>
+                        Google Play
+                    </a>
                 </div>
             </div>
         </div>

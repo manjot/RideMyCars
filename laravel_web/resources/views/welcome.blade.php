@@ -8,28 +8,22 @@
             <!-- Background pattern/gradient if needed -->
             <div class="absolute inset-0 bg-[radial-gradient(#f3f4f6_1px,transparent_1px)] [background-size:20px_20px] opacity-30 -z-10"></div>
             
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 md:pt-32 md:pb-24">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
                     
-                    <!-- Left Column: Content & Widget -->
+                    <!-- Left Content -->
                     <div class="max-w-2xl">
-                        
-                        <!-- Top Badge -->
-                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-orange-600 font-medium text-sm mb-8">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-sm font-bold tracking-wide mb-8">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             Trusted by 50,000+ riders worldwide
                         </div>
-
-                        <!-- Heading -->
-                        <h1 class="text-6xl md:text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-6 leading-tight">
-                            One App.<br/>
-                            <span class="text-orange-500">Three Ways</span><br/>
-                            to Move.
+                        
+                        <h1 class="text-6xl md:text-8xl font-extrabold text-gray-900 dark:text-white tracking-tighter leading-[1.1] mb-6">
+                            {!! site_setting('home.hero.title', 'One App.<br><span class="text-orange-500">Three Ways</span><br>to Move.') !!}
                         </h1>
-
-                        <!-- Subheading -->
-                        <p class="text-lg text-gray-500 dark:text-gray-400 mb-10 leading-relaxed max-w-lg">
-                            Book a ride, rent a vehicle, or hire a professional driver — all from a single platform built for the modern traveler.
+                        
+                        <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 leading-relaxed mb-10">
+                            {{ site_setting('home.hero.subtitle', 'Book a ride, rent a vehicle, or hire a professional driver — all from a single platform built for the modern traveler.') }}
                         </p>
 
                         <!-- Tabbed Widget -->
