@@ -40,6 +40,14 @@ Route::get('/become-driver', function () {
     return view('become-driver');
 });
 
+Route::get('/become-owner', function () {
+    return view('become-owner');
+});
+
+Route::get('/blogs', function () {
+    return view('blogs');
+});
+
 Route::get('/rent', function () {
     $vehicles = \App\Models\Vehicle::all();
     return view('rent', compact('vehicles'));
