@@ -18,7 +18,7 @@
                             Trusted by 50,000+ riders worldwide
                         </div>
                         
-                        <h1 class="text-6xl md:text-8xl font-extrabold text-gray-900 dark:text-white tracking-tighter leading-[1.1] mb-6">
+                        <h1 class="text-5xl md:text-8xl font-extrabold text-gray-900 dark:text-white tracking-tighter leading-[1.1] mb-6">
                             {!! site_setting('home.hero.title', 'One App.<br><span class="text-orange-500">Three Ways</span><br>to Move.') !!}
                         </h1>
                         
