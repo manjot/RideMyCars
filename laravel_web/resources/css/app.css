@@ -15,17 +15,17 @@
 }
 
 :root {
-  /* Default Orange (Tailwind Orange) */
-  --brand-50: #fff7ed;
-  --brand-100: #ffedd5;
-  --brand-200: #fed7aa;
-  --brand-300: #fdba74;
-  --brand-400: #fb923c;
-  --brand-500: #f97316;
-  --brand-600: #ea580c;
-  --brand-700: #c2410c;
-  --brand-800: #9a3412;
-  --brand-900: #7c2d12;
+  /* Default Yellow (Taxi) */
+  --brand-50: #fefce8;
+  --brand-100: #fef9c3;
+  --brand-200: #fef08a;
+  --brand-300: #fde047;
+  --brand-400: #facc15;
+  --brand-500: #eab308;
+  --brand-600: #ca8a04;
+  --brand-700: #a16207;
+  --brand-800: #854d0e;
+  --brand-900: #713f12;
 }
 
 .theme-ride {
