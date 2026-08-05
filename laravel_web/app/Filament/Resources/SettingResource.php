@@ -29,12 +29,25 @@ class SettingResource extends Resource
                 Forms\Components\TextInput::make('label')
                     ->disabled()
                     ->columnSpanFull(),
-                Forms\Components\Textarea::make('value')
-                    ->rows(5)
-                    ->required()
-                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('key')
                     ->disabled()
+                    ->columnSpanFull(),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'text' => 'Text',
+                        'file' => 'File / APK',
+                    ])
+                    ->live()
+                    ->required()
+                    ->columnSpanFull(),
+                Forms\Components\Textarea::make('value')
+                    ->rows(5)
+                    ->visible(fn (Forms\Get $get) => $get('type') === 'text')
+                    ->columnSpanFull(),
+                Forms\Components\FileUpload::make('file_path')
+                    ->visible(fn (Forms\Get $get) => $get('type') === 'file')
+                    ->acceptedFileTypes(['application/vnd.android.package-archive', 'application/octet-stream'])
+                    ->directory('app-downloads')
                     ->columnSpanFull(),
             ]);
     }

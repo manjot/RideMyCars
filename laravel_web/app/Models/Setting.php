@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
-    protected $fillable = ['key', 'value', 'group', 'type', 'label'];
+    protected $fillable = ['key', 'value', 'group', 'type', 'label', 'file_path'];
 
     protected static function boot()
     {

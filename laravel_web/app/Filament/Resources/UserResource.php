@@ -28,6 +28,14 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required(),
+                Forms\Components\Select::make('role')
+                    ->options([
+                        'customer' => 'Customer',
+                        'driver' => 'Driver',
+                        'admin' => 'Admin',
+                    ])
+                    ->required()
+                    ->default('customer'),
                 Forms\Components\DateTimePicker::make('email_verified_at'),
                 Forms\Components\TextInput::make('password')
                     ->password()
@@ -43,6 +51,15 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->searchable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'admin' => 'danger',
+                        'driver' => 'warning',
+                        'customer' => 'success',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),
