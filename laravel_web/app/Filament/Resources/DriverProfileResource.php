@@ -23,9 +23,13 @@ class DriverProfileResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
-                    ->required()
-                    ->numeric(),
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->required(),
+                Forms\Components\FileUpload::make('image_url')
+                    ->image()
+                    ->directory('drivers'),
                 Forms\Components\TextInput::make('license_number')
                     ->required(),
                 Forms\Components\TextInput::make('hourly_rate')
@@ -36,6 +40,8 @@ class DriverProfileResource extends Resource
                     ->required()
                     ->numeric()
                     ->default(5),
+                Forms\Components\Textarea::make('bio')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -43,8 +49,10 @@ class DriverProfileResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\ImageColumn::make('image_url')
+                    ->circular(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('license_number')
                     ->searchable(),

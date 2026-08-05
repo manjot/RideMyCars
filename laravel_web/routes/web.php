@@ -26,3 +26,12 @@ Route::get('/rent', function () {
     $vehicles = \App\Models\Vehicle::all();
     return view('rent', compact('vehicles'));
 });
+
+Route::get('/ride', function () {
+    return view('ride');
+});
+
+Route::get('/hire-driver', function () {
+    $drivers = \App\Models\DriverProfile::with('user')->get();
+    return view('hire-driver', compact('drivers'));
+});
