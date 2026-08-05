@@ -33,7 +33,7 @@ class RideMyCarsApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       home: const WebViewScreen(
         // REPLACE WITH YOUR ACTUAL LIVE URL
-        url: 'https://example.com', 
+        url: 'http://ridemycars.ajath.com/', 
       ),
     );
   }
