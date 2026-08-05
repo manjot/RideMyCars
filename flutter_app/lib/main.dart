@@ -1,42 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'screens/home_screen.dart';
-import 'screens/ride_screen.dart';
-import 'screens/rent_screen.dart';
-import 'screens/hire_screen.dart';
+import 'screens/webview_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const RideMyCarsApp());
 }
-
-final GoRouter _router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const HomeScreen(),
-    ),
-    GoRoute(
-      path: '/ride',
-      builder: (context, state) => const RideScreen(),
-    ),
-    GoRoute(
-      path: '/rent',
-      builder: (context, state) => const RentScreen(),
-    ),
-    GoRoute(
-      path: '/hire',
-      builder: (context, state) => const HireScreen(),
-    ),
-  ],
-);
 
 class RideMyCarsApp extends StatelessWidget {
   const RideMyCarsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'RideMyCars',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -56,7 +31,10 @@ class RideMyCarsApp extends StatelessWidget {
         fontFamily: 'Inter',
       ),
       themeMode: ThemeMode.system,
-      routerConfig: _router,
+      home: const WebViewScreen(
+        // REPLACE WITH YOUR ACTUAL LIVE URL
+        url: 'https://example.com', 
+      ),
     );
   }
 }
