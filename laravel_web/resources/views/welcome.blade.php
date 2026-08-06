@@ -12,7 +12,7 @@
                 <!-- Header -->
                 <div class="text-center max-w-4xl mx-auto mb-16">
                     <h1 class="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-6">
-                        One App. <span class="text-brand-500">Four Ways</span> to Move.
+                        One App. <span class="text-[#e40e1b]">Four Ways</span> to Move.
                     </h1>
                     <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 leading-relaxed">
                         Book a ride, rent a vehicle, hire a professional driver, or get things delivered — all from a single platform built for the modern traveler.
