@@ -13,6 +13,18 @@
   --color-brand-800: var(--brand-800);
   --color-brand-900: var(--brand-900);
   
+  /* Override Tailwind default yellow with Logo Yellow */
+  --color-yellow-50: var(--brand-50);
+  --color-yellow-100: var(--brand-100);
+  --color-yellow-200: var(--brand-200);
+  --color-yellow-300: var(--brand-300);
+  --color-yellow-400: var(--brand-400);
+  --color-yellow-500: var(--brand-500);
+  --color-yellow-600: var(--brand-600);
+  --color-yellow-700: var(--brand-700);
+  --color-yellow-800: var(--brand-800);
+  --color-yellow-900: var(--brand-900);
+  
   /* Override dark gray with Logo Navy */
   --color-gray-900: #102b54;
   --color-gray-800: #1a3c70;
