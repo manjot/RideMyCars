@@ -94,6 +94,7 @@
                             <option>Credit / debit card</option>
                             <option>Apple Pay</option>
                             <option>PayPal</option>
+                            <option>Mobile Money</option>
                             <option>Cash (Select regions)</option>
                         </select>
                     </div>
