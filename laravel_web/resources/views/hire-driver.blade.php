@@ -3,23 +3,45 @@
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
           x-data="{ 
-              search: '', 
-              maxRate: 150, 
+              search: '{{ request('search') }}', 
+              selectedCountry: '{{ request('country', 'USA') }}',
+              minRating: '{{ request('rating', '') }}',
+              availability: '{{ request('availability', '') }}',
               drivers: {{ Js::from($drivers) }},
+              countries: {{ Js::from($countries) }},
+              get currencySymbol() {
+                  return this.countries[this.selectedCountry]?.symbol || '$';
+              },
               get filteredDrivers() {
                   return this.drivers.filter(d => {
                       const searchStr = this.search.toLowerCase();
-                      const matchesSearch = d.user.name.toLowerCase().includes(searchStr);
-                      const matchesRate = parseFloat(d.hourly_rate) <= this.maxRate;
-                      return matchesSearch && matchesRate;
+                      const matchesSearch = !this.search || d.user.name.toLowerCase().includes(searchStr);
+                      const matchesCountry = this.selectedCountry === 'All' || d.country === this.selectedCountry;
+                      const matchesAvail = !this.availability || (this.availability === 'available' ? d.is_available : true);
+                      const matchesRating = !this.minRating || (parseFloat(d.rating) >= parseFloat(this.minRating));
+                      return matchesSearch && matchesCountry && matchesAvail && matchesRating;
                   });
               }
           }">
         
         <!-- Header Text -->
-        <div class="mb-10">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Hire a Professional Driver</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">Background-verified, experienced drivers for a day, week, or longer.</p>
+        <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Hire a Professional Driver</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced drivers for Private & Commercial hiring across USA & Africa.</p>
+            </div>
+
+            <!-- Country Switcher -->
+            <div class="flex items-center gap-3 bg-white dark:bg-[#111] p-2.5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm shrink-0">
+                <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2">Region:</span>
+                <select x-model="selectedCountry" @change="window.location.href = '/hire-driver?country=' + selectedCountry" class="bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white font-bold py-2 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 text-sm focus:outline-none cursor-pointer">
+                    <option value="USA">🇺🇸 USA ($)</option>
+                    <option value="Ghana">🇬🇭 Ghana (GH₵)</option>
+                    <option value="Nigeria">🇳🇬 Nigeria (₦)</option>
+                    <option value="South Africa">🇿🇦 South Africa (R)</option>
+                    <option value="All">🌐 All Regions</option>
+                </select>
+            </div>
         </div>
 
         <!-- Search and Filters Bar -->
@@ -30,33 +52,24 @@
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </div>
-                <input x-model="search" type="text" placeholder="Search drivers..." class="w-full pl-12 pr-4 py-3 bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-0">
+                <input x-model="search" type="text" placeholder="Search driver by name..." class="w-full pl-12 pr-4 py-3 bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-0">
             </div>
 
-            <!-- Selects -->
+            <!-- Availability Select -->
             <div class="w-full lg:w-48 border-r border-gray-200 dark:border-white/10 pr-4">
-                <select class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 appearance-none">
-                    <option class="dark:bg-[#111] dark:text-white">All</option>
-                    <option class="dark:bg-[#111] dark:text-white">Available Now</option>
-                    <option class="dark:bg-[#111] dark:text-white">Available Later</option>
+                <select x-model="availability" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
+                    <option value="" class="dark:bg-[#111] dark:text-white">All Availability</option>
+                    <option value="available" class="dark:bg-[#111] dark:text-white">Available Now</option>
                 </select>
             </div>
 
-            <div class="w-full lg:w-48 border-r border-gray-200 dark:border-white/10 pr-4">
-                <select class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 appearance-none">
-                    <option class="dark:bg-[#111] dark:text-white">Any</option>
-                    <option class="dark:bg-[#111] dark:text-white">5 Stars Only</option>
-                    <option class="dark:bg-[#111] dark:text-white">4+ Stars</option>
+            <!-- Rating Select -->
+            <div class="w-full lg:w-48 pr-4">
+                <select x-model="minRating" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
+                    <option value="" class="dark:bg-[#111] dark:text-white">Any Rating</option>
+                    <option value="4.5" class="dark:bg-[#111] dark:text-white">4.5+ Stars</option>
+                    <option value="4.0" class="dark:bg-[#111] dark:text-white">4.0+ Stars</option>
                 </select>
-            </div>
-
-            <!-- Slider -->
-            <div class="w-full lg:w-64 pl-4 pt-2">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Max hourly rate</label>
-                    <span class="text-sm font-bold text-gray-900 dark:text-white" x-text="`$${maxRate}`"></span>
-                </div>
-                <input type="range" min="10" max="150" x-model="maxRate" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-500">
             </div>
             
         </div>
@@ -65,52 +78,75 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             <template x-if="filteredDrivers.length === 0">
-                <div class="col-span-full text-center py-12">
-                    <p class="text-gray-500 dark:text-gray-400 text-lg">No drivers found matching your criteria.</p>
+                <div class="col-span-full text-center py-16 bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">No drivers found</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">Try relaxing your search or region filters.</p>
                 </div>
             </template>
 
             <template x-for="driver in filteredDrivers" :key="driver.id">
-                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col group cursor-pointer" @click="window.location.href = '/hire-driver/' + driver.id">
+                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col group relative">
                     
+                    <!-- Verification Badge -->
+                    <div class="absolute top-4 right-4">
+                        <span x-show="driver.verification_status === 'verified'" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Verified
+                        </span>
+                    </div>
+
                     <div class="flex items-start gap-4 mb-4">
                         <!-- Image -->
-                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] flex items-center justify-center text-gray-300 dark:text-gray-600 shrink-0 overflow-hidden relative">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] flex items-center justify-center text-gray-300 dark:text-gray-600 shrink-0 overflow-hidden relative border-2 border-gray-100 dark:border-white/10">
                             <svg x-show="!driver.image_url" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <img x-show="driver.image_url" :src="driver.image_url ? '/storage/' + driver.image_url : ''" class="absolute inset-0 w-full h-full object-cover" :alt="driver.user.name">
                         </div>
                         
                         <!-- Header -->
-                        <div class="flex-1">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="driver.user.name"></h3>
-                                    <div class="flex items-center gap-1 mt-0.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-brand-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300" x-text="driver.rating"></span>
-                                    </div>
+                        <div class="flex-1 pr-16">
+                            <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="driver.user.name"></h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-amber-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    <span class="text-xs font-bold text-amber-700 dark:text-amber-400" x-text="driver.rating"></span>
                                 </div>
-                                <div class="text-right">
-                                    <div class="font-bold text-lg text-gray-900 dark:text-white" x-text="`$${driver.hourly_rate}`"></div>
-                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">/hour</div>
-                                </div>
+                                <span class="text-xs text-gray-400 dark:text-gray-500" x-text="`(${driver.total_trips || 0} trips)`"></span>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Bio -->
-                    <div class="mb-6 mt-2">
-                        <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed line-clamp-3" x-text="driver.bio || 'Professional driver ready to provide a safe and comfortable ride.'"></p>
+                    <!-- Bio & Details -->
+                    <div class="mb-6 space-y-2">
+                        <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed line-clamp-2" x-text="driver.bio || 'Professional driver ready for private and commercial trips.'"></p>
+                        
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-medium" x-text="`${driver.experience_years || 2}+ Yrs Experience`"></span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-medium" x-text="driver.country"></span>
+                        </div>
+                    </div>
+
+                    <!-- Rates Preview -->
+                    <div class="bg-gray-50 dark:bg-[#1a1a1a] rounded-xl p-3 mb-6 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="text-gray-400 block">Hourly</span>
+                            <span class="font-bold text-gray-900 dark:text-white text-sm" x-text="currencySymbol + (driver.hourly_rate || '25.00') + '/hr'"></span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-gray-400 block">Daily</span>
+                            <span class="font-bold text-gray-900 dark:text-white text-sm" x-text="currencySymbol + (driver.daily_rate || (driver.hourly_rate * 8 * 0.85).toFixed(2)) + '/day'"></span>
+                        </div>
                     </div>
 
                     <!-- Actions -->
-                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 rounded-full" :class="driver.is_available ? 'bg-green-500' : 'bg-red-500'"></div>
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400" x-text="driver.is_available ? 'Available' : 'Busy'"></span>
-                        </div>
-                        <a :href="'/hire-driver/' + driver.id" class="px-5 py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/40 text-brand-600 dark:text-brand-400 font-bold rounded-xl transition-colors text-sm text-center">
+                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3">
+                        <a :href="'/hire-driver/' + driver.id" class="flex-1 py-2.5 px-3 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold rounded-xl transition-colors text-xs text-center">
                             View Profile
+                        </a>
+                        <a :href="'/hire-driver/book/' + driver.id + '?country=' + selectedCountry" class="flex-1 py-2.5 px-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors text-xs text-center shadow-sm">
+                            Book Driver
                         </a>
                     </div>
                 </div>

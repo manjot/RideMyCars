@@ -3,15 +3,23 @@
     <div class="pt-24 pb-12 bg-gray-50 dark:bg-[#09090b] min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            <div class="flex items-center justify-between mb-8">
+            @if(session('success'))
+                <div class="mb-6 p-4 bg-green-100 border border-green-200 text-green-800 rounded-2xl text-sm font-semibold">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {{ $user->name }}</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-1">Here's your driver dashboard summary</p>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your driver hiring requests, active jobs, and verification.</p>
                 </div>
-                <div>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium {{ $profile->kyc_status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $profile->kyc_status === 'approved' ? 'bg-green-600 dark:bg-green-400' : 'bg-yellow-600 dark:bg-yellow-400' }}"></span>
-                        KYC: {{ ucfirst($profile->kyc_status) }}
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase
+                        {{ $profile->verification_status === 'verified' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-300 dark:border-green-800/30' : 
+                          ($profile->verification_status === 'submitted' || $profile->verification_status === 'under_review' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400') }}">
+                        <span class="w-2 h-2 rounded-full bg-current"></span>
+                        License: {{ str_replace('_', ' ', $profile->verification_status) }}
                     </span>
                 </div>
             </div>
@@ -19,7 +27,7 @@
             <!-- Earnings Overview -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Today's Earnings</h3>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Today's Total Earnings</h3>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($dailyEarnings, 2) }}</p>
                 </div>
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
@@ -33,104 +41,187 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Main Content (Jobs) -->
+                <!-- Main Content (Driver Hiring Jobs & Rides) -->
                 <div class="lg:col-span-2 space-y-8">
                     
+                    <!-- Pending Hiring Requests -->
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Pending Hiring Requests ({{ $pendingDriverBookings->count() }})</h2>
+                        @if($pendingDriverBookings->isEmpty())
+                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No pending driver hiring requests.</p>
+                        @else
+                            <div class="space-y-4">
+                                @foreach($pendingDriverBookings as $bk)
+                                    <div class="p-5 border border-gray-200 dark:border-white/10 rounded-2xl bg-gray-50/50 dark:bg-white/5">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 rounded-lg">
+                                                    {{ ucfirst($bk->service_category) }} Driver Booking
+                                                </span>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2">Client: {{ $bk->client->name ?? 'Client' }}</h4>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="font-extrabold text-lg text-gray-900 dark:text-white">{{ $bk->currency }} {{ number_format($bk->total_price, 2) }}</span>
+                                                <span class="text-xs text-gray-400 block">Method: {{ strtoupper($bk->payment_method) }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
+                                            <p><strong>Schedule:</strong> {{ $bk->start_date }} at {{ $bk->start_time }} ({{ $bk->duration_count }} {{ $bk->duration_type }})</p>
+                                            <p><strong>Pickup:</strong> {{ $bk->pickup_location }}</p>
+                                            @if($bk->service_category === 'private')
+                                                <p><strong>Vehicle:</strong> {{ $bk->car_type }} | Reg: {{ $bk->registration_number }} ({{ $bk->transmission }})</p>
+                                            @else
+                                                <p><strong>Commercial Job:</strong> {{ $bk->commercial_service_type }}</p>
+                                                <p><strong>Cargo Details:</strong> {{ $bk->cargo_details ?? 'N/A' }}</p>
+                                            @endif
+                                        </div>
+
+                                        <div class="flex gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                                            <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST" class="inline">
+                                                @csrf
+                                                <input type="hidden" name="status" value="accepted">
+                                                <button type="submit" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow-sm">
+                                                    Accept Booking
+                                                </button>
+                                            </form>
+                                            <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST" class="inline">
+                                                @csrf
+                                                <input type="hidden" name="status" value="cancelled">
+                                                <button type="submit" class="px-5 py-2 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
+                                                    Decline
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- Active Jobs -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Active Jobs</h2>
-                        @if($activeRides->isEmpty())
-                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No active jobs right now.</p>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Active & Ongoing Jobs</h2>
+                        @if($activeDriverBookings->isEmpty())
+                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No active driver hiring jobs at the moment.</p>
                         @else
                             <div class="space-y-4">
-                                @foreach($activeRides as $ride)
-                                    <div class="p-4 border border-brand-100 dark:border-brand-900/30 bg-brand-50 dark:bg-brand-900/10 rounded-xl">
+                                @foreach($activeDriverBookings as $bk)
+                                    <div class="p-5 border border-brand-200 dark:border-brand-900/40 bg-brand-50/50 dark:bg-brand-900/10 rounded-2xl">
                                         <div class="flex justify-between items-start mb-2">
-                                            <span class="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">In Progress</span>
-                                            <span class="font-bold text-gray-900 dark:text-white">${{ number_format($ride->fare, 2) }}</span>
+                                            <span class="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-400 tracking-wider">
+                                                Status: {{ strtoupper($bk->booking_status) }}
+                                            </span>
+                                            <span class="font-bold text-gray-900 dark:text-white text-base">{{ $bk->currency }} {{ number_format($bk->total_price, 2) }}</span>
                                         </div>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300"><strong>From:</strong> {{ $ride->pickup_location }}</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300"><strong>To:</strong> {{ $ride->dropoff_location }}</p>
+                                        <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Client:</strong> {{ $bk->client->name }}</p>
+                                        <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Pickup:</strong> {{ $bk->pickup_location }}</p>
+                                        
+                                        <div class="mt-4 pt-3 border-t border-brand-100 dark:border-brand-900/30 flex gap-3">
+                                            @if($bk->booking_status === 'accepted')
+                                                <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="in_progress">
+                                                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs">
+                                                        Start Trip
+                                                    </button>
+                                                </form>
+                                            @elseif($bk->booking_status === 'in_progress')
+                                                <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="completed">
+                                                    <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs">
+                                                        Complete Trip & Receive Payment
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
                         @endif
                     </div>
 
-                    <!-- Pending Jobs -->
+                    <!-- License Verification Upload Section -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Pending Requests</h2>
-                        @if($pendingRides->isEmpty())
-                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No pending requests.</p>
-                        @else
-                            <div class="space-y-4">
-                                @foreach($pendingRides as $ride)
-                                    <div class="p-4 border border-gray-100 dark:border-white/10 rounded-xl">
-                                        <p class="text-sm text-gray-600 dark:text-gray-300"><strong>From:</strong> {{ $ride->pickup_location }}</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3"><strong>To:</strong> {{ $ride->dropoff_location }}</p>
-                                        <div class="flex gap-2">
-                                            <button class="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg">Accept</button>
-                                            <button class="px-4 py-2 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-white/5">Decline</button>
-                                        </div>
-                                    </div>
-                                @endforeach
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Driver License Verification</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Upload your driver's license to get verified and increase client booking trust.</p>
+
+                        <form action="/driver/verify-license" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">License Number *</label>
+                                    <input type="text" name="license_number" required value="{{ $profile->license_number }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Country / State *</label>
+                                    <input type="text" name="license_country" required value="{{ $profile->license_country ?? $profile->country }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Expiry Date *</label>
+                                    <input type="date" name="license_expiry" required value="{{ $profile->license_expiry }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
                             </div>
-                        @endif
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">License Front Image</label>
+                                    <input type="file" name="license_front" accept="image/*" class="w-full text-xs text-gray-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">License Back Image</label>
+                                    <input type="file" name="license_back" accept="image/*" class="w-full text-xs text-gray-500">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-sm shadow-sm transition-all">
+                                Submit Verification Documents
+                            </button>
+                        </form>
                     </div>
+
                 </div>
 
-                <!-- Sidebar (Profile & Vehicles) -->
+                <!-- Sidebar (Profile & Rates) -->
                 <div class="space-y-8">
-                    <!-- Driver Profile -->
+                    <!-- Driver Profile Details -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Driver Profile</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Profile & Status</h2>
                         <ul class="space-y-3 text-sm">
                             <li class="flex justify-between">
-                                <span class="text-gray-500 dark:text-gray-400">License No</span>
-                                <span class="font-medium text-gray-900 dark:text-white">{{ $profile->license_number }}</span>
+                                <span class="text-gray-500 dark:text-gray-400">License Number</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $profile->masked_license }}</span>
                             </li>
                             <li class="flex justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Rating</span>
-                                <span class="font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                                    <svg class="w-4 h-4 text-brand-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    {{ $profile->rating }}
+                                <span class="font-bold text-gray-900 dark:text-white flex items-center gap-1 text-amber-500">
+                                    ★ {{ $profile->rating }}
                                 </span>
                             </li>
                             <li class="flex justify-between">
-                                <span class="text-gray-500 dark:text-gray-400">Hourly Rate</span>
-                                <span class="font-medium text-gray-900 dark:text-white">${{ $profile->hourly_rate ?? '0.00' }}</span>
+                                <span class="text-gray-500 dark:text-gray-400">Total Completed Trips</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $profile->total_trips ?? 0 }}</span>
                             </li>
-                            <li class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100 dark:border-white/10">
-                                <span class="text-gray-500 dark:text-gray-400">Status</span>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                  <input type="checkbox" class="sr-only peer" {{ $profile->is_available ? 'checked' : '' }}>
-                                  <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
-                                </label>
+                            <li class="flex justify-between">
+                                <span class="text-gray-500 dark:text-gray-400">Hourly Rate</span>
+                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($profile->hourly_rate ?? 25.00, 2) }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-500 dark:text-gray-400">Daily Rate</span>
+                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($profile->daily_rate ?? (($profile->hourly_rate ?? 25) * 8 * 0.85), 2) }}</span>
+                            </li>
+
+                            <li class="pt-4 border-t border-gray-100 dark:border-white/10">
+                                <form action="/driver/toggle-availability" method="POST">
+                                    @csrf
+                                    <label class="flex justify-between items-center cursor-pointer">
+                                        <span class="font-bold text-gray-900 dark:text-white">Available for Booking</span>
+                                        <input type="checkbox" name="is_available" value="1" onchange="this.form.submit()" {{ $profile->is_available ? 'checked' : '' }} class="w-5 h-5 accent-brand-500">
+                                    </label>
+                                </form>
                             </li>
                         </ul>
-                    </div>
-
-                    <!-- Vehicles -->
-                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">My Vehicles</h2>
-                        @if($vehicles->isEmpty())
-                            <p class="text-gray-500 dark:text-gray-400 text-sm italic mb-3">No vehicles registered.</p>
-                            <a href="/owner-signup" class="text-sm text-brand-500 hover:text-brand-600 font-medium">Add a vehicle &rarr;</a>
-                        @else
-                            <ul class="space-y-4">
-                                @foreach($vehicles as $vehicle)
-                                    <li class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $vehicle->make }} {{ $vehicle->model }}</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $vehicle->license_plate }}</p>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
                     </div>
                 </div>
             </div>
