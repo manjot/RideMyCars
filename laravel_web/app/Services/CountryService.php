@@ -20,6 +20,7 @@ class CountryService
                 ['id' => 'paypal', 'name' => 'PayPal', 'icon' => 'paypal', 'type' => 'gateway'],
                 ['id' => 'cashapp', 'name' => 'Cash App', 'icon' => 'dollar-sign', 'type' => 'gateway'],
                 ['id' => 'applepay', 'name' => 'Apple Pay', 'icon' => 'apple', 'type' => 'gateway'],
+                ['id' => 'googlepay', 'name' => 'Google Pay', 'icon' => 'google', 'type' => 'gateway'],
                 ['id' => 'cash', 'name' => 'Cash (On Arrival)', 'icon' => 'banknote', 'type' => 'offline'],
             ],
         ],

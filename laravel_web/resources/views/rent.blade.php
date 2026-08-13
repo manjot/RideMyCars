@@ -18,9 +18,18 @@
           }">
         
         <!-- Header Text -->
-        <div class="mb-10">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Rent a Vehicle</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-lg" x-text="`${filteredVehicles.length} vehicles available — filter by type, price, and features.`"></p>
+        <div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Rent a Vehicle</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-lg" x-text="`${filteredVehicles.length} vehicles available — filter by type, price, and features.`"></p>
+            </div>
+            
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="/hire-driver" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2">
+                    <span>👨‍✈️ Rent a Driver</span>
+                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">Trust & Verification</span>
+                </a>
+            </div>
         </div>
 
         <!-- Search and Filters Bar -->

@@ -55,8 +55,9 @@ class PaymentService
         ]);
 
         // Log activity
+        $actType = ($initialStatus === 'paid' || $initialStatus === 'successful') ? 'payment_successful' : 'payment';
         ActivityLogService::log(
-            'payment',
+            $actType,
             "Payment of {$currency} {$amount} via {$paymentMethod} ({$initialStatus}) for booking #{$booking->booking_code}",
             $booking->client_id,
             [
@@ -88,6 +89,7 @@ class PaymentService
                 if ($method === 'paypal') return 'PayPal_SDK';
                 if ($method === 'cashapp') return 'CashApp_Pay';
                 if ($method === 'applepay') return 'ApplePay_SDK';
+                if ($method === 'googlepay') return 'GooglePay_SDK';
                 return 'Stripe_USA';
         }
     }

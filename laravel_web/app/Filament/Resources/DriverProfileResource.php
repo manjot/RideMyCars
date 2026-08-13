@@ -123,6 +123,24 @@ class DriverProfileResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('approveVerification')
+                    ->label('Approve Verification')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (DriverProfile $record) => $record->verification_status !== 'verified')
+                    ->action(function (DriverProfile $record) {
+                        \App\Services\LicenseVerificationService::updateStatus($record, 'verified', 'Approved by admin');
+                    }),
+                Tables\Actions\Action::make('rejectVerification')
+                    ->label('Reject Verification')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (DriverProfile $record) => $record->verification_status !== 'rejected')
+                    ->action(function (DriverProfile $record) {
+                        \App\Services\LicenseVerificationService::updateStatus($record, 'rejected', 'Rejected by admin');
+                    }),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

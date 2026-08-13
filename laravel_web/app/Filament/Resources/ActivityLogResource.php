@@ -48,11 +48,11 @@ class ActivityLogResource extends Resource
                 Tables\Columns\TextColumn::make('activity_type')
                     ->badge()
                     ->colors([
-                        'primary' => 'driver_hiring',
-                        'success' => 'payment',
-                        'info' => 'login',
-                        'warning' => 'status_change',
-                        'danger' => 'cancellation',
+                        'primary' => ['driver_hiring', 'car_rented'],
+                        'success' => ['payment', 'payment_successful', 'driver_verification_approved', 'driver_booking_accepted', 'rental_completed'],
+                        'info' => ['login', 'register', 'vehicle_listed', 'driver_verification_submitted'],
+                        'warning' => ['status_change', 'verification'],
+                        'danger' => ['payment_failed', 'driver_verification_rejected', 'driver_booking_rejected', 'booking_cancelled', 'cancellation'],
                     ])
                     ->searchable(),
                 Tables\Columns\TextColumn::make('description')
@@ -64,12 +64,20 @@ class ActivityLogResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('activity_type')
                     ->options([
+                        'vehicle_listed' => 'Car Listed',
+                        'car_rented' => 'Car Rented',
+                        'driver_hiring' => 'Driver Hired',
+                        'driver_booking_accepted' => 'Driver Booking Accepted',
+                        'driver_booking_rejected' => 'Driver Booking Rejected',
+                        'payment_successful' => 'Payment Successful',
+                        'payment_failed' => 'Payment Failed',
+                        'driver_verification_submitted' => 'Driver Verification Submitted',
+                        'driver_verification_approved' => 'Driver Verification Approved',
+                        'driver_verification_rejected' => 'Driver Verification Rejected',
+                        'booking_cancelled' => 'Booking Cancelled',
+                        'rental_completed' => 'Rental Completed',
                         'register' => 'Registration',
                         'login' => 'Login',
-                        'driver_hiring' => 'Driver Hiring',
-                        'payment' => 'Payment',
-                        'status_change' => 'Status Change',
-                        'verification' => 'Verification',
                     ]),
             ]);
     }

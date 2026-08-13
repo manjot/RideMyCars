@@ -91,9 +91,16 @@
                         </div>
                     </div>
 
-                    <a href="/ride" class="w-full block text-center py-4 px-6 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-lg transition-colors shadow-sm shadow-brand-500/20">
-                        Continue to Book
-                    </a>
+                    <div class="space-y-3">
+                        <a href="/ride?vehicle_id={{ $vehicle->id }}" class="w-full block text-center py-3.5 px-6 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-base transition-colors shadow-sm shadow-brand-500/20">
+                            🚗 Rent Car Only
+                        </a>
+
+                        <a href="/hire-driver?vehicle_id={{ $vehicle->id }}" class="w-full block text-center py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base transition-colors shadow-sm">
+                            👨‍✈️ Rent Car + Driver
+                        </a>
+                        <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-1">Recommended for additional vehicle peace of mind and verified driver support.</p>
+                    </div>
                 </div>
             </div>
         </div>

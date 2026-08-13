@@ -33,7 +33,7 @@ class LicenseVerificationService
         $profile->update($updateData);
 
         ActivityLogService::log(
-            'verification',
+            'driver_verification_submitted',
             "Driver {$profile->user->name} submitted license #{$profile->license_number} for verification",
             $profile->user_id,
             [
@@ -59,8 +59,10 @@ class LicenseVerificationService
             'verification_notes' => $notes,
         ]);
 
+        $actType = ($status === 'verified') ? 'driver_verification_approved' : (($status === 'rejected') ? 'driver_verification_rejected' : 'verification');
+
         ActivityLogService::log(
-            'verification',
+            $actType,
             "Admin updated driver {$profile->user->name} verification status to '{$status}'",
             null,
             [

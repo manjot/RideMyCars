@@ -64,4 +64,61 @@ class DriverProfile extends Model
     {
         return $this->verification_status === 'verified';
     }
+
+    /**
+     * Check if driver has any booking conflict for the given date, start time, and duration.
+     */
+    public function hasBookingConflict(string $startDate, string $startTime, string $durationType, int $durationCount, ?int $ignoreBookingId = null): bool
+    {
+        if (!$this->is_available) {
+            return true;
+        }
+
+        try {
+            $reqStart = \Carbon\Carbon::parse("{$startDate} {$startTime}");
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        $reqEnd = (clone $reqStart);
+        if ($durationType === 'weekly') {
+            $reqEnd->addWeeks(max(1, $durationCount));
+        } elseif ($durationType === 'daily') {
+            $reqEnd->addDays(max(1, $durationCount));
+        } else {
+            // hourly
+            $reqEnd->addHours(max(1, $durationCount));
+        }
+
+        $existingBookings = DriverBooking::where('driver_profile_id', $this->id)
+            ->whereIn('booking_status', ['pending', 'accepted', 'in_progress'])
+            ->when($ignoreBookingId, function ($q) use ($ignoreBookingId) {
+                $q->where('id', '!=', $ignoreBookingId);
+            })
+            ->get();
+
+        foreach ($existingBookings as $b) {
+            try {
+                $bStart = \Carbon\Carbon::parse("{$b->start_date} {$b->start_time}");
+            } catch (\Exception $e) {
+                continue;
+            }
+
+            $bEnd = (clone $bStart);
+            if ($b->duration_type === 'weekly') {
+                $bEnd->addWeeks(max(1, (int) $b->duration_count));
+            } elseif ($b->duration_type === 'daily') {
+                $bEnd->addDays(max(1, (int) $b->duration_count));
+            } else {
+                $bEnd->addHours(max(1, (int) $b->duration_count));
+            }
+
+            // Overlap condition: reqStart < bEnd AND reqEnd > bStart
+            if ($reqStart->lt($bEnd) && $reqEnd->gt($bStart)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

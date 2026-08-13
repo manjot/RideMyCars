@@ -47,10 +47,21 @@
           x-init="updatePrice(); $watch('country', () => { paymentMethod = currentPaymentMethods[0]?.id || 'card'; updatePrice(); }); $watch('durationType', () => updatePrice()); $watch('durationCount', () => updatePrice());">
 
         <!-- Header -->
-        <div class="mb-10 text-center md:text-left">
+        <div class="mb-8 text-center md:text-left">
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2">Book Driver Service</h1>
             <p class="text-gray-500 dark:text-gray-400">Complete your details to hire {{ $driverProfile->user->name }}.</p>
         </div>
+
+        @if($errors->any())
+            <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30 text-rose-700 dark:text-rose-300 text-sm font-semibold flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div>
+                    @foreach($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div class="flex flex-col lg:flex-row gap-10">
             
@@ -59,6 +70,7 @@
                 <form action="/hire-driver/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] p-6 md:p-8 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
                     @csrf
                     <input type="hidden" name="driver_profile_id" value="{{ $driverProfile->id }}">
+                    <input type="hidden" name="vehicle_id" value="{{ request('vehicle_id') }}">
                     <input type="hidden" name="service_category" x-model="serviceCategory">
                     <input type="hidden" name="country" x-model="country">
 
@@ -221,7 +233,7 @@
             <div class="w-full lg:w-[40%] space-y-6">
                 
                 <!-- Driver Info Card -->
-                <div class="bg-white dark:bg-[#111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-4">
+                <div class="bg-white dark:bg-[#111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-4 relative overflow-hidden">
                     <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] shrink-0 overflow-hidden relative border-2 border-brand-500">
                         @if($driverProfile->image_url)
                             <img src="{{ Storage::url($driverProfile->image_url) }}" alt="{{ $driverProfile->user->name }}" class="w-full h-full object-cover">
@@ -232,7 +244,15 @@
                         @endif
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ $driverProfile->user->name }}</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ $driverProfile->user->name }}</h3>
+                            @if($driverProfile->verification_status === 'verified')
+                                <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800/30">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                                    Verified Driver
+                                </span>
+                            @endif
+                        </div>
                         <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
                             <span class="text-amber-500 font-bold">★ {{ $driverProfile->rating }}</span>
                             <span>• {{ $driverProfile->experience_years ?? 3 }} yrs exp</span>

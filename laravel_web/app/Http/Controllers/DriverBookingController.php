@@ -137,6 +137,11 @@ class DriverBookingController extends Controller
             return back()->withErrors(['driver_profile_id' => 'This driver is currently unavailable for new bookings.'])->withInput();
         }
 
+        // Overlapping availability check
+        if ($driverProfile->hasBookingConflict($validated['start_date'], $validated['start_time'], $validated['duration_type'], (int) $validated['duration_count'])) {
+            return back()->withErrors(['start_date' => 'Driver is not available for the selected date/time. Please choose another driver or time.'])->withInput();
+        }
+
         $clientId = Auth::id();
         if (!$clientId) {
             // Fallback for guest or test client
@@ -155,6 +160,7 @@ class DriverBookingController extends Controller
         $bookingCode = 'DRV-' . strtoupper(Str::random(8));
 
         $booking = DriverBooking::create([
+            'vehicle_id' => $request->input('vehicle_id'),
             'booking_code' => $bookingCode,
             'client_id' => $clientId,
             'driver_id' => $driverProfile->user_id,
@@ -238,8 +244,15 @@ class DriverBookingController extends Controller
             }
         }
 
+        $actType = match ($newStatus) {
+            'accepted' => 'driver_booking_accepted',
+            'cancelled' => 'driver_booking_rejected',
+            'completed' => 'rental_completed',
+            default => 'status_change',
+        };
+
         ActivityLogService::log(
-            'status_change',
+            $actType,
             "Driver booking #{$booking->booking_code} status updated to '{$newStatus}'",
             Auth::id(),
             ['booking_id' => $booking->id, 'new_status' => $newStatus]
