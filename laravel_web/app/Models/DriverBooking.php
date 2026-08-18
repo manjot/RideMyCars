@@ -39,6 +39,7 @@ class DriverBooking extends Model
         'payment_status',
         'booking_status',
         'notes',
+        'vehicle_source',
     ];
 
     public function vehicle()

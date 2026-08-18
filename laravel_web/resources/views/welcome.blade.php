@@ -14,8 +14,8 @@
                     <h1 class="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-6">
                         One App. <span class="text-[#e40e1b]">Four Ways</span> to Move.
                     </h1>
-                    <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 leading-relaxed">
-                        Book a ride, rent a vehicle, hire a professional driver, or get things delivered — all from a single platform built for the modern traveler.
+                    <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 leading-relaxed max-w-4xl mx-auto">
+                        Time is the ultimate luxury. How you spend it—and how you move through it—should be entirely under your control. Welcome to Ride My Cars, a single platform built to streamline travel logistics for the discerning professional.
                     </p>
                 </div>
 
@@ -30,7 +30,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
                             </div>
                             <h3 class="text-2xl font-bold text-[#f97316] mb-3">Ride</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Book a ride in minutes and reach your destination comfortably.</p>
+                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">On-demand executive transport.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
@@ -52,7 +52,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                             </div>
                             <h3 class="text-2xl font-bold text-[#3b82f6] mb-3">Rent</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Rent a vehicle of your choice and drive on your own terms.</p>
+                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Tier-one luxury vehicles at your fingertips.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
@@ -66,19 +66,19 @@
                         </div>
                     </div>
 
-                    <!-- Hire Driver Card -->
+                    <!-- Driver Card -->
                     <div class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 flex flex-col pt-12 pb-8 px-6 text-center group">
                         <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#dcfce7] to-transparent"></div>
                         <div class="relative z-10 flex-1 flex flex-col items-center">
                             <div class="w-16 h-16 bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#22c55e]/30 mb-6">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             </div>
-                            <h3 class="text-2xl font-bold text-[#22c55e] mb-3">Hire Driver</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Hire a professional driver and travel stress-free and safely.</p>
+                            <h3 class="text-2xl font-bold text-[#22c55e] mb-3">Driver</h3>
+                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Secure an elite, vetted chauffeur for your itinerary.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
-                                <img src="/images/hero-hire.png" alt="Hire Driver" class="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
+                                <img src="/images/hero-hire.png" alt="Driver" class="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
                             </div>
                             
                             <a href="/hire-driver" class="mt-auto w-full inline-flex items-center justify-center bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white font-bold py-4 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-[#22c55e]/40 hover:-translate-y-1">
@@ -88,19 +88,19 @@
                         </div>
                     </div>
 
-                    <!-- Delivery Card -->
+                    <!-- Deliver Card -->
                     <div class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 flex flex-col pt-12 pb-8 px-6 text-center group">
                         <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#f3e8ff] to-transparent"></div>
                         <div class="relative z-10 flex-1 flex flex-col items-center">
                             <div class="w-16 h-16 bg-gradient-to-br from-[#a855f7] to-[#9333ea] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#a855f7]/30 mb-6">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                             </div>
-                            <h3 class="text-2xl font-bold text-[#a855f7] mb-3">Delivery</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Deliver anything, anywhere, quickly and reliably.</p>
+                            <h3 class="text-2xl font-bold text-[#a855f7] mb-3">Deliver</h3>
+                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Flawless, white-glove courier dispatch.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
-                                <img src="/images/hero-delivery.png" alt="Delivery" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
+                                <img src="/images/hero-delivery.png" alt="Deliver" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
                             </div>
                             
                             <a href="/delivery" class="mt-auto w-full inline-flex items-center justify-center bg-gradient-to-r from-[#a855f7] to-[#9333ea] text-white font-bold py-4 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-[#a855f7]/40 hover:-translate-y-1">
@@ -161,102 +161,73 @@
             </div>
         </section>
 
-        <!-- Services Section (Screenshot 2) -->
-        <section class="py-16 bg-white dark:bg-[#111]">
+
+        <!-- Customer Categories Section (Business Travelers, Tourists, Locals) -->
+        <section class="py-16 bg-gray-50 dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-white/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <div class="text-center mb-10">
-                    <h3 class="text-brand-500 font-bold text-sm tracking-widest uppercase mb-3">Our Services</h3>
-                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Everything you need to move</h2>
-                    <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Three marketplace modules, one seamless platform. Choose how you want to travel.</p>
+                <div class="text-center mb-12">
+                    <h3 class="text-brand-500 font-bold text-sm tracking-widest uppercase mb-3">Tailored Solutions</h3>
+                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Crafted for Every Journey</h2>
+                    <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Customized mobility logistics engineered to exceed the expectations of corporate leaders, travelers, and residents.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <!-- Ride Hailing -->
-                    <div class="rounded-3xl border border-gray-100 dark:border-white/10 p-8 hover:shadow-xl transition-shadow bg-white dark:bg-[#111] relative overflow-hidden group">
-                        <div class="absolute top-6 right-6 bg-brand-50 text-brand-600 text-xs font-bold px-3 py-1 rounded-full">Most Popular</div>
-                        <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                    <!-- Business Travelers Section -->
+                    <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 font-bold">
+                                💼
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Elite Mobility for the Corporate Traveler.</h3>
+                            <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
+                                Command your schedule with executive-grade transport. Seamlessly secure a premium ride, reserve an upscale vehicle, or utilize a vetted professional driver for your entire itinerary. Deliveries and logistics are handled instantly, leaving you free to focus on business.
+                            </p>
                         </div>
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Ride Hailing</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Book instant rides with verified drivers. Real-time tracking, fare estimates, and cashless payments. Your safety is our priority.</p>
-                        
-                        <ul class="space-y-3 mb-8">
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Instant booking
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Live GPS tracking
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Fare estimate upfront
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Rated drivers
-                            </li>
-                        </ul>
-
-                        <a href="/ride" class="inline-flex items-center gap-2 text-brand-500 font-bold hover:text-brand-600 transition-colors">
-                            Explore Ride Hailing <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                        </a>
+                        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-wrap gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Executive Rides</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Luxury Rentals</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Pro Chauffeurs</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Instant Logistics</span>
+                        </div>
                     </div>
 
-                    <!-- Vehicle Rentals -->
-                    <div class="rounded-3xl border border-brand-200 p-8 shadow-xl shadow-brand-100/50 bg-white dark:bg-[#111] relative overflow-hidden group transform md:-translate-y-4">
-                        <div class="absolute top-6 right-6 bg-brand-100 text-brand-600 text-xs font-bold px-3 py-1 rounded-full">Best Value</div>
-                        <div class="w-14 h-14 bg-brand-50 text-brand-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>
+                    <!-- Tourists Section -->
+                    <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 font-bold">
+                                ✈️
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">First-Class Exploration, Simplified.</h3>
+                            <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
+                                Experience your destination with unparalleled comfort and ease. Whether arriving in style via private transport, renting a luxury vehicle for a scenic drive, or hiring a dedicated local chauffeur, your journey is entirely curated. Enjoy effortless luggage and parcel delivery directly to your resort.
+                            </p>
                         </div>
-                        <h3 class="text-2xl font-bold text-brand-500 mb-3">Vehicle Rentals</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Rent from a curated fleet of economy, luxury, and specialty vehicles. Daily or weekly rates with full insurance coverage.</p>
-                        
-                        <ul class="space-y-3 mb-8">
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> 1000+ vehicles
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Flexible rental periods
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Doorstep delivery
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Full insurance
-                            </li>
-                        </ul>
-
-                        <a href="/rent" class="inline-flex items-center gap-2 text-brand-500 font-bold hover:text-brand-600 transition-colors">
-                            Explore Vehicle Rentals <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                        </a>
+                        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-wrap gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Private Transport</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Scenic Rentals</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Local Chauffeur</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Luggage Delivery</span>
+                        </div>
                     </div>
 
-                    <!-- Hire a Driver -->
-                    <div class="rounded-3xl border border-gray-100 dark:border-white/10 p-8 hover:shadow-xl transition-shadow bg-white dark:bg-[#111] relative overflow-hidden group">
-                        <div class="absolute top-6 right-6 bg-purple-50 text-purple-600 text-xs font-bold px-3 py-1 rounded-full">Premium</div>
-                        <div class="w-14 h-14 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <!-- Locals Section -->
+                    <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 font-bold">
+                                🏙️
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Redefining Daily Transit.</h3>
+                            <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
+                                Bring white-glove service to your everyday routine. Access top-tier vehicles, secure certified drivers for special events, or coordinate white-glove courier deliveries across the city. Enjoy absolute convenience and reliability at the touch of a button.
+                            </p>
                         </div>
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Hire a Driver</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Professional, background-verified drivers for a day, week, or longer. Perfect for business travel, weddings, and special occasions.</p>
-                        
-                        <ul class="space-y-3 mb-8">
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Background verified
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Experienced & multilingual
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Flexible hire periods
-                            </li>
-                            <li class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> Corporate packages
-                            </li>
-                        </ul>
-
-                        <a href="/hire-driver" class="inline-flex items-center gap-2 text-brand-500 font-bold hover:text-brand-600 transition-colors">
-                            Explore Hire a Driver <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                        </a>
+                        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-wrap gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Premium Vehicles</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Certified Drivers</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• Special Events</span>
+                            <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-full">• City Courier</span>
+                        </div>
                     </div>
                 </div>
 
@@ -466,6 +437,20 @@
 
                 </div>
 
+            </div>
+        </section>
+
+        <!-- Download App CTA Section (Requirement #6) -->
+        <section class="py-16 bg-gradient-to-r from-brand-600 to-brand-500 text-white border-t border-brand-400">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight">Your invitation to experience seamless travel is now active.</h2>
+                <p class="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 font-medium">Access rides, rentals, chauffeurs, and white-glove deliveries on iOS and Android.</p>
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <a href="{{ asset('ridemycars.apk') }}" download class="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-extrabold rounded-2xl shadow-xl hover:bg-gray-100 transition-all text-base">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download the App
+                    </a>
+                </div>
             </div>
         </section>
 

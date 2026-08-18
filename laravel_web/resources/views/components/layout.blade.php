@@ -32,6 +32,8 @@
                     <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/rent">Rent Vehicle</a>
                     <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/hire-driver">Hire Driver</a>
                     <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/delivery">Package Delivery</a>
+                    <a class="text-sm font-medium transition-colors text-brand-500 hover:text-brand-600 dark:text-brand-400 font-semibold" href="/membership">Memberships</a>
+                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/onboarding">Experience</a>
                     
                     <!-- Company Dropdown -->
                     <div x-data="{ open: false }" class="relative" @click.away="open = false">

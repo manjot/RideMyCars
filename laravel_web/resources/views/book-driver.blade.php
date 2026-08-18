@@ -106,6 +106,21 @@
                     <div x-show="serviceCategory === 'private'" class="space-y-5 pt-2 border-t border-gray-100 dark:border-white/10">
                         <h3 class="font-bold text-gray-900 dark:text-white text-base">Vehicle Information</h3>
                         
+                        <!-- Vehicle Source (Requirement #4) -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Vehicle Being Driven *</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl cursor-pointer hover:border-brand-500 transition-colors">
+                                    <input type="radio" name="vehicle_source" value="personal" class="w-4 h-4 text-brand-500 focus:ring-brand-500" checked>
+                                    <span class="text-xs font-bold text-gray-900 dark:text-white">🚘 Personal Vehicle</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl cursor-pointer hover:border-brand-500 transition-colors">
+                                    <input type="radio" name="vehicle_source" value="rental" class="w-4 h-4 text-brand-500 focus:ring-brand-500">
+                                    <span class="text-xs font-bold text-gray-900 dark:text-white">🔑 Rental Fleet Vehicle</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Car Type *</label>
@@ -196,12 +211,18 @@
                     <!-- Pickup & Dropoff -->
                     <div class="space-y-4 pt-4 border-t border-gray-100 dark:border-white/10">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Pickup Address / Location *</label>
-                            <input type="text" name="pickup_location" required placeholder="Enter pickup address..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Pickup Address / Location *</label>
+                                <button type="button" id="use_my_location_btn_book" class="text-brand-500 hover:text-brand-600 text-xs font-semibold flex items-center gap-1 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                                    Use my location
+                                </button>
+                            </div>
+                            <input type="text" id="pickup_location_input" name="pickup_location" required placeholder="Enter pickup address..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Destination Address (Optional)</label>
-                            <input type="text" name="dropoff_location" placeholder="Enter destination..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm">
+                            <input type="text" id="dropoff_location_input" name="dropoff_location" placeholder="Enter destination..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm">
                         </div>
                     </div>
 
@@ -292,5 +313,121 @@
 
         </div>
     </main>
+
+    <!-- Google Maps Places Autocomplete & Geolocation Integration -->
+    @php
+        $gmapsKey = env('GOOGLE_MAPS_API_KEY');
+        $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
+    @endphp
+
+    @if($hasValidKey)
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
+    @endif
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const pickupInput = document.getElementById("pickup_location_input");
+            const dropoffInput = document.getElementById("dropoff_location_input");
+
+            @if($hasValidKey)
+                if (window.google && google.maps && google.maps.places) {
+                    try {
+                        if (pickupInput) new google.maps.places.Autocomplete(pickupInput);
+                        if (dropoffInput) new google.maps.places.Autocomplete(dropoffInput);
+                    } catch (e) {
+                        console.warn("Google Places Autocomplete initialization bypassed:", e);
+                    }
+                }
+            @endif
+
+            const locBtn = document.getElementById("use_my_location_btn_book");
+            if (locBtn && pickupInput) {
+                locBtn.addEventListener("click", () => {
+                    if (!navigator.geolocation) {
+                        alert("Geolocation is not supported by your browser.");
+                        return;
+                    }
+
+                    const originalHTML = locBtn.innerHTML;
+                    locBtn.disabled = true;
+                    locBtn.innerHTML = `
+                        <svg class="animate-spin h-3 w-3 text-brand-500 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Locating...</span>
+                    `;
+
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const pos = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                            };
+
+                            let addressSet = false;
+
+                            // 1. Try Google Maps Geocoder if loaded
+                            if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+                                try {
+                                    const geocoder = new google.maps.Geocoder();
+                                    const res = await new Promise((resolve) => {
+                                        geocoder.geocode({ location: pos }, (results, status) => {
+                                            if (status === "OK" && results && results[0]) {
+                                                resolve(results[0].formatted_address);
+                                            } else {
+                                                resolve(null);
+                                            }
+                                        });
+                                    });
+                                    if (res) {
+                                        pickupInput.value = res;
+                                        addressSet = true;
+                                    }
+                                } catch (e) {
+                                    console.warn("Google Geocoder error:", e);
+                                }
+                            }
+
+                            // 2. Fallback to OpenStreetMap Nominatim API
+                            if (!addressSet) {
+                                try {
+                                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`);
+                                    if (response.ok) {
+                                        const data = await response.json();
+                                        if (data && data.display_name) {
+                                            pickupInput.value = data.display_name;
+                                            addressSet = true;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn("OSM Nominatim reverse geocode error:", e);
+                                }
+                            }
+
+                            // 3. Fallback to lat/lng text if reverse geocode failed
+                            if (!addressSet) {
+                                pickupInput.value = `Current Location (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
+                            }
+
+                            locBtn.disabled = false;
+                            locBtn.innerHTML = originalHTML;
+                        },
+                        (error) => {
+                            locBtn.disabled = false;
+                            locBtn.innerHTML = originalHTML;
+
+                            if (error.code === error.PERMISSION_DENIED) {
+                                alert("Location permission was denied. Please allow location access in your browser settings or enter your address manually.");
+                            } else {
+                                alert("Unable to retrieve your location automatically. Please enter your address manually.");
+                            }
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                });
+            }
+        });
+    </script>
 
 </x-layout>

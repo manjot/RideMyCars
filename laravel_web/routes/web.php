@@ -7,11 +7,87 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/onboarding', function () {
+    return view('onboarding');
+});
+
+Route::get('/membership', function () {
+    return view('membership');
+});
+
+Route::post('/membership/subscribe', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user) {
+        return redirect('/login')->with('error', 'Please sign in or create an account to activate your Club Membership.');
+    }
+    
+    $paymentMethod = $request->payment_method ?? 'Credit / Debit Card';
+
+    $user->update([
+        'membership_type' => 'club',
+        'membership_status' => 'active',
+        'membership_price' => 250.00,
+    ]);
+
+    \App\Services\ActivityLogService::log('membership_created', "Subscribed to Club Membership ($250/mo) via {$paymentMethod}", $user->id);
+
+    return redirect('/membership')->with('success', '🎉 Welcome to Club Membership! Your $250/mo executive privileges are now active.');
+});
+
+Route::post('/membership/corporate-request', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user) {
+        return redirect('/login')->with('error', 'Please sign in or create an account to request a Corporate Membership.');
+    }
+
+    $request->validate(['company_name' => 'required|string|max:255']);
+
+    $user->update([
+        'membership_type' => 'corporate',
+        'membership_status' => 'pending',
+        'corporate_company_name' => $request->company_name,
+        'corporate_billing_email' => $user->email,
+    ]);
+
+    \App\Services\ActivityLogService::log('membership_created', "Requested Corporate Membership for {$request->company_name}", $user->id);
+
+    return redirect('/membership')->with('success', "🎉 Corporate Membership request for '{$request->company_name}' submitted! Our concierge team will contact you shortly.");
+});
+
 Route::get('/delivery', function (\Illuminate\Http\Request $request) {
     return view('delivery', [
         'pickup' => $request->query('pickup'),
         'dropoff' => $request->query('dropoff'),
     ]);
+});
+
+Route::post('/delivery/book', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'pickup_location' => 'required|string|max:255',
+        'dropoff_location' => 'required|string|max:255',
+    ]);
+
+    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+
+    $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
+
+    $ride = \App\Models\Ride::create([
+        'rider_id' => $riderId,
+        'pickup_location' => $request->pickup_location,
+        'dropoff_location' => $request->dropoff_location,
+        'vehicle_type' => 'Package Delivery (' . ($request->package_size ?? 'Small') . ')',
+        'payment_method' => $request->payment_method ?? 'Credit Card',
+        'notes' => $request->notes,
+        'signature_required' => $request->has('signature_required'),
+        'climate_control' => $request->has('climate_control'),
+        'discreet_packaging' => $request->has('discreet_packaging'),
+        'digital_receipt_code' => $digitalReceipt,
+        'status' => 'pending',
+    ]);
+
+    \App\Services\ActivityLogService::log('delivery_created', "Created package delivery #{$ride->id} with receipt {$digitalReceipt}", $riderId);
+
+    return redirect('/delivery')->with('success', "Package dispatched successfully! Digital Receipt Code: {$digitalReceipt}. A driver is being assigned.");
 });
 
 Route::get('/login', function () {
@@ -77,15 +153,56 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
     ]);
 
     if ($user->role === 'driver') {
+        $photoPath = null;
+        $frontPath = null;
+        $backPath = null;
+
+        if ($request->hasFile('driver_photo')) {
+            $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+        }
+        if ($request->hasFile('license_front_image')) {
+            $frontPath = $request->file('license_front_image')->store('drivers/licenses', 'public');
+        }
+        if ($request->hasFile('license_back_image')) {
+            $backPath = $request->file('license_back_image')->store('drivers/licenses', 'public');
+        }
+
         \App\Models\DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => 'DL-' . strtoupper(\Illuminate\Support\Str::random(6)),
-            'hourly_rate' => 25.00,
-            'daily_rate' => 170.00,
-            'weekly_rate' => 950.00,
+            'license_number' => $request->license_number ?? ('DL-' . strtoupper(\Illuminate\Support\Str::random(6))),
+            'license_expiry' => $request->license_expiry ?? date('Y-m-d', strtotime('+3 years')),
+            'country' => $request->country ?? 'USA',
+            'experience_years' => $request->experience_years ?? 5,
+            'hourly_rate' => $request->hourly_rate ?? 25.00,
+            'daily_rate' => $request->daily_rate ?? 170.00,
+            'weekly_rate' => $request->weekly_rate ?? 950.00,
+            'image_url' => $photoPath,
+            'license_front_image' => $frontPath,
+            'license_back_image' => $backPath,
+            'bio' => $request->bio,
             'is_available' => true,
             'rating' => 5.00,
-            'country' => 'USA',
+            'license_verification_status' => $frontPath ? 'submitted' : 'unverified',
+            'photo_formality_status' => $photoPath ? 'submitted' : 'pending',
+        ]);
+    }
+
+    if ($user->role === 'owner' || $request->filled('vehicle_make')) {
+        $imagePath = null;
+        if ($request->hasFile('vehicle_image')) {
+            $imagePath = $request->file('vehicle_image')->store('vehicles', 'public');
+        }
+
+        \App\Models\Vehicle::create([
+            'owner_id' => $user->id,
+            'make' => $request->vehicle_make ?? 'Mercedes-Benz',
+            'model' => $request->vehicle_model ?? 'S-Class',
+            'year' => $request->vehicle_year ?? date('Y'),
+            'license_plate' => $request->license_plate ?? ('REG-' . rand(1000, 9999)),
+            'type' => $request->vehicle_type ?? 'Executive Sedan',
+            'daily_rate' => $request->daily_rate ?? 250.00,
+            'is_available' => true,
+            'image_url' => $imagePath,
         ]);
     }
 
@@ -133,6 +250,45 @@ Route::get('/rent', function () {
     return view('rent', compact('vehicles'));
 });
 
+Route::get('/rent/{vehicle}', function (\App\Models\Vehicle $vehicle) {
+    return view('vehicle-detail', compact('vehicle'));
+});
+
+Route::post('/rent/{vehicle}/book', function (\Illuminate\Http\Request $request, \App\Models\Vehicle $vehicle) {
+    $request->validate([
+        'start_date' => 'required|date',
+        'end_date' => 'required|date|after_or_equal:start_date',
+        'pickup_location' => 'required|string|max:255',
+        'driver_license' => 'required|string|max:255',
+        'payment_method' => 'nullable|string|max:255',
+    ]);
+
+    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+
+    $startDate = \Carbon\Carbon::parse($request->start_date);
+    $endDate = \Carbon\Carbon::parse($request->end_date);
+    $days = max(1, $startDate->diffInDays($endDate));
+
+    $totalPrice = $days * $vehicle->daily_rate;
+    $rentalCode = 'RENT-' . strtoupper(\Illuminate\Support\Str::random(8));
+
+    $ride = \App\Models\Ride::create([
+        'rider_id' => $riderId,
+        'pickup_location' => $request->pickup_location,
+        'dropoff_location' => "Self-Drive Return to " . $request->pickup_location,
+        'vehicle_type' => "Vehicle Rental ({$vehicle->make} {$vehicle->model})",
+        'payment_method' => $request->payment_method ?? 'Credit Card',
+        'notes' => "Rental Dates: {$request->start_date} to {$request->end_date} ({$days} days). License: {$request->driver_license}",
+        'digital_receipt_code' => $rentalCode,
+        'status' => 'confirmed',
+        'fare' => $totalPrice,
+    ]);
+
+    \App\Services\ActivityLogService::log('rental_created', "Created vehicle rental booking #{$ride->id} for {$vehicle->make} {$vehicle->model} (Receipt: {$rentalCode})", $riderId);
+
+    return redirect('/rent/' . $vehicle->id)->with('success', "Vehicle rental reservation confirmed! Confirmation Code: {$rentalCode}. Dates: {$request->start_date} to {$request->end_date} ({$days} days @ \${$vehicle->daily_rate}/day). Total: \${$totalPrice}.");
+});
+
 Route::get('/ride', function () {
     return view('ride');
 });
@@ -148,19 +304,22 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
 
     $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
 
+    $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
+
     $ride = \App\Models\Ride::create([
         'rider_id' => $riderId,
         'pickup_location' => $request->pickup_location,
         'dropoff_location' => $request->dropoff_location,
-        'vehicle_type' => $request->vehicle_type,
-        'payment_method' => $request->payment_method,
+        'vehicle_type' => $request->vehicle_type ?? 'Economy',
+        'payment_method' => $request->payment_method ?? 'Credit Card',
         'notes' => $request->notes,
+        'digital_receipt_code' => $digitalReceipt,
         'status' => 'pending',
     ]);
 
     \App\Services\ActivityLogService::log('booking_creation', "Created ride booking #{$ride->id}", $riderId);
 
-    return redirect('/admin/rides')->with('success', 'Ride booked successfully!');
+    return redirect('/ride')->with('success', "Ride booked successfully! Receipt Code: {$digitalReceipt}. Your driver is being dispatched.");
 });
 
 // Driver Dashboard
@@ -218,13 +377,59 @@ Route::prefix('driver')->middleware('auth')->group(function () {
     Route::post('/toggle-availability', function (\Illuminate\Http\Request $request) {
         $user = auth()->user();
         if ($user && $user->driverProfile) {
+            $wantsAvailable = $request->has('is_available');
+
+            if ($wantsAvailable && !$user->driverProfile->is_fully_verified) {
+                $missing = [];
+                if ($user->driverProfile->verification_status !== 'verified') $missing[] = 'Driver License Verification';
+                if (!in_array($user->driverProfile->background_check_status, ['clear', 'verified', 'approved'])) $missing[] = 'Background Check (Checkr)';
+                if ($user->driverProfile->photo_formality_status !== 'verified') $missing[] = 'Formal Profile Photo Review';
+
+                return back()->with('error', 'Cannot go online. Verification incomplete: ' . implode(', ', $missing));
+            }
+
             $user->driverProfile->update([
-                'is_available' => $request->has('is_available'),
+                'is_available' => $wantsAvailable,
             ]);
             \App\Services\ActivityLogService::log('status_change', "Driver availability toggled to " . ($user->driverProfile->is_available ? 'Available' : 'Unavailable'), $user->id);
         }
         return back()->with('success', 'Availability updated.');
     });
+});
+
+// Payment Gateway API Routes
+Route::post('/payment/paypal/create', function (\Illuminate\Http\Request $request) {
+    $amount = (float) ($request->amount ?? 50.00);
+    $result = \App\Services\PayPalService::createOrder($amount, $request->currency ?? 'USD', auth()->id(), $request->booking_id, $request->ride_id);
+    return response()->json($result);
+});
+
+Route::post('/payment/paypal/capture', function (\Illuminate\Http\Request $request) {
+    $request->validate(['transaction_ref' => 'required|string']);
+    $result = \App\Services\PayPalService::capturePayment($request->transaction_ref, $request->order_id);
+    return response()->json($result);
+});
+
+Route::post('/payment/apple-pay/validate-merchant', function (\Illuminate\Http\Request $request) {
+    $result = \App\Services\ApplePayService::validateMerchant($request->validation_url ?? '');
+    return response()->json($result);
+});
+
+Route::post('/payment/apple-pay/process', function (\Illuminate\Http\Request $request) {
+    $amount = (float) ($request->amount ?? 50.00);
+    $result = \App\Services\ApplePayService::processPayment($request->all(), $amount, $request->currency ?? 'USD', auth()->id());
+    return response()->json($result);
+});
+
+Route::post('/payment/cashapp/create', function (\Illuminate\Http\Request $request) {
+    $amount = (float) ($request->amount ?? 50.00);
+    $result = \App\Services\CashAppService::createPaymentRequest($amount, $request->currency ?? 'USD', auth()->id());
+    return response()->json($result);
+});
+
+Route::post('/payment/cashapp/webhook', function (\Illuminate\Http\Request $request) {
+    $result = \App\Services\CashAppService::processCallback($request->transaction_ref ?? '', $request->status ?? 'successful', $request->all());
+    return response()->json($result);
 });
 
 // Generic pages

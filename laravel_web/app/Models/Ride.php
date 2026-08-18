@@ -16,5 +16,19 @@ class Ride extends Model
         'vehicle_type',
         'payment_method',
         'notes',
+        'signature_required',
+        'climate_control',
+        'discreet_packaging',
+        'digital_receipt_code',
     ];
+
+    public function rider()
+    {
+        return $this->belongsTo(User::class, 'rider_id');
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(User::class, 'driver_id');
+    }
 }

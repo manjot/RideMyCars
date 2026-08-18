@@ -37,10 +37,28 @@ class UserResource extends Resource
                     ])
                     ->required()
                     ->default('customer'),
+                Forms\Components\Select::make('membership_type')
+                    ->options([
+                        'none' => 'None',
+                        'club' => 'Club Membership ($250/mo)',
+                        'corporate' => 'Corporate Enterprise Membership',
+                    ])
+                    ->default('none'),
+                Forms\Components\Select::make('membership_status')
+                    ->options([
+                        'inactive' => 'Inactive',
+                        'active' => 'Active',
+                        'pending' => 'Pending Review',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->default('inactive'),
+                Forms\Components\TextInput::make('membership_price')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(250.00),
+                Forms\Components\TextInput::make('corporate_company_name')
+                    ->label('Corporate Company Name'),
                 Forms\Components\DateTimePicker::make('email_verified_at'),
-                Forms\Components\TextInput::make('password')
-                    ->password()
-                    ->required(),
             ]);
     }
 
@@ -62,6 +80,26 @@ class UserResource extends Resource
                         'customer' => 'success',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('membership_type')
+                    ->label('Membership')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'club' => 'warning',
+                        'corporate' => 'info',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('membership_status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'pending' => 'warning',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('corporate_company_name')
+                    ->label('Company')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),

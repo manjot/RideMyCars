@@ -119,16 +119,16 @@ class DriverBookingController extends Controller
             'payment_method' => 'required|string',
             'notes' => 'nullable|string',
 
-            // Private hiring fields
-            'car_type' => 'required_if:service_category,private|nullable|string',
-            'car_make_model' => 'nullable|string',
-            'manufacturing_year' => 'nullable|string',
-            'registration_number' => 'required_if:service_category,private|nullable|string',
-            'transmission' => 'nullable|in:automatic,manual',
+            // Private hiring fields (Requirement #4 & #13)
+            'car_type' => 'required_if:service_category,private|nullable|string|max:100',
+            'car_make_model' => 'nullable|string|max:100',
+            'manufacturing_year' => 'required_if:service_category,private|nullable|string|max:10',
+            'registration_number' => 'required_if:service_category,private|nullable|string|max:50',
+            'transmission' => 'required_if:service_category,private|nullable|in:automatic,manual',
 
             // Commercial hiring fields
-            'commercial_service_type' => 'required_if:service_category,commercial|nullable|string',
-            'cargo_details' => 'nullable|string',
+            'commercial_service_type' => 'required_if:service_category,commercial|nullable|string|max:100',
+            'cargo_details' => 'nullable|string|max:1000',
         ]);
 
         $driverProfile = DriverProfile::findOrFail($validated['driver_profile_id']);

@@ -27,6 +27,13 @@ class DriverProfile extends Model
         'license_back_image',
         'verification_status',
         'verification_notes',
+        'photo_formality_status',
+        'license_verified_at',
+        'verification_provider',
+        'background_check_status',
+        'background_check_provider',
+        'background_check_id',
+        'background_checked_at',
     ];
 
     public function user()
@@ -63,6 +70,21 @@ class DriverProfile extends Model
     public function getIsVerifiedAttribute(): bool
     {
         return $this->verification_status === 'verified';
+    }
+
+    /**
+     * Check if driver satisfies all required verification criteria:
+     * 1. Driver License Verified
+     * 2. Background Check Clear/Verified
+     * 3. Formal Profile Photo Verified
+     */
+    public function getIsFullyVerifiedAttribute(): bool
+    {
+        $licenseOk = ($this->verification_status === 'verified');
+        $backgroundOk = in_array($this->background_check_status, ['clear', 'verified', 'approved']);
+        $photoOk = ($this->photo_formality_status === 'verified');
+
+        return $licenseOk && $backgroundOk && $photoOk;
     }
 
     /**

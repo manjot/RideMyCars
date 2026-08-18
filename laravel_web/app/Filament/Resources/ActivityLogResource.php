@@ -47,13 +47,14 @@ class ActivityLogResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('activity_type')
                     ->badge()
-                    ->colors([
-                        'primary' => ['driver_hiring', 'car_rented'],
-                        'success' => ['payment', 'payment_successful', 'driver_verification_approved', 'driver_booking_accepted', 'rental_completed'],
-                        'info' => ['login', 'register', 'vehicle_listed', 'driver_verification_submitted'],
-                        'warning' => ['status_change', 'verification'],
-                        'danger' => ['payment_failed', 'driver_verification_rejected', 'driver_booking_rejected', 'booking_cancelled', 'cancellation'],
-                    ])
+                    ->color(fn (string $state): string => match ($state) {
+                        'driver_hiring', 'car_rented' => 'primary',
+                        'payment', 'payment_successful', 'driver_verification_approved', 'driver_booking_accepted', 'rental_completed' => 'success',
+                        'login', 'register', 'vehicle_listed', 'driver_verification_submitted' => 'info',
+                        'status_change', 'verification' => 'warning',
+                        'payment_failed', 'driver_verification_rejected', 'driver_booking_rejected', 'booking_cancelled', 'cancellation' => 'danger',
+                        default => 'gray',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('description')
                     ->searchable()

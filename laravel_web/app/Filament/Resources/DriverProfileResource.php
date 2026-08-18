@@ -52,14 +52,37 @@ class DriverProfileResource extends Resource
                     ->default(5),
                 Forms\Components\Select::make('verification_status')
                     ->options([
-                        'not_submitted' => 'Not Submitted',
+                        'pending' => 'Pending',
                         'submitted' => 'Submitted',
                         'under_review' => 'Under Review',
                         'verified' => 'Verified',
                         'rejected' => 'Rejected',
-                        'expired' => 'Expired',
+                        'failed' => 'Failed',
                     ])
                     ->required(),
+                Forms\Components\Select::make('photo_formality_status')
+                    ->label('Formal Dress Verification')
+                    ->options([
+                        'pending' => 'Pending',
+                        'verified' => 'Formal Attire Verified (Suit/Tie)',
+                        'requires_review' => 'Requires Review',
+                        'rejected' => 'Rejected (Non-Formal)',
+                    ])
+                    ->default('pending'),
+                Forms\Components\Select::make('background_check_status')
+                    ->label('Background Check Status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing (Checkr)',
+                        'clear' => 'Clear / Verified',
+                        'failed' => 'Failed / Rejected',
+                        'requires_review' => 'Requires Review',
+                    ])
+                    ->default('pending'),
+                Forms\Components\TextInput::make('background_check_provider')
+                    ->default('checkr'),
+                Forms\Components\TextInput::make('background_check_id')
+                    ->label('Checkr Reference ID'),
                 Forms\Components\FileUpload::make('license_front_image')
                     ->image()
                     ->disk('public')
@@ -91,12 +114,32 @@ class DriverProfileResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('verification_status')
                     ->badge()
-                    ->colors([
-                        'success' => 'verified',
-                        'warning' => 'submitted',
-                        'primary' => 'under_review',
-                        'danger' => 'rejected',
-                    ]),
+                    ->color(fn (string $state): string => match ($state) {
+                        'verified' => 'success',
+                        'pending', 'submitted' => 'warning',
+                        'under_review' => 'primary',
+                        'rejected', 'failed' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('photo_formality_status')
+                    ->label('Formal Photo')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'verified' => 'success',
+                        'requires_review' => 'warning',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('background_check_status')
+                    ->label('Background Check')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'clear', 'verified' => 'success',
+                        'processing', 'pending' => 'warning',
+                        'requires_review' => 'primary',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('hourly_rate')
                     ->numeric()
                     ->sortable(),
@@ -114,17 +157,17 @@ class DriverProfileResource extends Resource
                         'verified' => 'Verified',
                         'rejected' => 'Rejected',
                     ]),
-                Tables\Filters\SelectFilter::make('country')
+                Tables\Filters\SelectFilter::make('background_check_status')
                     ->options([
-                        'USA' => 'USA',
-                        'Ghana' => 'Ghana',
-                        'Nigeria' => 'Nigeria',
-                        'South Africa' => 'South Africa',
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'clear' => 'Clear',
+                        'failed' => 'Failed',
                     ]),
             ])
             ->actions([
                 Tables\Actions\Action::make('approveVerification')
-                    ->label('Approve Verification')
+                    ->label('Approve License')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
@@ -132,14 +175,32 @@ class DriverProfileResource extends Resource
                     ->action(function (DriverProfile $record) {
                         \App\Services\LicenseVerificationService::updateStatus($record, 'verified', 'Approved by admin');
                     }),
-                Tables\Actions\Action::make('rejectVerification')
-                    ->label('Reject Verification')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
+                Tables\Actions\Action::make('initiateBackgroundCheck')
+                    ->label('Run Checkr Check')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (DriverProfile $record) => $record->verification_status !== 'rejected')
+                    ->visible(fn (DriverProfile $record) => $record->background_check_status !== 'clear')
                     ->action(function (DriverProfile $record) {
-                        \App\Services\LicenseVerificationService::updateStatus($record, 'rejected', 'Rejected by admin');
+                        \App\Services\BackgroundCheckService::initiateCheck($record);
+                    }),
+                Tables\Actions\Action::make('approveBackgroundCheck')
+                    ->label('Pass Background')
+                    ->icon('heroicon-o-check')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (DriverProfile $record) => $record->background_check_status !== 'clear')
+                    ->action(function (DriverProfile $record) {
+                        \App\Services\BackgroundCheckService::updateStatus($record, 'clear', 'Passed background check');
+                    }),
+                Tables\Actions\Action::make('approveFormalPhoto')
+                    ->label('Approve Formal Photo')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->visible(fn (DriverProfile $record) => $record->photo_formality_status !== 'verified')
+                    ->action(function (DriverProfile $record) {
+                        $record->update(['photo_formality_status' => 'verified']);
                     }),
                 Tables\Actions\EditAction::make(),
             ])

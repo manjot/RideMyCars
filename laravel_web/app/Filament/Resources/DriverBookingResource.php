@@ -27,12 +27,19 @@ class DriverBookingResource extends Resource
                 Forms\Components\Select::make('driver_id')->relationship('driver', 'name')->required(),
                 Forms\Components\TextInput::make('service_category')->required(),
                 Forms\Components\TextInput::make('country')->required(),
+                Forms\Components\TextInput::make('car_type')->label('Car Type'),
+                Forms\Components\TextInput::make('manufacturing_year')->label('Mfg Year'),
+                Forms\Components\TextInput::make('registration_number')->label('Registration No'),
+                Forms\Components\TextInput::make('transmission')->label('Transmission'),
+                Forms\Components\TextInput::make('commercial_service_type')->label('Commercial Service Type'),
+                Forms\Components\Textarea::make('cargo_details')->label('Cargo / Job Details'),
                 Forms\Components\TextInput::make('pickup_location')->required(),
                 Forms\Components\TextInput::make('dropoff_location'),
                 Forms\Components\DatePicker::make('start_date')->required(),
                 Forms\Components\TextInput::make('start_time')->required(),
                 Forms\Components\TextInput::make('duration_type')->required(),
                 Forms\Components\TextInput::make('duration_count')->numeric()->required(),
+                Forms\Components\TextInput::make('payment_method')->required(),
                 Forms\Components\TextInput::make('total_price')->numeric()->required(),
                 Forms\Components\TextInput::make('currency')->required(),
                 Forms\Components\Select::make('booking_status')
@@ -67,20 +74,22 @@ class DriverBookingResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('booking_status')
                     ->badge()
-                    ->colors([
-                        'warning' => 'pending',
-                        'info' => 'accepted',
-                        'primary' => 'in_progress',
-                        'success' => 'completed',
-                        'danger' => 'cancelled',
-                    ]),
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'accepted' => 'info',
+                        'in_progress' => 'primary',
+                        'completed' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('payment_status')
                     ->badge()
-                    ->colors([
-                        'success' => 'paid',
-                        'warning' => 'pending',
-                        'danger' => 'failed',
-                    ]),
+                    ->color(fn (string $state): string => match ($state) {
+                        'paid' => 'success',
+                        'pending' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->defaultSort('created_at', 'desc')

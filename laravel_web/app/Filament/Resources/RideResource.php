@@ -38,14 +38,27 @@ class RideResource extends Resource
                     ->required(),
                 Forms\Components\Select::make('vehicle_type')
                     ->options([
+                        'Executive Sedan' => 'Executive Sedan',
+                        'Ultra-SUV' => 'Ultra-SUV',
                         'Economy' => 'Economy',
                         'Comfort' => 'Comfort',
                         'Premium' => 'Premium',
+                        'Package Delivery (Small)' => 'Package Delivery (Small)',
+                        'Package Delivery (Medium)' => 'Package Delivery (Medium)',
+                        'Package Delivery (Large)' => 'Package Delivery (Large)',
                     ]),
                 Forms\Components\TextInput::make('payment_method'),
                 Forms\Components\TextInput::make('fare')
                     ->numeric()
                     ->prefix('$'),
+                Forms\Components\TextInput::make('digital_receipt_code')
+                    ->label('Digital Receipt Code'),
+                Forms\Components\Toggle::make('signature_required')
+                    ->label('Signature Required'),
+                Forms\Components\Toggle::make('climate_control')
+                    ->label('Climate Controlled'),
+                Forms\Components\Toggle::make('discreet_packaging')
+                    ->label('Discreet White-Glove Packaging'),
                 Forms\Components\Select::make('status')
                     ->options([
                         'pending' => 'Pending',
@@ -66,10 +79,10 @@ class RideResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('rider.name')
-                    ->numeric()
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('driver.name')
-                    ->numeric()
+                    ->searchable()
                     ->sortable()
                     ->placeholder('Unassigned'),
                 Tables\Columns\TextColumn::make('pickup_location')
@@ -78,17 +91,35 @@ class RideResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('vehicle_type')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('digital_receipt_code')
+                    ->label('Receipt Code')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('signature_required')
+                    ->label('Signature')
+                    ->boolean()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('climate_control')
+                    ->label('Climate')
+                    ->boolean()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('discreet_packaging')
+                    ->label('Discreet')
+                    ->boolean()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('fare')
                     ->numeric()
                     ->sortable()
                     ->prefix('$'),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'primary' => 'driver_assigned',
-                        'success' => fn ($state) => in_array($state, ['in_progress', 'completed']),
-                        'danger' => 'cancelled',
-                    ]),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'driver_assigned' => 'primary',
+                        'in_progress', 'completed' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

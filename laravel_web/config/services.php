@@ -35,4 +35,38 @@ return [
         ],
     ],
 
+    'veriff' => [
+        'api_key' => env('VERIFF_API_KEY'),
+        'secret_key' => env('VERIFF_SECRET_KEY'),
+        'url' => env('VERIFF_API_URL', 'https://stationapi.veriff.com/v1'),
+    ],
+
+    'onfido' => [
+        'api_token' => env('ONFIDO_API_TOKEN'),
+        'url' => env('ONFIDO_API_URL', 'https://api.onfido.com/v3.4'),
+    ],
+
+    'checkr' => [
+        'api_key' => env('CHECKR_API_KEY'),
+        'env' => env('CHECKR_ENV', 'sandbox'),
+    ],
+
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'secret' => env('PAYPAL_SECRET'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+    ],
+
+    'apple_pay' => [
+        'merchant_id' => env('APPLE_PAY_MERCHANT_ID'),
+        'domain' => env('APPLE_PAY_DOMAIN'),
+        'cert_path' => env('APPLE_PAY_CERT_PATH'),
+    ],
+
+    'cashapp' => [
+        'client_id' => env('CASHAPP_CLIENT_ID'),
+        'secret' => env('CASHAPP_SECRET'),
+        'env' => env('CASHAPP_ENV', 'sandbox'),
+    ],
+
 ];

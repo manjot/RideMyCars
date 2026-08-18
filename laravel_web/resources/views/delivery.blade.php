@@ -3,6 +3,27 @@
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         
+        @if(session('success'))
+            <div class="mb-8 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200 font-semibold flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-md">
+                        📦
+                    </div>
+                    <div>
+                        <h4 class="font-extrabold text-lg text-gray-900 dark:text-white">Package Dispatched Successfully!</h4>
+                        <p class="text-sm text-emerald-700 dark:text-emerald-300 font-medium mt-0.5">{{ session('success') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="mb-8 p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/30 text-rose-800 dark:text-rose-200 font-semibold flex items-center gap-3 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ session('error') }}</span>
+            </div>
+        @endif
+
         <div class="mb-10 text-center lg:text-left">
             <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Package Delivery</h1>
             <p class="text-gray-500 dark:text-gray-400 text-lg">Fast and secure delivery for packages and pharmaceuticals.</p>
@@ -99,6 +120,25 @@
                         </select>
                     </div>
 
+                    <!-- Special Handling Instructions (Requirement #6) -->
+                    <div class="bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-3">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Special Handling Options</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" name="signature_required" value="1" class="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Signature required on delivery</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" name="climate_control" value="1" class="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Climate-controlled transport (temperature sensitive)</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" name="discreet_packaging" value="1" class="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Discreet white-glove packaging</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Notes -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Delivery instructions <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span></label>
@@ -106,7 +146,7 @@
                     </div>
 
                     <button type="submit" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
-                        Send Package
+                        Dispatch Package
                     </button>
                     
                 </form>
@@ -160,62 +200,144 @@
         </div>
     </main>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places"></script>
+    @php
+        $gmapsKey = env('GOOGLE_MAPS_API_KEY');
+        $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
+    @endphp
+
+    @if($hasValidKey)
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
+    @endif
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            if (typeof google === 'undefined') return;
-
-            const map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 40.7128, lng: -74.0060 }, // Default to NY
-                zoom: 12,
-                mapTypeControl: false,
-                streetViewControl: false,
-                fullscreenControl: false
-            });
-            const marker = new google.maps.Marker({ map: map });
-            
+            let map = null;
+            let marker = null;
             const pickupInput = document.getElementById("pickup_location");
             const dropoffInput = document.getElementById("dropoff_location");
+            const locBtn = document.getElementById("use_my_location_btn");
 
-            const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
-            const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
+            if (typeof google !== 'undefined' && google.maps) {
+                try {
+                    map = new google.maps.Map(document.getElementById("map"), {
+                        center: { lat: 40.7128, lng: -74.0060 }, // Default to NY
+                        zoom: 12,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false
+                    });
+                    marker = new google.maps.Marker({ map: map });
+                    
+                    if (pickupInput && google.maps.places) {
+                        const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
+                        pickupAutocomplete.addListener("place_changed", () => {
+                            const place = pickupAutocomplete.getPlace();
+                            if (!place.geometry) return;
+                            map.setCenter(place.geometry.location);
+                            marker.setPosition(place.geometry.location);
+                            map.setZoom(15);
+                        });
+                    }
 
-            pickupAutocomplete.addListener("place_changed", () => {
-                const place = pickupAutocomplete.getPlace();
-                if (!place.geometry) return;
-                map.setCenter(place.geometry.location);
-                marker.setPosition(place.geometry.location);
-                map.setZoom(15);
-            });
+                    if (dropoffInput && google.maps.places) {
+                        new google.maps.places.Autocomplete(dropoffInput);
+                    }
+                } catch (e) {
+                    console.warn("Google Maps init skipped or failed:", e);
+                }
+            }
 
-            document.getElementById("use_my_location_btn").addEventListener("click", () => {
-                if (navigator.geolocation) {
+            if (locBtn && pickupInput) {
+                locBtn.addEventListener("click", () => {
+                    if (!navigator.geolocation) {
+                        alert("Error: Your browser doesn't support geolocation.");
+                        return;
+                    }
+
+                    const originalHTML = locBtn.innerHTML;
+                    locBtn.disabled = true;
+                    locBtn.innerHTML = `
+                        <svg class="animate-spin h-3.5 w-3.5 text-brand-500 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Locating...</span>
+                    `;
+
                     navigator.geolocation.getCurrentPosition(
-                        (position) => {
+                        async (position) => {
                             const pos = {
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude,
                             };
-                            map.setCenter(pos);
-                            marker.setPosition(pos);
-                            map.setZoom(15);
-                            
-                            // Reverse geocoding to fill input
-                            const geocoder = new google.maps.Geocoder();
-                            geocoder.geocode({ location: pos }, (results, status) => {
-                                if (status === "OK" && results[0]) {
-                                    pickupInput.value = results[0].formatted_address;
+
+                            if (map && marker) {
+                                map.setCenter(pos);
+                                marker.setPosition(pos);
+                                map.setZoom(15);
+                            }
+
+                            let addressSet = false;
+
+                            // 1. Try Google Maps Geocoder if loaded
+                            if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+                                try {
+                                    const geocoder = new google.maps.Geocoder();
+                                    const res = await new Promise((resolve) => {
+                                        geocoder.geocode({ location: pos }, (results, status) => {
+                                            if (status === "OK" && results && results[0]) {
+                                                resolve(results[0].formatted_address);
+                                            } else {
+                                                resolve(null);
+                                            }
+                                        });
+                                    });
+                                    if (res) {
+                                        pickupInput.value = res;
+                                        addressSet = true;
+                                    }
+                                } catch (e) {
+                                    console.warn("Google Geocoder error:", e);
                                 }
-                            });
+                            }
+
+                            // 2. Fallback to OpenStreetMap Nominatim API
+                            if (!addressSet) {
+                                try {
+                                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`);
+                                    if (response.ok) {
+                                        const data = await response.json();
+                                        if (data && data.display_name) {
+                                            pickupInput.value = data.display_name;
+                                            addressSet = true;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn("OSM Nominatim reverse geocode error:", e);
+                                }
+                            }
+
+                            // 3. Fallback to lat/lng text if reverse geocode failed
+                            if (!addressSet) {
+                                pickupInput.value = `Current Location (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
+                            }
+
+                            locBtn.disabled = false;
+                            locBtn.innerHTML = originalHTML;
                         },
-                        () => {
-                            alert("Error: The Geolocation service failed.");
-                        }
+                        (error) => {
+                            locBtn.disabled = false;
+                            locBtn.innerHTML = originalHTML;
+
+                            if (error.code === error.PERMISSION_DENIED) {
+                                alert("Location permission was denied. Please allow location access in your browser settings or enter your address manually.");
+                            } else {
+                                alert("Unable to retrieve your location automatically. Please enter your address manually.");
+                            }
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                     );
-                } else {
-                    alert("Error: Your browser doesn't support geolocation.");
-                }
-            });
+                });
+            }
         });
     </script>
 
