@@ -36,6 +36,28 @@ class DriverProfile extends Model
         'background_checked_at',
     ];
 
+    protected $appends = [
+        'photo_url',
+        'masked_license',
+        'is_verified',
+    ];
+
+    /**
+     * Get full driver photo URL or an avatar placeholder if no photo was uploaded.
+     */
+    public function getPhotoUrlAttribute(): string
+    {
+        if (!empty($this->image_url)) {
+            if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
+                return $this->image_url;
+            }
+            return asset('storage/' . ltrim($this->image_url, '/'));
+        }
+
+        $name = $this->user ? $this->user->name : 'Driver';
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=0F172A&color=FFFFFF&size=256&bold=true';
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

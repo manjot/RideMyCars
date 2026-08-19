@@ -179,6 +179,7 @@
                             <div class="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 font-bold">
                                 💼
                             </div>
+                            <div class="text-xs font-bold text-brand-500 uppercase tracking-widest mb-2">Business Travelers</div>
                             <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Elite Mobility for the Corporate Traveler.</h3>
                             <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
                                 Command your schedule with executive-grade transport. Seamlessly secure a premium ride, reserve an upscale vehicle, or utilize a vetted professional driver for your entire itinerary. Deliveries and logistics are handled instantly, leaving you free to focus on business.
@@ -198,6 +199,7 @@
                             <div class="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 font-bold">
                                 ✈️
                             </div>
+                            <div class="text-xs font-bold text-brand-500 uppercase tracking-widest mb-2">Tourists</div>
                             <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">First-Class Exploration, Simplified.</h3>
                             <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
                                 Experience your destination with unparalleled comfort and ease. Whether arriving in style via private transport, renting a luxury vehicle for a scenic drive, or hiring a dedicated local chauffeur, your journey is entirely curated. Enjoy effortless luggage and parcel delivery directly to your resort.
@@ -217,6 +219,7 @@
                             <div class="w-12 h-12 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 font-bold">
                                 🏙️
                             </div>
+                            <div class="text-xs font-bold text-brand-500 uppercase tracking-widest mb-2">Locals</div>
                             <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Redefining Daily Transit.</h3>
                             <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
                                 Bring white-glove service to your everyday routine. Access top-tier vehicles, secure certified drivers for special events, or coordinate white-glove courier deliveries across the city. Enjoy absolute convenience and reliability at the touch of a button.

@@ -108,16 +108,22 @@
                         </div>
                     </div>
 
-                    <!-- Payment -->
+                    <!-- Payment Method -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment method</label>
-                        <select name="payment_method" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer">
-                            <option>Credit / debit card</option>
-                            <option>Apple Pay</option>
-                            <option>PayPal</option>
-                            <option>Mobile Money</option>
-                            <option>Cash (Select regions)</option>
-                        </select>
+                        <div class="relative">
+                            <select name="payment_method" class="w-full px-4 py-3.5 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer font-semibold">
+                                <option value="stripe">💳 Stripe</option>
+                                <option value="momo" selected>📱 Momo Pay</option>
+                                <option value="cash">💵 Cash</option>
+                                <option value="applepay">🍏 Apple Pay</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Special Handling Instructions (Requirement #6) -->

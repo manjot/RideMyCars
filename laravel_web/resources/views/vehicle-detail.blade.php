@@ -181,12 +181,19 @@
 
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Payment Method</label>
-                                    <select name="payment_method" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-900 dark:text-white font-medium cursor-pointer">
-                                        <option value="Credit / Debit Card">Credit / Debit Card</option>
-                                        <option value="PayPal">PayPal</option>
-                                        <option value="Apple Pay">Apple Pay</option>
-                                        <option value="CashApp">Cash App</option>
-                                    </select>
+                                    <div class="relative">
+                                        <select name="payment_method" class="w-full px-3.5 py-2.5 pr-9 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-900 dark:text-white font-medium cursor-pointer appearance-none">
+                                            <option value="stripe">💳 Stripe</option>
+                                            <option value="momo">📱 Momo Pay</option>
+                                            <option value="cash">💵 Cash</option>
+                                            <option value="applepay">🍏 Apple Pay</option>
+                                        </select>
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 dark:text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Total Price Summary Box -->

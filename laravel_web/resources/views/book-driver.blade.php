@@ -8,7 +8,7 @@
               durationType: 'hourly',
               durationCount: 3,
               driverId: {{ $driverProfile->id }},
-              paymentMethod: 'card',
+              paymentMethod: 'momo',
               priceBreakdown: {
                   subtotal: 0,
                   service_fee: 0,
@@ -44,7 +44,7 @@
                   }
               }
           }"
-          x-init="updatePrice(); $watch('country', () => { paymentMethod = currentPaymentMethods[0]?.id || 'card'; updatePrice(); }); $watch('durationType', () => updatePrice()); $watch('durationCount', () => updatePrice());">
+          x-init="updatePrice(); $watch('country', () => { paymentMethod = currentPaymentMethods[1]?.id || 'momo'; updatePrice(); }); $watch('durationType', () => updatePrice()); $watch('durationCount', () => updatePrice());">
 
         <!-- Header -->
         <div class="mb-8 text-center md:text-left">
@@ -228,22 +228,48 @@
 
                     <!-- Country-Specific Payment Method Selection -->
                     <div class="space-y-4 pt-4 border-t border-gray-100 dark:border-white/10">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Payment Method for <span x-text="country"></span></label>
+                        <h2 class="text-xl font-bold text-[#0F172A] dark:text-white mb-4" style="color: #0F172A;">Payment Method for <span x-text="country">USA</span></h2>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 gap-[14px]">
                             <template x-for="pm in currentPaymentMethods" :key="pm.id">
                                 <label @click="paymentMethod = pm.id"
-                                       :class="paymentMethod === pm.id ? 'border-brand-500 bg-brand-50/20 dark:bg-brand-900/10' : 'border-gray-200 dark:border-white/10'"
-                                       class="p-4 border-2 rounded-2xl cursor-pointer flex items-center gap-3 transition-colors">
+                                       :style="paymentMethod === pm.id ? 'border: 2px solid #FBBF24 !important; background-color: #FFFFFF !important;' : 'border: 2px solid #E5E7EB !important; background-color: #FFFFFF !important;'"
+                                       class="py-4 px-4 rounded-xl cursor-pointer flex items-center gap-4 transition-all select-none shadow-sm">
                                     <input type="radio" name="payment_method" :value="pm.id" x-model="paymentMethod" class="sr-only">
-                                    <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-brand-500 font-bold text-xs shrink-0" x-text="pm.name.charAt(0)"></div>
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="pm.name"></span>
+                                    
+                                    <!-- Universal Single Icon Container -->
+                                    <div :style="pm.id === 'stripe' || pm.icon === 'stripe' || pm.id === 'card' || pm.icon === 'card' ? 'background-color: #635BFF !important;' : (pm.id === 'momo' || pm.icon === 'momo' ? 'background-color: #000000 !important;' : 'background-color: #F1F5F9 !important;')"
+                                         class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                                        
+                                        <!-- Stripe -->
+                                        <span x-show="pm.id === 'stripe' || pm.icon === 'stripe' || pm.id === 'card' || pm.icon === 'card'" style="color: #FFFFFF !important;" class="text-white text-base font-black tracking-tighter">stripe</span>
+
+                                        <!-- Momo Pay -->
+                                        <div x-show="pm.id === 'momo' || pm.icon === 'momo'" class="flex flex-col items-center justify-center p-1">
+                                            <svg viewBox="0 0 100 80" class="w-5 h-4.5 fill-white mb-0.5">
+                                                <path d="M56 4 C70 18, 76 38, 70 54 C67 38, 62 20, 56 4 Z" />
+                                                <path d="M26 46 C42 26, 56 16, 62 14 C66 40, 52 56, 26 46 Z" />
+                                            </svg>
+                                            <span style="color: #FFFFFF !important;" class="text-[6.5px] font-black tracking-tighter leading-none block uppercase">MoMo</span>
+                                        </div>
+
+                                        <!-- Cash -->
+                                        <span x-show="pm.id === 'cash' || pm.icon === 'cash'" style="color: #475569 !important;" class="font-bold text-lg">$</span>
+
+                                        <!-- Apple Pay -->
+                                        <svg x-show="pm.id === 'applepay' || pm.icon === 'apple'" xmlns="http://www.w3.org/2000/svg" style="color: #0F172A !important;" class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.02c.62-.76 1.05-1.81.93-2.87-.9.04-2.01.6-2.65 1.34-.57.65-1.08 1.73-.94 2.77 1.01.08 2.04-.48 2.66-1.24z"/></svg>
+
+                                        <!-- Fallback -->
+                                        <span x-show="!['stripe', 'card', 'momo', 'cash', 'applepay'].includes(pm.id) && !['stripe', 'card', 'momo', 'cash', 'apple'].includes(pm.icon)" style="color: #475569 !important;" class="font-bold text-sm" x-text="pm.name.charAt(0)"></span>
+                                    </div>
+
+                                    <span style="color: #0F172A !important;" class="text-base font-semibold truncate" x-text="pm.name"></span>
                                 </label>
                             </template>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25">
+                    <button type="submit" style="background-color: #FBBF24 !important; color: #FFFFFF !important;" class="w-full py-4 bg-amber-400 hover:bg-amber-500 text-white font-bold text-base rounded-xl transition-all shadow-md shadow-amber-500/20 cursor-pointer">
                         Confirm & Complete Booking
                     </button>
 
@@ -256,13 +282,7 @@
                 <!-- Driver Info Card -->
                 <div class="bg-white dark:bg-[#111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-4 relative overflow-hidden">
                     <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] shrink-0 overflow-hidden relative border-2 border-brand-500">
-                        @if($driverProfile->image_url)
-                            <img src="{{ Storage::url($driverProfile->image_url) }}" alt="{{ $driverProfile->user->name }}" class="w-full h-full object-cover">
-                        @else
-                            <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                            </div>
-                        @endif
+                        <img src="{{ $driverProfile->photo_url }}" alt="{{ $driverProfile->user->name }}" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <div class="flex items-center gap-2">

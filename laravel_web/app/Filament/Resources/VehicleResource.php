@@ -60,7 +60,9 @@ class VehicleResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
+                    ->label('Photo')
                     ->disk('public')
+                    ->defaultImageUrl(asset('images/hero-rent.png'))
                     ->circular(),
                 Tables\Columns\TextColumn::make('make')
                     ->searchable(),

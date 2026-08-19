@@ -16,12 +16,10 @@ class CountryService
             'phone_prefix' => '+1',
             'phone_mask' => '+1 (555) 000-0000',
             'payment_methods' => [
-                ['id' => 'card', 'name' => 'Credit / Debit Card', 'icon' => 'credit-card', 'type' => 'gateway'],
-                ['id' => 'paypal', 'name' => 'PayPal', 'icon' => 'paypal', 'type' => 'gateway'],
-                ['id' => 'cashapp', 'name' => 'Cash App', 'icon' => 'dollar-sign', 'type' => 'gateway'],
+                ['id' => 'stripe', 'name' => 'Stripe', 'icon' => 'stripe', 'type' => 'gateway'],
+                ['id' => 'momo', 'name' => 'Momo Pay', 'icon' => 'momo', 'type' => 'gateway'],
+                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'cash', 'type' => 'offline'],
                 ['id' => 'applepay', 'name' => 'Apple Pay', 'icon' => 'apple', 'type' => 'gateway'],
-                ['id' => 'googlepay', 'name' => 'Google Pay', 'icon' => 'google', 'type' => 'gateway'],
-                ['id' => 'cash', 'name' => 'Cash (On Arrival)', 'icon' => 'banknote', 'type' => 'offline'],
             ],
         ],
         'Ghana' => [
@@ -32,9 +30,10 @@ class CountryService
             'phone_prefix' => '+233',
             'phone_mask' => '+233 24 000 0000',
             'payment_methods' => [
-                ['id' => 'momo', 'name' => 'Mobile Money (MTN / Vodafone / AirtelTigo)', 'icon' => 'smartphone', 'type' => 'gateway'],
-                ['id' => 'card', 'name' => 'Debit / Credit Card', 'icon' => 'credit-card', 'type' => 'gateway'],
-                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'banknote', 'type' => 'offline'],
+                ['id' => 'stripe', 'name' => 'Stripe', 'icon' => 'stripe', 'type' => 'gateway'],
+                ['id' => 'momo', 'name' => 'Momo Pay', 'icon' => 'momo', 'type' => 'gateway'],
+                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'cash', 'type' => 'offline'],
+                ['id' => 'applepay', 'name' => 'Apple Pay', 'icon' => 'apple', 'type' => 'gateway'],
             ],
         ],
         'Nigeria' => [
@@ -45,9 +44,10 @@ class CountryService
             'phone_prefix' => '+234',
             'phone_mask' => '+234 800 000 0000',
             'payment_methods' => [
-                ['id' => 'card', 'name' => 'Debit / Credit Card', 'icon' => 'credit-card', 'type' => 'gateway'],
-                ['id' => 'bank_transfer', 'name' => 'Bank Transfer / Paystack', 'icon' => 'landmark', 'type' => 'gateway'],
-                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'banknote', 'type' => 'offline'],
+                ['id' => 'stripe', 'name' => 'Stripe', 'icon' => 'stripe', 'type' => 'gateway'],
+                ['id' => 'momo', 'name' => 'Momo Pay', 'icon' => 'momo', 'type' => 'gateway'],
+                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'cash', 'type' => 'offline'],
+                ['id' => 'applepay', 'name' => 'Apple Pay', 'icon' => 'apple', 'type' => 'gateway'],
             ],
         ],
         'South Africa' => [
@@ -58,9 +58,10 @@ class CountryService
             'phone_prefix' => '+27',
             'phone_mask' => '+27 82 000 0000',
             'payment_methods' => [
-                ['id' => 'card', 'name' => 'Debit / Credit Card', 'icon' => 'credit-card', 'type' => 'gateway'],
-                ['id' => 'eft', 'name' => 'EFT / Instant Bank Transfer', 'icon' => 'landmark', 'type' => 'gateway'],
-                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'banknote', 'type' => 'offline'],
+                ['id' => 'stripe', 'name' => 'Stripe', 'icon' => 'stripe', 'type' => 'gateway'],
+                ['id' => 'momo', 'name' => 'Momo Pay', 'icon' => 'momo', 'type' => 'gateway'],
+                ['id' => 'cash', 'name' => 'Cash', 'icon' => 'cash', 'type' => 'offline'],
+                ['id' => 'applepay', 'name' => 'Apple Pay', 'icon' => 'apple', 'type' => 'gateway'],
             ],
         ],
     ];

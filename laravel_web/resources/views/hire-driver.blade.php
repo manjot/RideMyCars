@@ -100,9 +100,8 @@
 
                     <div class="flex items-start gap-4 mb-4">
                         <!-- Image -->
-                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] flex items-center justify-center text-gray-300 dark:text-gray-600 shrink-0 overflow-hidden relative border-2 border-gray-100 dark:border-white/10">
-                            <svg x-show="!driver.image_url" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <img x-show="driver.image_url" :src="driver.image_url ? '/storage/' + driver.image_url : ''" class="absolute inset-0 w-full h-full object-cover" :alt="driver.user.name">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] shrink-0 overflow-hidden relative border-2 border-gray-100 dark:border-white/10">
+                            <img :src="driver.photo_url" class="w-full h-full object-cover" :alt="driver.user.name">
                         </div>
                         
                         <!-- Header -->

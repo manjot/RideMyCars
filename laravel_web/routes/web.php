@@ -167,9 +167,14 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
             $backPath = $request->file('license_back_image')->store('drivers/licenses', 'public');
         }
 
+        $licNumber = trim($request->license_number ?? '');
+        if (!$licNumber || \App\Models\DriverProfile::where('license_number', $licNumber)->exists()) {
+            $licNumber = 'DL-' . strtoupper(\Illuminate\Support\Str::random(6));
+        }
+
         \App\Models\DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => $request->license_number ?? ('DL-' . strtoupper(\Illuminate\Support\Str::random(6))),
+            'license_number' => $licNumber,
             'license_expiry' => $request->license_expiry ?? date('Y-m-d', strtotime('+3 years')),
             'country' => $request->country ?? 'USA',
             'experience_years' => $request->experience_years ?? 5,
@@ -187,10 +192,15 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
         ]);
     }
 
-    if ($user->role === 'owner' || $request->filled('vehicle_make')) {
+    if ($user->role === 'owner' || $request->filled('vehicle_make') || $request->filled('license_plate')) {
         $imagePath = null;
         if ($request->hasFile('vehicle_image')) {
             $imagePath = $request->file('vehicle_image')->store('vehicles', 'public');
+        }
+
+        $plate = trim($request->license_plate ?? '');
+        if (!$plate || \App\Models\Vehicle::where('license_plate', $plate)->exists()) {
+            $plate = ($plate ? $plate . '-' : 'REG-') . rand(1000, 9999);
         }
 
         \App\Models\Vehicle::create([
@@ -198,9 +208,9 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
             'make' => $request->vehicle_make ?? 'Mercedes-Benz',
             'model' => $request->vehicle_model ?? 'S-Class',
             'year' => $request->vehicle_year ?? date('Y'),
-            'license_plate' => $request->license_plate ?? ('REG-' . rand(1000, 9999)),
+            'license_plate' => $plate,
             'type' => $request->vehicle_type ?? 'Executive Sedan',
-            'daily_rate' => $request->daily_rate ?? 250.00,
+            'daily_rate' => $request->daily_rate ?? 150.00,
             'is_available' => true,
             'image_url' => $imagePath,
         ]);
@@ -209,6 +219,10 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
     auth()->login($user);
 
     \App\Services\ActivityLogService::log('register', "User registered as {$user->role}", $user->id);
+
+    if ($user->role === 'owner') {
+        return redirect('/rent')->with('success', '🎉 Account created & vehicle listed successfully! Your car is now available for rental on RideMyCars.');
+    }
 
     return redirect('/');
 });
