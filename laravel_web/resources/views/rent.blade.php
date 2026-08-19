@@ -25,9 +25,9 @@
             </div>
             
             <div class="flex items-center gap-3 shrink-0">
-                <a href="/hire-driver" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2">
-                    <span>👨‍✈️ Rent a Driver</span>
-                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">Trust & Verification</span>
+                <a href="/hire-driver" style="background-color: #059669 !important; color: #FFFFFF !important;" class="px-5 py-3 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition-all hover:brightness-95 cursor-pointer">
+                    <span style="color: #FFFFFF !important;">👨‍✈️ Rent a Driver</span>
+                    <span style="background-color: rgba(255, 255, 255, 0.25) !important; color: #FFFFFF !important;" class="text-xs px-2 py-0.5 rounded-full font-semibold">Trust & Verification</span>
                 </a>
             </div>
         </div>

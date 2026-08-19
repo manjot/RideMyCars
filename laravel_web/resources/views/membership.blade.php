@@ -33,7 +33,7 @@
                                 <h3 class="font-extrabold text-xl text-gray-900 dark:text-white">
                                     Active Membership: <span class="capitalize text-brand-500">{{ auth()->user()->membership_type }} Tier</span>
                                 </h3>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase {{ auth()->user()->membership_status === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' }}">
+                                <span style="{{ auth()->user()->membership_status === 'active' ? 'background-color: #D1FAE5 !important; color: #047857 !important;' : 'background-color: #FEF3C7 !important; color: #B45309 !important;' }}" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase">
                                     {{ auth()->user()->membership_status }}
                                 </span>
                             </div>
@@ -47,7 +47,7 @@
                         </div>
                     </div>
                     <div class="shrink-0">
-                        <span class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-extrabold bg-emerald-600 text-white shadow-md">
+                        <span style="background-color: #059669 !important; color: #FFFFFF !important;" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-extrabold shadow-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                             Privileges Active
                         </span>
@@ -127,7 +127,7 @@
 
                     @auth
                         @if(auth()->user()->membership_type === 'club')
-                            <button type="submit" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-base flex items-center justify-center gap-2">
+                            <button type="submit" style="background-color: #059669 !important; color: #FFFFFF !important;" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                                 Active Member — Renew $250/mo
                             </button>
