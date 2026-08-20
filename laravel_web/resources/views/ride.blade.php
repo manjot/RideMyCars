@@ -1,7 +1,7 @@
 <x-layout theme="theme-ride">
     <x-slot:title>Book a Ride — RideMyCars</x-slot>
 
-    <main class="w-full max-w-[1500px] mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <main class="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8" style="max-width: 1500px;">
         
         @if(session('success'))
             <div class="mb-6 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200 font-semibold flex items-center justify-between shadow-sm">
@@ -35,7 +35,7 @@
             <form action="/ride/book" method="POST" class="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full lg:w-auto z-10 shrink-0">
                 @csrf
                 
-                <div class="w-full lg:w-[380px] bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit">
+                <div class="w-full lg:w-96 bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit" style="max-width: 100%;">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">Find a trip</h1>
                     
                     <input type="hidden" name="schedule_type" x-model="schedule_type">
@@ -112,7 +112,7 @@
                     </div>
                 </div>
 
-                <div class="w-full lg:w-[440px] bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit relative pb-28 lg:pb-24" x-show="showRides" style="display: none;" x-transition.opacity.duration.300ms>
+                <div class="w-full bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit relative pb-28 lg:pb-24" x-show="showRides" style="display: none; max-width: 440px;" x-transition.opacity.duration.300ms>
                     
                     @guest
                         <div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/70 dark:bg-[#111]/80 backdrop-blur-[2px] rounded-[24px]">
@@ -209,8 +209,8 @@
             </form>
         
             <!-- Right Side: Map -->
-            <div class="w-full lg:flex-1 h-[400px] lg:h-[600px] bg-gray-50 dark:bg-[#1a1a1a] rounded-[24px] border border-gray-200 dark:border-white/10 overflow-hidden relative shadow-sm shrink-0 lg:shrink min-w-[300px]">
-                <div id="map" class="w-full h-full"></div>
+            <div class="w-full lg:flex-1 h-96 lg:h-auto bg-gray-50 dark:bg-[#1a1a1a] rounded-[24px] border border-gray-200 dark:border-white/10 overflow-hidden relative shadow-sm shrink-0 lg:shrink" style="min-width: 300px; min-height: 500px;">
+                <div id="map" class="w-full h-full absolute inset-0"></div>
             </div>
 
         </div>
