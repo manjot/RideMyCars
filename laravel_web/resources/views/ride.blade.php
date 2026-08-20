@@ -33,7 +33,13 @@
             
             <!-- Left Side: Form -->
             <div class="w-full lg:w-[55%]">
-                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ vehicle_type: '{{ request('type', 'Economy') }}', schedule_type: 'now' }">
+                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ 
+                    vehicle_type: '{{ request('type', '') }}', 
+                    schedule_type: 'now',
+                    pickup: '',
+                    dropoff: '',
+                    get showRides() { return this.pickup.trim().length > 0 && this.dropoff.trim().length > 0; }
+                }">
                     @csrf
                     
                     <!-- Schedule Time -->
@@ -101,7 +107,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-green-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                 </div>
-                                <input type="text" id="pickup_location" name="pickup_location" required placeholder="Where should the driver meet you?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                                <input type="text" id="pickup_location" name="pickup_location" x-model="pickup" required placeholder="Where should the driver meet you?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                             </div>
                         </div>
 
@@ -111,13 +117,13 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-red-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                                 </div>
-                                <input type="text" id="dropoff_location" name="dropoff_location" required placeholder="Where are you going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                                <input type="text" id="dropoff_location" name="dropoff_location" x-model="dropoff" required placeholder="Where are you going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Protected Options -->
-                    <div class="relative">
+                    <!-- Protected Options (Only show when locations entered) -->
+                    <div class="relative" x-show="showRides" x-transition.opacity.duration.300ms style="display: none;">
                         @guest
                             <!-- Login Overlay Modal (Uber Style) -->
                             <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/70 dark:bg-[#111]/80 backdrop-blur-[2px] rounded-2xl">
@@ -132,23 +138,23 @@
                         @endguest
 
                         <div class="space-y-4 @guest opacity-50 pointer-events-none select-none blur-[1px] @endguest transition-all duration-300 rounded-2xl pb-24" x-data="{ paymentModal: false, paymentMethod: 'Cash', profileType: 'Personal' }">
-                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Choose a ride</h2>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Rides we think you'll like</h3>
+                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">Choose a ride</h2>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Rides we think you'll like</h3>
                             
                             <input type="hidden" name="vehicle_type" x-model="vehicle_type">
                             <input type="hidden" name="payment_method" x-model="paymentMethod">
 
                             <!-- Vehicle List -->
-                            <div class="space-y-3" style="max-height: 50vh; overflow-y: auto;">
+                            <div class="space-y-3" style="max-height: 60vh; overflow-y: auto;">
                                 @forelse($vehicles as $vehicle)
                                 <div @click="vehicle_type = '{{ $vehicle->make }} {{ $vehicle->model }}'" 
-                                     :class="vehicle_type === '{{ $vehicle->make }} {{ $vehicle->model }}' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
-                                     class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
+                                     :class="vehicle_type === '{{ $vehicle->make }} {{ $vehicle->model }}' ? 'border-gray-900 ring-[1.5px] ring-gray-900 dark:border-white dark:ring-white' : 'border-[#0f0f0f] dark:border-white/30 hover:bg-gray-50 dark:hover:bg-[#222]'"
+                                     class="flex items-center justify-between p-4 rounded-[14px] border-[1.5px] cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
                                     <div class="flex items-center gap-4">
                                         @if($vehicle->image_url)
-                                            <img src="{{ Storage::url($vehicle->image_url) }}" alt="{{ $vehicle->make }}" class="w-16 h-12 object-contain">
+                                            <img src="{{ Storage::url($vehicle->image_url) }}" alt="{{ $vehicle->make }}" class="w-[72px] h-14 object-contain">
                                         @else
-                                            <div class="text-5xl">
+                                            <div class="text-[52px] leading-none">
                                                 @if(str_contains(strtolower($vehicle->type), 'sedan') || str_contains(strtolower($vehicle->type), 'luxury'))
                                                     🚘
                                                 @elseif(str_contains(strtolower($vehicle->type), 'suv') || str_contains(strtolower($vehicle->type), 'van'))
@@ -161,19 +167,26 @@
                                             </div>
                                         @endif
                                         <div>
-                                            <div class="flex items-center gap-2">
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">{{ $vehicle->make }} {{ $vehicle->model }}</h4>
-                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                                    4
+                                            <div class="flex items-center gap-1.5 mb-0.5">
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg leading-none">{{ $vehicle->make }} {{ $vehicle->model }}</h4>
+                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5 mt-0.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                                    {{ str_contains(strtolower($vehicle->type), 'bike') ? '1' : '4' }}
                                                 </div>
                                             </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">Available Now</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{{ $vehicle->type }}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">3 mins away • 11:27 PM</p>
+                                            @if(str_contains(strtolower($vehicle->type), 'bike'))
+                                                <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5">Affordable 2 wheeler rides</p>
+                                            @else
+                                                <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5">Affordable rides</p>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-bold text-xl text-gray-900 dark:text-white">${{ number_format($vehicle->daily_rate, 2) }}</div>
+                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹{{ number_format($vehicle->daily_rate, 2) }}</div>
+                                        @if(str_contains(strtolower($vehicle->type), 'bike'))
+                                            <div class="text-xs text-gray-500 line-through">₹{{ number_format($vehicle->daily_rate * 1.05, 2) }}</div>
+                                        @endif
                                     </div>
                                 </div>
                                 @empty
@@ -389,15 +402,31 @@
                         const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
                         pickupAutocomplete.addListener("place_changed", () => {
                             const place = pickupAutocomplete.getPlace();
-                            if (!place.geometry) return;
-                            map.setCenter(place.geometry.location);
-                            marker.setPosition(place.geometry.location);
-                            map.setZoom(15);
+                            if (place.geometry) {
+                                map.setCenter(place.geometry.location);
+                                marker.setPosition(place.geometry.location);
+                                map.setZoom(15);
+                            }
+                            if (place.formatted_address) {
+                                pickupInput.value = place.formatted_address;
+                            } else {
+                                pickupInput.value = place.name;
+                            }
+                            pickupInput.dispatchEvent(new Event('input'));
                         });
                     }
 
                     if (dropoffInput && google.maps.places) {
-                        new google.maps.places.Autocomplete(dropoffInput);
+                        const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
+                        dropoffAutocomplete.addListener("place_changed", () => {
+                            const place = dropoffAutocomplete.getPlace();
+                            if (place.formatted_address) {
+                                dropoffInput.value = place.formatted_address;
+                            } else {
+                                dropoffInput.value = place.name;
+                            }
+                            dropoffInput.dispatchEvent(new Event('input'));
+                        });
                     }
                 } catch (e) {
                     console.warn("Google Maps init skipped or failed:", e);
@@ -478,6 +507,8 @@
                             if (!addressSet) {
                                 pickupInput.value = `Current Location (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
                             }
+                            
+                            pickupInput.dispatchEvent(new Event('input'));
 
                             locBtn.disabled = false;
                             locBtn.innerHTML = originalHTML;
