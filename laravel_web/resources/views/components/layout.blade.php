@@ -97,9 +97,9 @@
                                 </a>
                             </div>
 
-                            <!-- Uber Cash -->
+                            <!-- RideMyCars Cash -->
                             <a href="/wallet" class="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 rounded-xl mb-4 hover:bg-gray-200 transition-colors">
-                                <span class="font-bold text-black dark:text-white text-sm">Uber Cash</span>
+                                <span class="font-bold text-black dark:text-white text-sm">RideMyCars Cash</span>
                                 <span class="font-bold text-black dark:text-white text-lg">₹0.00</span>
                             </a>
 

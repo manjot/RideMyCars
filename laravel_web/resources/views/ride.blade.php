@@ -125,7 +125,7 @@
                     <!-- Protected Options (Only show when locations entered) -->
                     <div class="relative" x-show="showRides" x-transition.opacity.duration.300ms style="display: none;">
                         @guest
-                            <!-- Login Overlay Modal (Uber Style) -->
+                            <!-- Login Overlay Modal (RideMyCars Style) -->
                             <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/70 dark:bg-[#111]/80 backdrop-blur-[2px] rounded-2xl">
                                 <div class="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] max-w-md w-[90%] mx-auto border border-gray-100 dark:border-white/10 text-center relative mt-[-20px]">
                                     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Log in to see trip options</h3>
@@ -223,7 +223,7 @@
                                 </button>
                             </div>
 
-                            <!-- Payment Modal (Uber Style) -->
+                            <!-- Payment Modal (RideMyCars Style) -->
                             <div x-show="paymentModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                                 <div @click.away="paymentModal = false" class="bg-white dark:bg-[#1a1a1a] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4">
                                     
@@ -255,17 +255,17 @@
                                             </button>
                                         </div>
 
-                                        <!-- Uber balances -->
+                                        <!-- RideMyCars balances -->
                                         <div class="mb-8">
                                             <div class="flex items-center justify-between mb-4">
-                                                <h4 class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">Uber balances</h4>
+                                                <h4 class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">RideMyCars balances</h4>
                                                 <div class="w-11 h-6 bg-black rounded-full border-2 border-transparent relative">
                                                     <div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></div>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-4">
-                                                <div class="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold text-[10px]">Uber</div>
-                                                <span class="font-medium text-gray-900 dark:text-white">Uber Cash: ₹0.00</span>
+                                                <div class="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold text-[10px] text-center leading-tight">Ride<br>MyCars</div>
+                                                <span class="font-medium text-gray-900 dark:text-white">RideMyCars Cash: ₹0.00</span>
                                             </div>
                                         </div>
 

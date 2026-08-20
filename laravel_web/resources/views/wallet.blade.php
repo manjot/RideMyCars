@@ -6,7 +6,7 @@
         <!-- Top Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
             <!-- Balance Card -->
-            <div class="bg-[#f6f6f6] dark:bg-[#1a1a1a] rounded-2xl p-6 flex flex-col justify-between border border-gray-100 dark:border-white/5 min-h-[200px]">
+            <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Balance</h3>
                     <div class="text-3xl font-bold text-black dark:text-white mb-4">₹0.00</div>
@@ -20,11 +20,11 @@
                 </div>
             </div>
 
-            <!-- Uber Cash Card -->
+            <!-- RideMyCars Cash Card -->
             <div class="bg-gradient-to-br from-[#f6f6f6] to-[#e6e6e6] dark:from-[#1a1a1a] dark:to-[#222] rounded-2xl p-6 flex flex-col justify-between border border-gray-100 dark:border-white/5 min-h-[200px] relative overflow-hidden">
                 <div class="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-bl from-white/40 to-transparent dark:from-white/5 dark:to-transparent skew-x-[-20deg] translate-x-1/4"></div>
                 <div class="relative z-10">
-                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Uber Cash</h3>
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">RideMyCars Cash</h3>
                     <div class="text-3xl font-bold text-black dark:text-white mb-6">₹0.00</div>
                 </div>
                 <div class="relative z-10">
