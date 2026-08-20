@@ -538,8 +538,11 @@ Route::post('/api/ride/{id}/review', function (\Illuminate\Http\Request $request
 // My Rides page
 Route::get('/my-rides', function () {
     $user = auth()->user();
-    $rides = \App\Models\Ride::where('rider_id', $user->id)
-        ->with(['driver', 'riderReview', 'driverReview'])
+    $rides = \App\Models\Ride::where(function ($q) use ($user) {
+            $q->where('rider_id', $user->id)
+              ->orWhere('driver_id', $user->id);
+        })
+        ->with(['driver', 'rider', 'riderReview', 'driverReview'])
         ->orderBy('created_at', 'desc')
         ->paginate(20);
 

@@ -170,41 +170,59 @@
                         
                         @php
                             $recentTrips = $completedRides->sortByDesc('updated_at')->take(5);
+                            $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
                         @endphp
 
                         @if($recentTrips->isEmpty() && $completedDriverBookings->isEmpty())
                             <p class="text-gray-500 dark:text-gray-400 text-sm italic">No completed trips yet.</p>
                         @else
-                            <div class="space-y-3">
+                            <div class="space-y-4">
                                 @foreach($recentTrips as $trip)
-                                    <div class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-                                        <!-- Icon -->
-                                        <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                        </div>
+                                    @php
+                                        $pickup = urlencode($trip->pickup_location);
+                                        $dropoff = urlencode($trip->dropoff_location);
+                                        $staticMap = "https://maps.googleapis.com/maps/api/staticmap?size=600x120&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7C{$pickup}&markers=size:small%7Ccolor:red%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
+                                    @endphp
+                                    <div class="border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+                                        <!-- Mini Map -->
+                                        <img src="{{ $staticMap }}" alt="Route" class="w-full h-[100px] object-cover" loading="lazy" onerror="this.style.display='none'">
+                                        
                                         <!-- Details -->
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-2 mb-0.5">
-                                                <p class="font-bold text-sm text-gray-900 dark:text-white truncate">{{ Str::limit($trip->dropoff_location, 40) }}</p>
+                                        <div class="p-4">
+                                            <div class="flex items-start gap-3">
+                                                <!-- Route dots -->
+                                                <div class="flex flex-col items-center pt-1 shrink-0">
+                                                    <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                                                    <div class="w-0.5 h-5 bg-gray-200 dark:bg-white/10 my-0.5"></div>
+                                                    <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                                                </div>
+                                                <!-- Locations -->
+                                                <div class="flex-1 min-w-0 space-y-1">
+                                                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ Str::limit($trip->pickup_location, 45) }}</p>
+                                                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ Str::limit($trip->dropoff_location, 45) }}</p>
+                                                </div>
+                                                <!-- Fare -->
+                                                <div class="text-right shrink-0">
+                                                    <p class="font-black text-lg text-green-600 dark:text-green-400">${{ number_format($trip->fare, 2) }}</p>
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-gray-400">
+                                                        {{ ucfirst($trip->payment_method ?? 'Cash') }}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <p class="text-xs text-gray-500 truncate">From: {{ Str::limit($trip->pickup_location, 35) }}</p>
-                                            <div class="flex items-center gap-3 mt-1">
-                                                <span class="text-xs text-gray-400">{{ $trip->updated_at->format('M d, h:i A') }}</span>
+                                            
+                                            <!-- Footer: Date + Rider -->
+                                            <div class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-white/10 text-xs text-gray-400">
+                                                <span>{{ $trip->updated_at->format('M d, Y · h:i A') }}</span>
                                                 @if($trip->rider)
-                                                    <span class="text-xs text-gray-400">· {{ $trip->rider->name }}</span>
+                                                    <span>· Rider: <span class="text-gray-600 dark:text-gray-300 font-medium">{{ $trip->rider->name }}</span></span>
                                                 @endif
                                             </div>
-                                        </div>
-                                        <!-- Earnings -->
-                                        <div class="text-right shrink-0">
-                                            <p class="font-extrabold text-base text-green-600 dark:text-green-400">${{ number_format($trip->fare, 2) }}</p>
-                                            <p class="text-xs text-gray-400 capitalize">{{ $trip->payment_method ?? 'cash' }}</p>
                                         </div>
                                     </div>
                                 @endforeach
 
                                 @foreach($completedDriverBookings->sortByDesc('updated_at')->take(3) as $bk)
-                                    <div class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                                    <div class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl">
                                         <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
                                             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                                         </div>
