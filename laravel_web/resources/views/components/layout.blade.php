@@ -368,7 +368,7 @@
 
     <!-- Ongoing Ride Banner & Details Modal -->
     @auth
-    <div x-data="ongoingRide()" x-init="init()" x-show="ride" x-cloak
+    <div x-data="ongoingRide()" x-init="init()" x-show="ride && !dismissed" x-cloak
          class="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
         
         <!-- Expanded Detail Card -->
@@ -379,15 +379,15 @@
              x-transition:leave="transition ease-in duration-200 transform" 
              x-transition:leave-start="opacity-100 translate-y-0 scale-100" 
              x-transition:leave-end="opacity-0 translate-y-6 scale-95"
-             class="pointer-events-auto max-w-lg mx-auto bg-white dark:bg-[#111] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 mb-3 overflow-hidden">
+             class="pointer-events-auto max-w-lg mx-auto bg-white dark:bg-[#111] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 mb-3 max-h-[75vh] overflow-y-auto">
             
             <!-- Header bar -->
-            <div class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between"
+            <div class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#111]/95 backdrop-blur z-10"
                  :class="{
-                     'bg-indigo-50/70 dark:bg-indigo-900/20': ride && ride.status === 'pending',
-                     'bg-emerald-50/70 dark:bg-emerald-900/20': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
-                     'bg-blue-50/70 dark:bg-blue-900/20': ride && ride.status === 'en_route',
-                     'bg-amber-50/70 dark:bg-amber-900/20': ride && ride.status === 'arrived',
+                     'bg-indigo-50/90 dark:bg-indigo-900/40': ride && ride.status === 'pending',
+                     'bg-emerald-50/90 dark:bg-emerald-900/40': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
+                     'bg-blue-50/90 dark:bg-blue-900/40': ride && ride.status === 'en_route',
+                     'bg-amber-50/90 dark:bg-amber-900/40': ride && ride.status === 'arrived',
                  }">
                 <div class="flex items-center gap-2.5">
                     <span class="w-3 h-3 rounded-full animate-ping"
@@ -399,7 +399,7 @@
                           }"></span>
                     <span class="font-extrabold text-sm text-gray-900 dark:text-white" x-text="statusText"></span>
                 </div>
-                <button @click="expanded = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
+                <button type="button" @click.stop="expanded = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
                     <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -484,7 +484,7 @@
                                    class="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                    placeholder="Enter new fare">
                         </div>
-                        <button @click="submitBoost()" :disabled="boosting" 
+                        <button type="button" @click="submitBoost()" :disabled="boosting" 
                                 class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-md">
                             <svg x-show="boosting" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
                             <span x-text="boosting ? 'Sending...' : '🚀 Boost & Resend'"></span>
@@ -502,7 +502,7 @@
                         <span>Track on Live Map</span>
                         <span>→</span>
                     </a>
-                    <button @click="cancelRide()" :disabled="cancelling"
+                    <button type="button" @click="cancelRide()" :disabled="cancelling"
                             class="block w-full text-center py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5">
                         <svg x-show="cancelling" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
                         <span x-text="cancelling ? 'Cancelling ride...' : '✕ Cancel Ride Request'"></span>
@@ -513,7 +513,7 @@
 
         <!-- Collapsed Floating Bottom Pill (click to toggle details) -->
         <div @click="expanded = !expanded"
-           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.25)] border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer backdrop-blur-md"
+           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.25)] border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer backdrop-blur-md select-none"
            :class="{
                'bg-indigo-900/95 border-indigo-500/50 text-white': ride && ride.status === 'pending',
                'bg-emerald-900/95 border-emerald-500/50 text-white': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
@@ -535,13 +535,13 @@
                 <p class="font-extrabold text-sm truncate leading-snug" x-text="statusText"></p>
                 <p class="text-xs opacity-75 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
             </div>
-            <!-- Quick Expand & Cancel Buttons -->
+            <!-- Quick Expand & Dismiss Buttons -->
             <div class="flex items-center gap-2 shrink-0">
-                <span class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1">
+                <button type="button" @click.stop="expanded = !expanded" class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1">
                     <span x-text="expanded ? 'Close' : 'Details'"></span>
                     <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-                </span>
-                <button @click.stop="cancelRide()" title="Cancel Ride Request" class="w-8 h-8 rounded-full bg-white/15 hover:bg-rose-500/80 text-white flex items-center justify-center text-xs font-bold transition-colors">
+                </button>
+                <button type="button" @click.stop="dismissed = true" title="Dismiss Banner" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs font-bold transition-colors">
                     ✕
                 </button>
             </div>
@@ -552,6 +552,8 @@
         Alpine.data('ongoingRide', () => ({
             ride: null,
             expanded: false,
+            dismissed: false,
+            lastStatus: null,
             timer: null,
             boostFare: '',
             boosting: false,
@@ -571,14 +573,21 @@
             },
             init() {
                 this.check();
-                this.timer = setInterval(() => this.check(), 6000);
+                this.timer = setInterval(() => this.check(), 5000);
             },
             async check() {
                 try {
                     const res = await fetch('/api/user/ongoing-ride');
                     if (res.ok) {
                         const data = await res.json();
-                        this.ride = data.ride || null;
+                        const newRide = data.ride || null;
+                        if (newRide) {
+                            if (this.lastStatus && this.lastStatus !== newRide.status) {
+                                this.dismissed = false; // re-show banner on new status
+                            }
+                            this.lastStatus = newRide.status;
+                        }
+                        this.ride = newRide;
                         if (this.ride && !this.boostFare) {
                             this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(2);
                         }
@@ -611,7 +620,7 @@
             },
             async cancelRide() {
                 if (!this.ride) return;
-                if (!confirm('Cancel this ride request?')) return;
+                if (!confirm('Are you sure you want to cancel this ride?')) return;
                 this.cancelling = true;
                 try {
                     const token = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -622,8 +631,12 @@
                     if (res.ok) {
                         this.ride = null;
                         this.expanded = false;
+                        this.dismissed = false;
+                    } else {
+                        const data = await res.json();
+                        alert(data.error || 'Failed to cancel ride');
                     }
-                } catch(e) {}
+                } catch(e) { alert('Network error'); }
                 this.cancelling = false;
             }
         }));
