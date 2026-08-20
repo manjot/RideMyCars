@@ -638,6 +638,12 @@
                         
                         const data = await response.json();
                         
+                        if (!response.ok || data.error) {
+                            alert('Booking error: ' + (data.error || data.message || 'Unknown server error'));
+                            this.isConfirming = false;
+                            return;
+                        }
+                        
                         if (data.polling_url) {
                             const checkStatus = async () => {
                                 if (!this.isConfirming) return; // user cancelled
@@ -667,7 +673,7 @@
                         
                     } catch (error) {
                         console.error('Error booking ride:', error);
-                        alert('There was an error booking your ride. Please try again.');
+                        alert('Booking failed: ' + error.message);
                         this.isConfirming = false;
                     }
                 },
