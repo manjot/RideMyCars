@@ -451,6 +451,10 @@ Route::post('/payment/cashapp/webhook', function (\Illuminate\Http\Request $requ
     return response()->json($result);
 });
 
+Route::get('/activity', function () {
+    return view('activity');
+})->middleware('auth');
+
 Route::get('/wallet', function () {
     return view('wallet');
 })->middleware('auth');
