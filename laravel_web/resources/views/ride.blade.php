@@ -460,10 +460,12 @@
                                 pickupInput.value = place.name;
                             }
                             pickupInput.dispatchEvent(new Event('input'));
-                            setTimeout(() => { 
-                                pickupInput.blur();
-                                document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); 
-                            }, 150);
+                            pickupInput.blur();
+                            const hidePac = () => document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none');
+                            hidePac();
+                            setTimeout(hidePac, 100);
+                            setTimeout(hidePac, 300);
+                            setTimeout(hidePac, 600);
                         });
                     }
 
@@ -481,10 +483,12 @@
                                 dropoffInput.value = place.name;
                             }
                             dropoffInput.dispatchEvent(new Event('input'));
-                            setTimeout(() => { 
-                                dropoffInput.blur();
-                                document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); 
-                            }, 150);
+                            dropoffInput.blur();
+                            const hidePacDrop = () => document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none');
+                            hidePacDrop();
+                            setTimeout(hidePacDrop, 100);
+                            setTimeout(hidePacDrop, 300);
+                            setTimeout(hidePacDrop, 600);
                         });
                     }
                 } catch (e) {
