@@ -12,6 +12,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-sans antialiased bg-white text-black" x-data="{ view: 'mobile', emailForOtp: '', otpError: '', isLoading: false, c1: '', c2: '', c3: '', c4: '' }">
     
