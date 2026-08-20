@@ -113,6 +113,136 @@
                         <svg x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
                     </button>
                     @auth
+                    <!-- Notification Bell -->
+                    <div x-data="notificationCenter()" x-init="init()" class="relative" @click.away="open = false">
+                        <!-- Bell Button -->
+                        <button @click="toggleOpen()" class="relative text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100 dark:hover:bg-white/10" aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
+                            
+                            <!-- Unread Badge -->
+                            <template x-if="unreadCount > 0">
+                                <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-sm animate-pulse">
+                                    <span x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                                </span>
+                            </template>
+                        </button>
+
+                        <!-- Notification Dropdown Panel -->
+                        <div x-show="open" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                             class="absolute top-full right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
+                             style="display: none;">
+                            
+                            <!-- Header -->
+                            <div class="px-4 py-3.5 bg-gray-50/80 dark:bg-white/5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-extrabold text-sm text-gray-900 dark:text-white">Notifications</h3>
+                                    <template x-if="unreadCount > 0">
+                                        <span class="text-[11px] font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full" x-text="unreadCount + ' new'"></span>
+                                    </template>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <template x-if="unreadCount > 0">
+                                        <button @click="markAllAsRead()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Mark all read</button>
+                                    </template>
+                                    <template x-if="notifications.length > 0">
+                                        <button @click="clearAll()" title="Clear all" class="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Notification List -->
+                            <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                <template x-if="notifications.length === 0">
+                                    <div class="py-10 text-center px-4">
+                                        <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-2 text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                        </div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">No notifications right now</p>
+                                    </div>
+                                </template>
+
+                                <template x-for="item in notifications" :key="item.id">
+                                    <div @click="handleItemClick(item)" 
+                                         class="p-3.5 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors flex items-start gap-3 relative"
+                                         :class="{'bg-indigo-50/40 dark:bg-indigo-950/20': !item.is_read}">
+                                        
+                                        <!-- Icon -->
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm shadow-sm"
+                                             :class="{
+                                                 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300': item.type === 'ride_accepted',
+                                                 'bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300': item.type === 'en_route',
+                                                 'bg-amber-100 text-amber-600 dark:bg-amber-900/60 dark:text-amber-300': item.type === 'arrived',
+                                                 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/60 dark:text-emerald-300': item.type === 'in_progress',
+                                                 'bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300': item.type === 'completed',
+                                                 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/60 dark:text-yellow-300': item.type === 'review',
+                                                 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300': !['ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)
+                                             }">
+                                            <template x-if="item.type === 'ride_accepted'"><span>🚗</span></template>
+                                            <template x-if="item.type === 'en_route'"><span>🚗</span></template>
+                                            <template x-if="item.type === 'arrived'"><span>📍</span></template>
+                                            <template x-if="item.type === 'in_progress'"><span>🟢</span></template>
+                                            <template x-if="item.type === 'completed'"><span>🏁</span></template>
+                                            <template x-if="item.type === 'review'"><span>★</span></template>
+                                            <template x-if="!['ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)"><span>🔔</span></template>
+                                        </div>
+
+                                        <!-- Content -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center justify-between gap-1 mb-0.5">
+                                                <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="item.title"></h4>
+                                                <span class="text-[10px] text-gray-400 shrink-0" x-text="item.time_ago"></span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2" x-text="item.message"></p>
+                                        </div>
+
+                                        <!-- Unread Dot -->
+                                        <template x-if="!item.is_read">
+                                            <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5"></span>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- In-App Floating Toast Notification (When a new event happens live) -->
+                        <template x-if="latestToast">
+                            <div x-show="toastVisible"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 translate-y-[-20px] scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-200"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-[-20px] scale-95"
+                                 class="fixed top-24 right-4 sm:right-8 z-50 max-w-sm w-full bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 shadow-2xl rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md">
+                                <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-base shadow-sm">
+                                    <span x-text="latestToast.type === 'completed' ? '🏁' : (latestToast.type === 'arrived' ? '📍' : (latestToast.type === 'in_progress' ? '🟢' : (latestToast.type === 'review' ? '★' : '🚗')))"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="latestToast.title"></h4>
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2" x-text="latestToast.message"></p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <template x-if="latestToast.link">
+                                            <a :href="latestToast.link" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View details →</a>
+                                        </template>
+                                        <button @click="toastVisible = false" class="text-[11px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">Dismiss</button>
+                                    </div>
+                                </div>
+                                <button @click="toastVisible = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs">✕</button>
+                            </div>
+                        </template>
+                    </div>
+
                     <div x-data="{ userMenuOpen: false }" class="relative" @click.away="userMenuOpen = false">
                         <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 focus:outline-none">
                             <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-lg border border-gray-300 shadow-sm">
@@ -621,6 +751,142 @@
             </div>
         </div>
     </footer>
+
+    @auth
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('notificationCenter', () => ({
+                open: false,
+                notifications: [],
+                unreadCount: 0,
+                pollingTimer: null,
+                latestToast: null,
+                toastVisible: false,
+                lastKnownIds: new Set(),
+                
+                init() {
+                    this.fetchNotifications(true);
+                    this.pollingTimer = setInterval(() => this.fetchNotifications(false), 4000);
+                },
+
+                toggleOpen() {
+                    this.open = !this.open;
+                },
+
+                async fetchNotifications(isInitial = false) {
+                    try {
+                        const res = await fetch('/api/notifications');
+                        if (res.ok) {
+                            const data = await res.json();
+                            const newNotifications = data.notifications || [];
+                            const newUnread = data.unread_count || 0;
+
+                            // Detect newly arrived notifications to trigger live toast pop-up
+                            if (!isInitial && newNotifications.length > 0) {
+                                const newItems = newNotifications.filter(n => !this.lastKnownIds.has(n.id) && !n.is_read);
+                                if (newItems.length > 0) {
+                                    this.latestToast = newItems[0];
+                                    this.toastVisible = true;
+                                    this.playChime();
+                                    setTimeout(() => { this.toastVisible = false; }, 6000);
+                                }
+                            }
+
+                            this.notifications = newNotifications;
+                            this.unreadCount = newUnread;
+                            this.lastKnownIds = new Set(newNotifications.map(n => n.id));
+                        }
+                    } catch (e) {
+                        // Silent catch
+                    }
+                },
+
+                async handleItemClick(item) {
+                    if (!item.is_read) {
+                        await this.markAsRead(item.id);
+                    }
+                    if (item.link) {
+                        window.location.href = item.link;
+                    }
+                },
+
+                async markAsRead(id) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        await fetch('/api/notifications/mark-read', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken || ''
+                            },
+                            body: JSON.stringify({ id })
+                        });
+                        const item = this.notifications.find(n => n.id === id);
+                        if (item) {
+                            item.is_read = true;
+                            this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        }
+                    } catch (e) {
+                        console.error('Error marking as read', e);
+                    }
+                },
+
+                async markAllAsRead() {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        await fetch('/api/notifications/mark-read', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken || ''
+                            },
+                            body: JSON.stringify({})
+                        });
+                        this.notifications.forEach(n => n.is_read = true);
+                        this.unreadCount = 0;
+                    } catch (e) {
+                        console.error('Error marking all as read', e);
+                    }
+                },
+
+                async clearAll() {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        await fetch('/api/notifications/clear', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken || ''
+                            },
+                            body: JSON.stringify({})
+                        });
+                        this.notifications = [];
+                        this.unreadCount = 0;
+                    } catch (e) {
+                        console.error('Error clearing notifications', e);
+                    }
+                },
+
+                playChime() {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.35);
+                    } catch (e) {}
+                }
+            }));
+        });
+    </script>
+    @endauth
 
 </body>
 </html>

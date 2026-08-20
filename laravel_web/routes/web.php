@@ -492,6 +492,17 @@ Route::post('/api/ride/{id}/update-status', function (\Illuminate\Http\Request $
 
     $ride->update($updates);
 
+    // Send notifications to rider and driver
+    if ($newStatus === 'en_route') {
+        \App\Services\NotificationService::notifyEnRoute($ride);
+    } elseif ($newStatus === 'arrived') {
+        \App\Services\NotificationService::notifyArrived($ride);
+    } elseif ($newStatus === 'in_progress') {
+        \App\Services\NotificationService::notifyTripStarted($ride);
+    } elseif ($newStatus === 'completed') {
+        \App\Services\NotificationService::notifyTripCompleted($ride);
+    }
+
     return response()->json(['success' => true, 'status' => $newStatus]);
 })->middleware('auth');
 
@@ -533,6 +544,72 @@ Route::post('/api/ride/{id}/review', function (\Illuminate\Http\Request $request
         'comment' => $request->comment,
     ]);
 
+    // Send notification to the person who was reviewed
+    \App\Services\NotificationService::notifyReviewReceived(
+        $revieweeId,
+        auth()->user()->name,
+        (int)$request->rating,
+        $request->comment,
+        $ride->id
+    );
+
+    return response()->json(['success' => true]);
+})->middleware('auth');
+
+// Get Notifications for Current User
+Route::get('/api/notifications', function () {
+    $user = auth()->user();
+    if (!$user) return response()->json(['notifications' => [], 'unread_count' => 0]);
+
+    $notifications = \App\Models\UserNotification::where('user_id', $user->id)
+        ->orderBy('created_at', 'desc')
+        ->take(20)
+        ->get()
+        ->map(function ($n) {
+            return [
+                'id' => $n->id,
+                'type' => $n->type,
+                'title' => $n->title,
+                'message' => $n->message,
+                'link' => $n->link,
+                'data' => $n->data,
+                'is_read' => (bool)$n->is_read,
+                'time_ago' => $n->created_at->diffForHumans(),
+                'created_at' => $n->created_at->toIso8601String(),
+            ];
+        });
+
+    $unreadCount = \App\Models\UserNotification::where('user_id', $user->id)
+        ->where('is_read', false)
+        ->count();
+
+    return response()->json([
+        'notifications' => $notifications,
+        'unread_count' => $unreadCount,
+    ]);
+})->middleware('auth');
+
+// Mark Notifications as Read
+Route::post('/api/notifications/mark-read', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user) return response()->json(['success' => false], 401);
+
+    $id = $request->input('id');
+    if ($id) {
+        \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->update(['is_read' => true]);
+    } else {
+        \App\Models\UserNotification::where('user_id', $user->id)->where('is_read', false)->update(['is_read' => true]);
+    }
+
+    return response()->json(['success' => true]);
+})->middleware('auth');
+
+// Clear All Notifications
+Route::post('/api/notifications/clear', function () {
+    $user = auth()->user();
+    if (!$user) return response()->json(['success' => false], 401);
+
+    \App\Models\UserNotification::where('user_id', $user->id)->delete();
     return response()->json(['success' => true]);
 })->middleware('auth');
 
@@ -712,6 +789,9 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
             ->where('id', '!=', $assignment->id)
             ->where('status', 'pending')
             ->update(['status' => 'expired']);
+
+        // Send notifications to rider and driver
+        \App\Services\NotificationService::notifyRideAccepted($ride);
     } elseif ($status === 'rejected') {
         // Try next driver
         \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
