@@ -37,21 +37,11 @@ class RideAssignmentService
             }
         }
 
-        // We need the ride's pickup coordinates to find the nearest driver.
-        // Assuming we geocode the pickup_location if lat/lng are not on the Ride model.
-        // For MVP, we will just find ANY available driver matching the vehicle type 
-        // who hasn't been asked yet. To do true proximity, we need Ride lat/lng.
-
-        $vehicleOwnerIds = Vehicle::where('type', $ride->vehicle_type ?? 'Economy')
-                                  ->pluck('owner_id')
-                                  ->toArray();
-
-        // Get the next driver
-        $nextDriver = DriverProfile::whereIn('user_id', $vehicleOwnerIds)
-            ->where('is_available', true)
+        // Get the next available driver (skip vehicle-type matching for now since
+        // vehicles don't have owner_id assigned yet)
+        $nextDriver = DriverProfile::where('is_available', true)
             ->whereNotIn('user_id', $excludedDriverIds)
-            // If latitude/longitude existed on Ride, we would sort by distance here
-            ->inRandomOrder() // Fallback to random if no coordinates exist yet
+            ->inRandomOrder()
             ->first();
 
         if ($nextDriver) {
