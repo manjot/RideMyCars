@@ -383,9 +383,64 @@
         document.addEventListener("DOMContentLoaded", function() {
             let map = null;
             let marker = null;
+            let directionsService = null;
+            let directionsRenderer = null;
+            let pickupLoc = null;
+            let dropoffLoc = null;
+            let vehicleMarkers = [];
+
             const pickupInput = document.getElementById("pickup_location");
             const dropoffInput = document.getElementById("dropoff_location");
             const locBtn = document.getElementById("use_my_location_btn");
+
+            function drawVehicles(location) {
+                // Clear existing
+                vehicleMarkers.forEach(m => m.setMap(null));
+                vehicleMarkers = [];
+                
+                const lat = typeof location.lat === 'function' ? location.lat() : location.lat;
+                const lng = typeof location.lng === 'function' ? location.lng() : location.lng;
+
+                // Spawn 4-5 vehicles around pickup
+                for(let i=0; i<5; i++) {
+                    let offsetLat = (Math.random() - 0.5) * 0.015;
+                    let offsetLng = (Math.random() - 0.5) * 0.015;
+                    let carMarker = new google.maps.Marker({
+                        position: { lat: lat + offsetLat, lng: lng + offsetLng },
+                        map: map,
+                        icon: {
+                            // A simple top-down car SVG path
+                            path: 'M17.4 0H5.6C2.5 0 0 3.5 0 6.6v34.8C0 44.5 2.5 47 5.6 47h11.8c3.1 0 5.6-2.5 5.6-5.6V6.6C23 3.5 20.5 0 17.4 0z',
+                            fillColor: "white",
+                            fillOpacity: 1,
+                            strokeWeight: 2,
+                            strokeColor: "black",
+                            rotation: Math.random() * 360,
+                            scale: 0.4,
+                            anchor: new google.maps.Point(11.5, 23.5)
+                        }
+                    });
+                    vehicleMarkers.push(carMarker);
+                }
+            }
+
+            function calculateRoute() {
+                if (pickupLoc && dropoffLoc && directionsService && directionsRenderer) {
+                    directionsService.route({
+                        origin: pickupLoc,
+                        destination: dropoffLoc,
+                        travelMode: google.maps.TravelMode.DRIVING
+                    }, (response, status) => {
+                        if (status === 'OK') {
+                            directionsRenderer.setDirections(response);
+                            if (marker) marker.setMap(null); // Hide default single marker
+                            drawVehicles(pickupLoc);
+                        } else {
+                            console.warn("Directions request failed: " + status);
+                        }
+                    });
+                }
+            }
 
             if (typeof google !== 'undefined' && google.maps) {
                 try {
@@ -398,14 +453,22 @@
                     });
                     marker = new google.maps.Marker({ map: map });
                     
+                    directionsService = new google.maps.DirectionsService();
+                    directionsRenderer = new google.maps.DirectionsRenderer({
+                        map: map,
+                        polylineOptions: { strokeColor: '#000000', strokeWeight: 4 }
+                    });
+                    
                     if (pickupInput && google.maps.places) {
                         const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
                         pickupAutocomplete.addListener("place_changed", () => {
                             const place = pickupAutocomplete.getPlace();
                             if (place.geometry) {
-                                map.setCenter(place.geometry.location);
-                                marker.setPosition(place.geometry.location);
+                                pickupLoc = place.geometry.location;
+                                map.setCenter(pickupLoc);
+                                if (marker) marker.setPosition(pickupLoc);
                                 map.setZoom(15);
+                                calculateRoute();
                             }
                             if (place.formatted_address) {
                                 pickupInput.value = place.formatted_address;
@@ -420,6 +483,10 @@
                         const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
                         dropoffAutocomplete.addListener("place_changed", () => {
                             const place = dropoffAutocomplete.getPlace();
+                            if (place.geometry) {
+                                dropoffLoc = place.geometry.location;
+                                calculateRoute();
+                            }
                             if (place.formatted_address) {
                                 dropoffInput.value = place.formatted_address;
                             } else {
@@ -462,6 +529,9 @@
                                 marker.setPosition(pos);
                                 map.setZoom(15);
                             }
+                            
+                            pickupLoc = pos;
+                            calculateRoute();
 
                             let addressSet = false;
 
