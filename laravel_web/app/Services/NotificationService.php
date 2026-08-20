@@ -40,7 +40,7 @@ class NotificationService
             self::send(
                 $ride->rider_id,
                 'ride_accepted',
-                '🚗 Driver Assigned',
+                'Driver Assigned',
                 "{$driverName} has accepted your ride request and is heading to {$ride->pickup_location}.",
                 $ride->id,
                 "/ride?resume={$ride->id}",
@@ -53,7 +53,7 @@ class NotificationService
             self::send(
                 $ride->driver_id,
                 'ride_accepted',
-                '✓ Ride Accepted',
+                'Ride Accepted',
                 "You accepted Ride #{$ride->id} for {$riderName}. Destination: {$ride->dropoff_location}.",
                 $ride->id,
                 '/driver/dashboard',
@@ -73,7 +73,7 @@ class NotificationService
             self::send(
                 $ride->rider_id,
                 'en_route',
-                '🚗 Driver En Route',
+                'Driver En Route',
                 "{$driverName} is on the way to your pickup location at {$ride->pickup_location}.",
                 $ride->id,
                 "/ride?resume={$ride->id}",
@@ -93,7 +93,7 @@ class NotificationService
             self::send(
                 $ride->rider_id,
                 'arrived',
-                '📍 Driver Arrived!',
+                'Driver Arrived',
                 "{$driverName} has arrived at {$ride->pickup_location}. Please meet your driver.",
                 $ride->id,
                 "/ride?resume={$ride->id}",
@@ -113,7 +113,7 @@ class NotificationService
             self::send(
                 $ride->rider_id,
                 'in_progress',
-                '🟢 Trip Started',
+                'Trip Started',
                 "Your journey to {$ride->dropoff_location} has started. Safe travels!",
                 $ride->id,
                 "/ride?resume={$ride->id}",
@@ -125,7 +125,7 @@ class NotificationService
             self::send(
                 $ride->driver_id,
                 'in_progress',
-                '🟢 Trip Started',
+                'Trip Started',
                 "Trip #{$ride->id} to {$ride->dropoff_location} is now in progress.",
                 $ride->id,
                 '/driver/dashboard',
@@ -145,7 +145,7 @@ class NotificationService
             self::send(
                 $ride->rider_id,
                 'completed',
-                '🏁 Trip Completed',
+                'Trip Completed',
                 "You have arrived at {$ride->dropoff_location}! Total fare: \${$fare}. Please leave a rating.",
                 $ride->id,
                 '/my-rides',
@@ -157,7 +157,7 @@ class NotificationService
             self::send(
                 $ride->driver_id,
                 'completed',
-                '🏁 Trip Completed',
+                'Trip Completed',
                 "Completed Ride #{$ride->id}. Total fare earned: \${$fare}.",
                 $ride->id,
                 '/driver/dashboard',
@@ -180,7 +180,7 @@ class NotificationService
         self::send(
             $revieweeId,
             'review',
-            '★ New Rating & Review',
+            'New Rating & Review',
             $msg,
             $rideId,
             '/my-rides',

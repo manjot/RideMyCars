@@ -115,18 +115,16 @@
                     @auth
                     <!-- Notification Bell -->
                     <div x-data="notificationCenter()" x-init="init()" class="relative" @click.away="open = false">
-                        <!-- Bell Button with Consistent Circular Style -->
+                        <!-- Bell Button with Proper Badge -->
                         <button @click="toggleOpen()" class="relative w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-white/10 focus:outline-none shrink-0" aria-label="Notifications">
                             <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                             </svg>
                             
-                            <!-- Unread Badge -->
+                            <!-- Unread Badge on Top-Right of circle -->
                             <template x-if="unreadCount > 0">
-                                <span class="absolute -top-1 -right-1 min-w-[19px] h-[19px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-md border-2 border-white dark:border-[#111] animate-pulse">
-                                    <span x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
-                                </span>
+                                <span class="absolute top-0 right-0 -mt-0.5 -mr-0.5 min-w-[17px] h-[17px] px-1 bg-red-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md ring-2 ring-white dark:ring-[#111] pointer-events-none" x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
                             </template>
                         </button>
 
@@ -138,24 +136,24 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="absolute top-full right-[-48px] sm:right-0 mt-3 w-[330px] sm:w-[380px] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden z-50 backdrop-blur-xl" 
+                             class="absolute top-full right-0 mt-3 w-[340px] sm:w-[390px] max-w-[calc(100vw-2rem)] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
                              style="display: none;">
                             
                             <!-- Header -->
-                            <div class="px-5 py-4 bg-gray-50/70 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
-                                <div class="flex items-center gap-2.5">
-                                    <h3 class="font-bold text-base text-gray-900 dark:text-white">Notifications</h3>
+                            <div class="px-4 py-3 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <h3 class="font-bold text-sm text-gray-900 dark:text-white shrink-0">Notifications</h3>
                                     <template x-if="unreadCount > 0">
-                                        <span class="text-[11px] font-extrabold bg-brand-500/15 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full" x-text="unreadCount + ' new'"></span>
+                                        <span class="text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full whitespace-nowrap" x-text="unreadCount + ' new'"></span>
                                     </template>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2.5 shrink-0">
                                     <template x-if="unreadCount > 0">
-                                        <button @click="markAllAsRead()" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline">Mark all read</button>
+                                        <button @click="markAllAsRead()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">Mark all read</button>
                                     </template>
                                     <template x-if="notifications.length > 0">
-                                        <button @click="clearAll()" title="Clear all" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        <button @click="clearAll()" title="Clear all" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                         </button>
                                     </template>
                                 </div>
@@ -165,8 +163,8 @@
                             <div class="max-h-[390px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                 <template x-if="notifications.length === 0">
                                     <div class="py-12 px-6 text-center">
-                                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-500/10 to-indigo-500/10 dark:from-white/5 dark:to-white/10 flex items-center justify-center mx-auto mb-3.5 text-brand-500 dark:text-brand-400 shadow-inner">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                        <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-3 text-indigo-500 dark:text-indigo-400 shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                                         </div>
                                         <p class="text-sm font-bold text-gray-900 dark:text-white">No notifications right now</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-[220px] mx-auto leading-relaxed">You're all caught up! Updates on rides, jobs, and logins will appear here.</p>
@@ -175,11 +173,11 @@
 
                                 <template x-for="item in notifications" :key="item.id">
                                     <div @click="handleItemClick(item)" 
-                                         class="p-4 hover:bg-gray-50 dark:hover:bg-white/[0.04] cursor-pointer transition-colors flex items-start gap-3.5 relative group"
-                                         :class="{'bg-brand-500/[0.03] dark:bg-white/[0.02]': !item.is_read}">
+                                         class="p-3.5 hover:bg-gray-50 dark:hover:bg-white/[0.04] cursor-pointer transition-colors flex items-start gap-3 relative"
+                                         :class="{'bg-indigo-50/30 dark:bg-indigo-950/20': !item.is_read}">
                                         
                                         <!-- Icon Avatar -->
-                                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base shadow-sm font-bold"
+                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base shadow-sm font-bold"
                                              :class="{
                                                  'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300': item.type === 'login' || item.type === 'ride_accepted',
                                                  'bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300': item.type === 'en_route',
@@ -201,20 +199,17 @@
 
                                         <!-- Content -->
                                         <div class="flex-1 min-w-0">
-                                            <div class="flex items-center justify-between gap-1 mb-1">
-                                                <h4 class="text-xs font-extrabold text-gray-900 dark:text-white truncate" x-text="item.title"></h4>
-                                                <span class="text-[11px] font-medium text-gray-400 shrink-0" x-text="item.time_ago"></span>
+                                            <div class="flex items-center justify-between gap-2 mb-0.5">
+                                                <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="item.title.replace(/^[\p{So}\p{Sk}\p{Sm}\p{Sc}\p{P}\s]+/u, '').trim()"></h4>
+                                                <span class="text-[11px] font-medium text-gray-400 whitespace-nowrap shrink-0" x-text="item.time_ago"></span>
                                             </div>
-                                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2" x-text="item.message"></p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-snug break-words" x-text="item.message"></p>
                                         </div>
 
-                                        <!-- Unread Dot / Action Arrow -->
-                                        <div class="shrink-0 flex items-center pt-1">
+                                        <!-- Unread Dot -->
+                                        <div class="shrink-0 flex items-center pt-1.5">
                                             <template x-if="!item.is_read">
-                                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500 shadow-sm"></span>
-                                            </template>
-                                            <template x-if="item.is_read">
-                                                <span class="text-xs text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                                                <span class="w-2 h-2 rounded-full bg-indigo-600 shadow-sm"></span>
                                             </template>
                                         </div>
                                     </div>
