@@ -200,7 +200,7 @@
     </main>
 
     @php
-        $gmapsKey = env('GOOGLE_MAPS_API_KEY');
+        $gmapsKey = config('services.google_maps.api_key');
         $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
     @endphp
 
