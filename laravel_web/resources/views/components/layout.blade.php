@@ -451,8 +451,8 @@
                         </div>
                     </a>
                     
-                    <!-- Google Play -->
-                    <a href="{{ asset('ridemycars.apk') }}" download class="flex items-center gap-3 px-5 py-2.5 bg-transparent border border-white/20 text-white rounded-xl hover:bg-white/5 transition-colors">
+                    <!-- Google Play / Direct APK Download -->
+                    <a href="{{ asset('ridemycars.apk') }}" download="RideMyCars.apk" class="flex items-center gap-3 px-5 py-2.5 bg-transparent border border-white/20 text-white rounded-xl hover:bg-white/5 transition-colors" title="Download RideMyCars Android APK">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.9l-9-5.1c-.5-.3-1.1-.3-1.6 0-.5.3-.8.8-.8 1.4v10.1c0 .6.3 1.1.8 1.4.3.1.6.2.8.2s.6-.1.8-.2l9-5.1c.5-.3.8-.8.8-1.4s-.3-1-.8-1.3zm-8.8-3.4l6.1 3.5-3.1 1.8-3-3.5v-1.8zm0 7.8v-1.8l3 3.5-3 1.8v-3.5zm4.7-.9l-1.1-.6 1.1-1.3 2 2.3-2-.4z"/></svg>
                         <div class="flex flex-col">
                             <span class="text-[10px] leading-tight text-gray-400">GET IT ON</span>
