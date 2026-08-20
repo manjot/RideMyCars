@@ -357,85 +357,85 @@ Route::get('/ride', function () {
 });
 
 Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
-    $request->validate([
-        'pickup_location' => 'required|string|max:255',
-        'dropoff_location' => 'required|string|max:255',
-        'vehicle_type' => 'nullable|string|max:255',
-        'payment_method' => 'nullable|string|max:255',
-        'notes' => 'nullable|string',
-        'amount' => 'nullable|numeric',
-    ]);
+    try {
+        $request->validate([
+            'pickup_location' => 'required|string|max:255',
+            'dropoff_location' => 'required|string|max:255',
+            'vehicle_type' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+            'amount' => 'nullable|numeric',
+        ]);
 
-    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+        $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
 
-    $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
-    
-    $paymentMethod = $request->payment_method ?? 'Credit Card';
-    $amount = $request->amount ?? 15.00; // Default if not parsed
+        $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
+        
+        $paymentMethod = $request->payment_method ?? 'Credit Card';
+        $amount = $request->amount ?? 15.00;
 
-    $ride = \App\Models\Ride::create([
-        'rider_id' => $riderId,
-        'pickup_location' => $request->pickup_location,
-        'dropoff_location' => $request->dropoff_location,
-        'vehicle_type' => $request->vehicle_type ?? 'Economy',
-        'payment_method' => $paymentMethod,
-        'notes' => $request->notes,
-        'digital_receipt_code' => $digitalReceipt,
-        'status' => 'pending',
-    ]);
+        $ride = \App\Models\Ride::create([
+            'rider_id' => $riderId,
+            'pickup_location' => $request->pickup_location,
+            'dropoff_location' => $request->dropoff_location,
+            'vehicle_type' => $request->vehicle_type ?? 'Economy',
+            'payment_method' => $paymentMethod,
+            'notes' => $request->notes,
+            'digital_receipt_code' => $digitalReceipt,
+            'status' => 'pending',
+        ]);
 
-    \App\Services\ActivityLogService::log('booking_creation', "Created ride booking #{$ride->id}", $riderId);
-
-    // Trigger the initial round-robin assignment
-    \App\Services\RideAssignmentService::assignNextDriver($ride);
-
-    if (strtolower($paymentMethod) === 'stripe') {
         try {
-            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-            
-            $session = \Stripe\Checkout\Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'usd',
-                        'product_data' => [
-                            'name' => 'Ride with ' . ($request->vehicle_type ?? 'Economy'),
-                            'description' => 'From ' . substr($request->pickup_location, 0, 100) . ' to ' . substr($request->dropoff_location, 0, 100),
-                        ],
-                        'unit_amount' => (int)($amount * 100),
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => url('/ride/success?session_id={CHECKOUT_SESSION_ID}&ride_id=' . $ride->id),
-                'cancel_url' => url('/ride'),
-            ]);
+            \App\Services\ActivityLogService::log('booking_creation', "Created ride booking #{$ride->id}", $riderId);
+        } catch (\Throwable $e) {
+            // Activity log is non-critical, don't fail the booking
+        }
 
-            if ($request->wantsJson()) {
+        // Trigger the initial round-robin assignment
+        \App\Services\RideAssignmentService::assignNextDriver($ride);
+
+        if (strtolower($paymentMethod) === 'stripe') {
+            try {
+                \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+                
+                $session = \Stripe\Checkout\Session::create([
+                    'payment_method_types' => ['card'],
+                    'line_items' => [[
+                        'price_data' => [
+                            'currency' => 'usd',
+                            'product_data' => [
+                                'name' => 'Ride with ' . ($request->vehicle_type ?? 'Economy'),
+                                'description' => 'From ' . substr($request->pickup_location, 0, 100) . ' to ' . substr($request->dropoff_location, 0, 100),
+                            ],
+                            'unit_amount' => (int)($amount * 100),
+                        ],
+                        'quantity' => 1,
+                    ]],
+                    'mode' => 'payment',
+                    'success_url' => url('/ride/success?session_id={CHECKOUT_SESSION_ID}&ride_id=' . $ride->id),
+                    'cancel_url' => url('/ride'),
+                ]);
+
                 return response()->json([
                     'url' => $session->url,
                     'polling_url' => url('/api/ride/' . $ride->id . '/status')
                 ]);
-            }
-            return redirect($session->url);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Stripe Checkout Error: ' . $e->getMessage());
-            if ($request->wantsJson()) {
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Stripe Checkout Error: ' . $e->getMessage());
                 return response()->json(['error' => 'Payment gateway error: ' . $e->getMessage()], 500);
             }
-            return back()->with('error', 'Payment gateway error: ' . $e->getMessage());
         }
-    }
 
-    if ($request->wantsJson()) {
         return response()->json([
             'success' => true, 
             'ride_id' => $ride->id,
             'polling_url' => url('/api/ride/' . $ride->id . '/status')
         ]);
-    }
 
-    return redirect('/ride')->with('success', "Ride booked successfully! Receipt Code: {$digitalReceipt}. Your driver is being dispatched.");
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Ride booking error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
 });
 
 // Polling endpoint for Rider to check if driver accepted
