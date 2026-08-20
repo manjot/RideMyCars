@@ -304,7 +304,8 @@ Route::post('/rent/{vehicle}/book', function (\Illuminate\Http\Request $request,
 });
 
 Route::get('/ride', function () {
-    return view('ride');
+    $vehicles = \App\Models\Vehicle::all();
+    return view('ride', compact('vehicles'));
 });
 
 Route::post('/ride/book', function (\Illuminate\Http\Request $request) {

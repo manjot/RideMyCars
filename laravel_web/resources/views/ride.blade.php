@@ -139,79 +139,48 @@
                             <input type="hidden" name="payment_method" x-model="paymentMethod">
 
                             <!-- Vehicle List -->
-                            <div class="space-y-3">
-                                <!-- Economy -->
-                                <div @click="vehicle_type = 'Economy'" 
-                                     :class="vehicle_type === 'Economy' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
+                            <div class="space-y-3" style="max-height: 50vh; overflow-y: auto;">
+                                @forelse($vehicles as $vehicle)
+                                <div @click="vehicle_type = '{{ $vehicle->make }} {{ $vehicle->model }}'" 
+                                     :class="vehicle_type === '{{ $vehicle->make }} {{ $vehicle->model }}' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
                                      class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
                                     <div class="flex items-center gap-4">
-                                        <div class="text-5xl">🚗</div>
+                                        @if($vehicle->image_url)
+                                            <img src="{{ Storage::url($vehicle->image_url) }}" alt="{{ $vehicle->make }}" class="w-16 h-12 object-contain">
+                                        @else
+                                            <div class="text-5xl">
+                                                @if(str_contains(strtolower($vehicle->type), 'sedan') || str_contains(strtolower($vehicle->type), 'luxury'))
+                                                    🚘
+                                                @elseif(str_contains(strtolower($vehicle->type), 'suv') || str_contains(strtolower($vehicle->type), 'van'))
+                                                    🚙
+                                                @elseif(str_contains(strtolower($vehicle->type), 'bike') || str_contains(strtolower($vehicle->type), 'moto'))
+                                                    🛵
+                                                @else
+                                                    🚗
+                                                @endif
+                                            </div>
+                                        @endif
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">Uber Go AC</h4>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">{{ $vehicle->make }} {{ $vehicle->model }}</h4>
                                                 <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
                                                     4
                                                 </div>
                                             </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">3 mins away • 11:27 PM</p>
-                                            <div class="inline-flex mt-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded items-center gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                                                Faster
-                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">Available Now</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{{ $vehicle->type }}</p>
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹212.65</div>
+                                        <div class="font-bold text-xl text-gray-900 dark:text-white">${{ number_format($vehicle->daily_rate, 2) }}</div>
                                     </div>
                                 </div>
-
-                                <!-- Bike -->
-                                <div @click="vehicle_type = 'Bike'" 
-                                     :class="vehicle_type === 'Bike' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
-                                     class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
-                                    <div class="flex items-center gap-4">
-                                        <div class="text-5xl">🛵</div>
-                                        <div>
-                                            <div class="flex items-center gap-2">
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">Bike</h4>
-                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                                    1
-                                                </div>
-                                            </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">5 mins away • 11:28 PM</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Affordable 2 wheeler rides</p>
-                                        </div>
+                                @empty
+                                    <div class="text-center p-6 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-white/10">
+                                        <p class="text-gray-500 dark:text-gray-400 font-medium">No vehicles are currently available in your area.</p>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹109.71</div>
-                                        <div class="text-xs text-gray-500 line-through">₹112.71</div>
-                                    </div>
-                                </div>
-
-                                <!-- Sedan -->
-                                <div @click="vehicle_type = 'Premium'" 
-                                     :class="vehicle_type === 'Premium' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
-                                     class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
-                                    <div class="flex items-center gap-4">
-                                        <div class="text-5xl">🚘</div>
-                                        <div>
-                                            <div class="flex items-center gap-2">
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">Go Sedan</h4>
-                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                                    4
-                                                </div>
-                                            </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">4 mins away • 11:27 PM</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Affordable sedans</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹213.69</div>
-                                    </div>
-                                </div>
+                                @endforelse
                             </div>
 
                             <!-- Sticky Bottom Booking Bar -->
@@ -237,7 +206,7 @@
 
                                 <!-- Submit Button -->
                                 <button type="submit" class="flex-1 bg-black hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-lg transition-colors flex items-center justify-center shadow-lg active:scale-[0.98]">
-                                    Request <span x-text="vehicle_type === 'Economy' ? 'Uber Go AC' : (vehicle_type === 'Premium' ? 'Go Sedan' : vehicle_type)" class="ml-1"></span>
+                                    Request <span x-text="vehicle_type || 'Ride'" class="ml-1 truncate max-w-[150px]"></span>
                                 </button>
                             </div>
 
