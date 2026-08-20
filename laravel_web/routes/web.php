@@ -453,7 +453,15 @@ Route::post('/payment/cashapp/webhook', function (\Illuminate\Http\Request $requ
 });
 
 Route::get('/activity', function () {
-    return view('activity');
+    $user = auth()->user();
+    $rides = \App\Models\Ride::where('rider_id', $user->id)
+        ->orderBy('created_at', 'desc')
+        ->get();
+        
+    $upcomingRides = $rides->whereIn('status', ['pending', 'accepted', 'in_progress']);
+    $pastRides = $rides->whereNotIn('status', ['pending', 'accepted', 'in_progress']);
+    
+    return view('activity', compact('upcomingRides', 'pastRides'));
 })->middleware('auth');
 
 Route::get('/wallet', function () {

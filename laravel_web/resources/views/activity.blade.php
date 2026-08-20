@@ -15,10 +15,30 @@
         <!-- Main Content -->
         <main class="flex-1 min-w-0">
             
-            <!-- Upcoming Section -->
+                <!-- Upcoming Section -->
             <div class="mb-14">
                 <h1 class="text-[32px] font-bold text-black dark:text-white mb-6">Upcoming</h1>
                 
+                @forelse($upcomingRides as $ride)
+                <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-[#f8f8f8] dark:bg-[#1a1a1a] mb-4 p-5 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-black dark:text-white mb-1">{{ $ride->dropoff_location }}</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">From: {{ $ride->pickup_location }}</p>
+                        <div class="text-xs font-bold mt-2 text-blue-600 dark:text-blue-400 uppercase tracking-wide px-2 py-1 bg-blue-50 dark:bg-blue-900/30 inline-block rounded">{{ $ride->status }}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-4xl">
+                            @if(stripos($ride->vehicle_type, 'auto') !== false || stripos($ride->vehicle_type, 'rickshaw') !== false)
+                                🛺
+                            @elseif(stripos($ride->vehicle_type, 'bike') !== false || stripos($ride->vehicle_type, 'moto') !== false)
+                                🛵
+                            @else
+                                🚗
+                            @endif
+                        </span>
+                    </div>
+                </div>
+                @empty
                 <!-- Upcoming Card -->
                 <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-[#f8f8f8] dark:bg-[#1a1a1a]">
                     <!-- Banner Graphic (Placeholder) -->
@@ -41,6 +61,7 @@
                         </a>
                     </div>
                 </div>
+                @endforelse
             </div>
 
             <!-- Past Section -->
@@ -86,147 +107,73 @@
                 <!-- Trips Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
-                    <!-- Map Card -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111]">
-                        <div class="w-full sm:w-[45%] h-40 sm:h-auto bg-[#e8eaed] dark:bg-[#222] relative flex-shrink-0">
-                            <!-- Fake Map Graphic -->
-                            <div class="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/cartographer.png')]"></div>
-                            <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-                                <path d="M 20 80 Q 40 60 50 30 T 80 20" fill="none" stroke="black" stroke-width="2" class="dark:stroke-white"/>
-                                <circle cx="20" cy="80" r="3" fill="black" class="dark:fill-white"/>
-                                <rect x="77" y="17" width="6" height="6" fill="black" class="dark:fill-white"/>
-                            </svg>
-                        </div>
-                        <div class="p-4 flex flex-col justify-center flex-1">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-1 leading-tight truncate">T/49, Main Street</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-1">18 Aug • 03:14</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-4">₹563.17</div>
-                            <div class="flex items-center gap-2">
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                                    Details
-                                </button>
+                    @forelse($pastRides as $index => $ride)
+                        @if($index === 0)
+                        <!-- Map Card for most recent past trip -->
+                        <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111]">
+                            <div class="w-full sm:w-[45%] h-40 sm:h-auto bg-[#e8eaed] dark:bg-[#222] relative flex-shrink-0">
+                                <!-- Fake Map Graphic -->
+                                <div class="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/cartographer.png')]"></div>
+                                <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                                    <path d="M 20 80 Q 40 60 50 30 T 80 20" fill="none" stroke="black" stroke-width="2" class="dark:stroke-white"/>
+                                    <circle cx="20" cy="80" r="3" fill="black" class="dark:fill-white"/>
+                                    <rect x="77" y="17" width="6" height="6" fill="black" class="dark:fill-white"/>
+                                </svg>
+                            </div>
+                            <div class="p-4 flex flex-col justify-center flex-1 min-w-0">
+                                <h3 class="font-bold text-[17px] text-black dark:text-white mb-1 leading-tight truncate">{{ $ride->dropoff_location }}</h3>
+                                <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-1">{{ $ride->created_at->format('d M • H:i') }}</div>
+                                <div class="text-[15px] font-medium text-black dark:text-white mb-4">
+                                    ₹{{ number_format($ride->fare ?? 0, 2) }}
+                                    @if($ride->status === 'cancelled') <span class="text-red-500 text-sm ml-1">• Cancelled</span> @endif
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                        Help
+                                    </button>
+                                    <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                                        Details
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Trip Card 1 -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4">
-                        <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0">
-                            <span class="text-3xl">🚗</span>
-                        </div>
-                        <div class="flex flex-col justify-center flex-1 min-w-0">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">Shree Khatu Shyam Mandir...</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">22 Jul • 12:40</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-3">₹298.67</div>
-                            <div>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
+                        @else
+                        <!-- Standard Trip Card -->
+                        <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4">
+                            <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0 relative">
+                                <span class="text-3xl">
+                                    @if(stripos($ride->vehicle_type, 'auto') !== false || stripos($ride->vehicle_type, 'rickshaw') !== false)
+                                        🛺
+                                    @elseif(stripos($ride->vehicle_type, 'bike') !== false || stripos($ride->vehicle_type, 'moto') !== false)
+                                        🛵
+                                    @else
+                                        🚗
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="flex flex-col justify-center flex-1 min-w-0">
+                                <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">{{ $ride->dropoff_location }}</h3>
+                                <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">{{ $ride->created_at->format('d M • H:i') }}</div>
+                                <div class="text-[15px] font-medium text-black dark:text-white mb-3">
+                                    ₹{{ number_format($ride->fare ?? 0, 2) }}
+                                    @if($ride->status === 'cancelled') <span class="text-red-500 text-sm ml-1">• Cancelled</span> @endif
+                                </div>
+                                <div>
+                                    <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                        Help
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Trip Card 2 -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4 relative">
-                        <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0">
-                            <span class="text-3xl">🛵</span>
+                        @endif
+                    @empty
+                        <div class="col-span-full py-10 text-center text-gray-500 font-medium">
+                            You have no past trips.
                         </div>
-                        <div class="flex flex-col justify-center flex-1 min-w-0">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">Tower-V</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">15 Jul • 17:09</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-3">₹61.58</div>
-                            <div>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Trip Card 3 -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4">
-                        <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0 relative">
-                            <span class="text-3xl">🛺</span>
-                        </div>
-                        <div class="flex flex-col justify-center flex-1 min-w-0">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">Gurudwara Mata Sundri Ji</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">11 Jul • 11:12</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-3">₹106.78</div>
-                            <div>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Trip Card 4 (Cancelled) -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4">
-                        <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0">
-                            <span class="text-3xl">🛺</span>
-                        </div>
-                        <div class="flex flex-col justify-center flex-1 min-w-0">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">Castle's Barbeque cp</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">26 Jun • 19:48</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-3">₹0.00 • Cancelled</div>
-                            <div>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Trip Card 5 (AC / Snowflake) -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4">
-                        <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0 relative">
-                            <span class="text-3xl">🚗</span>
-                            <div class="absolute -top-1 -right-1 bg-white dark:bg-[#111] rounded-full p-0.5 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-blue-500"><path d="M12 2v20M2 12h20M19.07 4.93l-14.14 14.14M4.93 4.93l14.14 14.14M8 12a4 4 0 0 1 8 0"/></svg>
-                            </div>
-                        </div>
-                        <div class="flex flex-col justify-center flex-1 min-w-0">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">T/49, Main Street</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">18 Jun • 03:06</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-3">₹634.01</div>
-                            <div>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Trip Card 6 (Clock / Scheduled) -->
-                    <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111] items-center gap-4">
-                        <div class="w-[72px] h-[72px] bg-[#f8f8f8] dark:bg-[#222] rounded-xl flex items-center justify-center shrink-0 relative">
-                            <span class="text-3xl">🚗</span>
-                            <div class="absolute -top-1 -right-1 bg-white dark:bg-[#111] rounded-full p-0.5 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-black dark:text-white"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            </div>
-                        </div>
-                        <div class="flex flex-col justify-center flex-1 min-w-0">
-                            <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">Orlando International...</h3>
-                            <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">2 May • 16:58</div>
-                            <div class="text-[15px] font-medium text-black dark:text-white mb-3">US$15.32</div>
-                            <div>
-                                <button class="inline-flex items-center gap-1.5 bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] px-3 py-1.5 rounded-full font-bold text-xs text-black dark:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    Help
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    @endforelse
 
                 </div>
                 
