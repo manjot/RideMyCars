@@ -185,84 +185,32 @@
                         </div>
 
                         <div class="absolute bottom-0 left-0 w-full bg-white dark:bg-[#111] border-t border-gray-100 dark:border-white/10 p-4 lg:rounded-b-[24px] z-10">
-                            <button type="button" @click="paymentModal = true" class="w-full flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-[#222] p-2 rounded-xl transition-colors cursor-pointer mb-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-8 bg-gray-900 text-white rounded-lg flex items-center justify-center shadow-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <div class="font-bold text-gray-900 dark:text-white text-sm" x-text="paymentMethod"></div>
-                                        <div class="text-[11px] text-gray-500 font-medium" x-text="profileType"></div>
-                                    </div>
+                            <!-- Payment Method -->
+                            <div class="mb-3 relative">
+                                <select name="payment_method" class="w-full px-4 py-3.5 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer font-semibold">
+                                    <option value="stripe">💳 Stripe</option>
+                                    <option value="momo" selected>📱 Momo Pay</option>
+                                    <option value="cash">💵 Cash</option>
+                                    <option value="applepay">🍏 Apple Pay</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
                                 </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                            </button>
+                            </div>
 
                             <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-lg transition-colors flex items-center justify-center shadow-md active:scale-[0.98]">
                                 Request <span x-text="vehicle_type || 'Ride'" class="ml-1 truncate max-w-[150px]"></span>
                             </button>
                         </div>
-
-                        <div x-show="paymentModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                            <div @click.away="paymentModal = false" class="bg-white dark:bg-[#1a1a1a] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4">
-                                <div class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <button type="button" @click="paymentModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-[#222] rounded-full transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                        </button>
-                                        <h2 class="text-base font-bold text-gray-900 dark:text-white">Payment methods</h2>
-                                    </div>
-                                    <button type="button" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-[#333] dark:hover:bg-[#444] rounded-full text-sm font-bold text-gray-900 dark:text-white transition-colors flex items-center gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                                        Add
-                                    </button>
-                                </div>
-                                <div class="p-6">
-                                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">Pay with</h3>
-                                    <div class="flex bg-gray-100 dark:bg-[#222] rounded-lg p-1 mb-8">
-                                        <button type="button" @click="profileType = 'Personal'" :class="profileType === 'Personal' ? 'bg-white dark:bg-[#333] shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'" class="flex-1 py-2 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                            Personal
-                                        </button>
-                                        <button type="button" @click="profileType = 'Business'" :class="profileType === 'Business' ? 'bg-white dark:bg-[#333] shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'" class="flex-1 py-2 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                            Business
-                                        </button>
-                                    </div>
-                                    <div class="space-y-1">
-                                        <div @click="paymentMethod = 'Cash'" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors">
-                                            <div class="flex items-center gap-4">
-                    <div class="mt-0.5 p-2 bg-brand-50 rounded-lg text-brand-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white mb-0.5">Fully insured</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Every ride covered by platform insurance.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex items-start gap-4 hover:border-gray-300 transition-colors">
-                    <div class="mt-0.5 p-2 bg-brand-50 rounded-lg text-brand-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white mb-0.5">Verified drivers</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Background-checked, rated 4.5 and above.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex items-start gap-4 hover:border-gray-300 transition-colors">
-                    <div class="mt-0.5 p-2 bg-brand-50 rounded-lg text-brand-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white mb-0.5">Support around the clock</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Reach a person any time, day or night.</p>
-                    </div>
-                </div>
-
-                <div class="pt-4 text-center">
-                    <a href="/rent" class="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Need a vehicle instead?</a>
-                </div>
-
+                </form>
+            </div>
+        
+            <!-- Right Side: Map -->
+            <div class="w-full lg:flex-1 h-[400px] lg:h-[600px] bg-gray-50 dark:bg-[#1a1a1a] rounded-[24px] border border-gray-200 dark:border-white/10 overflow-hidden relative shadow-sm shrink-0 lg:shrink min-w-[300px]">
+                <div id="map" class="w-full h-full"></div>
             </div>
 
         </div>
