@@ -14,9 +14,21 @@ class DriverProfileResource extends Resource
 {
     protected static ?string $model = DriverProfile::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-identification';
-    protected static ?string $navigationGroup = 'Driver Operations';
+    protected static ?string $navigationIcon = 'heroicon-o-user-check';
+    protected static ?string $navigationGroup = 'Fleet & Drivers';
+    protected static ?string $navigationLabel = 'Driver Profiles';
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::whereIn('verification_status', ['submitted', 'under_review'])->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
 
     public static function form(Form $form): Form
     {

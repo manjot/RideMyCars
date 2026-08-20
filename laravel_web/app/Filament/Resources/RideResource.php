@@ -17,7 +17,21 @@ class RideResource extends Resource
 {
     protected static ?string $model = Ride::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+    protected static ?string $navigationGroup = 'Dispatch & Bookings';
+    protected static ?string $navigationLabel = 'Rides & Deliveries';
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::where('status', 'pending')->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'amber';
+    }
 
     public static function form(Form $form): Form
     {

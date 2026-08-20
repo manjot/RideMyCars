@@ -14,9 +14,21 @@ class DriverBookingResource extends Resource
 {
     protected static ?string $model = DriverBooking::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationGroup = 'Driver Operations';
+    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static ?string $navigationGroup = 'Dispatch & Bookings';
+    protected static ?string $navigationLabel = 'Driver Hiring Bookings';
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::where('booking_status', 'pending')->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'amber';
+    }
 
     public static function form(Form $form): Form
     {

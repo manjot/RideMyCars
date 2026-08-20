@@ -14,8 +14,9 @@ class PaymentTransactionResource extends Resource
 {
     protected static ?string $model = PaymentTransaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
-    protected static ?string $navigationGroup = 'Financial & Payments';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static ?string $navigationGroup = 'Financials & Audit';
+    protected static ?string $navigationLabel = 'Payment Transactions';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
