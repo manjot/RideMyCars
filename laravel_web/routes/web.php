@@ -464,6 +464,11 @@ Route::get('/activity', function () {
     return view('activity', compact('upcomingRides', 'pastRides'));
 })->middleware('auth');
 
+Route::get('/account', function () {
+    $user = auth()->user();
+    return view('account', compact('user'));
+})->middleware('auth');
+
 Route::get('/wallet', function () {
     return view('wallet');
 })->middleware('auth');
