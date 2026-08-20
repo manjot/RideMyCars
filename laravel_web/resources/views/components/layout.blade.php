@@ -137,7 +137,7 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="fixed inset-x-3 top-20 sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-3 sm:w-[380px] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
+                             class="fixed left-3 right-3 top-20 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-[380px] max-w-[calc(100vw-2rem)] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
                              style="display: none;">
                             
                             <!-- Header -->
