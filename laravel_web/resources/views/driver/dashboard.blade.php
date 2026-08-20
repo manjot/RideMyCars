@@ -270,56 +270,6 @@
                                                     Decline
                                                 </button>
                                             </form>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Active Jobs -->
-                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Active & Ongoing Jobs</h2>
-                        @if($activeDriverBookings->isEmpty())
-                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No active driver hiring jobs at the moment.</p>
-                        @else
-                            <div class="space-y-4">
-                                @foreach($activeDriverBookings as $bk)
-                                    <div class="p-5 border border-brand-200 dark:border-brand-900/40 bg-brand-50/50 dark:bg-brand-900/10 rounded-2xl">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <span class="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-400 tracking-wider">
-                                                Status: {{ strtoupper($bk->booking_status) }}
-                                            </span>
-                                            <span class="font-bold text-gray-900 dark:text-white text-base">{{ $bk->currency }} {{ number_format($bk->total_price, 2) }}</span>
-                                        </div>
-                                        <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Client:</strong> {{ $bk->client->name }}</p>
-                                        <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Pickup:</strong> {{ $bk->pickup_location }}</p>
-                                        
-                                        <div class="mt-4 pt-3 border-t border-brand-100 dark:border-brand-900/30 flex gap-3">
-                                            @if($bk->booking_status === 'accepted')
-                                                <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST">
-                                                    @csrf
-                                                    <input type="hidden" name="status" value="in_progress">
-                                                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs">
-                                                        Start Trip
-                                                    </button>
-                                                </form>
-                                            @elseif($bk->booking_status === 'in_progress')
-                                                <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST">
-                                                    @csrf
-                                                    <input type="hidden" name="status" value="completed">
-                                                    <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs">
-                                                        Complete Trip & Receive Payment
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
                     <!-- License Verification Upload Section -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Driver License Verification</h2>

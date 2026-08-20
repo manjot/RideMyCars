@@ -215,8 +215,88 @@
     @auth
     <div x-data="ongoingRide()" x-init="init()" x-show="ride" x-transition x-cloak
          class="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pointer-events-none" style="display:none;">
-        <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
-           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-4 p-4 rounded-2xl shadow-2xl border transition-all hover:scale-[1.01]"
+        
+        <!-- Expanded Detail Panel -->
+        <div x-show="expanded" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-8"
+             class="pointer-events-auto max-w-lg mx-auto bg-white dark:bg-[#111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 mb-2 overflow-hidden" style="display:none;">
+            
+            <!-- Header bar -->
+            <div class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between"
+                 :class="{
+                     'bg-indigo-50 dark:bg-indigo-900/20': ride && ride.status === 'pending',
+                     'bg-yellow-50 dark:bg-yellow-900/20': ride && ride.status === 'accepted',
+                     'bg-blue-50 dark:bg-blue-900/20': ride && ride.status === 'en_route',
+                     'bg-amber-50 dark:bg-amber-900/20': ride && ride.status === 'arrived',
+                     'bg-green-50 dark:bg-green-900/20': ride && ride.status === 'in_progress',
+                 }">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full animate-pulse"
+                          :class="{
+                              'bg-indigo-500': ride && ride.status === 'pending',
+                              'bg-yellow-500': ride && ride.status === 'accepted',
+                              'bg-blue-500': ride && ride.status === 'en_route',
+                              'bg-amber-500': ride && ride.status === 'arrived',
+                              'bg-green-500': ride && ride.status === 'in_progress',
+                          }"></span>
+                    <span class="font-bold text-sm text-gray-900 dark:text-white" x-text="statusText"></span>
+                </div>
+                <button @click="expanded = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
+                    <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+            </div>
+            
+            <!-- Ride Details -->
+            <div class="p-4 space-y-3">
+                <!-- Locations -->
+                <div class="flex gap-3">
+                    <div class="flex flex-col items-center pt-1">
+                        <div class="w-3 h-3 rounded-full bg-green-500 border-2 border-green-200"></div>
+                        <div class="w-0.5 h-8 bg-gray-200 dark:bg-white/10 my-1"></div>
+                        <div class="w-3 h-3 rounded-full bg-red-500 border-2 border-red-200"></div>
+                    </div>
+                    <div class="flex-1 space-y-3">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight" x-text="ride ? ride.pickup_location : ''"></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight" x-text="ride ? ride.dropoff_location : ''"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver / Fare Info -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-3" x-show="ride && ride.driver_name">
+                        <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300" x-text="ride && ride.driver_name ? ride.driver_name.charAt(0) : ''"></div>
+                        <div>
+                            <p class="font-bold text-sm text-gray-900 dark:text-white" x-text="ride ? ride.driver_name : ''"></p>
+                            <p class="text-xs text-gray-400">Your driver</p>
+                        </div>
+                    </div>
+                    <div x-show="ride && !ride.driver_name" class="flex items-center gap-2">
+                        <div class="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-xs text-gray-500 font-medium">Searching drivers...</span>
+                    </div>
+                    <div class="text-right" x-show="ride && ride.fare">
+                        <p class="font-extrabold text-lg text-gray-900 dark:text-white" x-text="ride && ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : ''"></p>
+                        <p class="text-[10px] uppercase text-gray-400 font-bold">Estimated fare</p>
+                    </div>
+                </div>
+                
+                <!-- Track Button -->
+                <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
+                   class="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold text-sm rounded-xl hover:opacity-90 transition-opacity">
+                    Track Ride →
+                </a>
+            </div>
+        </div>
+
+        <!-- Collapsed Banner (click to expand) -->
+        <div @click="expanded = !expanded"
+           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-4 p-4 rounded-2xl shadow-2xl border transition-all hover:scale-[1.01] cursor-pointer"
            :class="{
                'bg-indigo-600 border-indigo-500 text-white': ride && ride.status === 'pending',
                'bg-blue-600 border-blue-500 text-white': ride && ride.status === 'en_route',
@@ -236,13 +316,14 @@
                 <p class="text-xs opacity-80 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
             </div>
             <!-- Arrow -->
-            <svg class="w-5 h-5 shrink-0 opacity-80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-        </a>
+            <svg class="w-5 h-5 shrink-0 opacity-80 transition-transform duration-200" :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
     </div>
     <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('ongoingRide', () => ({
             ride: null,
+            expanded: false,
             timer: null,
             get statusText() {
                 if (!this.ride) return '';
