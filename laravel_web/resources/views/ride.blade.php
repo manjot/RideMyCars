@@ -183,9 +183,9 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-bold text-xl text-gray-900 dark:text-white">${{ number_format($vehicle->daily_rate, 2) }}</div>
+                                        <div class="dynamic-price font-bold text-xl text-gray-900 dark:text-white" data-daily-rate="{{ $vehicle->daily_rate }}">${{ number_format($vehicle->daily_rate, 2) }}</div>
                                         @if(str_contains(strtolower($vehicle->type), 'bike'))
-                                            <div class="text-xs text-gray-500 line-through">${{ number_format($vehicle->daily_rate * 1.05, 2) }}</div>
+                                            <div class="dynamic-price-strike text-xs text-gray-500 line-through" data-daily-rate="{{ $vehicle->daily_rate }}">${{ number_format($vehicle->daily_rate * 1.05, 2) }}</div>
                                         @endif
                                     </div>
                                 </div>
@@ -435,6 +435,38 @@
                             directionsRenderer.setDirections(response);
                             if (marker) marker.setMap(null); // Hide default single marker
                             drawVehicles(pickupLoc);
+
+                            // Calculate dynamic prices based on route
+                            const route = response.routes[0].legs[0];
+                            const distanceKm = route.distance.value / 1000;
+                            const durationMin = route.duration.value / 60;
+                            
+                            // Adjust traffic multiplier (simulate traffic based on avg speed)
+                            // avg speed in km/h
+                            const avgSpeed = distanceKm / (durationMin / 60);
+                            const trafficMultiplier = avgSpeed < 20 ? 1.2 : (avgSpeed > 40 ? 0.9 : 1.0);
+
+                            document.querySelectorAll('.dynamic-price').forEach(el => {
+                                const dailyRate = parseFloat(el.getAttribute('data-daily-rate'));
+                                // Split daily rate into base, per km, and per min
+                                const basePrice = dailyRate / 10;
+                                const perKm = dailyRate / 50;
+                                const perMin = dailyRate / 100;
+                                
+                                const fare = (basePrice + (distanceKm * perKm) + (durationMin * perMin)) * trafficMultiplier;
+                                el.innerText = '$' + fare.toFixed(2);
+                            });
+                            
+                            document.querySelectorAll('.dynamic-price-strike').forEach(el => {
+                                const dailyRate = parseFloat(el.getAttribute('data-daily-rate'));
+                                const basePrice = dailyRate / 10;
+                                const perKm = dailyRate / 50;
+                                const perMin = dailyRate / 100;
+                                
+                                const fare = (basePrice + (distanceKm * perKm) + (durationMin * perMin)) * trafficMultiplier;
+                                el.innerText = '$' + (fare * 1.05).toFixed(2);
+                            });
+
                         } else {
                             console.warn("Directions request failed: " + status);
                         }
