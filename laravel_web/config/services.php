@@ -73,4 +73,9 @@ return [
         'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'stripe' => [
+        'key' => 'pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds',
+        'secret' => env('STRIPE_SECRET'),
+    ],
+
 ];
