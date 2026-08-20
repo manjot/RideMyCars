@@ -342,33 +342,41 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
     \App\Services\RideAssignmentService::assignNextDriver($ride);
 
     if (strtolower($paymentMethod) === 'stripe') {
-        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-        
-        $session = \Stripe\Checkout\Session::create([
-            'payment_method_types' => ['card'],
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => 'usd',
-                    'product_data' => [
-                        'name' => 'Ride with ' . ($request->vehicle_type ?? 'Economy'),
-                        'description' => 'From ' . $request->pickup_location . ' to ' . $request->dropoff_location,
+        try {
+            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+            
+            $session = \Stripe\Checkout\Session::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'usd',
+                        'product_data' => [
+                            'name' => 'Ride with ' . ($request->vehicle_type ?? 'Economy'),
+                            'description' => 'From ' . substr($request->pickup_location, 0, 100) . ' to ' . substr($request->dropoff_location, 0, 100),
+                        ],
+                        'unit_amount' => (int)($amount * 100),
                     ],
-                    'unit_amount' => (int)($amount * 100),
-                ],
-                'quantity' => 1,
-            ]],
-            'mode' => 'payment',
-            'success_url' => url('/ride/success?session_id={CHECKOUT_SESSION_ID}&ride_id=' . $ride->id),
-            'cancel_url' => url('/ride'),
-        ]);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'url' => $session->url,
-                'polling_url' => url('/api/ride/' . $ride->id . '/status')
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => url('/ride/success?session_id={CHECKOUT_SESSION_ID}&ride_id=' . $ride->id),
+                'cancel_url' => url('/ride'),
             ]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'url' => $session->url,
+                    'polling_url' => url('/api/ride/' . $ride->id . '/status')
+                ]);
+            }
+            return redirect($session->url);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Stripe Checkout Error: ' . $e->getMessage());
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Payment gateway error: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Payment gateway error: ' . $e->getMessage());
         }
-        return redirect($session->url);
     }
 
     if ($request->wantsJson()) {

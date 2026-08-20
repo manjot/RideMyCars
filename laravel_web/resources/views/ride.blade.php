@@ -632,6 +632,12 @@
                         
                         const data = await response.json();
                         
+                        if (data.error) {
+                            alert('Booking failed: ' + data.error);
+                            this.isConfirming = false;
+                            return;
+                        }
+                        
                         if (data.polling_url) {
                             const checkStatus = async () => {
                                 if (!this.isConfirming) return; // user cancelled
