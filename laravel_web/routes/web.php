@@ -572,15 +572,51 @@ Route::get('/api/user/ongoing-ride', function () {
 
     if (!$ride) return response()->json(['ride' => null]);
 
+    $driverProfile = $ride->driver && $ride->driver->driverProfile ? $ride->driver->driverProfile : null;
+
     return response()->json(['ride' => [
         'id' => $ride->id,
         'status' => $ride->status,
         'pickup_location' => $ride->pickup_location,
         'dropoff_location' => $ride->dropoff_location,
-        'driver_name' => $ride->driver ? $ride->driver->name : null,
-        'rider_name' => $ride->rider ? $ride->rider->name : null,
         'fare' => $ride->fare,
+        'vehicle_type' => $ride->vehicle_type ?? 'Standard',
+        'payment_method' => $ride->payment_method ?? 'cash',
+        'created_at' => $ride->created_at->toIso8601String(),
+        'driver_name' => $ride->driver ? $ride->driver->name : null,
+        'driver_phone' => $ride->driver ? $ride->driver->phone : null,
+        'driver_rating' => $driverProfile ? $driverProfile->rating : null,
+        'driver_total_trips' => $driverProfile ? $driverProfile->total_completed_trips : null,
+        'driver_vehicle' => $driverProfile ? ($driverProfile->vehicle_make . ' ' . $driverProfile->vehicle_model) : null,
+        'driver_plate' => $driverProfile ? $driverProfile->vehicle_plate : null,
+        'rider_name' => $ride->rider ? $ride->rider->name : null,
     ]]);
+})->middleware('auth');
+
+// Boost fare and resend ride to all drivers
+Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $request, $id) {
+    $user = auth()->user();
+    $ride = \App\Models\Ride::where('id', $id)->where('rider_id', $user->id)->first();
+    if (!$ride) return response()->json(['error' => 'Ride not found'], 404);
+    if (!in_array($ride->status, ['pending', 'failed'])) {
+        return response()->json(['error' => 'Cannot boost fare for this ride'], 400);
+    }
+
+    $newFare = floatval($request->input('fare'));
+    if ($newFare <= $ride->fare) {
+        return response()->json(['error' => 'New fare must be higher'], 400);
+    }
+
+    $ride->update(['fare' => $newFare, 'status' => 'pending']);
+
+    // Expire old assignments and resend
+    \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
+
+    // Reassign to all active drivers
+    $service = new \App\Services\RideAssignmentService();
+    $service->assignToActiveDrivers($ride);
+
+    return response()->json(['success' => true, 'new_fare' => $newFare]);
 })->middleware('auth');
 
 // Get active rides for driver

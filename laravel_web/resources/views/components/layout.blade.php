@@ -250,40 +250,93 @@
             <div class="p-4 space-y-3">
                 <!-- Locations -->
                 <div class="flex gap-3">
-                    <div class="flex flex-col items-center pt-1">
+                    <div class="flex flex-col items-center pt-1 shrink-0">
                         <div class="w-3 h-3 rounded-full bg-green-500 border-2 border-green-200"></div>
                         <div class="w-0.5 h-8 bg-gray-200 dark:bg-white/10 my-1"></div>
                         <div class="w-3 h-3 rounded-full bg-red-500 border-2 border-red-200"></div>
                     </div>
-                    <div class="flex-1 space-y-3">
+                    <div class="flex-1 min-w-0 space-y-3">
                         <div>
                             <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup</p>
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight" x-text="ride ? ride.pickup_location : ''"></p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words" x-text="ride ? ride.pickup_location : ''"></p>
                         </div>
                         <div>
                             <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff</p>
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight" x-text="ride ? ride.dropoff_location : ''"></p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words" x-text="ride ? ride.dropoff_location : ''"></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Driver / Fare Info -->
-                <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/10">
-                    <div class="flex items-center gap-3" x-show="ride && ride.driver_name">
-                        <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300" x-text="ride && ride.driver_name ? ride.driver_name.charAt(0) : ''"></div>
+                <!-- Driver Details (when assigned) -->
+                <div x-show="ride && ride.driver_name" class="pt-3 border-t border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-lg font-bold text-indigo-700 dark:text-indigo-300 shrink-0" x-text="ride && ride.driver_name ? ride.driver_name.charAt(0) : ''"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-base text-gray-900 dark:text-white" x-text="ride ? ride.driver_name : ''"></p>
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span x-show="ride && ride.driver_rating" class="flex items-center gap-0.5">
+                                    <span class="text-yellow-400">★</span>
+                                    <span x-text="ride && ride.driver_rating ? parseFloat(ride.driver_rating).toFixed(1) : ''"></span>
+                                </span>
+                                <span x-show="ride && ride.driver_total_trips">·</span>
+                                <span x-show="ride && ride.driver_total_trips" x-text="(ride ? ride.driver_total_trips : 0) + ' trips'"></span>
+                            </div>
+                        </div>
+                        <a x-show="ride && ride.driver_phone" :href="'tel:' + (ride ? ride.driver_phone : '')" class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center hover:bg-green-200 transition-colors shrink-0">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        </a>
+                    </div>
+                    <!-- Vehicle Info -->
+                    <div x-show="ride && ride.driver_vehicle" class="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-white/5 rounded-xl text-xs">
+                        <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
+                        <span class="font-semibold text-gray-700 dark:text-gray-300" x-text="ride ? ride.driver_vehicle : ''"></span>
+                        <span x-show="ride && ride.driver_plate" class="ml-auto px-2 py-0.5 bg-gray-200 dark:bg-white/10 rounded font-bold text-gray-600 dark:text-gray-300" x-text="ride ? ride.driver_plate : ''"></span>
+                    </div>
+                </div>
+
+                <!-- Searching for drivers (when pending) -->
+                <div x-show="ride && !ride.driver_name" class="pt-3 border-t border-gray-100 dark:border-white/10">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
+                            <div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
                         <div>
-                            <p class="font-bold text-sm text-gray-900 dark:text-white" x-text="ride ? ride.driver_name : ''"></p>
-                            <p class="text-xs text-gray-400">Your driver</p>
+                            <p class="font-bold text-sm text-gray-900 dark:text-white">Looking for drivers...</p>
+                            <p class="text-xs text-gray-400">We'll notify you when a driver accepts</p>
                         </div>
                     </div>
-                    <div x-show="ride && !ride.driver_name" class="flex items-center gap-2">
-                        <div class="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-xs text-gray-500 font-medium">Searching drivers...</span>
+                </div>
+
+                <!-- Fare & Payment -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/10">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Fare</p>
+                        <p class="font-black text-2xl text-gray-900 dark:text-white" x-text="ride && ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : '$0.00'"></p>
                     </div>
-                    <div class="text-right" x-show="ride && ride.fare">
-                        <p class="font-extrabold text-lg text-gray-900 dark:text-white" x-text="ride && ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : ''"></p>
-                        <p class="text-[10px] uppercase text-gray-400 font-bold">Estimated fare</p>
+                    <div class="text-right">
+                        <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Payment</p>
+                        <p class="font-semibold text-sm text-gray-700 dark:text-gray-300 capitalize" x-text="ride ? ride.payment_method : 'cash'"></p>
                     </div>
+                </div>
+                
+                <!-- Boost Fare (visible only when pending / no driver accepted) -->
+                <div x-show="ride && ride.status === 'pending'" class="pt-3 border-t border-gray-100 dark:border-white/10">
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">💰 No drivers yet? Increase fare to attract drivers</p>
+                    <div class="flex gap-2">
+                        <div class="flex-1 relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                            <input type="number" step="0.50" min="0" x-model="boostFare" 
+                                   class="w-full pl-7 pr-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-900 dark:text-white"
+                                   placeholder="Enter new fare">
+                        </div>
+                        <button @click="submitBoost()" :disabled="boosting" 
+                                class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5">
+                            <svg x-show="boosting" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
+                            <span x-text="boosting ? 'Sending...' : '🚀 Boost & Resend'"></span>
+                        </button>
+                    </div>
+                    <p x-show="boostError" class="text-xs text-red-500 mt-1 font-medium" x-text="boostError"></p>
+                    <p x-show="boostSuccess" class="text-xs text-green-600 mt-1 font-medium">✓ Fare boosted! Resent to all drivers.</p>
                 </div>
                 
                 <!-- Track Button -->
@@ -325,6 +378,10 @@
             ride: null,
             expanded: false,
             timer: null,
+            boostFare: '',
+            boosting: false,
+            boostError: '',
+            boostSuccess: false,
             get statusText() {
                 if (!this.ride) return '';
                 const s = this.ride.status;
@@ -346,8 +403,35 @@
                     if (res.ok) {
                         const data = await res.json();
                         this.ride = data.ride || null;
+                        if (this.ride && !this.boostFare) {
+                            this.boostFare = (parseFloat(this.ride.fare) + 5).toFixed(2);
+                        }
                     }
                 } catch(e) {}
+            },
+            async submitBoost() {
+                if (!this.ride) return;
+                this.boosting = true;
+                this.boostError = '';
+                this.boostSuccess = false;
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                    const res = await fetch(`/api/ride/${this.ride.id}/boost-fare`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                        body: JSON.stringify({ fare: parseFloat(this.boostFare) })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        this.boostSuccess = true;
+                        this.ride.fare = data.new_fare;
+                        this.boostFare = (parseFloat(data.new_fare) + 5).toFixed(2);
+                        setTimeout(() => this.boostSuccess = false, 4000);
+                    } else {
+                        this.boostError = data.error || 'Failed to boost fare';
+                    }
+                } catch(e) { this.boostError = 'Network error'; }
+                this.boosting = false;
             }
         }));
     });
