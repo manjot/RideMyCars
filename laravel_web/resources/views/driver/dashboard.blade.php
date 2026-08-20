@@ -56,7 +56,7 @@
                         
                         <div class="space-y-4 relative z-10">
                             <template x-for="req in requests" :key="req.id">
-                                <div class="p-5 border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/80 dark:bg-black/50 backdrop-blur-sm">
+                                <div class="p-5 border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/80 dark:bg-black/50 backdrop-blur-sm shadow-md">
                                     <div class="flex justify-between items-start mb-3">
                                         <div>
                                             <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
@@ -65,19 +65,21 @@
                                             <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + req.ride.id"></h4>
                                         </div>
                                         <div class="text-right">
-                                            <span class="font-extrabold text-lg text-gray-900 dark:text-white" x-text="req.ride.payment_method === 'Cash' ? 'Cash' : 'Card'"></span>
+                                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="req.ride.fare ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$0.00'"></p>
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.ride.payment_method || 'Cash'"></span>
                                         </div>
                                     </div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
+                                    <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
                                         <p><strong>Pickup:</strong> <span x-text="req.ride.pickup_location"></span></p>
                                         <p><strong>Dropoff:</strong> <span x-text="req.ride.dropoff_location"></span></p>
+                                        <p x-show="req.ride.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.ride.vehicle_type"></span></p>
                                         <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
                                     </div>
                                     <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
-                                        <button @click="respondToRequest(req.id, 'accepted')" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm">
-                                            Accept Ride
+                                        <button @click="respondToRequest(req.id, 'accepted')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                            ✓ Accept Ride & Earn <span x-text="req.ride.fare ? '$' + parseFloat(req.ride.fare).toFixed(2) : ''"></span>
                                         </button>
-                                        <button @click="respondToRequest(req.id, 'rejected')" class="px-5 py-2 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
+                                        <button @click="respondToRequest(req.id, 'rejected')" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
                                             Decline
                                         </button>
                                     </div>
@@ -112,7 +114,10 @@
                                                 }" x-text="ride.status.replace('_',' ').toUpperCase()"></span>
                                             <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + ride.id"></h4>
                                         </div>
-                                        <span class="font-extrabold text-lg text-gray-900 dark:text-white" x-text="ride.payment_method"></span>
+                                        <div class="text-right">
+                                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : '$0.00'"></p>
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Cash'"></span>
+                                        </div>
                                     </div>
                                     <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
                                         <p><strong>Rider:</strong> <span x-text="ride.rider?.name || 'Rider'"></span></p>
@@ -354,7 +359,11 @@
                             </li>
                             <li class="flex justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Total Completed Trips</span>
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $profile->total_trips ?? 0 }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ ($completedRides->count() + $completedDriverBookings->count()) }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-500 dark:text-gray-400">Total Earnings</span>
+                                <span class="font-extrabold text-emerald-600 dark:text-emerald-400">${{ number_format($monthlyEarnings, 2) }}</span>
                             </li>
                             <li class="flex justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Hourly Rate</span>

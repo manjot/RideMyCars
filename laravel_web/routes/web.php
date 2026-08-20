@@ -378,6 +378,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'rider_id' => $riderId,
             'pickup_location' => $request->pickup_location,
             'dropoff_location' => $request->dropoff_location,
+            'fare' => $amount,
             'vehicle_type' => $request->vehicle_type ?? 'Economy',
             'payment_method' => $paymentMethod,
             'notes' => $request->notes,
