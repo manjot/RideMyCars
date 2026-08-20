@@ -288,6 +288,13 @@
                                                     Decline
                                                 </button>
                                             </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- License Verification Upload Section -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Driver License Verification</h2>
