@@ -104,6 +104,7 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
         $request->session()->regenerate();
         
         \App\Services\ActivityLogService::log('login', 'User logged in successfully', auth()->id());
+        \App\Services\NotificationService::notifyLogin(auth()->user());
 
         if (auth()->user()->role === 'driver') {
             return redirect('/driver/dashboard');
@@ -158,6 +159,7 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
         );
         auth()->login($user);
         $request->session()->regenerate();
+        \App\Services\NotificationService::notifyLogin($user);
         return response()->json(['message' => 'Verified successfully', 'redirect' => session()->pull('url.intended', '/')]);
     }
     
@@ -267,6 +269,7 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
     auth()->login($user);
 
     \App\Services\ActivityLogService::log('register', "User registered as {$user->role}", $user->id);
+    \App\Services\NotificationService::notifyLogin($user);
 
     if ($user->role === 'owner') {
         return redirect('/rent')->with('success', '🎉 Account created & vehicle listed successfully! Your car is now available for rental on RideMyCars.');

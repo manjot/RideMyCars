@@ -187,4 +187,21 @@ class NotificationService
             ['rating' => $rating, 'icon' => 'star', 'color' => 'yellow']
         );
     }
+
+    /**
+     * Notify User on Login.
+     */
+    public static function notifyLogin(User $user): void
+    {
+        $name = $user->name ?? 'User';
+        self::send(
+            $user->id,
+            'login',
+            'Account Login',
+            "{$name}, Welcome in RideMyCars",
+            null,
+            $user->role === 'driver' ? '/driver/dashboard' : '/',
+            ['icon' => 'user', 'color' => 'indigo']
+        );
+    }
 }

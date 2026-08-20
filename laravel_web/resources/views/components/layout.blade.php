@@ -180,21 +180,22 @@
                                         <!-- Icon -->
                                         <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm shadow-sm"
                                              :class="{
-                                                 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300': item.type === 'ride_accepted',
+                                                 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300': item.type === 'login' || item.type === 'ride_accepted',
                                                  'bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300': item.type === 'en_route',
                                                  'bg-amber-100 text-amber-600 dark:bg-amber-900/60 dark:text-amber-300': item.type === 'arrived',
                                                  'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/60 dark:text-emerald-300': item.type === 'in_progress',
                                                  'bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300': item.type === 'completed',
                                                  'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/60 dark:text-yellow-300': item.type === 'review',
-                                                 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300': !['ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)
+                                                 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300': !['login','ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)
                                              }">
+                                            <template x-if="item.type === 'login'"><span>👋</span></template>
                                             <template x-if="item.type === 'ride_accepted'"><span>🚗</span></template>
                                             <template x-if="item.type === 'en_route'"><span>🚗</span></template>
                                             <template x-if="item.type === 'arrived'"><span>📍</span></template>
                                             <template x-if="item.type === 'in_progress'"><span>🟢</span></template>
                                             <template x-if="item.type === 'completed'"><span>🏁</span></template>
                                             <template x-if="item.type === 'review'"><span>★</span></template>
-                                            <template x-if="!['ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)"><span>🔔</span></template>
+                                            <template x-if="!['login','ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)"><span>🔔</span></template>
                                         </div>
 
                                         <!-- Content -->
@@ -226,7 +227,7 @@
                                  x-transition:leave-end="opacity-0 translate-y-[-20px] scale-95"
                                  class="fixed top-24 right-4 sm:right-8 z-50 max-w-sm w-full bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 shadow-2xl rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md">
                                 <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-base shadow-sm">
-                                    <span x-text="latestToast.type === 'completed' ? '🏁' : (latestToast.type === 'arrived' ? '📍' : (latestToast.type === 'in_progress' ? '🟢' : (latestToast.type === 'review' ? '★' : '🚗')))"></span>
+                                    <span x-text="latestToast.type === 'login' ? '👋' : (latestToast.type === 'completed' ? '🏁' : (latestToast.type === 'arrived' ? '📍' : (latestToast.type === 'in_progress' ? '🟢' : (latestToast.type === 'review' ? '★' : '🚗'))))"></span>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="latestToast.title"></h4>
