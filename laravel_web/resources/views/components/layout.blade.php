@@ -364,324 +364,6 @@
         </nav>
     </header>
 
-    <!-- Ongoing Ride Banner & Details Modal -->
-    @auth
-    <div x-data="ongoingRide()" x-init="init()" x-cloak>
-        
-        <!-- Expanded Fullscreen / Centered Detail Modal (Topmost z-index above Google Maps) -->
-        <div x-show="expanded && ride" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-             @click.self="expanded = false"
-             style="display: none;">
-            
-            <div class="w-full max-w-lg bg-white dark:bg-[#141414] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden max-h-[85vh] flex flex-col"
-                 x-show="expanded"
-                 x-transition:enter="transition ease-out duration-300 transform"
-                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-200 transform"
-                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 scale-95 translate-y-4">
-                
-                <!-- Header bar -->
-                <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between shrink-0"
-                     :class="{
-                         'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-950 dark:text-indigo-200': ride && ride.status === 'pending',
-                         'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-950 dark:text-emerald-200': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
-                         'bg-blue-50 dark:bg-blue-900/30 text-blue-950 dark:text-blue-200': ride && ride.status === 'en_route',
-                         'bg-amber-50 dark:bg-amber-900/30 text-amber-950 dark:text-amber-200': ride && ride.status === 'arrived',
-                     }">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-3 h-3 rounded-full animate-ping shrink-0"
-                              :class="{
-                                  'bg-indigo-500': ride && ride.status === 'pending',
-                                  'bg-emerald-500': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
-                                  'bg-blue-500': ride && ride.status === 'en_route',
-                                  'bg-amber-500': ride && ride.status === 'arrived',
-                              }"></span>
-                        <span class="font-extrabold text-base text-gray-900 dark:text-white" x-text="statusText"></span>
-                    </div>
-                    <button type="button" @click="expanded = false" class="w-8 h-8 rounded-full bg-gray-200/80 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-                
-                <!-- Ride Details Content (Scrollable) -->
-                <div class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
-                    
-                    <!-- Driver Details (when assigned) -->
-                    <div x-show="ride && ride.driver_name" class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
-                        <div class="flex items-center gap-3.5">
-                            <!-- Avatar with explicit solid styling -->
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shadow-md shrink-0" 
-                                 style="background-color: #4f46e5 !important; color: #ffffff !important;"
-                                 x-text="ride && ride.driver_name ? ride.driver_name.charAt(0).toUpperCase() : 'D'"></div>
-                            
-                            <div class="flex-1 min-w-0">
-                                <p class="font-extrabold text-base text-gray-900 dark:text-white truncate" x-text="ride ? ride.driver_name : ''"></p>
-                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    <span class="flex items-center gap-0.5 text-amber-500 font-bold">
-                                        ★ <span x-text="ride && ride.driver_rating ? parseFloat(ride.driver_rating).toFixed(1) : '4.9'"></span>
-                                    </span>
-                                    <span>·</span>
-                                    <span class="font-medium" x-text="(ride && ride.driver_total_trips ? ride.driver_total_trips : '40+') + ' trips'"></span>
-                                </div>
-                            </div>
-                            
-                            <!-- Call Button -->
-                            <a x-show="ride && ride.driver_phone" :href="'tel:' + (ride ? ride.driver_phone : '')" class="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-md transition-colors shrink-0" title="Call Driver">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            </a>
-                        </div>
-                        
-                        <!-- Vehicle Info (Only shown if data exists) -->
-                        <template x-if="ride && (ride.driver_vehicle || ride.driver_plate)">
-                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200/60 dark:border-white/10 text-xs">
-                                <span class="font-bold text-gray-700 dark:text-gray-300" x-text="ride.driver_vehicle || 'Vehicle'"></span>
-                                <span x-show="ride.driver_plate" class="px-2.5 py-0.5 bg-gray-200 dark:bg-white/10 font-mono font-bold text-gray-800 dark:text-gray-200 rounded" x-text="ride.driver_plate"></span>
-                            </div>
-                        </template>
-                    </div>
-
-                    <!-- Searching state (when pending) -->
-                    <div x-show="ride && !ride.driver_name" class="p-4 bg-indigo-50/70 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
-                            <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm text-indigo-950 dark:text-indigo-200">Contacting nearby drivers...</p>
-                            <p class="text-xs text-indigo-600 dark:text-indigo-400">Request sent to all active drivers</p>
-                        </div>
-                    </div>
-
-                    <!-- Locations -->
-                    <div class="flex gap-3 px-1 py-1">
-                        <div class="flex flex-col items-center pt-1 shrink-0">
-                            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-emerald-200 dark:border-emerald-800"></div>
-                            <div class="w-0.5 h-8 bg-gray-200 dark:bg-white/10 my-1"></div>
-                            <div class="w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-rose-200 dark:border-rose-800"></div>
-                        </div>
-                        <div class="flex-1 min-w-0 space-y-3">
-                            <div>
-                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup Location</p>
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words mt-0.5" x-text="ride ? ride.pickup_location : ''"></p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff Destination</p>
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words mt-0.5" x-text="ride ? ride.dropoff_location : ''"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fare & Payment Method -->
-                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
-                        <div>
-                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Estimated Fare</p>
-                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride && ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : '$28.50'"></p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Payment</p>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-bold uppercase text-gray-800 dark:text-gray-200" x-text="ride ? ride.payment_method : 'Cash'"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Boost Fare (visible only when pending / no driver accepted) -->
-                    <div x-show="ride && ride.status === 'pending'" class="p-4 bg-indigo-50/60 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
-                        <p class="text-xs font-bold text-gray-800 dark:text-gray-200 mb-2">💰 Need a ride faster? Increase fare to attract drivers</p>
-                        <div class="flex gap-2">
-                            <div class="flex-1 relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
-                                <input type="number" step="1.00" min="0" x-model="boostFare" 
-                                       class="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                       placeholder="Enter new fare">
-                            </div>
-                            <button type="button" @click="submitBoost()" :disabled="boosting" 
-                                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-md">
-                                <svg x-show="boosting" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
-                                <span x-text="boosting ? 'Sending...' : '🚀 Boost Fare'"></span>
-                            </button>
-                        </div>
-                        <p x-show="boostError" class="text-xs text-red-500 mt-1.5 font-medium" x-text="boostError"></p>
-                        <p x-show="boostSuccess" class="text-xs text-green-600 mt-1.5 font-medium">✓ Fare boosted! Resent to all drivers.</p>
-                    </div>
-                    
-                    <!-- Actions: Track & Cancel -->
-                    <div class="space-y-2.5 pt-2">
-                        <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
-                           class="block w-full text-center py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl hover:opacity-90 shadow-lg transition-all flex items-center justify-center gap-2">
-                            <span>🗺</span>
-                            <span>Track on Live Map</span>
-                            <span>→</span>
-                        </a>
-                        <button type="button" @click="cancelRide()" :disabled="cancelling"
-                                class="block w-full text-center py-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-800/30">
-                            <svg x-show="cancelling" class="w-4 h-4 animate-spin text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
-                            <span x-text="cancelling ? 'Cancelling ride...' : '✕ Cancel Ride Request'"></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Collapsed Floating Bottom Pill -->
-        <div x-show="ride && !dismissed && !expanded" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-6"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-[9998]"
-             style="display: none;">
-            
-            <div @click="expanded = true"
-                 class="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.3)] border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer backdrop-blur-md select-none"
-                 :class="{
-                     'bg-indigo-900/95 border-indigo-500/50 text-white': ride && ride.status === 'pending',
-                     'bg-emerald-900/95 border-emerald-500/50 text-white': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
-                     'bg-blue-900/95 border-blue-500/50 text-white': ride && ride.status === 'en_route',
-                     'bg-amber-900/95 border-amber-500/50 text-white': ride && ride.status === 'arrived',
-                 }">
-                <!-- Pulsing Icon Badge -->
-                <div class="relative shrink-0">
-                    <div class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-lg">
-                        <span x-show="ride && ride.status === 'pending'" class="animate-pulse">🔍</span>
-                        <span x-show="ride && ride.status === 'accepted'">✓</span>
-                        <span x-show="ride && ride.status === 'en_route'" class="animate-bounce">🚗</span>
-                        <span x-show="ride && ride.status === 'arrived'">📍</span>
-                        <span x-show="ride && ride.status === 'in_progress'">⚡</span>
-                    </div>
-                </div>
-                <!-- Info Text -->
-                <div class="flex-1 min-w-0">
-                    <p class="font-extrabold text-sm truncate leading-snug" x-text="statusText"></p>
-                    <p class="text-xs opacity-75 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
-                </div>
-                <!-- Action Buttons -->
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" @click.stop="expanded = true" class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1">
-                        <span>Details</span>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <button type="button" @click.stop="dismissed = true" title="Dismiss Banner" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs font-bold transition-colors">
-                        ✕
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('ongoingRide', () => ({
-            ride: null,
-            expanded: false,
-            dismissed: false,
-            lastStatus: null,
-            timer: null,
-            boostFare: '',
-            boosting: false,
-            boostError: '',
-            boostSuccess: false,
-            cancelling: false,
-            get statusText() {
-                if (!this.ride) return '';
-                const s = this.ride.status;
-                const d = this.ride.driver_name || 'Driver';
-                if (s === 'pending') return 'Looking for drivers...';
-                if (s === 'accepted') return `${d} accepted your ride`;
-                if (s === 'en_route') return `${d} is on the way`;
-                if (s === 'arrived') return `${d} has arrived at pickup`;
-                if (s === 'in_progress') return 'Trip in progress';
-                return '';
-            },
-            init() {
-                this.check();
-                this.timer = setInterval(() => this.check(), 4000);
-            },
-            async check() {
-                try {
-                    const res = await fetch('/api/user/ongoing-ride');
-                    if (res.ok) {
-                        const data = await res.json();
-                        const newRide = data.ride || null;
-                        if (newRide) {
-                            if (this.lastStatus && this.lastStatus !== newRide.status) {
-                                this.dismissed = false; // re-show banner on new status
-                            }
-                            this.lastStatus = newRide.status;
-                        }
-                        this.ride = newRide;
-                        if (this.ride && !this.boostFare) {
-                            this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(2);
-                        }
-                    }
-                } catch(e) {}
-            },
-            async submitBoost() {
-                if (!this.ride) return;
-                this.boosting = true;
-                this.boostError = '';
-                this.boostSuccess = false;
-                try {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                    const res = await fetch(`/api/ride/${this.ride.id}/boost-fare`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': token 
-                        },
-                        body: JSON.stringify({ fare: parseFloat(this.boostFare) })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        this.boostSuccess = true;
-                        this.ride.fare = data.new_fare;
-                        this.boostFare = (parseFloat(data.new_fare) + 5).toFixed(2);
-                        setTimeout(() => this.boostSuccess = false, 4000);
-                    } else {
-                        this.boostError = data.error || 'Failed to boost fare';
-                    }
-                } catch(e) { this.boostError = 'Network error'; }
-                this.boosting = false;
-            },
-            async cancelRide() {
-                if (!this.ride) return;
-                if (!confirm('Are you sure you want to cancel this ride request?')) return;
-                this.cancelling = true;
-                try {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                    const res = await fetch(`/api/ride/${this.ride.id}/cancel`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': token 
-                        }
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        this.ride = null;
-                        this.expanded = false;
-                        this.dismissed = true;
-                        alert('Ride cancelled successfully.');
-                        window.location.reload();
-                    } else {
-                        alert(data.error || 'Failed to cancel ride');
-                    }
-                } catch(e) { 
-                    alert('Network error while cancelling ride'); 
-                }
-                this.cancelling = false;
-            }
-        }));
-    });
-    </script>
-    @endauth
-
     {{ $slot }}
 
     <!-- Footer -->
@@ -938,6 +620,323 @@
                 }
             }));
         });
+    </script>
+    <!-- Ongoing Ride Banner & Details Modal (Placed at bottom of body for topmost stacking) -->
+    @auth
+    <div x-data="ongoingRide()" x-init="init()" x-cloak>
+        
+        <!-- Expanded Fullscreen / Centered Detail Modal (Topmost z-index above Google Maps) -->
+        <div x-show="expanded && ride" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+             style="display: none; z-index: 9999999 !important; position: fixed !important;"
+             @click.self="expanded = false">
+            
+            <div class="w-full max-w-lg bg-white dark:bg-[#141414] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden max-h-[85vh] flex flex-col relative"
+                 style="z-index: 9999999 !important;"
+                 x-show="expanded"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+                
+                <!-- Header bar -->
+                <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between shrink-0"
+                     :class="{
+                         'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-950 dark:text-indigo-200': ride && ride.status === 'pending',
+                         'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-950 dark:text-emerald-200': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
+                         'bg-blue-50 dark:bg-blue-900/30 text-blue-950 dark:text-blue-200': ride && ride.status === 'en_route',
+                         'bg-amber-50 dark:bg-amber-900/30 text-amber-950 dark:text-amber-200': ride && ride.status === 'arrived',
+                     }">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-3 h-3 rounded-full animate-ping shrink-0"
+                              :class="{
+                                  'bg-indigo-500': ride && ride.status === 'pending',
+                                  'bg-emerald-500': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
+                                  'bg-blue-500': ride && ride.status === 'en_route',
+                                  'bg-amber-500': ride && ride.status === 'arrived',
+                              }"></span>
+                        <span class="font-extrabold text-base text-gray-900 dark:text-white" x-text="statusText"></span>
+                    </div>
+                    <button type="button" @click="expanded = false" class="w-8 h-8 rounded-full bg-gray-200/80 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 flex items-center justify-center text-gray-600 dark:text-gray-300 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                
+                <!-- Ride Details Content (Scrollable) -->
+                <div class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
+                    
+                    <!-- Driver Details (when assigned) -->
+                    <div x-show="ride && ride.driver_name" class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+                        <div class="flex items-center gap-3.5">
+                            <!-- Avatar with explicit solid styling -->
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shadow-md shrink-0" 
+                                 style="background-color: #4f46e5 !important; color: #ffffff !important;"
+                                 x-text="ride && ride.driver_name ? ride.driver_name.charAt(0).toUpperCase() : 'D'"></div>
+                            
+                            <div class="flex-1 min-w-0">
+                                <p class="font-extrabold text-base text-gray-900 dark:text-white truncate" x-text="ride ? ride.driver_name : ''"></p>
+                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <span class="flex items-center gap-0.5 text-amber-500 font-bold">
+                                        ★ <span x-text="ride && ride.driver_rating ? parseFloat(ride.driver_rating).toFixed(1) : '4.9'"></span>
+                                    </span>
+                                    <span>·</span>
+                                    <span class="font-medium" x-text="(ride && ride.driver_total_trips ? ride.driver_total_trips : '40+') + ' trips'"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Call Button -->
+                            <a x-show="ride && ride.driver_phone" :href="'tel:' + (ride ? ride.driver_phone : '')" class="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-md transition-colors shrink-0" title="Call Driver">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            </a>
+                        </div>
+                        
+                        <!-- Vehicle Info (Only shown if data exists) -->
+                        <template x-if="ride && (ride.driver_vehicle || ride.driver_plate)">
+                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200/60 dark:border-white/10 text-xs">
+                                <span class="font-bold text-gray-700 dark:text-gray-300" x-text="ride.driver_vehicle || 'Vehicle'"></span>
+                                <span x-show="ride.driver_plate" class="px-2.5 py-0.5 bg-gray-200 dark:bg-white/10 font-mono font-bold text-gray-800 dark:text-gray-200 rounded" x-text="ride.driver_plate"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Searching state (when pending) -->
+                    <div x-show="ride && !ride.driver_name" class="p-4 bg-indigo-50/70 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
+                            <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-indigo-950 dark:text-indigo-200">Contacting nearby drivers...</p>
+                            <p class="text-xs text-indigo-600 dark:text-indigo-400">Request sent to all active drivers</p>
+                        </div>
+                    </div>
+
+                    <!-- Locations -->
+                    <div class="flex gap-3 px-1 py-1">
+                        <div class="flex flex-col items-center pt-1 shrink-0">
+                            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-emerald-200 dark:border-emerald-800"></div>
+                            <div class="w-0.5 h-8 bg-gray-200 dark:bg-white/10 my-1"></div>
+                            <div class="w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-rose-200 dark:border-rose-800"></div>
+                        </div>
+                        <div class="flex-1 min-w-0 space-y-3">
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup Location</p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words mt-0.5" x-text="ride ? ride.pickup_location : ''"></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff Destination</p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words mt-0.5" x-text="ride ? ride.dropoff_location : ''"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fare & Payment Method -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Estimated Fare</p>
+                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride && ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : '$28.50'"></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Payment</p>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-bold uppercase text-gray-800 dark:text-gray-200" x-text="ride ? ride.payment_method : 'Cash'"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Boost Fare (visible only when pending / no driver accepted) -->
+                    <div x-show="ride && ride.status === 'pending'" class="p-4 bg-indigo-50/60 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
+                        <p class="text-xs font-bold text-gray-800 dark:text-gray-200 mb-2">💰 Need a ride faster? Increase fare to attract drivers</p>
+                        <div class="flex gap-2">
+                            <div class="flex-1 relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                <input type="number" step="1.00" min="0" x-model="boostFare" 
+                                       class="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                       placeholder="Enter new fare">
+                            </div>
+                            <button type="button" @click="submitBoost()" :disabled="boosting" 
+                                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-md">
+                                <svg x-show="boosting" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
+                                <span x-text="boosting ? 'Sending...' : '🚀 Boost Fare'"></span>
+                            </button>
+                        </div>
+                        <p x-show="boostError" class="text-xs text-red-500 mt-1.5 font-medium" x-text="boostError"></p>
+                        <p x-show="boostSuccess" class="text-xs text-green-600 mt-1.5 font-medium">✓ Fare boosted! Resent to all drivers.</p>
+                    </div>
+                    
+                    <!-- Actions: Track & Cancel -->
+                    <div class="space-y-2.5 pt-2">
+                        <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
+                           class="block w-full text-center py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl hover:opacity-90 shadow-lg transition-all flex items-center justify-center gap-2">
+                            <span>🗺</span>
+                            <span>Track on Live Map</span>
+                            <span>→</span>
+                        </a>
+                        <button type="button" @click="cancelRide()" :disabled="cancelling"
+                                class="block w-full text-center py-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-800/30">
+                            <svg x-show="cancelling" class="w-4 h-4 animate-spin text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
+                            <span x-text="cancelling ? 'Cancelling ride...' : '✕ Cancel Ride Request'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsed Floating Bottom Pill -->
+        <div x-show="ride && !dismissed && !expanded" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-6"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md"
+             style="display: none; z-index: 999999 !important; position: fixed !important;">
+            
+            <div @click="expanded = true"
+                 class="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.3)] border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer backdrop-blur-md select-none"
+                 :class="{
+                     'bg-indigo-900/95 border-indigo-500/50 text-white': ride && ride.status === 'pending',
+                     'bg-emerald-900/95 border-emerald-500/50 text-white': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
+                     'bg-blue-900/95 border-blue-500/50 text-white': ride && ride.status === 'en_route',
+                     'bg-amber-900/95 border-amber-500/50 text-white': ride && ride.status === 'arrived',
+                 }">
+                <!-- Pulsing Icon Badge -->
+                <div class="relative shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-lg">
+                        <span x-show="ride && ride.status === 'pending'" class="animate-pulse">🔍</span>
+                        <span x-show="ride && ride.status === 'accepted'">✓</span>
+                        <span x-show="ride && ride.status === 'en_route'" class="animate-bounce">🚗</span>
+                        <span x-show="ride && ride.status === 'arrived'">📍</span>
+                        <span x-show="ride && ride.status === 'in_progress'">⚡</span>
+                    </div>
+                </div>
+                <!-- Info Text -->
+                <div class="flex-1 min-w-0">
+                    <p class="font-extrabold text-sm truncate leading-snug" x-text="statusText"></p>
+                    <p class="text-xs opacity-75 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
+                </div>
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" @click.stop="expanded = true" class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1">
+                        <span>Details</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <button type="button" @click.stop="dismissed = true" title="Dismiss Banner" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs font-bold transition-colors">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('ongoingRide', () => ({
+            ride: null,
+            expanded: false,
+            dismissed: false,
+            lastStatus: null,
+            timer: null,
+            boostFare: '',
+            boosting: false,
+            boostError: '',
+            boostSuccess: false,
+            cancelling: false,
+            get statusText() {
+                if (!this.ride) return '';
+                const s = this.ride.status;
+                const d = this.ride.driver_name || 'Driver';
+                if (s === 'pending') return 'Looking for drivers...';
+                if (s === 'accepted') return `${d} accepted your ride`;
+                if (s === 'en_route') return `${d} is on the way`;
+                if (s === 'arrived') return `${d} has arrived at pickup`;
+                if (s === 'in_progress') return 'Trip in progress';
+                return '';
+            },
+            init() {
+                this.check();
+                this.timer = setInterval(() => this.check(), 4000);
+            },
+            async check() {
+                try {
+                    const res = await fetch('/api/user/ongoing-ride');
+                    if (res.ok) {
+                        const data = await res.json();
+                        const newRide = data.ride || null;
+                        if (newRide) {
+                            if (this.lastStatus && this.lastStatus !== newRide.status) {
+                                this.dismissed = false; // re-show banner on new status
+                            }
+                            this.lastStatus = newRide.status;
+                        }
+                        this.ride = newRide;
+                        if (this.ride && !this.boostFare) {
+                            this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(2);
+                        }
+                    }
+                } catch(e) {}
+            },
+            async submitBoost() {
+                if (!this.ride) return;
+                this.boosting = true;
+                this.boostError = '';
+                this.boostSuccess = false;
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const res = await fetch(`/api/ride/${this.ride.id}/boost-fare`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token 
+                        },
+                        body: JSON.stringify({ fare: parseFloat(this.boostFare) })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        this.boostSuccess = true;
+                        this.ride.fare = data.new_fare;
+                        this.boostFare = (parseFloat(data.new_fare) + 5).toFixed(2);
+                        setTimeout(() => this.boostSuccess = false, 4000);
+                    } else {
+                        this.boostError = data.error || 'Failed to boost fare';
+                    }
+                } catch(e) { this.boostError = 'Network error'; }
+                this.boosting = false;
+            },
+            async cancelRide() {
+                if (!this.ride) return;
+                if (!confirm('Are you sure you want to cancel this ride request?')) return;
+                this.cancelling = true;
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const res = await fetch(`/api/ride/${this.ride.id}/cancel`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token 
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.ride = null;
+                        this.expanded = false;
+                        this.dismissed = true;
+                        alert('Ride cancelled successfully.');
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Failed to cancel ride');
+                    }
+                } catch(e) { 
+                    alert('Network error while cancelling ride'); 
+                }
+                this.cancelling = false;
+            }
+        }));
+    });
     </script>
     @endauth
 
