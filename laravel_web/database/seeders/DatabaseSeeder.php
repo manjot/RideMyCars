@@ -138,5 +138,11 @@ class DatabaseSeeder extends Seeder
                 'bio' => 'Reliable Sandton & JHB private chauffeur and commercial shuttle driver.',
             ]
         );
+
+        $this->call([
+            DriverProfileSeeder::class,
+            VehicleSeeder::class,
+            SettingsSeeder::class,
+        ]);
     }
 }
