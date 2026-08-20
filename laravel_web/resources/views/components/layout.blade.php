@@ -418,10 +418,14 @@
                     <!-- Driver Details (when assigned) -->
                     <div x-show="ride && ride.driver_name" class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
                         <div class="flex items-center gap-3.5">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-lg font-black shadow-md shrink-0" x-text="ride && ride.driver_name ? ride.driver_name.charAt(0) : 'D'"></div>
+                            <!-- Avatar with explicit solid styling -->
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shadow-md shrink-0" 
+                                 style="background-color: #4f46e5 !important; color: #ffffff !important;"
+                                 x-text="ride && ride.driver_name ? ride.driver_name.charAt(0).toUpperCase() : 'D'"></div>
+                            
                             <div class="flex-1 min-w-0">
                                 <p class="font-extrabold text-base text-gray-900 dark:text-white truncate" x-text="ride ? ride.driver_name : ''"></p>
-                                <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     <span class="flex items-center gap-0.5 text-amber-500 font-bold">
                                         ★ <span x-text="ride && ride.driver_rating ? parseFloat(ride.driver_rating).toFixed(1) : '4.9'"></span>
                                     </span>
@@ -429,15 +433,20 @@
                                     <span class="font-medium" x-text="(ride && ride.driver_total_trips ? ride.driver_total_trips : '40+') + ' trips'"></span>
                                 </div>
                             </div>
+                            
+                            <!-- Call Button -->
                             <a x-show="ride && ride.driver_phone" :href="'tel:' + (ride ? ride.driver_phone : '')" class="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-md transition-colors shrink-0" title="Call Driver">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                             </a>
                         </div>
-                        <!-- Vehicle Info -->
-                        <div x-show="ride && (ride.driver_vehicle || ride.vehicle_type)" class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-200/60 dark:border-white/10 text-xs">
-                            <span class="font-bold text-gray-700 dark:text-gray-300" x-text="ride && ride.driver_vehicle ? ride.driver_vehicle : (ride ? ride.vehicle_type : 'Sedan')"></span>
-                            <span x-show="ride && ride.driver_plate" class="px-2.5 py-0.5 bg-gray-200 dark:bg-white/10 font-mono font-bold text-gray-800 dark:text-gray-200 rounded" x-text="ride ? ride.driver_plate : ''"></span>
-                        </div>
+                        
+                        <!-- Vehicle Info (Only shown if data exists) -->
+                        <template x-if="ride && (ride.driver_vehicle || ride.driver_plate)">
+                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200/60 dark:border-white/10 text-xs">
+                                <span class="font-bold text-gray-700 dark:text-gray-300" x-text="ride.driver_vehicle || 'Vehicle'"></span>
+                                <span x-show="ride.driver_plate" class="px-2.5 py-0.5 bg-gray-200 dark:bg-white/10 font-mono font-bold text-gray-800 dark:text-gray-200 rounded" x-text="ride.driver_plate"></span>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Searching state (when pending) -->
@@ -452,20 +461,20 @@
                     </div>
 
                     <!-- Locations -->
-                    <div class="flex gap-3 px-1">
+                    <div class="flex gap-3 px-1 py-1">
                         <div class="flex flex-col items-center pt-1 shrink-0">
                             <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-emerald-200 dark:border-emerald-800"></div>
-                            <div class="w-0.5 h-10 bg-gray-200 dark:bg-white/10 my-1"></div>
+                            <div class="w-0.5 h-8 bg-gray-200 dark:bg-white/10 my-1"></div>
                             <div class="w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-rose-200 dark:border-rose-800"></div>
                         </div>
                         <div class="flex-1 min-w-0 space-y-3">
                             <div>
                                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup Location</p>
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words" x-text="ride ? ride.pickup_location : ''"></p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words mt-0.5" x-text="ride ? ride.pickup_location : ''"></p>
                             </div>
                             <div>
                                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff Destination</p>
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words" x-text="ride ? ride.dropoff_location : ''"></p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight break-words mt-0.5" x-text="ride ? ride.dropoff_location : ''"></p>
                             </div>
                         </div>
                     </div>
