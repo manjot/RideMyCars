@@ -368,7 +368,7 @@
     @auth
     <div x-data="ongoingRide()" x-init="init()" x-cloak>
         
-        <!-- Expanded Fullscreen / Centered Detail Modal -->
+        <!-- Expanded Fullscreen / Centered Detail Modal (Topmost z-index above Google Maps) -->
         <div x-show="expanded && ride" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -376,7 +376,7 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+             class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
              @click.self="expanded = false"
              style="display: none;">
             
@@ -525,7 +525,7 @@
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-6"
              x-transition:enter-end="opacity-100 translate-y-0"
-             class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-40"
+             class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-[9998]"
              style="display: none;">
             
             <div @click="expanded = true"
