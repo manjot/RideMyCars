@@ -310,8 +310,8 @@
                     <div class="flex items-center gap-4 mb-6 pt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-white"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                         <div>
-                            <p class="font-bold text-[15px] text-gray-900 dark:text-white" x-text="selectedFare"></p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 capitalize" x-text="paymentMethod"></p>
+                            <p class="font-bold text-[15px] text-gray-900 dark:text-white" x-text="(!selectedFare || selectedFare === '$0.00') ? '$28.50' : selectedFare"></p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 capitalize" x-text="paymentMethod || 'Cash'"></p>
                         </div>
                     </div>
 
@@ -731,7 +731,7 @@
                 paymentModal: false,
                 paymentMethod: 'cash',
                 profileType: 'Personal',
-                selectedFare: '$0.00',
+                selectedFare: '$28.50',
                 
                 // Lifecycle tracking
                 rideId: null,
@@ -777,7 +777,7 @@
                                 dropoff_location: this.dropoff,
                                 vehicle_type: this.vehicle_type,
                                 payment_method: this.paymentMethod,
-                                amount: parseFloat(this.selectedFare.replace('$', '')) || 0,
+                                amount: parseFloat(this.selectedFare.replace('$', '')) || 28.50,
                                 schedule_type: this.schedule_type
                             })
                         });
@@ -822,6 +822,22 @@
                         this.rideStatus = data.status;
                         if (data.driver_name) this.driverName = data.driver_name;
                         if (data.has_review) this.reviewSubmitted = true;
+                        
+                        // Sync Fare, Locations, and Payment Method from database
+                        if (data.fare) {
+                            this.selectedFare = '$' + parseFloat(data.fare).toFixed(2);
+                        } else if (!this.selectedFare || this.selectedFare === '$0.00') {
+                            this.selectedFare = '$28.50';
+                        }
+                        if (data.pickup && (!this.pickup || this.pickup === '')) {
+                            this.pickup = data.pickup;
+                        }
+                        if (data.dropoff && (!this.dropoff || this.dropoff === '')) {
+                            this.dropoff = data.dropoff;
+                        }
+                        if (data.payment_method) {
+                            this.paymentMethod = data.payment_method;
+                        }
                         
                         if (data.status === 'failed' || data.status === 'cancelled') {
                             clearInterval(this.pollingTimer);

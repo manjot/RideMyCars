@@ -373,9 +373,9 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
 
         $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
-        
         $paymentMethod = $request->payment_method ?? 'Credit Card';
-        $amount = $request->amount ?? 15.00;
+        $rawAmount = floatval($request->amount);
+        $amount = $rawAmount > 0 ? $rawAmount : 28.50;
 
         $ride = \App\Models\Ride::create([
             'rider_id' => $riderId,
@@ -408,36 +408,35 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                         'price_data' => [
                             'currency' => 'usd',
                             'product_data' => [
-                                'name' => 'Ride with ' . ($request->vehicle_type ?? 'Economy'),
-                                'description' => 'From ' . substr($request->pickup_location, 0, 100) . ' to ' . substr($request->dropoff_location, 0, 100),
+                                'name' => "Ride: {$ride->pickup_location} to {$ride->dropoff_location}",
                             ],
                             'unit_amount' => (int)($amount * 100),
                         ],
                         'quantity' => 1,
                     ]],
                     'mode' => 'payment',
-                    'success_url' => url('/ride/success?session_id={CHECKOUT_SESSION_ID}&ride_id=' . $ride->id),
-                    'cancel_url' => url('/ride'),
+                    'success_url' => url('/ride?success=1&ride_id=' . $ride->id),
+                    'cancel_url' => url('/ride?cancelled=1'),
                 ]);
 
                 return response()->json([
                     'url' => $session->url,
-                    'polling_url' => url('/api/ride/' . $ride->id . '/status')
+                    'ride_id' => $ride->id,
+                    'polling_url' => "/api/ride/{$ride->id}/status"
                 ]);
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Stripe Checkout Error: ' . $e->getMessage());
-                return response()->json(['error' => 'Payment gateway error: ' . $e->getMessage()], 500);
+                return response()->json(['error' => $e->getMessage()], 500);
             }
         }
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'ride_id' => $ride->id,
-            'polling_url' => url('/api/ride/' . $ride->id . '/status')
+            'polling_url' => "/api/ride/{$ride->id}/status"
         ]);
-
-    } catch (\Throwable $e) {
-        \Illuminate\Support\Facades\Log::error('Ride booking error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json(['error' => implode(' ', \Illuminate\Support\Arr::flatten($e->errors()))], 422);
+    } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 });
@@ -449,6 +448,11 @@ Route::get('/api/ride/{id}/status', function ($id) {
 
     $response = [
         'status' => $ride->status,
+        'fare' => ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : 28.50,
+        'pickup' => $ride->pickup_location,
+        'dropoff' => $ride->dropoff_location,
+        'payment_method' => $ride->payment_method ?? 'cash',
+        'vehicle_type' => $ride->vehicle_type ?? 'Sedan',
         'driver_name' => $ride->driver?->name,
         'arrived_at' => $ride->arrived_at?->toIso8601String(),
         'started_at' => $ride->started_at?->toIso8601String(),
