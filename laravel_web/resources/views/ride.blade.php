@@ -205,8 +205,8 @@
                             </button>
                         </div>
                     </div>
-                </form>
-            </div>
+                </div> <!-- Closes w-[440px] panel -->
+            </form>
         
             <!-- Right Side: Map -->
             <div class="w-full lg:flex-1 h-[400px] lg:h-[600px] bg-gray-50 dark:bg-[#1a1a1a] rounded-[24px] border border-gray-200 dark:border-white/10 overflow-hidden relative shadow-sm shrink-0 lg:shrink min-w-[300px]">
