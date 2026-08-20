@@ -586,7 +586,7 @@ Route::get('/api/driver/active-rides', function () {
     if (!$user) return response()->json([]);
 
     $rides = \App\Models\Ride::where('driver_id', $user->id)
-        ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'])
+        ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
         ->where('created_at', '>=', now()->subHours(24)) // Only last 24h
         ->with(['rider', 'driverReview'])
         ->orderBy('created_at', 'desc')
