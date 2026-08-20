@@ -42,7 +42,7 @@ class StatsOverviewWidget extends BaseWidget
 
             Stat::make('Verified Drivers', $verifiedDrivers)
                 ->description("{$pendingVerifications} driver verification pending")
-                ->descriptionIcon('heroicon-m-user-check')
+                ->descriptionIcon('heroicon-m-check-badge')
                 ->chart([2, 4, 6, 8, 10, $verifiedDrivers])
                 ->color($pendingVerifications > 0 ? 'amber' : 'info'),
 
