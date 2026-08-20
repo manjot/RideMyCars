@@ -62,12 +62,16 @@ Route::get('/delivery', function (\Illuminate\Http\Request $request) {
 });
 
 Route::post('/delivery/book', function (\Illuminate\Http\Request $request) {
+    if (!auth()->check()) {
+        return redirect('/login')->with('error', 'Please sign in or create an account to dispatch a package delivery.');
+    }
+
     $request->validate([
         'pickup_location' => 'required|string|max:255',
         'dropoff_location' => 'required|string|max:255',
     ]);
 
-    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+    $riderId = auth()->id();
 
     $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
 
@@ -269,6 +273,10 @@ Route::get('/rent/{vehicle}', function (\App\Models\Vehicle $vehicle) {
 });
 
 Route::post('/rent/{vehicle}/book', function (\Illuminate\Http\Request $request, \App\Models\Vehicle $vehicle) {
+    if (!auth()->check()) {
+        return redirect('/login')->with('error', 'Please sign in or create an account to reserve a vehicle rental.');
+    }
+
     $request->validate([
         'start_date' => 'required|date',
         'end_date' => 'required|date|after_or_equal:start_date',
@@ -277,7 +285,7 @@ Route::post('/rent/{vehicle}/book', function (\Illuminate\Http\Request $request,
         'payment_method' => 'nullable|string|max:255',
     ]);
 
-    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+    $riderId = auth()->id();
 
     $startDate = \Carbon\Carbon::parse($request->start_date);
     $endDate = \Carbon\Carbon::parse($request->end_date);
@@ -308,6 +316,10 @@ Route::get('/ride', function () {
 });
 
 Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
+    if (!auth()->check()) {
+        return redirect('/login')->with('error', 'Please sign in or create an account to book a ride.');
+    }
+
     $request->validate([
         'pickup_location' => 'required|string|max:255',
         'dropoff_location' => 'required|string|max:255',
@@ -316,7 +328,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         'notes' => 'nullable|string',
     ]);
 
-    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
+    $riderId = auth()->id();
 
     $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
 
@@ -337,10 +349,15 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
 });
 
 // Driver Dashboard
+Route::get('/dashboard', function () {
+    if (auth()->user()->role === 'admin') {
+        return redirect('/admin');
+    }
+    return redirect('/driver/dashboard');
+})->middleware('auth');
+
 Route::prefix('driver')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
-        if (auth()->user()->role !== 'driver') abort(403);
-        
         $user = auth()->user();
         
         // Ensure driver profile exists

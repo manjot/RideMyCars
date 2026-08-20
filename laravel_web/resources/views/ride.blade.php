@@ -33,7 +33,7 @@
             
             <!-- Left Side: Form -->
             <div class="w-full lg:w-[55%]">
-                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ vehicle_type: 'Economy' }">
+                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ vehicle_type: '{{ request('type', 'Economy') }}' }">
                     @csrf
                     
                     <!-- Locations -->
@@ -70,15 +70,15 @@
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Vehicle Tier</label>
                         <input type="hidden" name="vehicle_type" x-model="vehicle_type">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <!-- Executive Sedan -->
-                            <div @click="vehicle_type = 'Executive Sedan'" 
-                                 :class="vehicle_type === 'Executive Sedan' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
+                            <!-- Comfort -->
+                            <div @click="vehicle_type = 'Comfort'" 
+                                 :class="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
                                  class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="vehicle_type === 'Executive Sedan'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
+                                <div x-show="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 </div>
                                 <div class="text-2xl mb-1">🚘</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Executive Sedan</h3>
+                                <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Comfort</h3>
                                 <p class="text-[10px] text-gray-500 dark:text-gray-400">Class-leading comfort</p>
                             </div>
 

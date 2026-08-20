@@ -4,12 +4,17 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
           x-data="{ 
               search: '', 
-              selectedCategory: 'All', 
+              selectedCategory: '{{ request('category', 'All') }}', 
               categories: ['All', 'Economy', 'Compact', 'Midsize', 'SUV', 'Luxury', 'Van'],
               vehicles: {{ Js::from($vehicles) }},
               get filteredVehicles() {
                   return this.vehicles.filter(v => {
-                      const matchesCategory = this.selectedCategory === 'All' || v.type === this.selectedCategory;
+                      const selCat = this.selectedCategory.toLowerCase();
+                      const vType = (v.type || '').toLowerCase();
+                      const matchesCategory = this.selectedCategory === 'All' || 
+                                            vType === selCat || 
+                                            (selCat === 'economy' && (vType === 'economy' || vType === 'compact')) ||
+                                            (selCat === 'suv' && (vType.includes('suv') || vType.includes('midsize')));
                       const searchStr = this.search.toLowerCase();
                       const matchesSearch = v.make.toLowerCase().includes(searchStr) || v.model.toLowerCase().includes(searchStr);
                       return matchesCategory && matchesSearch;

@@ -40,7 +40,7 @@
                         </div>
                     </div>
                     
-                    <button class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors">Book Economy</button>
+                    <a href="/ride?type=Economy" class="block w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors text-center">Book Economy</a>
                 </div>
 
                 <!-- Comfort (Popular) -->
@@ -70,7 +70,7 @@
                         </div>
                     </div>
                     
-                    <button class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-brand-500/25">Book Comfort</button>
+                    <a href="/ride?type=Comfort" class="block w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-brand-500/25 text-center">Book Comfort</a>
                 </div>
 
                 <!-- Premium -->
@@ -97,7 +97,7 @@
                         </div>
                     </div>
                     
-                    <button class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors">Book Premium</button>
+                    <a href="/ride?type=Premium" class="block w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors text-center">Book Premium</a>
                 </div>
 
             </div>
@@ -139,7 +139,7 @@
                         </li>
                     </ul>
 
-                    <button class="w-full py-3 bg-white dark:bg-[#111] border border-brand-200 text-brand-500 hover:bg-brand-50 font-bold rounded-xl transition-colors">Browse Economy</button>
+                    <a href="/rent?category=Economy" class="block w-full py-3 bg-white dark:bg-[#111] border border-brand-200 text-brand-500 hover:bg-brand-50 font-bold rounded-xl transition-colors text-center">Browse Economy</a>
                 </div>
 
                 <!-- SUV Rental -->
@@ -170,7 +170,7 @@
                         </li>
                     </ul>
 
-                    <button class="w-full py-3 bg-white dark:bg-[#111] border border-brand-200 text-brand-500 hover:bg-brand-50 font-bold rounded-xl transition-colors">Browse SUV / Midsize</button>
+                    <a href="/rent?category=SUV" class="block w-full py-3 bg-white dark:bg-[#111] border border-brand-200 text-brand-500 hover:bg-brand-50 font-bold rounded-xl transition-colors text-center">Browse SUV / Midsize</a>
                 </div>
 
                 <!-- Luxury Rental -->
@@ -205,7 +205,7 @@
                         </li>
                     </ul>
 
-                    <button class="w-full py-3 bg-white dark:bg-[#111] border border-brand-200 text-brand-500 hover:bg-brand-50 font-bold rounded-xl transition-colors">Browse Luxury</button>
+                    <a href="/rent?category=Luxury" class="block w-full py-3 bg-white dark:bg-[#111] border border-brand-200 text-brand-500 hover:bg-brand-50 font-bold rounded-xl transition-colors text-center">Browse Luxury</a>
                 </div>
             </div>
         </section>
@@ -231,7 +231,7 @@
                 </div>
             </div>
 
-            <button class="px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-brand-500/25">Browse Drivers & Compare</button>
+            <a href="/hire-driver" class="inline-block px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-brand-500/25 text-center">Browse Drivers & Compare</a>
 
         </section>
 

@@ -1,4 +1,4 @@
-<x-layout title="Executive Memberships — RideMyCars">
+<x-layout title="Executive Memberships — RideMyCars" theme="theme-ride">
     <main class="flex-1 w-full max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         
         <!-- Flash Alerts -->
@@ -33,7 +33,7 @@
                                 <h3 class="font-extrabold text-xl text-gray-900 dark:text-white">
                                     Active Membership: <span class="capitalize text-brand-500">{{ auth()->user()->membership_type }} Tier</span>
                                 </h3>
-                                <span style="{{ auth()->user()->membership_status === 'active' ? 'background-color: #D1FAE5 !important; color: #047857 !important;' : 'background-color: #FEF3C7 !important; color: #B45309 !important;' }}" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase">
+                                <span class="bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase">
                                     {{ auth()->user()->membership_status }}
                                 </span>
                             </div>
@@ -47,7 +47,7 @@
                         </div>
                     </div>
                     <div class="shrink-0">
-                        <span style="background-color: #059669 !important; color: #FFFFFF !important;" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-extrabold shadow-md">
+                        <span class="bg-brand-500 text-white inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-extrabold shadow-md shadow-brand-500/25">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                             Privileges Active
                         </span>
@@ -71,7 +71,7 @@
         <!-- Membership Tiers Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto mb-16">
             
-            <!-- Tier 1: Club Membership (Requirement #7) -->
+            <!-- Tier 1: Club Membership -->
             <div class="bg-white dark:bg-[#111] border-2 border-brand-500 rounded-3xl p-8 lg:p-10 shadow-2xl relative flex flex-col justify-between overflow-hidden">
                 <div class="absolute top-6 right-6 bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                     Popular
@@ -90,15 +90,15 @@
 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Guaranteed 15-minute on-demand ride availability in core operational zones.</span>
                         </li>
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Complimentary vehicle delivery and collection for luxury rentals.</span>
                         </li>
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Preferred access to limited-edition supercars and flagship SUVs.</span>
                         </li>
                     </ul>
@@ -127,7 +127,7 @@
 
                     @auth
                         @if(auth()->user()->membership_type === 'club')
-                            <button type="submit" style="background-color: #059669 !important; color: #FFFFFF !important;" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                                 Active Member — Renew $250/mo
                             </button>
@@ -144,10 +144,10 @@
                 </form>
             </div>
 
-            <!-- Tier 2: Corporate Membership (Requirement #8) -->
-            <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-3xl p-8 lg:p-10 shadow-lg flex flex-col justify-between overflow-hidden">
+            <!-- Tier 2: Corporate Membership -->
+            <div class="bg-white dark:bg-[#111] border-2 border-brand-500/50 hover:border-brand-500 rounded-3xl p-8 lg:p-10 shadow-xl transition-colors flex flex-col justify-between overflow-hidden">
                 <div>
-                    <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-6">
+                    <div class="w-14 h-14 bg-brand-50 text-brand-500 rounded-2xl flex items-center justify-center mb-6">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
                     <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Corporate Membership</h2>
@@ -159,19 +159,19 @@
 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Consolidated monthly corporate billing and invoice management.</span>
                         </li>
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Expense categorization with cost-center tracking.</span>
                         </li>
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Dedicated 24/7 concierge account contact.</span>
                         </li>
                         <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
-                            <div class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
+                            <div class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 mt-0.5">✓</div>
                             <span>Shared pool of vetted recurring drivers for company executives.</span>
                         </li>
                     </ul>
@@ -182,17 +182,17 @@
                     <input type="text" name="company_name" required value="{{ auth()->user()->corporate_company_name ?? '' }}" placeholder="Company / Organization Name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm">
                     @auth
                         @if(auth()->user()->membership_type === 'corporate')
-                            <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl transition-all text-base flex items-center justify-center gap-2">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                                 Request Updated Corporate Plan
                             </button>
                         @else
-                            <button type="submit" class="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold rounded-2xl hover:opacity-90 transition-all text-base">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base">
                                 Request Corporate Account
                             </button>
                         @endif
                     @else
-                        <button type="submit" class="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold rounded-2xl hover:opacity-90 transition-all text-base">
+                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base">
                             Request Corporate Account
                         </button>
                     @endauth

@@ -26,30 +26,29 @@
                     <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-16 md:h-[72px] w-auto mix-blend-multiply dark:mix-blend-normal dark:bg-white dark:rounded-xl dark:p-1">
                 </a>
                 
-                <!-- Desktop Nav -->
                 <div class="hidden lg:flex items-center gap-6">
-                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/ride">Ride</a>
-                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/rent">Rent Vehicle</a>
-                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/hire-driver">Hire Driver</a>
-                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/delivery">Package Delivery</a>
-                    <a class="text-sm font-medium transition-colors text-brand-500 hover:text-brand-600 dark:text-brand-400 font-semibold" href="/membership">Memberships</a>
+                    <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
+                    <a class="text-sm font-medium transition-colors {{ request()->is('rent*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/rent">Rent Vehicle</a>
+                    <a class="text-sm font-medium transition-colors {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/hire-driver">Hire Driver</a>
+                    <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
+                    <a class="text-sm font-medium transition-colors {{ request()->is('membership*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/membership">Memberships</a>
                     
                     <!-- Company Dropdown -->
                     <div x-data="{ open: false }" class="relative" @click.away="open = false">
-                        <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1 text-gray-900 dark:text-white hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10 px-4 py-2 rounded-full">
+                        <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1 {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-4 py-2 rounded-full">
                             Company 
                             <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
                         <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-xl rounded-xl py-2 z-50" style="display: none;">
-                            <a href="/about" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">About Us</a>
-                            <a href="/safety" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Safety</a>
-                            <a href="/become-driver" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Become a Driver</a>
-                            <a href="/become-owner" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">List Your Vehicle</a>
-                            <a href="/blogs" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Blogs</a>
+                            <a href="/about" class="block px-4 py-2.5 text-sm {{ request()->is('about*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">About Us</a>
+                            <a href="/safety" class="block px-4 py-2.5 text-sm {{ request()->is('safety*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Safety</a>
+                            <a href="/become-driver" class="block px-4 py-2.5 text-sm {{ request()->is('become-driver*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Become a Driver</a>
+                            <a href="/become-owner" class="block px-4 py-2.5 text-sm {{ request()->is('become-owner*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">List Your Vehicle</a>
+                            <a href="/blogs" class="block px-4 py-2.5 text-sm {{ request()->is('blogs*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Blogs</a>
                         </div>
                     </div>
 
-                    <a class="text-sm font-medium transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" href="/pricing">Pricing</a>
+                    <a class="text-sm font-medium transition-colors {{ request()->is('pricing*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/pricing">Pricing</a>
                 </div>
                 
                 <!-- Actions -->
@@ -70,11 +69,10 @@
                                 <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ auth()->user()->email }}</p>
                             </div>
-                            @if(auth()->user()->role === 'driver')
-                                <a href="/driver/dashboard" class="block px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Dashboard</a>
-                            @else
-                                <a href="/admin" class="block px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Dashboard</a>
+                            @if(auth()->user()->role === 'admin')
+                                <a href="/admin" class="block px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Admin Panel</a>
                             @endif
+                            <a href="/driver/dashboard" class="block px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors">Dashboard</a>
                             
                             <form method="POST" action="/logout" class="block">
                                 @csrf
