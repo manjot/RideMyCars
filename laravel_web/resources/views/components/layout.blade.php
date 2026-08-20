@@ -797,16 +797,12 @@
              x-cloak>
             
             <div @click="expanded = true"
-                 class="flex items-center gap-3 p-4 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] border transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-md select-none"
-                 :class="{
-                     'bg-indigo-900/95 border-indigo-500/50 text-white': ride && ride.status === 'pending',
-                     'bg-emerald-900/95 border-emerald-500/50 text-white': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
-                     'bg-blue-900/95 border-blue-500/50 text-white': ride && ride.status === 'en_route',
-                     'bg-amber-900/95 border-amber-500/50 text-white': ride && ride.status === 'arrived',
-                 }">
-                <!-- Pulsing Icon Badge -->
+                 class="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none"
+                 style="background-color: #0f172a !important; color: #ffffff !important; border: 1.5px solid rgba(255, 255, 255, 0.22) !important; box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0,0,0,0.3) !important;">
+                
+                <!-- Status Icon Badge -->
                 <div class="relative shrink-0">
-                    <div class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-lg">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background-color: rgba(255, 255, 255, 0.12) !important;">
                         <span x-show="ride && ride.status === 'pending'" class="animate-pulse">🔍</span>
                         <span x-show="ride && ride.status === 'accepted'">✓</span>
                         <span x-show="ride && ride.status === 'en_route'" class="animate-bounce">🚗</span>
@@ -815,17 +811,21 @@
                     </div>
                 </div>
                 <!-- Info Text -->
-                <div class="flex-1 min-w-0">
-                    <p class="font-extrabold text-sm truncate leading-snug" x-text="statusText"></p>
-                    <p class="text-xs opacity-75 truncate" x-text="ride ? (ride.dropoff_location || ride.pickup_location || '') : ''"></p>
+                <div class="flex-1 min-w-0 pr-1">
+                    <p class="font-black text-sm truncate leading-snug" style="color: #ffffff !important;" x-text="statusText"></p>
+                    <p class="text-xs truncate font-medium mt-0.5" style="color: #94a3b8 !important;" x-text="ride ? (ride.dropoff_location || ride.pickup_location || '') : ''"></p>
                 </div>
                 <!-- Action Buttons -->
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" @click.stop="expanded = true" class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1">
+                    <button type="button" @click.stop="expanded = true" 
+                            class="text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 hover:brightness-110 shadow-sm"
+                            style="background-color: #3b82f6 !important; color: #ffffff !important; font-weight: 700 !important;">
                         <span>Details</span>
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <button type="button" @click.stop="dismissed = true" title="Dismiss Banner" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs font-bold transition-colors">
+                    <button type="button" @click.stop="dismissed = true" title="Dismiss Banner" 
+                            class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors hover:bg-white/20"
+                            style="background-color: rgba(255, 255, 255, 0.14) !important; color: #ffffff !important;">
                         ✕
                     </button>
                 </div>
