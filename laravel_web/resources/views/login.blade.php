@@ -37,7 +37,7 @@
             <div x-show="view === 'mobile'" x-transition.opacity.duration.300ms>
                 <h1 class="text-2xl font-semibold mb-6 text-gray-900 tracking-tight">Enter your mobile number</h1>
                 
-                <form action="#" method="GET" @submit.prevent="alert('Mobile login is a UI demo. Click Continue with email to log in as admin.')">
+                <form action="#" method="GET" @submit.prevent="view = 'otp'">
                     <div class="flex mb-4 h-[52px]">
                         <button type="button" class="flex items-center justify-center gap-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-l-lg border-r border-gray-300/50 transition-colors">
                             <span class="text-lg leading-none">🇮🇳</span>
@@ -88,6 +88,52 @@
                 <p class="text-[13px] text-gray-500 mt-8 leading-relaxed">
                     You consent to receive a verification code by text or WhatsApp. Message and data rates may apply.
                 </p>
+            </div>
+
+            <!-- OTP Verification View (Matches Screenshot 2) -->
+            <div x-show="view === 'otp'" x-transition.opacity.duration.300ms style="display: none;" x-data="{ c1: '', c2: '', c3: '', c4: '' }">
+                <h1 class="text-2xl font-bold mb-4 text-gray-900 tracking-tight">Welcome back, User.</h1>
+                
+                <p class="text-[15px] text-gray-700 leading-relaxed mb-4">
+                    Enter the 4-digit code sent via SMS at +91 98765 43210.
+                </p>
+
+                <button type="button" @click="view = 'mobile'" class="text-sm text-black font-semibold underline underline-offset-4 mb-8 hover:text-gray-600 transition-colors">
+                    Changed your mobile number?
+                </button>
+
+                <div class="flex items-center gap-3 mb-6">
+                    <input type="text" maxlength="1" x-model="c1" @input="$event.target.value ? $refs.c2.focus() : null" class="w-12 h-14 bg-gray-100 rounded-xl text-center text-xl font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-black border-2 border-transparent focus:border-black transition-all">
+                    <input type="text" maxlength="1" x-model="c2" x-ref="c2" @input="$event.target.value ? $refs.c3.focus() : $refs.c1.focus()" class="w-12 h-14 bg-gray-100 rounded-xl text-center text-xl font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-black border-2 border-transparent focus:border-black transition-all">
+                    <input type="text" maxlength="1" x-model="c3" x-ref="c3" @input="$event.target.value ? $refs.c4.focus() : $refs.c2.focus()" class="w-12 h-14 bg-gray-100 rounded-xl text-center text-xl font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-black border-2 border-transparent focus:border-black transition-all">
+                    <input type="text" maxlength="1" x-model="c4" x-ref="c4" @input="!$event.target.value ? $refs.c3.focus() : null" class="w-12 h-14 bg-gray-100 rounded-xl text-center text-xl font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-black border-2 border-transparent focus:border-black transition-all">
+                </div>
+
+                <div class="space-y-4 mb-16">
+                    <div>
+                        <button type="button" class="inline-flex items-center justify-center py-2.5 px-5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold text-sm rounded-full transition-colors">
+                            Login with driving licence number
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="inline-flex items-center justify-center py-2.5 px-5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold text-sm rounded-full transition-colors">
+                            More options
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation -->
+                <div class="flex items-center justify-between">
+                    <button type="button" @click="view = 'mobile'" class="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    
+                    <button type="button" class="h-12 px-6 rounded-full font-semibold flex items-center gap-2 transition-colors"
+                            :class="(c1 && c2 && c3 && c4) ? 'bg-black text-white hover:bg-gray-900 cursor-pointer shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
+                        Next
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Email View (For Backward Compatibility with actual auth logic) -->
