@@ -789,14 +789,13 @@
 
         <!-- Collapsed Floating Bottom Pill -->
         <div x-show="ride && !dismissed && !expanded" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-6"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md"
-             style="display: none; z-index: 999999 !important; position: fixed !important;">
+             x-transition.opacity.duration.300ms
+             class="fixed bottom-6 right-4 sm:right-8 max-w-[calc(100vw-32px)] sm:max-w-md"
+             style="display: none; z-index: 999999 !important; position: fixed !important; bottom: 28px !important; right: 24px !important;"
+             x-cloak>
             
             <div @click="expanded = true"
-                 class="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.3)] border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer backdrop-blur-md select-none"
+                 class="flex items-center gap-3 p-4 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] border transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-md select-none"
                  :class="{
                      'bg-indigo-900/95 border-indigo-500/50 text-white': ride && ride.status === 'pending',
                      'bg-emerald-900/95 border-emerald-500/50 text-white': ride && (ride.status === 'accepted' || ride.status === 'in_progress'),
@@ -816,7 +815,7 @@
                 <!-- Info Text -->
                 <div class="flex-1 min-w-0">
                     <p class="font-extrabold text-sm truncate leading-snug" x-text="statusText"></p>
-                    <p class="text-xs opacity-75 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
+                    <p class="text-xs opacity-75 truncate" x-text="ride ? (ride.dropoff_location || ride.pickup_location || '') : ''"></p>
                 </div>
                 <!-- Action Buttons -->
                 <div class="flex items-center gap-1.5 shrink-0">
