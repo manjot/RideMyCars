@@ -37,17 +37,40 @@
                     @csrf
                     
                     <!-- Schedule Time -->
-                    <div class="flex">
-                        <div class="relative inline-flex items-center">
-                            <div class="absolute left-3.5 pointer-events-none text-gray-900 dark:text-white">
+                    <div class="flex mb-4" x-data="{ open: false }">
+                        <div class="relative inline-block">
+                            <!-- Hidden input to submit the form value -->
+                            <input type="hidden" name="schedule_type" x-model="schedule_type">
+                            
+                            <!-- Custom Dropdown Button Pill -->
+                            <button type="button" @click="open = !open" @click.away="open = false" 
+                                    class="flex items-center gap-2 pl-4 pr-3.5 py-2.5 bg-gray-100 dark:bg-[#1a1a1a] hover:bg-gray-200 dark:hover:bg-[#222] text-gray-900 dark:text-white font-bold rounded-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors text-sm shadow-sm border border-gray-200 dark:border-white/10">
+                                
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Zm1-8h4a1 1 0 0 1 0 2h-5a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0Z"/></svg>
-                            </div>
-                            <select name="schedule_type" x-model="schedule_type" class="pl-9 pr-8 py-2 bg-gray-200/70 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] text-gray-900 dark:text-white font-semibold rounded-full appearance-none cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors text-sm">
-                                <option value="now">Pickup now</option>
-                                <option value="later">Schedule later</option>
-                            </select>
-                            <div class="absolute right-3.5 pointer-events-none text-gray-900 dark:text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                
+                                <span x-text="schedule_type === 'now' ? 'Pickup now' : 'Schedule later'"></span>
+                                
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+
+                            <!-- Custom Dropdown Menu -->
+                            <div x-show="open" style="display: none;" 
+                                 x-transition.opacity.duration.200ms
+                                 class="absolute left-0 mt-2 w-48 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 py-1 overflow-hidden">
+                                
+                                <button type="button" @click="schedule_type = 'now'; open = false;" 
+                                        class="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#222]"
+                                        :class="schedule_type === 'now' ? 'text-brand-500 bg-brand-50/50 dark:bg-brand-900/20' : 'text-gray-700 dark:text-gray-300'">
+                                    <svg x-show="schedule_type === 'now'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span :class="schedule_type !== 'now' ? 'ml-7' : ''">Pickup now</span>
+                                </button>
+
+                                <button type="button" @click="schedule_type = 'later'; open = false;" 
+                                        class="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 transition-colors hover:bg-gray-50 dark:hover:bg-[#222]"
+                                        :class="schedule_type === 'later' ? 'text-brand-500 bg-brand-50/50 dark:bg-brand-900/20' : 'text-gray-700 dark:text-gray-300'">
+                                    <svg x-show="schedule_type === 'later'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span :class="schedule_type !== 'later' ? 'ml-7' : ''">Schedule later</span>
+                                </button>
                             </div>
                         </div>
                     </div>
