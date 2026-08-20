@@ -241,11 +241,17 @@
                             map.setCenter(place.geometry.location);
                             marker.setPosition(place.geometry.location);
                             map.setZoom(15);
+                            pickupInput.blur();
+                            setTimeout(() => { document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); }, 10);
                         });
                     }
 
                     if (dropoffInput && google.maps.places) {
-                        new google.maps.places.Autocomplete(dropoffInput);
+                        const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
+                        dropoffAutocomplete.addListener("place_changed", () => {
+                            dropoffInput.blur();
+                            setTimeout(() => { document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); }, 10);
+                        });
                     }
                 } catch (e) {
                     console.warn("Google Maps init skipped or failed:", e);

@@ -353,6 +353,8 @@
                                 pickupInput.value = place.name;
                             }
                             pickupInput.dispatchEvent(new Event('input'));
+                            pickupInput.blur();
+                            setTimeout(() => { document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); }, 10);
                         });
                     }
 
@@ -370,6 +372,8 @@
                                 dropoffInput.value = place.name;
                             }
                             dropoffInput.dispatchEvent(new Event('input'));
+                            dropoffInput.blur();
+                            setTimeout(() => { document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); }, 10);
                         });
                     }
                 } catch (e) {
