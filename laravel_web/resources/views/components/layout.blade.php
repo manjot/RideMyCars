@@ -621,6 +621,8 @@
             }));
         });
     </script>
+    @endauth
+
     <!-- Ongoing Ride Banner & Details Modal (Placed at bottom of body for topmost stacking) -->
     @auth
     <div x-data="ongoingRide()" x-init="init()" x-cloak>
