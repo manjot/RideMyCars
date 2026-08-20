@@ -162,13 +162,16 @@
                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                         body: JSON.stringify({ email: emailForOtp })
                     })
-                    .then(res => {
+                    .then(res => res.json())
+                    .then(data => {
                         isLoading = false;
-                        if(res.ok) {
+                        if(data.mail_error) {
+                            otpError = 'Email failed: ' + data.mail_error + '. Your code is: ' + data.debug_otp;
                             view = 'otp';
                             c1 = c2 = c3 = c4 = '';
                         } else {
-                            otpError = 'Failed to send OTP. Try again.';
+                            view = 'otp';
+                            c1 = c2 = c3 = c4 = '';
                         }
                     })
                     .catch(() => { isLoading = false; otpError = 'Network error.'; });

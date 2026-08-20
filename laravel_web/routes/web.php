@@ -122,14 +122,19 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
     $otp = rand(1000, 9999);
     \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
     
+    $mailError = null;
     try {
         \Illuminate\Support\Facades\Mail::raw("Your RideMyCars login code is: {$otp}", function ($message) use ($email) {
-            $message->to($email)->subject('Your Login Code');
+            $message->to($email)->subject('Your RideMyCars Login Code');
         });
     } catch (\Throwable $e) {
-        \Illuminate\Support\Facades\Log::error('Mail error: ' . $e->getMessage());
-        // For local testing if mail fails
+        $mailError = $e->getMessage();
+        \Illuminate\Support\Facades\Log::error('Mail error: ' . $mailError);
         \Illuminate\Support\Facades\Log::info("OTP for {$email} is {$otp}");
+    }
+    
+    if ($mailError) {
+        return response()->json(['message' => 'OTP generated but email failed', 'mail_error' => $mailError, 'debug_otp' => $otp]);
     }
     return response()->json(['message' => 'OTP sent successfully']);
 });
