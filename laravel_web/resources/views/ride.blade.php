@@ -33,9 +33,37 @@
             
             <!-- Left Side: Form -->
             <div class="w-full lg:w-[55%]">
-                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ vehicle_type: '{{ request('type', 'Economy') }}' }">
+                <form action="/ride/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ vehicle_type: '{{ request('type', 'Economy') }}', schedule_type: 'now' }">
                     @csrf
                     
+                    <!-- Schedule Time -->
+                    <div class="flex">
+                        <div class="relative inline-flex items-center">
+                            <div class="absolute left-3.5 pointer-events-none text-gray-900 dark:text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Zm1-8h4a1 1 0 0 1 0 2h-5a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0Z"/></svg>
+                            </div>
+                            <select name="schedule_type" x-model="schedule_type" class="pl-9 pr-8 py-2 bg-gray-200/70 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] text-gray-900 dark:text-white font-semibold rounded-full appearance-none cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-colors text-sm">
+                                <option value="now">Pickup now</option>
+                                <option value="later">Schedule later</option>
+                            </select>
+                            <div class="absolute right-3.5 pointer-events-none text-gray-900 dark:text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date/Time Picker (Shown only if schedule later) -->
+                    <div x-show="schedule_type === 'later'" style="display: none;" class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pickup Date</label>
+                            <input type="date" name="schedule_date" :required="schedule_type === 'later'" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pickup Time</label>
+                            <input type="time" name="schedule_time" :required="schedule_type === 'later'" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                        </div>
+                    </div>
+
                     <!-- Locations -->
                     <div class="space-y-5">
                         <div>
