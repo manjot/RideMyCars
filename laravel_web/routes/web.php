@@ -619,6 +619,29 @@ Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $req
     return response()->json(['success' => true, 'new_fare' => $newFare]);
 })->middleware('auth');
 
+// Cancel a ride (rider or driver)
+Route::post('/api/ride/{id}/cancel', function ($id) {
+    $user = auth()->user();
+    $ride = \App\Models\Ride::where('id', $id)
+        ->where(function ($q) use ($user) {
+            $q->where('rider_id', $user->id)->orWhere('driver_id', $user->id);
+        })
+        ->first();
+
+    if (!$ride) return response()->json(['error' => 'Ride not found'], 404);
+
+    if (in_array($ride->status, ['completed', 'cancelled'])) {
+        return response()->json(['error' => 'Ride already finished'], 400);
+    }
+
+    $ride->update(['status' => 'cancelled']);
+
+    // Expire assignments
+    \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
+
+    return response()->json(['success' => true, 'message' => 'Ride cancelled successfully']);
+})->middleware('auth');
+
 // Get active rides for driver
 Route::get('/api/driver/active-rides', function () {
     $user = auth()->user();

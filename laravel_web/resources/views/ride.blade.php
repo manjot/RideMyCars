@@ -746,6 +746,17 @@
                 reviewComment: '',
                 reviewSubmitted: false,
                 
+                init() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const resumeId = urlParams.get('resume');
+                    if (resumeId) {
+                        this.rideId = resumeId;
+                        this.pollingUrl = `/api/ride/${resumeId}/status`;
+                        this.isConfirming = true;
+                        this.startPolling();
+                    }
+                },
+                
                 async submitBooking() {
                     this.isConfirming = true;
                     this.rideStatus = 'pending';
@@ -812,10 +823,11 @@
                         if (data.driver_name) this.driverName = data.driver_name;
                         if (data.has_review) this.reviewSubmitted = true;
                         
-                        if (data.status === 'failed') {
+                        if (data.status === 'failed' || data.status === 'cancelled') {
                             clearInterval(this.pollingTimer);
-                            alert('No drivers available right now. Please try again later.');
+                            if (data.status === 'failed') alert('No drivers available right now. Please try again later.');
                             this.isConfirming = false;
+                            this.rideId = null;
                         }
                         if (data.status === 'completed') {
                             clearInterval(this.pollingTimer);
@@ -847,8 +859,17 @@
                     }
                 },
                 
-                cancelRide() {
+                async cancelRide() {
                     if (this.pollingTimer) clearInterval(this.pollingTimer);
+                    if (this.rideId) {
+                        try {
+                            const csrfToken = document.querySelector('input[name="_token"]')?.value;
+                            await fetch(`/api/ride/${this.rideId}/cancel`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                            });
+                        } catch(e) {}
+                    }
                     this.isConfirming = false;
                     this.rideStatus = 'pending';
                     this.rideId = null;

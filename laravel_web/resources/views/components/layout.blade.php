@@ -339,17 +339,24 @@
                     <p x-show="boostSuccess" class="text-xs text-green-600 mt-1 font-medium">✓ Fare boosted! Resent to all drivers.</p>
                 </div>
                 
-                <!-- Track Button -->
-                <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
-                   class="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold text-sm rounded-xl hover:opacity-90 transition-opacity">
-                    Track Ride →
-                </a>
+                <!-- Actions: Track & Cancel -->
+                <div class="space-y-2">
+                    <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
+                       class="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold text-sm rounded-xl hover:opacity-90 transition-opacity">
+                        Track Ride →
+                    </a>
+                    <button @click="cancelRide()" :disabled="cancelling"
+                            class="block w-full text-center py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5">
+                        <svg x-show="cancelling" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
+                        <span x-text="cancelling ? 'Cancelling ride...' : '✕ Cancel Ride'"></span>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Collapsed Banner (click to expand) -->
         <div @click="expanded = !expanded"
-           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-4 p-4 rounded-2xl shadow-2xl border transition-all hover:scale-[1.01] cursor-pointer"
+           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl shadow-2xl border transition-all hover:scale-[1.01] cursor-pointer"
            :class="{
                'bg-indigo-600 border-indigo-500 text-white': ride && ride.status === 'pending',
                'bg-blue-600 border-blue-500 text-white': ride && ride.status === 'en_route',
@@ -359,7 +366,7 @@
            }">
             <!-- Pulsing dot -->
             <div class="relative shrink-0">
-                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center">
                     <div class="w-3 h-3 rounded-full bg-white animate-pulse"></div>
                 </div>
             </div>
@@ -368,8 +375,14 @@
                 <p class="font-bold text-sm truncate" x-text="statusText"></p>
                 <p class="text-xs opacity-80 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
             </div>
-            <!-- Arrow -->
-            <svg class="w-5 h-5 shrink-0 opacity-80 transition-transform duration-200" :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+            <!-- Quick Actions -->
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[11px] font-bold bg-white/20 px-2 py-1 rounded-lg hidden sm:inline" x-text="expanded ? 'Hide' : 'Details'"></span>
+                <svg class="w-5 h-5 opacity-80 transition-transform duration-200" :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                <button @click.stop="cancelRide()" title="Cancel Ride" class="w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-xs font-bold transition-colors">
+                    ✕
+                </button>
+            </div>
         </div>
     </div>
     <script>
@@ -382,6 +395,7 @@
             boosting: false,
             boostError: '',
             boostSuccess: false,
+            cancelling: false,
             get statusText() {
                 if (!this.ride) return '';
                 const s = this.ride.status;
@@ -432,6 +446,23 @@
                     }
                 } catch(e) { this.boostError = 'Network error'; }
                 this.boosting = false;
+            },
+            async cancelRide() {
+                if (!this.ride) return;
+                if (!confirm('Cancel this ride request?')) return;
+                this.cancelling = true;
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                    const res = await fetch(`/api/ride/${this.ride.id}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token }
+                    });
+                    if (res.ok) {
+                        this.ride = null;
+                        this.expanded = false;
+                    }
+                } catch(e) {}
+                this.cancelling = false;
             }
         }));
     });
