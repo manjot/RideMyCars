@@ -90,23 +90,25 @@
             <template x-for="driver in filteredDrivers" :key="driver.id">
                 <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col group relative">
                     
-                    <!-- Verification Badge -->
-                    <div class="absolute top-4 right-4">
-                        <span x-show="driver.verification_status === 'verified'" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800/30">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            Verified
-                        </span>
-                    </div>
-
                     <div class="flex items-start gap-4 mb-4">
                         <!-- Image -->
-                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] shrink-0 overflow-hidden relative border-2 border-gray-100 dark:border-white/10">
-                            <img :src="driver.photo_url" class="w-full h-full object-cover" :alt="driver.user.name">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] shrink-0 overflow-hidden relative border-2 border-gray-100 dark:border-white/10 flex items-center justify-center text-xl font-bold text-gray-400">
+                            <template x-if="driver.photo_url">
+                                <img :src="driver.photo_url" class="w-full h-full object-cover" :alt="driver.user.name">
+                            </template>
+                            <template x-if="!driver.photo_url">
+                                <span x-text="driver.user.name.split(' ').map(n => n[0]).join('').substring(0, 2)"></span>
+                            </template>
                         </div>
                         
                         <!-- Header -->
-                        <div class="flex-1 pr-16">
-                            <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="driver.user.name"></h3>
+                        <div class="flex-1 pr-2">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="driver.user.name"></h3>
+                                <span x-show="driver.verification_status === 'verified'" title="Verified Driver" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </span>
+                            </div>
                             <div class="flex items-center gap-2 mt-1">
                                 <div class="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-amber-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
