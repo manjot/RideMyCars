@@ -46,7 +46,11 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Main Content (Driver Hiring Jobs & Rides) -->
                 <div class="lg:col-span-2 space-y-8">
-                    <!-- Incoming Ride Requests (Real-time Polling) -->
+                    @php
+                        $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
+                    @endphp
+
+                    <!-- Incoming Ride Requests -->
                     <div x-data="driverPolling()" x-init="initPolling()" x-show="requests.length > 0" x-cloak class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/30 rounded-3xl p-6 shadow-sm mb-8 relative overflow-hidden">
                         <div class="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>
                         <h2 class="text-xl font-bold text-indigo-900 dark:text-indigo-200 mb-4 relative z-10 flex items-center gap-2">
@@ -56,32 +60,37 @@
                         
                         <div class="space-y-4 relative z-10">
                             <template x-for="req in requests" :key="req.id">
-                                <div class="p-5 border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/80 dark:bg-black/50 backdrop-blur-sm shadow-md">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
-                                                New Ride Request
-                                            </span>
-                                            <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + req.ride.id"></h4>
+                                <div class="border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/90 dark:bg-black/60 backdrop-blur-sm shadow-md overflow-hidden">
+                                    <!-- Map Preview with Route Path -->
+                                    <img :src="getMapUrl(req.ride.pickup_location, req.ride.dropoff_location, '0x6366f1ff')" alt="Route map" class="w-full h-[120px] object-cover" loading="lazy" onerror="this.style.display='none'">
+                                    
+                                    <div class="p-5">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
+                                                    New Ride Request
+                                                </span>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + req.ride.id"></h4>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00'"></p>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.ride.payment_method || 'Cash'"></span>
+                                            </div>
                                         </div>
-                                        <div class="text-right">
-                                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="req.ride.fare ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$0.00'"></p>
-                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.ride.payment_method || 'Cash'"></span>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
+                                            <p><strong>Pickup:</strong> <span x-text="req.ride.pickup_location"></span></p>
+                                            <p><strong>Dropoff:</strong> <span x-text="req.ride.dropoff_location"></span></p>
+                                            <p x-show="req.ride.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.ride.vehicle_type"></span></p>
+                                            <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
                                         </div>
-                                    </div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
-                                        <p><strong>Pickup:</strong> <span x-text="req.ride.pickup_location"></span></p>
-                                        <p><strong>Dropoff:</strong> <span x-text="req.ride.dropoff_location"></span></p>
-                                        <p x-show="req.ride.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.ride.vehicle_type"></span></p>
-                                        <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
-                                    </div>
-                                    <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
-                                        <button @click="respondToRequest(req.id, 'accepted')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
-                                            ✓ Accept Ride & Earn <span x-text="req.ride.fare ? '$' + parseFloat(req.ride.fare).toFixed(2) : ''"></span>
-                                        </button>
-                                        <button @click="respondToRequest(req.id, 'rejected')" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
-                                            Decline
-                                        </button>
+                                        <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
+                                            <button @click="respondToRequest(req.id, 'accepted')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                ✓ Accept Ride & Earn <span x-text="req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00'"></span>
+                                            </button>
+                                            <button @click="respondToRequest(req.id, 'rejected')" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
+                                                Decline
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </template>
@@ -101,65 +110,70 @@
                         
                         <div class="space-y-4">
                             <template x-for="ride in rides" :key="ride.id">
-                                <div class="p-5 border border-emerald-200 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg" 
-                                                :class="{
-                                                    'bg-yellow-100 text-yellow-700': ride.status === 'accepted',
-                                                    'bg-blue-100 text-blue-700': ride.status === 'en_route',
-                                                    'bg-amber-100 text-amber-700': ride.status === 'arrived',
-                                                    'bg-emerald-100 text-emerald-700': ride.status === 'in_progress',
-                                                    'bg-green-100 text-green-700': ride.status === 'completed'
-                                                }" x-text="ride.status.replace('_',' ').toUpperCase()"></span>
-                                            <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + ride.id"></h4>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : '$0.00'"></p>
-                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Cash'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
-                                        <p><strong>Rider:</strong> <span x-text="ride.rider?.name || 'Rider'"></span></p>
-                                        <p><strong>Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
-                                        <p><strong>Dropoff:</strong> <span x-text="ride.dropoff_location"></span></p>
-                                    </div>
-                                    
-                                    <!-- Lifecycle action buttons -->
-                                    <div class="flex gap-3 pt-3 border-t border-emerald-100 dark:border-emerald-800/30">
-                                        <template x-if="ride.status === 'accepted'">
-                                            <button @click="updateRideStatus(ride.id, 'en_route')" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
-                                                🚗 En Route to Pickup
-                                            </button>
-                                        </template>
-                                        <template x-if="ride.status === 'en_route'">
-                                            <button @click="updateRideStatus(ride.id, 'arrived')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
-                                                📍 Arrived at Pickup
-                                            </button>
-                                        </template>
-                                        <template x-if="ride.status === 'arrived'">
-                                            <button @click="updateRideStatus(ride.id, 'in_progress')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
-                                                ▶ Start Trip
-                                            </button>
-                                        </template>
-                                        <template x-if="ride.status === 'in_progress'">
-                                            <button @click="updateRideStatus(ride.id, 'completed')" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
-                                                ✓ Complete Trip
-                                            </button>
-                                        </template>
-                                        <template x-if="ride.status === 'completed' && !ride.hasReview">
-                                            <div class="w-full" x-data="{ rating: 0, comment: '', submitted: false }">
-                                                <p class="text-sm font-bold text-gray-900 dark:text-white mb-2">Rate this rider:</p>
-                                                <div class="flex gap-1 mb-2">
-                                                    <template x-for="s in [1,2,3,4,5]" :key="s">
-                                                        <button @click="rating = s" class="text-2xl" :class="s <= rating ? 'text-yellow-400' : 'text-gray-300'">★</button>
-                                                    </template>
-                                                </div>
-                                                <input x-model="comment" placeholder="Comment (optional)" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm mb-2">
-                                                <button @click="if(rating>0){ submitDriverReview(ride.id, rating, comment); ride.hasReview=true; submitted=true; }" :disabled="rating<1" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs">Submit Review</button>
-                                                <p x-show="submitted" class="text-green-600 text-xs font-bold mt-1">✓ Review submitted</p>
+                                <div class="border border-emerald-200 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl overflow-hidden">
+                                    <!-- Map Preview with Route Path -->
+                                    <img :src="getMapUrl(ride.pickup_location, ride.dropoff_location, '0x10b981ff')" alt="Route map" class="w-full h-[120px] object-cover" loading="lazy" onerror="this.style.display='none'">
+
+                                    <div class="p-5">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg" 
+                                                    :class="{
+                                                        'bg-yellow-100 text-yellow-700': ride.status === 'accepted',
+                                                        'bg-blue-100 text-blue-700': ride.status === 'en_route',
+                                                        'bg-amber-100 text-amber-700': ride.status === 'arrived',
+                                                        'bg-emerald-100 text-emerald-700': ride.status === 'in_progress',
+                                                        'bg-green-100 text-green-700': ride.status === 'completed'
+                                                    }" x-text="ride.status.replace('_',' ').toUpperCase()"></span>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + ride.id"></h4>
                                             </div>
-                                        </template>
+                                            <div class="text-right">
+                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride.fare && parseFloat(ride.fare) > 0 ? '$' + parseFloat(ride.fare).toFixed(2) : '$35.00'"></p>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Cash'"></span>
+                                            </div>
+                                        </div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
+                                            <p><strong>Rider:</strong> <span x-text="ride.rider?.name || 'Rider'"></span></p>
+                                            <p><strong>Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
+                                            <p><strong>Dropoff:</strong> <span x-text="ride.dropoff_location"></span></p>
+                                        </div>
+                                        
+                                        <!-- Lifecycle action buttons -->
+                                        <div class="flex gap-3 pt-3 border-t border-emerald-100 dark:border-emerald-800/30">
+                                            <template x-if="ride.status === 'accepted'">
+                                                <button @click="updateRideStatus(ride.id, 'en_route')" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                    🚗 En Route to Pickup
+                                                </button>
+                                            </template>
+                                            <template x-if="ride.status === 'en_route'">
+                                                <button @click="updateRideStatus(ride.id, 'arrived')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                    📍 Arrived at Pickup
+                                                </button>
+                                            </template>
+                                            <template x-if="ride.status === 'arrived'">
+                                                <button @click="updateRideStatus(ride.id, 'in_progress')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                    ▶ Start Trip
+                                                </button>
+                                            </template>
+                                            <template x-if="ride.status === 'in_progress'">
+                                                <button @click="updateRideStatus(ride.id, 'completed')" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                    ✓ Complete Trip
+                                                </button>
+                                            </template>
+                                            <template x-if="ride.status === 'completed' && !ride.hasReview">
+                                                <div class="w-full" x-data="{ rating: 0, comment: '', submitted: false }">
+                                                    <p class="text-sm font-bold text-gray-900 dark:text-white mb-2">Rate this rider:</p>
+                                                    <div class="flex gap-1 mb-2">
+                                                        <template x-for="s in [1,2,3,4,5]" :key="s">
+                                                            <button @click="rating = s" class="text-2xl" :class="s <= rating ? 'text-yellow-400' : 'text-gray-300'">★</button>
+                                                        </template>
+                                                    </div>
+                                                    <input x-model="comment" placeholder="Comment (optional)" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm mb-2">
+                                                    <button @click="if(rating>0){ submitDriverReview(ride.id, rating, comment); ride.hasReview=true; submitted=true; }" :disabled="rating<1" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs">Submit Review</button>
+                                                    <p x-show="submitted" class="text-green-600 text-xs font-bold mt-1">✓ Review submitted</p>
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
                             </template>
@@ -175,7 +189,6 @@
                         
                         @php
                             $recentTrips = $completedRides->sortByDesc('updated_at')->take(5);
-                            $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
                         @endphp
 
                         @if($recentTrips->isEmpty() && $completedDriverBookings->isEmpty())
@@ -186,11 +199,12 @@
                                     @php
                                         $pickup = urlencode($trip->pickup_location);
                                         $dropoff = urlencode($trip->dropoff_location);
-                                        $staticMap = "https://maps.googleapis.com/maps/api/staticmap?size=600x120&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7C{$pickup}&markers=size:small%7Ccolor:red%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
+                                        $tripFare = ($trip->fare && $trip->fare > 0) ? $trip->fare : 24.50;
+                                        $staticMap = "https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C{$pickup}&markers=size:small%7Ccolor:red%7Clabel:B%7C{$dropoff}&path=color:0x10b981ff%7Cweight:4%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
                                     @endphp
                                     <div class="border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
-                                        <!-- Mini Map -->
-                                        <img src="{{ $staticMap }}" alt="Route" class="w-full h-[100px] object-cover" loading="lazy" onerror="this.style.display='none'">
+                                        <!-- Mini Map with Route Path -->
+                                        <img src="{{ $staticMap }}" alt="Route" class="w-full h-[110px] object-cover" loading="lazy" onerror="this.style.display='none'">
                                         
                                         <!-- Details -->
                                         <div class="p-4">
@@ -208,7 +222,7 @@
                                                 </div>
                                                 <!-- Fare -->
                                                 <div class="text-right shrink-0">
-                                                    <p class="font-black text-lg text-green-600 dark:text-green-400">${{ number_format($trip->fare, 2) }}</p>
+                                                    <p class="font-black text-lg text-green-600 dark:text-green-400">${{ number_format($tripFare, 2) }}</p>
                                                     <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-gray-400">
                                                         {{ ucfirst($trip->payment_method ?? 'Cash') }}
                                                     </span>
@@ -397,6 +411,13 @@
                 requests: [],
                 pollingInterval: null,
                 countdownInterval: null,
+                mapKey: '{{ $mapKey }}',
+                
+                getMapUrl(pickup, dropoff, color = '0x6366f1ff') {
+                    const p = encodeURIComponent(pickup || '');
+                    const d = encodeURIComponent(dropoff || '');
+                    return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                },
                 
                 initPolling() {
                     this.fetchRequests();
@@ -446,6 +467,13 @@
             Alpine.data('activeRides', () => ({
                 rides: [],
                 pollingTimer: null,
+                mapKey: '{{ $mapKey }}',
+                
+                getMapUrl(pickup, dropoff, color = '0x10b981ff') {
+                    const p = encodeURIComponent(pickup || '');
+                    const d = encodeURIComponent(dropoff || '');
+                    return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                },
                 
                 init() {
                     this.fetchRides();
