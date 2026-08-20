@@ -131,89 +131,210 @@
                             </div>
                         @endguest
 
-                        <div class="space-y-8 @guest opacity-50 pointer-events-none select-none blur-[1px] @endguest transition-all duration-300 rounded-2xl">
-                            <!-- Vehicle Tier Selection (Requirement #2) -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Vehicle Tier</label>
-                                <input type="hidden" name="vehicle_type" x-model="vehicle_type">
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    <!-- Comfort -->
-                                    <div @click="vehicle_type = 'Comfort'" 
-                                         :class="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                        <div x-show="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                        </div>
-                                        <div class="text-2xl mb-1">🚘</div>
-                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Comfort</h3>
-                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Class-leading comfort</p>
-                                    </div>
+                        <div class="space-y-4 @guest opacity-50 pointer-events-none select-none blur-[1px] @endguest transition-all duration-300 rounded-2xl pb-24" x-data="{ paymentModal: false, paymentMethod: 'Cash', profileType: 'Personal' }">
+                            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Choose a ride</h2>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Rides we think you'll like</h3>
+                            
+                            <input type="hidden" name="vehicle_type" x-model="vehicle_type">
+                            <input type="hidden" name="payment_method" x-model="paymentMethod">
 
-                                    <!-- Ultra-SUV -->
-                                    <div @click="vehicle_type = 'Ultra-SUV'" 
-                                         :class="vehicle_type === 'Ultra-SUV' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                        <div x-show="vehicle_type === 'Ultra-SUV'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <!-- Vehicle List -->
+                            <div class="space-y-3">
+                                <!-- Economy -->
+                                <div @click="vehicle_type = 'Economy'" 
+                                     :class="vehicle_type === 'Economy' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
+                                     class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
+                                    <div class="flex items-center gap-4">
+                                        <div class="text-5xl">🚗</div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">Uber Go AC</h4>
+                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                                    4
+                                                </div>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">3 mins away • 11:27 PM</p>
+                                            <div class="inline-flex mt-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded items-center gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                                Faster
+                                            </div>
                                         </div>
-                                        <div class="text-2xl mb-1">🚙</div>
-                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Ultra-SUV</h3>
-                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Flagship luxury space</p>
                                     </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹212.65</div>
+                                    </div>
+                                </div>
 
-                                    <!-- Economy -->
-                                    <div @click="vehicle_type = 'Economy'" 
-                                         :class="vehicle_type === 'Economy' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                        <div x-show="vehicle_type === 'Economy'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                <!-- Bike -->
+                                <div @click="vehicle_type = 'Bike'" 
+                                     :class="vehicle_type === 'Bike' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
+                                     class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
+                                    <div class="flex items-center gap-4">
+                                        <div class="text-5xl">🛵</div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">Bike</h4>
+                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                                    1
+                                                </div>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">5 mins away • 11:28 PM</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Affordable 2 wheeler rides</p>
                                         </div>
-                                        <div class="text-2xl mb-1">🚗</div>
-                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Economy</h3>
-                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Everyday rides</p>
                                     </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹109.71</div>
+                                        <div class="text-xs text-gray-500 line-through">₹112.71</div>
+                                    </div>
+                                </div>
+
+                                <!-- Sedan -->
+                                <div @click="vehicle_type = 'Premium'" 
+                                     :class="vehicle_type === 'Premium' ? 'border-black dark:border-white ring-1 ring-black dark:ring-white' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
+                                     class="flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
+                                    <div class="flex items-center gap-4">
+                                        <div class="text-5xl">🚘</div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-lg">Go Sedan</h4>
+                                                <div class="flex items-center text-xs font-bold text-gray-900 dark:text-white gap-0.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                                    4
+                                                </div>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">4 mins away • 11:27 PM</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Affordable sedans</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹213.69</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sticky Bottom Booking Bar -->
+                            <div class="fixed bottom-0 left-0 lg:absolute lg:-bottom-6 lg:-left-6 w-full lg:w-[calc(100%+48px)] bg-white dark:bg-[#111] border-t lg:border border-gray-200 dark:border-white/10 p-4 lg:rounded-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] lg:shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-20 flex items-center justify-between gap-4">
+                                <!-- Payment Selector Pill -->
+                                <button type="button" @click="paymentModal = true" class="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-[#222] p-2 rounded-xl transition-colors cursor-pointer shrink-0 border border-transparent hover:border-gray-200 dark:hover:border-white/10">
+                                    <div class="flex bg-gray-900 text-white rounded-lg overflow-hidden">
+                                        <div class="px-2 py-1.5" :class="profileType === 'Personal' ? 'bg-black' : 'opacity-50'">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                        </div>
+                                        <div class="px-2 py-1.5" :class="profileType === 'Business' ? 'bg-black' : 'opacity-50'">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10-2h4v2h-4V5z"/></svg>
+                                        </div>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-bold text-gray-900 dark:text-white text-sm leading-tight" x-text="profileType"></div>
+                                        <div class="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                            <span x-text="paymentMethod"></span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <!-- Submit Button -->
+                                <button type="submit" class="flex-1 bg-black hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-lg transition-colors flex items-center justify-center shadow-lg active:scale-[0.98]">
+                                    Request <span x-text="vehicle_type === 'Economy' ? 'Uber Go AC' : (vehicle_type === 'Premium' ? 'Go Sedan' : vehicle_type)" class="ml-1"></span>
+                                </button>
+                            </div>
+
+                            <!-- Payment Modal (Uber Style) -->
+                            <div x-show="paymentModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                                <div @click.away="paymentModal = false" class="bg-white dark:bg-[#1a1a1a] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4">
                                     
-                                    <!-- Premium -->
-                                    <div @click="vehicle_type = 'Premium'" 
-                                         :class="vehicle_type === 'Premium' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                        <div x-show="vehicle_type === 'Premium'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <div class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" @click="paymentModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-[#222] rounded-full transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                            </button>
+                                            <h2 class="text-base font-bold text-gray-900 dark:text-white">Payment methods</h2>
                                         </div>
-                                        <div class="text-2xl mb-1">🏎️</div>
-                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Premium</h3>
-                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Luxury fleet</p>
+                                        <button type="button" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-[#333] dark:hover:bg-[#444] rounded-full text-sm font-bold text-gray-900 dark:text-white transition-colors flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                            Add
+                                        </button>
+                                    </div>
+
+                                    <div class="p-6">
+                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">Pay with</h3>
+
+                                        <!-- Personal / Business Tabs -->
+                                        <div class="flex bg-gray-100 dark:bg-[#222] rounded-lg p-1 mb-8">
+                                            <button type="button" @click="profileType = 'Personal'" :class="profileType === 'Personal' ? 'bg-white dark:bg-[#333] shadow-sm text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600' : 'text-gray-600 dark:text-gray-400 border border-transparent hover:text-gray-900'" class="flex-1 py-2 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                                Personal
+                                            </button>
+                                            <button type="button" @click="profileType = 'Business'" :class="profileType === 'Business' ? 'bg-white dark:bg-[#333] shadow-sm text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600' : 'text-gray-600 dark:text-gray-400 border border-transparent hover:text-gray-900'" class="flex-1 py-2 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10-2h4v2h-4V5z"/></svg>
+                                                Business
+                                            </button>
+                                        </div>
+
+                                        <!-- Uber balances -->
+                                        <div class="mb-8">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <h4 class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">Uber balances</h4>
+                                                <div class="w-11 h-6 bg-black rounded-full border-2 border-transparent relative">
+                                                    <div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold text-[10px]">Uber</div>
+                                                <span class="font-medium text-gray-900 dark:text-white">Uber Cash: ₹0.00</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Payment methods -->
+                                        <div>
+                                            <h4 class="font-bold text-lg text-gray-900 dark:text-white tracking-tight mb-4">Payment methods</h4>
+                                            <div class="space-y-1">
+                                                <div @click="paymentMethod = 'Cash'" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors">
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="w-10 h-6 bg-green-100 text-green-700 rounded flex items-center justify-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm-8 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm6.5-6H17V8.5c0-.28.22-.5.5-.5h1c.28 0 .5.22.5.5V10zM5.5 10H7v1.5c0 .28-.22.5-.5.5h-1c-.28 0-.5-.22-.5-.5V10z"/></svg>
+                                                        </div>
+                                                        <span class="font-medium text-gray-900 dark:text-white">Cash</span>
+                                                    </div>
+                                                    <div x-show="paymentMethod === 'Cash'" class="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                    </div>
+                                                </div>
+
+                                                <div @click="paymentMethod = 'Amazon Pay'" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors">
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="w-10 h-6 bg-gray-800 text-white rounded flex items-center justify-center font-bold text-[8px]">pay</div>
+                                                        <span class="font-medium text-gray-900 dark:text-white">Amazon Pay</span>
+                                                    </div>
+                                                    <div x-show="paymentMethod === 'Amazon Pay'" class="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white" style="display: none;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                    </div>
+                                                </div>
+
+                                                <div @click="paymentMethod = 'UPI Scan and Pay'" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors">
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="w-10 h-10 bg-gray-100 dark:bg-[#333] text-gray-900 dark:text-white rounded flex items-center justify-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v6H3z"/><path d="M15 3h6v6h-6z"/><path d="M3 15h6v6H3z"/><path d="M21 21v-6h-6"/><path d="M15 15v6h6"/><path d="M9 9h6v6H9z"/></svg>
+                                                        </div>
+                                                        <span class="font-medium text-gray-900 dark:text-white">UPI Scan and Pay</span>
+                                                    </div>
+                                                    <div x-show="paymentMethod === 'UPI Scan and Pay'" class="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white" style="display: none;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-8">
+                                            <button type="button" @click="paymentModal = false" class="w-full bg-black text-white font-bold py-4 rounded-xl text-lg hover:bg-gray-900 transition-colors">
+                                                Save
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Payment Method -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment method</label>
-                                <div class="relative">
-                                    <select name="payment_method" class="w-full px-4 py-3.5 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer font-semibold">
-                                        <option value="stripe">💳 Stripe</option>
-                                        <option value="momo" selected>📱 Momo Pay</option>
-                                        <option value="cash">💵 Cash</option>
-                                        <option value="applepay">🍏 Apple Pay</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Notes -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes for the driver <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span></label>
-                                <textarea name="notes" placeholder="Gate code, landmark, luggage..." rows="3" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all resize-none"></textarea>
-                            </div>
-
-                            <button type="submit" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
-                                Confirm Ride
-                            </button>
                         </div>
                     </div>
                     
