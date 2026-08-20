@@ -451,6 +451,10 @@ Route::post('/payment/cashapp/webhook', function (\Illuminate\Http\Request $requ
     return response()->json($result);
 });
 
+Route::get('/wallet', function () {
+    return view('wallet');
+})->middleware('auth');
+
 // Generic pages
 $pages = ['safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 'refund', 'cookie', 'pricing', 'list-vehicle'];
 foreach ($pages as $page) {
