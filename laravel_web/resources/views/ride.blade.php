@@ -116,6 +116,31 @@
                                 <a href="/login" class="block w-full py-3.5 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-bold rounded-xl transition-all shadow-md active:scale-[0.98]">
                                     Continue
                                 </a>
+                                <style>
+        .map-container {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+        }
+        /* Make Google Maps Autocomplete dropdown text wrap instead of crop */
+        .pac-container {
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border: 1px solid rgba(0,0,0,0.05);
+            margin-top: 4px;
+        }
+        .pac-item {
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            height: auto !important;
+            padding: 10px 12px !important;
+            line-height: 1.4 !important;
+        }
+        .pac-item-query {
+            display: inline !important;
+            font-size: 15px !important;
+        }
+    </style>
                             </div>
                         </div>
                     @endguest
@@ -191,8 +216,8 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
 
-                                <button type="submit" class="flex-1 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-bold py-3.5 rounded-xl text-[17px] transition-colors flex items-center justify-center shadow-md active:scale-[0.98]">
-                                    Request <span x-text="vehicle_type || 'Ride'" class="ml-1 truncate max-w-[130px]"></span>
+                                <button type="submit" class="flex-1 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-bold py-3.5 px-2 rounded-xl text-[17px] transition-colors flex items-center justify-center shadow-md active:scale-[0.98] text-center leading-tight">
+                                    Request <span x-text="vehicle_type || 'Ride'" class="ml-1"></span>
                                 </button>
                             </div>
                         </div>
