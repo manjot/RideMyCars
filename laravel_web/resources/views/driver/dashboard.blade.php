@@ -83,7 +83,82 @@
                         </div>
                     </div>
 
-                    <!-- Pending Hiring Requests -->
+                    <!-- Active Rides (Accepted rides with lifecycle controls) -->
+                    <div x-data="activeRides()" x-init="init()" class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                            Active Rides
+                        </h2>
+                        
+                        <template x-if="rides.length === 0">
+                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No active rides at the moment.</p>
+                        </template>
+                        
+                        <div class="space-y-4">
+                            <template x-for="ride in rides" :key="ride.id">
+                                <div class="p-5 border border-emerald-200 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg" 
+                                                :class="{
+                                                    'bg-yellow-100 text-yellow-700': ride.status === 'accepted',
+                                                    'bg-blue-100 text-blue-700': ride.status === 'en_route',
+                                                    'bg-amber-100 text-amber-700': ride.status === 'arrived',
+                                                    'bg-emerald-100 text-emerald-700': ride.status === 'in_progress',
+                                                    'bg-green-100 text-green-700': ride.status === 'completed'
+                                                }" x-text="ride.status.replace('_',' ').toUpperCase()"></span>
+                                            <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + ride.id"></h4>
+                                        </div>
+                                        <span class="font-extrabold text-lg text-gray-900 dark:text-white" x-text="ride.payment_method"></span>
+                                    </div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
+                                        <p><strong>Rider:</strong> <span x-text="ride.rider?.name || 'Rider'"></span></p>
+                                        <p><strong>Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
+                                        <p><strong>Dropoff:</strong> <span x-text="ride.dropoff_location"></span></p>
+                                    </div>
+                                    
+                                    <!-- Lifecycle action buttons -->
+                                    <div class="flex gap-3 pt-3 border-t border-emerald-100 dark:border-emerald-800/30">
+                                        <template x-if="ride.status === 'accepted'">
+                                            <button @click="updateRideStatus(ride.id, 'en_route')" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                🚗 En Route to Pickup
+                                            </button>
+                                        </template>
+                                        <template x-if="ride.status === 'en_route'">
+                                            <button @click="updateRideStatus(ride.id, 'arrived')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                📍 Arrived at Pickup
+                                            </button>
+                                        </template>
+                                        <template x-if="ride.status === 'arrived'">
+                                            <button @click="updateRideStatus(ride.id, 'in_progress')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                ▶ Start Trip
+                                            </button>
+                                        </template>
+                                        <template x-if="ride.status === 'in_progress'">
+                                            <button @click="updateRideStatus(ride.id, 'completed')" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                ✓ Complete Trip
+                                            </button>
+                                        </template>
+                                        <template x-if="ride.status === 'completed' && !ride.hasReview">
+                                            <div class="w-full" x-data="{ rating: 0, comment: '', submitted: false }">
+                                                <p class="text-sm font-bold text-gray-900 dark:text-white mb-2">Rate this rider:</p>
+                                                <div class="flex gap-1 mb-2">
+                                                    <template x-for="s in [1,2,3,4,5]" :key="s">
+                                                        <button @click="rating = s" class="text-2xl" :class="s <= rating ? 'text-yellow-400' : 'text-gray-300'">★</button>
+                                                    </template>
+                                                </div>
+                                                <input x-model="comment" placeholder="Comment (optional)" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm mb-2">
+                                                <button @click="if(rating>0){ submitDriverReview(ride.id, rating, comment); ride.hasReview=true; submitted=true; }" :disabled="rating<1" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs">Submit Review</button>
+                                                <p x-show="submitted" class="text-green-600 text-xs font-bold mt-1">✓ Review submitted</p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Pending Hiring Requests ({{ $pendingDriverBookings->count() }})</h2>
                         @if($pendingDriverBookings->isEmpty())
@@ -316,6 +391,67 @@
                         }
                     } catch (e) {
                         console.error('Error responding', e);
+                    }
+                }
+            }));
+
+            Alpine.data('activeRides', () => ({
+                rides: [],
+                pollingTimer: null,
+                
+                init() {
+                    this.fetchRides();
+                    this.pollingTimer = setInterval(() => this.fetchRides(), 5000);
+                },
+                
+                async fetchRides() {
+                    try {
+                        const res = await fetch('/api/driver/active-rides');
+                        if (res.ok) {
+                            this.rides = await res.json();
+                        }
+                    } catch (e) {
+                        console.error('Error fetching active rides', e);
+                    }
+                },
+                
+                async updateRideStatus(rideId, newStatus) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                        const res = await fetch(`/api/ride/${rideId}/update-status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                        if (res.ok) {
+                            // Update local state
+                            const ride = this.rides.find(r => r.id === rideId);
+                            if (ride) ride.status = newStatus;
+                        } else {
+                            const data = await res.json();
+                            alert(data.error || 'Failed to update status');
+                        }
+                    } catch (e) {
+                        console.error('Error updating ride status', e);
+                    }
+                },
+                
+                async submitDriverReview(rideId, rating, comment) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                        await fetch(`/api/ride/${rideId}/review`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ rating, comment })
+                        });
+                    } catch (e) {
+                        console.error('Error submitting review', e);
                     }
                 }
             }));

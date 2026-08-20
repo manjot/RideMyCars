@@ -438,30 +438,142 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
     }
 });
 
-// Polling endpoint for Rider to check if driver accepted
+// Polling endpoint for Rider to check ride lifecycle status
 Route::get('/api/ride/{id}/status', function ($id) {
-    $ride = \App\Models\Ride::find($id);
+    $ride = \App\Models\Ride::with(['driver', 'riderReview'])->find($id);
     if (!$ride) return response()->json(['error' => 'Not found'], 404);
 
-    // If still pending, the frontend continues polling
-    if ($ride->status === 'accepted') {
-        return response()->json(['status' => 'accepted', 'driver_id' => $ride->driver_id]);
-    }
-    
-    // In a real app, we would also trigger a check here to see if the current assignment timed out
-    // and assign the next driver if so (acting as a poor-man's queue worker).
-    $activeAssignment = \App\Models\RideAssignment::where('ride_id', $ride->id)->where('status', 'pending')->first();
-    if ($activeAssignment && now()->greaterThan($activeAssignment->expires_at)) {
-        $activeAssignment->update(['status' => 'expired']);
-        \App\Services\RideAssignmentService::assignNextDriver($ride);
-    } elseif (!$activeAssignment) {
-        // No active assignment and not accepted? All drivers rejected/expired.
-        $ride->update(['status' => 'failed']);
-        return response()->json(['status' => 'failed', 'message' => 'No drivers available']);
+    $response = [
+        'status' => $ride->status,
+        'driver_name' => $ride->driver?->name,
+        'arrived_at' => $ride->arrived_at?->toIso8601String(),
+        'started_at' => $ride->started_at?->toIso8601String(),
+        'completed_at' => $ride->completed_at?->toIso8601String(),
+        'has_review' => $ride->riderReview !== null,
+    ];
+
+    // If still pending, check for expired assignments
+    if ($ride->status === 'pending') {
+        $activeAssignment = \App\Models\RideAssignment::where('ride_id', $ride->id)->where('status', 'pending')->first();
+        if (!$activeAssignment) {
+            $ride->update(['status' => 'failed']);
+            $response['status'] = 'failed';
+            $response['message'] = 'No drivers available';
+        }
     }
 
-    return response()->json(['status' => $ride->status]);
+    return response()->json($response);
 });
+
+// Driver updates ride status through lifecycle
+Route::post('/api/ride/{id}/update-status', function (\Illuminate\Http\Request $request, $id) {
+    $ride = \App\Models\Ride::find($id);
+    if (!$ride || $ride->driver_id !== auth()->id()) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $newStatus = $request->input('status');
+    $validTransitions = [
+        'accepted' => 'en_route',
+        'en_route' => 'arrived',
+        'arrived' => 'in_progress',
+        'in_progress' => 'completed',
+    ];
+
+    if (!isset($validTransitions[$ride->status]) || $validTransitions[$ride->status] !== $newStatus) {
+        return response()->json(['error' => 'Invalid status transition from ' . $ride->status . ' to ' . $newStatus], 422);
+    }
+
+    $updates = ['status' => $newStatus];
+    if ($newStatus === 'arrived') $updates['arrived_at'] = now();
+    if ($newStatus === 'in_progress') $updates['started_at'] = now();
+    if ($newStatus === 'completed') $updates['completed_at'] = now();
+
+    $ride->update($updates);
+
+    return response()->json(['success' => true, 'status' => $newStatus]);
+})->middleware('auth');
+
+// Submit a review for a ride
+Route::post('/api/ride/{id}/review', function (\Illuminate\Http\Request $request, $id) {
+    $request->validate([
+        'rating' => 'required|integer|min:1|max:5',
+        'comment' => 'nullable|string|max:500',
+    ]);
+
+    $ride = \App\Models\Ride::find($id);
+    if (!$ride || $ride->status !== 'completed') {
+        return response()->json(['error' => 'Ride not found or not completed'], 404);
+    }
+
+    $userId = auth()->id();
+    if ($userId === $ride->rider_id) {
+        $type = 'rider_to_driver';
+        $revieweeId = $ride->driver_id;
+    } elseif ($userId === $ride->driver_id) {
+        $type = 'driver_to_rider';
+        $revieweeId = $ride->rider_id;
+    } else {
+        return response()->json(['error' => 'You are not part of this ride'], 403);
+    }
+
+    // Check if already reviewed
+    $existing = \App\Models\RideReview::where('ride_id', $id)->where('type', $type)->first();
+    if ($existing) {
+        return response()->json(['error' => 'Already reviewed'], 409);
+    }
+
+    \App\Models\RideReview::create([
+        'ride_id' => $id,
+        'reviewer_id' => $userId,
+        'reviewee_id' => $revieweeId,
+        'type' => $type,
+        'rating' => $request->rating,
+        'comment' => $request->comment,
+    ]);
+
+    return response()->json(['success' => true]);
+})->middleware('auth');
+
+// My Rides page
+Route::get('/my-rides', function () {
+    $user = auth()->user();
+    $rides = \App\Models\Ride::where('rider_id', $user->id)
+        ->with(['driver', 'riderReview', 'driverReview'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+
+    return view('my-rides', compact('user', 'rides'));
+})->middleware('auth');
+
+
+// Get active rides for driver
+Route::get('/api/driver/active-rides', function () {
+    $user = auth()->user();
+    if (!$user) return response()->json([]);
+
+    $rides = \App\Models\Ride::where('driver_id', $user->id)
+        ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'])
+        ->where('created_at', '>=', now()->subHours(24)) // Only last 24h
+        ->with(['rider', 'driverReview'])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($ride) {
+            return [
+                'id' => $ride->id,
+                'status' => $ride->status,
+                'pickup_location' => $ride->pickup_location,
+                'dropoff_location' => $ride->dropoff_location,
+                'fare' => $ride->fare,
+                'payment_method' => $ride->payment_method,
+                'rider' => $ride->rider ? ['name' => $ride->rider->name] : null,
+                'hasReview' => $ride->driverReview !== null,
+                'created_at' => $ride->created_at->toIso8601String(),
+            ];
+        });
+
+    return response()->json($rides);
+})->middleware('auth');
 
 // Polling endpoint for Driver to get incoming requests
 Route::get('/api/driver/requests', function () {

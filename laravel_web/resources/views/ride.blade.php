@@ -315,31 +315,125 @@
                         </div>
                     </div>
 
-                    <!-- Looking for drivers animation -->
-                    <div class="mb-6 p-5 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl">
-                        <div class="flex items-center gap-4">
-                            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
-                                <div class="absolute inset-0 rounded-full bg-indigo-400/30 animate-ping"></div>
-                                <div class="absolute inset-1 rounded-full bg-indigo-400/20 animate-pulse"></div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="relative z-10 text-indigo-600 dark:text-indigo-400">
-                                    <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
-                                    <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
-                                    <path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/>
-                                </svg>
+                    <!-- Ride Lifecycle Timeline -->
+                    <div class="mb-6 space-y-0">
+                        <!-- Step 1: Looking for drivers -->
+                        <div class="flex items-start gap-3 pb-4">
+                            <div class="flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="rideStatus === 'pending' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 animate-pulse' : (rideStatus !== 'pending' ? 'bg-green-100 dark:bg-green-900/40 text-green-600' : 'bg-gray-100 text-gray-400')">
+                                    <template x-if="rideStatus === 'pending'"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></template>
+                                    <template x-if="rideStatus !== 'pending'"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></template>
+                                </div>
+                                <div class="w-0.5 h-4 bg-gray-200 dark:bg-gray-700"></div>
                             </div>
-                            <div>
-                                <p class="font-bold text-[15px] text-indigo-900 dark:text-indigo-200">Looking for nearby drivers...</p>
-                                <p class="text-sm text-indigo-600/70 dark:text-indigo-400/70 mt-0.5">Sending request to all available drivers</p>
+                            <div class="-mt-0.5">
+                                <p class="font-bold text-sm" :class="rideStatus === 'pending' ? 'text-indigo-700 dark:text-indigo-300' : 'text-green-700 dark:text-green-400'" x-text="rideStatus === 'pending' ? 'Looking for nearby drivers...' : 'Driver found!'"></p>
+                                <p class="text-xs text-gray-500 mt-0.5" x-show="rideStatus === 'pending'">Sending request to all available drivers</p>
+                                <p class="text-xs text-gray-500 mt-0.5" x-show="rideStatus !== 'pending' && driverName" x-text="driverName + ' accepted your ride'"></p>
                             </div>
                         </div>
-                        <div class="mt-3 h-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-full overflow-hidden">
+
+                        <!-- Step 2: Driver en route -->
+                        <div class="flex items-start gap-3 pb-4" x-show="['en_route','arrived','in_progress','completed'].includes(rideStatus) || rideStatus === 'accepted'">
+                            <div class="flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="rideStatus === 'en_route' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 animate-pulse' : (rideStatus === 'accepted' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 animate-pulse' : (['arrived','in_progress','completed'].includes(rideStatus) ? 'bg-green-100 dark:bg-green-900/40 text-green-600' : 'bg-gray-100 text-gray-400'))">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
+                                </div>
+                                <div class="w-0.5 h-4 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
+                            <div class="-mt-0.5">
+                                <p class="font-bold text-sm" :class="rideStatus === 'en_route' ? 'text-blue-700 dark:text-blue-300' : (rideStatus === 'accepted' ? 'text-yellow-700 dark:text-yellow-300' : 'text-green-700 dark:text-green-400')" x-text="rideStatus === 'accepted' ? 'Driver is preparing...' : (rideStatus === 'en_route' ? 'Driver is on the way!' : 'Driver reached pickup')"></p>
+                                <p class="text-xs text-gray-500 mt-0.5" x-show="rideStatus === 'en_route'" x-text="driverName + ' is coming to your location'"></p>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Arrived at pickup -->
+                        <div class="flex items-start gap-3 pb-4" x-show="['arrived','in_progress','completed'].includes(rideStatus)">
+                            <div class="flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="rideStatus === 'arrived' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 animate-pulse' : (['in_progress','completed'].includes(rideStatus) ? 'bg-green-100 dark:bg-green-900/40 text-green-600' : 'bg-gray-100 text-gray-400')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </div>
+                                <div class="w-0.5 h-4 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
+                            <div class="-mt-0.5">
+                                <p class="font-bold text-sm" :class="rideStatus === 'arrived' ? 'text-amber-700 dark:text-amber-300' : 'text-green-700 dark:text-green-400'">Driver has arrived at pickup!</p>
+                                <p class="text-xs text-gray-500 mt-0.5" x-show="rideStatus === 'arrived'">Please meet your driver</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Trip in progress -->
+                        <div class="flex items-start gap-3 pb-4" x-show="['in_progress','completed'].includes(rideStatus)">
+                            <div class="flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="rideStatus === 'in_progress' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 animate-pulse' : (rideStatus === 'completed' ? 'bg-green-100 dark:bg-green-900/40 text-green-600' : 'bg-gray-100 text-gray-400')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                </div>
+                                <div class="w-0.5 h-4 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
+                            <div class="-mt-0.5">
+                                <p class="font-bold text-sm" :class="rideStatus === 'in_progress' ? 'text-emerald-700 dark:text-emerald-300' : 'text-green-700 dark:text-green-400'">Trip in progress</p>
+                                <p class="text-xs text-gray-500 mt-0.5" x-show="rideStatus === 'in_progress'">You're on your way!</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Completed -->
+                        <div class="flex items-start gap-3" x-show="rideStatus === 'completed'">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-green-500 text-white">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <div class="-mt-0.5">
+                                <p class="font-bold text-sm text-green-700 dark:text-green-400">Trip completed!</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Thank you for riding with RideMyCars</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress bar for pending -->
+                        <div x-show="rideStatus === 'pending'" class="mt-2 h-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-full overflow-hidden">
                             <div class="h-full bg-indigo-500 rounded-full animate-searching-bar"></div>
                         </div>
                     </div>
 
-                    <button type="button" @click="cancelRide()" class="w-full py-4 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] text-red-600 dark:text-red-500 font-bold rounded-xl text-[17px] transition-colors">
-                        Cancel trip
-                    </button>
+                    <!-- Cancel / Rate buttons -->
+                    <template x-if="rideStatus !== 'completed'">
+                        <button type="button" @click="cancelRide()" class="w-full py-4 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] text-red-600 dark:text-red-500 font-bold rounded-xl text-[17px] transition-colors">
+                            Cancel trip
+                        </button>
+                    </template>
+                    <template x-if="rideStatus === 'completed' && !reviewSubmitted">
+                        <button type="button" @click="showReviewModal = true" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-[17px] transition-colors">
+                            ⭐ Rate your driver
+                        </button>
+                    </template>
+                    <template x-if="rideStatus === 'completed' && reviewSubmitted">
+                        <div class="text-center py-4">
+                            <p class="text-green-600 dark:text-green-400 font-bold">✓ Review submitted!</p>
+                            <a href="/my-rides" class="text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:underline mt-1 inline-block">View My Rides →</a>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Rating Modal -->
+                <div x-show="showReviewModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div class="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 w-full max-w-md shadow-2xl" @click.outside="showReviewModal = false">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Rate Your Driver</h3>
+                        <p class="text-sm text-gray-500 mb-6" x-text="'How was your ride with ' + driverName + '?'"></p>
+                        
+                        <div class="flex justify-center gap-2 mb-6">
+                            <template x-for="star in [1,2,3,4,5]" :key="star">
+                                <button @click="reviewRating = star" class="text-3xl transition-transform hover:scale-110" :class="star <= reviewRating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'">★</button>
+                            </template>
+                        </div>
+                        
+                        <textarea x-model="reviewComment" placeholder="Leave a comment (optional)..." rows="3" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 resize-none"></textarea>
+                        
+                        <div class="flex gap-3">
+                            <button @click="submitReview()" :disabled="reviewRating < 1" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors">
+                                Submit Review
+                            </button>
+                            <button @click="showReviewModal = false" class="px-6 py-3 bg-gray-100 dark:bg-[#333] text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-colors">
+                                Skip
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
         
@@ -639,9 +733,22 @@
                 profileType: 'Personal',
                 selectedFare: '$0.00',
                 
+                // Lifecycle tracking
+                rideId: null,
+                rideStatus: 'pending', // pending, accepted, en_route, arrived, in_progress, completed, failed
+                driverName: '',
+                pollingUrl: null,
+                pollingTimer: null,
+                
+                // Review
+                showReviewModal: false,
+                reviewRating: 0,
+                reviewComment: '',
+                reviewSubmitted: false,
+                
                 async submitBooking() {
                     this.isConfirming = true;
-                    // Force close any open Google Maps Autocomplete dropdowns
+                    this.rideStatus = 'pending';
                     document.querySelectorAll('.pac-container').forEach(el => el.style.display = 'none');
                     document.activeElement.blur();
                     
@@ -672,32 +779,16 @@
                             return;
                         }
                         
-                        if (data.polling_url) {
-                            const checkStatus = async () => {
-                                if (!this.isConfirming) return; // user cancelled
-                                try {
-                                    const statusRes = await fetch(data.polling_url);
-                                    const statusData = await statusRes.json();
-                                    if (statusData.status === 'accepted') {
-                                        if (data.url) window.location.href = data.url; // Stripe
-                                        else if (data.redirect) window.location.href = data.redirect;
-                                        else window.location.href = '/ride/success?ride_id=' + data.ride_id;
-                                    } else if (statusData.status === 'failed') {
-                                        alert('No drivers available right now. Please try again later.');
-                                        this.isConfirming = false;
-                                    } else {
-                                        setTimeout(checkStatus, 3000);
-                                    }
-                                } catch (e) {
-                                    setTimeout(checkStatus, 3000);
-                                }
-                            };
-                            checkStatus();
-                        } else if (data.url) {
-                            window.location.href = data.url;
-                        } else if (data.redirect) {
-                            window.location.href = data.redirect;
+                        this.rideId = data.ride_id;
+                        this.pollingUrl = data.polling_url;
+                        
+                        if (data.url) {
+                            window.location.href = data.url; // Stripe
+                            return;
                         }
+                        
+                        // Start polling for status updates
+                        this.startPolling();
                         
                     } catch (error) {
                         console.error('Error booking ride:', error);
@@ -706,8 +797,61 @@
                     }
                 },
                 
+                startPolling() {
+                    if (this.pollingTimer) clearInterval(this.pollingTimer);
+                    this.pollStatus();
+                    this.pollingTimer = setInterval(() => this.pollStatus(), 3000);
+                },
+                
+                async pollStatus() {
+                    if (!this.isConfirming || !this.pollingUrl) return;
+                    try {
+                        const res = await fetch(this.pollingUrl);
+                        const data = await res.json();
+                        this.rideStatus = data.status;
+                        if (data.driver_name) this.driverName = data.driver_name;
+                        if (data.has_review) this.reviewSubmitted = true;
+                        
+                        if (data.status === 'failed') {
+                            clearInterval(this.pollingTimer);
+                            alert('No drivers available right now. Please try again later.');
+                            this.isConfirming = false;
+                        }
+                        if (data.status === 'completed') {
+                            clearInterval(this.pollingTimer);
+                            if (!data.has_review) this.showReviewModal = true;
+                        }
+                    } catch (e) {
+                        console.error('Polling error', e);
+                    }
+                },
+                
+                async submitReview() {
+                    if (this.reviewRating < 1) return;
+                    try {
+                        const csrfToken = document.querySelector('input[name="_token"]').value;
+                        const res = await fetch(`/api/ride/${this.rideId}/review`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ rating: this.reviewRating, comment: this.reviewComment })
+                        });
+                        if (res.ok) {
+                            this.reviewSubmitted = true;
+                            this.showReviewModal = false;
+                        }
+                    } catch (e) {
+                        console.error('Review error', e);
+                    }
+                },
+                
                 cancelRide() {
+                    if (this.pollingTimer) clearInterval(this.pollingTimer);
                     this.isConfirming = false;
+                    this.rideStatus = 'pending';
+                    this.rideId = null;
                 }
             }));
         });
