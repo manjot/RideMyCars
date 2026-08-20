@@ -24,77 +24,7 @@
             </div>
         @endif
 
-        <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative" x-data="{ 
-            vehicle_type: '{{ request('type', '') }}', 
-            schedule_type: 'now',
-            pickup: '',
-            dropoff: '',
-            get showRides() { return !this.isConfirming && this.pickup.trim().length > 0 && this.dropoff.trim().length > 0; },
-            isConfirming: false,
-            paymentModal: false,
-            paymentMethod: 'cash',
-            profileType: 'Personal',
-            selectedFare: '$0.00',
-            async submitBooking() {
-                this.isConfirming = true;
-                try {
-                    const csrfToken = document.querySelector('input[name="_token"]').value;
-                    const response = await fetch('/ride/book', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': csrfToken
-                        },
-                        body: JSON.stringify({
-                            pickup_location: this.pickup,
-                            dropoff_location: this.dropoff,
-                            vehicle_type: this.vehicle_type,
-                            payment_method: this.paymentMethod,
-                            amount: parseFloat(this.selectedFare.replace('$', '')) || 0,
-                            schedule_type: this.schedule_type
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.polling_url) {
-                        const checkStatus = async () => {
-                            if (!this.isConfirming) return; // user cancelled
-                            try {
-                                const statusRes = await fetch(data.polling_url);
-                                const statusData = await statusRes.json();
-                                if (statusData.status === 'accepted') {
-                                    if (data.url) window.location.href = data.url; // Stripe
-                                    else if (data.redirect) window.location.href = data.redirect;
-                                    else window.location.href = '/ride/success?ride_id=' + data.ride_id;
-                                } else if (statusData.status === 'failed') {
-                                    alert('No drivers available right now. Please try again later.');
-                                    this.isConfirming = false;
-                                } else {
-                                    setTimeout(checkStatus, 3000);
-                                }
-                            } catch (e) {
-                                setTimeout(checkStatus, 3000);
-                            }
-                        };
-                        checkStatus();
-                    } else if (data.url) {
-                        window.location.href = data.url;
-                    } else if (data.redirect) {
-                        window.location.href = data.redirect;
-                    }
-                    
-                } catch (error) {
-                    console.error('Error booking ride:', error);
-                    alert('There was an error booking your ride. Please try again.');
-                    this.isConfirming = false;
-                }
-            },
-            cancelRide() {
-                this.isConfirming = false;
-            }
-        }">
+        <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative" x-data="rideBooking">
             
             <form @submit.prevent="submitBooking" action="/ride/book" method="POST" class="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full lg:w-auto z-10 shrink-0">
                 @csrf
@@ -190,7 +120,7 @@
                         </div>
                     @endguest
 
-                    <div class="@guest opacity-30 pointer-events-none select-none blur-[1px] @endguest transition-all duration-300" x-data="{ paymentModal: false, paymentMethod: 'Cash', profileType: 'Personal' }">
+                    <div class="@guest opacity-30 pointer-events-none select-none blur-[1px] @endguest transition-all duration-300">
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">Choose a ride</h2>
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4">Recommended</h3>
                         
@@ -632,6 +562,85 @@
                     );
                 });
             }
+        });
+    </script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('rideBooking', () => ({
+                vehicle_type: '{{ request("type", "") }}', 
+                schedule_type: 'now',
+                pickup: '',
+                dropoff: '',
+                get showRides() { 
+                    return !this.isConfirming && this.pickup.trim().length > 0 && this.dropoff.trim().length > 0; 
+                },
+                isConfirming: false,
+                paymentModal: false,
+                paymentMethod: 'cash',
+                profileType: 'Personal',
+                selectedFare: '$0.00',
+                
+                async submitBooking() {
+                    this.isConfirming = true;
+                    try {
+                        const csrfToken = document.querySelector('input[name="_token"]').value;
+                        const response = await fetch('/ride/book', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                pickup_location: this.pickup,
+                                dropoff_location: this.dropoff,
+                                vehicle_type: this.vehicle_type,
+                                payment_method: this.paymentMethod,
+                                amount: parseFloat(this.selectedFare.replace('$', '')) || 0,
+                                schedule_type: this.schedule_type
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.polling_url) {
+                            const checkStatus = async () => {
+                                if (!this.isConfirming) return; // user cancelled
+                                try {
+                                    const statusRes = await fetch(data.polling_url);
+                                    const statusData = await statusRes.json();
+                                    if (statusData.status === 'accepted') {
+                                        if (data.url) window.location.href = data.url; // Stripe
+                                        else if (data.redirect) window.location.href = data.redirect;
+                                        else window.location.href = '/ride/success?ride_id=' + data.ride_id;
+                                    } else if (statusData.status === 'failed') {
+                                        alert('No drivers available right now. Please try again later.');
+                                        this.isConfirming = false;
+                                    } else {
+                                        setTimeout(checkStatus, 3000);
+                                    }
+                                } catch (e) {
+                                    setTimeout(checkStatus, 3000);
+                                }
+                            };
+                            checkStatus();
+                        } else if (data.url) {
+                            window.location.href = data.url;
+                        } else if (data.redirect) {
+                            window.location.href = data.redirect;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error booking ride:', error);
+                        alert('There was an error booking your ride. Please try again.');
+                        this.isConfirming = false;
+                    }
+                },
+                
+                cancelRide() {
+                    this.isConfirming = false;
+                }
+            }));
         });
     </script>
 
