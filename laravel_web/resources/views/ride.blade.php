@@ -93,88 +93,106 @@
                         </div>
                     </div>
 
-                    <!-- Vehicle Tier Selection (Requirement #2) -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Vehicle Tier</label>
-                        <input type="hidden" name="vehicle_type" x-model="vehicle_type">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <!-- Comfort -->
-                            <div @click="vehicle_type = 'Comfort'" 
-                                 :class="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <!-- Protected Options -->
+                    <div class="relative">
+                        @guest
+                            <!-- Login Overlay Modal (Uber Style) -->
+                            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/70 dark:bg-[#111]/80 backdrop-blur-[2px] rounded-2xl">
+                                <div class="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] max-w-md w-[90%] mx-auto border border-gray-100 dark:border-white/10 text-center relative mt-[-20px]">
+                                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Log in to see trip options</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Please take a moment to quickly log in or sign up so we can show you your trip options.</p>
+                                    <a href="/login" class="block w-full py-3.5 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-bold rounded-xl transition-all shadow-md active:scale-[0.98]">
+                                        Continue
+                                    </a>
                                 </div>
-                                <div class="text-2xl mb-1">🚘</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Comfort</h3>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Class-leading comfort</p>
+                            </div>
+                        @endguest
+
+                        <div class="space-y-8 @guest opacity-50 pointer-events-none select-none blur-[1px] @endguest transition-all duration-300 rounded-2xl">
+                            <!-- Vehicle Tier Selection (Requirement #2) -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Vehicle Tier</label>
+                                <input type="hidden" name="vehicle_type" x-model="vehicle_type">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <!-- Comfort -->
+                                    <div @click="vehicle_type = 'Comfort'" 
+                                         :class="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
+                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                        <div x-show="vehicle_type === 'Comfort' || vehicle_type === 'Executive Sedan'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                        <div class="text-2xl mb-1">🚘</div>
+                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Comfort</h3>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Class-leading comfort</p>
+                                    </div>
+
+                                    <!-- Ultra-SUV -->
+                                    <div @click="vehicle_type = 'Ultra-SUV'" 
+                                         :class="vehicle_type === 'Ultra-SUV' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
+                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                        <div x-show="vehicle_type === 'Ultra-SUV'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                        <div class="text-2xl mb-1">🚙</div>
+                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Ultra-SUV</h3>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Flagship luxury space</p>
+                                    </div>
+
+                                    <!-- Economy -->
+                                    <div @click="vehicle_type = 'Economy'" 
+                                         :class="vehicle_type === 'Economy' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
+                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                        <div x-show="vehicle_type === 'Economy'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                        <div class="text-2xl mb-1">🚗</div>
+                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Economy</h3>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Everyday rides</p>
+                                    </div>
+                                    
+                                    <!-- Premium -->
+                                    <div @click="vehicle_type = 'Premium'" 
+                                         :class="vehicle_type === 'Premium' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
+                                         class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
+                                        <div x-show="vehicle_type === 'Premium'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                        <div class="text-2xl mb-1">🏎️</div>
+                                        <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Premium</h3>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Luxury fleet</p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Ultra-SUV -->
-                            <div @click="vehicle_type = 'Ultra-SUV'" 
-                                 :class="vehicle_type === 'Ultra-SUV' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="vehicle_type === 'Ultra-SUV'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <!-- Payment Method -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment method</label>
+                                <div class="relative">
+                                    <select name="payment_method" class="w-full px-4 py-3.5 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer font-semibold">
+                                        <option value="stripe">💳 Stripe</option>
+                                        <option value="momo" selected>📱 Momo Pay</option>
+                                        <option value="cash">💵 Cash</option>
+                                        <option value="applepay">🍏 Apple Pay</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
                                 </div>
-                                <div class="text-2xl mb-1">🚙</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Ultra-SUV</h3>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Flagship luxury space</p>
                             </div>
 
-                            <!-- Economy -->
-                            <div @click="vehicle_type = 'Economy'" 
-                                 :class="vehicle_type === 'Economy' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="vehicle_type === 'Economy'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                </div>
-                                <div class="text-2xl mb-1">🚗</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Economy</h3>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Everyday rides</p>
+                            <!-- Notes -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes for the driver <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span></label>
+                                <textarea name="notes" placeholder="Gate code, landmark, luggage..." rows="3" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all resize-none"></textarea>
                             </div>
-                            
-                            <!-- Premium -->
-                            <div @click="vehicle_type = 'Premium'" 
-                                 :class="vehicle_type === 'Premium' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-3.5 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="vehicle_type === 'Premium'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                </div>
-                                <div class="text-2xl mb-1">🏎️</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white text-xs mb-0.5">Premium</h3>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Luxury fleet</p>
-                            </div>
+
+                            <button type="submit" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
+                                Confirm Ride
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Payment Method -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment method</label>
-                        <div class="relative">
-                            <select name="payment_method" class="w-full px-4 py-3.5 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer font-semibold">
-                                <option value="stripe">💳 Stripe</option>
-                                <option value="momo" selected>📱 Momo Pay</option>
-                                <option value="cash">💵 Cash</option>
-                                <option value="applepay">🍏 Apple Pay</option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Notes -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes for the driver <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span></label>
-                        <textarea name="notes" placeholder="Gate code, landmark, luggage..." rows="3" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all resize-none"></textarea>
-                    </div>
-
-                    <button type="submit" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
-                        Confirm Ride
-                    </button>
                     
                 </form>
             </div>
