@@ -21,6 +21,14 @@
                 display: inline !important;
                 font-size: 15px !important;
             }
+            @keyframes searching-bar {
+                0% { width: 0%; margin-left: 0; }
+                50% { width: 60%; margin-left: 20%; }
+                100% { width: 0%; margin-left: 100%; }
+            }
+            .animate-searching-bar {
+                animation: searching-bar 1.8s ease-in-out infinite;
+            }
         </style>
     </x-slot>
 
@@ -299,11 +307,33 @@
                         </div>
                     </div>
                     
-                    <div class="flex items-center gap-4 mb-8 pt-4">
+                    <div class="flex items-center gap-4 mb-6 pt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-white"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                         <div>
                             <p class="font-bold text-[15px] text-gray-900 dark:text-white" x-text="selectedFare"></p>
                             <p class="text-sm text-gray-500 dark:text-gray-400 capitalize" x-text="paymentMethod"></p>
+                        </div>
+                    </div>
+
+                    <!-- Looking for drivers animation -->
+                    <div class="mb-6 p-5 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl">
+                        <div class="flex items-center gap-4">
+                            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
+                                <div class="absolute inset-0 rounded-full bg-indigo-400/30 animate-ping"></div>
+                                <div class="absolute inset-1 rounded-full bg-indigo-400/20 animate-pulse"></div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="relative z-10 text-indigo-600 dark:text-indigo-400">
+                                    <path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                                    <path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                                    <path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-bold text-[15px] text-indigo-900 dark:text-indigo-200">Looking for nearby drivers...</p>
+                                <p class="text-sm text-indigo-600/70 dark:text-indigo-400/70 mt-0.5">Sending request to all available drivers</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 h-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-500 rounded-full animate-searching-bar"></div>
                         </div>
                     </div>
 

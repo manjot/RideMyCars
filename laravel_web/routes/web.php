@@ -488,12 +488,18 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
     $assignment->update(['status' => $status]);
 
     if ($status === 'accepted') {
+        // Race condition: check if ride is already accepted by another driver
+        $ride = $assignment->ride;
+        if ($ride->status === 'accepted' && $ride->driver_id !== auth()->id()) {
+            $assignment->update(['status' => 'expired']);
+            return response()->json(['error' => 'This ride was already accepted by another driver'], 409);
+        }
         // Assign the ride to the driver
-        $assignment->ride->update([
+        $ride->update([
             'driver_id' => auth()->id(),
             'status' => 'accepted'
         ]);
-        // Expire all other pending assignments for this ride just in case
+        // Expire all other pending assignments for this ride
         \App\Models\RideAssignment::where('ride_id', $assignment->ride_id)
             ->where('id', '!=', $assignment->id)
             ->where('status', 'pending')
