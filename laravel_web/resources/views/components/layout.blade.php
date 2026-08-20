@@ -100,7 +100,7 @@
                             <!-- RideMyCars Cash -->
                             <a href="/wallet" class="flex items-center justify-between p-4 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl mb-4 hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
                                 <span class="font-bold text-black dark:text-white text-sm">RideMyCars Cash</span>
-                                <span class="font-bold text-black dark:text-white text-lg">₹0.00</span>
+                                <span class="font-bold text-black dark:text-white text-lg">$0.00</span>
                             </a>
 
                             <!-- List Links -->

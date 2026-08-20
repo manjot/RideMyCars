@@ -9,7 +9,7 @@
             <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Balance</h3>
-                    <div class="text-3xl font-bold text-black dark:text-white mb-4">₹0.00</div>
+                    <div class="text-3xl font-bold text-black dark:text-white mb-4">$0.00</div>
                     <p class="text-sm font-bold text-black dark:text-white mb-6">Add the bank account where you want to receive payouts</p>
                 </div>
                 <div>
@@ -25,7 +25,7 @@
                 <div class="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-bl from-white/40 to-transparent dark:from-white/5 dark:to-transparent skew-x-[-20deg] translate-x-1/4"></div>
                 <div class="relative z-10">
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">RideMyCars Cash</h3>
-                    <div class="text-3xl font-bold text-black dark:text-white mb-6">₹0.00</div>
+                    <div class="text-3xl font-bold text-black dark:text-white mb-6">$0.00</div>
                 </div>
                 <div class="relative z-10">
                     <button class="bg-black hover:bg-gray-800 text-white text-sm font-bold py-2.5 px-4 rounded-full inline-flex items-center gap-1.5 transition-colors">

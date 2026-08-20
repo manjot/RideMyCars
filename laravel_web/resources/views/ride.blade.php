@@ -183,9 +183,9 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-bold text-xl text-gray-900 dark:text-white">₹{{ number_format($vehicle->daily_rate, 2) }}</div>
+                                        <div class="font-bold text-xl text-gray-900 dark:text-white">${{ number_format($vehicle->daily_rate, 2) }}</div>
                                         @if(str_contains(strtolower($vehicle->type), 'bike'))
-                                            <div class="text-xs text-gray-500 line-through">₹{{ number_format($vehicle->daily_rate * 1.05, 2) }}</div>
+                                            <div class="text-xs text-gray-500 line-through">${{ number_format($vehicle->daily_rate * 1.05, 2) }}</div>
                                         @endif
                                     </div>
                                 </div>
@@ -265,7 +265,7 @@
                                             </div>
                                             <div class="flex items-center gap-4">
                                                 <div class="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold text-[10px] text-center leading-tight">Ride<br>MyCars</div>
-                                                <span class="font-medium text-gray-900 dark:text-white">RideMyCars Cash: ₹0.00</span>
+                                                <span class="font-medium text-gray-900 dark:text-white">RideMyCars Cash: $0.00</span>
                                             </div>
                                         </div>
 
