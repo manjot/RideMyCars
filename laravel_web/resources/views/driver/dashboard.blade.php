@@ -200,7 +200,7 @@
                                         $pickup = urlencode($trip->pickup_location);
                                         $dropoff = urlencode($trip->dropoff_location);
                                         $tripFare = ($trip->fare && $trip->fare > 0) ? $trip->fare : 24.50;
-                                        $staticMap = "https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C{$pickup}&markers=size:small%7Ccolor:red%7Clabel:B%7C{$dropoff}&path=color:0x10b981ff%7Cweight:4%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
+                                        $staticMap = "https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C{$pickup}&markers=size:small%7Ccolor:red%7Clabel:B%7C{$dropoff}&path=color:0x10b981%7Cweight:4%7Cgeodesic:true%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
                                     @endphp
                                     <div class="border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
                                         <!-- Mini Map with Route Path -->
@@ -413,10 +413,10 @@
                 countdownInterval: null,
                 mapKey: '{{ $mapKey }}',
                 
-                getMapUrl(pickup, dropoff, color = '0x6366f1ff') {
+                getMapUrl(pickup, dropoff, color = '0x6366f1') {
                     const p = encodeURIComponent(pickup || '');
                     const d = encodeURIComponent(dropoff || '');
-                    return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                    return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7Cgeodesic:true%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
                 },
                 
                 initPolling() {
@@ -469,10 +469,10 @@
                 pollingTimer: null,
                 mapKey: '{{ $mapKey }}',
                 
-                getMapUrl(pickup, dropoff, color = '0x10b981ff') {
+                getMapUrl(pickup, dropoff, color = '0x10b981') {
                     const p = encodeURIComponent(pickup || '');
                     const d = encodeURIComponent(dropoff || '');
-                    return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                    return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7Cgeodesic:true%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
                 },
                 
                 init() {

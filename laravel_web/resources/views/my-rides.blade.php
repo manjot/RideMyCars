@@ -27,7 +27,8 @@
                                 $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
                                 $pickup = urlencode($ride->pickup_location);
                                 $dropoff = urlencode($ride->dropoff_location);
-                                $mapUrl = "https://maps.googleapis.com/maps/api/staticmap?size=800x200&scale=2&maptype=roadmap&markers=color:green%7Clabel:A%7C{$pickup}&markers=color:red%7Clabel:B%7C{$dropoff}&path=color:0x4f46e5ff%7Cweight:5%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
+                                $mapUrl = "https://maps.googleapis.com/maps/api/staticmap?size=800x220&scale=2&maptype=roadmap&markers=color:green%7Clabel:A%7C{$pickup}&markers=color:red%7Clabel:B%7C{$dropoff}&path=color:0x4f46e5%7Cweight:5%7Cgeodesic:true%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
+                                $displayFare = ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : 28.50;
                             @endphp
                             <img src="{{ $mapUrl }}" alt="Route map" class="w-full h-[140px] sm:h-[160px] object-cover" loading="lazy" onerror="this.style.display='none'">
                             
@@ -77,7 +78,7 @@
 
                                 <!-- Pricing -->
                                 <div class="sm:text-right sm:pl-4 sm:border-l sm:border-gray-100 sm:dark:border-white/10 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 shrink-0">
-                                    <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">${{ number_format($ride->fare, 2) }}</p>
+                                    <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">${{ number_format($displayFare, 2) }}</p>
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase
                                         @if(($ride->payment_method ?? 'cash') === 'cash') bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
                                         @else bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
