@@ -148,7 +148,7 @@
                             <div class="space-y-3" style="max-height: 60vh; overflow-y: auto;">
                                 @forelse($vehicles as $vehicle)
                                 <div @click="vehicle_type = '{{ $vehicle->make }} {{ $vehicle->model }}'" 
-                                     :class="vehicle_type === '{{ $vehicle->make }} {{ $vehicle->model }}' ? 'border-gray-900 ring-[1.5px] ring-gray-900 dark:border-white dark:ring-white' : 'border-[#0f0f0f] dark:border-white/30 hover:bg-gray-50 dark:hover:bg-[#222]'"
+                                     :class="vehicle_type === '{{ $vehicle->make }} {{ $vehicle->model }}' ? 'border-gray-900 ring-[1.5px] ring-gray-900 dark:border-white dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#222]'"
                                      class="flex items-center justify-between p-4 rounded-[14px] border-[1.5px] cursor-pointer transition-colors bg-white dark:bg-[#1a1a1a] shadow-sm">
                                     <div class="flex items-center gap-4">
                                         @if($vehicle->image_url)
