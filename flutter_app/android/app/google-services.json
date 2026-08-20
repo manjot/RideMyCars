@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "235015074737",
+    "project_id": "ridemycars",
+    "storage_bucket": "ridemycars.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:235015074737:android:5b9d451b8476927df30390",
+        "android_client_info": {
+          "package_name": "com.ridemycars.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHMGGqAAY9WpkaLIf5hEqubZL1XYP23TU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
