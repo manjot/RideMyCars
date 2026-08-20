@@ -126,7 +126,7 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         \Illuminate\Support\Facades\Mail::raw("Your RideMyCars login code is: {$otp}", function ($message) use ($email) {
             $message->to($email)->subject('Your Login Code');
         });
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
         \Illuminate\Support\Facades\Log::error('Mail error: ' . $e->getMessage());
         // For local testing if mail fails
         \Illuminate\Support\Facades\Log::info("OTP for {$email} is {$otp}");
