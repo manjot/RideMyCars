@@ -123,9 +123,11 @@
                                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                             </svg>
                             
-                            <!-- Unread Badge on Top-Right of circle -->
+                            <!-- Unread Badge with Bold Red Text -->
                             <template x-if="unreadCount > 0">
-                                <span class="absolute top-0 right-0 -mt-0.5 -mr-0.5 min-w-[17px] h-[17px] px-1 bg-red-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md ring-2 ring-white dark:ring-[#111] pointer-events-none" x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                                <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-white dark:bg-gray-900 border-2 border-red-500 text-red-600 dark:text-red-400 text-[10px] font-black rounded-full flex items-center justify-center shadow-md pointer-events-none" 
+                                      style="color: #dc2626 !important; font-weight: 800 !important; border-color: #ef4444 !important;"
+                                      x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
                             </template>
                         </button>
 
