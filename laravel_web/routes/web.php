@@ -715,11 +715,16 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         $weeklyEarnings = $completedRides->where('updated_at', '>=', $startOfWeek)->sum('fare') + $completedDriverBookings->where('updated_at', '>=', $startOfWeek)->sum('total_price');
         $monthlyEarnings = $rideEarnings + $bookingEarnings;
         
+        $todayTrips = $completedRides->where('updated_at', '>=', $today)->count() + $completedDriverBookings->where('updated_at', '>=', $today)->count();
+        $weekTrips = $completedRides->where('updated_at', '>=', $startOfWeek)->count() + $completedDriverBookings->where('updated_at', '>=', $startOfWeek)->count();
+        $monthTrips = $completedRides->where('updated_at', '>=', $startOfMonth)->count() + $completedDriverBookings->where('updated_at', '>=', $startOfMonth)->count();
+        
         return view('driver.dashboard', compact(
             'user', 'profile', 'vehicles', 
             'activeRides', 'pendingRides', 'completedRides',
             'driverBookings', 'activeDriverBookings', 'pendingDriverBookings', 'completedDriverBookings',
-            'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings'
+            'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings',
+            'todayTrips', 'weekTrips', 'monthTrips'
         ));
     });
 

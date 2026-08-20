@@ -27,16 +27,19 @@
             <!-- Earnings Overview -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Today's Total Earnings</h3>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Today's Earnings</h3>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($dailyEarnings, 2) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ $todayTrips }} trip{{ $todayTrips !== 1 ? 's' : '' }} completed</p>
                 </div>
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">This Week</h3>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($weeklyEarnings, 2) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ $weekTrips }} trip{{ $weekTrips !== 1 ? 's' : '' }} completed</p>
                 </div>
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">This Month</h3>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($monthlyEarnings, 2) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ $monthTrips }} trip{{ $monthTrips !== 1 ? 's' : '' }} completed</p>
                 </div>
             </div>
 
@@ -158,6 +161,67 @@
                         </div>
                     </div>
 
+                    <!-- Completed Past Trips -->
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Completed Trips ({{ $completedRides->count() + $completedDriverBookings->count() }})</h2>
+                            <a href="/my-rides" class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">View all →</a>
+                        </div>
+                        
+                        @php
+                            $recentTrips = $completedRides->sortByDesc('updated_at')->take(5);
+                        @endphp
+
+                        @if($recentTrips->isEmpty() && $completedDriverBookings->isEmpty())
+                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No completed trips yet.</p>
+                        @else
+                            <div class="space-y-3">
+                                @foreach($recentTrips as $trip)
+                                    <div class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                                        <!-- Icon -->
+                                        <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                        </div>
+                                        <!-- Details -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-0.5">
+                                                <p class="font-bold text-sm text-gray-900 dark:text-white truncate">{{ Str::limit($trip->dropoff_location, 40) }}</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500 truncate">From: {{ Str::limit($trip->pickup_location, 35) }}</p>
+                                            <div class="flex items-center gap-3 mt-1">
+                                                <span class="text-xs text-gray-400">{{ $trip->updated_at->format('M d, h:i A') }}</span>
+                                                @if($trip->rider)
+                                                    <span class="text-xs text-gray-400">· {{ $trip->rider->name }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <!-- Earnings -->
+                                        <div class="text-right shrink-0">
+                                            <p class="font-extrabold text-base text-green-600 dark:text-green-400">${{ number_format($trip->fare, 2) }}</p>
+                                            <p class="text-xs text-gray-400 capitalize">{{ $trip->payment_method ?? 'cash' }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                @foreach($completedDriverBookings->sortByDesc('updated_at')->take(3) as $bk)
+                                    <div class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-bold text-sm text-gray-900 dark:text-white">Hire: {{ $bk->client->name ?? 'Client' }}</p>
+                                            <p class="text-xs text-gray-500">{{ $bk->start_date }} — {{ $bk->duration_days ?? 1 }} day(s)</p>
+                                            <span class="text-xs text-gray-400">{{ $bk->updated_at->format('M d, h:i A') }}</span>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <p class="font-extrabold text-base text-green-600 dark:text-green-400">${{ number_format($bk->total_price, 2) }}</p>
+                                            <p class="text-xs text-gray-400">Hiring</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
 
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Pending Hiring Requests ({{ $pendingDriverBookings->count() }})</h2>
