@@ -283,19 +283,17 @@
                 <div class="w-full lg:w-[440px] bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit" style="max-width: 100%;" x-show="isConfirming" x-transition>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">Confirming your ride</h2>
                     
-                    <div class="relative pl-6 ml-3 mb-8 border-l-[3px] border-gray-900 dark:border-white min-h-[50px]">
+                    <div class="relative pl-6 ml-3 mb-8 border-l-[3px] border-gray-900 dark:border-white">
                         <div class="absolute -left-[7.5px] top-0 w-3 h-3 bg-gray-900 dark:bg-white rounded-full"></div>
                         <div class="absolute -left-[7.5px] bottom-0 w-3 h-3 border-[3px] border-gray-900 dark:border-white bg-white dark:bg-[#111]"></div>
                         
-                        <div class="mb-6 -mt-1.5">
+                        <div class="pb-6 -mt-1.5">
                             <p class="font-bold text-[15px] text-gray-900 dark:text-white">Meet at the pick-up point for</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5 pr-4 leading-tight truncate" x-text="pickup"></p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5 pr-16 leading-snug break-words" x-text="pickup"></p>
                         </div>
-                        <div class="absolute bottom-[-10px] left-6 right-0">
+                        <div class="pb-1 -mb-1.5">
                             <div class="flex justify-between items-start gap-4">
-                                <div class="truncate">
-                                    <p class="font-bold text-[15px] text-gray-900 dark:text-white truncate" x-text="dropoff"></p>
-                                </div>
+                                <p class="font-bold text-[15px] text-gray-900 dark:text-white break-words min-w-0 flex-1" x-text="dropoff"></p>
                                 <button type="button" @click="cancelRide()" class="shrink-0 px-3 py-1.5 bg-gray-100 dark:bg-[#333] hover:bg-gray-200 transition-colors rounded-full text-[13px] font-bold text-gray-900 dark:text-white">Change</button>
                             </div>
                         </div>
