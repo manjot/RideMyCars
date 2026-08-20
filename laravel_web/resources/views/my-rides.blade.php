@@ -17,79 +17,136 @@
                 <a href="/ride" class="inline-block mt-4 px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors">Book a Ride</a>
             </div>
         @else
-            <div class="space-y-4">
+            <div class="space-y-6">
                 @foreach($rides as $ride)
-                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg
-                                        @if($ride->status === 'completed') bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400
-                                        @elseif($ride->status === 'failed' || $ride->status === 'cancelled') bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400
-                                        @elseif(in_array($ride->status, ['accepted','en_route','arrived','in_progress'])) bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400
-                                        @else bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400
-                                        @endif">
-                                        {{ strtoupper(str_replace('_', ' ', $ride->status)) }}
-                                    </span>
-                                    <span class="text-xs text-gray-400">{{ $ride->created_at->format('M d, Y · h:i A') }}</span>
-                                </div>
-
-                                <div class="relative pl-5 ml-2 border-l-2 border-gray-200 dark:border-gray-700 space-y-3 mb-3">
-                                    <div class="relative">
-                                        <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-gray-900 dark:bg-white"></div>
-                                        <p class="text-sm text-gray-900 dark:text-white font-semibold">{{ $ride->pickup_location }}</p>
-                                    </div>
-                                    <div class="relative">
-                                        <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full border-2 border-gray-900 dark:border-white bg-white dark:bg-[#111]"></div>
-                                        <p class="text-sm text-gray-900 dark:text-white font-semibold">{{ $ride->dropoff_location }}</p>
-                                    </div>
-                                </div>
-
-                                @if($ride->driver)
-                                    <p class="text-sm text-gray-500"><strong>Driver:</strong> {{ $ride->driver->name }}</p>
-                                @endif
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        
+                        <!-- Map + Status Header -->
+                        <div class="relative">
+                            @php
+                                $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
+                                $pickup = urlencode($ride->pickup_location);
+                                $dropoff = urlencode($ride->dropoff_location);
+                                $mapUrl = "https://maps.googleapis.com/maps/api/staticmap?size=800x200&scale=2&maptype=roadmap&markers=color:green%7Clabel:A%7C{$pickup}&markers=color:red%7Clabel:B%7C{$dropoff}&path=enc:&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
+                            @endphp
+                            <img src="{{ $mapUrl }}" alt="Route map" class="w-full h-[140px] sm:h-[160px] object-cover" loading="lazy" onerror="this.style.display='none'">
+                            
+                            <!-- Status Badge on Map -->
+                            <div class="absolute top-3 left-3">
+                                <span class="text-xs font-extrabold uppercase px-3 py-1.5 rounded-lg shadow-md backdrop-blur-sm
+                                    @if($ride->status === 'completed') bg-green-500 text-white
+                                    @elseif($ride->status === 'failed' || $ride->status === 'cancelled') bg-red-500 text-white
+                                    @elseif(in_array($ride->status, ['accepted','en_route','arrived','in_progress'])) bg-blue-500 text-white
+                                    @else bg-gray-700 text-white
+                                    @endif">
+                                    {{ strtoupper(str_replace('_', ' ', $ride->status)) }}
+                                </span>
                             </div>
-
-                            <div class="text-right shrink-0">
-                                <p class="text-2xl font-extrabold text-gray-900 dark:text-white">${{ number_format($ride->fare, 2) }}</p>
-                                <p class="text-xs text-gray-400 capitalize mt-0.5">{{ $ride->payment_method }}</p>
+                            
+                            <!-- Date on Map -->
+                            <div class="absolute top-3 right-3">
+                                <span class="text-xs font-semibold text-white bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                                    {{ $ride->created_at->format('M d, Y · h:i A') }}
+                                </span>
                             </div>
                         </div>
 
-                        <!-- Reviews Section -->
-                        @if($ride->status === 'completed')
-                            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {{-- Rider's review of driver --}}
-                                @if($ride->riderReview)
-                                    <div class="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-xl p-3">
-                                        <p class="text-xs font-bold text-indigo-700 dark:text-indigo-300 mb-1">Your Review</p>
-                                        <div class="flex items-center gap-1 mb-1">
-                                            @for($i = 1; $i <= 5; $i++)
-                                                <span class="{{ $i <= $ride->riderReview->rating ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
-                                            @endfor
-                                            <span class="text-xs text-gray-500 ml-1">({{ $ride->riderReview->rating }}/5)</span>
+                        <!-- Ride Details -->
+                        <div class="p-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+                                <!-- Locations -->
+                                <div class="min-w-0">
+                                    <div class="flex gap-3">
+                                        <div class="flex flex-col items-center pt-1.5 shrink-0">
+                                            <div class="w-3 h-3 rounded-full bg-green-500 border-2 border-green-200"></div>
+                                            <div class="w-0.5 h-6 bg-gray-200 dark:bg-white/10 my-0.5"></div>
+                                            <div class="w-3 h-3 rounded-full bg-red-500 border-2 border-red-200"></div>
                                         </div>
-                                        @if($ride->riderReview->comment)
-                                            <p class="text-xs text-gray-600 dark:text-gray-400 italic">"{{ $ride->riderReview->comment }}"</p>
-                                        @endif
+                                        <div class="flex-1 min-w-0 space-y-2">
+                                            <div>
+                                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup</p>
+                                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-snug break-words">{{ $ride->pickup_location }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff</p>
+                                                <p class="text-sm font-semibold text-gray-900 dark:text-white leading-snug break-words">{{ $ride->dropoff_location }}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                @endif
+                                </div>
 
-                                {{-- Driver's review of rider --}}
-                                @if($ride->driverReview)
-                                    <div class="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 rounded-xl p-3">
-                                        <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-1">Driver's Review</p>
-                                        <div class="flex items-center gap-1 mb-1">
-                                            @for($i = 1; $i <= 5; $i++)
-                                                <span class="{{ $i <= $ride->driverReview->rating ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
-                                            @endfor
-                                            <span class="text-xs text-gray-500 ml-1">({{ $ride->driverReview->rating }}/5)</span>
-                                        </div>
-                                        @if($ride->driverReview->comment)
-                                            <p class="text-xs text-gray-600 dark:text-gray-400 italic">"{{ $ride->driverReview->comment }}"</p>
+                                <!-- Pricing -->
+                                <div class="sm:text-right sm:pl-4 sm:border-l sm:border-gray-100 sm:dark:border-white/10 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 shrink-0">
+                                    <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">${{ number_format($ride->fare, 2) }}</p>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase
+                                        @if(($ride->payment_method ?? 'cash') === 'cash') bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+                                        @else bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+                                        @endif">
+                                        @if(($ride->payment_method ?? 'cash') === 'cash')
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.96-3.12 3.19z"/></svg>
+                                        @else
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                                         @endif
+                                        {{ ucfirst($ride->payment_method ?? 'Cash') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Driver Info -->
+                            @if($ride->driver)
+                                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+                                    <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 shrink-0">
+                                        {{ strtoupper(substr($ride->driver->name, 0, 1)) }}
                                     </div>
-                                @endif
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $ride->driver->name }}</p>
+                                        <p class="text-xs text-gray-400">Driver</p>
+                                    </div>
+                                    @if($ride->riderReview)
+                                        <div class="ml-auto flex items-center gap-1">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <span class="text-sm {{ $i <= $ride->riderReview->rating ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                                            @endfor
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Reviews Section -->
+                        @if($ride->status === 'completed' && ($ride->riderReview || $ride->driverReview))
+                            <div class="px-5 pb-5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    @if($ride->riderReview)
+                                        <div class="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-xl p-3">
+                                            <p class="text-xs font-bold text-indigo-700 dark:text-indigo-300 mb-1">Your Review</p>
+                                            <div class="flex items-center gap-1 mb-1">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <span class="text-sm {{ $i <= $ride->riderReview->rating ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                                                @endfor
+                                                <span class="text-xs text-gray-500 ml-1">({{ $ride->riderReview->rating }}/5)</span>
+                                            </div>
+                                            @if($ride->riderReview->comment)
+                                                <p class="text-xs text-gray-600 dark:text-gray-400 italic break-words">"{{ $ride->riderReview->comment }}"</p>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    @if($ride->driverReview)
+                                        <div class="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 rounded-xl p-3">
+                                            <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-1">Driver's Review</p>
+                                            <div class="flex items-center gap-1 mb-1">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <span class="text-sm {{ $i <= $ride->driverReview->rating ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                                                @endfor
+                                                <span class="text-xs text-gray-500 ml-1">({{ $ride->driverReview->rating }}/5)</span>
+                                            </div>
+                                            @if($ride->driverReview->comment)
+                                                <p class="text-xs text-gray-600 dark:text-gray-400 italic break-words">"{{ $ride->driverReview->comment }}"</p>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         @endif
                     </div>
