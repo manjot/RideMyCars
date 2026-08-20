@@ -27,6 +27,11 @@ class Ride extends Model
         return $this->belongsTo(User::class, 'rider_id');
     }
 
+    public function assignments()
+    {
+        return $this->hasMany(RideAssignment::class);
+    }
+
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');

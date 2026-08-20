@@ -315,18 +315,22 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         'vehicle_type' => 'nullable|string|max:255',
         'payment_method' => 'nullable|string|max:255',
         'notes' => 'nullable|string',
+        'amount' => 'nullable|numeric',
     ]);
 
     $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
 
     $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
+    
+    $paymentMethod = $request->payment_method ?? 'Credit Card';
+    $amount = $request->amount ?? 15.00; // Default if not parsed
 
     $ride = \App\Models\Ride::create([
         'rider_id' => $riderId,
         'pickup_location' => $request->pickup_location,
         'dropoff_location' => $request->dropoff_location,
         'vehicle_type' => $request->vehicle_type ?? 'Economy',
-        'payment_method' => $request->payment_method ?? 'Credit Card',
+        'payment_method' => $paymentMethod,
         'notes' => $request->notes,
         'digital_receipt_code' => $digitalReceipt,
         'status' => 'pending',
@@ -334,7 +338,125 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
 
     \App\Services\ActivityLogService::log('booking_creation', "Created ride booking #{$ride->id}", $riderId);
 
+    // Trigger the initial round-robin assignment
+    \App\Services\RideAssignmentService::assignNextDriver($ride);
+
+    if (strtolower($paymentMethod) === 'stripe') {
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+        
+        $session = \Stripe\Checkout\Session::create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'usd',
+                    'product_data' => [
+                        'name' => 'Ride with ' . ($request->vehicle_type ?? 'Economy'),
+                        'description' => 'From ' . $request->pickup_location . ' to ' . $request->dropoff_location,
+                    ],
+                    'unit_amount' => (int)($amount * 100),
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => url('/ride/success?session_id={CHECKOUT_SESSION_ID}&ride_id=' . $ride->id),
+            'cancel_url' => url('/ride'),
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'url' => $session->url,
+                'polling_url' => url('/api/ride/' . $ride->id . '/status')
+            ]);
+        }
+        return redirect($session->url);
+    }
+
+    if ($request->wantsJson()) {
+        return response()->json([
+            'success' => true, 
+            'ride_id' => $ride->id,
+            'polling_url' => url('/api/ride/' . $ride->id . '/status')
+        ]);
+    }
+
     return redirect('/ride')->with('success', "Ride booked successfully! Receipt Code: {$digitalReceipt}. Your driver is being dispatched.");
+});
+
+// Polling endpoint for Rider to check if driver accepted
+Route::get('/api/ride/{id}/status', function ($id) {
+    $ride = \App\Models\Ride::find($id);
+    if (!$ride) return response()->json(['error' => 'Not found'], 404);
+
+    // If still pending, the frontend continues polling
+    if ($ride->status === 'accepted') {
+        return response()->json(['status' => 'accepted', 'driver_id' => $ride->driver_id]);
+    }
+    
+    // In a real app, we would also trigger a check here to see if the current assignment timed out
+    // and assign the next driver if so (acting as a poor-man's queue worker).
+    $activeAssignment = \App\Models\RideAssignment::where('ride_id', $ride->id)->where('status', 'pending')->first();
+    if ($activeAssignment && now()->greaterThan($activeAssignment->expires_at)) {
+        $activeAssignment->update(['status' => 'expired']);
+        \App\Services\RideAssignmentService::assignNextDriver($ride);
+    } elseif (!$activeAssignment) {
+        // No active assignment and not accepted? All drivers rejected/expired.
+        $ride->update(['status' => 'failed']);
+        return response()->json(['status' => 'failed', 'message' => 'No drivers available']);
+    }
+
+    return response()->json(['status' => $ride->status]);
+});
+
+// Polling endpoint for Driver to get incoming requests
+Route::get('/api/driver/requests', function () {
+    $user = auth()->user();
+    if (!$user) return response()->json([]);
+
+    $pending = \App\Models\RideAssignment::where('driver_id', $user->id)
+        ->where('status', 'pending')
+        ->where('expires_at', '>', now())
+        ->with('ride')
+        ->get();
+        
+    return response()->json($pending);
+})->middleware('auth');
+
+// Endpoint for Driver to Accept/Decline
+Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Request $request, $id) {
+    $assignment = \App\Models\RideAssignment::find($id);
+    if (!$assignment || $assignment->driver_id !== auth()->id()) {
+        return response()->json(['error' => 'Unauthorized or not found'], 403);
+    }
+
+    $status = $request->input('status'); // 'accepted' or 'rejected'
+    $assignment->update(['status' => $status]);
+
+    if ($status === 'accepted') {
+        // Assign the ride to the driver
+        $assignment->ride->update([
+            'driver_id' => auth()->id(),
+            'status' => 'accepted'
+        ]);
+        // Expire all other pending assignments for this ride just in case
+        \App\Models\RideAssignment::where('ride_id', $assignment->ride_id)
+            ->where('id', '!=', $assignment->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'expired']);
+    } elseif ($status === 'rejected') {
+        // Try next driver
+        \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
+    }
+
+    return response()->json(['success' => true]);
+})->middleware('auth');
+
+Route::get('/ride/success', function (\Illuminate\Http\Request $request) {
+    $ride = \App\Models\Ride::find($request->ride_id);
+    if ($ride && $request->session_id) {
+        // Here you would typically verify the session with Stripe
+        $ride->update(['payment_status' => 'paid']);
+    }
+    return redirect('/ride')->with('success', "Your ride has been confirmed!");
 });
 
 // Driver Dashboard

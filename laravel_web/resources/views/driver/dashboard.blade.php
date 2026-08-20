@@ -43,7 +43,46 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Main Content (Driver Hiring Jobs & Rides) -->
                 <div class="lg:col-span-2 space-y-8">
-                    
+                    <!-- Incoming Ride Requests (Real-time Polling) -->
+                    <div x-data="driverPolling()" x-init="initPolling()" x-show="requests.length > 0" x-cloak class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/30 rounded-3xl p-6 shadow-sm mb-8 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>
+                        <h2 class="text-xl font-bold text-indigo-900 dark:text-indigo-200 mb-4 relative z-10 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-indigo-500 animate-ping"></span>
+                            Incoming Ride Requests
+                        </h2>
+                        
+                        <div class="space-y-4 relative z-10">
+                            <template x-for="req in requests" :key="req.id">
+                                <div class="p-5 border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/80 dark:bg-black/50 backdrop-blur-sm">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
+                                                New Ride Request
+                                            </span>
+                                            <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + req.ride.id"></h4>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="font-extrabold text-lg text-gray-900 dark:text-white" x-text="req.ride.payment_method === 'Cash' ? 'Cash' : 'Card'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
+                                        <p><strong>Pickup:</strong> <span x-text="req.ride.pickup_location"></span></p>
+                                        <p><strong>Dropoff:</strong> <span x-text="req.ride.dropoff_location"></span></p>
+                                        <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
+                                    </div>
+                                    <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
+                                        <button @click="respondToRequest(req.id, 'accepted')" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm">
+                                            Accept Ride
+                                        </button>
+                                        <button @click="respondToRequest(req.id, 'rejected')" class="px-5 py-2 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
+                                            Decline
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
                     <!-- Pending Hiring Requests -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Pending Hiring Requests ({{ $pendingDriverBookings->count() }})</h2>
@@ -228,4 +267,58 @@
             
         </div>
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('driverPolling', () => ({
+                requests: [],
+                pollingInterval: null,
+                countdownInterval: null,
+                
+                initPolling() {
+                    this.fetchRequests();
+                    this.pollingInterval = setInterval(() => this.fetchRequests(), 5000); // Check every 5s
+                    this.countdownInterval = setInterval(() => {
+                        // Force reactivity update for the countdown timer
+                        this.requests = [...this.requests];
+                    }, 1000);
+                },
+                
+                async fetchRequests() {
+                    try {
+                        const res = await fetch('/api/driver/requests');
+                        if (res.ok) {
+                            this.requests = await res.json();
+                        }
+                    } catch (e) {
+                        console.error('Error fetching requests', e);
+                    }
+                },
+                
+                async respondToRequest(id, status) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                        const res = await fetch(`/api/driver/requests/${id}/respond`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ status })
+                        });
+                        
+                        if (res.ok) {
+                            this.requests = this.requests.filter(r => r.id !== id);
+                            if (status === 'accepted') {
+                                window.location.reload(); // Reload to show active job
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error responding', e);
+                    }
+                }
+            }));
+        });
+    </script>
 </x-layout>
