@@ -14,7 +14,7 @@ class DriverProfileResource extends Resource
 {
     protected static ?string $model = DriverProfile::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-check';
+    protected static ?string $navigationIcon = 'heroicon-o-identification';
     protected static ?string $navigationGroup = 'Fleet & Drivers';
     protected static ?string $navigationLabel = 'Driver Profiles';
     protected static ?int $navigationSort = 1;
