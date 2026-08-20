@@ -108,23 +108,23 @@
                 
                 <!-- Actions -->
                 <div class="flex items-center gap-3 lg:gap-6 shrink-0">
-                    <button @click="darkMode = !darkMode" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center transition-colors shrink-0" :class="darkMode ? 'border border-gray-700 bg-gray-800' : ''">
+                    <button @click="darkMode = !darkMode" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-white/10 shrink-0" aria-label="Toggle theme">
                         <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                         <svg x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
                     </button>
                     @auth
                     <!-- Notification Bell -->
                     <div x-data="notificationCenter()" x-init="init()" class="relative" @click.away="open = false">
-                        <!-- Bell Button -->
-                        <button @click="toggleOpen()" class="relative text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100 dark:hover:bg-white/10" aria-label="Notifications">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Bell Button with Consistent Circular Style -->
+                        <button @click="toggleOpen()" class="relative w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-white/10 focus:outline-none shrink-0" aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                             </svg>
                             
                             <!-- Unread Badge -->
                             <template x-if="unreadCount > 0">
-                                <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-sm animate-pulse">
+                                <span class="absolute -top-1 -right-1 min-w-[19px] h-[19px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-md border-2 border-white dark:border-[#111] animate-pulse">
                                     <span x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
                                 </span>
                             </template>
@@ -138,47 +138,48 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="absolute top-full right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
+                             class="absolute top-full right-[-48px] sm:right-0 mt-3 w-[330px] sm:w-[380px] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden z-50 backdrop-blur-xl" 
                              style="display: none;">
                             
                             <!-- Header -->
-                            <div class="px-4 py-3.5 bg-gray-50/80 dark:bg-white/5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <h3 class="font-extrabold text-sm text-gray-900 dark:text-white">Notifications</h3>
+                            <div class="px-5 py-4 bg-gray-50/70 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <h3 class="font-bold text-base text-gray-900 dark:text-white">Notifications</h3>
                                     <template x-if="unreadCount > 0">
-                                        <span class="text-[11px] font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full" x-text="unreadCount + ' new'"></span>
+                                        <span class="text-[11px] font-extrabold bg-brand-500/15 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full" x-text="unreadCount + ' new'"></span>
                                     </template>
                                 </div>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-3">
                                     <template x-if="unreadCount > 0">
-                                        <button @click="markAllAsRead()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Mark all read</button>
+                                        <button @click="markAllAsRead()" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline">Mark all read</button>
                                     </template>
                                     <template x-if="notifications.length > 0">
-                                        <button @click="clearAll()" title="Clear all" class="text-gray-400 hover:text-red-500 transition-colors p-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        <button @click="clearAll()" title="Clear all" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                         </button>
                                     </template>
                                 </div>
                             </div>
 
                             <!-- Notification List -->
-                            <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                            <div class="max-h-[390px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                 <template x-if="notifications.length === 0">
-                                    <div class="py-10 text-center px-4">
-                                        <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-2 text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                    <div class="py-12 px-6 text-center">
+                                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-500/10 to-indigo-500/10 dark:from-white/5 dark:to-white/10 flex items-center justify-center mx-auto mb-3.5 text-brand-500 dark:text-brand-400 shadow-inner">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                                         </div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">No notifications right now</p>
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white">No notifications right now</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-[220px] mx-auto leading-relaxed">You're all caught up! Updates on rides, jobs, and logins will appear here.</p>
                                     </div>
                                 </template>
 
                                 <template x-for="item in notifications" :key="item.id">
                                     <div @click="handleItemClick(item)" 
-                                         class="p-3.5 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors flex items-start gap-3 relative"
-                                         :class="{'bg-indigo-50/40 dark:bg-indigo-950/20': !item.is_read}">
+                                         class="p-4 hover:bg-gray-50 dark:hover:bg-white/[0.04] cursor-pointer transition-colors flex items-start gap-3.5 relative group"
+                                         :class="{'bg-brand-500/[0.03] dark:bg-white/[0.02]': !item.is_read}">
                                         
-                                        <!-- Icon -->
-                                        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm shadow-sm"
+                                        <!-- Icon Avatar -->
+                                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base shadow-sm font-bold"
                                              :class="{
                                                  'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300': item.type === 'login' || item.type === 'ride_accepted',
                                                  'bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300': item.type === 'en_route',
@@ -200,17 +201,22 @@
 
                                         <!-- Content -->
                                         <div class="flex-1 min-w-0">
-                                            <div class="flex items-center justify-between gap-1 mb-0.5">
-                                                <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="item.title"></h4>
-                                                <span class="text-[10px] text-gray-400 shrink-0" x-text="item.time_ago"></span>
+                                            <div class="flex items-center justify-between gap-1 mb-1">
+                                                <h4 class="text-xs font-extrabold text-gray-900 dark:text-white truncate" x-text="item.title"></h4>
+                                                <span class="text-[11px] font-medium text-gray-400 shrink-0" x-text="item.time_ago"></span>
                                             </div>
                                             <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2" x-text="item.message"></p>
                                         </div>
 
-                                        <!-- Unread Dot -->
-                                        <template x-if="!item.is_read">
-                                            <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5"></span>
-                                        </template>
+                                        <!-- Unread Dot / Action Arrow -->
+                                        <div class="shrink-0 flex items-center pt-1">
+                                            <template x-if="!item.is_read">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500 shadow-sm"></span>
+                                            </template>
+                                            <template x-if="item.is_read">
+                                                <span class="text-xs text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                                            </template>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
