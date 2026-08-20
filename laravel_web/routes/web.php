@@ -116,6 +116,49 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
     ])->onlyInput('email');
 });
 
+Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
+    $request->validate(['email' => 'required|email']);
+    $email = $request->email;
+    $otp = rand(1000, 9999);
+    \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
+    
+    try {
+        \Illuminate\Support\Facades\Mail::raw("Your RideMyCars login code is: {$otp}", function ($message) use ($email) {
+            $message->to($email)->subject('Your Login Code');
+        });
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Mail error: ' . $e->getMessage());
+        // For local testing if mail fails
+        \Illuminate\Support\Facades\Log::info("OTP for {$email} is {$otp}");
+    }
+    return response()->json(['message' => 'OTP sent successfully']);
+});
+
+Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+        'otp' => 'required|numeric'
+    ]);
+    
+    $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $request->email);
+    if ($cachedOtp && (string) $cachedOtp === (string) $request->otp) {
+        \Illuminate\Support\Facades\Cache::forget('otp_' . $request->email);
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => $request->email],
+            [
+                'name' => explode('@', $request->email)[0],
+                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+                'role' => 'customer'
+            ]
+        );
+        auth()->login($user);
+        $request->session()->regenerate();
+        return response()->json(['message' => 'Verified successfully', 'redirect' => session()->pull('url.intended', '/')]);
+    }
+    
+    return response()->json(['error' => 'Invalid or expired OTP'], 422);
+});
+
 Route::get('/signup', function () {
     return view('signup');
 })->name('signup');
