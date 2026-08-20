@@ -141,22 +141,30 @@
                                         <!-- Lifecycle action buttons -->
                                         <div class="flex gap-3 pt-3 border-t border-emerald-100 dark:border-emerald-800/30">
                                             <template x-if="ride.status === 'accepted'">
-                                                <button @click="updateRideStatus(ride.id, 'en_route')" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                <button @click="updateRideStatus(ride.id, 'en_route')" 
+                                                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-colors"
+                                                        style="background-color: #2563eb !important; color: #ffffff !important; font-weight: 700 !important; font-size: 12px !important;">
                                                     🚗 En Route to Pickup
                                                 </button>
                                             </template>
                                             <template x-if="ride.status === 'en_route'">
-                                                <button @click="updateRideStatus(ride.id, 'arrived')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                <button @click="updateRideStatus(ride.id, 'arrived')" 
+                                                        class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-colors"
+                                                        style="background-color: #d97706 !important; color: #ffffff !important; font-weight: 700 !important; font-size: 12px !important;">
                                                     📍 Arrived at Pickup
                                                 </button>
                                             </template>
                                             <template x-if="ride.status === 'arrived'">
-                                                <button @click="updateRideStatus(ride.id, 'in_progress')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                <button @click="updateRideStatus(ride.id, 'in_progress')" 
+                                                        class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-colors"
+                                                        style="background-color: #059669 !important; color: #ffffff !important; font-weight: 700 !important; font-size: 12px !important;">
                                                     ▶ Start Trip
                                                 </button>
                                             </template>
                                             <template x-if="ride.status === 'in_progress'">
-                                                <button @click="updateRideStatus(ride.id, 'completed')" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
+                                                <button @click="updateRideStatus(ride.id, 'completed')" 
+                                                        class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-colors"
+                                                        style="background-color: #16a34a !important; color: #ffffff !important; font-weight: 700 !important; font-size: 12px !important;">
                                                     ✓ Complete Trip
                                                 </button>
                                             </template>
