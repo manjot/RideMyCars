@@ -136,11 +136,11 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="absolute top-full right-0 mt-3 w-[340px] sm:w-[390px] max-w-[calc(100vw-2rem)] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
+                             class="fixed inset-x-3 top-20 sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-3 sm:w-[380px] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
                              style="display: none;">
                             
                             <!-- Header -->
-                            <div class="px-4 py-3 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+                            <div class="px-4 py-3.5 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <h3 class="font-bold text-sm text-gray-900 dark:text-white shrink-0">Notifications</h3>
                                     <template x-if="unreadCount > 0">
@@ -162,12 +162,12 @@
                             <!-- Notification List -->
                             <div class="max-h-[390px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                 <template x-if="notifications.length === 0">
-                                    <div class="py-12 px-6 text-center">
+                                    <div class="py-10 px-6 text-center">
                                         <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-3 text-indigo-500 dark:text-indigo-400 shadow-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                                         </div>
                                         <p class="text-sm font-bold text-gray-900 dark:text-white">No notifications right now</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-[220px] mx-auto leading-relaxed">You're all caught up! Updates on rides, jobs, and logins will appear here.</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-[280px] mx-auto leading-relaxed">You're all caught up! Updates on rides, jobs, and logins will appear here.</p>
                                     </div>
                                 </template>
 
