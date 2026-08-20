@@ -129,19 +129,14 @@
                             </template>
                         </button>
 
-                        <!-- Notification Dropdown Panel -->
+                        <!-- Notification Dropdown Panel (Styled exactly like User Menu) -->
                         <div x-show="open" 
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="fixed left-3 right-3 top-20 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-[380px] max-w-[calc(100vw-2rem)] bg-white dark:bg-[#161616] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50" 
-                             style="display: none;">
+                             x-transition
+                             class="absolute top-full right-0 mt-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl z-50 overflow-hidden" 
+                             style="display: none; width: 360px; max-width: 90vw;">
                             
                             <!-- Header -->
-                            <div class="px-4 py-3.5 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+                            <div class="px-4 py-3.5 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <h3 class="font-bold text-sm text-gray-900 dark:text-white shrink-0">Notifications</h3>
                                     <template x-if="unreadCount > 0">
@@ -161,7 +156,7 @@
                             </div>
 
                             <!-- Notification List -->
-                            <div class="max-h-[390px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                            <div class="max-h-[390px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
                                 <template x-if="notifications.length === 0">
                                     <div class="py-10 px-6 text-center">
                                         <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-3 text-indigo-500 dark:text-indigo-400 shadow-sm">
