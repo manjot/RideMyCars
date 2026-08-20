@@ -211,6 +211,68 @@
         </nav>
     </header>
 
+    <!-- Ongoing Ride Banner -->
+    @auth
+    <div x-data="ongoingRide()" x-init="init()" x-show="ride" x-transition x-cloak
+         class="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pointer-events-none" style="display:none;">
+        <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
+           class="pointer-events-auto max-w-lg mx-auto flex items-center gap-4 p-4 rounded-2xl shadow-2xl border transition-all hover:scale-[1.01]"
+           :class="{
+               'bg-indigo-600 border-indigo-500 text-white': ride && ride.status === 'pending',
+               'bg-blue-600 border-blue-500 text-white': ride && ride.status === 'en_route',
+               'bg-amber-500 border-amber-400 text-white': ride && ride.status === 'arrived',
+               'bg-emerald-600 border-emerald-500 text-white': ride && ride.status === 'in_progress',
+               'bg-yellow-500 border-yellow-400 text-white': ride && ride.status === 'accepted',
+           }">
+            <!-- Pulsing dot -->
+            <div class="relative shrink-0">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <div class="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                </div>
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm truncate" x-text="statusText"></p>
+                <p class="text-xs opacity-80 truncate" x-text="ride ? ride.dropoff_location : ''"></p>
+            </div>
+            <!-- Arrow -->
+            <svg class="w-5 h-5 shrink-0 opacity-80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+    </div>
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('ongoingRide', () => ({
+            ride: null,
+            timer: null,
+            get statusText() {
+                if (!this.ride) return '';
+                const s = this.ride.status;
+                const d = this.ride.driver_name || 'Driver';
+                if (s === 'pending') return '🔍 Looking for drivers...';
+                if (s === 'accepted') return `✓ ${d} accepted your ride`;
+                if (s === 'en_route') return `🚗 ${d} is on the way`;
+                if (s === 'arrived') return `📍 ${d} has arrived`;
+                if (s === 'in_progress') return '⚡ Trip in progress';
+                return '';
+            },
+            init() {
+                this.check();
+                this.timer = setInterval(() => this.check(), 8000);
+            },
+            async check() {
+                try {
+                    const res = await fetch('/api/user/ongoing-ride');
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.ride = data.ride || null;
+                    }
+                } catch(e) {}
+            }
+        }));
+    });
+    </script>
+    @endauth
+
     {{ $slot }}
 
     <!-- Footer -->

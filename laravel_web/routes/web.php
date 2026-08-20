@@ -547,6 +547,39 @@ Route::get('/my-rides', function () {
 })->middleware('auth');
 
 
+
+// Get ongoing ride for current user (rider or driver)
+Route::get('/api/user/ongoing-ride', function () {
+    $user = auth()->user();
+    if (!$user) return response()->json(['ride' => null]);
+
+    // Check as rider first
+    $ride = \App\Models\Ride::where('rider_id', $user->id)
+        ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
+        ->latest()
+        ->first();
+
+    // Check as driver if not found as rider
+    if (!$ride && $user->role === 'driver') {
+        $ride = \App\Models\Ride::where('driver_id', $user->id)
+            ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
+            ->latest()
+            ->first();
+    }
+
+    if (!$ride) return response()->json(['ride' => null]);
+
+    return response()->json(['ride' => [
+        'id' => $ride->id,
+        'status' => $ride->status,
+        'pickup_location' => $ride->pickup_location,
+        'dropoff_location' => $ride->dropoff_location,
+        'driver_name' => $ride->driver ? $ride->driver->name : null,
+        'rider_name' => $ride->rider ? $ride->rider->name : null,
+        'fare' => $ride->fare,
+    ]]);
+})->middleware('auth');
+
 // Get active rides for driver
 Route::get('/api/driver/active-rides', function () {
     $user = auth()->user();
