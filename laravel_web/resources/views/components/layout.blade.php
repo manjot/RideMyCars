@@ -11,11 +11,39 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
-    <!-- Alpine.js -->
+    <!-- Alpine.js & Instant Page Prefetching -->
     <style>[x-cloak] { display: none !important; }</style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script>
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Tailwind CSS Fallback CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#fff8df',
+                100: '#ffecb0',
+                200: '#ffe183',
+                300: '#ffd453',
+                400: '#fbc933',
+                500: '#f9c52a',
+                600: '#dbab21',
+                700: '#a78117',
+                800: '#886711',
+                900: '#71540a',
+                950: '#451a03',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
 
     @if(config('services.firebase.api_key'))
     <!-- Firebase SDK (Web) -->
@@ -501,7 +529,7 @@
                 
                 init() {
                     this.fetchNotifications(true);
-                    this.pollingTimer = setInterval(() => this.fetchNotifications(false), 4000);
+                    this.pollingTimer = setInterval(() => this.fetchNotifications(false), 12000);
                 },
 
                 toggleOpen() {
@@ -509,6 +537,7 @@
                 },
 
                 async fetchNotifications(isInitial = false) {
+                    if (!isInitial && document.hidden) return;
                     try {
                         const res = await fetch('/api/notifications');
                         if (res.ok) {
@@ -858,9 +887,10 @@
             },
             init() {
                 this.check();
-                this.timer = setInterval(() => this.check(), 4000);
+                this.timer = setInterval(() => this.check(), 12000);
             },
             async check() {
+                if (document.hidden) return;
                 try {
                     const res = await fetch('/api/user/ongoing-ride');
                     if (res.ok) {

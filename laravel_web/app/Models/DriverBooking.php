@@ -40,6 +40,15 @@ class DriverBooking extends Model
         'booking_status',
         'notes',
         'vehicle_source',
+        'end_date',
+        'end_time',
+        'buffer_end_time',
+        'escrow_deposit_amount',
+        'escrow_status',
+        'escrow_damage_claim_notes',
+        'start_odometer',
+        'end_odometer',
+        'overage_mileage_fee',
     ];
 
     public function vehicle()

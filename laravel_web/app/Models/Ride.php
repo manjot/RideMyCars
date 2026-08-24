@@ -15,6 +15,9 @@ class Ride extends Model
         'status',
         'vehicle_type',
         'payment_method',
+        'is_for_someone_else',
+        'passenger_name',
+        'passenger_phone',
         'notes',
         'signature_required',
         'climate_control',
@@ -23,12 +26,32 @@ class Ride extends Model
         'arrived_at',
         'started_at',
         'completed_at',
+        'ride_type',
+        'merchant_account',
+        'sender_name',
+        'sender_address',
+        'receiver_name',
+        'receiver_phone',
+        'receiver_address',
+        'pod_photo_url',
+        'pod_signature_url',
+        'pod_timestamp',
+        'pod_status',
+        'current_lat',
+        'current_lng',
+        'pickup_lat',
+        'pickup_lng',
+        'dropoff_lat',
+        'dropoff_lng',
+        'estimated_minutes',
+        'is_delayed',
     ];
 
     protected $casts = [
         'arrived_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'pod_timestamp' => 'datetime',
     ];
 
     public function rider()

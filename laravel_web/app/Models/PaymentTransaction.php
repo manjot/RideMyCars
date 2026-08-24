@@ -11,12 +11,28 @@ class PaymentTransaction extends Model
         'driver_booking_id',
         'ride_id',
         'user_id',
+        'vehicle_id',
         'country',
         'currency',
         'amount',
+        'gross_amount',
+        'platform_fee',
+        'maintenance_fee',
+        'gateway_fee',
+        'owner_share',
+        'net_payout',
         'payment_method',
         'provider',
         'status',
+        'payout_status',
+        'escrow_status',
+        'escrow_amount',
+        'escrow_refunded_amount',
+        'escrow_deducted_amount',
+        'gateway_fee_absorber',
+        'payout_failed_reason',
+        'payout_retry_count',
+        'service_vertical',
         'gateway_response',
     ];
 
@@ -37,5 +53,10 @@ class PaymentTransaction extends Model
     public function ride()
     {
         return $this->belongsTo(Ride::class, 'ride_id');
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicle_id');
     }
 }

@@ -213,6 +213,9 @@
 
     @if($hasValidKey)
         <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
+    @else
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @endif
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -255,6 +258,20 @@
                     }
                 } catch (e) {
                     console.warn("Google Maps init skipped or failed:", e);
+                }
+            } else if (typeof L !== 'undefined') {
+                try {
+                    const leafletMap = L.map('map').setView([40.7128, -74.0060], 12);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(leafletMap);
+
+                    L.marker([40.7128, -74.0060]).addTo(leafletMap)
+                        .bindPopup('<b>New York, NY</b><br>Package Pickup')
+                        .openPopup();
+                } catch (e) {
+                    console.warn("Leaflet map init failed:", e);
                 }
             }
 

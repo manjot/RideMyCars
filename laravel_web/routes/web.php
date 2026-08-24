@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminFinancialExportController;
+use App\Http\Controllers\DeliveryTrackerController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DriverBookingController;
 
@@ -377,6 +379,10 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $rawAmount = floatval($request->amount);
         $amount = $rawAmount > 0 ? $rawAmount : 28.50;
 
+        $isForSomeoneElse = $request->boolean('is_for_someone_else');
+        $passengerName = $request->input('passenger_name');
+        $passengerPhone = $request->input('passenger_phone');
+
         $ride = \App\Models\Ride::create([
             'rider_id' => $riderId,
             'pickup_location' => $request->pickup_location,
@@ -384,6 +390,9 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'fare' => $amount,
             'vehicle_type' => $request->vehicle_type ?? 'Economy',
             'payment_method' => $paymentMethod,
+            'is_for_someone_else' => $isForSomeoneElse,
+            'passenger_name' => $passengerName,
+            'passenger_phone' => $passengerPhone,
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
@@ -397,6 +406,10 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
 
         // Trigger the initial round-robin assignment
         \App\Services\RideAssignmentService::assignNextDriver($ride);
+
+        try {
+            \App\Services\NotificationService::notifyRideRequested($ride);
+        } catch (\Throwable $e) {}
 
         if (strtolower($paymentMethod) === 'stripe') {
             try {
@@ -800,25 +813,30 @@ Route::get('/api/driver/requests', function () {
 // Endpoint for Driver to Accept/Decline
 Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Request $request, $id) {
     $assignment = \App\Models\RideAssignment::find($id);
-    if (!$assignment || $assignment->driver_id !== auth()->id()) {
-        return response()->json(['error' => 'Unauthorized or not found'], 403);
+    if (!$assignment || (int)$assignment->driver_id !== (int)auth()->id()) {
+        return response()->json(['error' => 'Unauthorized or request not found.'], 403);
     }
 
     $status = $request->input('status'); // 'accepted' or 'rejected'
     $assignment->update(['status' => $status]);
 
     if ($status === 'accepted') {
-        // Race condition: check if ride is already accepted by another driver
         $ride = $assignment->ride;
-        if ($ride->status === 'accepted' && $ride->driver_id !== auth()->id()) {
-            $assignment->update(['status' => 'expired']);
-            return response()->json(['error' => 'This ride was already accepted by another driver'], 409);
+        if (!$ride) {
+            return response()->json(['error' => 'Associated ride not found.'], 404);
         }
+
+        if ($ride->status === 'accepted' && (int)$ride->driver_id !== (int)auth()->id()) {
+            $assignment->update(['status' => 'expired']);
+            return response()->json(['error' => 'This ride was already accepted by another driver.'], 409);
+        }
+
         // Assign the ride to the driver
         $ride->update([
             'driver_id' => auth()->id(),
             'status' => 'accepted'
         ]);
+
         // Expire all other pending assignments for this ride
         \App\Models\RideAssignment::where('ride_id', $assignment->ride_id)
             ->where('id', '!=', $assignment->id)
@@ -826,10 +844,15 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
             ->update(['status' => 'expired']);
 
         // Send notifications to rider and driver
-        \App\Services\NotificationService::notifyRideAccepted($ride);
+        try {
+            \App\Services\NotificationService::notifyRideAccepted($ride);
+        } catch (\Throwable $e) {}
     } elseif ($status === 'rejected') {
-        // Try next driver
-        \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
+        if ($assignment->ride) {
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
+            } catch (\Throwable $e) {}
+        }
     }
 
     return response()->json(['success' => true]);
@@ -985,11 +1008,34 @@ Route::get('/wallet', function () {
     return view('wallet');
 })->middleware('auth');
 
-// Generic pages
-$pages = ['safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 'refund', 'cookie', 'pricing', 'list-vehicle'];
+// Package Delivery Live Tracker Admin Routes
+Route::get('/admin/live-delivery-tracker/data', [DeliveryTrackerController::class, 'getData']);
+Route::post('/admin/live-delivery-tracker/reassign', [DeliveryTrackerController::class, 'reassignDriver']);
+Route::get('/admin/package-delivery-tracker', function () {
+    $controller = app(DeliveryTrackerController::class);
+    $data = $controller->getData(request())->getData(true);
+    return view('admin.live-delivery-tracker-standalone', [
+        'initialOrders' => $data['orders'] ?? [],
+        'initialAvailableDrivers' => $data['available_drivers'] ?? [],
+    ]);
+});
+
+// Financial Statement CSV Export Route
+Route::get('/admin/financial-statement/export-csv', [AdminFinancialExportController::class, 'exportCsv']);
+
+// Generic & Legal pages
+$pages = [
+    'safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 
+    'refund', 'cookie', 'pricing', 'list-vehicle', 'legal', 'terms', 'privacy', 
+    'terms-of-service', 'privacy-policy', 'services', 'about', 'cookies'
+];
 foreach ($pages as $page) {
     Route::get('/' . $page, function () use ($page) {
         $title = ucwords(str_replace('-', ' ', $page));
+        if ($page === 'terms-of-service' && view()->exists('terms')) return view('terms');
+        if ($page === 'privacy-policy' && view()->exists('privacy')) return view('privacy');
+        if ($page === 'cookies' && view()->exists('cookie')) return view('cookie');
+        
         if (view()->exists($page)) {
             return view($page);
         }

@@ -27,6 +27,13 @@ class SettingsSeeder extends Seeder
             // App Links
             ['key' => 'app.ios_link', 'label' => 'App - iOS Download Link', 'value' => '#', 'group' => 'App Links', 'type' => 'text'],
             ['key' => 'app.android_link', 'label' => 'App - Android Download Link', 'value' => '#', 'group' => 'App Links', 'type' => 'text'],
+
+            // Financial & Commission Rules
+            ['key' => 'ride_hailing.platform_commission', 'label' => 'Ride Hailing - Platform Commission (%)', 'value' => '10', 'group' => 'Commissions', 'type' => 'text'],
+            ['key' => 'ride_hailing.maintenance_fee_percent', 'label' => 'Ride Hailing - App Maintenance Fee (% of Owner Share)', 'value' => '2.5', 'group' => 'Commissions', 'type' => 'text'],
+            ['key' => 'ride_hailing.gateway_fee_absorber', 'label' => 'Ride Hailing - Gateway Fee Absorber (passenger, platform, fleet_owner)', 'value' => 'fleet_owner', 'group' => 'Commissions', 'type' => 'text'],
+            ['key' => 'driver_hiring.platform_commission', 'label' => 'Driver Hiring - Platform Commission (%)', 'value' => '15', 'group' => 'Commissions', 'type' => 'text'],
+            ['key' => 'vehicle_rental.platform_commission', 'label' => 'Vehicle Rental - Platform Commission (%)', 'value' => '20', 'group' => 'Commissions', 'type' => 'text'],
         ];
 
         foreach ($settings as $setting) {

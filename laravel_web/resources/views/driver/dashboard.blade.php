@@ -84,10 +84,11 @@
                                             <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
                                         </div>
                                         <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
-                                            <button @click="respondToRequest(req.id, 'accepted')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5">
-                                                ✓ Accept Ride & Earn <span x-text="req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00'"></span>
+                                            <button type="button" @click.stop.prevent="respondToRequest(req.id, 'accepted')" :disabled="responding" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                                <svg x-show="responding" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
+                                                <span>✓ Accept Ride & Earn</span> <span x-text="req.ride && req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00'"></span>
                                             </button>
-                                            <button @click="respondToRequest(req.id, 'rejected')" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
+                                            <button type="button" @click.stop.prevent="respondToRequest(req.id, 'rejected')" :disabled="responding" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
                                                 Decline
                                             </button>
                                         </div>
@@ -417,6 +418,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('driverPolling', () => ({
                 requests: [],
+                responding: false,
                 pollingInterval: null,
                 countdownInterval: null,
                 mapKey: '{{ $mapKey }}',
@@ -437,6 +439,7 @@
                 },
                 
                 async fetchRequests() {
+                    if (document.hidden) return;
                     try {
                         const res = await fetch('/api/driver/requests');
                         if (res.ok) {
@@ -448,27 +451,35 @@
                 },
                 
                 async respondToRequest(id, status) {
+                    if (this.responding) return;
+                    this.responding = true;
                     try {
                         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
                         const res = await fetch(`/api/driver/requests/${id}/respond`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
+                                'Accept': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': csrfToken
+                                'X-CSRF-TOKEN': csrfToken || ''
                             },
                             body: JSON.stringify({ status })
                         });
                         
-                        if (res.ok) {
+                        const data = await res.json();
+                        if (res.ok && data.success) {
                             this.requests = this.requests.filter(r => r.id !== id);
                             if (status === 'accepted') {
                                 window.location.reload(); // Reload to show active job
                             }
+                        } else {
+                            alert(data.error || 'Failed to process ride response.');
                         }
                     } catch (e) {
                         console.error('Error responding', e);
+                        alert('Network error while processing response.');
                     }
+                    this.responding = false;
                 }
             }));
 

@@ -47,7 +47,7 @@
                             <!-- Date on Map -->
                             <div class="absolute top-3 right-3">
                                 <span class="text-xs font-semibold text-white bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                                    {{ $ride->created_at->format('M d, Y · h:i A') }}
+                                    {{ $ride->created_at->timezone(config('app.timezone', 'Asia/Kolkata'))->format('M d, Y · h:i A') }}
                                 </span>
                             </div>
                         </div>

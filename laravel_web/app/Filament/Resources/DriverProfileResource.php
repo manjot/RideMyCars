@@ -39,14 +39,46 @@ class DriverProfileResource extends Resource
                     ->searchable()
                     ->required(),
                 Forms\Components\FileUpload::make('image_url')
+                    ->label('Profile Photo')
                     ->image()
                     ->disk('public')
                     ->directory('drivers'),
                 Forms\Components\TextInput::make('license_number')
+                    ->label('DVLA License Number')
                     ->required(),
                 Forms\Components\TextInput::make('license_country')
-                    ->default('USA'),
+                    ->default('Ghana'),
                 Forms\Components\DatePicker::make('license_expiry'),
+                
+                // Ghana Card & KYC
+                Forms\Components\FileUpload::make('ghana_card_front_url')
+                    ->label('Ghana Card Front')
+                    ->image()
+                    ->disk('public')
+                    ->directory('kyc_documents'),
+                Forms\Components\FileUpload::make('ghana_card_back_url')
+                    ->label('Ghana Card Back')
+                    ->image()
+                    ->disk('public')
+                    ->directory('kyc_documents'),
+                Forms\Components\Select::make('selfie_verification_status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'verified' => 'Verified Selfie',
+                        'rejected' => 'Rejected',
+                    ]),
+
+                // Performance & Revenue Target
+                Forms\Components\TextInput::make('daily_revenue_target')
+                    ->label('Daily Revenue Target (GH₵)')
+                    ->numeric()
+                    ->prefix('GH₵')
+                    ->default(500.00),
+                Forms\Components\TextInput::make('consecutive_target_misses')
+                    ->label('Consecutive Target Misses (Days)')
+                    ->numeric()
+                    ->default(0),
+
                 Forms\Components\TextInput::make('hourly_rate')
                     ->numeric(),
                 Forms\Components\TextInput::make('daily_rate')
@@ -54,14 +86,13 @@ class DriverProfileResource extends Resource
                 Forms\Components\TextInput::make('weekly_rate')
                     ->numeric(),
                 Forms\Components\TextInput::make('country')
-                    ->default('USA'),
+                    ->default('Ghana'),
                 Forms\Components\TextInput::make('service_area'),
                 Forms\Components\Toggle::make('is_available')
                     ->required(),
-                Forms\Components\TextInput::make('rating')
-                    ->required()
-                    ->numeric()
-                    ->default(5),
+                Forms\Components\Toggle::make('is_banned')
+                    ->label('Ban / Freeze Driver Account'),
+
                 Forms\Components\Select::make('verification_status')
                     ->options([
                         'pending' => 'Pending',
@@ -76,9 +107,9 @@ class DriverProfileResource extends Resource
                     ->label('Formal Dress Verification')
                     ->options([
                         'pending' => 'Pending',
-                        'verified' => 'Formal Attire Verified (Suit/Tie)',
+                        'verified' => 'Formal Attire Verified',
                         'requires_review' => 'Requires Review',
-                        'rejected' => 'Rejected (Non-Formal)',
+                        'rejected' => 'Rejected',
                     ])
                     ->default('pending'),
                 Forms\Components\Select::make('background_check_status')
@@ -91,18 +122,6 @@ class DriverProfileResource extends Resource
                         'requires_review' => 'Requires Review',
                     ])
                     ->default('pending'),
-                Forms\Components\TextInput::make('background_check_provider')
-                    ->default('checkr'),
-                Forms\Components\TextInput::make('background_check_id')
-                    ->label('Checkr Reference ID'),
-                Forms\Components\FileUpload::make('license_front_image')
-                    ->image()
-                    ->disk('public')
-                    ->directory('license_documents'),
-                Forms\Components\FileUpload::make('license_back_image')
-                    ->image()
-                    ->disk('public')
-                    ->directory('license_documents'),
                 Forms\Components\Textarea::make('verification_notes')
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('bio')
@@ -123,6 +142,7 @@ class DriverProfileResource extends Resource
                 Tables\Columns\TextColumn::make('country')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('license_number')
+                    ->label('DVLA License')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('verification_status')
                     ->badge()
@@ -133,33 +153,18 @@ class DriverProfileResource extends Resource
                         'rejected', 'failed' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('photo_formality_status')
-                    ->label('Formal Photo')
+                Tables\Columns\TextColumn::make('daily_revenue_target')
+                    ->label('Daily Target')
+                    ->money('GHS'),
+                Tables\Columns\TextColumn::make('consecutive_target_misses')
+                    ->label('Target Misses')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'verified' => 'success',
-                        'requires_review' => 'warning',
-                        'rejected' => 'danger',
-                        default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('background_check_status')
-                    ->label('Background Check')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'clear', 'verified' => 'success',
-                        'processing', 'pending' => 'warning',
-                        'requires_review' => 'primary',
-                        'failed' => 'danger',
-                        default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('hourly_rate')
-                    ->numeric()
-                    ->sortable(),
+                    ->color(fn (int $state): string => $state >= 2 ? 'danger' : 'gray'),
+                Tables\Columns\IconColumn::make('is_banned')
+                    ->label('Banned')
+                    ->boolean(),
                 Tables\Columns\IconColumn::make('is_available')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('rating')
-                    ->numeric()
-                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('verification_status')
@@ -169,13 +174,8 @@ class DriverProfileResource extends Resource
                         'verified' => 'Verified',
                         'rejected' => 'Rejected',
                     ]),
-                Tables\Filters\SelectFilter::make('background_check_status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'clear' => 'Clear',
-                        'failed' => 'Failed',
-                    ]),
+                Tables\Filters\TernaryFilter::make('is_banned')
+                    ->label('Banned Drivers Only'),
             ])
             ->actions([
                 Tables\Actions\Action::make('approveVerification')
@@ -187,39 +187,19 @@ class DriverProfileResource extends Resource
                     ->action(function (DriverProfile $record) {
                         \App\Services\LicenseVerificationService::updateStatus($record, 'verified', 'Approved by admin');
                     }),
-                Tables\Actions\Action::make('initiateBackgroundCheck')
-                    ->label('Run Checkr Check')
-                    ->icon('heroicon-o-shield-check')
-                    ->color('warning')
+                Tables\Actions\Action::make('toggleBan')
+                    ->label(fn (DriverProfile $record) => $record->is_banned ? 'Unban Driver' : 'Ban Driver')
+                    ->icon('heroicon-o-no-symbol')
+                    ->color(fn (DriverProfile $record) => $record->is_banned ? 'success' : 'danger')
                     ->requiresConfirmation()
-                    ->visible(fn (DriverProfile $record) => $record->background_check_status !== 'clear')
                     ->action(function (DriverProfile $record) {
-                        \App\Services\BackgroundCheckService::initiateCheck($record);
-                    }),
-                Tables\Actions\Action::make('approveBackgroundCheck')
-                    ->label('Pass Background')
-                    ->icon('heroicon-o-check')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (DriverProfile $record) => $record->background_check_status !== 'clear')
-                    ->action(function (DriverProfile $record) {
-                        \App\Services\BackgroundCheckService::updateStatus($record, 'clear', 'Passed background check');
-                    }),
-                Tables\Actions\Action::make('approveFormalPhoto')
-                    ->label('Approve Formal Photo')
-                    ->icon('heroicon-o-check-badge')
-                    ->color('info')
-                    ->requiresConfirmation()
-                    ->visible(fn (DriverProfile $record) => $record->photo_formality_status !== 'verified')
-                    ->action(function (DriverProfile $record) {
-                        $record->update(['photo_formality_status' => 'verified']);
+                        $record->update(['is_banned' => !$record->is_banned]);
+                        \App\Services\ActivityLogService::log(
+                            'driver_ban_toggled',
+                            "Driver {$record->user->name} ban status set to " . ($record->is_banned ? 'BANNED' : 'ACTIVE')
+                        );
                     }),
                 Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

@@ -14,7 +14,7 @@
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="font-sans antialiased bg-white text-black" x-data="{ view: 'mobile', emailForOtp: '', otpError: '', isLoading: false, c1: '', c2: '', c3: '', c4: '' }">
+<body class="font-sans antialiased bg-white text-black" x-data="{ view: '{{ $errors->any() || old('email') ? 'email' : 'mobile' }}', emailForOtp: '', otpError: '', isLoading: false, c1: '', c2: '', c3: '', c4: '' }">
     
     <!-- Header -->
     <header class="w-full bg-black h-16 flex items-center px-4 md:px-8">
@@ -69,7 +69,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="currentColor"><path d="M16 0C7.164 0 0 7.164 0 16s7.164 16 16 16 16-7.164 16-16S24.836 0 16 0zm-1.844 11.238c-.027-2.586 2.113-4.992 4.922-5.184 1.14.04 2.22.56 2.97 1.43.05.07.09.13.12.2.02.06.05.12.06.18.39 1.13.41 2.39-.02 3.48-.9 2.18-3.08 3.52-5.46 3.36a3.81 3.81 0 0 1-2.59-3.466zM22.06 25c-1.398 2.016-2.906 4.02-5.32 4.06-2.355.04-3.11-1.395-5.836-1.395-2.723 0-3.586 1.356-5.82 1.43-2.375.078-4.105-2.227-5.52-4.266C6.676 20.672 5.094 15.684 6.55 12.23c.723-1.71 2.375-2.82 4.22-2.85 2.26-.04 4.39 1.53 5.86 1.53 1.47 0 4.05-1.92 6.78-1.64 1.15.12 3.31.59 4.7 2.65-.13.09-2.81 1.63-2.77 4.87.04 3.91 3.34 5.2 3.42 5.24-.03.09-1.52 5.3-6.7 5.97z"/></svg>
                         Continue with Apple
                     </button>
-                    <button type="button" @click="view = 'email_otp'" class="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors">
+                    <button type="button" @click="view = 'email'" class="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                         Continue with email
                     </button>
@@ -196,33 +196,46 @@
                 </div>
             </div>
 
-            <!-- Email Password View (For Backward Compatibility) -->
+            <!-- Email & Password Login View -->
             <div x-show="view === 'email'" x-transition.opacity.duration.300ms style="display: none;">
-                <h1 class="text-2xl font-semibold mb-6 text-gray-900 tracking-tight">Login with password</h1>
+                <h1 class="text-2xl font-semibold mb-6 text-gray-900 tracking-tight">Sign in with email</h1>
                 
                 <form action="/login" method="POST" class="space-y-4">
                     @csrf
                     <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Email Address</label>
                         <input type="email" name="email" required value="{{ old('email') }}" placeholder="you@example.com" class="w-full bg-gray-100 rounded-lg px-4 py-3.5 text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:ring-2 focus:ring-black border-none text-base">
                         @error('email')
-                            <p class="text-red-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                            <p class="text-red-600 text-sm mt-1.5 font-semibold flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span>{{ $message }}</span>
+                            </p>
                         @enderror
                     </div>
                     
-                    <div x-data="{ show: false }" class="relative">
-                        <input :type="show ? 'text' : 'password'" name="password" required placeholder="Your password" class="w-full bg-gray-100 rounded-lg px-4 py-3.5 pr-12 text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:ring-2 focus:ring-black border-none text-base">
-                        <div @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 cursor-pointer hover:text-gray-900">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Password</label>
+                        <div x-data="{ show: false }" class="relative">
+                            <input :type="show ? 'text' : 'password'" name="password" required placeholder="Enter your password" class="w-full bg-gray-100 rounded-lg px-4 py-3.5 pr-12 text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:ring-2 focus:ring-black border-none text-base">
+                            <div @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 cursor-pointer hover:text-gray-900">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </div>
                         </div>
+                        @error('password')
+                            <p class="text-red-600 text-sm mt-1.5 font-semibold">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <button type="submit" class="w-full bg-black hover:bg-gray-900 text-white font-medium py-3.5 rounded-lg text-base transition-colors mt-2">
-                        Continue
+                        Sign In
                     </button>
                 </form>
 
-                <div class="mt-6 text-center">
-                    <button type="button" @click="view = 'mobile'" class="text-sm font-semibold text-gray-600 hover:text-black transition-colors">
+                <div class="mt-6 text-center space-y-3">
+                    <button type="button" @click="view = 'email_otp'" class="text-sm font-semibold text-gray-600 hover:text-black transition-colors block w-full">
+                        Or log in with a 4-digit code (OTP) instead
+                    </button>
+                    <button type="button" @click="view = 'mobile'" class="text-sm font-semibold text-gray-600 hover:text-black transition-colors block w-full">
                         ← Back to mobile number
                     </button>
                 </div>

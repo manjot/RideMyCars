@@ -96,6 +96,76 @@
                         <input type="time" name="schedule_time" :required="schedule_type === 'later'" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm">
                     </div>
 
+                    <!-- Rider Selection Dropdown (For me / Order ride for someone else) -->
+                    <div class="mb-4" x-data="{ riderOpen: false, riderType: 'me', passengerName: '', passengerPhone: '' }">
+                        <div class="relative inline-block w-full" @click.outside="riderOpen = false">
+                            <!-- Trigger Button -->
+                            <button type="button" @click="riderOpen = !riderOpen" 
+                                    class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-[#222] text-gray-900 dark:text-white font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/20 transition-all text-sm shadow-sm border border-gray-200 dark:border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                                        <span x-text="riderType === 'me' ? '{{ strtoupper(substr(auth()->user()->name ?? 'M', 0, 1)) }}' : '👤'"></span>
+                                    </div>
+                                    <span class="font-semibold text-gray-900 dark:text-white" x-text="riderType === 'me' ? 'For me' : ('For ' + (passengerName.trim() ? passengerName : 'someone else'))"></span>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition-transform duration-200" :class="{'rotate-180': riderOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div x-show="riderOpen" style="display: none;" 
+                                 x-transition.opacity.duration.200ms
+                                 class="absolute left-0 mt-2 w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] z-50 p-2 space-y-1">
+                                
+                                <!-- Option 1: Me -->
+                                <button type="button" @click="riderType = 'me'; riderOpen = false;" 
+                                        class="w-full text-left px-3 py-2.5 text-sm font-semibold flex items-center justify-between rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-[#222]" 
+                                        :class="riderType === 'me' ? 'text-black dark:text-white bg-gray-100/80 dark:bg-white/10 font-bold' : 'text-gray-700 dark:text-gray-300'">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-bold text-xs shrink-0">
+                                            {{ strtoupper(substr(auth()->user()->name ?? 'M', 0, 1)) }}
+                                        </div>
+                                        <span>Me</span>
+                                    </div>
+                                    <svg x-show="riderType === 'me'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </button>
+
+                                <!-- Option 2: Order ride for someone else -->
+                                <button type="button" @click="riderType = 'someone_else';" 
+                                        class="w-full text-left px-3 py-2.5 text-sm font-semibold flex items-center justify-between rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-[#222]" 
+                                        :class="riderType === 'someone_else' ? 'text-black dark:text-white bg-gray-100/80 dark:bg-white/10 font-bold' : 'text-gray-700 dark:text-gray-300'">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/20 text-gray-900 dark:text-white flex items-center justify-center text-xs shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                                        </div>
+                                        <span>Order ride for someone else</span>
+                                    </div>
+                                    <svg x-show="riderType === 'someone_else'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </button>
+
+                                <!-- Passenger Inputs (Expanded when 'someone_else' is active) -->
+                                <div x-show="riderType === 'someone_else'" x-transition.opacity.duration.200ms class="p-2.5 space-y-2 bg-gray-50 dark:bg-[#111] rounded-lg mt-1 border border-gray-200 dark:border-white/10">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Passenger Name</label>
+                                        <input type="text" x-model="passengerName" placeholder="Full name" class="w-full px-3 py-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Passenger Phone</label>
+                                        <input type="tel" x-model="passengerPhone" placeholder="Phone number" class="w-full px-3 py-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-medium">
+                                    </div>
+                                    <button type="button" @click="riderOpen = false" class="w-full py-2 bg-black dark:bg-white text-white dark:text-black rounded-md text-xs font-bold transition-colors mt-1">
+                                        Done
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Hidden inputs for rider selection -->
+                        <input type="hidden" name="is_for_someone_else" :value="riderType === 'someone_else' ? '1' : '0'">
+                        <input type="hidden" name="passenger_name" :value="passengerName">
+                        <input type="hidden" name="passenger_phone" :value="passengerPhone">
+                    </div>
+
                     <div class="space-y-4">
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -435,6 +505,81 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Choose a Rider Modal (Uber Style - Teleported to body for top-level overlay) -->
+                <template x-teleport="body">
+                    <div x-show="showRiderModal" style="display: none;" 
+                         class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95">
+                        
+                        <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showRiderModal = false">
+                            
+                            <!-- Header -->
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Choose a rider</h3>
+                                <button type="button" @click="showRiderModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Rider Options -->
+                            <div class="space-y-3">
+                                
+                                <!-- Option 1: Me -->
+                                <div @click="riderType = 'me'" class="flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-all" :class="riderType === 'me' ? 'border-black dark:border-white bg-gray-50 dark:bg-white/5 font-semibold' : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5'">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-black text-white dark:bg-white dark:text-black font-bold flex items-center justify-center text-sm shadow-sm">
+                                            {{ strtoupper(substr(auth()->user()->name ?? 'M', 0, 1)) }}
+                                        </div>
+                                        <span class="text-base font-bold text-gray-900 dark:text-white">Me</span>
+                                    </div>
+                                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" :class="riderType === 'me' ? 'border-black dark:border-white' : 'border-gray-300 dark:border-gray-600'">
+                                        <div x-show="riderType === 'me'" class="w-2.5 h-2.5 rounded-full bg-black dark:bg-white"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Option 2: Order ride for someone else -->
+                                <div @click="riderType = 'someone_else'" class="flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-all" :class="riderType === 'someone_else' ? 'border-black dark:border-white bg-gray-50 dark:bg-white/5 font-semibold' : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5'">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                                        </div>
+                                        <span class="text-base font-bold text-gray-900 dark:text-white">Order ride for someone else</span>
+                                    </div>
+                                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" :class="riderType === 'someone_else' ? 'border-black dark:border-white' : 'border-gray-300 dark:border-gray-600'">
+                                        <div x-show="riderType === 'someone_else'" class="w-2.5 h-2.5 rounded-full bg-black dark:bg-white"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Passenger Inputs (Shown when someone_else is selected) -->
+                                <div x-show="riderType === 'someone_else'" x-transition.opacity.duration.200ms class="pt-2 space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Passenger Name</label>
+                                        <input type="text" x-model="passengerName" placeholder="Enter passenger's full name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Passenger Phone Number</label>
+                                        <input type="tel" x-model="passengerPhone" placeholder="Enter phone number (+1 555 000-1234)" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm font-medium">
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Footer Button -->
+                            <div class="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                                <button type="button" @click="showRiderModal = false" class="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-base transition-colors shadow-md">
+                                    Done
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </template>
             </form>
         
             <!-- Right Side: Map -->
@@ -452,6 +597,9 @@
 
     @if($hasValidKey)
         <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
+    @else
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @endif
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -616,6 +764,33 @@
                 } catch (e) {
                     console.warn("Google Maps init skipped or failed:", e);
                 }
+            } else if (typeof L !== 'undefined') {
+                try {
+                    const leafletMap = L.map('map').setView([40.7128, -74.0060], 12);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(leafletMap);
+
+                    L.marker([40.7128, -74.0060]).addTo(leafletMap)
+                        .bindPopup('<b>New York, NY</b><br>Pickup Location')
+                        .openPopup();
+
+                    for (let i = 0; i < 5; i++) {
+                        let offsetLat = (Math.random() - 0.5) * 0.015;
+                        let offsetLng = (Math.random() - 0.5) * 0.015;
+                        L.circleMarker([40.7128 + offsetLat, -74.0060 + offsetLng], {
+                            radius: 8,
+                            fillColor: '#f59e0b',
+                            color: '#000000',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        }).addTo(leafletMap).bindPopup('<b>Available Driver</b>');
+                    }
+                } catch (e) {
+                    console.warn("Leaflet map init failed:", e);
+                }
             }
 
             if (locBtn && pickupInput) {
@@ -724,6 +899,10 @@
                 schedule_type: 'now',
                 pickup: '',
                 dropoff: '',
+                riderType: 'me',
+                showRiderModal: false,
+                passengerName: '',
+                passengerPhone: '',
                 get showRides() { 
                     return !this.isConfirming && this.pickup.trim().length > 0 && this.dropoff.trim().length > 0; 
                 },

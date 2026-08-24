@@ -122,7 +122,7 @@
                             </div>
                             <div class="p-4 flex flex-col justify-center flex-1 min-w-0">
                                 <h3 class="font-bold text-[17px] text-black dark:text-white mb-1 leading-tight truncate">{{ $ride->dropoff_location }}</h3>
-                                <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-1">{{ $ride->created_at->format('d M • H:i') }}</div>
+                                <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-1">{{ $ride->created_at->timezone(config('app.timezone', 'Asia/Kolkata'))->format('M d, Y • h:i A') }}</div>
                                 <div class="text-[15px] font-medium text-black dark:text-white mb-4">
                                     ${{ number_format($ride->fare ?? 0, 2) }}
                                     @if($ride->status === 'cancelled') <span class="text-red-500 text-sm ml-1">• Cancelled</span> @endif
@@ -155,7 +155,7 @@
                             </div>
                             <div class="flex flex-col justify-center flex-1 min-w-0">
                                 <h3 class="font-bold text-[17px] text-black dark:text-white mb-0.5 leading-tight truncate">{{ $ride->dropoff_location }}</h3>
-                                <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">{{ $ride->created_at->format('d M • H:i') }}</div>
+                                <div class="text-[13px] text-gray-600 dark:text-gray-400 mb-0.5">{{ $ride->created_at->timezone(config('app.timezone', 'Asia/Kolkata'))->format('M d, Y • h:i A') }}</div>
                                 <div class="text-[15px] font-medium text-black dark:text-white mb-3">
                                     ${{ number_format($ride->fare ?? 0, 2) }}
                                     @if($ride->status === 'cancelled') <span class="text-red-500 text-sm ml-1">• Cancelled</span> @endif

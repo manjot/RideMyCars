@@ -26,6 +26,29 @@ class NotificationService
     }
 
     /**
+     * Notify Rider when a new ride request is placed & clear old stale notifications.
+     */
+    public static function notifyRideRequested(Ride $ride): void
+    {
+        if ($ride->rider_id) {
+            // Mark all older unread notifications as read to prevent stale notification popups
+            UserNotification::where('user_id', $ride->rider_id)
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+
+            self::send(
+                $ride->rider_id,
+                'ride_requested',
+                'Searching for Drivers',
+                "Your ride request to {$ride->dropoff_location} has been placed. Contacting nearby drivers...",
+                $ride->id,
+                "/ride?resume={$ride->id}",
+                ['status' => 'pending', 'icon' => 'clock', 'color' => 'amber']
+            );
+        }
+    }
+
+    /**
      * Notify both Rider and Driver when driver accepts a ride request.
      */
     public static function notifyRideAccepted(Ride $ride): void

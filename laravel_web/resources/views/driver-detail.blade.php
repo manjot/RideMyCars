@@ -59,6 +59,51 @@
                         </div>
                     </div>
 
+                    <!-- Driver Verification UI (Section 9 Requirements) -->
+                    <div class="my-6 p-5 bg-gray-50 dark:bg-[#161616] rounded-2xl border border-gray-200 dark:border-white/10 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                Driver Verification Status
+                            </h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider {{ $driverProfile->verification_status === 'verified' ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-400' : 'bg-amber-100 text-amber-700' }}">
+                                {{ ucfirst($driverProfile->verification_status ?? 'pending') }}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                            <!-- Identity & License Status -->
+                            <div class="p-3 bg-white dark:bg-[#111] rounded-xl border border-gray-100 dark:border-white/5 space-y-1">
+                                <span class="text-xs text-gray-400 font-semibold block">Driving License</span>
+                                <div class="flex items-center gap-1.5 font-bold text-xs {{ $driverProfile->verification_status === 'verified' ? 'text-green-600 dark:text-green-400' : 'text-amber-600' }}">
+                                    <span>{{ $driverProfile->verification_status === 'verified' ? '✓ Verified' : '⏳ Pending' }}</span>
+                                </div>
+                                <span class="text-[11px] text-gray-500 block">No: {{ $driverProfile->masked_license }}</span>
+                                @if($driverProfile->license_expiry)
+                                    <span class="text-[10px] text-gray-400 block">Expires: {{ $driverProfile->license_expiry }}</span>
+                                @endif
+                            </div>
+
+                            <!-- Background Check Status -->
+                            <div class="p-3 bg-white dark:bg-[#111] rounded-xl border border-gray-100 dark:border-white/5 space-y-1">
+                                <span class="text-xs text-gray-400 font-semibold block">Background Check</span>
+                                <div class="flex items-center gap-1.5 font-bold text-xs {{ in_array($driverProfile->background_check_status, ['clear', 'verified', 'approved']) ? 'text-green-600 dark:text-green-400' : 'text-amber-600' }}">
+                                    <span>{{ in_array($driverProfile->background_check_status, ['clear', 'verified', 'approved']) ? '✓ Record Clear' : '⏳ In Review' }}</span>
+                                </div>
+                                <span class="text-[11px] text-gray-500 block">Provider: {{ $driverProfile->background_check_provider ?? 'RideMyCars Safety' }}</span>
+                            </div>
+
+                            <!-- Photo & Document Status -->
+                            <div class="p-3 bg-white dark:bg-[#111] rounded-xl border border-gray-100 dark:border-white/5 space-y-1">
+                                <span class="text-xs text-gray-400 font-semibold block">Identity & Photo</span>
+                                <div class="flex items-center gap-1.5 font-bold text-xs {{ $driverProfile->photo_formality_status === 'verified' ? 'text-green-600 dark:text-green-400' : 'text-amber-600' }}">
+                                    <span>{{ $driverProfile->photo_formality_status === 'verified' ? '✓ Photo Verified' : '⏳ Submitted' }}</span>
+                                </div>
+                                <span class="text-[11px] text-gray-500 block">Formality Check Passed</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Meta Badges -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-6 pt-4 border-t border-gray-100 dark:border-white/10">
                         <div class="bg-gray-50 dark:bg-[#1a1a1a] p-3 rounded-xl">

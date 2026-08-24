@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentTransactionResource\Pages;
 use App\Models\PaymentTransaction;
+use App\Models\PayoutLedger;
+use App\Services\PayoutAutomationService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -26,30 +28,63 @@ class PaymentTransactionResource extends Resource
                 Forms\Components\TextInput::make('transaction_ref')
                     ->required()
                     ->readOnly(),
+                Forms\Components\Select::make('service_vertical')
+                    ->options([
+                        'RIDE_HAILING' => 'Ride Hailing (10% Platform / 90% Owner)',
+                        'DRIVER_HIRING' => 'Driver Hiring (15% Platform / 85% Owner)',
+                        'VEHICLE_RENTAL' => 'Vehicle Rental (20% Platform / 80% Owner)',
+                    ])
+                    ->required(),
                 Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->required(),
-                Forms\Components\TextInput::make('payment_method')
-                    ->required(),
-                Forms\Components\TextInput::make('provider')
-                    ->required(),
                 Forms\Components\TextInput::make('amount')
+                    ->label('Gross Amount')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix('GH₵')
                     ->required(),
-                Forms\Components\TextInput::make('currency')
-                    ->default('USD'),
+                Forms\Components\TextInput::make('platform_fee')
+                    ->numeric()
+                    ->prefix('GH₵'),
+                Forms\Components\TextInput::make('maintenance_fee')
+                    ->numeric()
+                    ->prefix('GH₵'),
+                Forms\Components\TextInput::make('net_payout')
+                    ->numeric()
+                    ->prefix('GH₵'),
+                Forms\Components\Select::make('payment_method')
+                    ->options([
+                        'momo' => 'Mobile Money (MoMo)',
+                        'card' => 'Credit / Debit Card',
+                        'paypal' => 'PayPal',
+                        'cash' => 'Cash',
+                    ])
+                    ->required(),
                 Forms\Components\Select::make('status')
                     ->options([
                         'pending' => 'Pending',
-                        'successful' => 'Successful',
+                        'paid' => 'Paid / Successful',
                         'failed' => 'Failed',
                         'cancelled' => 'Cancelled',
                     ])
                     ->required(),
-                Forms\Components\KeyValue::make('gateway_response')
-                    ->columnSpanFull(),
+                Forms\Components\Select::make('payout_status')
+                    ->options([
+                        'pending' => 'Pending Payout',
+                        'completed' => 'Completed Payout',
+                        'failed' => 'Failed Payout',
+                        'on_hold' => 'On Hold',
+                    ]),
+                Forms\Components\Select::make('escrow_status')
+                    ->options([
+                        'none' => 'None',
+                        'held' => 'Escrow Held',
+                        'released' => 'Released',
+                        'partially_deducted' => 'Partially Deducted',
+                        'fully_deducted' => 'Fully Deducted',
+                        'refunded' => 'Refunded',
+                    ]),
             ]);
     }
 
@@ -61,20 +96,55 @@ class PaymentTransactionResource extends Resource
                     ->label('Ref ID')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('service_vertical')
+                    ->label('Vertical')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'RIDE_HAILING' => 'warning',
+                        'DRIVER_HIRING' => 'info',
+                        'VEHICLE_RENTAL' => 'success',
+                        default => 'gray',
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('payment_method')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('amount')
-                    ->money('USD')
+                    ->label('Gross Fare')
+                    ->money('GHS')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('platform_fee')
+                    ->label('Platform Fee')
+                    ->getStateUsing(function ($record) {
+                        if ((float) $record->platform_fee > 0) return $record->platform_fee;
+                        $calc = \App\Services\CommissionBillingService::calculate((float) ($record->gross_amount ?: $record->amount), $record->service_vertical ?: 'RIDE_HAILING');
+                        return $calc['platform_fee'];
+                    })
+                    ->money('GHS'),
+                Tables\Columns\TextColumn::make('maintenance_fee')
+                    ->label('App Maint (2.5%)')
+                    ->getStateUsing(function ($record) {
+                        if ((float) $record->maintenance_fee > 0) return $record->maintenance_fee;
+                        $calc = \App\Services\CommissionBillingService::calculate((float) ($record->gross_amount ?: $record->amount), $record->service_vertical ?: 'RIDE_HAILING');
+                        return $calc['maintenance_fee'];
+                    })
+                    ->money('GHS'),
+                Tables\Columns\TextColumn::make('net_payout')
+                    ->label('Net Owner Payout')
+                    ->getStateUsing(function ($record) {
+                        if ((float) $record->net_payout > 0) return $record->net_payout;
+                        $calc = \App\Services\CommissionBillingService::calculate((float) ($record->gross_amount ?: $record->amount), $record->service_vertical ?: 'RIDE_HAILING');
+                        return $calc['net_payout'];
+                    })
+                    ->money('GHS')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('payout_status')
+                    ->label('Payout Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'successful' => 'success',
+                        'completed' => 'success',
                         'pending' => 'warning',
-                        'failed', 'cancelled' => 'danger',
+                        'failed' => 'danger',
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
@@ -82,29 +152,43 @@ class PaymentTransactionResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                Tables\Filters\SelectFilter::make('service_vertical')
+                    ->options([
+                        'RIDE_HAILING' => 'Ride Hailing',
+                        'DRIVER_HIRING' => 'Driver Hiring',
+                        'VEHICLE_RENTAL' => 'Vehicle Rental',
+                    ]),
+                Tables\Filters\SelectFilter::make('payout_status')
                     ->options([
                         'pending' => 'Pending',
-                        'successful' => 'Successful',
+                        'completed' => 'Completed',
                         'failed' => 'Failed',
-                        'cancelled' => 'Cancelled',
                     ]),
-                Tables\Filters\SelectFilter::make('payment_method')
+                Tables\Filters\SelectFilter::make('escrow_status')
                     ->options([
-                        'Credit / debit card' => 'Card',
-                        'PayPal' => 'PayPal',
-                        'Apple Pay' => 'Apple Pay',
-                        'Cash App' => 'Cash App',
-                        'Mobile Money' => 'Mobile Money',
+                        'held' => 'Escrow Held',
+                        'released' => 'Escrow Released',
+                        'partially_deducted' => 'Partially Deducted',
+                        'refunded' => 'Refunded',
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('retry_payout')
+                    ->label('Retry Payout')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->visible(fn (PaymentTransaction $record) => $record->payout_status === 'failed')
+                    ->action(function (PaymentTransaction $record) {
+                        $ledger = PayoutLedger::where('payment_transaction_id', $record->id)->first();
+                        if ($ledger) {
+                            PayoutAutomationService::retryFailedPayout($ledger);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Payout Retried')
+                                ->success()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

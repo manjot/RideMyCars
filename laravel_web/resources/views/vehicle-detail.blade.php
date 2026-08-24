@@ -45,6 +45,23 @@
                     </div>
                 </div>
 
+                <!-- Inspection & Verification Badges -->
+                <div class="p-5 rounded-2xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center font-bold">
+                            ✓
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold block">Vehicle Inspection Status</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white">Passed 150-Point Safety & Condition Check</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                        <span class="px-3 py-1 bg-white dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-white/10">Plate: {{ $vehicle->license_plate ?? 'REG-9912' }}</span>
+                        <span class="px-3 py-1 bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 rounded-lg border border-green-200 dark:border-green-800/30">Verified Listing</span>
+                    </div>
+                </div>
+
                 <!-- Features -->
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Features & Specifications</h2>
@@ -85,13 +102,22 @@
             <div class="lg:col-span-1" x-data="{ driverRequired: 'no' }">
                 <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-sm sticky top-24">
                     <div class="mb-6">
-                        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">{{ $vehicle->make }}</h1>
+                        <div class="flex items-center justify-between mb-2">
+                            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">{{ $vehicle->make }}</h1>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold {{ $vehicle->is_available ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-400' : 'bg-red-100 text-red-700' }}">
+                                {{ $vehicle->is_available ? 'Available Now' : 'Booked' }}
+                            </span>
+                        </div>
                         <p class="text-xl text-gray-500 dark:text-gray-400 font-medium">{{ $vehicle->model }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Listed by: <strong class="text-gray-700 dark:text-gray-300">{{ $vehicle->owner->name ?? 'Verified Fleet Partner' }}</strong></p>
                     </div>
 
-                    <div class="flex items-end gap-2 mb-6 pb-6 border-b border-gray-100 dark:border-white/10">
-                        <span class="text-4xl font-extrabold text-gray-900 dark:text-white">${{ $vehicle->daily_rate }}</span>
-                        <span class="text-lg text-gray-500 dark:text-gray-400 font-medium pb-1">/ day</span>
+                    <div class="flex items-end justify-between mb-6 pb-6 border-b border-gray-100 dark:border-white/10">
+                        <div>
+                            <span class="text-4xl font-extrabold text-gray-900 dark:text-white">${{ $vehicle->daily_rate }}</span>
+                            <span class="text-lg text-gray-500 dark:text-gray-400 font-medium pb-1">/ day</span>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-400 bg-gray-50 dark:bg-white/5 px-2.5 py-1 rounded-lg">80% Owner Payout Model</span>
                     </div>
 
                     <div class="space-y-3 mb-6">
@@ -107,6 +133,15 @@
                             <span class="text-gray-500 dark:text-gray-400">Unlimited mileage</span>
                             <span class="text-green-500 font-semibold flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Included</span>
                         </div>
+                    </div>
+
+                    <!-- Security Deposit Information (Section 7 Requirement) -->
+                    <div class="mb-6 p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-300 space-y-1">
+                        <div class="flex items-center gap-2 font-bold text-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <span>Security Deposit Information</span>
+                        </div>
+                        <p class="text-xs leading-relaxed text-amber-700 dark:text-amber-400">Refundable Security Deposit: <strong>$200</strong> (Pre-authorization hold released upon vehicle return check).</p>
                     </div>
 
                     <!-- Driver Required Toggle (Client Requirement #2) -->

@@ -97,6 +97,93 @@
             </template>
             
         </div>
+
+        <!-- Vehicle Owner / Rental Benefits Section (Section 6 Requirements) -->
+        <section class="mt-20 pt-16 border-t border-gray-200 dark:border-white/10">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="px-3.5 py-1.5 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800/40 text-brand-600 dark:text-brand-400 font-bold text-xs uppercase tracking-widest inline-block mb-3">Vehicle Owner Partnership</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">Earn More From Your Vehicle</h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                    Vehicle owners can list eligible vehicles for rental through RideMyCars and keep <strong class="text-gray-900 dark:text-white">80% of every rental fare</strong>. Turn your idle car into passive income today.
+                </p>
+            </div>
+
+            <!-- Owner Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <!-- 1. Vehicle Listing -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        🚗
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Vehicle Listing</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">List your car in under 5 minutes with custom photos, daily rates, and specifications.</p>
+                </div>
+
+                <!-- 2. Rental Availability -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        📅
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Rental Availability</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Set custom rental schedules, blocked dates, and preferred pickup locations effortlessly.</p>
+                </div>
+
+                <!-- 3. Booking Management -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        📊
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Booking Management</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Review incoming rental requests, track active trips, and manage booking dates seamlessly.</p>
+                </div>
+
+                <!-- 4. Vehicle Information -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        📋
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Vehicle Information</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Highlight capacity, transmission type, climate control, and insurance details to attract renters.</p>
+                </div>
+
+                <!-- 5. Rental Earnings -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-950/60 text-green-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        💰
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Rental Earnings</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Keep 80% of all rental proceeds under our transparent 20% platform / 80% owner model.</p>
+                </div>
+
+                <!-- 6. Vehicle Inspection -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        🔍
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Vehicle Inspection</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Simple pre-rental inspection verification ensures your vehicle remains in top condition.</p>
+                </div>
+
+                <!-- 7. Security Deposit Info -->
+                <div class="bg-white dark:bg-[#111] rounded-2xl p-6 border border-gray-100 dark:border-white/10 shadow-sm md:col-span-2">
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center mb-4 text-2xl font-bold">
+                        🛡️
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">Security Deposit & Protection</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Built-in refundable security deposits and verified renter profiles protect your asset on every trip.</p>
+                </div>
+            </div>
+
+            <!-- Owner CTA -->
+            <div class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white rounded-3xl p-8 text-center max-w-3xl mx-auto shadow-xl">
+                <h3 class="text-2xl font-bold mb-2">Ready to list your vehicle?</h3>
+                <p class="text-gray-400 text-sm mb-6">Join vehicle owners earning passive income on RideMyCars.</p>
+                <a href="/owner-signup" class="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-xl transition-all shadow-md">
+                    List Your Vehicle Now
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
+            </div>
+        </section>
     </main>
 
 </x-layout>

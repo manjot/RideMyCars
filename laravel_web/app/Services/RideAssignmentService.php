@@ -30,7 +30,7 @@ class RideAssignmentService
                 'ride_id' => $ride->id,
                 'driver_id' => $driver->user_id,
                 'status' => 'pending',
-                'expires_at' => now()->addMinutes(2), // 2 min to respond
+                'expires_at' => now()->addMinutes(10), // 10 min window to respond
             ]);
         }
 
