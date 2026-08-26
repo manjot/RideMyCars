@@ -23,21 +23,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-16">
                     
                     <!-- Ride Card -->
-                    <div class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 flex flex-col pt-12 pb-8 px-6 text-center group">
-                        <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#ffedd5] to-transparent"></div>
+                    <div class="relative bg-white dark:bg-[#161616] rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 dark:border-white/10 flex flex-col pt-12 pb-8 px-6 text-center group transition-transform hover:-translate-y-1 duration-300">
+                        <div class="absolute top-0 left-0 w-full h-40" style="background: linear-gradient(180deg, #ffedd5 0%, rgba(255,237,213,0) 100%);"></div>
                         <div class="relative z-10 flex-1 flex flex-col items-center">
-                            <div class="w-16 h-16 bg-gradient-to-br from-[#f97316] to-[#ea580c] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#f97316]/30 mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                            <div class="w-16 h-16 text-white rounded-full flex items-center justify-center mb-6" style="background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.45);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
                             </div>
-                            <h3 class="text-2xl font-bold text-[#f97316] mb-3">Ride</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">On-demand executive transport.</p>
+                            <h3 class="text-2xl font-bold mb-3" style="color: #f97316;">Ride</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-[250px] leading-relaxed">On-demand executive transport.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
-                                <img src="/images/hero-ride.png" alt="Ride" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-ride.png') }}" alt="Ride" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
                             </div>
                             
-                            <a href="/ride" class="mt-auto w-full inline-flex items-center justify-center bg-gradient-to-r from-[#f97316] to-[#ea580c] text-white font-bold py-4 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-[#f97316]/40 hover:-translate-y-1">
+                            <a href="/ride" class="mt-auto w-full inline-flex items-center justify-center text-white font-bold py-4 px-8 rounded-full transition-all hover:opacity-95 hover:shadow-lg hover:-translate-y-0.5" style="background: linear-gradient(90deg, #f97316, #ea580c); box-shadow: 0 10px 20px -5px rgba(249, 115, 22, 0.4);">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                 Book Ride
                             </a>
@@ -45,21 +45,21 @@
                     </div>
 
                     <!-- Rent Card -->
-                    <div class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 flex flex-col pt-12 pb-8 px-6 text-center group">
-                        <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#dbeafe] to-transparent"></div>
+                    <div class="relative bg-white dark:bg-[#161616] rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 dark:border-white/10 flex flex-col pt-12 pb-8 px-6 text-center group transition-transform hover:-translate-y-1 duration-300">
+                        <div class="absolute top-0 left-0 w-full h-40" style="background: linear-gradient(180deg, #dbeafe 0%, rgba(219,234,254,0) 100%);"></div>
                         <div class="relative z-10 flex-1 flex flex-col items-center">
-                            <div class="w-16 h-16 bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#3b82f6]/30 mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                            <div class="w-16 h-16 text-white rounded-full flex items-center justify-center mb-6" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.45);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                             </div>
-                            <h3 class="text-2xl font-bold text-[#3b82f6] mb-3">Rent</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Tier-one luxury vehicles at your fingertips.</p>
+                            <h3 class="text-2xl font-bold mb-3" style="color: #3b82f6;">Rent</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-[250px] leading-relaxed">Tier-one luxury vehicles at your fingertips.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
-                                <img src="/images/hero-rent.png" alt="Rent" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-rent.png') }}" alt="Rent" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
                             </div>
                             
-                            <a href="/rent" class="mt-auto w-full inline-flex items-center justify-center bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white font-bold py-4 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-[#3b82f6]/40 hover:-translate-y-1">
+                            <a href="/rent" class="mt-auto w-full inline-flex items-center justify-center text-white font-bold py-4 px-8 rounded-full transition-all hover:opacity-95 hover:shadow-lg hover:-translate-y-0.5" style="background: linear-gradient(90deg, #3b82f6, #2563eb); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
                                 Rent Now
                             </a>
@@ -67,21 +67,21 @@
                     </div>
 
                     <!-- Driver Card -->
-                    <div class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 flex flex-col pt-12 pb-8 px-6 text-center group">
-                        <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#dcfce7] to-transparent"></div>
+                    <div class="relative bg-white dark:bg-[#161616] rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 dark:border-white/10 flex flex-col pt-12 pb-8 px-6 text-center group transition-transform hover:-translate-y-1 duration-300">
+                        <div class="absolute top-0 left-0 w-full h-40" style="background: linear-gradient(180deg, #dcfce7 0%, rgba(220,252,231,0) 100%);"></div>
                         <div class="relative z-10 flex-1 flex flex-col items-center">
-                            <div class="w-16 h-16 bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#22c55e]/30 mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <div class="w-16 h-16 text-white rounded-full flex items-center justify-center mb-6" style="background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.45);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             </div>
-                            <h3 class="text-2xl font-bold text-[#22c55e] mb-3">Driver</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Secure an elite, vetted chauffeur for your itinerary.</p>
+                            <h3 class="text-2xl font-bold mb-3" style="color: #22c55e;">Driver</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-[250px] leading-relaxed">Secure an elite, vetted chauffeur for your itinerary.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
-                                <img src="/images/hero-hire.png" alt="Driver" class="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-hire.png') }}" alt="Driver" class="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
                             </div>
                             
-                            <a href="/hire-driver" class="mt-auto w-full inline-flex items-center justify-center bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white font-bold py-4 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-[#22c55e]/40 hover:-translate-y-1">
+                            <a href="/hire-driver" class="mt-auto w-full inline-flex items-center justify-center text-white font-bold py-4 px-8 rounded-full transition-all hover:opacity-95 hover:shadow-lg hover:-translate-y-0.5" style="background: linear-gradient(90deg, #22c55e, #16a34a); box-shadow: 0 10px 20px -5px rgba(34, 197, 94, 0.4);">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                                 Hire Driver
                             </a>
@@ -89,21 +89,21 @@
                     </div>
 
                     <!-- Deliver Card -->
-                    <div class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 flex flex-col pt-12 pb-8 px-6 text-center group">
-                        <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#f3e8ff] to-transparent"></div>
+                    <div class="relative bg-white dark:bg-[#161616] rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-100 dark:border-white/10 flex flex-col pt-12 pb-8 px-6 text-center group transition-transform hover:-translate-y-1 duration-300">
+                        <div class="absolute top-0 left-0 w-full h-40" style="background: linear-gradient(180deg, #f3e8ff 0%, rgba(243,232,255,0) 100%);"></div>
                         <div class="relative z-10 flex-1 flex flex-col items-center">
-                            <div class="w-16 h-16 bg-gradient-to-br from-[#a855f7] to-[#9333ea] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#a855f7]/30 mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            <div class="w-16 h-16 text-white rounded-full flex items-center justify-center mb-6" style="background: linear-gradient(135deg, #a855f7, #9333ea); box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.45);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                             </div>
-                            <h3 class="text-2xl font-bold text-[#a855f7] mb-3">Deliver</h3>
-                            <p class="text-gray-600 mb-8 max-w-[250px] leading-relaxed">Flawless, white-glove courier dispatch.</p>
+                            <h3 class="text-2xl font-bold mb-3" style="color: #a855f7;">Deliver</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-[250px] leading-relaxed">Flawless, white-glove courier dispatch.</p>
                             
                             <!-- Vehicle Image -->
                             <div class="relative w-[120%] h-48 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-6">
-                                <img src="/images/hero-delivery.png" alt="Deliver" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-delivery.png') }}" alt="Deliver" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" style="mix-blend-mode: multiply;">
                             </div>
                             
-                            <a href="/delivery" class="mt-auto w-full inline-flex items-center justify-center bg-gradient-to-r from-[#a855f7] to-[#9333ea] text-white font-bold py-4 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-[#a855f7]/40 hover:-translate-y-1">
+                            <a href="/delivery" class="mt-auto w-full inline-flex items-center justify-center text-white font-bold py-4 px-8 rounded-full transition-all hover:opacity-95 hover:shadow-lg hover:-translate-y-0.5" style="background: linear-gradient(90deg, #a855f7, #9333ea); box-shadow: 0 10px 20px -5px rgba(168, 85, 247, 0.4);">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                                 Send Delivery
                             </a>
