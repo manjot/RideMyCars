@@ -4,6 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign In — RideMyCars</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -17,9 +22,13 @@
 <body class="font-sans antialiased bg-white text-black" x-data="{ view: '{{ $errors->any() || old('email') ? 'email' : 'mobile' }}', emailForOtp: '', otpError: '', isLoading: false, c1: '', c2: '', c3: '', c4: '' }">
     
     <!-- Header -->
-    <header class="w-full bg-black h-16 flex items-center px-4 md:px-8">
-        <a href="/" class="flex items-center">
-            <img src="{{ asset('images/logo.png') }}" alt="RideMyCars" class="h-8 brightness-0 invert object-contain">
+    <header class="w-full bg-black h-16 flex items-center justify-between px-4 md:px-8 border-b border-white/10">
+        <a href="/" class="flex items-center gap-2">
+            <img src="{{ asset('images/logo.png') }}" alt="RideMyCars" class="h-10 w-auto object-contain bg-white rounded-lg p-0.5 shadow-sm">
+        </a>
+        <a href="/" class="text-sm font-medium text-gray-300 hover:text-white transition-colors flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Home
         </a>
     </header>
 
