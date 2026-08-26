@@ -58,6 +58,17 @@ fi
 sed -i 's/^APP_ENV=.*/APP_ENV=production/' .env 2>/dev/null || true
 sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env 2>/dev/null || true
 sed -i 's|^APP_URL=.*|APP_URL=https://ridemycars.com|' .env 2>/dev/null || true
+sed -i 's/^MAIL_MAILER=.*/MAIL_MAILER=smtp/' .env 2>/dev/null || true
+sed -i 's/^MAIL_HOST=.*/MAIL_HOST=mail.ridemycars.com/' .env 2>/dev/null || true
+sed -i 's/^MAIL_PORT=.*/MAIL_PORT=465/' .env 2>/dev/null || true
+sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=support@ridemycars.com/' .env 2>/dev/null || true
+sed -i 's/^MAIL_PASSWORD=.*/MAIL_PASSWORD="Support@#007"/' .env 2>/dev/null || true
+sed -i 's/^MAIL_ENCRYPTION=.*/MAIL_ENCRYPTION=ssl/' .env 2>/dev/null || true
+sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS="support@ridemycars.com"/' .env 2>/dev/null || true
+sed -i 's/^ADMIN_INQUIRY_EMAIL=.*/ADMIN_INQUIRY_EMAIL=info@ridemycars.com/' .env 2>/dev/null || true
+if ! grep -q "ADMIN_INQUIRY_EMAIL" .env; then
+    echo "ADMIN_INQUIRY_EMAIL=info@ridemycars.com" >> .env
+fi
 
 # Step 5: Install PHP dependencies
 echo "📦 Installing PHP composer dependencies (no-dev, optimized)..."

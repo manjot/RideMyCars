@@ -106,8 +106,8 @@
                     <a href="/activity" class="px-5 py-3 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold text-xs rounded-xl transition-colors shadow-sm">
                         View Trip History & Dispute →
                     </a>
-                    <a href="mailto:refunds@ridemycars.com" class="px-5 py-3 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-bold text-xs rounded-xl transition-colors hover:bg-gray-200 dark:hover:bg-white/20">
-                        Email Support: refunds@ridemycars.com
+                    <a href="mailto:support@ridemycars.com" class="px-5 py-3 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-bold text-xs rounded-xl transition-colors hover:bg-gray-200 dark:hover:bg-white/20">
+                        Email Support: support@ridemycars.com
                     </a>
                 </div>
             </section>

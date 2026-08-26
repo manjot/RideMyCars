@@ -77,7 +77,7 @@
                     <span>5. Contact Legal Counsel</span>
                 </h2>
                 <p class="leading-relaxed text-sm">
-                    For legal notices, regulatory inquiries, or law enforcement data requests, please contact our legal team at <a href="mailto:legal@ridemycars.com" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">legal@ridemycars.com</a> or write to:
+                    For legal notices, regulatory inquiries, or law enforcement data requests, please contact our team at <a href="mailto:support@ridemycars.com" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">support@ridemycars.com</a> or write to:
                 </p>
                 <div class="mt-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-xs font-mono text-gray-800 dark:text-gray-200">
                     RideMyCars Inc. — Legal & Compliance Department<br>

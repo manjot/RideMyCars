@@ -48,7 +48,7 @@
 
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">9. Contact</h2>
-                    <p class="leading-relaxed">For questions about these Terms, contact us at <a href="mailto:legal@ridemycars.com" class="text-brand-500 hover:underline">legal@ridemycars.com</a>.</p>
+                    <p class="leading-relaxed">For questions about these Terms, contact us at <a href="mailto:support@ridemycars.com" class="text-brand-500 hover:underline">support@ridemycars.com</a>.</p>
                 </div>
             </div>
         </main>

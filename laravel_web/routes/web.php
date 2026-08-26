@@ -1261,6 +1261,82 @@ Route::get('/admin/package-delivery-tracker', function () {
 Route::get('/admin/financial-statement/export-csv', [AdminFinancialExportController::class, 'exportCsv']);
 Route::get('/admin/financial-statement/export-pdf', [AdminFinancialExportController::class, 'exportPdf']);
 
+// Contact & Inquiry Submission Route
+Route::post('/contact/send', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'nullable|string|max:50',
+        'subject' => 'required|string|max:255',
+        'message' => 'required|string|max:5000',
+    ]);
+
+    $adminEmail = env('ADMIN_INQUIRY_EMAIL', 'info@ridemycars.com');
+    $userEmail = $validated['email'];
+    $userName = $validated['name'];
+    $subject = $validated['subject'];
+    $msgBody = $validated['message'];
+    $phone = $validated['phone'] ?? 'Not provided';
+
+    // 1. Send Inquiry to Admin (info@ridemycars.com)
+    try {
+        \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($adminEmail, $userEmail, $userName, $subject, $msgBody, $phone) {
+            $message->to($adminEmail)
+                    ->replyTo($userEmail, $userName)
+                    ->subject("📬 New Inquiry: {$subject} [From: {$userName}]")
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;'>
+                            <div style='background: #0b0f17; padding: 24px; color: white;'>
+                                <h2 style='margin: 0; color: #f59e0b;'>RideMyCars - New Customer Inquiry</h2>
+                            </div>
+                            <div style='padding: 24px; background: #fafafa; color: #333; line-height: 1.6;'>
+                                <p><strong>From:</strong> {$userName} (<a href='mailto:{$userEmail}'>{$userEmail}</a>)</p>
+                                <p><strong>Phone:</strong> {$phone}</p>
+                                <p><strong>Topic:</strong> {$subject}</p>
+                                <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;'>
+                                <p><strong>Message:</strong></p>
+                                <div style='background: white; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; white-space: pre-wrap;'>{$msgBody}</div>
+                            </div>
+                            <div style='background: #f1f5f9; padding: 12px 24px; font-size: 12px; color: #64748b;'>
+                                Sent via RideMyCars Contact System • Direct reply will go to {$userEmail}
+                            </div>
+                        </div>
+                    ");
+        });
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Admin inquiry mail error: ' . $e->getMessage());
+    }
+
+    // 2. Send Automated Confirmation Receipt to Customer
+    try {
+        \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($userEmail, $userName, $subject) {
+            $message->to($userEmail)
+                    ->subject("Thank you for contacting RideMyCars - We received your message")
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;'>
+                            <div style='background: #0b0f17; padding: 24px; color: white;'>
+                                <h2 style='margin: 0; color: #f59e0b;'>RideMyCars Concierge Support</h2>
+                            </div>
+                            <div style='padding: 24px; background: #fafafa; color: #333; line-height: 1.6;'>
+                                <p>Hello <strong>{$userName}</strong>,</p>
+                                <p>Thank you for contacting RideMyCars regarding <strong>\"{$subject}\"</strong>. Our executive concierge team has received your message.</p>
+                                <p>We are reviewing your inquiry and will reply to this email address shortly.</p>
+                                <p>For urgent mobility needs, you can also reach us directly at <a href='mailto:support@ridemycars.com' style='color: #f59e0b; font-weight: bold;'>support@ridemycars.com</a> or call <strong>+1 800 123 4567</strong>.</p>
+                                <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;'>
+                                <p style='margin: 0; color: #64748b;'>Warm regards,<br><strong>RideMyCars Support Team</strong></p>
+                            </div>
+                        </div>
+                    ");
+        });
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Customer confirmation mail error: ' . $e->getMessage());
+    }
+
+    \App\Services\ActivityLogService::log('inquiry_submitted', "Inquiry submitted by {$userName} ({$userEmail}): {$subject}", auth()->id());
+
+    return back()->with('success', '🎉 Your message has been sent successfully! Our concierge team has received your inquiry and will reply to your email shortly.');
+});
+
 // Generic & Legal pages
 $pages = [
     'safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 
