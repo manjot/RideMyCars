@@ -38,10 +38,12 @@ elif [ -f "/usr/local/bin/composer" ]; then
     COMPOSER_BIN="$PHP_BIN /usr/local/bin/composer"
 elif [ -f "/opt/cpanel/composer/bin/composer" ]; then
     COMPOSER_BIN="$PHP_BIN /opt/cpanel/composer/bin/composer"
+elif [ -f "$TARGET_DIR/composer.phar" ]; then
+    COMPOSER_BIN="$PHP_BIN $TARGET_DIR/composer.phar"
 else
     echo "⚠️ Downloading local composer.phar..."
-    curl -sS https://getcomposer.org/installer | $PHP_BIN
-    COMPOSER_BIN="$PHP_BIN composer.phar"
+    curl -sS https://getcomposer.org/installer | $PHP_BIN -- --install-dir="$TARGET_DIR" --filename=composer.phar
+    COMPOSER_BIN="$PHP_BIN $TARGET_DIR/composer.phar"
 fi
 
 # Step 4: Configure .env in laravel_web
