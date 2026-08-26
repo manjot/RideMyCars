@@ -465,23 +465,42 @@
     </section>
 
     <!-- 8. Strong Driver CTA Section -->
-    <section class="py-24 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] opacity-10"></div>
+    <section class="relative py-28 overflow-hidden border-t border-gray-100 dark:border-white/10" style="background: radial-gradient(circle at 50% 30%, #151b26 0%, #090c12 100%);">
+        <!-- Ambient Gold/Amber Glow -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] rounded-full pointer-events-none blur-[140px] opacity-25" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+        
         <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8 relative z-10">
-            <h2 class="text-4xl sm:text-6xl font-black tracking-tight mb-6">Ready to Keep 90%?</h2>
-            <p class="text-xl text-gray-300 mb-10 max-w-xl mx-auto">Don't work harder just to give away more.</p>
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 border shadow-sm" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3);">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                <span class="text-xs font-black uppercase tracking-widest text-amber-400">Join Over 3,200+ Verified Drivers</span>
+            </div>
+
+            <!-- Title -->
+            <h2 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white mb-6 leading-tight">
+                Ready to Keep <span style="background: linear-gradient(135deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">90%</span>?
+            </h2>
+
+            <p class="text-lg sm:text-xl text-gray-300 mb-10 max-w-xl mx-auto leading-relaxed">
+                Don't work harder just to give away 25%. Keep more profit on every trip with RideMyCars.
+            </p>
             
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-                <a href="/driver-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-9 py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-lg rounded-2xl transition-all shadow-xl shadow-brand-500/40 hover:-translate-y-0.5">
+                <a href="/driver-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-9 py-4 text-white font-black text-lg rounded-2xl transition-all shadow-xl hover:opacity-95 hover:scale-[1.02] transform duration-200" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 12px 30px -5px rgba(245, 158, 11, 0.45);">
                     Join RideMyCars Today
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </a>
-                <a href="/driver-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-lg rounded-2xl border border-white/15 transition-all">
+                <a href="/driver-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-bold text-lg rounded-2xl border transition-all hover:bg-white/10 hover:border-white/30" style="background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);">
                     Get Started
                 </a>
             </div>
 
-            <p class="text-sm text-gray-400">Download the app or visit RideMyCars to get started.</p>
+            <!-- Trust Line -->
+            <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400 font-medium">
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Instant Weekly Payouts</span>
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Free Driver Registration</span>
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> 24/7 Dedicated Support</span>
+            </div>
         </div>
     </section>
 </x-layout>
