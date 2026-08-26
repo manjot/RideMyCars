@@ -535,17 +535,17 @@
         </form>
     </main>
 
-    <!-- Google Places Autocomplete Script for Delivery Page -->
+    <!-- Maps & Autocomplete Integration -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     @php
         $gmapsKey = config('services.google_maps.api_key');
         $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
     @endphp
 
     @if($hasValidKey)
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
-    @else
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places" async defer></script>
     @endif
 
     <script>
@@ -558,7 +558,156 @@
             const dLatInput = document.getElementById("dropoff_lat_input");
             const dLngInput = document.getElementById("dropoff_lng_input");
 
-            @if($hasValidKey)
+            let mapInstance = null;
+            let pickupMarker = null;
+            let dropoffMarker = null;
+            let routeLine = null;
+            let defaultLat = 40.7128;
+            let defaultLng = -74.0060;
+
+            // Custom Leaflet Icons
+            const createIcon = (emoji, bg) => L.divIcon({
+                className: 'custom-map-marker',
+                html: `<div style="background: ${bg}; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid white;">${emoji}</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            const pickupIcon = createIcon('📍', '#f59e0b');
+            const dropoffIcon = createIcon('🏁', '#ef4444');
+            const courierIcon = createIcon('🛵', '#10b981');
+
+            function initMap() {
+                const mapEl = document.getElementById('map');
+                if (!mapEl || typeof L === 'undefined') return;
+
+                try {
+                    mapInstance = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 13);
+
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap &copy; CARTO'
+                    }).addTo(mapInstance);
+
+                    // Add initial pickup area marker
+                    pickupMarker = L.marker([defaultLat, defaultLng], { icon: pickupIcon, draggable: true }).addTo(mapInstance)
+                        .bindPopup('<b>📍 Pickup Location</b><br><span class="text-xs text-gray-500">Drag to refine location</span>');
+
+                    pickupMarker.on('dragend', function(e) {
+                        const pos = e.target.getLatLng();
+                        setPickup(pos.lat, pos.lng, true);
+                    });
+
+                    // Add simulated active delivery couriers in the city
+                    const offsets = [
+                        [0.008, 0.006],
+                        [-0.007, 0.009],
+                        [0.005, -0.008],
+                        [-0.006, -0.005]
+                    ];
+                    offsets.forEach((off, i) => {
+                        L.marker([defaultLat + off[0], defaultLng + off[1]], { icon: courierIcon }).addTo(mapInstance)
+                            .bindPopup(`<b>🛵 Active Courier #${i+1}</b><br><span class="text-xs text-emerald-600 font-bold">● Available (2-4 mins away)</span>`);
+                    });
+
+                    // Map Click Handler: alternates setting pickup / dropoff
+                    mapInstance.on('click', function(e) {
+                        const { lat, lng } = e.latlng;
+                        if (!pLatInput.value || (pLatInput.value && dLatInput.value)) {
+                            setPickup(lat, lng, true);
+                        } else {
+                            setDropoff(lat, lng, true);
+                        }
+                    });
+
+                    setTimeout(() => mapInstance.invalidateSize(), 300);
+                } catch (e) {
+                    console.warn("Map initialization error:", e);
+                }
+            }
+
+            function setPickup(lat, lng, reverseGeocode = false) {
+                if (pLatInput) pLatInput.value = lat;
+                if (pLngInput) pLngInput.value = lng;
+
+                if (pickupMarker && mapInstance) {
+                    pickupMarker.setLatLng([lat, lng]);
+                } else if (mapInstance) {
+                    pickupMarker = L.marker([lat, lng], { icon: pickupIcon, draggable: true }).addTo(mapInstance);
+                }
+
+                if (reverseGeocode && pInput) {
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                pInput.value = data.display_name;
+                                pInput.dispatchEvent(new Event('input'));
+                            }
+                        }).catch(() => {});
+                }
+
+                updateRouteAndBounds();
+            }
+
+            function setDropoff(lat, lng, reverseGeocode = false) {
+                if (dLatInput) dLatInput.value = lat;
+                if (dLngInput) dLngInput.value = lng;
+
+                if (dropoffMarker && mapInstance) {
+                    dropoffMarker.setLatLng([lat, lng]);
+                } else if (mapInstance) {
+                    dropoffMarker = L.marker([lat, lng], { icon: dropoffIcon, draggable: true }).addTo(mapInstance);
+                    dropoffMarker.on('dragend', function(e) {
+                        const pos = e.target.getLatLng();
+                        setDropoff(pos.lat, pos.lng, true);
+                    });
+                }
+
+                if (reverseGeocode && dInput) {
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                dInput.value = data.display_name;
+                                dInput.dispatchEvent(new Event('input'));
+                            }
+                        }).catch(() => {});
+                }
+
+                updateRouteAndBounds();
+            }
+
+            function updateRouteAndBounds() {
+                if (!mapInstance) return;
+                const pLat = parseFloat(pLatInput?.value);
+                const pLng = parseFloat(pLngInput?.value);
+                const dLat = parseFloat(dLatInput?.value);
+                const dLng = parseFloat(dLngInput?.value);
+
+                if (!isNaN(pLat) && !isNaN(pLng) && !isNaN(dLat) && !isNaN(dLng)) {
+                    if (routeLine) mapInstance.removeLayer(routeLine);
+
+                    // Draw delivery dispatch route
+                    routeLine = L.polyline([[pLat, pLng], [dLat, dLng]], {
+                        color: '#f59e0b',
+                        weight: 4,
+                        opacity: 0.85,
+                        dashArray: '8, 8',
+                        lineCap: 'round'
+                    }).addTo(mapInstance);
+
+                    const bounds = L.latLngBounds([[pLat, pLng], [dLat, dLng]]);
+                    mapInstance.fitBounds(bounds, { padding: [40, 40] });
+                } else if (!isNaN(pLat) && !isNaN(pLng)) {
+                    mapInstance.setView([pLat, pLng], 14);
+                }
+            }
+
+            initMap();
+
+            // Google Places Autocomplete if available
+            window.addEventListener('load', () => {
                 if (window.google && google.maps && google.maps.places) {
                     try {
                         if (pInput) {
@@ -566,8 +715,7 @@
                             acP.addListener('place_changed', () => {
                                 const place = acP.getPlace();
                                 if (place.geometry && place.geometry.location) {
-                                    if (pLatInput) pLatInput.value = place.geometry.location.lat();
-                                    if (pLngInput) pLngInput.value = place.geometry.location.lng();
+                                    setPickup(place.geometry.location.lat(), place.geometry.location.lng(), false);
                                 }
                             });
                         }
@@ -576,80 +724,37 @@
                             acD.addListener('place_changed', () => {
                                 const place = acD.getPlace();
                                 if (place.geometry && place.geometry.location) {
-                                    if (dLatInput) dLatInput.value = place.geometry.location.lat();
-                                    if (dLngInput) dLngInput.value = place.geometry.location.lng();
+                                    setDropoff(place.geometry.location.lat(), place.geometry.location.lng(), false);
                                 }
                             });
                         }
                     } catch (e) {}
                 }
-            @endif
+            });
 
-            // Initialize OpenStreetMap Leaflet Map
-            if (typeof L !== 'undefined' && document.getElementById('map')) {
-                try {
-                    const leafletMap = L.map('map').setView([40.7128, -74.0060], 12);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: '© OpenStreetMap contributors'
-                    }).addTo(leafletMap);
-
-                    // Add Pickup Marker
-                    L.marker([40.7128, -74.0060]).addTo(leafletMap)
-                        .bindPopup('<b>📍 Pickup Area</b><br>New York City Center')
-                        .openPopup();
-
-                    // Add Nearby Active Couriers
-                    const courierCoords = [
-                        [40.7220, -74.0060],
-                        [40.7180, -73.9980],
-                        [40.7050, -74.0120]
-                    ];
-
-                    courierCoords.forEach((coord, i) => {
-                        L.circleMarker(coord, {
-                            radius: 8,
-                            fillColor: '#f59e0b',
-                            color: '#000000',
-                            weight: 2,
-                            opacity: 1,
-                            fillOpacity: 0.9
-                        }).addTo(leafletMap).bindPopup(`<b>🛵 Active Express Courier #${i+1}</b>`);
-                    });
-                } catch (e) {
-                    console.warn("Leaflet map init failed:", e);
-                }
-            }
-
-            if (locBtn && pInput) {
+            // Geolocation Button
+            if (locBtn) {
                 locBtn.addEventListener("click", () => {
                     if (!navigator.geolocation) {
                         alert("Geolocation is not supported by your browser.");
                         return;
                     }
+                    const orig = locBtn.innerHTML;
                     locBtn.disabled = true;
                     locBtn.innerText = "Locating...";
 
                     navigator.geolocation.getCurrentPosition(
-                        async (pos) => {
-                            if (pLatInput) pLatInput.value = pos.coords.latitude;
-                            if (pLngInput) pLngInput.value = pos.coords.longitude;
-
-                            try {
-                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
-                                if (res.ok) {
-                                    const data = await res.json();
-                                    if (data && data.display_name) pInput.value = data.display_name;
-                                }
-                            } catch (e) {}
+                        (pos) => {
+                            setPickup(pos.coords.latitude, pos.coords.longitude, true);
                             locBtn.disabled = false;
-                            locBtn.innerText = "📍 Use My Location";
+                            locBtn.innerHTML = orig;
                         },
                         () => {
                             locBtn.disabled = false;
-                            locBtn.innerText = "📍 Use My Location";
-                            alert("Unable to detect location automatically.");
-                        }
+                            locBtn.innerHTML = orig;
+                            alert("Unable to retrieve your location automatically.");
+                        },
+                        { timeout: 8000 }
                     );
                 });
             }
