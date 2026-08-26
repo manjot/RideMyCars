@@ -6,9 +6,20 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\DriverApiController;
+use App\Http\Controllers\Api\BannerApiController;
+use App\Http\Controllers\Api\CategoryApiController;
+use App\Http\Controllers\Api\ProductApiController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Public Banners, Categories & Products
+Route::get('/banners', [BannerApiController::class, 'index']);
+Route::get('/banners/{id}', [BannerApiController::class, 'show']);
+Route::get('/categories', [CategoryApiController::class, 'index']);
+Route::get('/categories/{id}', [CategoryApiController::class, 'show']);
+Route::get('/products', [ProductApiController::class, 'index']);
+Route::get('/products/{id}', [ProductApiController::class, 'show']);
 
 // Public driver listing & country info
 Route::get('/drivers', [DriverApiController::class, 'drivers']);
@@ -22,6 +33,20 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Banners & Categories Management
+    Route::post('/banners', [BannerApiController::class, 'store']);
+    Route::put('/banners/{id}', [BannerApiController::class, 'update']);
+    Route::delete('/banners/{id}', [BannerApiController::class, 'destroy']);
+
+    Route::post('/categories', [CategoryApiController::class, 'store']);
+    Route::put('/categories/{id}', [CategoryApiController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryApiController::class, 'destroy']);
+
+    // Products Management
+    Route::post('/products', [ProductApiController::class, 'store']);
+    Route::put('/products/{id}', [ProductApiController::class, 'update']);
+    Route::delete('/products/{id}', [ProductApiController::class, 'destroy']);
 
     // Rides & Vehicles
     Route::apiResource('rides', RideController::class);

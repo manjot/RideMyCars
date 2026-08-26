@@ -42,6 +42,23 @@ class AdminPanelProvider extends PanelProvider
             ->font('Inter')
             ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->resources([
+                \App\Filament\Resources\CategoryResource::class,
+                \App\Filament\Resources\BannerResource::class,
+                \App\Filament\Resources\ProductResource::class,
+                \App\Filament\Resources\RideResource::class,
+                \App\Filament\Resources\VehicleResource::class,
+                \App\Filament\Resources\DriverProfileResource::class,
+                \App\Filament\Resources\DriverBookingResource::class,
+                \App\Filament\Resources\PaymentTransactionResource::class,
+                \App\Filament\Resources\OwnerWalletResource::class,
+                \App\Filament\Resources\PayoutLedgerResource::class,
+                \App\Filament\Resources\GuarantorVerificationResource::class,
+                \App\Filament\Resources\RentalInspectionResource::class,
+                \App\Filament\Resources\ActivityLogResource::class,
+                \App\Filament\Resources\SettingResource::class,
+                \App\Filament\Resources\UserResource::class,
+            ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,

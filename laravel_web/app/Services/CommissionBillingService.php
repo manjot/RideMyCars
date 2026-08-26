@@ -50,8 +50,9 @@ class CommissionBillingService
                 // passenger absorbs fee
                 $netPayout = $ownerShare;
             }
-        } elseif ($vertical === 'DRIVER_HIRING') {
-            $platformPct = (float) (Setting::where('key', 'driver_hiring.platform_commission')->value('value') ?? 15.0);
+        } elseif ($vertical === 'DRIVER_HIRING' || $vertical === 'PACKAGE_DELIVERY') {
+            $key = ($vertical === 'PACKAGE_DELIVERY') ? 'package_delivery.platform_commission' : 'driver_hiring.platform_commission';
+            $platformPct = (float) (Setting::where('key', $key)->value('value') ?? 15.0);
             
             $platformFee = round($grossAmount * ($platformPct / 100.0), 2);
             $ownerShare = round($grossAmount - $platformFee, 2);

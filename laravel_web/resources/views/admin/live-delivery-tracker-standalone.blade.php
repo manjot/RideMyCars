@@ -609,14 +609,26 @@
                 },
 
                 centerMapOnSelected() {
-                    if (this.selectedOrder && this.map) {
-                        const lat = this.selectedOrder.current_lat;
-                        const lng = this.selectedOrder.current_lng;
-                        if (typeof google !== 'undefined' && google.maps) {
-                            this.map.setCenter({ lat, lng });
-                            this.map.setZoom(15);
-                        } else if (typeof L !== 'undefined') {
-                            this.map.setView([lat, lng], 15);
+                    if (!this.map) {
+                        this.initMap();
+                    }
+                    if (this.selectedOrder) {
+                        const lat = parseFloat(this.selectedOrder.current_lat) || parseFloat(this.selectedOrder.pickup_lat) || 5.6037;
+                        const lng = parseFloat(this.selectedOrder.current_lng) || parseFloat(this.selectedOrder.pickup_lng) || -0.1870;
+
+                        if (this.map) {
+                            if (typeof google !== 'undefined' && google.maps && typeof this.map.setCenter === 'function') {
+                                this.map.setCenter({ lat, lng });
+                                this.map.setZoom(15);
+                            } else if (typeof L !== 'undefined' && typeof this.map.setView === 'function') {
+                                try { this.map.invalidateSize(); } catch(e){}
+                                this.map.setView([lat, lng], 15);
+                            }
+                        }
+
+                        const mapEl = document.getElementById("live_tracker_map_standalone");
+                        if (mapEl && window.innerWidth < 1024) {
+                            mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     }
                 },

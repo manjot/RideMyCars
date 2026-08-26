@@ -76,7 +76,7 @@ class VehicleSeeder extends Seeder
         ];
 
         foreach ($vehicles as $vehicle) {
-            Vehicle::create($vehicle);
+            Vehicle::firstOrCreate(['license_plate' => $vehicle['license_plate']], $vehicle);
         }
     }
 }

@@ -33,6 +33,8 @@
     </x-slot>
 
     <main class="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8" style="max-width: 1500px;">
+        <!-- Category Banner Component -->
+        <x-category-banner category="Ride" />
         
         @if(session('success'))
             <div class="mb-6 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200 font-semibold flex items-center justify-between shadow-sm">
@@ -182,6 +184,33 @@
                                 <div class="w-2.5 h-2.5 bg-gray-900 dark:bg-white"></div>
                             </div>
                             <input type="text" id="dropoff_location" name="dropoff_location" x-model="dropoff" required placeholder="Dropoff location" class="w-full pl-10 pr-4 py-3.5 bg-gray-100 dark:bg-[#222] border-none rounded-xl text-gray-900 dark:text-white placeholder-gray-500 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all">
+                        </div>
+
+                        <!-- Dynamic Additional Destinations / Stops -->
+                        <div class="space-y-3 pt-1">
+                            <template x-for="(stop, index) in stops" :key="stop.id">
+                                <div class="relative flex items-center gap-2">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                    </div>
+                                    <input type="text" :placeholder="`Additional Stop ${index + 1}`" x-model="stop.location" required class="w-full pl-10 pr-10 py-3 bg-gray-100 dark:bg-[#222] border-none rounded-xl text-gray-900 dark:text-white placeholder-gray-500 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all">
+                                    <button type="button" @click="removeStop(index)" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors shrink-0" title="Remove stop">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </template>
+                            <button type="button" @click="addStop()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-bold transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                <span>+ Add Stop</span>
+                            </button>
+                        </div>
+
+                        <!-- Mandatory Phone Number Field -->
+                        <div class="relative pt-1">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            </div>
+                            <input type="tel" name="phone_number" x-model="phone" required placeholder="Mobile Phone Number (Required) *" class="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-[#222] border-none rounded-xl text-gray-900 dark:text-white placeholder-gray-500 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all">
                         </div>
                     </div>
 
@@ -899,10 +928,18 @@
                 schedule_type: 'now',
                 pickup: '',
                 dropoff: '',
+                phone: '{{ auth()->user()->phone ?? "" }}',
+                stops: [],
                 riderType: 'me',
                 showRiderModal: false,
                 passengerName: '',
                 passengerPhone: '',
+                addStop() {
+                    this.stops.push({ id: Date.now(), location: '' });
+                },
+                removeStop(idx) {
+                    this.stops.splice(idx, 1);
+                },
                 get showRides() { 
                     return !this.isConfirming && this.pickup.trim().length > 0 && this.dropoff.trim().length > 0; 
                 },
@@ -916,6 +953,10 @@
                 rideId: null,
                 rideStatus: 'pending', // pending, accepted, en_route, arrived, in_progress, completed, failed
                 driverName: '',
+                driverPhoto: '',
+                driverRating: 5.0,
+                driverPlate: '',
+                driverModel: '',
                 pollingUrl: null,
                 pollingTimer: null,
                 
@@ -937,6 +978,12 @@
                 },
                 
                 async submitBooking() {
+                    const activePhone = (this.riderType === 'someone_else' && this.passengerPhone.trim()) ? this.passengerPhone : this.phone;
+                    if (!activePhone || activePhone.trim().length < 5) {
+                        alert('A valid Mobile Phone Number is required to book a ride request.');
+                        return;
+                    }
+
                     this.isConfirming = true;
                     this.rideStatus = 'pending';
                     document.querySelectorAll('.pac-container').forEach(el => el.style.display = 'none');
@@ -954,6 +1001,11 @@
                             body: JSON.stringify({
                                 pickup_location: this.pickup,
                                 dropoff_location: this.dropoff,
+                                phone_number: activePhone,
+                                passenger_phone: activePhone,
+                                is_for_someone_else: this.riderType === 'someone_else' ? 1 : 0,
+                                passenger_name: this.passengerName,
+                                stops: this.stops.map(s => s.location).filter(l => l && l.trim().length > 0),
                                 vehicle_type: this.vehicle_type,
                                 payment_method: this.paymentMethod,
                                 amount: parseFloat(this.selectedFare.replace('$', '')) || 28.50,
@@ -1000,6 +1052,13 @@
                         const data = await res.json();
                         this.rideStatus = data.status;
                         if (data.driver_name) this.driverName = data.driver_name;
+                        if (data.driver) {
+                            this.driverName = data.driver.name || this.driverName;
+                            this.driverPhoto = data.driver.photo_url || '';
+                            this.driverRating = data.driver.rating || 5.0;
+                            this.driverPlate = data.driver.vehicle_plate || '';
+                            this.driverModel = data.driver.vehicle_model || '';
+                        }
                         if (data.has_review) this.reviewSubmitted = true;
                         
                         // Sync Fare, Locations, and Payment Method from database

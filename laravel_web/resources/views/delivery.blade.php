@@ -1,211 +1,541 @@
 <x-layout theme="theme-delivery">
-    <x-slot:title>Package Delivery — RideMyCars</x-slot>
+    <x-slot:title>Package Delivery — RideMyCars Express Parcel Dispatch</x-slot>
 
-    <main class="flex-1 w-full max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10"
+          x-data="{
+              currentStep: 1,
+              pickupLocation: '{{ $pickup ?? '' }}',
+              dropoffLocation: '{{ $dropoff ?? '' }}',
+              pickupLat: null,
+              pickupLng: null,
+              dropoffLat: null,
+              dropoffLng: null,
+              
+              deliveryType: 'Instant', // Instant, Same Day, Express, Scheduled, Hyperlocal
+              scheduleMode: 'now', // now, later
+              pickupDate: '{{ date('Y-m-d') }}',
+              pickupTime: '09:00',
+
+              senderName: '{{ auth()->user()->name ?? 'Jane Sender' }}',
+              senderPhone: '{{ auth()->user()->phone ?? '+1 555 019 2831' }}',
+              senderAddress: '',
+              
+              recipientName: 'Robert Johnson',
+              recipientPhone: '+1 555 992 4810',
+              recipientAddress: '',
+              deliveryInstructions: '',
+
+              packageCategory: 'Documents', // Documents, Clothing, Electronics, Household items, Office supplies, Personal belongings
+              packageDescription: 'Important Legal Contracts & Office Supplies',
+              packageSize: 'Small', // Small, Medium, Large
+              packageWeight: 1.5,
+              quantity: 1,
+              declaredValue: 150,
+              specialHandling: ['signature_required'],
+
+              paymentMethod: 'stripe',
+
+              priceBreakdown: {
+                  subtotal: 0,
+                  service_fee: 0,
+                  tax: 0,
+                  total_price: 0,
+                  currency_symbol: '$'
+              },
+
+              async updatePrice() {
+                  try {
+                      const res = await fetch('/delivery/calculate-price', {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                          },
+                          body: JSON.stringify({
+                              pickup_lat: this.pickupLat,
+                              pickup_lng: this.pickupLng,
+                              dropoff_lat: this.dropoffLat,
+                              dropoff_lng: this.dropoffLng,
+                              delivery_type: this.deliveryType,
+                              package_size: this.packageSize,
+                              package_weight_kg: this.packageWeight
+                          })
+                      });
+                      if (res.ok) {
+                          this.priceBreakdown = await res.json();
+                      }
+                  } catch (e) {
+                      console.error(e);
+                  }
+              },
+              toggleHandling(val) {
+                  const idx = this.specialHandling.indexOf(val);
+                  if (idx > -1) {
+                      this.specialHandling.splice(idx, 1);
+                  } else {
+                      this.specialHandling.push(val);
+                  }
+              }
+          }"
+          x-init="updatePrice(); $watch('deliveryType', () => updatePrice()); $watch('packageSize', () => updatePrice()); $watch('packageWeight', () => updatePrice());">
+
+        <!-- Category Banner Component -->
+        <x-category-banner category="Delivery" />
+
+        <!-- Page Header -->
+        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <span class="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider border border-amber-200 dark:border-amber-800/30">RideMyCars Parcel Dispatch</span>
+                <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mt-1 tracking-tight">On-Demand & Scheduled Parcel Delivery</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Fast, secure door-to-door courier delivery for documents, electronics, supplies & personal items.</p>
+            </div>
+            <a href="/admin/package-delivery-tracker" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all shrink-0">
+                <span>🚚</span>
+                <span>Live Courier Tracker (Ops Dashboard)</span>
+            </a>
+        </div>
+
         @if(session('success'))
-            <div class="mb-8 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200 font-semibold flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-md">
-                        📦
-                    </div>
-                    <div>
-                        <h4 class="font-extrabold text-lg text-gray-900 dark:text-white">Package Dispatched Successfully!</h4>
-                        <p class="text-sm text-emerald-700 dark:text-emerald-300 font-medium mt-0.5">{{ session('success') }}</p>
-                    </div>
-                </div>
+            <div class="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center gap-2">
+                <span>📦 {{ session('success') }}</span>
             </div>
         @endif
 
-        @if(session('error'))
-            <div class="mb-8 p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/30 text-rose-800 dark:text-rose-200 font-semibold flex items-center gap-3 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>{{ session('error') }}</span>
+        @if($errors->any())
+            <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/30 text-rose-800 dark:text-rose-200 text-xs font-bold space-y-1">
+                @foreach($errors->all() as $error)
+                    <p>• {{ $error }}</p>
+                @endforeach
             </div>
         @endif
 
-        <div class="mb-10 text-center lg:text-left">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Package Delivery</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">Fast and secure delivery for packages and pharmaceuticals.</p>
+        <!-- 6-Step Wizard Navigation Tabs -->
+        <div class="mb-8 overflow-x-auto pb-2">
+            <div class="flex items-center gap-2 min-w-max bg-white dark:bg-[#111] p-2 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm text-xs font-extrabold">
+                <button type="button" @click="currentStep = 1" :class="currentStep === 1 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>1.</span> 📍 Pickup & Drop
+                </button>
+                <span class="text-gray-300 dark:text-gray-700">→</span>
+                <button type="button" @click="currentStep = 2" :class="currentStep === 2 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>2.</span> ⏱️ Delivery Type
+                </button>
+                <span class="text-gray-300 dark:text-gray-700">→</span>
+                <button type="button" @click="currentStep = 3" :class="currentStep === 3 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>3.</span> 👤 Sender & Recipient
+                </button>
+                <span class="text-gray-300 dark:text-gray-700">→</span>
+                <button type="button" @click="currentStep = 4" :class="currentStep === 4 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>4.</span> 📦 Package Specs
+                </button>
+                <span class="text-gray-300 dark:text-gray-700">→</span>
+                <button type="button" @click="currentStep = 5" :class="currentStep === 5 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>5.</span> 💳 Price & Payment
+                </button>
+                <span class="text-gray-300 dark:text-gray-700">→</span>
+                <button type="button" @click="currentStep = 6" :class="currentStep === 6 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>6.</span> 🚀 Confirmation
+                </button>
+            </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row gap-12">
-            
-            <!-- Left Side: Form -->
-            <div class="w-full lg:w-[55%]">
-                <form action="/delivery/book" method="POST" class="space-y-8 bg-white dark:bg-[#111] lg:bg-transparent" x-data="{ package_size: 'Small' }">
-                    @csrf
-                    
-                    <!-- Locations -->
-                    <div class="space-y-5">
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Pickup location</label>
-                                <button type="button" id="use_my_location_btn" class="text-brand-500 hover:text-brand-600 text-sm font-medium flex items-center gap-1 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                                    Use my location
-                                </button>
-                            </div>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-green-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                </div>
-                                <input type="text" id="pickup_location" name="pickup_location" value="{{ $pickup ?? '' }}" required placeholder="Where should the driver pick up the package?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
-                            </div>
-                        </div>
+        <form action="/delivery/book" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            @csrf
+            <input type="hidden" name="pickup_lat" x-model="pickupLat" id="pickup_lat_input">
+            <input type="hidden" name="pickup_lng" x-model="pickupLng" id="pickup_lng_input">
+            <input type="hidden" name="dropoff_lat" x-model="dropoffLat" id="dropoff_lat_input">
+            <input type="hidden" name="dropoff_lng" x-model="dropoffLng" id="dropoff_lng_input">
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Destination</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-red-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                </div>
-                                <input type="text" id="dropoff_location" name="dropoff_location" value="{{ $dropoff ?? '' }}" required placeholder="Where is the package going?" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
-                            </div>
-                        </div>
+            <!-- Left & Middle: Step Form Container -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- STEP 1: PICKUP & DROP-OFF -->
+                <div x-show="currentStep === 1" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900 dark:text-white">STEP 1: Pickup & Destination Locations</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Specify where your parcel should be picked up and delivered.</p>
                     </div>
 
-                    <!-- Vehicle Type -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Package size</label>
-                        <input type="hidden" name="package_size" x-model="package_size">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Small -->
-                            <div @click="package_size = 'Small'" 
-                                 :class="package_size === 'Small' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="package_size === 'Small'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                </div>
-                                <div class="text-3xl mb-2">📦</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white mb-1">Small</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Documents, small boxes</p>
-                            </div>
-                            
-                            <!-- Medium -->
-                            <div @click="package_size = 'Medium'" 
-                                 :class="package_size === 'Medium' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="package_size === 'Medium'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                </div>
-                                <div class="text-3xl mb-2">🛒</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white mb-1">Medium</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Groceries, medium boxes</p>
-                            </div>
-
-                            <!-- Large -->
-                            <div @click="package_size = 'Large'" 
-                                 :class="package_size === 'Large' ? 'border-brand-500 bg-brand-50/30' : 'border-gray-200 dark:border-white/10 hover:border-brand-200 hover:bg-brand-50/10'"
-                                 class="border-2 rounded-xl p-4 text-center cursor-pointer relative overflow-hidden transition-colors">
-                                <div x-show="package_size === 'Large'" class="absolute top-2 right-2 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                </div>
-                                <div class="text-3xl mb-2">🚚</div>
-                                <h3 class="font-bold text-gray-900 dark:text-white mb-1">Large</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Large packages, furniture</p>
-                            </div>
+                    <!-- Pickup Address -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pickup Address *</label>
+                            <button type="button" id="use_my_location_btn_delivery" class="text-amber-500 hover:text-amber-600 text-xs font-extrabold flex items-center gap-1 transition-colors">
+                                📍 Use My Location
+                            </button>
                         </div>
-                    </div>
-
-                    <!-- Payment Method -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment method</label>
                         <div class="relative">
-                            <select name="payment_method" class="w-full px-4 py-3.5 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer font-semibold">
-                                <option value="stripe">💳 Stripe</option>
-                                <option value="momo" selected>📱 Momo Pay</option>
-                                <option value="cash">💵 Cash</option>
-                                <option value="applepay">🍏 Apple Pay</option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
+                            <input type="text" id="pickup_location_input" name="pickup_location" x-model="pickupLocation" required placeholder="Enter street address, building, or landmark..." class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Drop-off Address -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Drop-off / Destination Address *</label>
+                        <div class="relative">
+                            <input type="text" id="dropoff_location_input" name="dropoff_location" x-model="dropoffLocation" required placeholder="Enter recipient delivery address..." class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Map Preview Box -->
+                    <div class="bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl h-56 overflow-hidden relative">
+                        <div id="map" class="w-full h-full"></div>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button type="button" @click="currentStep = 2" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md transition-all">
+                            Next: Delivery Type & Schedule →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: DELIVERY TYPE & SCHEDULE -->
+                <div x-show="currentStep === 2" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900 dark:text-white">STEP 2: Delivery Type & Schedule</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select dispatch speed and schedule window.</p>
+                    </div>
+
+                    <!-- Delivery Type Options (Three Parcel Style) -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Delivery Speed Option *</label>
+                        <input type="hidden" name="delivery_type" x-model="deliveryType">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold">
+                            <template x-for="dt in [
+                                { name: 'Instant', desc: '⚡ Immediate Courier Pickup (~30 mins)', fee: '+$0.00' },
+                                { name: 'Same Day', desc: '📅 Delivered by end of today', fee: '+$4.00' },
+                                { name: 'Express', desc: '🚀 Priority Direct Route (< 2 hrs)', fee: '+$8.00' },
+                                { name: 'Scheduled', desc: '🕒 Pick your exact time window', fee: '+$2.00' },
+                                { name: 'Hyperlocal', desc: '🛵 City Local Bike Courier', fee: '+$0.00' }
+                            ]" :key="dt.name">
+                                <div @click="deliveryType = dt.name"
+                                     :class="deliveryType === dt.name ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20' : 'border-gray-200 dark:border-white/10 hover:border-amber-300'"
+                                     class="border-2 rounded-2xl p-4 cursor-pointer transition-all flex items-start justify-between gap-2">
+                                    <div>
+                                        <h4 class="font-extrabold text-sm text-gray-900 dark:text-white" x-text="dt.name"></h4>
+                                        <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-0.5" x-text="dt.desc"></p>
+                                    </div>
+                                    <span class="text-xs font-black text-amber-600 dark:text-amber-400" x-text="dt.fee"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Now vs Schedule Later -->
+                    <div class="space-y-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Dispatch Schedule *</label>
+                        <input type="hidden" name="schedule_mode" x-model="scheduleMode">
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" @click="scheduleMode = 'now'"
+                                    :class="scheduleMode === 'now' ? 'bg-amber-500 text-white font-extrabold shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 font-bold'"
+                                    class="py-3 px-4 rounded-xl text-xs transition-all text-center">
+                                ⚡ Deliver Now (Immediate)
+                            </button>
+                            <button type="button" @click="scheduleMode = 'later'"
+                                    :class="scheduleMode === 'later' ? 'bg-amber-500 text-white font-extrabold shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 font-bold'"
+                                    class="py-3 px-4 rounded-xl text-xs transition-all text-center">
+                                📅 Schedule for Later
+                            </button>
+                        </div>
+
+                        <div x-show="scheduleMode === 'later'" class="grid grid-cols-2 gap-3 pt-2">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Pickup Date *</label>
+                                <input type="date" name="pickup_date" x-model="pickupDate" min="{{ date('Y-m-d') }}" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Pickup Time *</label>
+                                <input type="time" name="pickup_time" x-model="pickupTime" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Special Handling Instructions (Requirement #6) -->
-                    <div class="bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-3">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Special Handling Options</label>
-                        <div class="space-y-2">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="signature_required" value="1" class="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500">
-                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Signature required on delivery</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="climate_control" value="1" class="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500">
-                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Climate-controlled transport (temperature sensitive)</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="discreet_packaging" value="1" class="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500">
-                                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">Discreet white-glove packaging</span>
-                            </label>
+                    <div class="flex justify-between pt-2">
+                        <button type="button" @click="currentStep = 1" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
+                            ← Back
+                        </button>
+                        <button type="button" @click="currentStep = 3" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
+                            Next: Sender & Recipient →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: SENDER & RECIPIENT -->
+                <div x-show="currentStep === 3" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900 dark:text-white">STEP 3: Sender & Recipient Details</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Provide contact details for parcel pickup & delivery notification.</p>
+                    </div>
+
+                    <!-- Sender Box -->
+                    <div class="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 space-y-3">
+                        <h3 class="font-extrabold text-sm text-gray-900 dark:text-white uppercase tracking-wider">📤 Sender Information</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Sender Full Name *</label>
+                                <input type="text" name="sender_name" x-model="senderName" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Sender Phone Number *</label>
+                                <input type="tel" name="sender_phone" x-model="senderPhone" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Notes -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Delivery instructions <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span></label>
-                        <textarea name="notes" placeholder="Gate code, fragile items, leave at door..." rows="3" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all resize-none"></textarea>
+                    <!-- Recipient Box -->
+                    <div class="p-4 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-800/30 space-y-3">
+                        <h3 class="font-extrabold text-sm text-amber-800 dark:text-amber-300 uppercase tracking-wider">📥 Recipient Information</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Recipient Full Name *</label>
+                                <input type="text" name="recipient_name" x-model="recipientName" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Recipient Phone Number (For PIN SMS) *</label>
+                                <input type="tel" name="recipient_phone" x-model="recipientPhone" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            </div>
+                        </div>
+
+                        <div class="text-xs">
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Delivery Notes / Instructions (Optional)</label>
+                            <textarea name="delivery_instructions" x-model="deliveryInstructions" rows="2" placeholder="Gate code, call before arrival, leave at reception..." class="w-full px-3.5 py-2 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white resize-none"></textarea>
+                        </div>
                     </div>
 
-                    <button type="submit" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
-                        Dispatch Package
-                    </button>
+                    <div class="flex justify-between pt-2">
+                        <button type="button" @click="currentStep = 2" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
+                            ← Back
+                        </button>
+                        <button type="button" @click="currentStep = 4" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
+                            Next: Package Specifications →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 4: PACKAGE DETAILS & SPECS -->
+                <div x-show="currentStep === 4" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900 dark:text-white">STEP 4: Package Category & Specifications</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Specify parcel category, size, weight, and handling rules.</p>
+                    </div>
+
+                    <!-- Category Pills -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Package Category *</label>
+                        <input type="hidden" name="package_category" x-model="packageCategory">
+
+                        <div class="flex flex-wrap gap-2 text-xs font-bold">
+                            <template x-for="cat in ['Documents', 'Clothing', 'Electronics', 'Household items', 'Office supplies', 'Personal belongings', 'Other']" :key="cat">
+                                <button type="button" @click="packageCategory = cat"
+                                        :class="packageCategory === cat ? 'bg-amber-500 text-white shadow-sm' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
+                                        class="py-2 px-3.5 rounded-xl transition-all">
+                                    <span x-text="cat"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Description & Value -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Package Description</label>
+                            <input type="text" name="package_description" x-model="packageDescription" placeholder="e.g. Legal documents & laptop" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Declared Value ($)</label>
+                            <input type="number" name="declared_value" min="0" x-model="declaredValue" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Package Size Selector -->
+                    <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-white/10">
+                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Package Size *</label>
+                        <input type="hidden" name="package_size" x-model="packageSize">
+
+                        <div class="grid grid-cols-3 gap-3 text-center text-xs">
+                            <div @click="packageSize = 'Small'; packageWeight = 1.5;"
+                                 :class="packageSize === 'Small' ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 font-black' : 'border-gray-200 dark:border-white/10'"
+                                 class="border-2 rounded-2xl p-4 cursor-pointer transition-all">
+                                <div class="text-3xl mb-1">✉️</div>
+                                <h4 class="font-extrabold text-sm text-gray-900 dark:text-white">Small</h4>
+                                <p class="text-[10px] text-gray-400">Up to 2 kg (Envelopes / Small Box)</p>
+                            </div>
+
+                            <div @click="packageSize = 'Medium'; packageWeight = 5.0;"
+                                 :class="packageSize === 'Medium' ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 font-black' : 'border-gray-200 dark:border-white/10'"
+                                 class="border-2 rounded-2xl p-4 cursor-pointer transition-all">
+                                <div class="text-3xl mb-1">📦</div>
+                                <h4 class="font-extrabold text-sm text-gray-900 dark:text-white">Medium</h4>
+                                <p class="text-[10px] text-gray-400">Up to 8 kg (Shoebox / Groceries)</p>
+                            </div>
+
+                            <div @click="packageSize = 'Large'; packageWeight = 15.0;"
+                                 :class="packageSize === 'Large' ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 font-black' : 'border-gray-200 dark:border-white/10'"
+                                 class="border-2 rounded-2xl p-4 cursor-pointer transition-all">
+                                <div class="text-3xl mb-1">🚚</div>
+                                <h4 class="font-extrabold text-sm text-gray-900 dark:text-white">Large</h4>
+                                <p class="text-[10px] text-gray-400">Up to 25 kg (Cartons / Heavy Items)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weight & Quantity -->
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Weight (kg) *</label>
+                            <input type="number" step="0.1" name="package_weight_kg" x-model="packageWeight" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Quantity *</label>
+                            <input type="number" min="1" name="quantity" x-model="quantity" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Special Handling Checkboxes -->
+                    <div class="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 space-y-2 text-xs">
+                        <label class="block font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">Special Handling Options</label>
+                        
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="special_handling[]" value="signature_required" @change="toggleHandling('signature_required')" checked class="w-4 h-4 text-amber-500 rounded border-gray-300">
+                            <span class="font-bold text-gray-800 dark:text-gray-200">Signature required on delivery</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="special_handling[]" value="climate_control" @change="toggleHandling('climate_control')" class="w-4 h-4 text-amber-500 rounded border-gray-300">
+                            <span class="font-bold text-gray-800 dark:text-gray-200">Climate-controlled transport (Temperature sensitive)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="special_handling[]" value="discreet" @change="toggleHandling('discreet')" class="w-4 h-4 text-amber-500 rounded border-gray-300">
+                            <span class="font-bold text-gray-800 dark:text-gray-200">Discreet white-glove packaging</span>
+                        </label>
+                    </div>
+
+                    <div class="flex justify-between pt-2">
+                        <button type="button" @click="currentStep = 3" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
+                            ← Back
+                        </button>
+                        <button type="button" @click="currentStep = 5" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
+                            Next: Price & Payment →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 5: PRICE & PAYMENT -->
+                <div x-show="currentStep === 5" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900 dark:text-white">STEP 5: Payment Method</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select payment method for parcel dispatch.</p>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <label class="block font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Payment Method *</label>
+                        <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white cursor-pointer">
+                            <option value="stripe">💳 Stripe (Credit / Debit Card)</option>
+                            <option value="momo">📱 Momo Pay</option>
+                            <option value="cash">💵 Cash on Pickup / Delivery</option>
+                            <option value="applepay">🍏 Apple Pay</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-between pt-2">
+                        <button type="button" @click="currentStep = 4" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
+                            ← Back
+                        </button>
+                        <button type="button" @click="currentStep = 6" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
+                            Next: Summary & Confirmation →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 6: CONFIRMATION SUMMARY -->
+                <div x-show="currentStep === 6" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900 dark:text-white">STEP 6: Confirm & Dispatch Parcel</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Review complete parcel order details before dispatching courier.</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs font-semibold">
+                        <div class="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 space-y-2">
+                            <h4 class="font-extrabold text-gray-900 dark:text-white uppercase">📍 Locations</h4>
+                            <p><strong class="text-gray-900 dark:text-white">Pickup:</strong> <span x-text="pickupLocation || 'Pickup Address'"></span></p>
+                            <p><strong class="text-gray-900 dark:text-white">Destination:</strong> <span x-text="dropoffLocation || 'Drop-off Address'"></span></p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 space-y-1">
+                                <h4 class="font-extrabold text-gray-900 dark:text-white uppercase">📤 Sender</h4>
+                                <p x-text="senderName"></p>
+                                <p x-text="senderPhone" class="text-gray-500"></p>
+                            </div>
+                            <div class="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 space-y-1">
+                                <h4 class="font-extrabold text-gray-900 dark:text-white uppercase">📥 Recipient</h4>
+                                <p x-text="recipientName"></p>
+                                <p x-text="recipientPhone" class="text-gray-500"></p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 space-y-1">
+                            <h4 class="font-extrabold text-gray-900 dark:text-white uppercase">📦 Package Details</h4>
+                            <p><strong class="text-gray-900 dark:text-white">Category:</strong> <span x-text="packageCategory"></span> (<span x-text="packageSize"></span> Size, <span x-text="packageWeight"></span> kg)</p>
+                            <p><strong class="text-gray-900 dark:text-white">Speed:</strong> <span x-text="deliveryType"></span> Delivery</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between pt-2">
+                        <button type="button" @click="currentStep = 5" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
+                            ← Back
+                        </button>
+                        <button type="submit" class="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-amber-500/25 uppercase tracking-wider">
+                            🚀 Confirm & Dispatch Parcel (<span x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>)
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Sticky Fare Breakdown -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-xl sticky top-24 space-y-6">
                     
-                </form>
+                    <div>
+                        <span class="text-xs font-extrabold text-amber-500 uppercase tracking-widest block mb-1">Price Estimate</span>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white">Delivery Fare</h2>
+                        <p class="text-xs text-gray-400 mt-1" x-text="deliveryType + ' Parcel Delivery'"></p>
+                    </div>
+
+                    <!-- Price Itemized List -->
+                    <div class="space-y-3 text-xs border-t border-b border-gray-100 dark:border-white/10 py-4">
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Delivery Fee:</span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.subtotal || 0).toFixed(2)"></span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Service Fee (5%):</span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.service_fee || 0).toFixed(2)"></span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Taxes (5%):</span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.tax || 0).toFixed(2)"></span>
+                        </div>
+
+                        <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-black">
+                            <span class="text-gray-900 dark:text-white">Total Amount:</span>
+                            <span class="text-2xl text-amber-500" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center gap-2">
+                        <span>🔒</span>
+                        <span>4-Digit Secure PIN Verification Included</span>
+                    </div>
+
+                </div>
             </div>
 
-            <!-- Right Side: Info & Map -->
-            <div class="w-full lg:w-[45%] space-y-4">
-                
-                <!-- Map Container -->
-                <div class="bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl flex flex-col items-center justify-center text-center h-[300px] overflow-hidden">
-                    <div id="map" class="w-full h-full"></div>
-                </div>
-
-                <!-- Info Cards -->
-                <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex items-start gap-4 hover:border-gray-300 transition-colors">
-                    <div class="mt-0.5 p-2 bg-brand-50 rounded-lg text-brand-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white mb-0.5">Fully insured</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Every ride covered by platform insurance.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex items-start gap-4 hover:border-gray-300 transition-colors">
-                    <div class="mt-0.5 p-2 bg-brand-50 rounded-lg text-brand-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white mb-0.5">Verified drivers</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Background-checked, rated 4.5 and above.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex items-start gap-4 hover:border-gray-300 transition-colors">
-                    <div class="mt-0.5 p-2 bg-brand-50 rounded-lg text-brand-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white mb-0.5">Support around the clock</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Reach a person any time, day or night.</p>
-                    </div>
-                </div>
-
-                <div class="pt-4 text-center">
-                    <a href="/ride" class="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Need a ride instead?</a>
-                </div>
-
-            </div>
-
-        </div>
+        </form>
     </main>
 
+    <!-- Google Places Autocomplete Script for Delivery Page -->
     @php
         $gmapsKey = config('services.google_maps.api_key');
         $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
@@ -217,157 +547,112 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @endif
+
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            let map = null;
-            let marker = null;
-            const pickupInput = document.getElementById("pickup_location");
-            const dropoffInput = document.getElementById("dropoff_location");
-            const locBtn = document.getElementById("use_my_location_btn");
+        document.addEventListener("DOMContentLoaded", function () {
+            const pInput = document.getElementById("pickup_location_input");
+            const dInput = document.getElementById("dropoff_location_input");
+            const locBtn = document.getElementById("use_my_location_btn_delivery");
+            const pLatInput = document.getElementById("pickup_lat_input");
+            const pLngInput = document.getElementById("pickup_lng_input");
+            const dLatInput = document.getElementById("dropoff_lat_input");
+            const dLngInput = document.getElementById("dropoff_lng_input");
 
-            if (typeof google !== 'undefined' && google.maps) {
-                try {
-                    map = new google.maps.Map(document.getElementById("map"), {
-                        center: { lat: 40.7128, lng: -74.0060 }, // Default to NY
-                        zoom: 12,
-                        mapTypeControl: false,
-                        streetViewControl: false,
-                        fullscreenControl: false
-                    });
-                    marker = new google.maps.Marker({ map: map });
-                    
-                    if (pickupInput && google.maps.places) {
-                        const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
-                        pickupAutocomplete.addListener("place_changed", () => {
-                            const place = pickupAutocomplete.getPlace();
-                            if (!place.geometry) return;
-                            map.setCenter(place.geometry.location);
-                            marker.setPosition(place.geometry.location);
-                            map.setZoom(15);
-                            pickupInput.blur();
-                            setTimeout(() => { document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); }, 10);
-                        });
-                    }
-
-                    if (dropoffInput && google.maps.places) {
-                        const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
-                        dropoffAutocomplete.addListener("place_changed", () => {
-                            dropoffInput.blur();
-                            setTimeout(() => { document.querySelectorAll('.pac-container').forEach(c => c.style.display = 'none'); }, 10);
-                        });
-                    }
-                } catch (e) {
-                    console.warn("Google Maps init skipped or failed:", e);
+            @if($hasValidKey)
+                if (window.google && google.maps && google.maps.places) {
+                    try {
+                        if (pInput) {
+                            const acP = new google.maps.places.Autocomplete(pInput);
+                            acP.addListener('place_changed', () => {
+                                const place = acP.getPlace();
+                                if (place.geometry && place.geometry.location) {
+                                    if (pLatInput) pLatInput.value = place.geometry.location.lat();
+                                    if (pLngInput) pLngInput.value = place.geometry.location.lng();
+                                }
+                            });
+                        }
+                        if (dInput) {
+                            const acD = new google.maps.places.Autocomplete(dInput);
+                            acD.addListener('place_changed', () => {
+                                const place = acD.getPlace();
+                                if (place.geometry && place.geometry.location) {
+                                    if (dLatInput) dLatInput.value = place.geometry.location.lat();
+                                    if (dLngInput) dLngInput.value = place.geometry.location.lng();
+                                }
+                            });
+                        }
+                    } catch (e) {}
                 }
-            } else if (typeof L !== 'undefined') {
+            @endif
+
+            // Initialize OpenStreetMap Leaflet Map
+            if (typeof L !== 'undefined' && document.getElementById('map')) {
                 try {
                     const leafletMap = L.map('map').setView([40.7128, -74.0060], 12);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,
-                        attribution: '© OpenStreetMap'
+                        attribution: '© OpenStreetMap contributors'
                     }).addTo(leafletMap);
 
+                    // Add Pickup Marker
                     L.marker([40.7128, -74.0060]).addTo(leafletMap)
-                        .bindPopup('<b>New York, NY</b><br>Package Pickup')
+                        .bindPopup('<b>📍 Pickup Area</b><br>New York City Center')
                         .openPopup();
+
+                    // Add Nearby Active Couriers
+                    const courierCoords = [
+                        [40.7220, -74.0060],
+                        [40.7180, -73.9980],
+                        [40.7050, -74.0120]
+                    ];
+
+                    courierCoords.forEach((coord, i) => {
+                        L.circleMarker(coord, {
+                            radius: 8,
+                            fillColor: '#f59e0b',
+                            color: '#000000',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        }).addTo(leafletMap).bindPopup(`<b>🛵 Active Express Courier #${i+1}</b>`);
+                    });
                 } catch (e) {
                     console.warn("Leaflet map init failed:", e);
                 }
             }
 
-            if (locBtn && pickupInput) {
+            if (locBtn && pInput) {
                 locBtn.addEventListener("click", () => {
                     if (!navigator.geolocation) {
-                        alert("Error: Your browser doesn't support geolocation.");
+                        alert("Geolocation is not supported by your browser.");
                         return;
                     }
-
-                    const originalHTML = locBtn.innerHTML;
                     locBtn.disabled = true;
-                    locBtn.innerHTML = `
-                        <svg class="animate-spin h-3.5 w-3.5 text-brand-500 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Locating...</span>
-                    `;
+                    locBtn.innerText = "Locating...";
 
                     navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            const pos = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude,
-                            };
+                        async (pos) => {
+                            if (pLatInput) pLatInput.value = pos.coords.latitude;
+                            if (pLngInput) pLngInput.value = pos.coords.longitude;
 
-                            if (map && marker) {
-                                map.setCenter(pos);
-                                marker.setPosition(pos);
-                                map.setZoom(15);
-                            }
-
-                            let addressSet = false;
-
-                            // 1. Try Google Maps Geocoder if loaded
-                            if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
-                                try {
-                                    const geocoder = new google.maps.Geocoder();
-                                    const res = await new Promise((resolve) => {
-                                        geocoder.geocode({ location: pos }, (results, status) => {
-                                            if (status === "OK" && results && results[0]) {
-                                                resolve(results[0].formatted_address);
-                                            } else {
-                                                resolve(null);
-                                            }
-                                        });
-                                    });
-                                    if (res) {
-                                        pickupInput.value = res;
-                                        addressSet = true;
-                                    }
-                                } catch (e) {
-                                    console.warn("Google Geocoder error:", e);
+                            try {
+                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    if (data && data.display_name) pInput.value = data.display_name;
                                 }
-                            }
-
-                            // 2. Fallback to OpenStreetMap Nominatim API
-                            if (!addressSet) {
-                                try {
-                                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`);
-                                    if (response.ok) {
-                                        const data = await response.json();
-                                        if (data && data.display_name) {
-                                            pickupInput.value = data.display_name;
-                                            addressSet = true;
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.warn("OSM Nominatim reverse geocode error:", e);
-                                }
-                            }
-
-                            // 3. Fallback to lat/lng text if reverse geocode failed
-                            if (!addressSet) {
-                                pickupInput.value = `Current Location (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
-                            }
-
+                            } catch (e) {}
                             locBtn.disabled = false;
-                            locBtn.innerHTML = originalHTML;
+                            locBtn.innerText = "📍 Use My Location";
                         },
-                        (error) => {
+                        () => {
                             locBtn.disabled = false;
-                            locBtn.innerHTML = originalHTML;
-
-                            if (error.code === error.PERMISSION_DENIED) {
-                                alert("Location permission was denied. Please allow location access in your browser settings or enter your address manually.");
-                            } else {
-                                alert("Unable to retrieve your location automatically. Please enter your address manually.");
-                            }
-                        },
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                            locBtn.innerText = "📍 Use My Location";
+                            alert("Unable to detect location automatically.");
+                        }
                     );
                 });
             }
         });
     </script>
-
 </x-layout>

@@ -11,6 +11,8 @@ class RideAssignment extends Model
 
     protected $fillable = [
         'ride_id',
+        'driver_booking_id',
+        'package_delivery_id',
         'driver_id',
         'status',
         'expires_at',
@@ -23,6 +25,16 @@ class RideAssignment extends Model
     public function ride()
     {
         return $this->belongsTo(Ride::class);
+    }
+
+    public function driverBooking()
+    {
+        return $this->belongsTo(DriverBooking::class, 'driver_booking_id');
+    }
+
+    public function packageDelivery()
+    {
+        return $this->belongsTo(PackageDelivery::class, 'package_delivery_id');
     }
 
     public function driver()

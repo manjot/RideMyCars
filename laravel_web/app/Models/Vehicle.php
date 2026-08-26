@@ -15,7 +15,29 @@ class Vehicle extends Model
         'daily_rate',
         'is_available',
         'owner_id',
-        'image_url',
+        'assigned_driver_id',
+        'security_deposit_amount',
+        'daily_mileage_limit',
+        'overage_fee_per_km',
+        'transmission',
+        'fuel_type',
+        'seats',
+        'luggage',
+        'doors',
+        'mileage_policy',
+        'fuel_policy',
+        'min_driver_age',
+        'category',
+    ];
+
+    protected $casts = [
+        'is_available' => 'boolean',
+        'daily_rate' => 'float',
+        'security_deposit_amount' => 'float',
+        'seats' => 'integer',
+        'luggage' => 'integer',
+        'doors' => 'integer',
+        'min_driver_age' => 'integer',
     ];
 
     protected $appends = ['image_src'];
@@ -37,5 +59,10 @@ class Vehicle extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function assignedDriver()
+    {
+        return $this->belongsTo(User::class, 'assigned_driver_id');
     }
 }

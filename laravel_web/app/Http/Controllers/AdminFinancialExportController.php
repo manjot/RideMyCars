@@ -73,4 +73,28 @@ class AdminFinancialExportController extends Controller
             fclose($handle);
         }, 200, $headers);
     }
+
+    /**
+     * Render / Download itemized financial statement as printable PDF document.
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = PaymentTransaction::with(['user', 'vehicle']);
+
+        if ($request->filled('vertical')) {
+            $query->where('service_vertical', $request->input('vertical'));
+        }
+
+        if ($request->filled('payout_status')) {
+            $query->where('payout_status', $request->input('payout_status'));
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->get();
+
+        $totalGross = $transactions->sum(fn($t) => (float)($t->gross_amount ?? $t->amount));
+        $totalPlatform = $transactions->sum(fn($t) => (float)($t->platform_fee ?? 0));
+        $totalNet = $transactions->sum(fn($t) => (float)($t->net_payout ?? 0));
+
+        return view('pdf.financial-statement', compact('transactions', 'totalGross', 'totalPlatform', 'totalNet'));
+    }
 }

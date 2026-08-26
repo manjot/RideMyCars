@@ -45,6 +45,29 @@ class Ride extends Model
         'dropoff_lng',
         'estimated_minutes',
         'is_delayed',
+        'pickup_date',
+        'pickup_time',
+        'total_amount',
+        'paid_amount',
+        'remaining_balance',
+        'payment_status',
+        'insurance_accepted',
+        'fuel_policy',
+        'customer_age',
+        'distance_km',
+        'duration_minutes',
+        'cancellation_reason',
+        'vehicle_id',
+        'return_date',
+        'return_time',
+        'different_dropoff',
+        'driver_country',
+        'driver_email',
+        'driver_phone',
+        'protection_option',
+        'protection_fee',
+        'selected_extras',
+        'extras_fee',
     ];
 
     protected $casts = [
@@ -52,7 +75,32 @@ class Ride extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'pod_timestamp' => 'datetime',
+        'insurance_accepted' => 'boolean',
+        'different_dropoff' => 'boolean',
+        'pickup_date' => 'date',
+        'return_date' => 'date',
+        'pickup_lat' => 'float',
+        'pickup_lng' => 'float',
+        'dropoff_lat' => 'float',
+        'dropoff_lng' => 'float',
+        'distance_km' => 'float',
+        'duration_minutes' => 'integer',
+        'protection_fee' => 'float',
+        'extras_fee' => 'float',
+        'total_amount' => 'float',
+        'paid_amount' => 'float',
+        'remaining_balance' => 'float',
     ];
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicle_id');
+    }
+
+    public function stops()
+    {
+        return $this->hasMany(RideStop::class)->orderBy('stop_order');
+    }
 
     public function rider()
     {

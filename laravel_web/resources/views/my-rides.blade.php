@@ -68,6 +68,16 @@
                                                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pickup</p>
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white leading-snug break-words">{{ $ride->pickup_location }}</p>
                                             </div>
+
+                                            @if($ride->stops && $ride->stops->count() > 0)
+                                                @foreach($ride->stops as $stop)
+                                                    <div class="pl-2 border-l-2 border-amber-400">
+                                                        <p class="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">Stop {{ $stop->stop_order }}</p>
+                                                        <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-snug break-words">{{ $stop->location }}</p>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
                                             <div>
                                                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Dropoff</p>
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-white leading-snug break-words">{{ $ride->dropoff_location }}</p>
@@ -76,9 +86,21 @@
                                     </div>
                                 </div>
 
-                                <!-- Pricing -->
+                                <!-- Pricing & Rental Details -->
                                 <div class="sm:text-right sm:pl-4 sm:border-l sm:border-gray-100 sm:dark:border-white/10 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 shrink-0">
-                                    <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">${{ number_format($displayFare, 2) }}</p>
+                                    <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">${{ number_format($ride->total_amount ?? $displayFare, 2) }}</p>
+                                    
+                                    @if($ride->total_amount > 0 && $ride->paid_amount !== null)
+                                        <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                            Paid Today: ${{ number_format($ride->paid_amount, 2) }}
+                                        </div>
+                                        @if($ride->remaining_balance > 0)
+                                            <div class="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                                                Balance Due at Pickup: ${{ number_format($ride->remaining_balance, 2) }}
+                                            </div>
+                                        @endif
+                                    @endif
+
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase
                                         @if(($ride->payment_method ?? 'cash') === 'cash') bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
                                         @else bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
@@ -92,6 +114,45 @@
                                     </span>
                                 </div>
                             </div>
+
+                            @if($ride->pickup_time || $ride->fuel_policy || $ride->passenger_phone || str_starts_with($ride->digital_receipt_code ?? '', 'RENT-'))
+                                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        @if($ride->pickup_date && $ride->pickup_time)
+                                            <span class="px-2.5 py-1 rounded-md bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 font-medium">
+                                                ⏰ Pickup: {{ $ride->pickup_date->format('M d, Y') }} at {{ $ride->pickup_time }}
+                                            </span>
+                                        @endif
+                                        @if($ride->fuel_policy)
+                                            <span class="px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-medium">
+                                                ⛽ Fuel: {{ $ride->fuel_policy }}
+                                            </span>
+                                        @endif
+                                        @if($ride->insurance_accepted)
+                                            <span class="px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 font-medium">
+                                                🛡️ Insurance Accepted
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    @if(str_starts_with($ride->digital_receipt_code ?? '', 'RENT-'))
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <a href="/rent/booking/{{ $ride->id }}/voucher" class="px-3 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
+                                                📄 Rental Voucher
+                                            </a>
+
+                                            @if(!in_array($ride->status, ['completed', 'cancelled']))
+                                                <form action="/rent/booking/{{ $ride->id }}/cancel" method="POST" onsubmit="return confirm('Are you sure you want to cancel this car rental? Free cancellation terms apply.');">
+                                                    @csrf
+                                                    <button type="submit" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
+                                                        ❌ Cancel
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
 
                             <!-- Driver Info -->
                             @if($ride->driver)

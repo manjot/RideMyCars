@@ -46,6 +46,47 @@ class VehicleResource extends Resource
                         'Van' => 'Van',
                     ])
                     ->required(),
+                Forms\Components\Select::make('transmission')
+                    ->options([
+                        'automatic' => 'Automatic',
+                        'manual' => 'Manual',
+                    ])
+                    ->default('automatic')
+                    ->required(),
+                Forms\Components\Select::make('fuel_type')
+                    ->options([
+                        'petrol' => 'Petrol',
+                        'diesel' => 'Diesel',
+                        'hybrid' => 'Hybrid',
+                        'electric' => 'Electric',
+                    ])
+                    ->default('petrol')
+                    ->required(),
+                Forms\Components\TextInput::make('seats')
+                    ->numeric()
+                    ->default(5)
+                    ->required(),
+                Forms\Components\TextInput::make('luggage')
+                    ->numeric()
+                    ->default(2)
+                    ->required(),
+                Forms\Components\TextInput::make('doors')
+                    ->numeric()
+                    ->default(4)
+                    ->required(),
+                Forms\Components\Select::make('fuel_policy')
+                    ->options([
+                        'Full-to-Full' => 'Full-to-Full',
+                        'Return as Received' => 'Return as Received',
+                        'Pre-purchase' => 'Pre-purchase',
+                    ])
+                    ->default('Full-to-Full')
+                    ->required(),
+                Forms\Components\TextInput::make('min_driver_age')
+                    ->label('Minimum Driver Age')
+                    ->numeric()
+                    ->default(18)
+                    ->required(),
                 Forms\Components\TextInput::make('daily_rate')
                     ->numeric()
                     ->prefix('GH₵'),

@@ -143,6 +143,13 @@ class DatabaseSeeder extends Seeder
             DriverProfileSeeder::class,
             VehicleSeeder::class,
             SettingsSeeder::class,
+            GuarantorVerificationSeeder::class,
+            OwnerWalletSeeder::class,
+            PayoutLedgerSeeder::class,
+            RentalInspectionSeeder::class,
+            PaymentTransactionSeeder::class,
+            CategoryAndBannerSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }

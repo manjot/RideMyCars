@@ -62,31 +62,31 @@
                             <template x-for="req in requests" :key="req.id">
                                 <div class="border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/90 dark:bg-black/60 backdrop-blur-sm shadow-md overflow-hidden">
                                     <!-- Map Preview with Route Path -->
-                                    <img :src="getMapUrl(req.ride.pickup_location, req.ride.dropoff_location, '0x6366f1ff')" alt="Route map" class="w-full h-[120px] object-cover" loading="lazy" onerror="this.style.display='none'">
+                                    <img :src="getMapUrl(req.ride ? req.ride.pickup_location : (req.driver_booking ? req.driver_booking.pickup_location : ''), req.ride ? req.ride.dropoff_location : (req.driver_booking ? req.driver_booking.dropoff_location : ''), '0x6366f1ff')" alt="Route map" class="w-full h-[120px] object-cover" loading="lazy" onerror="this.style.display='none'">
                                     
                                     <div class="p-5">
                                         <div class="flex justify-between items-start mb-3">
                                             <div>
-                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
-                                                    New Ride Request
+                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg" x-text="req.driver_booking ? 'New Driver Hiring Request' : 'New Ride Request'">
                                                 </span>
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + req.ride.id"></h4>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="req.driver_booking ? 'Booking #' + req.driver_booking.booking_code : 'Ride #' + req.ride.id"></h4>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00'"></p>
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.ride.payment_method || 'Cash'"></span>
+                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="req.driver_booking ? (req.driver_booking.currency + ' ' + parseFloat(req.driver_booking.total_price).toFixed(2)) : (req.ride && req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00')"></p>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="(req.driver_booking ? req.driver_booking.payment_method : req.ride?.payment_method) || 'Cash'"></span>
                                             </div>
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
-                                            <p><strong>Pickup:</strong> <span x-text="req.ride.pickup_location"></span></p>
-                                            <p><strong>Dropoff:</strong> <span x-text="req.ride.dropoff_location"></span></p>
-                                            <p x-show="req.ride.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.ride.vehicle_type"></span></p>
+                                            <p><strong>Pickup:</strong> <span x-text="req.ride ? req.ride.pickup_location : (req.driver_booking ? req.driver_booking.pickup_location : '')"></span></p>
+                                            <p x-show="(req.ride && req.ride.dropoff_location) || (req.driver_booking && req.driver_booking.dropoff_location)"><strong>Dropoff:</strong> <span x-text="req.ride ? req.ride.dropoff_location : (req.driver_booking ? req.driver_booking.dropoff_location : '')"></span></p>
+                                            <p x-show="req.driver_booking"><strong>Schedule & Duration:</strong> <span x-text="req.driver_booking ? (req.driver_booking.start_date + ' (' + req.driver_booking.duration_count + ' ' + req.driver_booking.duration_type + ')') : ''"></span></p>
+                                            <p x-show="req.ride && req.ride.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.ride ? req.ride.vehicle_type : ''"></span></p>
                                             <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
                                         </div>
                                         <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
                                             <button type="button" @click.stop.prevent="respondToRequest(req.id, 'accepted')" :disabled="responding" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
                                                 <svg x-show="responding" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
-                                                <span>✓ Accept Ride & Earn</span> <span x-text="req.ride && req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00'"></span>
+                                                <span>✓ Accept Request & Earn</span> <span x-text="req.driver_booking ? (req.driver_booking.currency + ' ' + parseFloat(req.driver_booking.total_price).toFixed(2)) : (req.ride && req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00')"></span>
                                             </button>
                                             <button type="button" @click.stop.prevent="respondToRequest(req.id, 'rejected')" :disabled="responding" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
                                                 Decline
@@ -362,6 +362,72 @@
                         </form>
                     </div>
 
+                    <!-- Guarantor Information & Document Submission Section -->
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Guarantor Verification Information</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Submit your guarantor's identity and signed liability agreement to unlock vehicle hiring opportunities.</p>
+
+                        <form action="/driver/submit-guarantor" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Guarantor Legal Full Name *</label>
+                                    <input type="text" name="full_name" required placeholder="e.g. Kwame Mensah" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card Number (NIA) *</label>
+                                    <input type="text" name="ghana_card_number" required placeholder="GHA-712345678-9" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Relationship to Driver *</label>
+                                    <input type="text" name="relationship" required placeholder="e.g. Sibling / Employer / Parent" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Primary Phone Number *</label>
+                                    <input type="text" name="primary_phone" required placeholder="+233 24 123 4567" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Alternative Phone Number</label>
+                                    <input type="text" name="alt_phone" placeholder="+233 20 987 6543" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Post GPS Address</label>
+                                    <input type="text" name="digital_address" placeholder="GA-123-4567" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Physical Residential Address</label>
+                                    <input type="text" name="physical_address" placeholder="House No 14, East Legon, Accra" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Employer / Business Name & Occupation</label>
+                                    <input type="text" name="employer_business" placeholder="Business / Employer Name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card Front Image</label>
+                                    <input type="file" name="ghana_card_front" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card Back Image</label>
+                                    <input type="file" name="ghana_card_back" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Signed Liability Agreement</label>
+                                    <input type="file" name="signed_liability_agreement" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all">
+                                Submit Guarantor Details
+                            </button>
+                        </form>
+                    </div>
+
                 </div>
 
                 <!-- Sidebar (Profile & Rates) -->
@@ -550,6 +616,27 @@
                     }
                 }
             }));
+
+            // Background Driver GPS Location Pinger
+            if (navigator.geolocation) {
+                const sendGpsPing = (pos) => {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                    fetch('/api/driver/location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken || ''
+                        },
+                        body: JSON.stringify({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        })
+                    }).catch(e => console.error('GPS ping error:', e));
+                };
+
+                navigator.geolocation.getCurrentPosition(sendGpsPing, null, { enableHighAccuracy: true });
+                navigator.geolocation.watchPosition(sendGpsPing, null, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+            }
         });
     </script>
 </x-layout>

@@ -107,39 +107,44 @@ class DriverBookingController extends Controller
     public function storeBooking(Request $request)
     {
         $validated = $request->validate([
-            'driver_profile_id' => 'required|exists:driver_profiles,id',
+            'driver_profile_id' => 'nullable|exists:driver_profiles,id',
             'service_category' => 'required|in:private,commercial',
+            'service_type' => 'nullable|string|max:100',
             'country' => 'required|string',
             'pickup_location' => 'required|string|max:255',
             'dropoff_location' => 'nullable|string|max:255',
+            'additional_stops' => 'nullable|array',
+            'pickup_lat' => 'nullable|numeric',
+            'pickup_lng' => 'nullable|numeric',
+            'dropoff_lat' => 'nullable|numeric',
+            'dropoff_lng' => 'nullable|numeric',
             'start_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required',
             'duration_type' => 'required|in:hourly,daily,weekly',
             'duration_count' => 'required|integer|min:1',
             'payment_method' => 'required|string',
             'notes' => 'nullable|string',
+            'preferred_gender' => 'nullable|string|max:50',
+            'preferred_language' => 'nullable|string|max:50',
 
-            // Private hiring fields (Requirement #4 & #13)
-            'car_type' => 'required_if:service_category,private|nullable|string|max:100',
+            // Private hiring fields
+            'car_type' => 'nullable|string|max:100',
             'car_make_model' => 'nullable|string|max:100',
-            'manufacturing_year' => 'required_if:service_category,private|nullable|string|max:10',
-            'registration_number' => 'required_if:service_category,private|nullable|string|max:50',
-            'transmission' => 'required_if:service_category,private|nullable|in:automatic,manual',
+            'manufacturing_year' => 'nullable|string|max:10',
+            'registration_number' => 'nullable|string|max:50',
+            'transmission' => 'nullable|in:automatic,manual',
 
             // Commercial hiring fields
-            'commercial_service_type' => 'required_if:service_category,commercial|nullable|string|max:100',
+            'commercial_service_type' => 'nullable|string|max:100',
             'cargo_details' => 'nullable|string|max:1000',
         ]);
 
-        $driverProfile = DriverProfile::findOrFail($validated['driver_profile_id']);
-
-        if (!$driverProfile->is_available) {
-            return back()->withErrors(['driver_profile_id' => 'This driver is currently unavailable for new bookings.'])->withInput();
+        $driverProfile = null;
+        if (!empty($validated['driver_profile_id'])) {
+            $driverProfile = DriverProfile::find($validated['driver_profile_id']);
         }
-
-        // Overlapping availability check
-        if ($driverProfile->hasBookingConflict($validated['start_date'], $validated['start_time'], $validated['duration_type'], (int) $validated['duration_count'])) {
-            return back()->withErrors(['start_date' => 'Driver is not available for the selected date/time. Please choose another driver or time.'])->withInput();
+        if (!$driverProfile) {
+            $driverProfile = DriverProfile::where('is_available', true)->first() ?? DriverProfile::first();
         }
 
         $clientId = Auth::id();
@@ -157,24 +162,33 @@ class DriverBookingController extends Controller
         );
 
         $bookingCode = 'DRV-' . strtoupper(Str::random(8));
+        $stopsJson = !empty($validated['additional_stops']) ? json_encode($validated['additional_stops']) : null;
 
         $booking = DriverBooking::create([
             'vehicle_id' => $request->input('vehicle_id'),
             'booking_code' => $bookingCode,
             'client_id' => $clientId,
-            'driver_id' => $driverProfile->user_id,
-            'driver_profile_id' => $driverProfile->id,
+            'driver_id' => $driverProfile ? $driverProfile->user_id : null,
+            'driver_profile_id' => $driverProfile ? $driverProfile->id : null,
             'service_category' => $validated['service_category'],
+            'service_type' => $validated['service_type'] ?? 'Hire Driver',
             'country' => $validated['country'],
             'car_type' => $validated['car_type'] ?? null,
             'car_make_model' => $validated['car_make_model'] ?? null,
             'manufacturing_year' => $validated['manufacturing_year'] ?? null,
             'registration_number' => $validated['registration_number'] ?? null,
             'transmission' => $validated['transmission'] ?? 'automatic',
+            'preferred_gender' => $validated['preferred_gender'] ?? null,
+            'preferred_language' => $validated['preferred_language'] ?? null,
             'commercial_service_type' => $validated['commercial_service_type'] ?? null,
             'cargo_details' => $validated['cargo_details'] ?? null,
             'pickup_location' => $validated['pickup_location'],
+            'pickup_lat' => $request->input('pickup_lat'),
+            'pickup_lng' => $request->input('pickup_lng'),
             'dropoff_location' => $validated['dropoff_location'] ?? null,
+            'additional_stops' => $stopsJson,
+            'dropoff_lat' => $request->input('dropoff_lat'),
+            'dropoff_lng' => $request->input('dropoff_lng'),
             'start_date' => $validated['start_date'],
             'start_time' => $validated['start_time'],
             'duration_type' => $validated['duration_type'],
@@ -196,14 +210,16 @@ class DriverBookingController extends Controller
         // Process payment transaction
         PaymentService::processBookingPayment($booking, $validated['payment_method'], $request->all());
 
+        // Initiate proximity driver assignment
+        \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+
         // Activity log
         ActivityLogService::log(
             'driver_hiring',
-            "Created driver booking #{$booking->booking_code} with driver {$driverProfile->user->name}",
+            "Created driver booking #{$booking->booking_code}",
             $clientId,
             [
                 'booking_id' => $booking->id,
-                'driver_profile_id' => $driverProfile->id,
                 'total_price' => $booking->total_price,
                 'currency' => $booking->currency,
             ]
@@ -229,19 +245,36 @@ class DriverBookingController extends Controller
     public function updateBookingStatus(DriverBooking $booking, Request $request)
     {
         $validated = $request->validate([
-            'status' => 'required|in:accepted,in_progress,completed,cancelled',
+            'status' => 'required|in:accepted,en_route,arrived,in_progress,completed,cancelled',
         ]);
 
         $newStatus = $validated['status'];
-        $booking->update(['booking_status' => $newStatus]);
+        $updates = ['booking_status' => $newStatus];
 
+        if ($newStatus === 'arrived') $updates['arrived_at'] = now();
+        if ($newStatus === 'in_progress') $updates['started_at'] = now();
         if ($newStatus === 'completed') {
-            $booking->update(['payment_status' => 'paid']);
-            // Increment total trips on driver profile
+            $updates['completed_at'] = now();
+            $updates['payment_status'] = 'paid';
+
+            // Calculate actual duration
+            $start = $booking->started_at ?? $booking->created_at;
+            $updates['actual_duration_minutes'] = max(1, (int) round(now()->diffInMinutes($start)));
+
+            // Restore driver availability
             if ($booking->driverProfile) {
+                $booking->driverProfile->update(['is_available' => true]);
                 $booking->driverProfile->increment('total_trips');
             }
         }
+
+        if ($newStatus === 'cancelled') {
+            if ($booking->driverProfile) {
+                $booking->driverProfile->update(['is_available' => true]);
+            }
+        }
+
+        $booking->update($updates);
 
         $actType = match ($newStatus) {
             'accepted' => 'driver_booking_accepted',
@@ -333,5 +366,130 @@ class DriverBookingController extends Controller
         );
 
         return back()->with('success', 'Thank you! Your review has been submitted.');
+    }
+
+    /**
+     * Driver submits guarantor verification information & documents.
+     */
+    public function submitGuarantorVerification(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->driverProfile) {
+            return back()->withErrors(['guarantor' => 'Driver profile not found. Please complete driver signup first.']);
+        }
+
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'ghana_card_number' => 'required|string|max:100',
+            'dob' => 'nullable|date',
+            'relationship' => 'required|string|max:100',
+            'primary_phone' => 'required|string|max:50',
+            'alt_phone' => 'nullable|string|max:50',
+            'digital_address' => 'nullable|string|max:100',
+            'physical_address' => 'nullable|string|max:255',
+            'employer_business' => 'nullable|string|max:255',
+            'job_title' => 'nullable|string|max:100',
+            'workplace_address' => 'nullable|string|max:255',
+            'ghana_card_front' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'ghana_card_back' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'signed_liability_agreement' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+        ]);
+
+        $frontPath = $request->hasFile('ghana_card_front') 
+            ? $request->file('ghana_card_front')->store('guarantor_docs', 'public') 
+            : null;
+
+        $backPath = $request->hasFile('ghana_card_back') 
+            ? $request->file('ghana_card_back')->store('guarantor_docs', 'public') 
+            : null;
+
+        $agreementPath = $request->hasFile('signed_liability_agreement') 
+            ? $request->file('signed_liability_agreement')->store('guarantor_docs', 'public') 
+            : null;
+
+        $guarantor = \App\Models\GuarantorVerification::create([
+            'driver_profile_id' => $user->driverProfile->id,
+            'full_name' => $validated['full_name'],
+            'ghana_card_number' => $validated['ghana_card_number'],
+            'dob' => $validated['dob'] ?? null,
+            'relationship' => $validated['relationship'],
+            'primary_phone' => $validated['primary_phone'],
+            'alt_phone' => $validated['alt_phone'] ?? null,
+            'digital_address' => $validated['digital_address'] ?? null,
+            'physical_address' => $validated['physical_address'] ?? null,
+            'employer_business' => $validated['employer_business'] ?? null,
+            'job_title' => $validated['job_title'] ?? null,
+            'workplace_address' => $validated['workplace_address'] ?? null,
+            'ghana_card_front_url' => $frontPath,
+            'ghana_card_back_url' => $backPath,
+            'signed_liability_agreement_url' => $agreementPath,
+            'status' => 'pending_additional_proof',
+        ]);
+
+        ActivityLogService::log(
+            'guarantor_submitted',
+            "Driver {$user->name} submitted guarantor information for {$guarantor->full_name}",
+            $user->id
+        );
+
+        return back()->with('success', "Guarantor information for {$guarantor->full_name} submitted successfully! Support team will review the documents.");
+    }
+
+    /**
+     * User/Renter/Driver submits 6-Photo Rental Inspection.
+     */
+    public function storeRentalInspection(Request $request)
+    {
+        $validated = $request->validate([
+            'driver_booking_id' => 'required|exists:driver_bookings,id',
+            'inspection_type' => 'required|in:pre_rental,post_rental',
+            'odometer_reading' => 'required|numeric|min:0',
+            'fuel_level' => 'required|string|max:50',
+            'front_photo' => 'required|image|max:5120',
+            'back_photo' => 'required|image|max:5120',
+            'left_photo' => 'required|image|max:5120',
+            'right_photo' => 'required|image|max:5120',
+            'dashboard_photo' => 'required|image|max:5120',
+            'fuel_gauge_photo' => 'required|image|max:5120',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $booking = DriverBooking::findOrFail($validated['driver_booking_id']);
+
+        $frontPath = $request->file('front_photo')->store('inspections', 'public');
+        $backPath = $request->file('back_photo')->store('inspections', 'public');
+        $leftPath = $request->file('left_photo')->store('inspections', 'public');
+        $rightPath = $request->file('right_photo')->store('inspections', 'public');
+        $dashPath = $request->file('dashboard_photo')->store('inspections', 'public');
+        $fuelPath = $request->file('fuel_gauge_photo')->store('inspections', 'public');
+
+        $inspection = \App\Models\RentalInspection::updateOrCreate(
+            [
+                'driver_booking_id' => $booking->id,
+                'inspection_type' => $validated['inspection_type'],
+            ],
+            [
+                'vehicle_id' => $booking->vehicle_id ?? 1,
+                'odometer_reading' => $validated['odometer_reading'],
+                'fuel_level' => $validated['fuel_level'],
+                'front_photo_url' => $frontPath,
+                'back_photo_url' => $backPath,
+                'left_photo_url' => $leftPath,
+                'right_photo_url' => $rightPath,
+                'dashboard_photo_url' => $dashPath,
+                'fuel_gauge_photo_url' => $fuelPath,
+                'notes' => $validated['notes'] ?? null,
+                'inspected_at' => now(),
+            ]
+        );
+
+        ActivityLogService::log(
+            'rental_inspection_submitted',
+            "Submitted {$validated['inspection_type']} 6-photo inspection for booking #{$booking->booking_code}",
+            Auth::id() ?? 1
+        );
+
+        $label = $validated['inspection_type'] === 'pre_rental' ? 'Pre-Rental' : 'Post-Rental';
+        return back()->with('success', "🎉 6-Photo {$label} Inspection submitted successfully! All 6 mandatory photos verified.");
     }
 }

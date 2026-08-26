@@ -9,16 +9,19 @@ use Illuminate\Support\Str;
 class PaymentService
 {
     /**
-     * Process a payment for a driver booking.
+     * Process a payment for a driver booking or package delivery.
      */
     public static function processBookingPayment(
-        DriverBooking $booking,
+        $booking,
         string $paymentMethod,
         array $paymentData = []
     ): PaymentTransaction {
-        $country = $booking->country;
-        $currency = CountryService::getCurrencyCode($country);
+        $isDelivery = $booking instanceof \App\Models\PackageDelivery;
+        $country = $isDelivery ? 'USA' : ($booking->country ?? 'USA');
+        $currency = $isDelivery ? ($booking->currency ?? 'USD') : CountryService::getCurrencyCode($country);
         $amount = $booking->total_price;
+        $userId = $isDelivery ? $booking->customer_id : $booking->client_id;
+        $bookingCode = $isDelivery ? $booking->delivery_code : $booking->booking_code;
 
         $transactionRef = 'TXN-' . strtoupper(Str::random(10));
 
@@ -29,16 +32,16 @@ class PaymentService
         $initialStatus = ($paymentMethod === 'cash') ? 'pending' : 'paid';
 
         // Create transaction record
-        $transaction = PaymentTransaction::create([
+        $txnData = [
             'transaction_ref' => $transactionRef,
-            'driver_booking_id' => $booking->id,
-            'user_id' => $booking->client_id,
+            'user_id' => $userId,
             'country' => $country,
             'currency' => $currency,
             'amount' => $amount,
             'payment_method' => $paymentMethod,
             'provider' => $provider,
             'status' => $initialStatus,
+            'service_vertical' => $isDelivery ? 'package_delivery' : 'driver_hiring',
             'gateway_response' => [
                 'processed_at' => now()->toIso8601String(),
                 'provider' => $provider,
@@ -46,7 +49,15 @@ class PaymentService
                 'masked_account' => isset($paymentData['card_number']) ? '**** ' . substr($paymentData['card_number'], -4) : null,
                 'phone' => $paymentData['momo_phone'] ?? null,
             ],
-        ]);
+        ];
+
+        if ($isDelivery) {
+            $txnData['package_delivery_id'] = $booking->id;
+        } else {
+            $txnData['driver_booking_id'] = $booking->id;
+        }
+
+        $transaction = PaymentTransaction::create($txnData);
 
         // Update booking payment status
         $booking->update([
@@ -58,8 +69,8 @@ class PaymentService
         $actType = ($initialStatus === 'paid' || $initialStatus === 'successful') ? 'payment_successful' : 'payment';
         ActivityLogService::log(
             $actType,
-            "Payment of {$currency} {$amount} via {$paymentMethod} ({$initialStatus}) for booking #{$booking->booking_code}",
-            $booking->client_id,
+            "Payment of {$currency} {$amount} via {$paymentMethod} ({$initialStatus}) for booking #{$bookingCode}",
+            $userId,
             [
                 'booking_id' => $booking->id,
                 'transaction_ref' => $transactionRef,

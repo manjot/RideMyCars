@@ -9,6 +9,7 @@ class PaymentTransaction extends Model
     protected $fillable = [
         'transaction_ref',
         'driver_booking_id',
+        'package_delivery_id',
         'ride_id',
         'user_id',
         'vehicle_id',
@@ -48,6 +49,11 @@ class PaymentTransaction extends Model
     public function driverBooking()
     {
         return $this->belongsTo(DriverBooking::class, 'driver_booking_id');
+    }
+
+    public function packageDelivery()
+    {
+        return $this->belongsTo(PackageDelivery::class, 'package_delivery_id');
     }
 
     public function ride()

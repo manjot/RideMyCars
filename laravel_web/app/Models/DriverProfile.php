@@ -34,6 +34,16 @@ class DriverProfile extends Model
         'background_check_provider',
         'background_check_id',
         'background_checked_at',
+        'current_lat',
+        'current_lng',
+        'last_location_update',
+    ];
+
+    protected $casts = [
+        'is_available' => 'boolean',
+        'last_location_update' => 'datetime',
+        'current_lat' => 'float',
+        'current_lng' => 'float',
     ];
 
     protected $appends = [

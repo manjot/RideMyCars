@@ -74,4 +74,30 @@ class PricingService
             'currency_symbol' => $symbol,
         ];
     }
+
+    /**
+     * Calculate dynamic Uber-style trip fare based on distance (km), duration (minutes), and vehicle tier.
+     */
+    public static function calculateTripFare(float $distanceKm, int $durationMinutes, ?string $vehicleType = null): float
+    {
+        $baseFare = (float) config('ride.base_fare', 5.00);
+        $perKmRate = (float) config('ride.per_km_rate', 1.50);
+        $perMinuteRate = (float) config('ride.per_minute_rate', 0.25);
+        $minFare = (float) config('ride.minimum_fare', 10.00);
+
+        $multiplier = 1.0;
+        if ($vehicleType) {
+            $lower = strtolower($vehicleType);
+            if (str_contains($lower, 'suv') || str_contains($lower, 'luxury') || str_contains($lower, 'executive')) {
+                $multiplier = 1.4;
+            } elseif (str_contains($lower, 'premium') || str_contains($lower, 'comfort')) {
+                $multiplier = 1.2;
+            } elseif (str_contains($lower, 'bike') || str_contains($lower, 'moto')) {
+                $multiplier = 0.6;
+            }
+        }
+
+        $calc = ($baseFare + ($distanceKm * $perKmRate) + ($durationMinutes * $perMinuteRate)) * $multiplier;
+        return round(max($minFare, $calc), 2);
+    }
 }
