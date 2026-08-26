@@ -401,123 +401,166 @@
     {{ $slot }}
 
     <!-- Footer -->
-    <footer class="bg-[#0a0a0a] text-white py-16">
+    <footer class="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-white/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                <div class="col-span-1 md:col-span-1">
-                    <a class="flex items-center gap-2 mb-6" href="/">
-                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-16 md:h-[72px] w-auto bg-white rounded-xl p-1 shadow-md object-contain">
+            
+            <!-- Main Grid: 12-Column Responsive Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-14">
+                
+                <!-- Brand Column (Span 4) -->
+                <div class="lg:col-span-4 space-y-5">
+                    <a class="inline-flex items-center gap-2 group" href="/">
+                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 w-auto bg-white rounded-xl p-1 shadow-md object-contain transition-transform group-hover:scale-105">
                     </a>
-                    <p class="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">
-                        Your unified mobility platform. Book rides, rent vehicles, and hire professional drivers — all in one place.
+                    <p class="text-gray-300 text-sm leading-relaxed max-w-sm">
+                        Your unified mobility platform. Book rides, rent vehicles, hire verified private chauffeurs, and track parcel deliveries in real time.
                     </p>
-                    <div class="flex gap-4 mt-6">
-                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white transition-colors cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white transition-colors cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white transition-colors cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-white transition-colors cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/></svg>
-                        </div>
+                    <div class="flex items-center gap-3 pt-2">
+                        <a href="https://twitter.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Twitter / X">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        <a href="https://instagram.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Instagram">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                        </a>
+                        <a href="https://facebook.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Facebook">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="LinkedIn">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        </a>
                     </div>
                 </div>
-                <div>
-                    <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Services</h4>
-                    <ul class="space-y-4">
-                        <li><a href="/ride" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Book a Ride</a></li>
-                        <li><a href="/rent" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Rent a Vehicle</a></li>
-                        <li><a href="/hire-driver" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Hire a Driver</a></li>
-                        <li><a href="/pricing" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Pricing</a></li>
+
+                <!-- Column 1: Services (Span 2) -->
+                <div class="lg:col-span-2 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                        Services
+                    </h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="/ride" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Book a Ride</a></li>
+                        <li><a href="/rent" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Rent a Vehicle</a></li>
+                        <li><a href="/hire-driver" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Hire a Driver</a></li>
+                        <li><a href="/delivery" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Package Delivery</a></li>
+                        <li><a href="/pricing" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Pricing & Rates</a></li>
+                        <li><a href="/membership" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all flex items-center gap-1.5">
+                            Club Membership
+                            <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">VIP</span>
+                        </a></li>
                     </ul>
                 </div>
-                <div>
-                    <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Company</h4>
-                    <ul class="space-y-4">
-                        <li><a href="/about" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">About Us</a></li>
-                        <li><a href="/safety" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Safety</a></li>
-                        <li><a href="/blog" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Blog</a></li>
-                        <li><a href="/careers" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Careers</a></li>
+
+                <!-- Column 2: Company (Span 2) -->
+                <div class="lg:col-span-2 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                        Company
+                    </h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="/about" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">About Us</a></li>
+                        <li><a href="/safety" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Safety & Trust</a></li>
+                        <li><a href="/blogs" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">News & Insights</a></li>
+                        <li><a href="/become-driver" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Become a Driver</a></li>
+                        <li><a href="/become-owner" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">List Your Vehicle</a></li>
                     </ul>
                 </div>
-                <div>
-                    <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Partners</h4>
-                    <ul class="space-y-4">
-                        <li><a href="/become-driver" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Become a Driver</a></li>
-                        <li><a href="/list-vehicle" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">List Your Vehicle</a></li>
-                        <li><a href="/partner" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Partner Portal</a></li>
+
+                <!-- Column 3: Support (Span 2) -->
+                <div class="lg:col-span-2 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                        Support
+                    </h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="/about" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Help Center</a></li>
+                        <li><a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Concierge Support</a></li>
+                        <li><a href="/onboarding" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">How It Works</a></li>
+                        <li><a href="/delivery/tracker" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Delivery Tracker</a></li>
+                        <li><a href="/driver/dashboard" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Driver Portal</a></li>
                     </ul>
                 </div>
-                <div>
-                    <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Support</h4>
-                    <ul class="space-y-4">
-                        <li><a href="/help" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Help Center</a></li>
-                        <li><a href="/contact" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Contact Us</a></li>
-                        <li><a href="/faq" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">FAQ</a></li>
-                        <li><a href="/support" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Support Tickets</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold text-xs tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-6">Legal</h4>
-                    <ul class="space-y-4">
-                        <li><a href="/terms" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Terms of Service</a></li>
-                        <li><a href="/privacy" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Privacy Policy</a></li>
-                        <li><a href="/refund" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Refund Policy</a></li>
-                        <li><a href="/cookie" class="text-sm text-gray-400 dark:text-gray-500 hover:text-white transition-colors">Cookie Policy</a></li>
+
+                <!-- Column 4: Legal (Span 2) -->
+                <div class="lg:col-span-2 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                        Legal
+                    </h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="/terms" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Terms of Service</a></li>
+                        <li><a href="/privacy" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Privacy Policy</a></li>
+                        <li><a href="/refund" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Refund Policy</a></li>
+                        <li><a href="/cookie" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Cookie Policy</a></li>
+                        <li><a href="/legal" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Compliance & Trust</a></li>
                     </ul>
                 </div>
             </div>
 
-            <!-- App Downloads -->
-            <div class="py-12 flex flex-col md:flex-row items-center justify-center gap-6 border-t border-gray-100 dark:border-white/10 mt-12">
-                <span class="text-gray-500 dark:text-gray-400 font-medium">Available on</span>
-                <div class="flex items-center gap-4">
+            <!-- Middle Bar: Contact Info & App Download Buttons -->
+            <div class="py-8 border-y border-white/10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                <!-- Direct Contacts -->
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-y-3 gap-x-8 text-sm text-gray-300">
+                    <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
+                        <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        </span>
+                        <span>{{ site_setting('footer.support_email', 'support@ridemycars.com') }}</span>
+                    </a>
+                    
+                    <a href="tel:{{ site_setting('footer.support_phone', '+1 800 123 4567') }}" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
+                        <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        </span>
+                        <span>{{ site_setting('footer.support_phone', '+1 800 123 4567') }}</span>
+                    </a>
+
+                    <span class="flex items-center gap-2.5 text-gray-400">
+                        <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </span>
+                        <span>{{ site_setting('footer.location', 'San Francisco, CA') }}</span>
+                    </span>
+                </div>
+
+                <!-- App Buttons -->
+                <div class="flex items-center gap-3">
                     <!-- App Store -->
-                    <a href="{{ site_setting('driver.ios_url', '#') }}" class="flex items-center gap-3 px-5 py-2.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 transition-colors">
-                        <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
-                        <div class="flex flex-col">
-                            <span class="text-[10px] leading-tight text-gray-400">Download on the</span>
-                            <span class="text-sm font-semibold leading-tight">App Store</span>
+                    <a href="{{ site_setting('driver.ios_url', '#') }}" class="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group">
+                        <svg class="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                        <div class="flex flex-col text-left">
+                            <span class="text-[9px] uppercase tracking-wider text-gray-400 leading-none">Download on</span>
+                            <span class="text-xs font-semibold leading-tight mt-0.5">App Store</span>
                         </div>
                     </a>
                     
                     <!-- Google Play / Direct APK Download -->
-                    <a href="{{ asset('ridemycars.apk') }}" download="RideMyCars.apk" class="flex items-center gap-3 px-5 py-2.5 bg-transparent border border-white/20 text-white rounded-xl hover:bg-white/5 transition-colors" title="Download RideMyCars Android APK">
-                        <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
-                        <div class="flex flex-col">
-                            <span class="text-[10px] leading-tight text-gray-400">GET IT ON</span>
-                            <span class="text-sm font-semibold leading-tight">Google Play</span>
+                    <a href="{{ asset('ridemycars.apk') }}" download="RideMyCars.apk" class="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group" title="Download RideMyCars Android APK">
+                        <svg class="w-5 h-5 shrink-0 text-brand-500 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                        <div class="flex flex-col text-left">
+                            <span class="text-[9px] uppercase tracking-wider text-gray-400 leading-none">Get it on</span>
+                            <span class="text-xs font-semibold leading-tight mt-0.5">Google Play</span>
                         </div>
                     </a>
                 </div>
             </div>
             
-            <!-- Bottom Footer -->
-            <div class="pt-8 border-t border-gray-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Bottom Footer Bar -->
+            <div class="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
+                <p class="text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars. All rights reserved.') }}</p>
                 
-                <div class="flex items-center gap-6">
-                    <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                        {{ site_setting('footer.support_email', 'support@ridemycars.com') }}
-                    </a>
-                    <a href="tel:{{ site_setting('footer.support_phone', '+1 800 123 4567') }}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                        {{ site_setting('footer.support_phone', '+1 800 123 4567') }}
-                    </a>
-                    <span class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                        {{ site_setting('footer.location', 'San Francisco, CA') }}
+                <div class="flex flex-wrap items-center justify-center gap-4 text-gray-400">
+                    <span class="flex items-center gap-1.5 text-gray-300">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Systems Operational
+                    </span>
+                    <span class="text-gray-600 hidden sm:inline">•</span>
+                    <span class="flex items-center gap-1.5 text-gray-300">
+                        <svg class="w-3.5 h-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        256-Bit SSL Encrypted
                     </span>
                 </div>
             </div>
-            
-            <div class="mt-8 pt-8 border-t border-gray-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-sm text-gray-400 dark:text-gray-500 text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars. All rights reserved.') }}</p>
-            </div>
+
         </div>
     </footer>
 
