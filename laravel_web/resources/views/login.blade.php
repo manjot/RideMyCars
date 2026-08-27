@@ -19,7 +19,7 @@
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="font-sans antialiased bg-white text-black" x-data="{ view: '{{ $errors->any() || old('email') ? 'email' : 'mobile' }}', emailForOtp: '', otpError: '', isLoading: false, c1: '', c2: '', c3: '', c4: '' }">
+<body class="font-sans antialiased bg-white text-black" x-data="loginApp()">
     
     <!-- Header -->
     <header class="w-full bg-black h-16 flex items-center justify-between px-4 md:px-8 border-b border-white/10">
@@ -47,15 +47,71 @@
             <div x-show="view === 'mobile'" x-transition.opacity.duration.300ms>
                 <h1 class="text-2xl font-semibold mb-6 text-gray-900 tracking-tight">Enter your mobile number</h1>
                 
-                <form action="#" method="GET" @submit.prevent="view = 'otp'">
-                    <div class="flex mb-4 h-[52px]">
-                        <button type="button" class="flex items-center justify-center gap-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-l-lg border-r border-gray-300/50 transition-colors">
-                            <span class="text-lg leading-none">🇮🇳</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-900" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                        <input type="tel" placeholder="+91 Mobile number" class="flex-1 bg-gray-100 rounded-r-lg px-4 text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:ring-2 focus:ring-black border-none text-base">
+                <form action="#" method="GET" @submit.prevent="emailForOtp = selectedCountry.dial + ' ' + mobileNumber; view = 'otp';">
+                    <div class="relative mb-4">
+                        <div class="flex h-[52px] bg-gray-100 rounded-lg border-2 border-transparent focus-within:border-black focus-within:bg-white transition-all">
+                            <!-- Country Code Trigger Button -->
+                            <button type="button" 
+                                    @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.countrySearchInput?.focus())"
+                                    class="flex items-center justify-center gap-1.5 px-3.5 bg-gray-100 hover:bg-gray-200 rounded-l-lg border-r border-gray-300/60 transition-colors shrink-0 cursor-pointer select-none">
+                                <span class="text-xl leading-none" x-text="selectedCountry.flag">🇺🇸</span>
+                                <span class="text-xs font-bold text-gray-800" x-text="selectedCountry.dial">+1</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600 transition-transform duration-200" :class="countryDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <!-- Mobile Input -->
+                            <input type="tel" 
+                                   x-model="mobileNumber"
+                                   :placeholder="`${selectedCountry.dial} Mobile number`"
+                                   required
+                                   class="flex-1 bg-transparent rounded-r-lg px-4 text-gray-900 placeholder-gray-500 font-medium focus:outline-none border-none text-base">
+                        </div>
+
+                        <!-- Country Dropdown Modal / Popover -->
+                        <div x-show="countryDropdownOpen" 
+                             @click.away="countryDropdownOpen = false" 
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                             class="absolute left-0 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden"
+                             style="display: none;">
+                            
+                            <!-- Search Bar -->
+                            <div class="p-3 border-b border-gray-100 bg-gray-50/90 sticky top-0 z-10">
+                                <div class="relative">
+                                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <input type="text" 
+                                           x-ref="countrySearchInput"
+                                           x-model="countrySearch" 
+                                           placeholder="Search country or dial code..." 
+                                           class="w-full pl-9 pr-3 py-2 bg-white rounded-xl text-xs font-semibold text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black">
+                                </div>
+                            </div>
+
+                            <!-- Country List -->
+                            <div class="max-h-64 overflow-y-auto divide-y divide-gray-50 text-sm">
+                                <template x-for="country in filteredCountries" :key="country.code + country.dial">
+                                    <button type="button" 
+                                            @click="selectCountry(country)"
+                                            class="w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-100 transition-colors text-left group"
+                                            :class="selectedCountry.code === country.code ? 'bg-amber-50/70 font-semibold' : ''">
+                                        <div class="flex items-center gap-3 min-w-0 pr-2">
+                                            <span class="text-xl leading-none shrink-0" x-text="country.flag"></span>
+                                            <span class="text-xs text-gray-900 group-hover:text-black truncate" x-text="country.name"></span>
+                                        </div>
+                                        <span class="font-mono text-xs font-bold text-gray-500 group-hover:text-black shrink-0" x-text="country.dial"></span>
+                                    </button>
+                                </template>
+                                <div x-show="filteredCountries.length === 0" class="p-6 text-center text-xs text-gray-400">
+                                    No countries found matching "<span x-text="countrySearch"></span>"
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full bg-black hover:bg-gray-900 text-white font-medium py-3.5 rounded-lg text-base transition-colors">
@@ -253,5 +309,175 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('loginApp', () => ({
+                view: '{{ $errors->any() || old("email") ? "email" : "mobile" }}',
+                emailForOtp: '',
+                otpError: '',
+                isLoading: false,
+                c1: '', c2: '', c3: '', c4: '',
+                
+                // Country Code Selector
+                countryDropdownOpen: false,
+                countrySearch: '',
+                mobileNumber: '',
+                selectedCountry: { name: 'United States', code: 'US', dial: '+1', flag: '🇺🇸' },
+                
+                countries: [
+                    { name: 'United States', code: 'US', dial: '+1', flag: '🇺🇸' },
+                    { name: 'South Africa', code: 'ZA', dial: '+27', flag: '🇿🇦' },
+                    { name: 'Ghana', code: 'GH', dial: '+233', flag: '🇬🇭' },
+                    { name: 'United Kingdom', code: 'GB', dial: '+44', flag: '🇬🇧' },
+                    { name: 'Canada', code: 'CA', dial: '+1', flag: '🇨🇦' },
+                    { name: 'India', code: 'IN', dial: '+91', flag: '🇮🇳' },
+                    { name: 'Nigeria', code: 'NG', dial: '+234', flag: '🇳🇬' },
+                    { name: 'Kenya', code: 'KE', dial: '+254', flag: '🇰🇪' },
+                    { name: 'United Arab Emirates', code: 'AE', dial: '+971', flag: '🇦🇪' },
+                    { name: 'Australia', code: 'AU', dial: '+61', flag: '🇦🇺' },
+                    { name: 'Germany', code: 'DE', dial: '+49', flag: '🇩🇪' },
+                    { name: 'France', code: 'FR', dial: '+33', flag: '🇫🇷' },
+                    { name: 'Afghanistan', code: 'AF', dial: '+93', flag: '🇦🇫' },
+                    { name: 'Albania', code: 'AL', dial: '+355', flag: '🇦🇱' },
+                    { name: 'Algeria', code: 'DZ', dial: '+213', flag: '🇩🇿' },
+                    { name: 'Andorra', code: 'AD', dial: '+376', flag: '🇦🇩' },
+                    { name: 'Angola', code: 'AO', dial: '+244', flag: '🇦🇴' },
+                    { name: 'Antigua & Barbuda', code: 'AG', dial: '+1268', flag: '🇦🇬' },
+                    { name: 'Argentina', code: 'AR', dial: '+54', flag: '🇦🇷' },
+                    { name: 'Armenia', code: 'AM', dial: '+374', flag: '🇦🇲' },
+                    { name: 'Austria', code: 'AT', dial: '+43', flag: '🇦🇹' },
+                    { name: 'Azerbaijan', code: 'AZ', dial: '+994', flag: '🇦🇿' },
+                    { name: 'Bahamas', code: 'BS', dial: '+1242', flag: '🇧🇸' },
+                    { name: 'Bahrain', code: 'BH', dial: '+973', flag: '🇧🇭' },
+                    { name: 'Bangladesh', code: 'BD', dial: '+880', flag: '🇧🇩' },
+                    { name: 'Barbados', code: 'BB', dial: '+1246', flag: '🇧🇧' },
+                    { name: 'Belarus', code: 'BY', dial: '+375', flag: '🇧🇾' },
+                    { name: 'Belgium', code: 'BE', dial: '+32', flag: '🇧🇪' },
+                    { name: 'Belize', code: 'BZ', dial: '+501', flag: '🇧🇿' },
+                    { name: 'Benin', code: 'BJ', dial: '+229', flag: '🇧🇯' },
+                    { name: 'Bermuda', code: 'BM', dial: '+1441', flag: '🇧🇲' },
+                    { name: 'Bolivia', code: 'BO', dial: '+591', flag: '🇧🇴' },
+                    { name: 'Bosnia & Herzegovina', code: 'BA', dial: '+387', flag: '🇧🇦' },
+                    { name: 'Botswana', code: 'BW', dial: '+267', flag: '🇧🇼' },
+                    { name: 'Brazil', code: 'BR', dial: '+55', flag: '🇧🇷' },
+                    { name: 'Brunei', code: 'BN', dial: '+673', flag: '🇧🇳' },
+                    { name: 'Bulgaria', code: 'BG', dial: '+359', flag: '🇧🇬' },
+                    { name: 'Burkina Faso', code: 'BF', dial: '+226', flag: '🇧🇫' },
+                    { name: 'Cambodia', code: 'KH', dial: '+855', flag: '🇰🇭' },
+                    { name: 'Cameroon', code: 'CM', dial: '+237', flag: '🇨🇲' },
+                    { name: 'Chile', code: 'CL', dial: '+56', flag: '🇨🇱' },
+                    { name: 'China', code: 'CN', dial: '+86', flag: '🇨🇳' },
+                    { name: 'Colombia', code: 'CO', dial: '+57', flag: '🇨🇴' },
+                    { name: 'Costa Rica', code: 'CR', dial: '+506', flag: '🇨🇷' },
+                    { name: 'Croatia', code: 'HR', dial: '+385', flag: '🇭🇷' },
+                    { name: 'Cyprus', code: 'CY', dial: '+357', flag: '🇨🇾' },
+                    { name: 'Czech Republic', code: 'CZ', dial: '+420', flag: '🇨🇿' },
+                    { name: 'Denmark', code: 'DK', dial: '+45', flag: '🇩🇰' },
+                    { name: 'Dominican Republic', code: 'DO', dial: '+1809', flag: '🇩🇴' },
+                    { name: 'Ecuador', code: 'EC', dial: '+593', flag: '🇪🇨' },
+                    { name: 'Egypt', code: 'EG', dial: '+20', flag: '🇪🇬' },
+                    { name: 'El Salvador', code: 'SV', dial: '+503', flag: '🇸🇻' },
+                    { name: 'Estonia', code: 'EE', dial: '+372', flag: '🇪🇪' },
+                    { name: 'Ethiopia', code: 'ET', dial: '+251', flag: '🇪🇹' },
+                    { name: 'Fiji', code: 'FJ', dial: '+679', flag: '🇫🇯' },
+                    { name: 'Finland', code: 'FI', dial: '+358', flag: '🇫🇮' },
+                    { name: 'Gabon', code: 'GA', dial: '+241', flag: '🇬🇦' },
+                    { name: 'Gambia', code: 'GM', dial: '+220', flag: '🇬🇲' },
+                    { name: 'Georgia', code: 'GE', dial: '+995', flag: '🇬🇪' },
+                    { name: 'Greece', code: 'GR', dial: '+30', flag: '🇬🇷' },
+                    { name: 'Guatemala', code: 'GT', dial: '+502', flag: '🇬🇹' },
+                    { name: 'Guinea', code: 'GN', dial: '+224', flag: '🇬🇳' },
+                    { name: 'Guyana', code: 'GY', dial: '+592', flag: '🇬🇾' },
+                    { name: 'Honduras', code: 'HN', dial: '+504', flag: '🇭🇳' },
+                    { name: 'Hong Kong', code: 'HK', dial: '+852', flag: '🇭🇰' },
+                    { name: 'Hungary', code: 'HU', dial: '+36', flag: '🇭🇺' },
+                    { name: 'Iceland', code: 'IS', dial: '+354', flag: '🇮🇸' },
+                    { name: 'Indonesia', code: 'ID', dial: '+62', flag: '🇮🇩' },
+                    { name: 'Ireland', code: 'IE', dial: '+353', flag: '🇮🇪' },
+                    { name: 'Israel', code: 'IL', dial: '+972', flag: '🇮🇱' },
+                    { name: 'Italy', code: 'IT', dial: '+39', flag: '🇮🇹' },
+                    { name: 'Ivory Coast', code: 'CI', dial: '+225', flag: '🇨🇮' },
+                    { name: 'Jamaica', code: 'JM', dial: '+1876', flag: '🇯🇲' },
+                    { name: 'Japan', code: 'JP', dial: '+81', flag: '🇯🇵' },
+                    { name: 'Jordan', code: 'JO', dial: '+962', flag: '🇯🇴' },
+                    { name: 'Kazakhstan', code: 'KZ', dial: '+7', flag: '🇰🇿' },
+                    { name: 'Kuwait', code: 'KW', dial: '+965', flag: '🇰🇼' },
+                    { name: 'Lebanon', code: 'LB', dial: '+961', flag: '🇱🇧' },
+                    { name: 'Liberia', code: 'LR', dial: '+231', flag: '🇱🇷' },
+                    { name: 'Luxembourg', code: 'LU', dial: '+352', flag: '🇱🇺' },
+                    { name: 'Malaysia', code: 'MY', dial: '+60', flag: '🇲🇾' },
+                    { name: 'Maldives', code: 'MV', dial: '+960', flag: '🇲🇻' },
+                    { name: 'Malta', code: 'MT', dial: '+356', flag: '🇲🇹' },
+                    { name: 'Mauritius', code: 'MU', dial: '+230', flag: '🇲🇺' },
+                    { name: 'Mexico', code: 'MX', dial: '+52', flag: '🇲🇽' },
+                    { name: 'Monaco', code: 'MC', dial: '+377', flag: '🇲🇨' },
+                    { name: 'Morocco', code: 'MA', dial: '+212', flag: '🇲🇦' },
+                    { name: 'Mozambique', code: 'MZ', dial: '+258', flag: '🇲🇿' },
+                    { name: 'Namibia', code: 'NA', dial: '+264', flag: '🇳🇦' },
+                    { name: 'Nepal', code: 'NP', dial: '+977', flag: '🇳🇵' },
+                    { name: 'Netherlands', code: 'NL', dial: '+31', flag: '🇳🇱' },
+                    { name: 'New Zealand', code: 'NZ', dial: '+64', flag: '🇳🇿' },
+                    { name: 'Nicaragua', code: 'NI', dial: '+505', flag: '🇳🇮' },
+                    { name: 'Norway', code: 'NO', dial: '+47', flag: '🇳🇴' },
+                    { name: 'Oman', code: 'OM', dial: '+968', flag: '🇴🇲' },
+                    { name: 'Pakistan', code: 'PK', dial: '+92', flag: '🇵🇰' },
+                    { name: 'Panama', code: 'PA', dial: '+507', flag: '🇵🇦' },
+                    { name: 'Paraguay', code: 'PY', dial: '+595', flag: '🇵🇾' },
+                    { name: 'Peru', code: 'PE', dial: '+51', flag: '🇵🇪' },
+                    { name: 'Philippines', code: 'PH', dial: '+63', flag: '🇵🇭' },
+                    { name: 'Poland', code: 'PL', dial: '+48', flag: '🇵🇱' },
+                    { name: 'Portugal', code: 'PT', dial: '+351', flag: '🇵🇹' },
+                    { name: 'Puerto Rico', code: 'PR', dial: '+1787', flag: '🇵🇷' },
+                    { name: 'Qatar', code: 'QA', dial: '+974', flag: '🇶🇦' },
+                    { name: 'Romania', code: 'RO', dial: '+40', flag: '🇷🇴' },
+                    { name: 'Rwanda', code: 'RW', dial: '+250', flag: '🇷🇼' },
+                    { name: 'Saudi Arabia', code: 'SA', dial: '+966', flag: '🇸🇦' },
+                    { name: 'Senegal', code: 'SN', dial: '+221', flag: '🇸🇳' },
+                    { name: 'Serbia', code: 'RS', dial: '+381', flag: '🇷🇸' },
+                    { name: 'Seychelles', code: 'SC', dial: '+248', flag: '🇸🇨' },
+                    { name: 'Sierra Leone', code: 'SL', dial: '+232', flag: '🇸🇱' },
+                    { name: 'Singapore', code: 'SG', dial: '+65', flag: '🇸🇬' },
+                    { name: 'Slovakia', code: 'SK', dial: '+421', flag: '🇸🇰' },
+                    { name: 'Slovenia', code: 'SI', dial: '+386', flag: '🇸🇮' },
+                    { name: 'South Korea', code: 'KR', dial: '+82', flag: '🇰🇷' },
+                    { name: 'Spain', code: 'ES', dial: '+34', flag: '🇪🇸' },
+                    { name: 'Sri Lanka', code: 'LK', dial: '+94', flag: '🇱🇰' },
+                    { name: 'Sweden', code: 'SE', dial: '+46', flag: '🇸🇪' },
+                    { name: 'Switzerland', code: 'CH', dial: '+41', flag: '🇨🇭' },
+                    { name: 'Taiwan', code: 'TW', dial: '+886', flag: '🇹🇼' },
+                    { name: 'Tanzania', code: 'TZ', dial: '+255', flag: '🇹🇿' },
+                    { name: 'Thailand', code: 'TH', dial: '+66', flag: '🇹🇭' },
+                    { name: 'Togo', code: 'TG', dial: '+228', flag: '🇹🇬' },
+                    { name: 'Trinidad & Tobago', code: 'TT', dial: '+1868', flag: '🇹🇹' },
+                    { name: 'Tunisia', code: 'TN', dial: '+216', flag: '🇹🇳' },
+                    { name: 'Turkey', code: 'TR', dial: '+90', flag: '🇹🇷' },
+                    { name: 'Uganda', code: 'UG', dial: '+256', flag: '🇺🇬' },
+                    { name: 'Ukraine', code: 'UA', dial: '+380', flag: '🇺🇦' },
+                    { name: 'Uruguay', code: 'UY', dial: '+598', flag: '🇺🇾' },
+                    { name: 'Uzbekistan', code: 'UZ', dial: '+998', flag: '🇺🇿' },
+                    { name: 'Venezuela', code: 'VE', dial: '+58', flag: '🇻🇪' },
+                    { name: 'Vietnam', code: 'VN', dial: '+84', flag: '🇻🇳' },
+                    { name: 'Zambia', code: 'ZM', dial: '+260', flag: '🇿🇲' },
+                    { name: 'Zimbabwe', code: 'ZW', dial: '+263', flag: '🇿🇼' }
+                ],
+
+                get filteredCountries() {
+                    if (!this.countrySearch) return this.countries;
+                    const q = this.countrySearch.toLowerCase().trim();
+                    return this.countries.filter(c => 
+                        c.name.toLowerCase().includes(q) || 
+                        c.dial.includes(q) || 
+                        c.code.toLowerCase().includes(q)
+                    );
+                },
+
+                selectCountry(country) {
+                    this.selectedCountry = country;
+                    this.countryDropdownOpen = false;
+                    this.countrySearch = '';
+                }
+            }));
+        });
+    </script>
 </body>
 </html>
