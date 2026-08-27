@@ -58,11 +58,12 @@ class PackageDeliveryController extends Controller
             default => 1.00,
         };
 
-        $typeAddon = match ($validated['delivery_type'] ?? 'Instant') {
+        $typeAddon = match ($validated['delivery_type'] ?? 'Hyperlocal') {
+            'Instant' => 10.00,
             'Express' => 8.00,
             'Same Day' => 4.00,
             'Scheduled' => 2.00,
-            default => 0.00,
+            default => 0.00, // Hyperlocal (Standard base rate)
         };
 
         $weightAddon = max(0, ((float)($validated['package_weight_kg'] ?? 1.0) - 1.0)) * 0.75;

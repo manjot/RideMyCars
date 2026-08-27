@@ -11,7 +11,7 @@
               dropoffLat: null,
               dropoffLng: null,
               
-              deliveryType: 'Instant', // Instant, Same Day, Express, Scheduled, Hyperlocal
+              deliveryType: 'Hyperlocal', // Hyperlocal (Base), Scheduled, Same Day, Express, Instant
               scheduleMode: 'now', // now, later
               pickupDate: '{{ date('Y-m-d') }}',
               pickupTime: '09:00',
@@ -202,11 +202,11 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold">
                             <template x-for="dt in [
-                                { name: 'Instant', desc: '⚡ Immediate Courier Pickup (~30 mins)', fee: '+$0.00' },
+                                { name: 'Hyperlocal', desc: '🛵 City Local Bike Courier', fee: '+$0.00' },
+                                { name: 'Scheduled', desc: '🕒 Pick your exact time window', fee: '+$2.00' },
                                 { name: 'Same Day', desc: '📅 Delivered by end of today', fee: '+$4.00' },
                                 { name: 'Express', desc: '🚀 Priority Direct Route (< 2 hrs)', fee: '+$8.00' },
-                                { name: 'Scheduled', desc: '🕒 Pick your exact time window', fee: '+$2.00' },
-                                { name: 'Hyperlocal', desc: '🛵 City Local Bike Courier', fee: '+$0.00' }
+                                { name: 'Instant', desc: '⚡ Immediate Courier Pickup (~30 mins)', fee: '+$10.00' }
                             ]" :key="dt.name">
                                 <div @click="deliveryType = dt.name"
                                      :class="deliveryType === dt.name ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20' : 'border-gray-200 dark:border-white/10 hover:border-amber-300'"
