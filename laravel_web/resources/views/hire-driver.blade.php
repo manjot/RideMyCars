@@ -9,8 +9,98 @@
               availability: '{{ request('availability', '') }}',
               drivers: {{ Js::from($drivers) }},
               countries: {{ Js::from($countries) }},
+              countryDropdownOpen: false,
+              regionSearch: '',
+              countryList: [
+                  { key: 'USA', name: 'USA', fullName: 'United States', flag: '🇺🇸', symbol: '$', code: 'USA' },
+                  { key: 'Ghana', name: 'Ghana', fullName: 'Ghana', flag: '🇬🇭', symbol: 'GH₵', code: 'GHA' },
+                  { key: 'Nigeria', name: 'Nigeria', fullName: 'Nigeria', flag: '🇳🇬', symbol: '₦', code: 'NGA' },
+                  { key: 'South Africa', name: 'South Africa', fullName: 'South Africa', flag: '🇿🇦', symbol: 'R', code: 'ZAF' },
+                  { key: 'All', name: 'All Regions', fullName: 'All Global Regions', flag: '🌐', symbol: '$', code: 'ALL' },
+                  { key: 'UK', name: 'United Kingdom', fullName: 'United Kingdom', flag: '🇬🇧', symbol: '£', code: 'GBR' },
+                  { key: 'Canada', name: 'Canada', fullName: 'Canada', flag: '🇨🇦', symbol: 'CA$', code: 'CAN' },
+                  { key: 'India', name: 'India', fullName: 'India', flag: '🇮🇳', symbol: '₹', code: 'IND' },
+                  { key: 'Kenya', name: 'Kenya', fullName: 'Kenya', flag: '🇰🇪', symbol: 'KSh', code: 'KEN' },
+                  { key: 'UAE', name: 'United Arab Emirates', fullName: 'United Arab Emirates', flag: '🇦🇪', symbol: 'AED', code: 'ARE' },
+                  { key: 'Australia', name: 'Australia', fullName: 'Australia', flag: '🇦🇺', symbol: 'AU$', code: 'AUS' },
+                  { key: 'Germany', name: 'Germany', fullName: 'Germany', flag: '🇩🇪', symbol: '€', code: 'DEU' },
+                  { key: 'France', name: 'France', fullName: 'France', flag: '🇫🇷', symbol: '€', code: 'FRA' },
+                  { key: 'Italy', name: 'Italy', fullName: 'Italy', flag: '🇮🇹', symbol: '€', code: 'ITA' },
+                  { key: 'Spain', name: 'Spain', fullName: 'Spain', flag: '🇪🇸', symbol: '€', code: 'ESP' },
+                  { key: 'Netherlands', name: 'Netherlands', fullName: 'Netherlands', flag: '🇳🇱', symbol: '€', code: 'NLD' },
+                  { key: 'Switzerland', name: 'Switzerland', fullName: 'Switzerland', flag: '🇨🇭', symbol: 'CHF', code: 'CHE' },
+                  { key: 'Sweden', name: 'Sweden', fullName: 'Sweden', flag: '🇸🇪', symbol: 'SEK', code: 'SWE' },
+                  { key: 'Norway', name: 'Norway', fullName: 'Norway', flag: '🇳🇴', symbol: 'NOK', code: 'NOR' },
+                  { key: 'Denmark', name: 'Denmark', fullName: 'Denmark', flag: '🇩🇰', symbol: 'DKK', code: 'DNK' },
+                  { key: 'Ireland', name: 'Ireland', fullName: 'Ireland', flag: '🇮🇪', symbol: '€', code: 'IRL' },
+                  { key: 'New Zealand', name: 'New Zealand', fullName: 'New Zealand', flag: '🇳🇿', symbol: 'NZ$', code: 'NZL' },
+                  { key: 'Singapore', name: 'Singapore', fullName: 'Singapore', flag: '🇸🇬', symbol: 'S$', code: 'SGP' },
+                  { key: 'Malaysia', name: 'Malaysia', fullName: 'Malaysia', flag: '🇲🇾', symbol: 'RM', code: 'MYS' },
+                  { key: 'Philippines', name: 'Philippines', fullName: 'Philippines', flag: '🇵🇭', symbol: '₱', code: 'PHL' },
+                  { key: 'Saudi Arabia', name: 'Saudi Arabia', fullName: 'Saudi Arabia', flag: '🇸🇦', symbol: 'SAR', code: 'SAU' },
+                  { key: 'Qatar', name: 'Qatar', fullName: 'Qatar', flag: '🇶🇦', symbol: 'QAR', code: 'QAT' },
+                  { key: 'Egypt', name: 'Egypt', fullName: 'Egypt', flag: '🇪🇬', symbol: 'E£', code: 'EGY' },
+                  { key: 'Morocco', name: 'Morocco', fullName: 'Morocco', flag: '🇲🇦', symbol: 'MAD', code: 'MAR' },
+                  { key: 'Uganda', name: 'Uganda', fullName: 'Uganda', flag: '🇺🇬', symbol: 'USh', code: 'UGA' },
+                  { key: 'Tanzania', name: 'Tanzania', fullName: 'Tanzania', flag: '🇹🇿', symbol: 'TSh', code: 'TZA' },
+                  { key: 'Rwanda', name: 'Rwanda', fullName: 'Rwanda', flag: '🇷🇼', symbol: 'FRw', code: 'RWA' },
+                  { key: 'Zambia', name: 'Zambia', fullName: 'Zambia', flag: '🇿🇲', symbol: 'ZK', code: 'ZMB' },
+                  { key: 'Zimbabwe', name: 'Zimbabwe', fullName: 'Zimbabwe', flag: '🇿🇼', symbol: 'ZWL', code: 'ZWE' },
+                  { key: 'Botswana', name: 'Botswana', fullName: 'Botswana', flag: '🇧🇼', symbol: 'P', code: 'BWA' },
+                  { key: 'Namibia', name: 'Namibia', fullName: 'Namibia', flag: '🇳🇦', symbol: 'N$', code: 'NAM' },
+                  { key: 'Ivory Coast', name: 'Ivory Coast', fullName: 'Ivory Coast', flag: '🇨🇮', symbol: 'CFA', code: 'CIV' },
+                  { key: 'Senegal', name: 'Senegal', fullName: 'Senegal', flag: '🇸🇳', symbol: 'CFA', code: 'SEN' },
+                  { key: 'Cameroon', name: 'Cameroon', fullName: 'Cameroon', flag: '🇨🇲', symbol: 'FCFA', code: 'CMR' },
+                  { key: 'Ethiopia', name: 'Ethiopia', fullName: 'Ethiopia', flag: '🇪🇹', symbol: 'ETB', code: 'ETH' },
+                  { key: 'Brazil', name: 'Brazil', fullName: 'Brazil', flag: '🇧🇷', symbol: 'R$', code: 'BRA' },
+                  { key: 'Mexico', name: 'Mexico', fullName: 'Mexico', flag: '🇲🇽', symbol: 'MX$', code: 'MEX' },
+                  { key: 'Argentina', name: 'Argentina', fullName: 'Argentina', flag: '🇦🇷', symbol: 'ARS', code: 'ARG' },
+                  { key: 'Colombia', name: 'Colombia', fullName: 'Colombia', flag: '🇨🇴', symbol: 'COP', code: 'COL' },
+                  { key: 'Chile', name: 'Chile', fullName: 'Chile', flag: '🇨🇱', symbol: 'CLP', code: 'CHL' },
+                  { key: 'Jamaica', name: 'Jamaica', fullName: 'Jamaica', flag: '🇯🇲', symbol: 'J$', code: 'JAM' },
+                  { key: 'Bahamas', name: 'Bahamas', fullName: 'Bahamas', flag: '🇧🇸', symbol: 'B$', code: 'BHS' },
+                  { key: 'Trinidad and Tobago', name: 'Trinidad and Tobago', fullName: 'Trinidad & Tobago', flag: '🇹🇹', symbol: 'TT$', code: 'TTO' },
+                  { key: 'Japan', name: 'Japan', fullName: 'Japan', flag: '🇯🇵', symbol: '¥', code: 'JPN' },
+                  { key: 'China', name: 'China', fullName: 'China', flag: '🇨🇳', symbol: '¥', code: 'CHN' },
+                  { key: 'South Korea', name: 'South Korea', fullName: 'South Korea', flag: '🇰🇷', symbol: '₩', code: 'KOR' },
+                  { key: 'Hong Kong', name: 'Hong Kong', fullName: 'Hong Kong', flag: '🇭🇰', symbol: 'HK$', code: 'HKG' },
+                  { key: 'Taiwan', name: 'Taiwan', fullName: 'Taiwan', flag: '🇹🇼', symbol: 'NT$', code: 'TWN' },
+                  { key: 'Thailand', name: 'Thailand', fullName: 'Thailand', flag: '🇹🇭', symbol: '฿', code: 'THA' },
+                  { key: 'Vietnam', name: 'Vietnam', fullName: 'Vietnam', flag: '🇻🇳', symbol: '₫', code: 'VNM' },
+                  { key: 'Indonesia', name: 'Indonesia', fullName: 'Indonesia', flag: '🇮🇩', symbol: 'Rp', code: 'IDN' },
+                  { key: 'Pakistan', name: 'Pakistan', fullName: 'Pakistan', flag: '🇵🇰', symbol: '₨', code: 'PAK' },
+                  { key: 'Bangladesh', name: 'Bangladesh', fullName: 'Bangladesh', flag: '🇧🇩', symbol: '৳', code: 'BGD' },
+                  { key: 'Sri Lanka', name: 'Sri Lanka', fullName: 'Sri Lanka', flag: '🇱🇰', symbol: 'Rs', code: 'LKA' },
+                  { key: 'Turkey', name: 'Turkey', fullName: 'Turkey', flag: '🇹🇷', symbol: '₺', code: 'TUR' },
+                  { key: 'Greece', name: 'Greece', fullName: 'Greece', flag: '🇬🇷', symbol: '€', code: 'GRC' },
+                  { key: 'Portugal', name: 'Portugal', fullName: 'Portugal', flag: '🇵🇹', symbol: '€', code: 'PRT' },
+                  { key: 'Austria', name: 'Austria', fullName: 'Austria', flag: '🇦🇹', symbol: '€', code: 'AUT' },
+                  { key: 'Belgium', name: 'Belgium', fullName: 'Belgium', flag: '🇧🇪', symbol: '€', code: 'BEL' },
+                  { key: 'Poland', name: 'Poland', fullName: 'Poland', flag: '🇵🇱', symbol: 'zł', code: 'POL' },
+                  { key: 'Czech Republic', name: 'Czech Republic', fullName: 'Czech Republic', flag: '🇨🇿', symbol: 'Kč', code: 'CZE' },
+                  { key: 'Hungary', name: 'Hungary', fullName: 'Hungary', flag: '🇭🇺', symbol: 'Ft', code: 'HUN' },
+                  { key: 'Romania', name: 'Romania', fullName: 'Romania', flag: '🇷🇴', symbol: 'lei', code: 'ROU' },
+                  { key: 'Ukraine', name: 'Ukraine', fullName: 'Ukraine', flag: '🇺🇦', symbol: '₴', code: 'UKR' },
+                  { key: 'Israel', name: 'Israel', fullName: 'Israel', flag: '🇮🇱', symbol: '₪', code: 'ISR' },
+                  { key: 'Kuwait', name: 'Kuwait', fullName: 'Kuwait', flag: '🇰🇼', symbol: 'KD', code: 'KWT' },
+                  { key: 'Bahrain', name: 'Bahrain', fullName: 'Bahrain', flag: '🇧🇭', symbol: 'BD', code: 'BHR' },
+                  { key: 'Oman', name: 'Oman', fullName: 'Oman', flag: '🇴🇲', symbol: 'OMR', code: 'OMN' }
+              ],
+              get filteredCountryList() {
+                  if (!this.regionSearch) return this.countryList;
+                  const q = this.regionSearch.toLowerCase().trim();
+                  return this.countryList.filter(c => 
+                      c.name.toLowerCase().includes(q) || 
+                      c.fullName.toLowerCase().includes(q) || 
+                      c.symbol.toLowerCase().includes(q) || 
+                      c.key.toLowerCase().includes(q)
+                  );
+              },
+              get selectedCountryObj() {
+                  return this.countryList.find(c => c.key === this.selectedCountry) || { key: this.selectedCountry, name: this.selectedCountry, flag: '🌍', symbol: '$' };
+              },
               get currencySymbol() {
-                  return this.countries[this.selectedCountry]?.symbol || '$';
+                  return this.selectedCountryObj.symbol || '$';
               },
               get filteredDrivers() {
                   return this.drivers.filter(d => {
@@ -31,16 +121,81 @@
                 <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced drivers for Private & Commercial hiring across USA & Africa.</p>
             </div>
 
-            <!-- Country Switcher -->
-            <div class="flex items-center gap-3 bg-white dark:bg-[#111] p-2.5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm shrink-0">
-                <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2">Region:</span>
-                <select x-model="selectedCountry" @change="window.location.href = '/hire-driver?country=' + selectedCountry" class="bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-white font-bold py-2 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 text-sm focus:outline-none cursor-pointer">
-                    <option value="USA">🇺🇸 USA ($)</option>
-                    <option value="Ghana">🇬🇭 Ghana (GH₵)</option>
-                    <option value="Nigeria">🇳🇬 Nigeria (₦)</option>
-                    <option value="South Africa">🇿🇦 South Africa (R)</option>
-                    <option value="All">🌐 All Regions</option>
-                </select>
+            <!-- Country Switcher Dropdown with Search -->
+            <div class="relative shrink-0" @click.away="countryDropdownOpen = false">
+                <div class="flex items-center gap-2 bg-white dark:bg-[#111] p-1.5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2.5">Region:</span>
+                    
+                    <button type="button" 
+                            @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.regionSearchInput?.focus())"
+                            class="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-[#1a1a1a] dark:hover:bg-[#222] text-gray-900 dark:text-white font-bold py-2 px-3 rounded-xl border border-gray-200 dark:border-white/10 text-sm transition-all cursor-pointer select-none">
+                        <span class="text-lg leading-none" x-text="selectedCountryObj.flag">🇺🇸</span>
+                        <span class="text-xs font-bold" x-text="`${selectedCountryObj.name} (${selectedCountryObj.symbol})`">USA ($)</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Floating Searchable Dropdown -->
+                <div x-show="countryDropdownOpen" 
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                     class="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#141414] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden"
+                     style="display: none;">
+                    
+                    <!-- Search Input -->
+                    <div class="p-3 bg-gray-50 dark:bg-[#1a1a1a] border-b border-gray-100 dark:border-white/10 sticky top-0 z-10">
+                        <div class="relative flex items-center bg-white dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-brand-500 dark:focus-within:border-brand-500 transition-all px-3 py-2">
+                            <svg class="w-4 h-4 text-gray-400 shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <input type="text" 
+                                   x-ref="regionSearchInput"
+                                   x-model="regionSearch" 
+                                   placeholder="Search region or currency..." 
+                                   class="w-full bg-transparent text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none border-none p-0">
+                            <button type="button" 
+                                    x-show="regionSearch" 
+                                    @click="regionSearch = ''; $refs.regionSearchInput?.focus()" 
+                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-white shrink-0 ml-1 p-0.5"
+                                    style="display: none;">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Country List -->
+                    <div class="max-h-64 overflow-y-auto p-1.5 space-y-0.5 text-sm">
+                        <template x-for="c in filteredCountryList" :key="c.key">
+                            <button type="button" 
+                                    @click="selectedCountry = c.key; countryDropdownOpen = false; regionSearch = ''; window.history.pushState({}, '', '/hire-driver?country=' + c.key);"
+                                    class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-left group cursor-pointer"
+                                    :class="selectedCountry === c.key ? 'bg-brand-500 text-white hover:bg-brand-600 font-bold' : 'text-gray-800 dark:text-gray-200'">
+                                <div class="flex items-center gap-3 min-w-0 pr-2">
+                                    <span class="text-xl leading-none shrink-0" x-text="c.flag"></span>
+                                    <span class="text-xs truncate" 
+                                          :class="selectedCountry === c.key ? 'text-white' : 'text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-white font-medium'" 
+                                          x-text="c.name"></span>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-md" 
+                                          :class="selectedCountry === c.key ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white'"
+                                          x-text="c.symbol"></span>
+                                    <span x-show="selectedCountry === c.key" class="text-xs font-bold text-white">✓</span>
+                                </div>
+                            </button>
+                        </template>
+                        
+                        <div x-show="filteredCountryList.length === 0" class="py-6 text-center" style="display: none;">
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">No countries found</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
