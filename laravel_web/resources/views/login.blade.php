@@ -12,10 +12,46 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
-    <!-- Vite -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff9eb',
+                            100: '#ffefc6',
+                            200: '#ffdc88',
+                            300: '#ffc34a',
+                            400: '#ffa71a',
+                            500: '#f58400',
+                            600: '#d96200',
+                            700: '#b44402',
+                            800: '#903509',
+                            900: '#762c0c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .country-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .country-scroll::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        .country-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .country-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -48,15 +84,16 @@
                 <h1 class="text-2xl font-semibold mb-6 text-gray-900 tracking-tight">Enter your mobile number</h1>
                 
                 <form action="#" method="GET" @submit.prevent="emailForOtp = selectedCountry.dial + ' ' + mobileNumber; view = 'otp';">
-                    <div class="relative mb-4">
-                        <div class="flex h-[52px] bg-gray-100 rounded-lg border-2 border-transparent focus-within:border-black focus-within:bg-white transition-all">
+                    <div class="relative mb-5" @click.away="countryDropdownOpen = false">
+                        <!-- Main Phone Input Bar -->
+                        <div class="flex items-center h-[54px] bg-[#f3f4f6] rounded-xl border border-transparent focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10 transition-all duration-200 shadow-sm overflow-hidden">
                             <!-- Country Code Trigger Button -->
                             <button type="button" 
                                     @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.countrySearchInput?.focus())"
-                                    class="flex items-center justify-center gap-1.5 px-3.5 bg-gray-100 hover:bg-gray-200 rounded-l-lg border-r border-gray-300/60 transition-colors shrink-0 cursor-pointer select-none">
-                                <span class="text-xl leading-none" x-text="selectedCountry.flag">🇺🇸</span>
-                                <span class="text-xs font-bold text-gray-800" x-text="selectedCountry.dial">+1</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600 transition-transform duration-200" :class="countryDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
+                                    class="flex items-center gap-2 h-full px-3.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] border-r border-gray-300/80 transition-colors shrink-0 cursor-pointer select-none">
+                                <span class="text-2xl leading-none" x-text="selectedCountry.flag">🇺🇸</span>
+                                <span class="text-sm font-bold text-gray-900 tracking-tight" x-text="selectedCountry.dial">+1</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180 text-black' : ''" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </button>
@@ -66,55 +103,73 @@
                                    x-model="mobileNumber"
                                    :placeholder="`${selectedCountry.dial} Mobile number`"
                                    required
-                                   class="flex-1 bg-transparent rounded-r-lg px-4 text-gray-900 placeholder-gray-500 font-medium focus:outline-none border-none text-base">
+                                   class="flex-1 h-full bg-transparent px-4 text-gray-900 placeholder-gray-400 font-medium focus:outline-none border-none text-base">
                         </div>
 
-                        <!-- Country Dropdown Modal / Popover -->
+                        <!-- Country Dropdown Floating Card -->
                         <div x-show="countryDropdownOpen" 
-                             @click.away="countryDropdownOpen = false" 
-                             x-transition:enter="transition ease-out duration-150"
-                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-98"
                              x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="absolute left-0 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-98"
+                             class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-gray-200 z-50 overflow-hidden ring-1 ring-black/5"
                              style="display: none;">
                             
-                            <!-- Search Bar -->
-                            <div class="p-3 border-b border-gray-100 bg-gray-50/90 sticky top-0 z-10">
-                                <div class="relative">
-                                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <!-- Search Bar Header -->
+                            <div class="p-3 bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-sm">
+                                <div class="relative flex items-center bg-white rounded-xl border border-gray-200 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all shadow-inner px-3 py-2">
+                                    <svg class="w-4 h-4 text-gray-400 shrink-0 mr-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
                                     <input type="text" 
                                            x-ref="countrySearchInput"
                                            x-model="countrySearch" 
-                                           placeholder="Search country or dial code..." 
-                                           class="w-full pl-9 pr-3 py-2 bg-white rounded-xl text-xs font-semibold text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black">
+                                           placeholder="Search country or code (e.g. +1, USA)..." 
+                                           class="w-full bg-transparent text-xs font-semibold text-gray-900 placeholder-gray-400 focus:outline-none border-none p-0">
+                                    <button type="button" 
+                                            x-show="countrySearch" 
+                                            @click="countrySearch = ''; $refs.countrySearchInput?.focus()" 
+                                            class="text-gray-400 hover:text-gray-600 shrink-0 ml-1 p-0.5"
+                                            style="display: none;">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
                                 </div>
                             </div>
 
                             <!-- Country List -->
-                            <div class="max-h-64 overflow-y-auto divide-y divide-gray-50 text-sm">
+                            <div class="max-h-64 sm:max-h-72 overflow-y-auto country-scroll p-1.5 space-y-0.5 text-sm">
                                 <template x-for="country in filteredCountries" :key="country.code + country.dial">
                                     <button type="button" 
                                             @click="selectCountry(country)"
-                                            class="w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-100 transition-colors text-left group"
-                                            :class="selectedCountry.code === country.code ? 'bg-amber-50/70 font-semibold' : ''">
+                                            class="w-full px-3 py-2 rounded-xl flex items-center justify-between hover:bg-gray-100/90 active:bg-gray-200/80 transition-all text-left group cursor-pointer"
+                                            :class="selectedCountry.code === country.code ? 'bg-black text-white hover:bg-gray-900' : 'text-gray-800'">
                                         <div class="flex items-center gap-3 min-w-0 pr-2">
                                             <span class="text-xl leading-none shrink-0" x-text="country.flag"></span>
-                                            <span class="text-xs text-gray-900 group-hover:text-black truncate" x-text="country.name"></span>
+                                            <span class="text-xs font-semibold truncate" 
+                                                  :class="selectedCountry.code === country.code ? 'text-white' : 'text-gray-900 group-hover:text-black'" 
+                                                  x-text="country.name"></span>
                                         </div>
-                                        <span class="font-mono text-xs font-bold text-gray-500 group-hover:text-black shrink-0" x-text="country.dial"></span>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-md" 
+                                                  :class="selectedCountry.code === country.code ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600 group-hover:text-black group-hover:bg-gray-200'"
+                                                  x-text="country.dial"></span>
+                                            <span x-show="selectedCountry.code === country.code" class="text-xs font-bold text-white">✓</span>
+                                        </div>
                                     </button>
                                 </template>
-                                <div x-show="filteredCountries.length === 0" class="p-6 text-center text-xs text-gray-400">
-                                    No countries found matching "<span x-text="countrySearch"></span>"
+                                
+                                <div x-show="filteredCountries.length === 0" class="py-8 text-center" style="display: none;">
+                                    <div class="text-2xl mb-1">🌍</div>
+                                    <p class="text-xs font-semibold text-gray-500">No countries found</p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">Try searching with a different name or dial code</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-black hover:bg-gray-900 text-white font-medium py-3.5 rounded-lg text-base transition-colors">
+                    <button type="submit" class="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3.5 rounded-xl text-base transition-all shadow-md shadow-black/10 active:scale-[0.99] cursor-pointer">
                         Continue
                     </button>
                 </form>
