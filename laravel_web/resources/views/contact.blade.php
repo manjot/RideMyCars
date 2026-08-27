@@ -52,8 +52,8 @@
                         <div>
                             <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Phone Line</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Available 24 hours a day, 7 days a week</p>
-                            <a href="tel:+18001234567" class="text-sm font-black text-brand-600 dark:text-brand-400 hover:underline">
-                                +1 800 123 4567
+                            <a href="tel:+18885700008" class="text-sm font-black text-brand-600 dark:text-brand-400 hover:underline">
+                                +1 888 570 0008
                             </a>
                         </div>
                     </div>
@@ -67,7 +67,7 @@
                             <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Headquarters</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">RideMyCars Operations</p>
                             <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
-                                San Francisco, CA 94102, USA
+                                Washington, DC, USA
                             </span>
                         </div>
                     </div>

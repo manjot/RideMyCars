@@ -1438,7 +1438,7 @@ Route::post('/contact/send', function (\Illuminate\Http\Request $request) {
                                 <p>Hello <strong>{$userName}</strong>,</p>
                                 <p>Thank you for contacting RideMyCars regarding <strong>\"{$subject}\"</strong>. Our executive concierge team has received your message.</p>
                                 <p>We are reviewing your inquiry and will reply to this email address shortly.</p>
-                                <p>For urgent mobility needs, you can also reach us directly at <a href='mailto:support@ridemycars.com' style='color: #f59e0b; font-weight: bold;'>support@ridemycars.com</a> or call <strong>+1 800 123 4567</strong>.</p>
+                                <p>For urgent mobility needs, you can also reach us directly at <a href='mailto:support@ridemycars.com' style='color: #f59e0b; font-weight: bold;'>support@ridemycars.com</a> or call <strong>+1 888 570 0008</strong>.</p>
                                 <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;'>
                                 <p style='margin: 0; color: #64748b;'>Warm regards,<br><strong>RideMyCars Support Team</strong></p>
                             </div>

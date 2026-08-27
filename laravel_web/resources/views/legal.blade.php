@@ -82,7 +82,7 @@
                 <div class="mt-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-xs font-mono text-gray-800 dark:text-gray-200 space-y-1">
                     <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
                     <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                    <p><strong>Contact Telephone:</strong> <a href="tel:+14105706639" class="text-brand-500 font-bold hover:underline">+1 410 570 6639</a></p>
+                    <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
                     <p><strong>Legal Counsel Email:</strong> <a href="mailto:legal@ridemycars.com" class="text-brand-500 font-bold hover:underline">legal@ridemycars.com</a></p>
                 </div>
             </section>

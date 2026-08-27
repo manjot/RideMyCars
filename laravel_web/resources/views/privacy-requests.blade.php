@@ -47,7 +47,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Contact Phone</label>
-                            <input type="text" name="phone" value="{{ auth()->user()->phone ?? old('phone') }}" placeholder="+1 410 570 6639" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none">
+                            <input type="text" name="phone" value="{{ auth()->user()->phone ?? old('phone') }}" placeholder="+1 888 570 0008" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none">
                         </div>
 
                         <div>
@@ -88,7 +88,7 @@
                             <p><strong>Entity:</strong> New Development Finance Group LLC/PTY LTD</p>
                             <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
                             <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                            <p><strong>Contact Telephone:</strong> <a href="tel:+14105706639" class="text-amber-500 font-bold hover:underline">+1 410 570 6639</a></p>
+                            <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-amber-500 font-bold hover:underline">+1 888 570 0008</a></p>
                             <p><strong>DPO Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-amber-500 font-bold hover:underline">privacy@ridemycars.com</a></p>
                         </div>
                     </div>

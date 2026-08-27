@@ -194,7 +194,7 @@
                             <p><strong>Entity:</strong> New Development Finance Group LLC/PTY LTD</p>
                             <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
                             <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                            <p><strong>Contact Telephone:</strong> <a href="tel:+14105706639" class="text-emerald-500 font-bold hover:underline">+1 410 570 6639</a></p>
+                            <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-emerald-500 font-bold hover:underline">+1 888 570 0008</a></p>
                             <p><strong>Disputes Email:</strong> <a href="mailto:disputes@ridemycars.com" class="text-emerald-500 font-bold hover:underline">disputes@ridemycars.com</a></p>
                         </div>
                     </div>

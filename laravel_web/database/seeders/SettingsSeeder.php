@@ -20,8 +20,8 @@ class SettingsSeeder extends Seeder
             
             // Footer
             ['key' => 'footer.support_email', 'label' => 'Footer - Support Email', 'value' => 'support@ridemycars.com', 'group' => 'Footer', 'type' => 'text'],
-            ['key' => 'footer.support_phone', 'label' => 'Footer - Support Phone', 'value' => '+1 800 123 4567', 'group' => 'Footer', 'type' => 'text'],
-            ['key' => 'footer.location', 'label' => 'Footer - Location', 'value' => 'San Francisco, CA', 'group' => 'Footer', 'type' => 'text'],
+            ['key' => 'footer.support_phone', 'label' => 'Footer - Support Phone', 'value' => '+1 888 570 0008', 'group' => 'Footer', 'type' => 'text'],
+            ['key' => 'footer.location', 'label' => 'Footer - Location', 'value' => 'Washington, DC', 'group' => 'Footer', 'type' => 'text'],
             ['key' => 'footer.copyright', 'label' => 'Footer - Copyright', 'value' => '© 2026 RideMyCars. All rights reserved.', 'group' => 'Footer', 'type' => 'text'],
 
             // App Links
