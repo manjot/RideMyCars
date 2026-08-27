@@ -506,6 +506,72 @@
                 </div>
             </div>
 
+            <!-- Corporate Regional Offices Strip (New Development Finance Group) -->
+            <div class="pt-10 pb-8 border-t border-white/10">
+                <div class="flex items-center justify-between gap-4 mb-5 flex-wrap">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                        <span class="text-xs font-black uppercase tracking-wider text-white">
+                            New Development Finance Group — Global Corporate & Regional Offices
+                        </span>
+                    </div>
+                    <a href="/contact" class="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1">
+                        <span>View Office Directory</span>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- USA Global HQ -->
+                    <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
+                        <span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0 text-lg group-hover:scale-105 transition-transform">
+                            🇺🇸
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">United States</span>
+                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase tracking-wider">Global HQ</span>
+                            </div>
+                            <p class="text-xs text-gray-300 font-medium leading-snug mt-1" title="4301 Saddle River Drive, Bowie, MD 20720">
+                                4301 Saddle River Drive, Bowie, MD 20720
+                            </p>
+                        </div>
+                    </a>
+
+                    <!-- RSA Regional Hub -->
+                    <a href="https://maps.google.com/?q=11+Corona+Road,+Sandhurst,+Sandton,+Gauteng+2196" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
+                        <span class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 text-lg group-hover:scale-105 transition-transform">
+                            🇿🇦
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">South Africa</span>
+                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">RSA Hub</span>
+                            </div>
+                            <p class="text-xs text-gray-300 font-medium leading-snug mt-1" title="11 Corona Road, Sandhurst, Sandton, Gauteng 2196">
+                                11 Corona Rd, Sandhurst, Sandton 2196
+                            </p>
+                        </div>
+                    </a>
+
+                    <!-- Ghana Regional Hub -->
+                    <a href="https://maps.google.com/?q=No+1+Airport+Square,+Airport+City,+Accra,+Ghana" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
+                        <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0 text-lg group-hover:scale-105 transition-transform">
+                            🇬🇭
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">Ghana</span>
+                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider">GHA Hub</span>
+                            </div>
+                            <p class="text-xs text-gray-300 font-medium leading-snug mt-1" title="No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana">
+                                No 1 Airport Square, 8th FL, Airport City, Accra
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
             <!-- Middle Bar: Contact Info & App Download Buttons -->
             <div class="py-8 border-y border-white/10 flex flex-col lg:flex-row items-center justify-between gap-6">
                 <!-- Direct Contacts -->
@@ -523,13 +589,6 @@
                         </span>
                         <span>{{ site_setting('footer.support_phone', '+1 888 570 0008') }}</span>
                     </a>
-
-                    <span class="flex items-center gap-2.5 text-gray-400">
-                        <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        </span>
-                        <span>{{ site_setting('footer.location', 'Washington, DC') }}</span>
-                    </span>
                 </div>
 
                 <!-- App Buttons -->
