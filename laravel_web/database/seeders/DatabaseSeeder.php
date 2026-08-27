@@ -12,12 +12,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin User
-        $admin = User::firstOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@ridemycars.com'],
             [
                 'name' => 'Admin User',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'admin',
+                'account_status' => 'active',
             ]
         );
 
