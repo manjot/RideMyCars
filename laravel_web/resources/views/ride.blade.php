@@ -145,7 +145,7 @@
                                 </button>
 
                                 <!-- Passenger Inputs (Expanded when 'someone_else' is active) -->
-                                <div x-show="riderType === 'someone_else'" x-transition.opacity.duration.200ms class="p-2.5 space-y-2 bg-gray-50 dark:bg-[#111] rounded-lg mt-1 border border-gray-200 dark:border-white/10">
+                                <div x-show="riderType === 'someone_else'" style="display: none;" x-transition.opacity.duration.200ms class="p-2.5 space-y-2 bg-gray-50 dark:bg-[#111] rounded-lg mt-1 border border-gray-200 dark:border-white/10">
                                     <div>
                                         <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Passenger Name</label>
                                         <input type="text" x-model="passengerName" placeholder="Full name" class="w-full px-3 py-2 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black text-xs font-medium">
@@ -390,7 +390,7 @@
                 </div> <!-- Closes w-[440px] panel -->
 
                 <!-- Confirming State UI -->
-                <div class="w-full lg:w-[440px] bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit" style="max-width: 100%;" x-show="isConfirming" x-transition>
+                <div class="w-full lg:w-[440px] bg-white dark:bg-[#111] lg:p-6 lg:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] lg:rounded-[24px] border-0 lg:border border-gray-100 dark:border-white/10 shrink-0 h-fit" style="display: none; max-width: 100%;" x-show="isConfirming" x-cloak x-transition>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">Confirming your ride</h2>
                     
                     <div class="relative pl-6 ml-3 mb-8 border-l-[3px] border-gray-900 dark:border-white">
@@ -514,7 +514,7 @@
                 </div>
 
                 <!-- Rating Modal -->
-                <div x-show="showReviewModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div x-show="showReviewModal" x-cloak style="display: none;" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div class="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 w-full max-w-md shadow-2xl" @click.outside="showReviewModal = false">
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Rate Your Driver</h3>
                         <p class="text-sm text-gray-500 mb-6" x-text="'How was your ride with ' + driverName + '?'"></p>
@@ -589,7 +589,7 @@
                                 </div>
 
                                 <!-- Passenger Inputs (Shown when someone_else is selected) -->
-                                <div x-show="riderType === 'someone_else'" x-transition.opacity.duration.200ms class="pt-2 space-y-3">
+                                <div x-show="riderType === 'someone_else'" style="display: none;" x-transition.opacity.duration.200ms class="pt-2 space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Passenger Name</label>
                                         <input type="text" x-model="passengerName" placeholder="Enter passenger's full name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm font-medium">
