@@ -50,25 +50,25 @@
             </div>
 
             <!-- Vehicle Summary Banner -->
-            <div class="p-6 rounded-2xl bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+            <div class="p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
                 <div class="flex items-center gap-5">
-                    <div class="w-24 h-16 bg-white/10 rounded-xl overflow-hidden p-2 flex items-center justify-center shrink-0">
+                    <div class="w-24 h-16 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden p-2 flex items-center justify-center shrink-0">
                         <img src="{{ $ride->vehicle ? $ride->vehicle->image_src : '/images/hero-rent.png' }}" alt="Vehicle" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <span class="text-xs text-brand-400 font-bold uppercase tracking-wider block mb-1">Confirmed Vehicle</span>
-                        <h2 class="text-2xl font-extrabold">{{ $ride->vehicle ? ($ride->vehicle->year . ' ' . $ride->vehicle->make . ' ' . $ride->vehicle->model) : $ride->vehicle_type }}</h2>
-                        <div class="flex items-center gap-3 text-xs text-gray-300 mt-1">
-                            <span>License Plate: <strong class="text-white">{{ $ride->vehicle->license_plate ?? 'REG-9988' }}</strong></span>
-                            <span>•</span>
-                            <span>Transmission: <strong class="text-white">{{ ucfirst($ride->vehicle->transmission ?? 'Automatic') }}</strong></span>
+                        <span class="text-xs text-amber-300 font-extrabold uppercase tracking-wider block mb-1">Confirmed Vehicle</span>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ $ride->vehicle ? ($ride->vehicle->year . ' ' . $ride->vehicle->make . ' ' . $ride->vehicle->model) : $ride->vehicle_type }}</h2>
+                        <div class="flex items-center gap-3 text-xs text-slate-300 mt-1 font-medium">
+                            <span>License Plate: <strong class="text-white font-bold">{{ $ride->vehicle->license_plate ?? 'REG-9988' }}</strong></span>
+                            <span class="text-slate-600">•</span>
+                            <span>Transmission: <strong class="text-white font-bold">{{ ucfirst($ride->vehicle->transmission ?? 'Automatic') }}</strong></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="text-center md:text-right border-t md:border-t-0 border-white/10 pt-4 md:pt-0 w-full md:w-auto">
-                    <span class="text-xs text-gray-400 block uppercase font-bold tracking-wider mb-1">Status</span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <div class="text-center md:text-right border-t md:border-t-0 border-slate-800 pt-4 md:pt-0 w-full md:w-auto">
+                    <span class="text-xs text-slate-400 block uppercase font-bold tracking-wider mb-1.5">Status</span>
+                    <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase bg-emerald-400 text-slate-950 shadow-md">
                         ✓ {{ strtoupper($ride->status) }}
                     </span>
                 </div>
