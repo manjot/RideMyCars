@@ -84,12 +84,18 @@
                     </h2>
 
                     <div class="space-y-4 text-xs">
-                        <div class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl space-y-1 font-mono text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-white/10">
-                            <p><strong>Entity:</strong> New Development Finance Group LLC/PTY LTD</p>
-                            <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
-                            <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                            <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-amber-500 font-bold hover:underline">+1 888 570 0008</a></p>
-                            <p><strong>DPO Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-amber-500 font-bold hover:underline">privacy@ridemycars.com</a></p>
+                        <div class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl space-y-2 font-mono text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-white/10">
+                            <p><strong>Parent Entity:</strong> New Development Finance Group</p>
+                            <p><strong>Department:</strong> Legal & Compliance Department</p>
+                            <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
+                                <p><strong>🇺🇸 USA HQ:</strong> 4301 Saddle River Drive, Bowie, MD 20720, United States</p>
+                                <p><strong>🇿🇦 South Africa Hub:</strong> 11 Corona Road, Sandhurst, Sandton, Gauteng 2196, South Africa</p>
+                                <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
+                            </div>
+                            <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
+                                <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-amber-500 font-bold hover:underline">+1 888 570 0008</a></p>
+                                <p><strong>DPO Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-amber-500 font-bold hover:underline">privacy@ridemycars.com</a></p>
+                            </div>
                         </div>
                     </div>
                 </div>

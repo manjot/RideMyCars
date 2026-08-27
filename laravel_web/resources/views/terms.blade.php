@@ -243,12 +243,18 @@
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
                         <p><strong>12.1 72-Hour Dispute Rule:</strong> All dispute claims, fee challenges, or damage reports MUST be submitted within <strong>72 hours of service completion or cancellation</strong> via the <a href="/disputes/create" class="text-brand-500 font-bold hover:underline">Dispute Portal</a> or sent to <a href="mailto:disputes@ridemycars.com" class="text-brand-500 font-bold hover:underline">disputes@ridemycars.com</a>.</p>
-                        <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl space-y-1 font-mono text-xs mt-3">
-                            <p><strong>Entity:</strong> New Development Finance Group LLC/PTY LTD</p>
-                            <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
-                            <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                            <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
-                            <p><strong>Disputes Email:</strong> <a href="mailto:disputes@ridemycars.com" class="text-brand-500 hover:underline">disputes@ridemycars.com</a></p>
+                        <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl space-y-2 font-mono text-xs mt-3">
+                            <p><strong>Parent Corporate Entity:</strong> New Development Finance Group</p>
+                            <p><strong>Department:</strong> Legal, Risk & Compliance Department</p>
+                            <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
+                                <p><strong>🇺🇸 USA HQ:</strong> 4301 Saddle River Drive, Bowie, MD 20720, United States</p>
+                                <p><strong>🇿🇦 South Africa Hub:</strong> 11 Corona Road, Sandhurst, Sandton, Gauteng 2196, South Africa</p>
+                                <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
+                            </div>
+                            <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
+                                <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
+                                <p><strong>Disputes Email:</strong> <a href="mailto:disputes@ridemycars.com" class="text-brand-500 hover:underline">disputes@ridemycars.com</a></p>
+                            </div>
                         </div>
                     </div>
                 </section>

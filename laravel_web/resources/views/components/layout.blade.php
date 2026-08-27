@@ -556,7 +556,7 @@
             
             <!-- Bottom Footer Bar -->
             <div class="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-                <p class="text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars. All rights reserved.') }}</p>
+                <p class="text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars • A New Development Finance Group Company. All rights reserved.') }}</p>
                 
                 <div class="flex flex-wrap items-center justify-center gap-4 text-gray-400">
                     <span class="flex items-center gap-1.5 text-gray-300">

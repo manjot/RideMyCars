@@ -194,14 +194,20 @@
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
                         <p>For inquiries, statutory privacy requests, or complaints, contact our Corporate Desk:</p>
-                        <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl space-y-1 font-mono text-xs">
+                        <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl space-y-2 font-mono text-xs">
                             <p><strong>Corporate Desk:</strong> Data Protection Officer (DPO)</p>
-                            <p><strong>Entity:</strong> New Development Finance Group LLC/PTY LTD</p>
-                            <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
-                            <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                            <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
-                            <p><strong>Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-brand-500 hover:underline">privacy@ridemycars.com</a></p>
-                            <p><strong>Privacy Portal:</strong> <a href="/privacy-requests" class="text-brand-500 hover:underline">https://ridemycars.com/privacy-requests</a></p>
+                            <p><strong>Parent Entity:</strong> New Development Finance Group</p>
+                            <p><strong>Department:</strong> Legal, Risk & Compliance Department</p>
+                            <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
+                                <p><strong>🇺🇸 USA HQ:</strong> 4301 Saddle River Drive, Bowie, MD 20720, United States</p>
+                                <p><strong>🇿🇦 South Africa Hub:</strong> 11 Corona Road, Sandhurst, Sandton, Gauteng 2196, South Africa</p>
+                                <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
+                            </div>
+                            <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
+                                <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
+                                <p><strong>Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-brand-500 hover:underline">privacy@ridemycars.com</a></p>
+                                <p><strong>Privacy Portal:</strong> <a href="/privacy-requests" class="text-brand-500 hover:underline">https://ridemycars.com/privacy-requests</a></p>
+                            </div>
                         </div>
                     </div>
                 </section>

@@ -79,11 +79,18 @@
                 <p class="leading-relaxed text-sm">
                     For legal notices, regulatory inquiries, or law enforcement data requests, please contact our team at <a href="mailto:support@ridemycars.com" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">support@ridemycars.com</a> or write to:
                 </p>
-                <div class="mt-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-xs font-mono text-gray-800 dark:text-gray-200 space-y-1">
-                    <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
-                    <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
-                    <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
-                    <p><strong>Legal Counsel Email:</strong> <a href="mailto:legal@ridemycars.com" class="text-brand-500 font-bold hover:underline">legal@ridemycars.com</a></p>
+                <div class="mt-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-xs font-mono text-gray-800 dark:text-gray-200 space-y-2">
+                    <p><strong>Parent Corporate Entity:</strong> New Development Finance Group</p>
+                    <p><strong>Department:</strong> Legal, Risk & Compliance Department</p>
+                    <div class="border-t border-gray-200 dark:border-white/10 pt-2 mt-2 space-y-1">
+                        <p><strong>🇺🇸 USA Global HQ:</strong> 4301 Saddle River Drive, Bowie, MD 20720, United States</p>
+                        <p><strong>🇿🇦 South Africa Hub:</strong> 11 Corona Road, Sandhurst, Sandton, Gauteng 2196, South Africa</p>
+                        <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
+                    </div>
+                    <div class="border-t border-gray-200 dark:border-white/10 pt-2 mt-2 space-y-1">
+                        <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
+                        <p><strong>Legal Counsel Email:</strong> <a href="mailto:legal@ridemycars.com" class="text-brand-500 font-bold hover:underline">legal@ridemycars.com</a></p>
+                    </div>
                 </div>
             </section>
 

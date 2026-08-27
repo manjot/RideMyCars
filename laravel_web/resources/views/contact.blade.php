@@ -137,6 +137,124 @@
                 </div>
 
             </div>
+
+            <!-- Global Corporate Headquarters & Regional Offices (New Development Finance Group) -->
+            <div class="mt-20 pt-16 border-t border-gray-200 dark:border-white/10 max-w-6xl mx-auto">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <span class="px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider border border-amber-500/20 inline-block mb-3">
+                        New Development Finance Group
+                    </span>
+                    <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-3">
+                        Global Corporate & Regional Offices
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-600 dark:text-gray-400">
+                        Operating under the global corporate umbrella of New Development Finance Group across the Americas and Africa.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    
+                    <!-- 1. USA Headquarters -->
+                    <div class="bg-white dark:bg-[#121212] rounded-3xl p-8 border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all"></div>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-5">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
+                                    <span>🇺🇸</span> USA
+                                </span>
+                                <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">Global HQ</span>
+                            </div>
+                            <h3 class="text-lg font-black text-gray-900 dark:text-white mb-2">
+                                United States Headquarters
+                            </h3>
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-4">
+                                New Development Finance Group LLC
+                            </p>
+                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#181818] border border-gray-100 dark:border-white/5 space-y-2 text-xs font-medium text-gray-700 dark:text-gray-300 mb-6">
+                                <div class="flex items-start gap-2.5">
+                                    <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span class="leading-relaxed">4301 Saddle River Drive, Bowie, MD 20720, United States</span>
+                                </div>
+                                <div class="flex items-center gap-2.5 pt-1">
+                                    <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                    <a href="tel:+18885700008" class="font-bold hover:text-amber-500 transition-colors">+1 888 570 0008</a>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-amber-500 hover:text-black dark:bg-white/5 dark:hover:bg-amber-500 dark:hover:text-black text-gray-800 dark:text-gray-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 group/btn">
+                            <span>Open in Maps</span>
+                            <svg class="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- 2. RSA Regional Hub -->
+                    <div class="bg-white dark:bg-[#121212] rounded-3xl p-8 border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-5">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                                    <span>🇿🇦</span> RSA
+                                </span>
+                                <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Southern Africa</span>
+                            </div>
+                            <h3 class="text-lg font-black text-gray-900 dark:text-white mb-2">
+                                South Africa Regional Hub
+                            </h3>
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-4">
+                                New Development Finance Group (Pty) Ltd
+                            </p>
+                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#181818] border border-gray-100 dark:border-white/5 space-y-2 text-xs font-medium text-gray-700 dark:text-gray-300 mb-6">
+                                <div class="flex items-start gap-2.5">
+                                    <svg class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span class="leading-relaxed">11 Corona Road, Sandhurst, Sandton, Gauteng 2196, South Africa</span>
+                                </div>
+                                <div class="flex items-center gap-2.5 pt-1">
+                                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                    <a href="tel:+18885700008" class="font-bold hover:text-emerald-500 transition-colors">+1 888 570 0008</a>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="https://maps.google.com/?q=11+Corona+Road,+Sandhurst,+Sandton,+Gauteng+2196" target="_blank" rel="noopener" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-emerald-500 hover:text-black dark:bg-white/5 dark:hover:bg-emerald-500 dark:hover:text-black text-gray-800 dark:text-gray-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 group/btn">
+                            <span>Open in Maps</span>
+                            <svg class="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- 3. Ghana Regional Hub -->
+                    <div class="bg-white dark:bg-[#121212] rounded-3xl p-8 border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all"></div>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-5">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                                    <span>🇬🇭</span> GHA
+                                </span>
+                                <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">West Africa</span>
+                            </div>
+                            <h3 class="text-lg font-black text-gray-900 dark:text-white mb-2">
+                                Ghana Regional Hub
+                            </h3>
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-4">
+                                New Development Finance Group Ghana Ltd
+                            </p>
+                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#181818] border border-gray-100 dark:border-white/5 space-y-2 text-xs font-medium text-gray-700 dark:text-gray-300 mb-6">
+                                <div class="flex items-start gap-2.5">
+                                    <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span class="leading-relaxed">No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</span>
+                                </div>
+                                <div class="flex items-center gap-2.5 pt-1">
+                                    <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                    <a href="tel:+18885700008" class="font-bold hover:text-amber-500 transition-colors">+1 888 570 0008</a>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="https://maps.google.com/?q=No+1+Airport+Square,+Airport+City,+Accra,+Ghana" target="_blank" rel="noopener" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-amber-500 hover:text-black dark:bg-white/5 dark:hover:bg-amber-500 dark:hover:text-black text-gray-800 dark:text-gray-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 group/btn">
+                            <span>Open in Maps</span>
+                            <svg class="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
         </div>
     </main>
 </x-layout>
