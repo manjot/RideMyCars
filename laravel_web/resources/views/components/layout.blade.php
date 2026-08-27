@@ -504,8 +504,6 @@
                         <li><a href="/legal" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Compliance & Trust</a></li>
                     </ul>
                 </div>
-                    </ul>
-                </div>
             </div>
 
             <!-- Middle Bar: Contact Info & App Download Buttons -->
