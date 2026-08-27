@@ -399,6 +399,19 @@ Route::post('/logout', function (\Illuminate\Http\Request $request) {
 Route::get('/delivery', [PackageDeliveryController::class, 'index']);
 Route::post('/delivery/calculate-price', [PackageDeliveryController::class, 'calculatePrice']);
 Route::post('/delivery/book', [PackageDeliveryController::class, 'storeBooking']);
+Route::get('/delivery/tracker', function () {
+    if (auth()->check()) {
+        $latestDelivery = \App\Models\PackageDelivery::where('customer_id', auth()->id())->latest()->first();
+        if ($latestDelivery) {
+            return redirect()->route('package-delivery.tracker', $latestDelivery->id);
+        }
+    }
+    $delivery = \App\Models\PackageDelivery::latest()->first();
+    if ($delivery) {
+        return redirect()->route('package-delivery.tracker', $delivery->id);
+    }
+    return redirect('/delivery')->with('info', 'Please book a package delivery to view live tracking.');
+});
 Route::get('/delivery/{delivery}/tracker', [PackageDeliveryController::class, 'tracker'])->name('package-delivery.tracker');
 Route::get('/api/package-delivery/{id}/status', [PackageDeliveryController::class, 'statusApi']);
 Route::post('/api/package-delivery/{id}/verify-otp', [PackageDeliveryController::class, 'verifyOtp']);

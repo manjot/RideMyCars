@@ -151,6 +151,7 @@ class DatabaseSeeder extends Seeder
             CategoryAndBannerSeeder::class,
             ProductSeeder::class,
             DisputeSeeder::class,
+            PackageDeliverySeeder::class,
         ]);
     }
 }
