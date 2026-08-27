@@ -13,11 +13,15 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
+    <!-- Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <!-- Alpine.js & Instant Page Prefetching -->
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+        body { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script>
     <!-- Vite -->
@@ -29,6 +33,9 @@
         darkMode: 'class',
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            },
             colors: {
               brand: {
                 50: '#fff8df',
@@ -86,11 +93,13 @@
                 <div class="hidden lg:flex items-center gap-6">
                     @auth
                         @if(auth()->user()->role === 'driver')
+                            <a class="text-sm font-medium transition-colors {{ request()->is('/') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/">Home</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('driver/dashboard*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/driver/dashboard">Dashboard</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('wallet*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/wallet">Earnings</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('pricing*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/pricing">Pricing</a>
                         @else
+                            <a class="text-sm font-medium transition-colors {{ request()->is('/') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/">Home</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('rent*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/rent">Rent Vehicle</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/hire-driver">Hire Driver</a>
@@ -115,11 +124,11 @@
                             <a class="text-sm font-medium transition-colors {{ request()->is('pricing*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/pricing">Pricing</a>
                         @endif
                     @else
+                        <a class="text-sm font-medium transition-colors {{ request()->is('/') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/">Home</a>
                         <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
                         <a class="text-sm font-medium transition-colors {{ request()->is('rent*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/rent">Rent Vehicle</a>
                         <a class="text-sm font-medium transition-colors {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/hire-driver">Hire Driver</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('admin/package-delivery-tracker*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/admin/package-delivery-tracker">🚚 Track Deliveries</a>
+                        <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
                         <a class="text-sm font-medium transition-colors {{ request()->is('membership*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/membership">Memberships</a>
                         
                         <!-- Company Dropdown -->
@@ -479,19 +488,22 @@
                         <li><a href="/driver/dashboard" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Driver Portal</a></li>
                     </ul>
                 </div>
-
                 <!-- Column 4: Legal (Span 2) -->
                 <div class="lg:col-span-2 space-y-4">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                        Legal
+                        Legal & Compliance
                     </h4>
                     <ul class="space-y-2.5 text-sm">
-                        <li><a href="/terms" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Terms of Service</a></li>
-                        <li><a href="/privacy" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Privacy Policy</a></li>
-                        <li><a href="/refund" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Refund Policy</a></li>
-                        <li><a href="/cookie" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Cookie Policy</a></li>
+                        <li><a href="/terms-and-conditions" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Terms & Conditions</a></li>
+                        <li><a href="/privacy-policy" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Privacy Policy</a></li>
+                        <li><a href="/refund-cancellation-policy" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Refund & Cancellation Policy</a></li>
+                        <li><a href="/privacy-requests" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Privacy Data Rights Portal</a></li>
+                        <li><a href="/disputes" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Disputes & Claims (72h)</a></li>
+                        <li><a href="/contact" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Contact Us</a></li>
                         <li><a href="/legal" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Compliance & Trust</a></li>
+                    </ul>
+                </div>
                     </ul>
                 </div>
             </div>

@@ -79,10 +79,11 @@
                 <p class="leading-relaxed text-sm">
                     For legal notices, regulatory inquiries, or law enforcement data requests, please contact our team at <a href="mailto:support@ridemycars.com" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">support@ridemycars.com</a> or write to:
                 </p>
-                <div class="mt-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-xs font-mono text-gray-800 dark:text-gray-200">
-                    RideMyCars Inc. — Legal & Compliance Department<br>
-                    500 Howard Street, Suite 400<br>
-                    San Francisco, CA 94105
+                <div class="mt-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-xs font-mono text-gray-800 dark:text-gray-200 space-y-1">
+                    <p><strong>Department:</strong> RideMyCars — Legal & Compliance Department</p>
+                    <p><strong>Address:</strong> 4301 Saddle River Dr., Bowie, MD 20720, United States</p>
+                    <p><strong>Contact Telephone:</strong> <a href="tel:+14105706639" class="text-brand-500 font-bold hover:underline">+1 410 570 6639</a></p>
+                    <p><strong>Legal Counsel Email:</strong> <a href="mailto:legal@ridemycars.com" class="text-brand-500 font-bold hover:underline">legal@ridemycars.com</a></p>
                 </div>
             </section>
 

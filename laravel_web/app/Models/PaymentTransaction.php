@@ -35,6 +35,14 @@ class PaymentTransaction extends Model
         'payout_retry_count',
         'service_vertical',
         'gateway_response',
+        'cancellation_fee',
+        'penalty_amount',
+        'return_fee',
+        'eligible_refund_amount',
+        'refund_amount',
+        'refund_status',
+        'refund_reference',
+        'refunded_at',
     ];
 
     protected $casts = [

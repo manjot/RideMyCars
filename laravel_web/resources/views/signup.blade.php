@@ -270,13 +270,22 @@
                         </div>
                     </div>
 
+                    <!-- Terms & Conditions Acceptance Checkbox -->
+                    <div class="mt-4 p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl">
+                        <label class="flex items-start gap-3 cursor-pointer select-none">
+                            <input type="checkbox" name="terms" value="1" required class="w-4 h-4 mt-0.5 rounded text-brand-500 border-gray-300 focus:ring-brand-500">
+                            <span class="text-xs text-gray-600 dark:text-gray-300 leading-normal">
+                                I explicitly agree to the <a href="/terms-and-conditions" target="_blank" class="text-brand-500 dark:text-brand-400 font-bold hover:underline">Ride My Cars Terms & Conditions</a> and <a href="/privacy" target="_blank" class="text-brand-500 dark:text-brand-400 font-bold hover:underline">Privacy Policy</a>.
+                            </span>
+                        </label>
+                        @error('terms')
+                            <p class="text-xs text-red-500 font-bold mt-1">You must agree to the Terms & Conditions to create an account.</p>
+                        @enderror
+                    </div>
+
                     <button type="submit" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
                         <span x-text="currentRole === 'owner' ? 'Register & List Vehicle' : (currentRole === 'driver' ? 'Register as Driver' : 'Create Account')"></span>
                     </button>
-                    
-                    <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-                        By signing up you agree to our <a href="/terms" class="text-brand-500 hover:underline">Terms</a> and <a href="/privacy" class="text-brand-500 hover:underline">Privacy Policy</a>.
-                    </p>
                 </form>
             </div>
         </div>

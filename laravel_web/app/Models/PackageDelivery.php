@@ -51,10 +51,23 @@ class PackageDelivery extends Model
         'pod_signature_url',
         'pod_timestamp',
         'pod_status',
+        'prohibited_items_acknowledged',
+        'inspection_status',
+        'inspection_notes',
+        'inspection_photo_url',
         'arrived_at_pickup_at',
         'picked_up_at',
         'arrived_at_destination_at',
         'delivered_at',
+        'cancellation_fee',
+        'penalty_amount',
+        'return_fee',
+        'eligible_refund_amount',
+        'refund_amount',
+        'refund_status',
+        'refund_reference',
+        'refunded_at',
+        'accepted_at',
     ];
 
     protected $casts = [

@@ -85,6 +85,34 @@ class PaymentTransactionResource extends Resource
                         'fully_deducted' => 'Fully Deducted',
                         'refunded' => 'Refunded',
                     ]),
+
+                Forms\Components\Section::make('Cancellation & Refund Controls')
+                    ->schema([
+                        Forms\Components\TextInput::make('cancellation_fee')
+                            ->numeric()
+                            ->prefix('$'),
+                        Forms\Components\TextInput::make('penalty_amount')
+                            ->numeric()
+                            ->prefix('$'),
+                        Forms\Components\TextInput::make('refund_amount')
+                            ->numeric()
+                            ->prefix('$'),
+                        Forms\Components\Select::make('refund_status')
+                            ->options([
+                                'not_eligible' => 'Not Eligible',
+                                'pending' => 'Pending Review',
+                                'requested' => 'Refund Requested',
+                                'processing' => 'Processing',
+                                'refunded' => 'Refunded',
+                                'partially_refunded' => 'Partially Refunded',
+                                'failed' => 'Failed',
+                                'rejected' => 'Rejected',
+                            ]),
+                        Forms\Components\TextInput::make('refund_reference')
+                            ->readOnly(),
+                        Forms\Components\DateTimePicker::make('refunded_at')
+                            ->readOnly(),
+                    ])->columns(2),
             ]);
     }
 
@@ -147,6 +175,15 @@ class PaymentTransactionResource extends Resource
                         'failed' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('refund_status')
+                    ->label('Refund Status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'refunded' => 'success',
+                        'processing', 'pending' => 'warning',
+                        'failed', 'rejected' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -158,21 +195,32 @@ class PaymentTransactionResource extends Resource
                         'DRIVER_HIRING' => 'Driver Hiring',
                         'VEHICLE_RENTAL' => 'Vehicle Rental',
                     ]),
-                Tables\Filters\SelectFilter::make('payout_status')
+                Tables\Filters\SelectFilter::make('refund_status')
                     ->options([
                         'pending' => 'Pending',
-                        'completed' => 'Completed',
-                        'failed' => 'Failed',
-                    ]),
-                Tables\Filters\SelectFilter::make('escrow_status')
-                    ->options([
-                        'held' => 'Escrow Held',
-                        'released' => 'Escrow Released',
-                        'partially_deducted' => 'Partially Deducted',
+                        'processing' => 'Processing',
                         'refunded' => 'Refunded',
+                        'failed' => 'Failed',
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('approve_refund')
+                    ->label('Approve & Refund')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (PaymentTransaction $record) {
+                        $record->update([
+                            'refund_status' => 'refunded',
+                            'refund_amount' => $record->eligible_refund_amount ?: $record->amount,
+                            'refund_reference' => 'REFD-ADM-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                            'refunded_at' => now(),
+                        ]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Refund Processed Successfully')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('retry_payout')
                     ->label('Retry Payout')
                     ->icon('heroicon-o-arrow-path')

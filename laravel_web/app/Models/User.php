@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email'])]
+#[Fillable(['name', 'email', 'password', 'role', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -21,7 +21,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->role === 'admin' || $this->email === 'admin@ridemycars.com';
+        return ($this->role === 'admin' || $this->email === 'admin@ridemycars.com') && $this->account_status !== 'suspended' && $this->account_status !== 'deactivated';
     }
 
     /**
@@ -34,6 +34,9 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'terms_accepted' => 'boolean',
+            'terms_accepted_at' => 'datetime',
+            'suspended_at' => 'datetime',
         ];
     }
 
@@ -61,4 +64,15 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(PaymentTransaction::class);
     }
+
+    public function disputes()
+    {
+        return $this->hasMany(Dispute::class);
+    }
+
+    public function privacyRequests()
+    {
+        return $this->hasMany(PrivacyRequest::class);
+    }
 }
+

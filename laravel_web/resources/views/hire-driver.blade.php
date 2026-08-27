@@ -154,6 +154,10 @@
             </template>
             
         </div>
+
+        <p class="text-[10px] text-gray-500 dark:text-gray-400 text-center mt-6">
+            By booking a driver, you agree to the <a href="/terms-and-conditions" target="_blank" class="underline font-bold text-indigo-500">Terms & Conditions</a> and <a href="/refund-cancellation-policy" target="_blank" class="underline font-bold text-indigo-500">Refund & Cancellation Policy</a>.
+        </p>
     </main>
 
 </x-layout>

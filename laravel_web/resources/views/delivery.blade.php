@@ -479,6 +479,22 @@
                             <p><strong class="text-gray-900 dark:text-white">Category:</strong> <span x-text="packageCategory"></span> (<span x-text="packageSize"></span> Size, <span x-text="packageWeight"></span> kg)</p>
                             <p><strong class="text-gray-900 dark:text-white">Speed:</strong> <span x-text="deliveryType"></span> Delivery</p>
                         </div>
+
+                        <!-- Prohibited Consignment Declaration Box -->
+                        <div class="p-4 bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl space-y-2 text-xs">
+                            <h4 class="font-extrabold text-red-900 dark:text-red-200 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>🚫 Prohibited Consignment Declaration</span>
+                            </h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-[11px] leading-relaxed">
+                                Per Article VII of our Terms & Conditions, consignments must NOT contain illegal narcotics, weapons/firearms, explosives, flammable liquids, cash/bullion, biohazards, or stolen goods.
+                            </p>
+                            <label class="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                                <input type="checkbox" name="prohibited_items_acknowledged" value="1" required class="w-4 h-4 mt-0.5 rounded text-amber-500 border-gray-300 focus:ring-amber-500">
+                                <span class="font-bold text-gray-900 dark:text-white text-xs">
+                                    I confirm and declare that this parcel does NOT contain any prohibited, illegal, or hazardous items.
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="flex justify-between pt-2">

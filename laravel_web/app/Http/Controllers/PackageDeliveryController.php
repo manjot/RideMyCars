@@ -114,6 +114,7 @@ class PackageDeliveryController extends Controller
             'declared_value' => 'nullable|numeric|min:0',
             'special_handling' => 'nullable|array',
             'payment_method' => 'required|string',
+            'prohibited_items_acknowledged' => 'required|accepted',
         ]);
 
         $customerId = Auth::id();
@@ -155,6 +156,7 @@ class PackageDeliveryController extends Controller
             'quantity' => (int)$validated['quantity'],
             'declared_value' => (float)($validated['declared_value'] ?? 0),
             'special_handling' => $validated['special_handling'] ?? [],
+            'prohibited_items_acknowledged' => true,
             'delivery_otp' => $deliveryOtp,
             'delivery_status' => 'pending',
             'subtotal' => $priceRes['subtotal'],

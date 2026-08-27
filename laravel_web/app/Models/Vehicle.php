@@ -28,6 +28,11 @@ class Vehicle extends Model
         'fuel_policy',
         'min_driver_age',
         'category',
+        'insurance_policy_number',
+        'insurance_expiry',
+        'roadworthiness_expiry',
+        'approval_status',
+        'approval_notes',
     ];
 
     protected $casts = [

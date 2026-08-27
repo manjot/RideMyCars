@@ -122,6 +122,31 @@ class VehicleResource extends Resource
                     ->searchable(),
                 Forms\Components\Toggle::make('is_available')
                     ->required(),
+
+                Forms\Components\Section::make('Legal Compliance & Rental Approval')
+                    ->schema([
+                        Forms\Components\TextInput::make('insurance_policy_number')
+                            ->label('Insurance Policy Number'),
+                        Forms\Components\DatePicker::make('insurance_expiry')
+                            ->label('Insurance Expiry Date'),
+                        Forms\Components\DatePicker::make('roadworthiness_expiry')
+                            ->label('Roadworthiness / Inspection Expiry'),
+                        Forms\Components\Select::make('approval_status')
+                            ->options([
+                                'pending' => 'Pending Review',
+                                'under_review' => 'Under Review',
+                                'approved' => 'Approved for Rental & Ride',
+                                'rejected' => 'Rejected',
+                                'expired' => 'Documentation Expired',
+                                'suspended' => 'Suspended',
+                            ])
+                            ->required()
+                            ->default('approved'),
+                        Forms\Components\Textarea::make('approval_notes')
+                            ->label('Compliance / Approval Notes')
+                            ->rows(2)
+                            ->columnSpanFull(),
+                    ])->columns(2),
             ]);
     }
 
@@ -145,6 +170,15 @@ class VehicleResource extends Resource
                     ->placeholder('Unassigned')
                     ->badge()
                     ->color('info'),
+                Tables\Columns\TextColumn::make('approval_status')
+                    ->label('Compliance Approval')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'approved' => 'success',
+                        'pending', 'under_review' => 'warning',
+                        'rejected', 'expired', 'suspended' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

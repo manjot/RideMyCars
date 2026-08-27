@@ -104,6 +104,15 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
     ]);
 
     if (auth()->attempt($credentials)) {
+        $user = auth()->user();
+        if (in_array($user->account_status, ['suspended', 'deactivated'])) {
+            $reason = $user->suspension_reason ?? 'Administrative policy violation';
+            auth()->logout();
+            return back()->withErrors([
+                'email' => "Your account has been {$user->account_status}. Reason: {$reason}. Please contact legal@ridemycars.com for legal compliance appeal."
+            ])->onlyInput('email');
+        }
+
         $request->session()->regenerate();
         
         \App\Services\ActivityLogService::log('login', 'User logged in successfully', auth()->id());
@@ -118,6 +127,96 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
     return back()->withErrors([
         'email' => 'The provided credentials do not match our records.',
     ])->onlyInput('email');
+});
+
+Route::get('/terms-and-conditions', function () {
+    return view('terms');
+});
+
+Route::get('/privacy-policy', function () {
+    return view('privacy');
+});
+
+Route::get('/refund-cancellation-policy', function () {
+    return view('refund');
+});
+
+Route::get('/refund-cancellation', function () {
+    return view('refund');
+});
+
+Route::get('/refund', function () {
+    return view('refund');
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+
+Route::get('/contact-us', function () {
+    return view('contact');
+});
+
+Route::post('/contact', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'message' => 'required|string',
+    ]);
+
+    return back()->with('success', 'Thank you for reaching out! Your message has been received by the RideMyCars support desk.');
+});
+
+Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index']);
+Route::post('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'store']);
+
+Route::middleware('auth')->group(function () {
+    Route::get('/disputes', [\App\Http\Controllers\DisputeController::class, 'index']);
+    Route::get('/disputes/create', [\App\Http\Controllers\DisputeController::class, 'create']);
+    Route::post('/disputes', [\App\Http\Controllers\DisputeController::class, 'store']);
+
+    Route::post('/api/cancellation/preview', function (\Illuminate\Http\Request $request) {
+        $type = $request->input('service_type', 'ride');
+        $id = $request->input('id');
+
+        $model = match ($type) {
+            'ride' => \App\Models\Ride::find($id),
+            'chauffeur', 'rental' => \App\Models\DriverBooking::find($id),
+            'delivery' => \App\Models\PackageDelivery::find($id),
+            default => null,
+        };
+
+        if (!$model) {
+            return response()->json(['error' => 'Booking record not found'], 44);
+        }
+
+        $calc = \App\Services\RefundService::calculateCancellation($model, $type);
+        return response()->json($calc);
+    });
+
+    Route::post('/api/cancellation/confirm', function (\Illuminate\Http\Request $request) {
+        $type = $request->input('service_type', 'ride');
+        $id = $request->input('id');
+        $reason = $request->input('reason', 'User requested cancellation');
+
+        $model = match ($type) {
+            'ride' => \App\Models\Ride::find($id),
+            'chauffeur', 'rental' => \App\Models\DriverBooking::find($id),
+            'delivery' => \App\Models\PackageDelivery::find($id),
+            default => null,
+        };
+
+        if (!$model) {
+            return response()->json(['error' => 'Booking record not found'], 404);
+        }
+
+        $result = \App\Services\RefundService::processRefund($model, $type, $reason);
+        return response()->json([
+            'success' => true,
+            'message' => "Booking cancelled successfully. Eligible refund of \${$result['eligible_refund_amount']} processed.",
+            'result' => $result,
+        ]);
+    });
 });
 
 Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
@@ -196,6 +295,7 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
         'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
         'password' => ['required', 'string', 'min:8', 'confirmed'],
         'role' => ['nullable', 'string', 'in:customer,driver,owner'],
+        'terms' => ['required', 'accepted'],
     ]);
 
     $user = \App\Models\User::create([
@@ -203,6 +303,10 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
         'email' => $validated['email'],
         'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         'role' => $validated['role'] ?? 'customer',
+        'terms_accepted' => true,
+        'terms_accepted_at' => now(),
+        'terms_version' => '2026-08-23',
+        'account_status' => 'active',
     ]);
 
     if ($user->role === 'driver') {

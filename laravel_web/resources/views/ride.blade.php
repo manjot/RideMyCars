@@ -325,6 +325,9 @@
                                     Request <span x-text="vehicle_type || 'Ride'" class="ml-1 truncate max-w-[130px]"></span>
                                 </button>
                             </div>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 text-center mt-2">
+                                Transportation is provided by independent licensed drivers. By requesting, you agree to our <a href="/terms-and-conditions" target="_blank" class="underline font-bold text-indigo-500">Terms & Conditions</a>.
+                            </p>
                         </div>
 
                         <!-- Payment Modal (Uber Style) -->

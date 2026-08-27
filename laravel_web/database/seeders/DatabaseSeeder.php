@@ -150,6 +150,7 @@ class DatabaseSeeder extends Seeder
             PaymentTransactionSeeder::class,
             CategoryAndBannerSeeder::class,
             ProductSeeder::class,
+            DisputeSeeder::class,
         ]);
     }
 }

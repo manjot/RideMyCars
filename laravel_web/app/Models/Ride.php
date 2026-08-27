@@ -68,6 +68,15 @@ class Ride extends Model
         'protection_fee',
         'selected_extras',
         'extras_fee',
+        'cancellation_fee',
+        'penalty_amount',
+        'return_fee',
+        'eligible_refund_amount',
+        'refund_amount',
+        'refund_status',
+        'refund_reference',
+        'refunded_at',
+        'accepted_at',
     ];
 
     protected $casts = [

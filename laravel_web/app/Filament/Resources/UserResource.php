@@ -68,6 +68,32 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('corporate_company_name')
                     ->label('Corporate Company Name'),
                 Forms\Components\DateTimePicker::make('email_verified_at'),
+
+                Forms\Components\Section::make('Account Compliance & Status')
+                    ->schema([
+                        Forms\Components\Select::make('account_status')
+                            ->options([
+                                'active' => 'Active',
+                                'suspended' => 'Suspended (Blocked from System)',
+                                'deactivated' => 'Deactivated (Permanently Disabled)',
+                            ])
+                            ->required()
+                            ->default('active'),
+                        Forms\Components\Textarea::make('suspension_reason')
+                            ->label('Reason for Suspension / Action')
+                            ->placeholder('e.g. Fraud, Harassment, Failed Background Check, Dangerous Driving...')
+                            ->rows(2),
+                        Forms\Components\Textarea::make('admin_notes')
+                            ->label('Internal Admin Notes')
+                            ->rows(2),
+                        Forms\Components\Toggle::make('terms_accepted')
+                            ->label('Terms & Conditions Accepted'),
+                        Forms\Components\DateTimePicker::make('terms_accepted_at')
+                            ->label('Terms Acceptance Date'),
+                        Forms\Components\TextInput::make('terms_version')
+                            ->label('Terms Version')
+                            ->default('2026-08-23'),
+                    ])->columns(2),
             ]);
     }
 
@@ -89,6 +115,21 @@ class UserResource extends Resource
                         'customer' => 'success',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('account_status')
+                    ->label('Account Status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'active' => 'success',
+                        'suspended' => 'danger',
+                        'deactivated' => 'warning',
+                        default => 'gray',
+                    }),
+                Tables\Columns\IconColumn::make('terms_accepted')
+                    ->label('Terms Agreed')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('membership_type')
                     ->label('Membership')
                     ->badge()
@@ -111,12 +152,9 @@ class UserResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

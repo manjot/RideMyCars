@@ -64,6 +64,15 @@ class DriverBooking extends Model
         'started_at',
         'completed_at',
         'cancellation_reason',
+        'cancellation_fee',
+        'penalty_amount',
+        'return_fee',
+        'eligible_refund_amount',
+        'refund_amount',
+        'refund_status',
+        'refund_reference',
+        'refunded_at',
+        'accepted_at',
     ];
 
     protected $casts = [
