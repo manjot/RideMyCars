@@ -351,4 +351,5 @@
             }
         });
     </script>
+    <x-stripe-modal serviceType="rental" />
 </x-layout>

@@ -74,8 +74,9 @@ return [
     ],
 
     'stripe' => [
-        'key' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA',
-        'secret' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i',
+        'key' => env('STRIPE_PUBLISHABLE_KEY', env('STRIPE_KEY', 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA')),
+        'secret' => env('STRIPE_SECRET_KEY', env('STRIPE_SECRET', 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i')),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET', ''),
     ],
 
     'firebase' => [

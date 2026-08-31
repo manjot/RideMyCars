@@ -315,4 +315,5 @@
         </p>
     </main>
 
+    <x-stripe-modal serviceType="driver_booking" />
 </x-layout>

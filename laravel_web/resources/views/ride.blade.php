@@ -371,13 +371,15 @@
                                         <label class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors group">
                                             <div class="flex items-center gap-4">
                                                 <div class="w-10 h-7 bg-[#635BFF] rounded text-white flex items-center justify-center font-bold text-lg">S</div>
-                                                <span class="font-bold text-gray-900 dark:text-white text-[15px]">Stripe / Card</span>
+                                                <span class="font-bold text-gray-900 dark:text-white text-[15px]">Stripe / Credit Card</span>
                                             </div>
                                             <div class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center" :class="paymentMethod === 'stripe' ? 'border-black dark:border-white bg-black dark:bg-white' : 'group-hover:border-gray-400'">
                                                 <svg x-show="paymentMethod === 'stripe'" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white dark:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                             </div>
                                             <input type="radio" x-model="paymentMethod" value="stripe" class="hidden">
                                         </label>
+                                        <!-- Card Fillup Information for Stripe -->
+                                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
                                     </div>
                                     
                                     <button type="button" @click="paymentModal = false" class="w-full py-3.5 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl text-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
@@ -1028,8 +1030,8 @@
                         this.rideId = data.ride_id;
                         this.pollingUrl = data.polling_url;
                         
-                        if (data.url) {
-                            window.location.href = data.url; // Stripe
+                        if (this.paymentMethod === 'stripe' || data.stripe_client_secret || (data.url && data.url.includes('stripe'))) {
+                            window.location.href = '/payment/verify-details/ride/' + data.ride_id;
                             return;
                         }
                         
@@ -1136,4 +1138,5 @@
         });
     </script>
 
+    <x-stripe-modal serviceType="ride" />
 </x-layout>

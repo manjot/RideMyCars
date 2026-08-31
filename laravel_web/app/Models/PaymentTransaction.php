@@ -33,6 +33,9 @@ class PaymentTransaction extends Model
         'gateway_fee_absorber',
         'payout_failed_reason',
         'payout_retry_count',
+        'stripe_payment_intent_id',
+        'stripe_client_secret',
+        'paid_at',
         'service_vertical',
         'gateway_response',
         'cancellation_fee',
@@ -47,6 +50,7 @@ class PaymentTransaction extends Model
 
     protected $casts = [
         'gateway_response' => 'array',
+        'paid_at' => 'datetime',
     ];
 
     public function user()

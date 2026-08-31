@@ -167,8 +167,10 @@ Route::post('/contact', function (\Illuminate\Http\Request $request) {
     return back()->with('success', 'Thank you for reaching out! Your message has been received by the RideMyCars support desk.');
 });
 
-Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index']);
-Route::post('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'store']);
+Route::get('/payment/verify-details/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'showDetails'])->name('payment.verify-details');
+Route::post('/api/driver/verify-booking', [\App\Http\Controllers\StripeVerificationController::class, 'driverRespond']);
+Route::get('/api/driver/pending-verifications', [\App\Http\Controllers\StripeVerificationController::class, 'getPendingVerifications']);
+Route::get('/api/payment/verification-status/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'getVerificationStatus']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/disputes', [\App\Http\Controllers\DisputeController::class, 'index']);
@@ -541,29 +543,16 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
 
         if (strtolower($paymentMethod) === 'stripe') {
             try {
-                \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-                
-                $session = \Stripe\Checkout\Session::create([
-                    'payment_method_types' => ['card'],
-                    'line_items' => [[
-                        'price_data' => [
-                            'currency' => 'usd',
-                            'product_data' => [
-                                'name' => "Ride: {$ride->pickup_location} to {$ride->dropoff_location}",
-                            ],
-                            'unit_amount' => (int)($amount * 100),
-                        ],
-                        'quantity' => 1,
-                    ]],
-                    'mode' => 'payment',
-                    'success_url' => url('/ride?success=1&ride_id=' . $ride->id),
-                    'cancel_url' => url('/ride?cancelled=1'),
-                ]);
+                $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, auth()->id());
 
                 return response()->json([
-                    'url' => $session->url,
+                    'success' => true,
                     'ride_id' => $ride->id,
-                    'polling_url' => "/api/ride/{$ride->id}/status"
+                    'stripe_client_secret' => $intentData['client_secret'],
+                    'stripe_publishable_key' => $intentData['publishable_key'],
+                    'stripe_intent_id' => $intentData['payment_intent_id'],
+                    'amount' => $intentData['amount'],
+                    'currency' => $intentData['currency'],
                 ]);
             } catch (\Exception $e) {
                 return response()->json(['error' => $e->getMessage()], 500);
@@ -1452,6 +1441,20 @@ Route::post('/contact/send', function (\Illuminate\Http\Request $request) {
     \App\Services\ActivityLogService::log('inquiry_submitted', "Inquiry submitted by {$userName} ({$userEmail}): {$subject}", auth()->id());
 
     return back()->with('success', '🎉 Your message has been sent successfully! Our concierge team has received your inquiry and will reply to your email shortly.');
+});
+
+// Payment confirmation routes
+Route::get('/payment/success', function (\Illuminate\Http\Request $request) {
+    $intentId = $request->query('intent');
+    $transaction = null;
+    if ($intentId) {
+        $transaction = \App\Models\PaymentTransaction::where('stripe_payment_intent_id', $intentId)->first();
+    }
+    return view('payment.success', ['transaction' => $transaction]);
+});
+
+Route::get('/payment/failed', function () {
+    return view('payment.failed');
 });
 
 // Generic & Legal pages

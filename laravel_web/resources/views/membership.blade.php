@@ -104,14 +104,14 @@
                     </ul>
                 </div>
 
-                <form action="/membership/subscribe" method="POST" class="space-y-4">
+                <form action="/membership/subscribe" method="POST" x-data="{ paymentMethod: 'stripe' }" class="space-y-4">
                     @csrf
                     <input type="hidden" name="membership_type" value="club">
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Select Payment Method</label>
                         <div class="relative">
-                            <select name="payment_method" class="w-full px-4 py-3 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium cursor-pointer appearance-none">
+                            <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium cursor-pointer appearance-none">
                                 <option value="stripe">💳 Stripe</option>
                                 <option value="momo">📱 Momo Pay</option>
                                 <option value="cash">💵 Cash</option>
@@ -123,6 +123,9 @@
                                 </svg>
                             </div>
                         </div>
+
+                        <!-- Card Fillup Information for Stripe -->
+                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
                     </div>
 
                     @auth
@@ -201,4 +204,5 @@
 
         </div>
     </main>
+    <x-stripe-modal serviceType="membership" />
 </x-layout>

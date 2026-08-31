@@ -305,6 +305,9 @@
                         </select>
                     </div>
 
+                    <!-- Card Fillup Information for Stripe -->
+                    <x-stripe-card-input modelName="paymentMethod" value="stripe" />
+
                     <!-- Primary Request CTA -->
                     <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-brand-500/25 cursor-pointer uppercase tracking-wider">
                         🚀 Request Driver Now (<span x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>)
@@ -386,4 +389,5 @@
             }
         });
     </script>
+    <x-stripe-modal serviceType="driver_booking" />
 </x-layout>

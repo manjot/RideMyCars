@@ -50,6 +50,121 @@
                         $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
                     @endphp
 
+                    <!-- Pending Payment & Booking Verification Requests -->
+                    <div x-data="driverVerificationRequests()" x-init="fetchRequests()" class="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-3xl p-6 shadow-sm mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
+                                Pending Payment & Booking Verification Requests
+                            </h2>
+                            <button type="button" @click="fetchRequests()" class="text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                                🔄 Refresh
+                            </button>
+                        </div>
+
+                        <div x-show="loading" class="py-4 text-center text-xs text-amber-700 dark:text-amber-300">
+                            Loading pending verification requests...
+                        </div>
+
+                        <div x-show="!loading && items.length === 0" class="py-4 text-center text-xs text-gray-500 dark:text-gray-400">
+                            No pending payment verification requests at the moment.
+                        </div>
+
+                        <div x-show="!loading && items.length > 0" class="space-y-4">
+                            <template x-for="item in items" :key="item.type + '-' + item.id">
+                                <div class="border border-amber-300 dark:border-amber-800/50 rounded-2xl bg-white dark:bg-[#111] p-5 shadow-sm space-y-3">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-lg" x-text="item.type_label"></span>
+                                            <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Booking ID: #' + item.code"></h4>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Customer: ' + item.customer_name"></p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="font-black text-xl text-emerald-600 dark:text-emerald-400" x-text="'$' + item.amount.toFixed(2) + ' ' + item.currency"></span>
+                                            <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">💳 Stripe Verification Pending</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-xs text-gray-600 dark:text-gray-300 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 dark:bg-white/5 p-3 rounded-xl">
+                                        <p><strong>📍 Pickup:</strong> <span x-text="item.pickup"></span></p>
+                                        <p><strong>🏁 Dropoff:</strong> <span x-text="item.dropoff"></span></p>
+                                        <p><strong>📅 Date & Time:</strong> <span x-text="item.schedule"></span></p>
+                                        <p><strong>🚘 Vehicle Info:</strong> <span x-text="item.vehicle"></span></p>
+                                    </div>
+
+                                    <div class="flex items-center justify-end gap-3 pt-2">
+                                        <button type="button" @click="respond(item, 'reject')" :disabled="processing" class="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 font-bold rounded-xl text-xs transition">
+                                            ✗ Reject Verification
+                                        </button>
+                                        <button type="button" @click="respond(item, 'approve')" :disabled="processing" class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+                                            <span x-show="processing" class="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
+                                            <span>✓ Approve & Verify Details</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <script>
+                    function driverVerificationRequests() {
+                        return {
+                            loading: true,
+                            processing: false,
+                            items: [],
+
+                            async fetchRequests() {
+                                this.loading = true;
+                                try {
+                                    const res = await fetch('/api/driver/pending-verifications');
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        this.items = data.items || [];
+                                    }
+                                } catch (e) {
+                                    console.error("Error fetching driver verification requests:", e);
+                                } finally {
+                                    this.loading = false;
+                                }
+                            },
+
+                            async respond(item, action) {
+                                let reason = '';
+                                if (action === 'reject') {
+                                    reason = prompt("Please enter rejection reason for customer:", "Schedule mismatch or vehicle unavailable");
+                                    if (reason === null) return;
+                                }
+
+                                this.processing = true;
+                                try {
+                                    const res = await fetch('/api/driver/verify-booking', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                                        },
+                                        body: JSON.stringify({
+                                            service_type: item.type,
+                                            service_id: item.id,
+                                            action: action,
+                                            rejection_reason: reason
+                                        })
+                                    });
+
+                                    const data = await res.json();
+                                    alert(data.message || 'Verification updated successfully.');
+                                    await this.fetchRequests();
+                                } catch (e) {
+                                    alert('Failed to submit response: ' + e.message);
+                                } finally {
+                                    this.processing = false;
+                                }
+                            }
+                        }
+                    }
+                    </script>
+
                     <!-- Incoming Ride Requests -->
                     <div x-data="driverPolling()" x-init="initPolling()" x-show="requests.length > 0" x-cloak class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/30 rounded-3xl p-6 shadow-sm mb-8 relative overflow-hidden">
                         <div class="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>

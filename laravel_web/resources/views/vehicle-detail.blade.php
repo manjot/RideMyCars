@@ -12,6 +12,7 @@
               protectionOption: 'basic', // basic, full_cover
               selectedExtras: [], // additional_driver, child_seat, gps
               paymentOption: 'part', // part (20%), full (100%)
+              paymentMethod: 'stripe',
               dailyRate: {{ $vehicle->daily_rate }},
 
               get daysCount() {
@@ -375,13 +376,16 @@
                         <!-- Payment Method -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Payment Method</label>
-                            <select name="payment_method" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white cursor-pointer">
+                            <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white cursor-pointer">
                                 <option value="stripe">💳 Stripe (Credit / Debit Card)</option>
                                 <option value="momo">📱 Momo Pay</option>
                                 <option value="cash">💵 Cash</option>
                                 <option value="applepay">🍏 Apple Pay</option>
                             </select>
                         </div>
+
+                        <!-- Card Fillup Information for Stripe -->
+                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
 
                         <!-- Terms & Agreement Checkbox -->
                         <div class="space-y-2 text-xs">

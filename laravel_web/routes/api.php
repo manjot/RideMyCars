@@ -9,9 +9,25 @@ use App\Http\Controllers\Api\DriverApiController;
 use App\Http\Controllers\Api\BannerApiController;
 use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\ProductApiController;
+use App\Http\Controllers\Api\StripePaymentController;
+use App\Http\Controllers\Api\StripeWebhookController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+use App\Http\Controllers\StripeVerificationController;
+
+// Stripe Payment Gateway & Webhooks
+Route::post('/stripe/create-payment-intent', [StripePaymentController::class, 'createPaymentIntent']);
+Route::post('/stripe/confirm-payment', [StripePaymentController::class, 'confirmPayment']);
+Route::get('/stripe/payment-status/{identifier}', [StripePaymentController::class, 'getPaymentStatus']);
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
+
+// Stripe Driver Verification Flow
+Route::post('/payment/submit-verification', [StripeVerificationController::class, 'submitForVerification']);
+Route::post('/driver/verify-booking', [StripeVerificationController::class, 'driverRespond']);
+Route::get('/payment/verification-status/{serviceType}/{serviceId}', [StripeVerificationController::class, 'getVerificationStatus']);
+Route::get('/driver/pending-verifications', [StripeVerificationController::class, 'getPendingVerifications']);
 
 // Public Banners, Categories & Products
 Route::get('/banners', [BannerApiController::class, 'index']);

@@ -182,6 +182,17 @@ class PackageDeliveryController extends Controller
             ['delivery_id' => $delivery->id, 'total_price' => $delivery->total_price]
         );
 
+        if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'delivery_id' => $delivery->id,
+                'delivery_code' => $delivery->delivery_code,
+                'total_price' => (float)$delivery->total_price,
+                'currency' => $delivery->currency ?? 'USD',
+                'redirect_url' => route('package-delivery.tracker', $delivery->id),
+            ]);
+        }
+
         return redirect()->route('package-delivery.tracker', $delivery->id)->with('success', 'Package delivery dispatched successfully! Tracking live courier status...');
     }
 

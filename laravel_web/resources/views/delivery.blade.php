@@ -68,12 +68,83 @@
                       console.error(e);
                   }
               },
+              isSubmitting: false,
+              submitError: '',
+
               toggleHandling(val) {
                   const idx = this.specialHandling.indexOf(val);
                   if (idx > -1) {
                       this.specialHandling.splice(idx, 1);
                   } else {
                       this.specialHandling.push(val);
+                  }
+              },
+
+              async submitDeliveryForm(event) {
+                  this.submitError = '';
+
+                  // Validate Step 1
+                  if (!this.pickupLocation || !this.pickupLocation.trim()) {
+                      this.currentStep = 1;
+                      this.submitError = 'Please enter a valid Pickup Address.';
+                      return;
+                  }
+                  if (!this.dropoffLocation || !this.dropoffLocation.trim()) {
+                      this.currentStep = 1;
+                      this.submitError = 'Please enter a valid Drop-off / Destination Address.';
+                      return;
+                  }
+
+                  // Validate Step 3
+                  if (!this.senderName || !this.senderName.trim() || !this.senderPhone || !this.senderPhone.trim()) {
+                      this.currentStep = 3;
+                      this.submitError = 'Please fill in Sender Name and Phone Number.';
+                      return;
+                  }
+                  if (!this.recipientName || !this.recipientName.trim() || !this.recipientPhone || !this.recipientPhone.trim()) {
+                      this.currentStep = 3;
+                      this.submitError = 'Please fill in Recipient Name and Phone Number.';
+                      return;
+                  }
+
+                  // Validate Step 6 Checkbox
+                  const prohibitedCheckbox = document.querySelector('input[name="prohibited_items_acknowledged"]');
+                  if (prohibitedCheckbox && !prohibitedCheckbox.checked) {
+                      this.currentStep = 6;
+                      this.submitError = 'Please confirm the Prohibited Consignment Declaration.';
+                      return;
+                  }
+
+                  this.isSubmitting = true;
+
+                  try {
+                      const formData = new FormData(event.target);
+                      const response = await fetch('/delivery/book', {
+                          method: 'POST',
+                          headers: {
+                              'Accept': 'application/json',
+                              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                          },
+                          body: formData
+                      });
+
+                      const data = await response.json();
+
+                      if (!response.ok || !data.success) {
+                          this.isSubmitting = false;
+                          this.submitError = data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Failed to dispatch parcel. Please check form fields.');
+                          return;
+                      }
+
+                      if (this.paymentMethod === 'stripe') {
+                          window.location.href = '/payment/verify-details/package_delivery/' + data.delivery_id;
+                      } else {
+                          window.location.href = data.redirect_url || ('/admin/package-delivery-tracker/' + data.delivery_id);
+                      }
+                  } catch (err) {
+                      console.error("Delivery submission error:", err);
+                      this.isSubmitting = false;
+                      this.submitError = err.message || 'An unexpected error occurred. Please try again.';
                   }
               }
           }"
@@ -138,7 +209,7 @@
             </div>
         </div>
 
-        <form action="/delivery/book" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form action="/delivery/book" method="POST" @submit.prevent="submitDeliveryForm($event)" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             @csrf
             <input type="hidden" name="pickup_lat" x-model="pickupLat" id="pickup_lat_input">
             <input type="hidden" name="pickup_lng" x-model="pickupLng" id="pickup_lng_input">
@@ -435,6 +506,9 @@
                             <option value="cash">💵 Cash on Pickup / Delivery</option>
                             <option value="applepay">🍏 Apple Pay</option>
                         </select>
+
+                        <!-- Card Fillup Information for Stripe -->
+                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
                     </div>
 
                     <div class="flex justify-between pt-2">
@@ -495,14 +569,20 @@
                                 </span>
                             </label>
                         </div>
+                        <!-- Validation / Submit Error Alert -->
+                        <div x-show="submitError" x-transition class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-2xl text-xs font-bold flex items-center gap-2">
+                            <span>⚠️</span>
+                            <span x-text="submitError"></span>
+                        </div>
                     </div>
 
                     <div class="flex justify-between pt-2">
-                        <button type="button" @click="currentStep = 5" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
+                        <button type="button" @click="currentStep = 5" :disabled="isSubmitting" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl disabled:opacity-50">
                             ← Back
                         </button>
-                        <button type="submit" class="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-amber-500/25 uppercase tracking-wider">
-                            🚀 Confirm & Dispatch Parcel (<span x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>)
+                        <button type="submit" :disabled="isSubmitting" class="px-8 py-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-sm rounded-2xl shadow-lg shadow-amber-500/25 uppercase tracking-wider flex items-center justify-center gap-2">
+                            <svg x-show="isSubmitting" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span x-text="isSubmitting ? 'Dispatching Parcel...' : '🚀 Confirm & Dispatch Parcel ($' + Number(priceBreakdown.total_price || 0).toFixed(2) + ')'"></span>
                         </button>
                     </div>
                 </div>
@@ -776,4 +856,5 @@
             }
         });
     </script>
+    <x-stripe-modal serviceType="package_delivery" />
 </x-layout>

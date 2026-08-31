@@ -202,7 +202,8 @@ class DriverBookingController extends Controller
             'total_price' => $priceInfo['total_price'],
             'currency' => $priceInfo['currency'],
             'payment_method' => $validated['payment_method'],
-            'payment_status' => ($validated['payment_method'] === 'cash') ? 'pending' : 'paid',
+            'payment_status' => 'pending',
+            'verification_status' => ($validated['payment_method'] === 'stripe') ? 'pending_verification' : 'driver_verified',
             'booking_status' => 'pending',
             'notes' => $validated['notes'] ?? null,
         ]);
@@ -224,6 +225,18 @@ class DriverBookingController extends Controller
                 'currency' => $booking->currency,
             ]
         );
+
+        if ($validated['payment_method'] === 'stripe') {
+            $redirectUrl = route('payment.verify-details', ['serviceType' => 'driver_booking', 'serviceId' => $booking->id]);
+            if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'booking_id' => $booking->id,
+                    'redirect_url' => $redirectUrl,
+                ]);
+            }
+            return redirect($redirectUrl);
+        }
 
         return redirect()->route('driver-booking.confirmation', $booking->id)->with('success', 'Driver booking request submitted successfully!');
     }
