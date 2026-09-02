@@ -57,8 +57,24 @@
                     <span x-text="errorMessage"></span>
                 </div>
 
+                <!-- Already Paid State -->
+                <div x-show="isAlreadyPaid" class="py-6 text-center space-y-4">
+                    <div class="w-16 h-16 bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto text-3xl font-black shadow-md">
+                        ✓
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-black text-gray-900 dark:text-white">Payment Already Completed</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">This booking has already been paid in full.</p>
+                    </div>
+                    <div class="pt-2">
+                        <a href="/my-rides" class="inline-flex items-center justify-center px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-extrabold text-sm rounded-2xl shadow-lg hover:opacity-90 transition">
+                            View Booking & Receipt →
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Stripe Element Container -->
-                <div x-show="!isLoading" class="space-y-4">
+                <div x-show="!isLoading && !isAlreadyPaid && !errorMessage" class="space-y-4">
                     <!-- Cardholder Name Field -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
@@ -93,7 +109,7 @@
             </div>
 
             <!-- Modal Actions -->
-            <div class="bg-gray-50 dark:bg-gray-900/60 px-6 py-4 flex flex-col sm:flex-row sm:justify-end gap-3 border-t border-gray-100 dark:border-gray-700">
+            <div x-show="!isAlreadyPaid" class="bg-gray-50 dark:bg-gray-900/60 px-6 py-4 flex flex-col sm:flex-row sm:justify-end gap-3 border-t border-gray-100 dark:border-gray-700">
                 <button type="button" @click="closeModal()" :disabled="isProcessing" class="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition disabled:opacity-50">
                     Cancel
                 </button>
@@ -117,6 +133,7 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
         isProcessing: false,
         errorMessage: '',
         loadingText: 'Initializing Stripe Security...',
+        isAlreadyPaid: false,
         cardholderName: '',
         serviceType: defaultType,
         serviceId: defaultId,
@@ -130,6 +147,7 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
         async openModal(data = {}) {
             this.isOpen = true;
             this.errorMessage = '';
+            this.isAlreadyPaid = false;
             this.isLoading = true;
             this.isProcessing = false;
             this.cardholderName = data.cardholderName || '';
@@ -174,6 +192,12 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
                 });
 
                 const result = await response.json();
+                if (result.already_paid || (result.message && result.message.toLowerCase().includes('already been paid'))) {
+                    this.isAlreadyPaid = true;
+                    this.isLoading = false;
+                    return;
+                }
+
                 if (!result.success) {
                     throw new Error(result.message || 'Failed to initialize payment intent.');
                 }
@@ -199,12 +223,19 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
                     }
                 };
 
-                const container = document.getElementById('stripe-card-element');
-                container.innerHTML = '';
-                this.cardElement = elements.create('card', { style, hidePostalCode: false });
-                this.cardElement.mount('#stripe-card-element');
-
                 this.isLoading = false;
+                if (typeof this.$nextTick === 'function') {
+                    await this.$nextTick();
+                } else {
+                    await new Promise(r => setTimeout(r, 50));
+                }
+
+                const container = document.getElementById('stripe-card-element');
+                if (container) {
+                    container.innerHTML = '';
+                    this.cardElement = elements.create('card', { style, hidePostalCode: false });
+                    this.cardElement.mount('#stripe-card-element');
+                }
             } catch (err) {
                 this.isLoading = false;
                 this.errorMessage = err.message || 'An error occurred starting payment.';

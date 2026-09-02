@@ -41,6 +41,18 @@ class StripeService
         $bookingDetails = static::resolveServiceBooking($serviceType, $serviceId);
         $model = $bookingDetails['model'] ?? null;
 
+        // Prevent duplicate payment if booking is already paid
+        if ($model && isset($model->payment_status) && strtolower($model->payment_status) === 'paid') {
+            throw new \InvalidArgumentException("This booking (#{$serviceId}) has already been paid.");
+        }
+
+        $user = $userId ? User::find($userId) : auth()->user();
+
+        // Verify booking ownership if model has user_id and user is logged in
+        if ($model && isset($model->user_id) && $user && $model->user_id && (int)$model->user_id !== (int)$user->id && !($user->is_admin ?? false)) {
+            throw new \InvalidArgumentException("You are not authorized to process payment for this booking.");
+        }
+
         // Automatically allow or promote verification status when customer initializes Stripe payment
         if ($model && isset($model->verification_status)) {
             if ($model->verification_status === 'rejected') {
@@ -52,8 +64,9 @@ class StripeService
         }
 
         $amount = (float) $bookingDetails['amount'];
-        $currency = strtolower($bookingDetails['currency'] ?? 'usd');
-        $user = $userId ? User::find($userId) : auth()->user();
+        $rawCurrency = strtolower($bookingDetails['currency'] ?? 'usd');
+        $supportedStripeCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud', 'chf', 'jpy', 'zar', 'inr', 'ngn'];
+        $currency = in_array($rawCurrency, $supportedStripeCurrencies) ? $rawCurrency : 'usd';
 
         if ($amount <= 0) {
             throw new \InvalidArgumentException("Invalid payment amount for {$serviceType} #{$serviceId}.");
@@ -70,6 +83,9 @@ class StripeService
                 $intent = \Stripe\PaymentIntent::retrieve($existingTxn->stripe_payment_intent_id);
                 if ($intent && in_array($intent->status, ['requires_payment_method', 'requires_confirmation', 'requires_action'])) {
                     return [
+                        'clientSecret' => $existingTxn->stripe_client_secret,
+                        'paymentIntentId' => $existingTxn->stripe_payment_intent_id,
+                        'publishableKey' => config('services.stripe.key'),
                         'client_secret' => $existingTxn->stripe_client_secret,
                         'publishable_key' => config('services.stripe.key'),
                         'payment_intent_id' => $existingTxn->stripe_payment_intent_id,
@@ -95,6 +111,7 @@ class StripeService
             'metadata' => [
                 'service_type' => $serviceType,
                 'booking_id' => $serviceId,
+                'order_id' => $serviceId,
                 'user_id' => $user->id ?? 0,
                 'transaction_ref' => $transactionRef,
             ],
@@ -124,6 +141,9 @@ class StripeService
         PaymentTransaction::create($txnData);
 
         return [
+            'clientSecret' => $intent->client_secret,
+            'paymentIntentId' => $intent->id,
+            'publishableKey' => config('services.stripe.key'),
             'client_secret' => $intent->client_secret,
             'publishable_key' => config('services.stripe.key'),
             'payment_intent_id' => $intent->id,

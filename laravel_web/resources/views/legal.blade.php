@@ -88,7 +88,7 @@
                         <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
                     </div>
                     <div class="border-t border-gray-200 dark:border-white/10 pt-2 mt-2 space-y-1">
-                        <p><strong>Contact Telephone:</strong> <a href="tel:+18885700008" class="text-brand-500 font-bold hover:underline">+1 888 570 0008</a></p>
+                        <p><strong>Contact Telephone:</strong> <a href="tel:+18552033177" class="text-brand-500 font-bold hover:underline">+1 855 203 3177</a></p>
                         <p><strong>Legal Counsel Email:</strong> <a href="mailto:legal@ridemycars.com" class="text-brand-500 font-bold hover:underline">legal@ridemycars.com</a></p>
                     </div>
                 </div>

@@ -20,9 +20,16 @@ class SettingsSeeder extends Seeder
             
             // Footer
             ['key' => 'footer.support_email', 'label' => 'Footer - Support Email', 'value' => 'support@ridemycars.com', 'group' => 'Footer', 'type' => 'text'],
-            ['key' => 'footer.support_phone', 'label' => 'Footer - Support Phone', 'value' => '+1 888 570 0008', 'group' => 'Footer', 'type' => 'text'],
+            ['key' => 'footer.support_phone', 'label' => 'Footer - Support Phone', 'value' => '+1 855 203 3177', 'group' => 'Footer', 'type' => 'text'],
             ['key' => 'footer.location', 'label' => 'Footer - Location', 'value' => 'Washington, DC', 'group' => 'Footer', 'type' => 'text'],
             ['key' => 'footer.copyright', 'label' => 'Footer - Copyright', 'value' => '© 2026 RideMyCars • A New Development Finance Group Company. All rights reserved.', 'group' => 'Footer', 'type' => 'text'],
+
+            // Social Media
+            ['key' => 'social.instagram_url', 'label' => 'Social - Instagram Profile URL', 'value' => 'https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr', 'group' => 'Social Media', 'type' => 'text'],
+            ['key' => 'social.x_url', 'label' => 'Social - X (Twitter) Profile URL', 'value' => 'https://x.com/ridemycars', 'group' => 'Social Media', 'type' => 'text'],
+            ['key' => 'social.tiktok_url', 'label' => 'Social - TikTok Profile URL', 'value' => 'https://www.tiktok.com/@ridemycars', 'group' => 'Social Media', 'type' => 'text'],
+            ['key' => 'social.facebook_url', 'label' => 'Social - Facebook Profile URL', 'value' => 'https://www.facebook.com/profile.php?id=61594184214102', 'group' => 'Social Media', 'type' => 'text'],
+            ['key' => 'social.linkedin_url', 'label' => 'Social - LinkedIn Profile URL', 'value' => 'https://www.linkedin.com/in/ride-mycars-587b03432', 'group' => 'Social Media', 'type' => 'text'],
 
             // App Links
             ['key' => 'app.ios_link', 'label' => 'App - iOS Download Link', 'value' => '#', 'group' => 'App Links', 'type' => 'text'],

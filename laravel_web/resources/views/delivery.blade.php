@@ -1,154 +1,7 @@
 <x-layout theme="theme-delivery">
     <x-slot:title>Package Delivery — RideMyCars Express Parcel Dispatch</x-slot>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10"
-          x-data="{
-              currentStep: 1,
-              pickupLocation: '{{ $pickup ?? '' }}',
-              dropoffLocation: '{{ $dropoff ?? '' }}',
-              pickupLat: null,
-              pickupLng: null,
-              dropoffLat: null,
-              dropoffLng: null,
-              
-              deliveryType: 'Hyperlocal', // Hyperlocal (Base), Scheduled, Same Day, Express, Instant
-              scheduleMode: 'now', // now, later
-              pickupDate: '{{ date('Y-m-d') }}',
-              pickupTime: '09:00',
-
-              senderName: '{{ auth()->user()->name ?? 'Jane Sender' }}',
-              senderPhone: '{{ auth()->user()->phone ?? '+1 555 019 2831' }}',
-              senderAddress: '',
-              
-              recipientName: 'Robert Johnson',
-              recipientPhone: '+1 555 992 4810',
-              recipientAddress: '',
-              deliveryInstructions: '',
-
-              packageCategory: 'Documents', // Documents, Clothing, Electronics, Household items, Office supplies, Personal belongings
-              packageDescription: 'Important Legal Contracts & Office Supplies',
-              packageSize: 'Small', // Small, Medium, Large
-              packageWeight: 1.5,
-              quantity: 1,
-              declaredValue: 150,
-              specialHandling: ['signature_required'],
-
-              paymentMethod: 'stripe',
-
-              priceBreakdown: {
-                  subtotal: 0,
-                  service_fee: 0,
-                  tax: 0,
-                  total_price: 0,
-                  currency_symbol: '$'
-              },
-
-              async updatePrice() {
-                  try {
-                      const res = await fetch('/delivery/calculate-price', {
-                          method: 'POST',
-                          headers: {
-                              'Content-Type': 'application/json',
-                              'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                          },
-                          body: JSON.stringify({
-                              pickup_lat: this.pickupLat,
-                              pickup_lng: this.pickupLng,
-                              dropoff_lat: this.dropoffLat,
-                              dropoff_lng: this.dropoffLng,
-                              delivery_type: this.deliveryType,
-                              package_size: this.packageSize,
-                              package_weight_kg: this.packageWeight
-                          })
-                      });
-                      if (res.ok) {
-                          this.priceBreakdown = await res.json();
-                      }
-                  } catch (e) {
-                      console.error(e);
-                  }
-              },
-              isSubmitting: false,
-              submitError: '',
-
-              toggleHandling(val) {
-                  const idx = this.specialHandling.indexOf(val);
-                  if (idx > -1) {
-                      this.specialHandling.splice(idx, 1);
-                  } else {
-                      this.specialHandling.push(val);
-                  }
-              },
-
-              async submitDeliveryForm(event) {
-                  this.submitError = '';
-
-                  // Validate Step 1
-                  if (!this.pickupLocation || !this.pickupLocation.trim()) {
-                      this.currentStep = 1;
-                      this.submitError = 'Please enter a valid Pickup Address.';
-                      return;
-                  }
-                  if (!this.dropoffLocation || !this.dropoffLocation.trim()) {
-                      this.currentStep = 1;
-                      this.submitError = 'Please enter a valid Drop-off / Destination Address.';
-                      return;
-                  }
-
-                  // Validate Step 3
-                  if (!this.senderName || !this.senderName.trim() || !this.senderPhone || !this.senderPhone.trim()) {
-                      this.currentStep = 3;
-                      this.submitError = 'Please fill in Sender Name and Phone Number.';
-                      return;
-                  }
-                  if (!this.recipientName || !this.recipientName.trim() || !this.recipientPhone || !this.recipientPhone.trim()) {
-                      this.currentStep = 3;
-                      this.submitError = 'Please fill in Recipient Name and Phone Number.';
-                      return;
-                  }
-
-                  // Validate Step 6 Checkbox
-                  const prohibitedCheckbox = document.querySelector('input[name="prohibited_items_acknowledged"]');
-                  if (prohibitedCheckbox && !prohibitedCheckbox.checked) {
-                      this.currentStep = 6;
-                      this.submitError = 'Please confirm the Prohibited Consignment Declaration.';
-                      return;
-                  }
-
-                  this.isSubmitting = true;
-
-                  try {
-                      const formData = new FormData(event.target);
-                      const response = await fetch('/delivery/book', {
-                          method: 'POST',
-                          headers: {
-                              'Accept': 'application/json',
-                              'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                          },
-                          body: formData
-                      });
-
-                      const data = await response.json();
-
-                      if (!response.ok || !data.success) {
-                          this.isSubmitting = false;
-                          this.submitError = data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Failed to dispatch parcel. Please check form fields.');
-                          return;
-                      }
-
-                      if (this.paymentMethod === 'stripe') {
-                          window.location.href = '/payment/verify-details/package_delivery/' + data.delivery_id;
-                      } else {
-                          window.location.href = data.redirect_url || ('/admin/package-delivery-tracker/' + data.delivery_id);
-                      }
-                  } catch (err) {
-                      console.error("Delivery submission error:", err);
-                      this.isSubmitting = false;
-                      this.submitError = err.message || 'An unexpected error occurred. Please try again.';
-                  }
-              }
-          }"
-          x-init="updatePrice(); $watch('deliveryType', () => updatePrice()); $watch('packageSize', () => updatePrice()); $watch('packageWeight', () => updatePrice());">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="packageDeliveryBooking">
 
         <!-- Category Banner Component -->
         <x-category-banner category="Delivery" />
@@ -854,6 +707,163 @@
                     );
                 });
             }
+        });
+    </script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('packageDeliveryBooking', () => ({
+                currentStep: 1,
+                pickupLocation: @json($pickup ?? ''),
+                dropoffLocation: @json($dropoff ?? ''),
+                pickupLat: null,
+                pickupLng: null,
+                dropoffLat: null,
+                dropoffLng: null,
+
+                deliveryType: 'Hyperlocal',
+                scheduleMode: 'now',
+                pickupDate: @json(date('Y-m-d')),
+                pickupTime: '09:00',
+
+                senderName: @json(auth()->user()->name ?? 'Jane Sender'),
+                senderPhone: @json(auth()->user()->phone ?? '+1 855 203 3177'),
+                senderAddress: '',
+
+                recipientName: 'Robert Johnson',
+                recipientPhone: '+1 855 203 3177',
+                recipientAddress: '',
+                deliveryInstructions: '',
+
+                packageCategory: 'Documents',
+                packageDescription: 'Important Legal Contracts & Office Supplies',
+                packageSize: 'Small',
+                packageWeight: 1.5,
+                quantity: 1,
+                declaredValue: 150,
+                specialHandling: ['signature_required'],
+
+                paymentMethod: 'stripe',
+
+                priceBreakdown: {
+                    subtotal: 0,
+                    service_fee: 0,
+                    tax: 0,
+                    total_price: 0,
+                    currency_symbol: '$'
+                },
+
+                init() {
+                    this.updatePrice();
+                    this.$watch('deliveryType', () => this.updatePrice());
+                    this.$watch('packageSize', () => this.updatePrice());
+                    this.$watch('packageWeight', () => this.updatePrice());
+                },
+
+                async updatePrice() {
+                    try {
+                        const res = await fetch('/api/delivery/calculate-price', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                pickup_lat: this.pickupLat,
+                                pickup_lng: this.pickupLng,
+                                dropoff_lat: this.dropoffLat,
+                                dropoff_lng: this.dropoffLng,
+                                delivery_type: this.deliveryType,
+                                package_size: this.packageSize,
+                                package_weight_kg: this.packageWeight
+                            })
+                        });
+                        if (res.ok) {
+                            this.priceBreakdown = await res.json();
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+                isSubmitting: false,
+                submitError: '',
+
+                toggleHandling(val) {
+                    const idx = this.specialHandling.indexOf(val);
+                    if (idx > -1) {
+                        this.specialHandling.splice(idx, 1);
+                    } else {
+                        this.specialHandling.push(val);
+                    }
+                },
+
+                async submitDeliveryForm(event) {
+                    this.submitError = '';
+
+                    // Validate Step 1
+                    if (!this.pickupLocation || !this.pickupLocation.trim()) {
+                        this.currentStep = 1;
+                        this.submitError = 'Please enter a valid Pickup Address.';
+                        return;
+                    }
+                    if (!this.dropoffLocation || !this.dropoffLocation.trim()) {
+                        this.currentStep = 1;
+                        this.submitError = 'Please enter a valid Drop-off / Destination Address.';
+                        return;
+                    }
+
+                    // Validate Step 3
+                    if (!this.senderName || !this.senderName.trim() || !this.senderPhone || !this.senderPhone.trim()) {
+                        this.currentStep = 3;
+                        this.submitError = 'Please fill in Sender Name and Phone Number.';
+                        return;
+                    }
+                    if (!this.recipientName || !this.recipientName.trim() || !this.recipientPhone || !this.recipientPhone.trim()) {
+                        this.currentStep = 3;
+                        this.submitError = 'Please fill in Recipient Name and Phone Number.';
+                        return;
+                    }
+
+                    // Validate Step 6 Checkbox
+                    const prohibitedCheckbox = document.querySelector('input[name="prohibited_items_acknowledged"]');
+                    if (prohibitedCheckbox && !prohibitedCheckbox.checked) {
+                        this.currentStep = 6;
+                        this.submitError = 'Please confirm the Prohibited Consignment Declaration.';
+                        return;
+                    }
+
+                    this.isSubmitting = true;
+
+                    try {
+                        const formData = new FormData(event.target);
+                        const response = await fetch('/delivery/book', {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok || !data.success) {
+                            this.isSubmitting = false;
+                            this.submitError = data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Failed to dispatch parcel. Please check form fields.');
+                            return;
+                        }
+
+                        if (this.paymentMethod === 'stripe' || this.paymentMethod === 'card' || (data.redirect_url && data.redirect_url.includes('verify-details'))) {
+                            window.location.href = data.redirect_url || ('/payment/verify-details/package_delivery/' + data.delivery_id);
+                        } else {
+                            window.location.href = data.redirect_url || ('/admin/package-delivery-tracker/' + data.delivery_id);
+                        }
+                    } catch (err) {
+                        console.error("Delivery submission error:", err);
+                        this.isSubmitting = false;
+                        this.submitError = err.message || 'An unexpected error occurred. Please try again.';
+                    }
+                }
+            }));
         });
     </script>
     <x-stripe-modal serviceType="package_delivery" />

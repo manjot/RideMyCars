@@ -114,6 +114,10 @@ class DriverBookingController extends Controller
             'pickup_location' => 'required|string|max:255',
             'dropoff_location' => 'nullable|string|max:255',
             'additional_stops' => 'nullable|array',
+            'additional_stops.*.location' => 'nullable|string|max:255',
+            'additional_stops.*.lat' => 'nullable|numeric',
+            'additional_stops.*.lng' => 'nullable|numeric',
+            'additional_stops.*.place_id' => 'nullable|string|max:255',
             'pickup_lat' => 'nullable|numeric',
             'pickup_lng' => 'nullable|numeric',
             'dropoff_lat' => 'nullable|numeric',
@@ -226,7 +230,8 @@ class DriverBookingController extends Controller
             ]
         );
 
-        if ($validated['payment_method'] === 'stripe') {
+        $method = strtolower($validated['payment_method'] ?? '');
+        if (in_array($method, ['stripe', 'card', 'credit_card', 'credit card'])) {
             $redirectUrl = route('payment.verify-details', ['serviceType' => 'driver_booking', 'serviceId' => $booking->id]);
             if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
                 return response()->json([

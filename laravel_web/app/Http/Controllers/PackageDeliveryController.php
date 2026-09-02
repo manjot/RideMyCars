@@ -166,7 +166,7 @@ class PackageDeliveryController extends Controller
             'total_price' => $priceRes['total_price'],
             'currency' => 'USD',
             'payment_method' => $validated['payment_method'],
-            'payment_status' => ($validated['payment_method'] === 'cash') ? 'pending' : 'paid',
+            'payment_status' => 'pending',
         ]);
 
         // Process payment
@@ -182,6 +182,10 @@ class PackageDeliveryController extends Controller
             ['delivery_id' => $delivery->id, 'total_price' => $delivery->total_price]
         );
 
+        $redirectUrl = ($validated['payment_method'] === 'stripe' || $validated['payment_method'] === 'card')
+            ? route('payment.verify-details', ['serviceType' => 'package_delivery', 'serviceId' => $delivery->id])
+            : route('package-delivery.tracker', $delivery->id);
+
         if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -189,7 +193,7 @@ class PackageDeliveryController extends Controller
                 'delivery_code' => $delivery->delivery_code,
                 'total_price' => (float)$delivery->total_price,
                 'currency' => $delivery->currency ?? 'USD',
-                'redirect_url' => route('package-delivery.tracker', $delivery->id),
+                'redirect_url' => $redirectUrl,
             ]);
         }
 

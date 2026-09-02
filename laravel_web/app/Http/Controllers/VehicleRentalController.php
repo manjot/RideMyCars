@@ -215,6 +215,11 @@ class VehicleRentalController extends Controller
 
         ActivityLogService::log('rental_created', "Created vehicle rental booking #{$ride->id} for {$vehicle->make} {$vehicle->model} (Receipt: {$rentalCode})", $riderId);
 
+        $method = strtolower($request->payment_method ?? '');
+        if ($method === 'stripe' || $method === 'credit card' || $method === 'card' || $method === 'credit_card') {
+            return redirect()->route('payment.verify-details', ['serviceType' => 'rental', 'serviceId' => $ride->id]);
+        }
+
         return redirect()->route('rent.voucher', $ride->id)->with('success', "Vehicle rental confirmed! Voucher Code: {$rentalCode}. Paid Today: \${$paidAmount}, Balance at Pickup: \${$remainingBalance}.");
     }
 

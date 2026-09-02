@@ -43,26 +43,26 @@
 
         <!-- Card Number -->
         <div>
-            <div class="flex justify-between items-center mb-1">
+            <div class="flex justify-between items-center mb-1 flex-wrap gap-1">
                 <label class="block text-[11px] font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Card Number <span class="text-red-500">*</span>
                 </label>
-                <div class="flex items-center space-x-1 text-[10px] font-bold text-gray-400">
-                    <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">VISA</span>
-                    <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">MC</span>
-                    <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">AMEX</span>
-                    <span class="px-1.5 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">DISCOVER</span>
+                <div class="flex items-center space-x-1 text-[9px] font-bold text-gray-400">
+                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">VISA</span>
+                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">MC</span>
+                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">AMEX</span>
+                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">DISCOVER</span>
                 </div>
             </div>
-            <div class="relative">
+            <div class="relative w-full">
                 <input type="text" 
                        name="card_number" 
                        maxlength="19" 
-                       placeholder="1234 5678 9012 3456" 
+                       placeholder="4242 4242 4242 4242" 
                        required
                        oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(.{4})/g, '$1 ').trim()"
-                       class="w-full pl-10 pr-3.5 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition tracking-widest">
-                <div class="absolute left-3 top-2.5 text-gray-400">
+                       class="w-full pl-8 pr-2.5 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-[13px] font-mono font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition tracking-wide shadow-inner">
+                <div class="absolute left-2.5 top-2.5 text-gray-400 text-xs">
                     💳
                 </div>
             </div>

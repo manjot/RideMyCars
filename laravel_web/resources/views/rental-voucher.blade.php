@@ -173,7 +173,14 @@
                     <div class="flex justify-between items-center text-sm font-extrabold text-amber-700 dark:text-amber-400 pt-1">
                         <span>Remaining Balance Payable at Pickup (80%):</span>
                         <span class="text-lg">${{ number_format($ride->remaining_balance, 2) }}</span>
-                    </div>
+                    @if($ride->payment_status !== 'paid')
+                        <div class="pt-3 border-t border-brand-200 dark:border-brand-800/30">
+                            <a href="{{ route('payment.verify-details', ['serviceType' => 'rental', 'serviceId' => $ride->id]) }}" class="w-full py-3.5 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                                <span>💳 Pay ${{ number_format($ride->total_amount, 2) }} Online with Stripe</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
 

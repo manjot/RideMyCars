@@ -425,17 +425,20 @@
                         Your unified mobility platform. Book rides, rent vehicles, hire verified private chauffeurs, and track parcel deliveries in real time.
                     </p>
                     <div class="flex items-center gap-3 pt-2">
-                        <a href="https://twitter.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Twitter / X">
+                        <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on X (Twitter)">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                         </a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Instagram">
+                        <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on Instagram">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                         </a>
-                        <a href="https://facebook.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Facebook">
+                        <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on Facebook">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
                         </a>
-                        <a href="https://linkedin.com" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="LinkedIn">
+                        <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on LinkedIn">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        </a>
+                        <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on TikTok">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.33-6.33V9.05a8.3 8.3 0 0 0 4.92 1.6V7.21a4.85 4.85 0 0 1-1-.52z"/></svg>
                         </a>
                     </div>
                 </div>
@@ -583,11 +586,11 @@
                         <span>{{ site_setting('footer.support_email', 'support@ridemycars.com') }}</span>
                     </a>
                     
-                    <a href="tel:{{ site_setting('footer.support_phone', '+1 888 570 0008') }}" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
+                    <a href="tel:+18552033177" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
                         <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                         </span>
-                        <span>{{ site_setting('footer.support_phone', '+1 888 570 0008') }}</span>
+                        <span>{{ site_setting('footer.support_phone', '+1 855 203 3177') }}</span>
                     </a>
                 </div>
 

@@ -55,12 +55,16 @@ class PaymentTransactionResource extends Resource
                     ->prefix('GH₵'),
                 Forms\Components\Select::make('payment_method')
                     ->options([
+                        'stripe' => 'Stripe Card (PCI-DSS)',
                         'momo' => 'Mobile Money (MoMo)',
                         'card' => 'Credit / Debit Card',
                         'paypal' => 'PayPal',
                         'cash' => 'Cash',
                     ])
                     ->required(),
+                Forms\Components\TextInput::make('stripe_payment_intent_id')
+                    ->label('Stripe PaymentIntent ID')
+                    ->readOnly(),
                 Forms\Components\Select::make('status')
                     ->options([
                         'pending' => 'Pending',

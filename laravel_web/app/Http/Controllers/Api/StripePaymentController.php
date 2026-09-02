@@ -16,27 +16,34 @@ class StripePaymentController extends Controller
      */
     public function createPaymentIntent(Request $request): JsonResponse
     {
-        $request->validate([
-            'service_type' => 'required|string|in:ride,rental,driver_booking,hire-driver,package_delivery,delivery',
-            'service_id' => 'required|integer',
-        ]);
+        $serviceType = $request->input('service_type', $request->input('type', 'driver_booking'));
+        $serviceId = (int) $request->input('booking_id', $request->input('order_id', $request->input('service_id')));
+
+        if (!$serviceId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing booking_id or service_id parameter.',
+            ], 422);
+        }
 
         try {
-            $serviceType = $request->input('service_type');
-            $serviceId = (int) $request->input('service_id');
             $userId = auth()->id();
-
             $intentData = StripeService::createPaymentIntent($serviceType, $serviceId, $userId);
 
             return response()->json([
                 'success' => true,
+                'clientSecret' => $intentData['clientSecret'] ?? $intentData['client_secret'],
+                'paymentIntentId' => $intentData['paymentIntentId'] ?? $intentData['payment_intent_id'],
+                'publishableKey' => $intentData['publishableKey'] ?? $intentData['publishable_key'],
                 'data' => $intentData,
             ]);
         } catch (\InvalidArgumentException $e) {
+            $isAlreadyPaid = str_contains(strtolower($e->getMessage()), 'already been paid');
             return response()->json([
                 'success' => false,
+                'already_paid' => $isAlreadyPaid,
                 'message' => $e->getMessage(),
-            ], 400);
+            ], $isAlreadyPaid ? 200 : 400);
         } catch (\Throwable $e) {
             Log::error("Stripe createPaymentIntent Error: " . $e->getMessage(), ['exception' => $e]);
             return response()->json([

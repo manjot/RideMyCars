@@ -5,10 +5,11 @@
             /* Make Google Maps Autocomplete dropdown text wrap instead of crop */
             .pac-container {
                 border-radius: 12px;
-                box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-                border: 1px solid rgba(0,0,0,0.05);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+                border: 1px solid rgba(0,0,0,0.1);
                 margin-top: 4px;
-                z-index: 10000 !important;
+                z-index: 9999999 !important;
+                pointer-events: auto !important;
             }
             .pac-item {
                 white-space: normal !important;
@@ -32,7 +33,7 @@
         </style>
     </x-slot>
 
-    <main class="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8" style="max-width: 1500px;">
+    <main class="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8" style="max-width: 1500px;" x-data="rideBooking">
         <!-- Category Banner Component -->
         <x-category-banner category="Ride" />
         
@@ -57,7 +58,7 @@
             </div>
         @endif
 
-        <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative" x-data="rideBooking">
+        <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative">
             
             <form @submit.prevent="submitBooking" action="/ride/book" method="POST" class="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full lg:w-auto z-10 shrink-0">
                 @csrf
@@ -190,20 +191,80 @@
                         <div class="space-y-3 pt-1">
                             <template x-for="(stop, index) in stops" :key="stop.id">
                                 <div class="relative flex items-center gap-2">
-                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                    <div class="w-full relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                        </div>
+                                        <input type="text" 
+                                               :placeholder="`Additional Stop ${index + 1} (search map/address)...`" 
+                                               x-model="stop.location" 
+                                               @input.debounce.300ms="searchStopLocation(stop)"
+                                               @focus="if(stop.suggestions && stop.suggestions.length > 0) stop.showSuggestions = true"
+                                               @click.outside="stop.showSuggestions = false"
+                                               x-init="initStopAutocomplete($el, stop)"
+                                               required 
+                                               class="w-full pl-10 pr-10 py-3 bg-gray-100 dark:bg-[#222] border-none rounded-xl text-gray-900 dark:text-white placeholder-gray-500 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all">
+
+                                        <!-- Map Search Suggestions Dropdown -->
+                                        <div x-show="stop.showSuggestions && stop.suggestions && stop.suggestions.length > 0"
+                                             x-transition.opacity
+                                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
+                                            <template x-for="item in stop.suggestions" :key="item.place_id">
+                                                <button type="button" 
+                                                        @click="stop.location = item.display_name; stop.showSuggestions = false;" 
+                                                        class="w-full px-3.5 py-2.5 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2 transition-colors">
+                                                    <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
+                                                    <span class="font-bold line-clamp-2" x-text="item.display_name"></span>
+                                                </button>
+                                            </template>
+                                        </div>
                                     </div>
-                                    <input type="text" :placeholder="`Additional Stop ${index + 1}`" x-model="stop.location" required class="w-full pl-10 pr-10 py-3 bg-gray-100 dark:bg-[#222] border-none rounded-xl text-gray-900 dark:text-white placeholder-gray-500 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all">
                                     <button type="button" @click="removeStop(index)" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors shrink-0" title="Remove stop">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
                             </template>
-                            <button type="button" @click="addStop()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-bold transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                                <span>+ Add Stop</span>
-                            </button>
+                            <div class="flex flex-wrap items-center gap-2 pt-1">
+                                <button type="button" @click="addStop()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-bold transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                    <span>+ Add Stop</span>
+                                </button>
+
+                                <!-- Quick Home Button -->
+                                <div class="relative inline-flex items-center gap-1">
+                                    <button type="button" 
+                                            @click="useSavedLocation('home')" 
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all border cursor-pointer"
+                                            :class="savedLocations.home ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40 shadow-sm' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 border-transparent hover:border-amber-300'">
+                                        <span>🏠</span>
+                                        <span x-text="savedLocations.home ? 'Home' : '+ Save Home'"></span>
+                                    </button>
+                                    <template x-if="savedLocations.home">
+                                        <button type="button" @click.stop="openSavedLocationModal('home')" class="p-1 text-gray-400 hover:text-amber-500 font-bold text-xs rounded transition-colors" title="Edit Home Address">
+                                            ✏️
+                                        </button>
+                                    </template>
+                                </div>
+
+                                <!-- Quick Office Button -->
+                                <div class="relative inline-flex items-center gap-1">
+                                    <button type="button" 
+                                            @click="useSavedLocation('office')" 
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all border cursor-pointer"
+                                            :class="savedLocations.office ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40 shadow-sm' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 border-transparent hover:border-amber-300'">
+                                        <span>🏢</span>
+                                        <span x-text="savedLocations.office ? 'Office' : '+ Save Office'"></span>
+                                    </button>
+                                    <template x-if="savedLocations.office">
+                                        <button type="button" @click.stop="openSavedLocationModal('office')" class="p-1 text-gray-400 hover:text-amber-500 font-bold text-xs rounded transition-colors" title="Edit Office Address">
+                                            ✏️
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
+
+
 
                         <!-- Mandatory Phone Number Field -->
                         <div class="relative pt-1">
@@ -322,7 +383,7 @@
                                 </button>
 
                                 <button type="submit" class="flex-1 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-bold py-3.5 rounded-xl text-[17px] transition-colors flex items-center justify-center shadow-md active:scale-[0.98]">
-                                    Request <span x-text="vehicle_type || 'Ride'" class="ml-1 truncate max-w-[130px]"></span>
+Request <span x-text="vehicle_type || 'Ride'" class="ml-1 truncate max-w-[130px]"></span>
                                 </button>
                             </div>
                             <p class="text-[10px] text-gray-500 dark:text-gray-400 text-center mt-2">
@@ -330,22 +391,24 @@
                             </p>
                         </div>
 
-                        <!-- Payment Modal (Uber Style) -->
-                        <div x-show="paymentModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                            <div @click.away="paymentModal = false" class="bg-white dark:bg-[#1a1a1a] rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4">
-                                <div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10">
-                                    <div class="flex items-center gap-3">
-                                        <button type="button" @click="paymentModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-[#333] rounded-full transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                        </button>
-                                    </div>
-                                    <h2 class="text-base font-bold text-gray-900 dark:text-white mx-auto">Payment methods</h2>
-                                    <button type="button" class="px-3 py-1.5 bg-gray-100 dark:bg-[#333] rounded-full text-sm font-bold text-gray-900 dark:text-white">+ Add</button>
+                        <!-- Payment Modal (Uber Style - Flex Layout for 100% Viewport Safety) -->
+                        <div x-show="paymentModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+                            <div @click.away="paymentModal = false" class="bg-white dark:bg-[#1a1a1a] rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden my-auto" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4">
+                                
+                                <!-- Sticky Header -->
+                                <div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10 shrink-0 bg-white dark:bg-[#1a1a1a]">
+                                    <button type="button" @click="paymentModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-[#333] rounded-full transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                    </button>
+                                    <h2 class="text-base font-extrabold text-gray-900 dark:text-white">Payment Methods</h2>
+                                    <span class="text-xs font-bold text-gray-400">SSL Encrypted</span>
                                 </div>
-                                <div class="p-6">
-                                    <h3 class="text-[28px] leading-tight font-bold text-gray-900 dark:text-white mb-6">Pay with</h3>
+
+                                <!-- Scrollable Body -->
+                                <div class="p-5 overflow-y-auto flex-1 space-y-5">
+                                    <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Pay with</h3>
                                     
-                                    <div class="flex bg-gray-100 dark:bg-[#222] rounded-xl p-1 mb-6">
+                                    <div class="flex bg-gray-100 dark:bg-[#222] rounded-xl p-1">
                                         <button type="button" @click="profileType = 'Personal'" :class="profileType === 'Personal' ? 'bg-white dark:bg-[#333] shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'" class="flex-1 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                                             Personal
@@ -356,36 +419,44 @@
                                         </button>
                                     </div>
                                     
-                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Payment methods</h4>
-                                    <div class="space-y-1 mb-6">
-                                        <label class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors group">
-                                            <div class="flex items-center gap-4">
-                                                <div class="w-10 h-7 bg-[#85bb65] rounded text-white flex items-center justify-center font-bold text-xs">💵</div>
-                                                <span class="font-bold text-gray-900 dark:text-white text-[15px]">Cash</span>
-                                            </div>
-                                            <div class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center" :class="paymentMethod === 'Cash' ? 'border-black dark:border-white bg-black dark:bg-white' : 'group-hover:border-gray-400'">
-                                                <svg x-show="paymentMethod === 'Cash'" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white dark:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                            </div>
-                                            <input type="radio" x-model="paymentMethod" value="Cash" class="hidden">
-                                        </label>
-                                        <label class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors group">
-                                            <div class="flex items-center gap-4">
-                                                <div class="w-10 h-7 bg-[#635BFF] rounded text-white flex items-center justify-center font-bold text-lg">S</div>
-                                                <span class="font-bold text-gray-900 dark:text-white text-[15px]">Stripe / Credit Card</span>
-                                            </div>
-                                            <div class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center" :class="paymentMethod === 'stripe' ? 'border-black dark:border-white bg-black dark:bg-white' : 'group-hover:border-gray-400'">
-                                                <svg x-show="paymentMethod === 'stripe'" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white dark:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                            </div>
-                                            <input type="radio" x-model="paymentMethod" value="stripe" class="hidden">
-                                        </label>
-                                        <!-- Card Fillup Information for Stripe -->
-                                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Available Options</h4>
+                                        <div class="space-y-2">
+                                            <label class="flex items-center justify-between p-3.5 rounded-2xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors group" :class="paymentMethod === 'Cash' ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-[#222]' : ''">
+                                                <div class="flex items-center gap-3.5">
+                                                    <div class="w-10 h-7 bg-[#85bb65] rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-sm">💵</div>
+                                                    <span class="font-extrabold text-gray-900 dark:text-white text-sm">Cash on Arrival</span>
+                                                </div>
+                                                <div class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center" :class="paymentMethod === 'Cash' ? 'border-black dark:border-white bg-black dark:bg-white' : 'group-hover:border-gray-400'">
+                                                    <svg x-show="paymentMethod === 'Cash'" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white dark:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                </div>
+                                                <input type="radio" x-model="paymentMethod" value="Cash" class="hidden">
+                                            </label>
+                                            
+                                            <label class="flex items-center justify-between p-3.5 rounded-2xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-[#222] cursor-pointer transition-colors group" :class="paymentMethod === 'stripe' ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-[#222]' : ''">
+                                                <div class="flex items-center gap-3.5">
+                                                    <div class="w-10 h-7 bg-[#635BFF] rounded-lg text-white flex items-center justify-center font-black text-base shadow-sm">S</div>
+                                                    <span class="font-extrabold text-gray-900 dark:text-white text-sm">Stripe / Credit Card</span>
+                                                </div>
+                                                <div class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center" :class="paymentMethod === 'stripe' ? 'border-black dark:border-white bg-black dark:bg-white' : 'group-hover:border-gray-400'">
+                                                    <svg x-show="paymentMethod === 'stripe'" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white dark:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                </div>
+                                                <input type="radio" x-model="paymentMethod" value="stripe" class="hidden">
+                                            </label>
+
+                                            <!-- Card Fillup Information for Stripe -->
+                                            <x-stripe-card-input modelName="paymentMethod" value="stripe" />
+                                        </div>
                                     </div>
-                                    
-                                    <button type="button" @click="paymentModal = false" class="w-full py-3.5 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl text-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
-                                        Save
+                                </div>
+
+                                <!-- Sticky Footer Button -->
+                                <div class="p-4 bg-gray-50 dark:bg-[#111] border-t border-gray-100 dark:border-white/10 shrink-0">
+                                    <button type="button" @click="paymentModal = false" class="w-full py-3.5 bg-black dark:bg-white text-white dark:text-black font-black text-base rounded-2xl shadow-xl hover:opacity-90 transition-all active:scale-[0.99]">
+                                        Save & Continue →
                                     </button>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -622,6 +693,69 @@
             </div>
 
         </div>
+
+        <!-- Saved Location Setup / Edit Modal (Top-Level Container for Absolute Stacking Order above Map) -->
+        <div x-show="showSavedLocationModal" 
+             x-transition.opacity
+             style="display: none;"
+             class="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div @click.outside="showSavedLocationModal = false" class="bg-white dark:bg-[#181818] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full p-6 space-y-4 relative z-[99999999]">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-extrabold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                        <span x-text="editingLabel === 'home' ? '🏠' : '🏢'"></span>
+                        <span x-text="(savedLocations[editingLabel] ? 'Edit ' : 'Set ') + (editingLabel === 'home' ? 'Home' : 'Office') + ' Address'"></span>
+                    </h3>
+                    <button type="button" @click="showSavedLocationModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+                </div>
+
+                <p class="text-xs text-gray-500 dark:text-gray-400">Search and select your <span x-text="editingLabel"></span> address from the map. It will be saved for one-tap booking.</p>
+
+                <div class="relative space-y-2">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Map Address Search</label>
+                    <div class="relative">
+                        <input type="text" 
+                               x-model="modalTempLocation.location"
+                               @input.debounce.300ms="searchModalLocation()"
+                               @focus="if(modalSuggestions.length > 0) showModalSuggestions = true"
+                               @click.outside="showModalSuggestions = false"
+                               x-init="initModalAutocomplete($el)"
+                               placeholder="Search address, city, landmark..." 
+                               class="w-full pl-9 pr-8 py-3 bg-gray-50 dark:bg-[#222] border rounded-xl text-xs font-bold text-gray-900 dark:text-white transition-colors"
+                               :class="modalTempLocation.isSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30' : 'border-gray-200 dark:border-white/10'">
+                        <span class="absolute left-3 top-3.5 text-amber-500">📍</span>
+                        <span x-show="modalTempLocation.isSelected" class="absolute right-3 top-3.5 text-emerald-500 font-bold text-xs" title="Verified Location">✓</span>
+                    </div>
+
+                    <!-- Selection Confirmation Badge -->
+                    <div x-show="modalTempLocation.isSelected" class="flex items-center gap-1.5 p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
+                        <span class="text-emerald-500 shrink-0">✓ Verified Location:</span>
+                        <span class="truncate" x-text="modalTempLocation.location"></span>
+                    </div>
+
+                    <!-- Suggestions Dropdown -->
+                    <div x-show="showModalSuggestions && modalSuggestions.length > 0"
+                         x-transition.opacity
+                         class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-300 dark:border-white/20 rounded-2xl shadow-2xl z-[999999999] overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-56 overflow-y-auto">
+                        <template x-for="item in modalSuggestions" :key="item.place_id || item.osm_id">
+                            <button type="button" 
+                                    @click="selectModalSuggestion(item)" 
+                                    class="w-full px-3.5 py-3 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2.5 transition-colors cursor-pointer">
+                                <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
+                                <div>
+                                    <span class="font-bold block text-xs" x-text="item.display_name"></span>
+                                    <span class="text-[10px] text-gray-400 font-normal block" x-text="item.type ? (item.type.toUpperCase() + ' • ' + (item.class || 'location')) : 'Map Location'"></span>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-white/10">
+                    <button type="button" @click="showSavedLocationModal = false" class="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-bold text-xs">Cancel</button>
+                    <button type="button" @click="saveLocationFromModal()" :disabled="!modalTempLocation.isSelected" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer">Save & Apply</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     @php
@@ -637,6 +771,50 @@
         <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places" async defer></script>
     @endif
     <script>
+        function initModalAutocomplete(el) {
+            if (window.google && google.maps && google.maps.places) {
+                try {
+                    const ac = new google.maps.places.Autocomplete(el);
+                    ac.addListener('place_changed', () => {
+                        const place = ac.getPlace();
+                        const component = Alpine.$data(el.closest('[x-data]'));
+                        if (component) {
+                            if (place.geometry && place.geometry.location) {
+                                component.modalTempLocation.lat = place.geometry.location.lat();
+                                component.modalTempLocation.lng = place.geometry.location.lng();
+                            }
+                            if (place.place_id) component.modalTempLocation.place_id = place.place_id;
+                            const addr = place.formatted_address || place.name;
+                            if (addr) {
+                                component.modalTempLocation.location = addr;
+                                component.modalTempLocation.isSelected = true;
+                                component.showModalSuggestions = false;
+                                el.value = addr;
+                                el.dispatchEvent(new Event('input'));
+                            }
+                        }
+                    });
+                } catch (e) {}
+            }
+        }
+
+        function initStopAutocomplete(el, stopObj) {
+            if (window.google && google.maps && google.maps.places) {
+                try {
+                    const ac = new google.maps.places.Autocomplete(el);
+                    ac.addListener('place_changed', () => {
+                        const place = ac.getPlace();
+                        const addr = place.formatted_address || place.name;
+                        if (addr) {
+                            stopObj.location = addr;
+                            el.value = addr;
+                            el.dispatchEvent(new Event('input'));
+                        }
+                    });
+                } catch (e) {}
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             let map = null;
             let marker = null;
@@ -936,15 +1114,38 @@
                 dropoff: '',
                 phone: '{{ auth()->user()->phone ?? "" }}',
                 stops: [],
+                savedLocations: { home: null, office: null },
+                showSavedLocationModal: false,
+                editingLabel: 'home',
+                modalTempLocation: { location: '', lat: null, lng: null, place_id: null, isSelected: false },
+                modalSuggestions: [],
+                showModalSuggestions: false,
                 riderType: 'me',
                 showRiderModal: false,
                 passengerName: '',
                 passengerPhone: '',
                 addStop() {
-                    this.stops.push({ id: Date.now(), location: '' });
+                    this.stops.push({ id: Date.now() + Math.random(), location: '', suggestions: [], showSuggestions: false });
                 },
                 removeStop(idx) {
                     this.stops.splice(idx, 1);
+                },
+                async searchStopLocation(stop) {
+                    if (!stop.location || stop.location.trim().length < 3) {
+                        stop.suggestions = [];
+                        stop.showSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stop.location)}&limit=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            stop.suggestions = data;
+                            stop.showSuggestions = data.length > 0;
+                        }
+                    } catch (e) {
+                        console.warn('Map search error:', e);
+                    }
                 },
                 get showRides() { 
                     return !this.isConfirming && this.pickup.trim().length > 0 && this.dropoff.trim().length > 0; 
@@ -980,6 +1181,140 @@
                         this.pollingUrl = `/api/ride/${resumeId}/status`;
                         this.isConfirming = true;
                         this.startPolling();
+                    }
+                    this.fetchSavedLocations();
+                },
+
+                async fetchSavedLocations() {
+                    try {
+                        const res = await fetch('/api/user/saved-locations');
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.locations) {
+                                this.savedLocations.home = data.locations.home || null;
+                                this.savedLocations.office = data.locations.office || null;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Error fetching saved locations:', e);
+                    }
+                },
+
+                useSavedLocation(label) {
+                    const saved = this.savedLocations[label];
+                    if (saved && saved.address) {
+                        if (this.stops.length < 5) {
+                            this.stops.push({
+                                id: Date.now() + Math.random(),
+                                location: saved.address,
+                                lat: saved.latitude ? parseFloat(saved.latitude) : null,
+                                lng: saved.longitude ? parseFloat(saved.longitude) : null,
+                                place_id: saved.place_id || null,
+                                isSelected: true,
+                                suggestions: [],
+                                showSuggestions: false
+                            });
+                        }
+                    } else {
+                        this.openSavedLocationModal(label);
+                    }
+                },
+
+                openSavedLocationModal(label) {
+                    this.editingLabel = label;
+                    const existing = this.savedLocations[label];
+                    if (existing) {
+                        this.modalTempLocation = {
+                            location: existing.address || '',
+                            lat: existing.latitude ? parseFloat(existing.latitude) : null,
+                            lng: existing.longitude ? parseFloat(existing.longitude) : null,
+                            place_id: existing.place_id || null,
+                            isSelected: true
+                        };
+                    } else {
+                        this.modalTempLocation = { location: '', lat: null, lng: null, place_id: null, isSelected: false };
+                    }
+                    this.modalSuggestions = [];
+                    this.showModalSuggestions = false;
+                    this.showSavedLocationModal = true;
+                },
+
+                async searchModalLocation() {
+                    this.modalTempLocation.isSelected = false;
+                    if (!this.modalTempLocation.location || this.modalTempLocation.location.trim().length < 3) {
+                        this.modalSuggestions = [];
+                        this.showModalSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.modalTempLocation.location)}&limit=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.modalSuggestions = data;
+                            this.showModalSuggestions = data.length > 0;
+                        }
+                    } catch (e) {
+                        console.warn('Modal map search error:', e);
+                    }
+                },
+
+                selectModalSuggestion(item) {
+                    this.modalTempLocation.location = item.display_name;
+                    this.modalTempLocation.lat = parseFloat(item.lat);
+                    this.modalTempLocation.lng = parseFloat(item.lon);
+                    this.modalTempLocation.place_id = item.place_id ? String(item.place_id) : null;
+                    this.modalTempLocation.isSelected = true;
+                    this.showModalSuggestions = false;
+                },
+
+                async saveLocationFromModal() {
+                    if (!this.modalTempLocation.location || !this.modalTempLocation.isSelected) {
+                        alert('Please select a valid location suggestion from the map dropdown.');
+                        return;
+                    }
+                    try {
+                        const csrfToken = '{{ csrf_token() }}';
+                        const res = await fetch('/api/user/saved-locations', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                label: this.editingLabel,
+                                address: this.modalTempLocation.location,
+                                latitude: this.modalTempLocation.lat,
+                                longitude: this.modalTempLocation.lng,
+                                place_id: this.modalTempLocation.place_id
+                            })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.location) {
+                                this.savedLocations[this.editingLabel] = data.location;
+                                this.showSavedLocationModal = false;
+                                
+                                if (this.stops.length < 5) {
+                                    this.stops.push({
+                                        id: Date.now() + Math.random(),
+                                        location: data.location.address,
+                                        lat: data.location.latitude ? parseFloat(data.location.latitude) : null,
+                                        lng: data.location.longitude ? parseFloat(data.location.longitude) : null,
+                                        place_id: data.location.place_id || null,
+                                        isSelected: true,
+                                        suggestions: [],
+                                        showSuggestions: false
+                                    });
+                                }
+                            }
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            alert(errData.message || 'Failed to save location. Please try again.');
+                        }
+                    } catch (e) {
+                        console.error('Error saving location:', e);
+                        alert('An error occurred while saving the location.');
                     }
                 },
                 
@@ -1030,8 +1365,9 @@
                         this.rideId = data.ride_id;
                         this.pollingUrl = data.polling_url;
                         
-                        if (this.paymentMethod === 'stripe' || data.stripe_client_secret || (data.url && data.url.includes('stripe'))) {
-                            window.location.href = '/payment/verify-details/ride/' + data.ride_id;
+                        const m = (this.paymentMethod || '').toLowerCase();
+                        if (m === 'stripe' || m === 'card' || m === 'credit_card' || m === 'credit card' || data.stripe_client_secret || data.redirect_url) {
+                            window.location.href = data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
                             return;
                         }
                         

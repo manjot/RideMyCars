@@ -58,7 +58,7 @@
 
                     <div>
                         <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Contact Phone</label>
-                        <input type="text" name="contact_phone" value="{{ auth()->user()->phone ?? old('contact_phone') }}" placeholder="+1 888 570 0008" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none">
+                        <input type="text" name="contact_phone" value="{{ auth()->user()->phone ?? old('contact_phone') }}" placeholder="+1 855 203 3177" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none">
                     </div>
                 </div>
 

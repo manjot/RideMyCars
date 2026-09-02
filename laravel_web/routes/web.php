@@ -172,6 +172,11 @@ Route::post('/api/driver/verify-booking', [\App\Http\Controllers\StripeVerificat
 Route::get('/api/driver/pending-verifications', [\App\Http\Controllers\StripeVerificationController::class, 'getPendingVerifications']);
 Route::get('/api/payment/verification-status/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'getVerificationStatus']);
 
+// User Saved Locations API (Home / Office)
+Route::get('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'index']);
+Route::post('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'store']);
+Route::delete('/api/user/saved-locations/{id}', [\App\Http\Controllers\SavedLocationController::class, 'destroy']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/disputes', [\App\Http\Controllers\DisputeController::class, 'index']);
     Route::get('/disputes/create', [\App\Http\Controllers\DisputeController::class, 'create']);
@@ -541,7 +546,8 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             \App\Services\NotificationService::notifyRideRequested($ride);
         } catch (\Throwable $e) {}
 
-        if (strtolower($paymentMethod) === 'stripe') {
+        $method = strtolower($paymentMethod);
+        if (in_array($method, ['stripe', 'card', 'credit card', 'credit_card'])) {
             try {
                 $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, auth()->id());
 
@@ -553,6 +559,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'stripe_intent_id' => $intentData['payment_intent_id'],
                     'amount' => $intentData['amount'],
                     'currency' => $intentData['currency'],
+                    'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
                 ]);
             } catch (\Exception $e) {
                 return response()->json(['error' => $e->getMessage()], 500);

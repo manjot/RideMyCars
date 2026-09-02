@@ -18,6 +18,7 @@ Route::post('/login', [AuthController::class, 'login']);
 use App\Http\Controllers\StripeVerificationController;
 
 // Stripe Payment Gateway & Webhooks
+Route::post('/create-payment-intent', [StripePaymentController::class, 'createPaymentIntent']);
 Route::post('/stripe/create-payment-intent', [StripePaymentController::class, 'createPaymentIntent']);
 Route::post('/stripe/confirm-payment', [StripePaymentController::class, 'confirmPayment']);
 Route::get('/stripe/payment-status/{identifier}', [StripePaymentController::class, 'getPaymentStatus']);

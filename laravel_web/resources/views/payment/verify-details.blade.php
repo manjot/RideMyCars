@@ -88,29 +88,75 @@
                 </div>
             </div>
 
-            <!-- State 2: DRIVER VERIFIED (APPROVED) -->
-            <div x-show="currentVerificationStatus === 'driver_verified'" x-transition
-                 class="bg-green-50 dark:bg-green-950/30 border-2 border-green-400 dark:border-green-700/50 rounded-3xl p-6 shadow-sm text-green-900 dark:text-green-200 space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-green-500 text-white flex items-center justify-center font-black text-xl shrink-0">
-                        ✓
+            <!-- State 0: PAYMENT ALREADY COMPLETED -->
+            <template x-if="currentPaymentStatus === 'paid'">
+                <div class="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-400 dark:border-emerald-700/50 rounded-3xl p-6 shadow-sm text-emerald-900 dark:text-emerald-200 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
+                            ✓
+                        </div>
+                        <div>
+                            <h3 class="font-black text-lg">✓ Payment Already Completed</h3>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                This booking has been fully paid. Transaction Reference: <strong class="font-mono">{{ $transactionRef ?? 'N/A' }}</strong>
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-extrabold text-base">🎉 Booking Verified by Driver!</h3>
-                        <p class="text-xs text-green-700 dark:text-green-300 mt-0.5">
-                            Your assigned driver has reviewed and approved your booking request. You may now proceed with secure Stripe Payment.
-                        </p>
-                    </div>
-                </div>
 
-                <div class="pt-2">
-                    <button type="button" @click="triggerStripePayment()"
-                            class="w-full py-4 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
-                        <span>💳 Pay ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
-                        <span>→</span>
-                    </button>
+                    <div class="bg-white/80 dark:bg-black/40 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800/30 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Status</span>
+                            <span class="font-black text-emerald-600 dark:text-emerald-400 uppercase">✓ Paid</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Amount Paid</span>
+                            <span class="font-black text-gray-900 dark:text-white">${{ number_format($totalAmount, 2) }} {{ $currency }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Method</span>
+                            <span class="font-extrabold text-gray-900 dark:text-white">{{ $paidMethod ?? 'Stripe Secure Card' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Date</span>
+                            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $paidAt ?? date('M d, Y') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                        <a href="/my-rides" class="px-6 py-3 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-extrabold text-xs rounded-xl shadow-md transition-all text-center">
+                            View My Bookings →
+                        </a>
+                        <button type="button" onclick="window.print()" class="px-5 py-3 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 font-bold text-xs rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition text-center">
+                            📄 Download Receipt
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </template>
+
+            <!-- State 2: DRIVER VERIFIED (APPROVED) OR DIRECT PAYMENT -->
+            <template x-if="currentPaymentStatus !== 'paid'">
+                <div class="bg-green-50 dark:bg-green-950/30 border-2 border-green-400 dark:border-green-700/50 rounded-3xl p-6 shadow-sm text-green-900 dark:text-green-200 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-green-500 text-white flex items-center justify-center font-black text-xl shrink-0">
+                            ✓
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-base">🎉 Booking Ready for Checkout!</h3>
+                            <p class="text-xs text-green-700 dark:text-green-300 mt-0.5">
+                                Your booking request is confirmed. You may now proceed with secure Stripe PCI-DSS Payment.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="button" @click="triggerStripePayment()"
+                                class="w-full py-4 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
+                            <span>💳 Pay ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </template>
 
             <!-- State 3: REJECTED -->
             <div x-show="currentVerificationStatus === 'rejected'" x-transition
@@ -184,7 +230,7 @@
                             <div>
                                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assigned Driver</span>
                                 <h4 class="font-extrabold text-base text-white">{{ $driver['name'] }}</h4>
-                                <p class="text-xs text-gray-300">{{ $driver['vehicle'] }} • ⭐ {{ $driver['rating'] }}</p>
+                                <p class="text-xs text-gray-300">{{ $driver['vehicle'] ?? 'Executive Vehicle' }} • ⭐ {{ $driver['rating'] ?? 4.9 }}</p>
                             </div>
                         </div>
                         <div class="text-right">

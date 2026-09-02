@@ -74,5 +74,10 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(PrivacyRequest::class);
     }
+
+    public function savedLocations()
+    {
+        return $this->hasMany(UserSavedLocation::class);
+    }
 }
 

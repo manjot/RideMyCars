@@ -1,68 +1,57 @@
 <x-layout theme="theme-hire">
     <x-slot:title>Hire a Driver — Professional Driver Hiring | RideMyCars</x-slot>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10"
-          x-data="{
-              serviceType: 'Hire Driver', // Hire Driver, Hourly Driver, Daily Driver, Outstation, Package
-              scheduleMode: 'now', // now, later
-              startDate: '{{ date('Y-m-d') }}',
-              startTime: '09:00',
-              durationType: 'hourly', // hourly, daily, weekly
-              durationCount: 4,
-              country: '{{ $selectedCountry ?? 'USA' }}',
-              driverProfileId: '{{ $driverProfile->id ?? '' }}',
-              paymentMethod: 'stripe',
-              stops: [],
-              vehicleSource: 'personal',
-              carType: 'Sedan',
-              transmission: 'automatic',
-              carMakeModel: 'Toyota Camry',
-              mfgYear: '2023',
-              regNumber: 'REG-8899',
-              preferredGender: 'any',
-              preferredLanguage: 'English',
-              
-              priceBreakdown: {
-                  subtotal: 0,
-                  service_fee: 0,
-                  tax: 0,
-                  total_price: 0,
-                  currency_symbol: '$',
-                  applied_rate_text: ''
-              },
+    <style>
+        /* Force Google Places Autocomplete to appear on top of modals and maps */
+        .pac-container {
+            z-index: 9999999 !important;
+            pointer-events: auto !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid rgba(245, 158, 11, 0.4) !important;
+            background-color: #ffffff !important;
+            font-family: inherit !important;
+            margin-top: 4px !important;
+            overflow: hidden !important;
+        }
+        .dark .pac-container {
+            background-color: #1f1f1f !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #ffffff !important;
+        }
+        .pac-item {
+            padding: 10px 14px !important;
+            cursor: pointer !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #111827 !important;
+            border-top: 1px solid rgba(243, 244, 246, 1) !important;
+        }
+        .dark .pac-item {
+            color: #f3f4f6 !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+        .pac-item:hover, .pac-item-selected {
+            background-color: #fef3c7 !important;
+        }
+        .dark .pac-item:hover, .dark .pac-item-selected {
+            background-color: rgba(180, 83, 9, 0.4) !important;
+        }
+        .pac-item-query {
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+        }
+        .dark .pac-item-query {
+            color: #ffffff !important;
+        }
+        .pac-matched {
+            font-weight: 800 !important;
+            color: #d97706 !important;
+        }
+    </style>
 
-              addStop() {
-                  if (this.stops.length < 3) {
-                      this.stops.push({ location: '' });
-                  }
-              },
-              removeStop(index) {
-                  this.stops.splice(index, 1);
-              },
-              async updatePrice() {
-                  try {
-                      const res = await fetch('/hire-driver/calculate-price', {
-                          method: 'POST',
-                          headers: {
-                              'Content-Type': 'application/json',
-                              'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                          },
-                          body: JSON.stringify({
-                              driver_profile_id: this.driverProfileId || 1,
-                              duration_type: this.durationType,
-                              duration_count: this.durationCount,
-                              country: this.country
-                          })
-                      });
-                      if (res.ok) {
-                          this.priceBreakdown = await res.json();
-                      }
-                  } catch (e) {
-                      console.error(e);
-                  }
-              }
-          }"
-          x-init="updatePrice(); $watch('country', () => updatePrice()); $watch('durationType', () => updatePrice()); $watch('durationCount', () => updatePrice());">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="bookDriverBooking">
 
         <!-- Category Banner Component -->
         <x-category-banner category="Hire a Driver" />
@@ -93,7 +82,7 @@
             </div>
         @endif
 
-        <form action="/hire-driver/book" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form action="/hire-driver/book" method="POST" @submit="validateForm($event)" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             @csrf
             <input type="hidden" name="driver_profile_id" :value="driverProfileId">
             <input type="hidden" name="service_category" value="private">
@@ -141,22 +130,108 @@
 
                     <!-- Additional Stops -->
                     <div class="space-y-3">
-                        <template x-for="(stop, index) in stops" :key="index">
-                            <div class="relative flex items-center gap-2">
-                                <div class="w-full relative">
-                                    <input type="text" :name="`additional_stops[${index}]`" x-model="stop.location" placeholder="Additional Stop Location..." class="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-amber-200 dark:border-amber-900/30 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
-                                    <span class="absolute left-3 top-2.5 text-amber-500">📍</span>
+                        <div x-show="validationErrorMessage" class="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-start gap-2">
+                            <span class="text-rose-500">⚠️</span>
+                            <span x-text="validationErrorMessage"></span>
+                        </div>
+
+                        <template x-for="(stop, index) in stops" :key="stop.id">
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                        <span>🚩 Stop</span> <span x-text="index + 1"></span>
+                                    </span>
                                 </div>
-                                <button type="button" @click="removeStop(index)" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors shrink-0" title="Remove Stop">
-                                    ✕
-                                </button>
+
+                                <div class="relative flex items-center gap-2">
+                                    <div class="w-full relative">
+                                        <input type="text" 
+                                               x-model="stop.location" 
+                                               @input.debounce.300ms="onStopInputChange(stop)"
+                                               @focus="if(stop.suggestions && stop.suggestions.length > 0) stop.showSuggestions = true"
+                                               @click.outside="stop.showSuggestions = false"
+                                               x-init="initStopAutocomplete($el, stop)"
+                                               placeholder="Search additional stop location (address, city, airport, landmark)..." 
+                                               :class="stop.validationError ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/20' : (stop.isSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30' : 'border-amber-200 dark:border-amber-900/30')"
+                                               class="w-full pl-9 pr-8 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border rounded-xl text-xs font-bold text-gray-900 dark:text-white transition-colors">
+                                        
+                                        <span class="absolute left-3 top-2.5 text-amber-500">📍</span>
+                                        
+                                        <span x-show="stop.isSelected" class="absolute right-3 top-2.5 text-emerald-500 font-bold text-xs" title="Map location verified">✓</span>
+
+                                        <!-- Map Search Suggestions Dropdown -->
+                                        <div x-show="stop.showSuggestions && stop.suggestions && stop.suggestions.length > 0"
+                                             x-transition.opacity
+                                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-200 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
+                                            <template x-for="item in stop.suggestions" :key="item.place_id || item.osm_id">
+                                                <button type="button" 
+                                                        @click="selectStopSuggestion(stop, item)" 
+                                                        class="w-full px-3.5 py-2.5 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2 transition-colors">
+                                                    <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
+                                                    <div>
+                                                        <span class="font-bold block" x-text="item.display_name"></span>
+                                                        <span class="text-[10px] text-gray-400 font-normal block" x-text="item.type ? (item.type.toUpperCase() + ' • ' + (item.class || 'location')) : 'Map Location'"></span>
+                                                    </div>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hidden Form Payload Inputs -->
+                                    <input type="hidden" :name="`additional_stops[${index}][location]`" :value="stop.location">
+                                    <input type="hidden" :name="`additional_stops[${index}][lat]`" :value="stop.lat">
+                                    <input type="hidden" :name="`additional_stops[${index}][lng]`" :value="stop.lng">
+                                    <input type="hidden" :name="`additional_stops[${index}][place_id]`" :value="stop.place_id">
+
+                                    <button type="button" @click="removeStop(index)" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors shrink-0" title="Remove Stop">
+                                        ✕
+                                    </button>
+                                </div>
+
+                                <p x-show="stop.validationError" class="text-[11px] font-bold text-rose-600 dark:text-rose-400 pl-1" x-text="stop.validationError"></p>
                             </div>
                         </template>
 
-                        <button type="button" @click="addStop()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-extrabold text-xs transition-colors border border-amber-200 dark:border-amber-800/30">
-                            + Add Additional Stop
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                            <button type="button" @click="addStop()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-extrabold text-xs transition-colors border border-amber-200 dark:border-amber-800/30 cursor-pointer hover:bg-amber-100">
+                                + Add Additional Stop
+                            </button>
+
+                            <!-- Quick Home Button -->
+                            <div class="relative inline-flex items-center gap-1">
+                                <button type="button" 
+                                        @click="useSavedLocation('home')" 
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-extrabold text-xs transition-all border cursor-pointer"
+                                        :class="savedLocations.home ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40 shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-amber-300'">
+                                    <span>🏠</span>
+                                    <span x-text="savedLocations.home ? 'Home' : '+ Save Home'"></span>
+                                </button>
+                                <template x-if="savedLocations.home">
+                                    <button type="button" @click.stop="openSavedLocationModal('home')" class="p-1 text-gray-400 hover:text-amber-500 font-bold text-xs rounded transition-colors" title="Edit Home Address">
+                                        ✏️
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- Quick Office Button -->
+                            <div class="relative inline-flex items-center gap-1">
+                                <button type="button" 
+                                        @click="useSavedLocation('office')" 
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-extrabold text-xs transition-all border cursor-pointer"
+                                        :class="savedLocations.office ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40 shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-amber-300'">
+                                    <span>🏢</span>
+                                    <span x-text="savedLocations.office ? 'Office' : '+ Save Office'"></span>
+                                </button>
+                                <template x-if="savedLocations.office">
+                                    <button type="button" @click.stop="openSavedLocationModal('office')" class="p-1 text-gray-400 hover:text-amber-500 font-bold text-xs rounded transition-colors" title="Edit Office Address">
+                                        ✏️
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
+
+
 
                     <!-- Drop-off Address -->
                     <div>
@@ -317,6 +392,69 @@
             </div>
 
         </form>
+
+        <!-- Saved Location Setup / Edit Modal (Top-Level Container for Absolute Stacking Order) -->
+        <div x-show="showSavedLocationModal" 
+             x-transition.opacity
+             style="display: none;"
+             class="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div @click.outside="showSavedLocationModal = false" class="bg-white dark:bg-[#181818] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-md w-full p-6 space-y-4 relative z-[99999999]">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-extrabold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                        <span x-text="editingLabel === 'home' ? '🏠' : '🏢'"></span>
+                        <span x-text="(savedLocations[editingLabel] ? 'Edit ' : 'Set ') + (editingLabel === 'home' ? 'Home' : 'Office') + ' Address'"></span>
+                    </h3>
+                    <button type="button" @click="showSavedLocationModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+                </div>
+
+                <p class="text-xs text-gray-500 dark:text-gray-400">Search and select your <span x-text="editingLabel"></span> address from the map. It will be saved for one-tap booking.</p>
+
+                <div class="relative space-y-2">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Map Address Search</label>
+                    <div class="relative">
+                        <input type="text" 
+                               x-model="modalTempLocation.location"
+                               @input.debounce.300ms="searchModalLocation()"
+                               @focus="if(modalSuggestions.length > 0) showModalSuggestions = true"
+                               @click.outside="showModalSuggestions = false"
+                               x-init="initModalAutocomplete($el)"
+                               placeholder="Search address, city, landmark..." 
+                               class="w-full pl-9 pr-8 py-3 bg-gray-50 dark:bg-[#222] border rounded-xl text-xs font-bold text-gray-900 dark:text-white transition-colors"
+                               :class="modalTempLocation.isSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30' : 'border-gray-200 dark:border-white/10'">
+                        <span class="absolute left-3 top-3.5 text-amber-500">📍</span>
+                        <span x-show="modalTempLocation.isSelected" class="absolute right-3 top-3.5 text-emerald-500 font-bold text-xs" title="Verified Location">✓</span>
+                    </div>
+
+                    <!-- Selection Confirmation Badge -->
+                    <div x-show="modalTempLocation.isSelected" class="flex items-center gap-1.5 p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
+                        <span class="text-emerald-500 shrink-0">✓ Verified Location:</span>
+                        <span class="truncate" x-text="modalTempLocation.location"></span>
+                    </div>
+
+                    <!-- Suggestions Dropdown -->
+                    <div x-show="showModalSuggestions && modalSuggestions.length > 0"
+                         x-transition.opacity
+                         class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-300 dark:border-white/20 rounded-2xl shadow-2xl z-[999999999] overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-56 overflow-y-auto">
+                        <template x-for="item in modalSuggestions" :key="item.place_id || item.osm_id">
+                            <button type="button" 
+                                    @click="selectModalSuggestion(item)" 
+                                    class="w-full px-3.5 py-3 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2.5 transition-colors cursor-pointer">
+                                <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
+                                <div>
+                                    <span class="font-bold block text-xs" x-text="item.display_name"></span>
+                                    <span class="text-[10px] text-gray-400 font-normal block" x-text="item.type ? (item.type.toUpperCase() + ' • ' + (item.class || 'location')) : 'Map Location'"></span>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-white/10">
+                    <button type="button" @click="showSavedLocationModal = false" class="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-bold text-xs">Cancel</button>
+                    <button type="button" @click="saveLocationFromModal()" :disabled="!modalTempLocation.isSelected" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer">Save & Apply</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Google Places Autocomplete Script for Hire Driver Page -->
@@ -330,6 +468,344 @@
     @endif
 
     <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('bookDriverBooking', () => ({
+                serviceType: 'Hire Driver',
+                scheduleMode: 'now',
+                startDate: '{{ date("Y-m-d") }}',
+                startTime: '09:00',
+                durationType: 'hourly',
+                durationCount: 4,
+                country: '{{ $selectedCountry ?? "USA" }}',
+                driverProfileId: '{{ $driverProfile->id ?? "" }}',
+                paymentMethod: 'stripe',
+                vehicleSource: 'personal',
+                carType: 'Sedan',
+                transmission: 'automatic',
+                carMakeModel: 'Toyota Camry',
+                mfgYear: '2023',
+                regNumber: 'REG-8899',
+                preferredGender: 'any',
+                preferredLanguage: 'English',
+                stops: [],
+                validationErrorMessage: null,
+                savedLocations: { home: null, office: null },
+                showSavedLocationModal: false,
+                editingLabel: 'home',
+                modalTempLocation: { location: '', lat: null, lng: null, place_id: null, isSelected: false },
+                modalSuggestions: [],
+                showModalSuggestions: false,
+
+                priceBreakdown: {
+                    subtotal: 0,
+                    service_fee: 0,
+                    tax: 0,
+                    total_price: 0,
+                    currency_symbol: '$',
+                    applied_rate_text: ''
+                },
+
+                init() {
+                    this.updatePrice();
+                    this.fetchSavedLocations();
+                    this.$watch('country', () => this.updatePrice());
+                    this.$watch('durationType', () => this.updatePrice());
+                    this.$watch('durationCount', () => this.updatePrice());
+                },
+
+                async fetchSavedLocations() {
+                    try {
+                        const res = await fetch('/api/user/saved-locations');
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.locations) {
+                                this.savedLocations.home = data.locations.home || null;
+                                this.savedLocations.office = data.locations.office || null;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Error fetching saved locations:', e);
+                    }
+                },
+
+                useSavedLocation(label) {
+                    const saved = this.savedLocations[label];
+                    if (saved && saved.address) {
+                        if (this.stops.length < 5) {
+                            this.stops.push({
+                                id: 'stop_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                                location: saved.address,
+                                lat: saved.latitude ? parseFloat(saved.latitude) : null,
+                                lng: saved.longitude ? parseFloat(saved.longitude) : null,
+                                place_id: saved.place_id || null,
+                                isSelected: true,
+                                suggestions: [],
+                                showSuggestions: false,
+                                validationError: null
+                            });
+                            this.validationErrorMessage = null;
+                        } else {
+                            alert('Maximum 5 additional stops allowed.');
+                        }
+                    } else {
+                        this.openSavedLocationModal(label);
+                    }
+                },
+
+                openSavedLocationModal(label) {
+                    this.editingLabel = label;
+                    const existing = this.savedLocations[label];
+                    if (existing) {
+                        this.modalTempLocation = {
+                            location: existing.address || '',
+                            lat: existing.latitude ? parseFloat(existing.latitude) : null,
+                            lng: existing.longitude ? parseFloat(existing.longitude) : null,
+                            place_id: existing.place_id || null,
+                            isSelected: true
+                        };
+                    } else {
+                        this.modalTempLocation = { location: '', lat: null, lng: null, place_id: null, isSelected: false };
+                    }
+                    this.modalSuggestions = [];
+                    this.showModalSuggestions = false;
+                    this.showSavedLocationModal = true;
+                },
+
+                async searchModalLocation() {
+                    this.modalTempLocation.isSelected = false;
+                    if (!this.modalTempLocation.location || this.modalTempLocation.location.trim().length < 3) {
+                        this.modalSuggestions = [];
+                        this.showModalSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.modalTempLocation.location)}&limit=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.modalSuggestions = data;
+                            this.showModalSuggestions = data.length > 0;
+                        }
+                    } catch (e) {
+                        console.warn('Modal map search error:', e);
+                    }
+                },
+
+                selectModalSuggestion(item) {
+                    this.modalTempLocation.location = item.display_name;
+                    this.modalTempLocation.lat = parseFloat(item.lat);
+                    this.modalTempLocation.lng = parseFloat(item.lon);
+                    this.modalTempLocation.place_id = item.place_id ? String(item.place_id) : null;
+                    this.modalTempLocation.isSelected = true;
+                    this.showModalSuggestions = false;
+                },
+
+                async saveLocationFromModal() {
+                    if (!this.modalTempLocation.location || !this.modalTempLocation.isSelected) {
+                        alert('Please select a valid location suggestion from the map dropdown.');
+                        return;
+                    }
+                    try {
+                        const csrfToken = '{{ csrf_token() }}';
+                        const res = await fetch('/api/user/saved-locations', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                label: this.editingLabel,
+                                address: this.modalTempLocation.location,
+                                latitude: this.modalTempLocation.lat,
+                                longitude: this.modalTempLocation.lng,
+                                place_id: this.modalTempLocation.place_id
+                            })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.location) {
+                                this.savedLocations[this.editingLabel] = data.location;
+                                this.showSavedLocationModal = false;
+                                
+                                // Automatically insert the saved location as an additional stop
+                                if (this.stops.length < 5) {
+                                    this.stops.push({
+                                        id: 'stop_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                                        location: data.location.address,
+                                        lat: data.location.latitude ? parseFloat(data.location.latitude) : null,
+                                        lng: data.location.longitude ? parseFloat(data.location.longitude) : null,
+                                        place_id: data.location.place_id || null,
+                                        isSelected: true,
+                                        suggestions: [],
+                                        showSuggestions: false,
+                                        validationError: null
+                                    });
+                                }
+                            }
+                        } else {
+                            alert('Failed to save location. Please try again.');
+                        }
+                    } catch (e) {
+                        console.error('Error saving location:', e);
+                        alert('An error occurred while saving the location.');
+                    }
+                },
+
+                addStop() {
+                    if (this.stops.length < 5) {
+                        this.stops.push({
+                            id: 'stop_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                            location: '',
+                            lat: null,
+                            lng: null,
+                            place_id: null,
+                            isSelected: false,
+                            suggestions: [],
+                            showSuggestions: false,
+                            validationError: null
+                        });
+                        this.validationErrorMessage = null;
+                    }
+                },
+
+                removeStop(index) {
+                    this.stops.splice(index, 1);
+                    this.validationErrorMessage = null;
+                },
+
+                onStopInputChange(stop) {
+                    stop.lat = null;
+                    stop.lng = null;
+                    stop.place_id = null;
+                    stop.isSelected = false;
+                    stop.validationError = null;
+                    this.validationErrorMessage = null;
+                    this.searchStopLocation(stop);
+                },
+
+                selectStopSuggestion(stop, item) {
+                    stop.location = item.display_name;
+                    stop.lat = parseFloat(item.lat);
+                    stop.lng = parseFloat(item.lon);
+                    stop.place_id = item.place_id ? String(item.place_id) : null;
+                    stop.isSelected = true;
+                    stop.validationError = null;
+                    stop.showSuggestions = false;
+                    this.validationErrorMessage = null;
+                },
+
+                async searchStopLocation(stop) {
+                    if (!stop.location || stop.location.trim().length < 3) {
+                        stop.suggestions = [];
+                        stop.showSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stop.location)}&limit=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            stop.suggestions = data;
+                            stop.showSuggestions = data.length > 0;
+                        }
+                    } catch (e) {
+                        console.warn('Map search error:', e);
+                    }
+                },
+
+                validateForm(e) {
+                    this.validationErrorMessage = null;
+                    for (let i = 0; i < this.stops.length; i++) {
+                        const s = this.stops[i];
+                        if (!s.location || s.location.trim().length === 0) {
+                            s.validationError = `Additional Stop #${i + 1} location is required.`;
+                            this.validationErrorMessage = `Additional Stop #${i + 1} location cannot be empty. Please search and select a valid map location.`;
+                            e.preventDefault();
+                            return false;
+                        }
+                        if (!s.isSelected) {
+                            s.validationError = `Please select a location suggestion from the map dropdown.`;
+                            this.validationErrorMessage = `Additional Stop #${i + 1} ("${s.location}") was not selected from map suggestions. Please pick a location from the dropdown list.`;
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                    return true;
+                },
+
+                async updatePrice() {
+                    try {
+                        const res = await fetch('/hire-driver/calculate-price', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                driver_profile_id: this.driverProfileId || 1,
+                                duration_type: this.durationType,
+                                duration_count: this.durationCount,
+                                country: this.country
+                            })
+                        });
+                        if (res.ok) {
+                            this.priceBreakdown = await res.json();
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            }));
+        });
+        function initModalAutocomplete(el) {
+            if (window.google && google.maps && google.maps.places) {
+                try {
+                    const ac = new google.maps.places.Autocomplete(el);
+                    ac.addListener('place_changed', () => {
+                        const place = ac.getPlace();
+                        const component = Alpine.$data(el.closest('[x-data]'));
+                        if (component) {
+                            if (place.geometry && place.geometry.location) {
+                                component.modalTempLocation.lat = place.geometry.location.lat();
+                                component.modalTempLocation.lng = place.geometry.location.lng();
+                            }
+                            if (place.place_id) component.modalTempLocation.place_id = place.place_id;
+                            const addr = place.formatted_address || place.name;
+                            if (addr) {
+                                component.modalTempLocation.location = addr;
+                                component.modalTempLocation.isSelected = true;
+                                el.value = addr;
+                            }
+                        }
+                    });
+                } catch (e) {}
+            }
+        }
+
+        function initStopAutocomplete(el, stopObj) {
+            if (window.google && google.maps && google.maps.places) {
+                try {
+                    const ac = new google.maps.places.Autocomplete(el);
+                    ac.addListener('place_changed', () => {
+                        const place = ac.getPlace();
+                        if (place.geometry && place.geometry.location) {
+                            stopObj.lat = place.geometry.location.lat();
+                            stopObj.lng = place.geometry.location.lng();
+                        }
+                        if (place.place_id) {
+                            stopObj.place_id = place.place_id;
+                        }
+                        const addr = place.formatted_address || place.name;
+                        if (addr) {
+                            stopObj.location = addr;
+                            stopObj.isSelected = true;
+                            stopObj.validationError = null;
+                            el.value = addr;
+                            el.dispatchEvent(new Event('input'));
+                        }
+                    });
+                } catch (e) {}
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const pInput = document.getElementById("pickup_location_rmc");
             const dInput = document.getElementById("dropoff_location_rmc");
