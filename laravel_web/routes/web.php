@@ -168,9 +168,6 @@ Route::post('/contact', function (\Illuminate\Http\Request $request) {
 });
 
 Route::get('/payment/verify-details/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'showDetails'])->name('payment.verify-details');
-Route::post('/api/driver/verify-booking', [\App\Http\Controllers\StripeVerificationController::class, 'driverRespond']);
-Route::get('/api/driver/pending-verifications', [\App\Http\Controllers\StripeVerificationController::class, 'getPendingVerifications']);
-Route::get('/api/payment/verification-status/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'getVerificationStatus']);
 
 // User Saved Locations API (Home / Office)
 Route::get('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'index']);

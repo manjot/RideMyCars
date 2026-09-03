@@ -65,6 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/driver/toggle-availability', [DriverApiController::class, 'toggleAvailability']);
     Route::get('/driver/requests', [DriverApiController::class, 'pendingRequests']);
     Route::post('/driver/respond', [DriverApiController::class, 'respondToAssignment']);
+    Route::post('/driver/verify-booking', [StripeVerificationController::class, 'driverRespond']);
+    Route::get('/driver/pending-verifications', [StripeVerificationController::class, 'getPendingVerifications']);
     Route::get('/driver/active-rides', [DriverApiController::class, 'activeRides']);
     Route::get('/driver/earnings', [DriverApiController::class, 'earnings']);
 
