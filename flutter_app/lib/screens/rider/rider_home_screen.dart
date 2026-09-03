@@ -69,10 +69,23 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           _userLat = pos.latitude;
           _userLng = pos.longitude;
           if (_pickupController.text.isEmpty) {
-            _pickupController.text = 'Current Location';
+            _pickupController.text = 'Locating pickup address...';
           }
         });
         _updateMapMarkers();
+
+        // Perform reverse geocoding to get proper detailed street address
+        final address = await PlacesService.getAddressFromCoordinates(pos.latitude, pos.longitude);
+        if (mounted) {
+          setState(() {
+            if (address != null && address.isNotEmpty) {
+              _pickupController.text = address;
+            } else if (_pickupController.text == 'Locating pickup address...') {
+              _pickupController.text = 'Current Location';
+            }
+          });
+          _updateMapMarkers();
+        }
       }
     } catch (_) {}
   }

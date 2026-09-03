@@ -96,7 +96,29 @@ class PlacesService {
     } catch (e) {
       debugPrint('Place details error: $e');
     }
+    return null;
+  }
 
+  /// Reverse geocode GPS coordinates to a detailed, human-readable street address
+  static Future<String?> getAddressFromCoordinates(double lat, double lng) async {
+    try {
+      final url =
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=${ApiConstants.googleMapsApiKey}';
+      final res = await _dio.get(url);
+
+      if (res.statusCode == 200 && res.data['status'] == 'OK') {
+        final List results = res.data['results'] ?? [];
+        if (results.isNotEmpty) {
+          final first = results.first;
+          final formatted = first['formatted_address'] as String?;
+          if (formatted != null && formatted.isNotEmpty) {
+            return formatted;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Geocoding reverse lookup error: $e');
+    }
     return null;
   }
 }
