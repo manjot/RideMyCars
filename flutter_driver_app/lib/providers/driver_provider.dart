@@ -12,6 +12,7 @@ class DriverProvider extends ChangeNotifier {
 
   bool _isOnline = false;
   bool _isLoading = false;
+  String? _errorMessage;
   double? _currentLat;
   double? _currentLng;
 
@@ -24,6 +25,7 @@ class DriverProvider extends ChangeNotifier {
 
   bool get isOnline => _isOnline;
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
   double? get currentLat => _currentLat;
   double? get currentLng => _currentLng;
   List<Map<String, dynamic>> get pendingRequests => _pendingRequests;
@@ -36,12 +38,15 @@ class DriverProvider extends ChangeNotifier {
   }
 
   Future<void> toggleOnline() async {
+    final previousState = _isOnline;
+    _isOnline = !previousState;
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
       final res = await _dio.post(ApiConstants.driverToggleAvailability, data: {
-        'is_available': !_isOnline,
+        'is_available': _isOnline,
       });
 
       if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'success')) {
@@ -53,8 +58,13 @@ class DriverProvider extends ChangeNotifier {
         } else {
           _stopDispatchLoop();
         }
+      } else {
+        _isOnline = previousState;
+        _errorMessage = res.data['message'] ?? 'Failed to update status.';
       }
     } catch (e) {
+      _isOnline = previousState;
+      _errorMessage = 'Network connection error. Please try again.';
       debugPrint('Error toggling availability: $e');
     }
 

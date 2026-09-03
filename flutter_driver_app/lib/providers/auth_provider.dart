@@ -35,9 +35,7 @@ class AuthProvider extends ChangeNotifier {
           final u = res.data['user'];
           _userId = u['id'];
           _userName = u['name'];
-          _userEmail = u['email'];
-          _role = res.data['role'] ?? _role;
-          await TokenStorage.saveUserData(role: _role, name: _userName!, email: _userEmail!);
+          await TokenStorage.saveUserData(role: 'driver', name: _userName!, email: _userEmail!);
         } else {
           await logout();
           return false;
