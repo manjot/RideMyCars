@@ -145,10 +145,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
       itemCount: trips.length,
       itemBuilder: (context, index) {
         final t = trips[index];
-        final fare = (t['fare'] ?? t['total_amount'] ?? 0.0) as num;
+        final fare = double.tryParse((t['fare'] ?? t['total_amount'] ?? '0').toString()) ?? 0.0;
         final status = (t['status'] ?? 'completed').toString();
-        final riderName = t['rider']?['name'] ?? t['passenger_name'] ?? 'Passenger';
-        final vehicleType = t['vehicle_type'] ?? 'Standard';
+        final riderName = t['rider'] is Map ? (t['rider']['name'] ?? 'Passenger') : (t['passenger_name'] ?? 'Passenger');
+        final vehicleType = (t['vehicle_type'] ?? t['car_make_model'] ?? 'Standard').toString();
         final date = t['created_at'] != null ? t['created_at'].toString().split('T').first : 'Recent';
 
         return Container(

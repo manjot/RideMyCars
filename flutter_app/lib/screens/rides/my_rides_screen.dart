@@ -161,9 +161,9 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
       itemBuilder: (context, index) {
         final r = rides[index];
         final status = (r['status'] ?? 'pending').toString();
-        final fare = (r['fare'] ?? r['total_amount'] ?? 0.0) as num;
-        final driverName = r['driver']?['name'] ?? 'Assigned Driver';
-        final vehicleType = r['vehicle_type'] ?? 'Standard';
+        final fare = double.tryParse((r['fare'] ?? r['total_amount'] ?? '0').toString()) ?? 0.0;
+        final driverName = r['driver'] is Map ? (r['driver']['name'] ?? 'Assigned Driver') : (r['driver_name'] ?? 'Assigned Driver');
+        final vehicleType = (r['vehicle_type'] ?? r['car_make_model'] ?? 'Standard').toString();
         final date = r['created_at'] != null
             ? r['created_at'].toString().split('T').first
             : 'Recent';
