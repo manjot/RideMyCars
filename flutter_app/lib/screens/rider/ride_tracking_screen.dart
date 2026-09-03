@@ -129,187 +129,193 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
               decoration: BoxDecoration(
                 color: AppColors.surfaceDark,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.55),
+                    color: Colors.black.withValues(alpha: 0.55),
                     blurRadius: 30,
                     offset: const Offset(0, -10),
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Status Banner
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.radar_rounded, color: AppColors.primary, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _statusDescription(status, driver?['name']),
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
+              child: SafeArea(
+                top: false,
+                bottom: true,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Status Banner
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Driver Details (if assigned)
-                  if (driver != null) ...[
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundColor: AppColors.purple,
-                          child: Text(
-                            (driver['name'] ?? 'D')[0].toUpperCase(),
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                driver['name'] ?? 'Driver',
-                                style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 17),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.radar_rounded, color: AppColors.primary, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _statusDescription(status, driver?['name']),
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
-                              Row(
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Driver Details (if assigned)
+                      if (driver != null) ...[
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundColor: AppColors.purple,
+                              child: Text(
+                                (driver['name'] ?? 'D')[0].toUpperCase(),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.star_rounded, color: AppColors.primary, size: 16),
-                                  const SizedBox(width: 4),
                                   Text(
-                                    '${driver['rating'] ?? 4.9} · ${driver['total_trips'] ?? 40} trips',
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                                    driver['name'] ?? 'Driver',
+                                    style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 17),
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.star_rounded, color: AppColors.primary, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${driver['rating'] ?? 4.9} · ${driver['total_trips'] ?? 40} trips',
+                                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        if (driver['phone'] != null)
-                          IconButton(
-                            onPressed: _callDriver,
-                            style: IconButton.styleFrom(
-                              backgroundColor: AppColors.success.withOpacity(0.2),
-                              foregroundColor: AppColors.success,
                             ),
-                            icon: const Icon(Icons.phone_rounded),
-                          ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '\$${fare.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-
-                  // Route Information
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundDark,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.circle, color: AppColors.success, size: 12),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                pickup,
-                                style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            if (driver['phone'] != null)
+                              IconButton(
+                                onPressed: _callDriver,
+                                style: IconButton.styleFrom(
+                                  backgroundColor: AppColors.success.withValues(alpha: 0.2),
+                                  foregroundColor: AppColors.success,
+                                ),
+                                icon: const Icon(Icons.phone_rounded),
+                              ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '\$${fare.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 22,
                               ),
                             ),
                           ],
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(left: 5),
-                          child: Align(alignment: Alignment.centerLeft, child: SizedBox(height: 14, child: VerticalDivider(color: Colors.white24))),
+                        const SizedBox(height: 14),
+                      ],
+
+                      // Route Information
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        Row(
+                        child: Column(
                           children: [
-                            const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 14),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                dropoff,
-                                style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            Row(
+                              children: [
+                                const Icon(Icons.circle, color: AppColors.success, size: 12),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    pickup,
+                                    style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 5),
+                              child: Align(alignment: Alignment.centerLeft, child: SizedBox(height: 14, child: VerticalDivider(color: Colors.white24))),
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 14),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    dropoff,
+                                    style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Cancel Button
-                  if (status == 'pending' || status == 'accepted')
-                    OutlinedButton(
-                      onPressed: () async {
-                        final ok = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            backgroundColor: AppColors.surfaceDark,
-                            title: const Text('Cancel Ride?', style: TextStyle(color: AppColors.textLight)),
-                            content: const Text('Are you sure you want to cancel this ride request?', style: TextStyle(color: AppColors.textMuted)),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (ok == true && context.mounted) {
-                          await rideProv.cancelRide(currentRide['id']);
-                          if (context.mounted) Navigator.pop(context);
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.danger,
-                        side: const BorderSide(color: AppColors.danger),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text('✕ Cancel Ride Request', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                ],
+                      const SizedBox(height: 16),
+
+                      // Cancel Button
+                      if (status == 'pending' || status == 'accepted')
+                        OutlinedButton(
+                          onPressed: () async {
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                backgroundColor: AppColors.surfaceDark,
+                                title: const Text('Cancel Ride?', style: TextStyle(color: AppColors.textLight)),
+                                content: const Text('Are you sure you want to cancel this ride request?', style: TextStyle(color: AppColors.textMuted)),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (ok == true && context.mounted) {
+                              await rideProv.cancelRide(currentRide['id']);
+                              if (context.mounted) Navigator.pop(context);
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.danger,
+                            side: const BorderSide(color: AppColors.danger),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('✕ Cancel Ride Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

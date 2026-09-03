@@ -163,7 +163,6 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               decoration: BoxDecoration(
                 color: AppColors.surfaceDark,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -175,112 +174,119 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Rider Info Row
-                  Row(
+              child: SafeArea(
+                top: false,
+                bottom: true,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.purple,
-                        child: Text(
-                          riderName.isNotEmpty ? riderName[0].toUpperCase() : 'R',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              riderName,
-                              style: const TextStyle(
-                                color: AppColors.textLight,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                      // Rider Info Row
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.purple,
+                            child: Text(
+                              riderName.isNotEmpty ? riderName[0].toUpperCase() : 'R',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                             ),
-                            Text(
-                              status.replaceAll('_', ' ').toUpperCase(),
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 11,
-                                letterSpacing: 0.5,
-                              ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  riderName,
+                                  style: const TextStyle(
+                                    color: AppColors.textLight,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  status.replaceAll('_', ' ').toUpperCase(),
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 11,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            onPressed: _callRider,
+                            style: IconButton.styleFrom(
+                              backgroundColor: AppColors.success.withValues(alpha: 0.2),
+                              foregroundColor: AppColors.success,
+                            ),
+                            icon: const Icon(Icons.phone_rounded),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '\$${fare.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        onPressed: _callRider,
-                        style: IconButton.styleFrom(
-                          backgroundColor: AppColors.success.withValues(alpha: 0.2),
-                          foregroundColor: AppColors.success,
-                        ),
-                        icon: const Icon(Icons.phone_rounded),
+                      const SizedBox(height: 18),
+                      const Divider(color: Colors.white10),
+                      const SizedBox(height: 12),
+
+                      // Route display
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.pin_drop_rounded, color: AppColors.primary, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  status == 'in_progress' ? 'DESTINATION' : 'PICKUP LOCATION',
+                                  style: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _currentDestination,
+                                  style: const TextStyle(
+                                    color: AppColors.textLight,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '\$${fare.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 22,
-                        ),
+                      const SizedBox(height: 22),
+
+                      // Lifecycle Step Button
+                      SizedBox(
+                        height: 54,
+                        child: _buildActionButton(status),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  const Divider(color: Colors.white10),
-                  const SizedBox(height: 12),
-
-                  // Route display
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.pin_drop_rounded, color: AppColors.primary, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              status == 'in_progress' ? 'DESTINATION' : 'PICKUP LOCATION',
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _currentDestination,
-                              style: const TextStyle(
-                                color: AppColors.textLight,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 22),
-
-                  // Lifecycle Step Button
-                  SizedBox(
-                    height: 54,
-                    child: _buildActionButton(status),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
