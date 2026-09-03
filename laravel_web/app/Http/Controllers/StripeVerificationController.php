@@ -84,53 +84,78 @@ class StripeVerificationController extends Controller
             'rejection_reason' => 'nullable|string|max:500',
         ]);
 
-        $serviceType = $request->input('service_type');
-        $serviceId = (int) $request->input('service_id');
-        $action = $request->input('action');
-        $reason = $request->input('rejection_reason');
-        $driverUser = Auth::user();
+        try {
+            $serviceType = $request->input('service_type');
+            $serviceId = (int) $request->input('service_id');
+            $action = $request->input('action');
+            $reason = $request->input('rejection_reason');
+            $driverUser = Auth::user() ?? (auth('sanctum')->check() ? auth('sanctum')->user() : null);
+            $driverId = $driverUser ? $driverUser->id : null;
 
-        $booking = $this->getBookingModel($serviceType, $serviceId);
-        if (!$booking) {
-            return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
-        }
+            $booking = $this->getBookingModel($serviceType, $serviceId);
+            if (!$booking) {
+                return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+            }
 
-        if ($action === 'approve') {
-            $booking->update([
-                'verification_status' => 'driver_verified',
-                'verified_by_driver_id' => $driverUser->id ?? null,
-                'verified_at' => now(),
-                'rejection_reason' => null,
-            ]);
+            if ($action === 'approve') {
+                $updateData = [
+                    'verification_status' => 'driver_verified',
+                    'verified_at' => now(),
+                    'rejection_reason' => null,
+                ];
 
-            ActivityLogService::log(
-                'driver_verified_booking',
-                "Driver #{$driverUser->id} approved verification for {$serviceType} #{$serviceId}",
-                $driverUser->id ?? 1
-            );
+                if ($driverId) {
+                    $updateData['verified_by_driver_id'] = $driverId;
+                    if (empty($booking->driver_id)) {
+                        $updateData['driver_id'] = $driverId;
+                    }
+                }
 
+                $booking->update($updateData);
+
+                try {
+                    ActivityLogService::log(
+                        'driver_verified_booking',
+                        "Driver #" . ($driverId ?? 'System') . " approved verification for {$serviceType} #{$serviceId}",
+                        $driverId ?? 1
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning("Activity log failed: " . $e->getMessage());
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'verification_status' => 'driver_verified',
+                    'message' => 'Booking verification approved. Customer can now proceed with Stripe Payment.',
+                ]);
+            } else {
+                $booking->update([
+                    'verification_status' => 'rejected',
+                    'rejection_reason' => $reason ?? 'Driver declined details.',
+                ]);
+
+                try {
+                    ActivityLogService::log(
+                        'driver_rejected_booking',
+                        "Driver #" . ($driverId ?? 'System') . " rejected verification for {$serviceType} #{$serviceId}: {$reason}",
+                        $driverId ?? 1
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning("Activity log failed: " . $e->getMessage());
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'verification_status' => 'rejected',
+                    'message' => 'Booking verification rejected.',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error("Error in driverRespond: " . $e->getMessage());
             return response()->json([
-                'success' => true,
-                'verification_status' => 'driver_verified',
-                'message' => 'Booking verification approved. Customer can now proceed with Stripe Payment.',
-            ]);
-        } else {
-            $booking->update([
-                'verification_status' => 'rejected',
-                'rejection_reason' => $reason ?? 'Driver declined details.',
-            ]);
-
-            ActivityLogService::log(
-                'driver_rejected_booking',
-                "Driver #{$driverUser->id} rejected verification for {$serviceType} #{$serviceId}: {$reason}",
-                $driverUser->id ?? 1
-            );
-
-            return response()->json([
-                'success' => true,
-                'verification_status' => 'rejected',
-                'message' => 'Booking verification rejected.',
-            ]);
+                'success' => false,
+                'message' => 'Failed to process verification response: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
