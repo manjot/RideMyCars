@@ -1939,3 +1939,60 @@ foreach ($pages as $page) {
     });
 }
 
+Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
+    if ($request->query('key') !== 'rmc2026') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+    
+    $output = [];
+    
+    // Ensure personal_access_tokens table
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('personal_access_tokens')) {
+            \Illuminate\Support\Facades\Schema::create('personal_access_tokens', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->morphs('tokenable');
+                $table->text('name');
+                $table->string('token', 64)->unique();
+                $table->text('abilities')->nullable();
+                $table->timestamp('last_used_at')->nullable();
+                $table->timestamp('expires_at')->nullable()->index();
+                $table->timestamps();
+            });
+            $output['tokens_table'] = 'Created';
+        } else {
+            $output['tokens_table'] = 'Exists';
+        }
+    } catch (\Throwable $e) {
+        $output['tokens_table_err'] = $e->getMessage();
+    }
+    
+    // Run git pull
+    $output['git_pull'] = shell_exec('cd ' . base_path('..') . ' && git pull origin main 2>&1');
+    
+    // Run migrations & seeders
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output['migrate'] = \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Throwable $e) {
+        $output['migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
+        $output['seed'] = \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Throwable $e) {
+        $output['seed_err'] = $e->getMessage();
+    }
+    
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+    
+    return response()->json([
+        'status' => 'success',
+        'details' => $output,
+    ]);
+});
+
+
