@@ -1362,8 +1362,60 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
     $pending = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
         ->where('status', 'pending')
         ->where('expires_at', '>', now())
-        ->with(['ride', 'driverBooking'])
-        ->get();
+        ->with(['ride.rider', 'driverBooking.client', 'packageDelivery'])
+        ->get()
+        ->map(function ($a) {
+            $ride = $a->ride;
+            $db = $a->driverBooking;
+            $pkg = $a->packageDelivery;
+
+            $fare = 0.0;
+            $pickup = 'Pickup location';
+            $dropoff = 'Destination';
+            $passenger = 'Passenger';
+            $type = 'ride';
+
+            if ($ride) {
+                $fare = (float)($ride->total_amount ?? $ride->fare ?? 0);
+                $pickup = $ride->pickup_location ?? 'Current Location';
+                $dropoff = $ride->dropoff_location ?? 'Destination';
+                $passenger = $ride->passenger_name ?? ($ride->rider->name ?? 'Rider');
+                $type = 'ride';
+            } elseif ($db) {
+                $fare = (float)($db->total_price ?? 0);
+                $pickup = $db->pickup_location ?? 'Pickup location';
+                $dropoff = $db->dropoff_location ?? 'Destination';
+                $passenger = $db->client->name ?? 'Client';
+                $type = 'driver_booking';
+            } elseif ($pkg) {
+                $fare = (float)($pkg->total_price ?? 0);
+                $pickup = $pkg->pickup_address ?? 'Pickup location';
+                $dropoff = $pkg->delivery_address ?? 'Destination';
+                $passenger = $pkg->sender_name ?? 'Sender';
+                $type = 'package_delivery';
+            }
+
+            return [
+                'id' => $a->id,
+                'assignment_id' => $a->id,
+                'type' => $type,
+                'ride_id' => $a->ride_id,
+                'driver_booking_id' => $a->driver_booking_id,
+                'package_delivery_id' => $a->package_delivery_id,
+                'fare' => $fare,
+                'total_price' => $fare,
+                'pickup_location' => $pickup,
+                'dropoff_location' => $dropoff,
+                'rider_name' => $passenger,
+                'client_name' => $passenger,
+                'passenger_name' => $passenger,
+                'vehicle_type' => $ride->vehicle_type ?? ($db->car_make_model ?? 'Standard'),
+                'distance_km' => $ride->distance_km ?? null,
+                'duration_minutes' => $ride->duration_minutes ?? 15,
+                'expires_at' => $a->expires_at ? $a->expires_at->toIso8601String() : null,
+                'status' => $a->status,
+            ];
+        });
         
     return response()->json([
         'success' => true,

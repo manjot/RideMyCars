@@ -155,9 +155,13 @@ class DriverProvider extends ChangeNotifier {
       // 1. Fetch direct incoming dispatch requests
       try {
         final res = await _dio.get(ApiConstants.driverRequests);
-        if (res.statusCode == 200 && res.data['success'] == true) {
-          final List newReqs = res.data['requests'] ?? [];
-          _pendingRequests = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
+        if (res.statusCode == 200) {
+          final List newReqs = (res.data is Map ? (res.data['requests'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
+          final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
+          if (mapped.isNotEmpty && mapped.length > _pendingRequests.length) {
+            _playNotificationSound();
+          }
+          _pendingRequests = mapped;
         }
       } catch (e) {
         debugPrint('Error polling dispatch requests: $e');
