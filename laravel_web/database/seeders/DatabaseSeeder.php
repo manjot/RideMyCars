@@ -23,20 +23,20 @@ class DatabaseSeeder extends Seeder
         );
 
         // Client User
-        $client = User::firstOrCreate(
+        $client = User::updateOrCreate(
             ['email' => 'customer@ridemycars.com'],
             [
                 'name' => 'John Client',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'customer',
             ]
         );
 
-        $client2 = User::firstOrCreate(
+        $client2 = User::updateOrCreate(
             ['email' => 'client@ridemycars.com'],
             [
                 'name' => 'John Client',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'customer',
             ]
         );
