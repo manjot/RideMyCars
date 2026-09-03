@@ -49,29 +49,80 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     
+    // Auth & User Profile
+    Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Rides Lifecycle
+    Route::get('/rides/active', [RideController::class, 'active']);
+    Route::post('/rides/{id}/status', [RideController::class, 'updateStatus']);
+    Route::post('/rides/{id}/cancel', [RideController::class, 'cancel']);
+    Route::apiResource('rides', RideController::class);
+    Route::apiResource('vehicles', VehicleController::class);
+
+    // Driver Dispatch & Operations
+    Route::post('/driver/location', [DriverApiController::class, 'updateLocation']);
+    Route::post('/driver/toggle-availability', [DriverApiController::class, 'toggleAvailability']);
+    Route::get('/driver/requests', [DriverApiController::class, 'pendingRequests']);
+    Route::post('/driver/respond', [DriverApiController::class, 'respondToAssignment']);
+    Route::get('/driver/active-rides', [DriverApiController::class, 'activeRides']);
+    Route::get('/driver/earnings', [DriverApiController::class, 'earnings']);
+
+    // Driver Bookings & Reviews
+    Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
+    Route::post('/driver-bookings/{id}/review', [DriverApiController::class, 'submitReview']);
+
+    // Notifications
+    Route::get('/notifications', function (Request $request) {
+        $user = $request->user();
+        $notifications = \App\Models\UserNotification::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->take(30)
+            ->get()
+            ->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'type' => $n->type,
+                    'title' => $n->title,
+                    'message' => $n->message,
+                    'link' => $n->link,
+                    'data' => $n->data,
+                    'is_read' => (bool)$n->is_read,
+                    'time_ago' => $n->created_at->diffForHumans(),
+                    'created_at' => $n->created_at->toIso8601String(),
+                ];
+            });
+
+        $unreadCount = \App\Models\UserNotification::where('user_id', $user->id)->where('is_read', false)->count();
+
+        return response()->json([
+            'success' => true,
+            'notifications' => $notifications,
+            'unread_count' => $unreadCount,
+        ]);
+    });
+
+    Route::post('/notifications/mark-read', function (Request $request) {
+        $user = $request->user();
+        $id = $request->input('id');
+        if ($id) {
+            \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->update(['is_read' => true]);
+        } else {
+            \App\Models\UserNotification::where('user_id', $user->id)->update(['is_read' => true]);
+        }
+        return response()->json(['success' => true]);
+    });
 
     // Banners & Categories Management
     Route::post('/banners', [BannerApiController::class, 'store']);
     Route::put('/banners/{id}', [BannerApiController::class, 'update']);
     Route::delete('/banners/{id}', [BannerApiController::class, 'destroy']);
-
     Route::post('/categories', [CategoryApiController::class, 'store']);
     Route::put('/categories/{id}', [CategoryApiController::class, 'update']);
     Route::delete('/categories/{id}', [CategoryApiController::class, 'destroy']);
-
-    // Products Management
     Route::post('/products', [ProductApiController::class, 'store']);
     Route::put('/products/{id}', [ProductApiController::class, 'update']);
     Route::delete('/products/{id}', [ProductApiController::class, 'destroy']);
-
-    // Rides & Vehicles
-    Route::apiResource('rides', RideController::class);
-    Route::apiResource('vehicles', VehicleController::class);
-
-    // Driver Bookings & Reviews
-    Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
-    Route::post('/driver-bookings/{id}/review', [DriverApiController::class, 'submitReview']);
 
     // Activity Logs
     Route::get('/activity-logs', [DriverApiController::class, 'activityLogs']);

@@ -234,4 +234,213 @@ class DriverApiController extends Controller
             'data' => $logs,
         ]);
     }
+
+    /**
+     * Update driver live GPS location.
+     */
+    public function updateLocation(Request $request)
+    {
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+        ]);
+
+        $user = $request->user();
+        if ($user && $user->driverProfile) {
+            $user->driverProfile->update([
+                'current_lat' => $request->lat,
+                'current_lng' => $request->lng,
+                'last_location_update' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Location updated',
+                'lat' => $request->lat,
+                'lng' => $request->lng,
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Driver profile not found'], 404);
+    }
+
+    /**
+     * Toggle driver availability (online/offline).
+     */
+    public function toggleAvailability(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || !$user->driverProfile) {
+            return response()->json(['success' => false, 'message' => 'Driver profile not found'], 404);
+        }
+
+        $isAvailable = $request->has('is_available') ? $request->boolean('is_available') : !$user->driverProfile->is_available;
+        $user->driverProfile->update(['is_available' => $isAvailable]);
+
+        return response()->json([
+            'success' => true,
+            'is_available' => $isAvailable,
+            'message' => $isAvailable ? 'You are now online and ready for jobs.' : 'You are now offline.',
+        ]);
+    }
+
+    /**
+     * Get pending incoming requests for the authenticated driver.
+     */
+    public function pendingRequests(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['requests' => []]);
+
+        $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client'])
+            ->where('driver_id', $user->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->get();
+
+        $requests = [];
+        foreach ($assignments as $a) {
+            if ($a->ride && $a->ride->status === 'pending') {
+                $requests[] = [
+                    'assignment_id' => $a->id,
+                    'type' => 'ride',
+                    'ride_id' => $a->ride->id,
+                    'pickup_location' => $a->ride->pickup_location,
+                    'pickup_lat' => $a->ride->pickup_lat,
+                    'pickup_lng' => $a->ride->pickup_lng,
+                    'dropoff_location' => $a->ride->dropoff_location,
+                    'dropoff_lat' => $a->ride->dropoff_lat,
+                    'dropoff_lng' => $a->ride->dropoff_lng,
+                    'fare' => floatval($a->ride->fare ?: $a->ride->total_amount),
+                    'vehicle_type' => $a->ride->vehicle_type ?? 'Standard',
+                    'rider_name' => $a->ride->rider?->name ?? $a->ride->passenger_name ?? 'Rider',
+                    'rider_phone' => $a->ride->passenger_phone ?? $a->ride->rider?->phone,
+                    'distance_km' => $a->ride->distance_km,
+                    'duration_minutes' => $a->ride->duration_minutes,
+                    'expires_at' => $a->expires_at->toIso8601String(),
+                ];
+            } elseif ($a->driverBooking && $a->driverBooking->status === 'pending') {
+                $requests[] = [
+                    'assignment_id' => $a->id,
+                    'type' => 'driver_booking',
+                    'booking_id' => $a->driverBooking->id,
+                    'pickup_location' => $a->driverBooking->pickup_location,
+                    'service_category' => $a->driverBooking->service_category,
+                    'duration_type' => $a->driverBooking->duration_type,
+                    'duration_count' => $a->driverBooking->duration_count,
+                    'total_price' => floatval($a->driverBooking->total_price),
+                    'client_name' => $a->driverBooking->client?->name ?? 'Client',
+                    'start_date' => $a->driverBooking->start_date,
+                    'expires_at' => $a->expires_at->toIso8601String(),
+                ];
+            }
+        }
+
+        return response()->json(['success' => true, 'requests' => $requests]);
+    }
+
+    /**
+     * Driver responds to assignment (accept or reject).
+     */
+    public function respondToAssignment(Request $request)
+    {
+        $request->validate([
+            'assignment_id' => 'required|exists:ride_assignments,id',
+            'action' => 'required|in:accept,reject',
+        ]);
+
+        $user = $request->user();
+        $assignment = \App\Models\RideAssignment::where('id', $request->assignment_id)
+            ->where('driver_id', $user->id)
+            ->first();
+
+        if (!$assignment) {
+            return response()->json(['success' => false, 'message' => 'Assignment not found'], 404);
+        }
+
+        if ($request->action === 'accept') {
+            if ($assignment->status !== 'pending' || $assignment->expires_at->isPast()) {
+                return response()->json(['success' => false, 'message' => 'This offer has already expired or been accepted.'], 410);
+            }
+
+            $assignment->update(['status' => 'accepted']);
+
+            if ($assignment->ride) {
+                $ride = $assignment->ride;
+                $ride->update([
+                    'driver_id' => $user->id,
+                    'status' => 'accepted',
+                ]);
+
+                // Expire competing assignments
+                \App\Models\RideAssignment::where('ride_id', $ride->id)
+                    ->where('id', '!=', $assignment->id)
+                    ->update(['status' => 'expired']);
+
+                if ($user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => false]);
+                }
+
+                try {
+                    \App\Services\NotificationService::notifyRideAccepted($ride);
+                } catch (\Throwable $e) {}
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Ride accepted successfully.',
+                    'ride' => $ride->fresh(),
+                ]);
+            }
+        } else {
+            $assignment->update(['status' => 'rejected']);
+
+            // Assign to next driver
+            if ($assignment->ride) {
+                \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Job declined.']);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get active rides for driver.
+     */
+    public function activeRides(Request $request)
+    {
+        $user = $request->user();
+        $rides = \App\Models\Ride::with(['rider', 'stops'])
+            ->where('driver_id', $user->id)
+            ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'rides' => $rides,
+        ]);
+    }
+
+    /**
+     * Driver earnings summary.
+     */
+    public function earnings(Request $request)
+    {
+        $user = $request->user();
+        $completedRides = \App\Models\Ride::where('driver_id', $user->id)->where('status', 'completed');
+
+        $today = (clone $completedRides)->whereDate('created_at', today())->sum('fare');
+        $week = (clone $completedRides)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('fare');
+        $month = (clone $completedRides)->whereMonth('created_at', now()->month)->sum('fare');
+
+        return response()->json([
+            'success' => true,
+            'today' => floatval($today),
+            'week' => floatval($week),
+            'month' => floatval($month),
+            'total_trips' => $completedRides->count(),
+        ]);
+    }
 }
