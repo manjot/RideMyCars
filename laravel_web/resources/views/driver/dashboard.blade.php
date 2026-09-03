@@ -394,6 +394,65 @@
                         @endif
                     </div>
 
+                    <!-- Available Ride Requests (Pending / Unassigned Rides) -->
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-indigo-500 {{ $pendingRides->isNotEmpty() ? 'animate-ping' : '' }}"></span>
+                                Available Ride Requests ({{ $pendingRides->count() }})
+                            </h2>
+                            <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">On-Demand Rides</span>
+                        </div>
+
+                        @if($pendingRides->isEmpty())
+                            <p class="text-gray-500 dark:text-gray-400 text-sm italic">No pending ride requests right now.</p>
+                        @else
+                            <div class="space-y-4">
+                                @foreach($pendingRides as $pr)
+                                    <div class="p-5 border border-indigo-200 dark:border-indigo-800/40 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
+                                                    {{ $pr->vehicle_type ?? 'Standard' }} Ride #{{ $pr->id }}
+                                                </span>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2">Rider: {{ $pr->rider->name ?? $pr->passenger_name ?? 'Guest Passenger' }}</h4>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400">${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
+                                                <span class="text-xs text-gray-400 block font-bold uppercase">{{ $pr->payment_method ?? 'Cash' }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
+                                            <p><strong>📍 Pickup:</strong> {{ $pr->pickup_location }}</p>
+                                            @if($pr->dropoff_location)
+                                                <p><strong>🏁 Destination:</strong> {{ $pr->dropoff_location }}</p>
+                                            @endif
+                                            @if($pr->distance_km)
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Distance: ~{{ number_format($pr->distance_km, 1) }} km ({{ $pr->duration_minutes ?? 15 }} mins)</p>
+                                            @endif
+                                        </div>
+
+                                        <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
+                                            <form action="/driver/ride/{{ $pr->id }}/accept" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                                    <span>✓ Accept Ride & Earn ${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
+                                                </button>
+                                            </form>
+                                            <form action="/driver/ride/{{ $pr->id }}/decline" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
+                                                    Decline
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Pending Hiring Requests ({{ $pendingDriverBookings->count() }})</h2>
                         @if($pendingDriverBookings->isEmpty())

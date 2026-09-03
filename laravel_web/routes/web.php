@@ -1243,28 +1243,90 @@ Route::get('/api/driver/requests', function () {
 
     // If driver is online/available, automatically dispatch any pending unassigned rides and bookings
     if (($user->role === 'driver' || $user->driverProfile) && $user->driverProfile && $user->driverProfile->is_available) {
+        $user->driverProfile->update(['last_location_update' => now()]);
+
         $pendingRides = \App\Models\Ride::where('status', 'pending')
             ->whereNull('driver_id')
-            ->whereDoesntHave('assignments', function ($q) {
-                $q->where('status', 'pending')->where('expires_at', '>', now());
-            })
-            ->take(3)
+            ->take(5)
             ->get();
 
         foreach ($pendingRides as $pRide) {
-            \App\Services\RideAssignmentService::assignNextDriver($pRide);
+            $myOffer = \App\Models\RideAssignment::where('ride_id', $pRide->id)
+                ->where('driver_id', $user->id)
+                ->where('status', 'pending')
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if (!$myOffer) {
+                $rejected = \App\Models\RideAssignment::where('ride_id', $pRide->id)
+                    ->where('driver_id', $user->id)
+                    ->where('status', 'rejected')
+                    ->exists();
+
+                if (!$rejected) {
+                    $otherDriverOffer = \App\Models\RideAssignment::where('ride_id', $pRide->id)
+                        ->where('driver_id', '!=', $user->id)
+                        ->where('status', 'pending')
+                        ->where('expires_at', '>', now())
+                        ->first();
+
+                    // If other offer is to an inactive driver or nonexistent, assign to this active driver!
+                    if (!$otherDriverOffer || !$otherDriverOffer->driver || !$otherDriverOffer->driver->driverProfile || !$otherDriverOffer->driver->driverProfile->last_location_update || $otherDriverOffer->driver->driverProfile->last_location_update->lt(now()->subMinutes(3))) {
+                        if ($otherDriverOffer) {
+                            $otherDriverOffer->update(['status' => 'expired']);
+                        }
+                        \App\Models\RideAssignment::create([
+                            'ride_id' => $pRide->id,
+                            'driver_id' => $user->id,
+                            'status' => 'pending',
+                            'expires_at' => now()->addSeconds(120),
+                        ]);
+                        \App\Services\NotificationService::notifyDriverRideAssigned($pRide, $user->id);
+                    }
+                }
+            }
         }
 
         $pendingBookings = \App\Models\DriverBooking::where('booking_status', 'pending')
             ->whereNull('driver_id')
-            ->whereDoesntHave('assignments', function ($q) {
-                $q->where('status', 'pending')->where('expires_at', '>', now());
-            })
-            ->take(3)
+            ->take(5)
             ->get();
 
         foreach ($pendingBookings as $pBooking) {
-            \App\Services\DriverBookingAssignmentService::assignNextDriver($pBooking);
+            $myOffer = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
+                ->where('driver_id', $user->id)
+                ->where('status', 'pending')
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if (!$myOffer) {
+                $rejected = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
+                    ->where('driver_id', $user->id)
+                    ->where('status', 'rejected')
+                    ->exists();
+
+                if (!$rejected) {
+                    $otherDriverOffer = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
+                        ->where('driver_id', '!=', $user->id)
+                        ->where('status', 'pending')
+                        ->where('expires_at', '>', now())
+                        ->first();
+
+                    if (!$otherDriverOffer || !$otherDriverOffer->driver || !$otherDriverOffer->driver->driverProfile || !$otherDriverOffer->driver->driverProfile->last_location_update || $otherDriverOffer->driver->driverProfile->last_location_update->lt(now()->subMinutes(3))) {
+                        if ($otherDriverOffer) {
+                            $otherDriverOffer->update(['status' => 'expired']);
+                        }
+                        \App\Models\RideAssignment::create([
+                            'driver_booking_id' => $pBooking->id,
+                            'ride_id' => null,
+                            'driver_id' => $user->id,
+                            'status' => 'pending',
+                            'expires_at' => now()->addSeconds(120),
+                        ]);
+                        \App\Services\NotificationService::notifyDriverHiringAssigned($pBooking, $user->id);
+                    }
+                }
+            }
         }
     }
 
@@ -1485,7 +1547,35 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         }
 
         $vehicles = \App\Models\Vehicle::where('owner_id', $user->id)->get();
-        $rides = \App\Models\Ride::where('driver_id', $user->id)->orderBy('created_at', 'desc')->get();
+        
+        $assignedRideIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->whereNotNull('ride_id')
+            ->pluck('ride_id')
+            ->toArray();
+
+        $unassignedPendingRideIds = [];
+        if ($profile->is_available) {
+            $unassignedPendingRideIds = \App\Models\Ride::where('status', 'pending')
+                ->whereNull('driver_id')
+                ->latest()
+                ->take(5)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        $allPendingRideIds = array_unique(array_merge($assignedRideIds, $unassignedPendingRideIds));
+
+        $rides = \App\Models\Ride::where(function ($q) use ($user, $allPendingRideIds) {
+                $q->where('driver_id', $user->id);
+                if (!empty($allPendingRideIds)) {
+                    $q->orWhereIn('id', $allPendingRideIds);
+                }
+            })
+            ->with(['rider'])
+            ->orderBy('created_at', 'desc')
+            ->get();
         
         $assignedBookingIds = \App\Models\RideAssignment::where('driver_id', $user->id)
             ->where('status', 'pending')
@@ -1494,10 +1584,22 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->pluck('driver_booking_id')
             ->toArray();
 
-        $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($user, $assignedBookingIds) {
+        $unassignedBookingIds = [];
+        if ($profile->is_available) {
+            $unassignedBookingIds = \App\Models\DriverBooking::where('booking_status', 'pending')
+                ->whereNull('driver_id')
+                ->latest()
+                ->take(5)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        $allPendingBookingIds = array_unique(array_merge($assignedBookingIds, $unassignedBookingIds));
+
+        $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($user, $allPendingBookingIds) {
                 $q->where('driver_id', $user->id);
-                if (!empty($assignedBookingIds)) {
-                    $q->orWhereIn('id', $assignedBookingIds);
+                if (!empty($allPendingBookingIds)) {
+                    $q->orWhereIn('id', $allPendingBookingIds);
                 }
             })
             ->with(['client', 'review'])
@@ -1508,7 +1610,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         $pendingDriverBookings = $driverBookings->where('booking_status', 'pending');
         $completedDriverBookings = $driverBookings->where('booking_status', 'completed');
         
-        $activeRides = $rides->whereIn('status', ['accepted', 'in_progress']);
+        $activeRides = $rides->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
         $pendingRides = $rides->where('status', 'pending');
         $completedRides = $rides->where('status', 'completed');
         
@@ -1534,6 +1636,48 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings',
             'todayTrips', 'weekTrips', 'monthTrips'
         ));
+    });
+
+    Route::post('/ride/{id}/accept', function ($id) {
+        $user = auth()->user();
+        if (!$user) return redirect('/login');
+
+        $ride = \App\Models\Ride::where('id', $id)->first();
+        if (!$ride) return back()->with('error', 'Ride not found.');
+
+        if ($ride->status !== 'pending') {
+            return back()->with('error', 'This ride is no longer available.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($ride, $user) {
+            $ride->update([
+                'driver_id' => $user->id,
+                'status' => 'accepted',
+            ]);
+
+            if ($user->driverProfile) {
+                $user->driverProfile->update(['is_available' => false]);
+            }
+
+            \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'accepted']);
+        });
+
+        try {
+            \App\Services\NotificationService::notifyRiderRideAccepted($ride);
+        } catch (\Throwable $e) {}
+
+        return back()->with('success', "🎉 Ride #{$ride->id} accepted! You can now manage this trip.");
+    });
+
+    Route::post('/ride/{id}/decline', function ($id) {
+        $user = auth()->user();
+        if (!$user) return redirect('/login');
+
+        \App\Models\RideAssignment::where('ride_id', $id)
+            ->where('driver_id', $user->id)
+            ->update(['status' => 'rejected']);
+
+        return back()->with('info', 'Ride request declined.');
     });
 
     Route::post('/toggle-availability', function (\Illuminate\Http\Request $request) {

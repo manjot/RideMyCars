@@ -58,20 +58,10 @@ class DriverBookingAssignmentService
         $query = DriverProfile::where('is_available', true)
             ->whereNotIn('user_id', $allExcluded);
 
-        $freshnessSec = (int) config('ride.gps_freshness_seconds', 300);
-        $freshnessCutoff = now()->subSeconds($freshnessSec);
-
-        $onlineDrivers = $query->get()->filter(function ($driver) use ($freshnessCutoff) {
-            if ($driver->last_location_update) {
-                return $driver->last_location_update->gte($freshnessCutoff);
-            }
-            return true;
+        // Prioritize active drivers who have recent activity over ghost/seed accounts
+        $onlineDrivers = $query->get()->sortByDesc(function ($driver) {
+            return $driver->last_location_update ? $driver->last_location_update->timestamp : 0;
         });
-
-        // Fallback: If no driver updated GPS within 5 mins, include all online available drivers
-        if ($onlineDrivers->isEmpty()) {
-            $onlineDrivers = $query->get();
-        }
 
         if ($onlineDrivers->isEmpty()) {
             return null;
