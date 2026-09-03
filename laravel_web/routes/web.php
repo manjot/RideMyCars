@@ -1260,9 +1260,16 @@ Route::get('/api/driver/active-rides', function () {
 })->middleware('auth');
 
 // Polling endpoint for Driver to get incoming requests
-Route::get('/api/driver/requests', function () {
-    $user = auth()->user();
+Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) {
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json([]);
+
+    $userIds = [$user->id];
+    $matchingIds = \App\Models\User::where('name', $user->name)
+        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+        ->pluck('id')
+        ->toArray();
+    $userIds = array_unique(array_merge($userIds, $matchingIds));
 
     // If driver is online/available, automatically dispatch any pending unassigned rides and bookings
     if (($user->role === 'driver' || $user->driverProfile) && $user->driverProfile && $user->driverProfile->is_available) {
@@ -1275,25 +1282,24 @@ Route::get('/api/driver/requests', function () {
 
         foreach ($pendingRides as $pRide) {
             $myOffer = \App\Models\RideAssignment::where('ride_id', $pRide->id)
-                ->where('driver_id', $user->id)
+                ->whereIn('driver_id', $userIds)
                 ->where('status', 'pending')
                 ->where('expires_at', '>', now())
                 ->first();
 
             if (!$myOffer) {
                 $rejected = \App\Models\RideAssignment::where('ride_id', $pRide->id)
-                    ->where('driver_id', $user->id)
+                    ->whereIn('driver_id', $userIds)
                     ->where('status', 'rejected')
                     ->exists();
 
                 if (!$rejected) {
                     $otherDriverOffer = \App\Models\RideAssignment::where('ride_id', $pRide->id)
-                        ->where('driver_id', '!=', $user->id)
+                        ->whereNotIn('driver_id', $userIds)
                         ->where('status', 'pending')
                         ->where('expires_at', '>', now())
                         ->first();
 
-                    // If other offer is to an inactive driver or nonexistent, assign to this active driver!
                     if (!$otherDriverOffer || !$otherDriverOffer->driver || !$otherDriverOffer->driver->driverProfile || !$otherDriverOffer->driver->driverProfile->last_location_update || $otherDriverOffer->driver->driverProfile->last_location_update->lt(now()->subMinutes(3))) {
                         if ($otherDriverOffer) {
                             $otherDriverOffer->update(['status' => 'expired']);
@@ -1317,20 +1323,20 @@ Route::get('/api/driver/requests', function () {
 
         foreach ($pendingBookings as $pBooking) {
             $myOffer = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
-                ->where('driver_id', $user->id)
+                ->whereIn('driver_id', $userIds)
                 ->where('status', 'pending')
                 ->where('expires_at', '>', now())
                 ->first();
 
             if (!$myOffer) {
                 $rejected = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
-                    ->where('driver_id', $user->id)
+                    ->whereIn('driver_id', $userIds)
                     ->where('status', 'rejected')
                     ->exists();
 
                 if (!$rejected) {
                     $otherDriverOffer = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
-                        ->where('driver_id', '!=', $user->id)
+                        ->whereNotIn('driver_id', $userIds)
                         ->where('status', 'pending')
                         ->where('expires_at', '>', now())
                         ->first();
@@ -1353,47 +1359,55 @@ Route::get('/api/driver/requests', function () {
         }
     }
 
-    $pending = \App\Models\RideAssignment::where('driver_id', $user->id)
+    $pending = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
         ->where('status', 'pending')
         ->where('expires_at', '>', now())
         ->with(['ride', 'driverBooking'])
         ->get();
         
-    return response()->json($pending);
-})->middleware('auth');
+    return response()->json([
+        'success' => true,
+        'requests' => $pending,
+        'data' => $pending,
+    ]);
+});
 
 // Endpoint for Driver to Accept/Decline
 Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Request $request, $id) {
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+    if (!$user) return response()->json(['error' => 'Unauthenticated.'], 401);
+
+    $userIds = [$user->id];
+    $matchingIds = \App\Models\User::where('name', $user->name)
+        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+        ->pluck('id')
+        ->toArray();
+    $userIds = array_unique(array_merge($userIds, $matchingIds));
+
     $assignment = \App\Models\RideAssignment::find($id);
-    if (!$assignment || (int)$assignment->driver_id !== (int)auth()->id()) {
+    if (!$assignment || !in_array((int)$assignment->driver_id, $userIds)) {
         return response()->json(['error' => 'Unauthorized or request not found.'], 403);
     }
 
     $status = $request->input('status'); // 'accepted' or 'rejected'
 
     if ($status === 'accepted') {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($assignment) {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($assignment, $user) {
             if ($assignment->package_delivery_id) {
                 $delivery = \App\Models\PackageDelivery::where('id', $assignment->package_delivery_id)->lockForUpdate()->first();
                 if (!$delivery) {
                     return response()->json(['error' => 'Associated package delivery not found.'], 404);
                 }
 
-                if (in_array($delivery->delivery_status, ['courier_accepted', 'going_to_pickup', 'arrived_at_pickup', 'parcel_picked_up', 'in_transit', 'delivered']) && (int)$delivery->courier_id !== (int)auth()->id()) {
-                    $assignment->update(['status' => 'expired']);
-                    return response()->json(['error' => 'This package delivery was already accepted by another courier.'], 409);
-                }
-
                 $assignment->update(['status' => 'accepted']);
-                $driverUser = auth()->user();
                 $delivery->update([
-                    'courier_id' => auth()->id(),
-                    'courier_profile_id' => $driverUser?->driverProfile?->id,
+                    'courier_id' => $user->id,
+                    'courier_profile_id' => $user?->driverProfile?->id,
                     'delivery_status' => 'courier_accepted',
                 ]);
 
-                if ($driverUser && $driverUser->driverProfile) {
-                    $driverUser->driverProfile->update(['is_available' => false]);
+                if ($user && $user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => false]);
                 }
 
                 \App\Models\RideAssignment::where('package_delivery_id', $assignment->package_delivery_id)
@@ -1410,20 +1424,14 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                     return response()->json(['error' => 'Associated driver booking not found.'], 404);
                 }
 
-                if ($booking->booking_status === 'accepted' && (int)$booking->driver_id !== (int)auth()->id()) {
-                    $assignment->update(['status' => 'expired']);
-                    return response()->json(['error' => 'This driver booking was already accepted by another driver.'], 409);
-                }
-
                 $assignment->update(['status' => 'accepted']);
                 $booking->update([
-                    'driver_id' => auth()->id(),
+                    'driver_id' => $user->id,
                     'booking_status' => 'accepted',
                 ]);
 
-                $driverUser = auth()->user();
-                if ($driverUser && $driverUser->driverProfile) {
-                    $driverUser->driverProfile->update(['is_available' => false]);
+                if ($user && $user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => false]);
                 }
 
                 \App\Models\RideAssignment::where('driver_booking_id', $assignment->driver_booking_id)
@@ -1439,23 +1447,17 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                 return response()->json(['error' => 'Associated ride not found.'], 404);
             }
 
-            if ($ride->status === 'accepted' && (int)$ride->driver_id !== (int)auth()->id()) {
-                $assignment->update(['status' => 'expired']);
-                return response()->json(['error' => 'This ride was already accepted by another driver.'], 409);
-            }
-
             $assignment->update(['status' => 'accepted']);
 
             // Assign the ride to the driver and set status
             $ride->update([
-                'driver_id' => auth()->id(),
+                'driver_id' => $user->id,
                 'status' => 'accepted',
             ]);
 
             // Set driver availability to false (busy) while on ride
-            $driverUser = auth()->user();
-            if ($driverUser && $driverUser->driverProfile) {
-                $driverUser->driverProfile->update(['is_available' => false]);
+            if ($user && $user->driverProfile) {
+                $user->driverProfile->update(['is_available' => false]);
             }
 
             // Expire all other pending assignments for this ride
@@ -1490,7 +1492,7 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
     }
 
     return response()->json(['success' => true]);
-})->middleware('auth');
+});
 
 // Status API for Driver Bookings
 Route::get('/api/driver-booking/{id}/status', function ($id) {
