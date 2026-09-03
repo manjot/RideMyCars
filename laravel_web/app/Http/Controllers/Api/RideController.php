@@ -22,17 +22,96 @@ class RideController extends Controller
     {
         $user = $request->user();
 
+        // Include all driver IDs associated with this driver's identity
+        $driverUserIds = [$user->id];
+        if ($user->role === 'driver') {
+            $matchingIds = \App\Models\User::where('name', $user->name)
+                ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+                ->pluck('id')
+                ->toArray();
+            $driverUserIds = array_unique(array_merge($driverUserIds, $matchingIds));
+        }
+
         $rides = Ride::with(['driver.driverProfile', 'rider'])
-            ->where(function ($q) use ($user) {
+            ->where(function ($q) use ($user, $driverUserIds) {
                 $q->where('rider_id', $user->id)
-                  ->orWhere('driver_id', $user->id);
+                  ->orWhereIn('driver_id', $driverUserIds)
+                  ->orWhereIn('verified_by_driver_id', $driverUserIds);
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->get();
+
+        // Also fetch chauffeur bookings for this user/driver
+        $driverBookings = \App\Models\DriverBooking::with(['client', 'driver'])
+            ->where(function ($q) use ($user, $driverUserIds) {
+                $q->where('client_id', $user->id)
+                  ->orWhereIn('driver_id', $driverUserIds)
+                  ->orWhereIn('verified_by_driver_id', $driverUserIds);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $items = [];
+
+        foreach ($rides as $r) {
+            $items[] = [
+                'id' => $r->id,
+                'type' => 'ride',
+                'booking_code' => 'RIDE-' . $r->id,
+                'status' => $r->status,
+                'fare' => (float)($r->total_amount ?? $r->fare ?? 0),
+                'pickup_location' => $r->pickup_location,
+                'dropoff_location' => $r->dropoff_location,
+                'vehicle_type' => $r->vehicle_type ?? 'Standard',
+                'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
+                'driver' => $r->driver ? [
+                    'id' => $r->driver->id,
+                    'name' => $r->driver->name,
+                    'email' => $r->driver->email,
+                ] : null,
+                'rider' => $r->rider ? [
+                    'id' => $r->rider->id,
+                    'name' => $r->rider->name,
+                    'email' => $r->rider->email,
+                ] : null,
+                'passenger_name' => $r->passenger_name ?? ($r->rider->name ?? 'Passenger'),
+            ];
+        }
+
+        foreach ($driverBookings as $db) {
+            $items[] = [
+                'id' => $db->id,
+                'type' => 'driver_booking',
+                'booking_code' => $db->booking_code ?? ('BK-' . $db->id),
+                'status' => $db->booking_status ?? ($db->verification_status === 'driver_verified' ? 'completed' : 'pending'),
+                'fare' => (float)($db->total_price ?? 0),
+                'pickup_location' => $db->pickup_location,
+                'dropoff_location' => $db->dropoff_location ?? 'As Directed',
+                'vehicle_type' => $db->car_make_model ?? 'Executive Chauffeur',
+                'created_at' => $db->created_at ? $db->created_at->toIso8601String() : null,
+                'driver' => $db->driver ? [
+                    'id' => $db->driver->id,
+                    'name' => $db->driver->name,
+                    'email' => $db->driver->email,
+                ] : null,
+                'rider' => $db->client ? [
+                    'id' => $db->client->id,
+                    'name' => $db->client->name,
+                    'email' => $db->client->email,
+                ] : null,
+                'passenger_name' => $db->client->name ?? 'Client',
+            ];
+        }
+
+        // Sort all trips descending by created_at
+        usort($items, function ($a, $b) {
+            return strcmp($b['created_at'] ?? '', $a['created_at'] ?? '');
+        });
 
         return response()->json([
             'success' => true,
-            'rides' => $rides,
+            'data' => $items,
+            'rides' => $items,
         ]);
     }
 
