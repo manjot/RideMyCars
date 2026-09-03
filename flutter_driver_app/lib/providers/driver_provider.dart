@@ -96,9 +96,9 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void _startDispatchLoop() {
-    _getCurrentLocationAndSend();
     pollPendingRequests();
     fetchActiveRides();
+    _getCurrentLocationAndSend();
 
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
