@@ -122,4 +122,9 @@ class DriverBooking extends Model
     {
         return $this->hasOne(PaymentTransaction::class, 'driver_booking_id');
     }
+
+    public function assignments()
+    {
+        return $this->hasMany(RideAssignment::class, 'driver_booking_id');
+    }
 }

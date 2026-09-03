@@ -36,8 +36,14 @@ class RideAssignmentService
      */
     public static function assignNextDriver(Ride $ride)
     {
-        // 1. Exclude drivers already asked for this ride
+        // 1. Exclude drivers who explicitly rejected or currently have an active unexpired offer
         $excludedDriverIds = RideAssignment::where('ride_id', $ride->id)
+            ->where(function ($q) {
+                $q->where('status', 'rejected')
+                  ->orWhere(function ($sq) {
+                      $sq->where('status', 'pending')->where('expires_at', '>', now());
+                  });
+            })
             ->pluck('driver_id')
             ->toArray();
 

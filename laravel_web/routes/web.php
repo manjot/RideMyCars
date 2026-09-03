@@ -1096,6 +1096,18 @@ Route::get('/api/user/ongoing-ride', function () {
 
         if (!$ride) return ['ride' => null];
 
+        // If ride is pending with no driver, ensure an active assignment exists
+        if ($ride->status === 'pending' && is_null($ride->driver_id)) {
+            $hasActiveOffer = \App\Models\RideAssignment::where('ride_id', $ride->id)
+                ->where('status', 'pending')
+                ->where('expires_at', '>', now())
+                ->exists();
+
+            if (!$hasActiveOffer) {
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            }
+        }
+
         $driverProfile = $ride->driver && $ride->driver->driverProfile ? $ride->driver->driverProfile : null;
 
         return ['ride' => [
@@ -1139,9 +1151,8 @@ Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $req
     // Expire old assignments and resend
     \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
 
-    // Reassign to all active drivers
-    $service = new \App\Services\RideAssignmentService();
-    $service->assignToActiveDrivers($ride);
+    // Reassign to nearest available driver
+    \App\Services\RideAssignmentService::assignNextDriver($ride);
 
     return response()->json(['success' => true, 'new_fare' => $newFare]);
 })->middleware('auth');
@@ -1229,6 +1240,33 @@ Route::get('/api/driver/active-rides', function () {
 Route::get('/api/driver/requests', function () {
     $user = auth()->user();
     if (!$user) return response()->json([]);
+
+    // If driver is online/available, automatically dispatch any pending unassigned rides and bookings
+    if ($user->role === 'driver' && $user->driverProfile && $user->driverProfile->is_available) {
+        $pendingRides = \App\Models\Ride::where('status', 'pending')
+            ->whereNull('driver_id')
+            ->whereDoesntHave('assignments', function ($q) {
+                $q->where('status', 'pending')->where('expires_at', '>', now());
+            })
+            ->take(3)
+            ->get();
+
+        foreach ($pendingRides as $pRide) {
+            \App\Services\RideAssignmentService::assignNextDriver($pRide);
+        }
+
+        $pendingBookings = \App\Models\DriverBooking::where('booking_status', 'pending')
+            ->whereNull('driver_id')
+            ->whereDoesntHave('assignments', function ($q) {
+                $q->where('status', 'pending')->where('expires_at', '>', now());
+            })
+            ->take(3)
+            ->get();
+
+        foreach ($pendingBookings as $pBooking) {
+            \App\Services\DriverBookingAssignmentService::assignNextDriver($pBooking);
+        }
+    }
 
     $pending = \App\Models\RideAssignment::where('driver_id', $user->id)
         ->where('status', 'pending')

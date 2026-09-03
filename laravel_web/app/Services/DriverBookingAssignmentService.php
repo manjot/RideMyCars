@@ -14,8 +14,14 @@ class DriverBookingAssignmentService
      */
     public static function assignNextDriver(DriverBooking $booking)
     {
-        // 1. Get drivers already asked for this booking
+        // 1. Get drivers who rejected or currently have an active unexpired offer
         $excludedDriverIds = RideAssignment::where('driver_booking_id', $booking->id)
+            ->where(function ($q) {
+                $q->where('status', 'rejected')
+                  ->orWhere(function ($sq) {
+                      $sq->where('status', 'pending')->where('expires_at', '>', now());
+                  });
+            })
             ->pluck('driver_id')
             ->toArray();
 
