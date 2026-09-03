@@ -35,6 +35,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   bool _isSearchingPickup = true;
   Timer? _debounceTimer;
   Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
 
   @override
   void initState() {
@@ -70,12 +71,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           if (_pickupController.text.isEmpty) {
             _pickupController.text = 'Current Location';
           }
-          _updateMapMarkers();
         });
-
-        _mapController?.animateCamera(
-          CameraUpdate.newLatLng(LatLng(pos.latitude, pos.longitude)),
-        );
+        _updateMapMarkers();
       }
     } catch (_) {}
   }
@@ -116,37 +113,40 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
     setState(() {
       if (_isSearchingPickup) {
-        _pickupController.text = prediction.description;
+        _pickupController.text = prediction.mainText.isNotEmpty ? prediction.mainText : prediction.description;
         if (details != null) {
           _userLat = details.lat;
           _userLng = details.lng;
         }
       } else {
-        _dropoffController.text = prediction.description;
+        _dropoffController.text = prediction.mainText.isNotEmpty ? prediction.mainText : prediction.description;
         if (details != null) {
           _dropoffLat = details.lat;
           _dropoffLng = details.lng;
         }
       }
       _predictions = [];
-      _updateMapMarkers();
     });
 
+    _updateMapMarkers();
     FocusScope.of(context).unfocus();
   }
 
   void _updateMapMarkers() {
     final markers = <Marker>{};
+    final polylines = <Polyline>{};
+
     if (_userLat != null && _userLng != null) {
       markers.add(
         Marker(
           markerId: const MarkerId('pickup'),
           position: LatLng(_userLat!, _userLng!),
-          infoWindow: InfoWindow(title: 'Pickup', snippet: _pickupController.text),
+          infoWindow: InfoWindow(title: 'Pickup Location', snippet: _pickupController.text),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
         ),
       );
     }
+
     if (_dropoffLat != null && _dropoffLng != null) {
       markers.add(
         Marker(
@@ -157,23 +157,53 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         ),
       );
     }
+
+    if (_userLat != null && _userLng != null && _dropoffLat != null && _dropoffLng != null) {
+      polylines.add(
+        Polyline(
+          polylineId: const PolylineId('route_preview'),
+          color: AppColors.primary,
+          width: 5,
+          points: [
+            LatLng(_userLat!, _userLng!),
+            LatLng(_dropoffLat!, _dropoffLng!),
+          ],
+        ),
+      );
+    }
+
     setState(() {
       _markers = markers;
+      _polylines = polylines;
     });
 
     if (_userLat != null && _userLng != null) {
       if (_dropoffLat != null && _dropoffLng != null) {
+        double south = _userLat! < _dropoffLat! ? _userLat! : _dropoffLat!;
+        double north = _userLat! > _dropoffLat! ? _userLat! : _dropoffLat!;
+        double west = _userLng! < _dropoffLng! ? _userLng! : _dropoffLng!;
+        double east = _userLng! > _dropoffLng! ? _userLng! : _dropoffLng!;
+
+        // Ensure minimum bounding area
+        if (north - south < 0.01) {
+          north += 0.005;
+          south -= 0.005;
+        }
+        if (east - west < 0.01) {
+          east += 0.005;
+          west -= 0.005;
+        }
+
         final bounds = LatLngBounds(
-          southwest: LatLng(
-            _userLat! < _dropoffLat! ? _userLat! : _dropoffLat!,
-            _userLng! < _dropoffLng! ? _userLng! : _dropoffLng!,
-          ),
-          northeast: LatLng(
-            _userLat! > _dropoffLat! ? _userLat! : _dropoffLat!,
-            _userLng! > _dropoffLng! ? _userLng! : _dropoffLng!,
-          ),
+          southwest: LatLng(south, west),
+          northeast: LatLng(north, east),
         );
-        _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _mapController?.animateCamera(
+            CameraUpdate.newLatLngBounds(bounds, 50),
+          );
+        });
       } else {
         _mapController?.animateCamera(CameraUpdate.newLatLng(LatLng(_userLat!, _userLng!)));
       }
@@ -265,6 +295,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           GoogleMap(
             initialCameraPosition: CameraPosition(target: initialCenter, zoom: 14.0),
             markers: _markers,
+            polylines: _polylines,
+            padding: const EdgeInsets.only(top: 80, bottom: 300),
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
@@ -278,54 +310,74 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               child: Row(
                 children: [
                   Builder(
-                    builder: (ctx) => CircleAvatar(
-                      backgroundColor: AppColors.surfaceDark,
-                      child: IconButton(
-                        icon: const Icon(Icons.menu_rounded, color: AppColors.textLight),
-                        onPressed: () => Scaffold.of(ctx).openDrawer(),
+                    builder: (btnCtx) => GestureDetector(
+                      onTap: () => Scaffold.of(btnCtx).openDrawer(),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceDark,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.menu_rounded, color: AppColors.textLight, size: 22),
                       ),
                     ),
                   ),
                   const Spacer(),
-                  // Notification Bell with Badge
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: AppColors.surfaceDark,
-                        child: IconButton(
-                          icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textLight),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                            );
-                          },
-                        ),
+                  // Notification Button
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      if (notifs.unreadCount > 0)
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.danger,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                            child: Text(
-                              '${notifs.unreadCount}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(Icons.notifications_rounded, color: AppColors.textLight, size: 22),
+                          if (notifs.unreadCount > 0)
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.danger,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  notifs.unreadCount > 9 ? '9+' : notifs.unreadCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -382,7 +434,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                         icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
                                         onPressed: () {
                                           _pickupController.clear();
+                                          _userLat = null;
+                                          _userLng = null;
                                           setState(() => _predictions = []);
+                                          _updateMapMarkers();
                                         },
                                       )
                                     : null,
@@ -404,7 +459,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                         icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
                                         onPressed: () {
                                           _dropoffController.clear();
+                                          _dropoffLat = null;
+                                          _dropoffLng = null;
                                           setState(() => _predictions = []);
+                                          _updateMapMarkers();
                                         },
                                       )
                                     : null,
