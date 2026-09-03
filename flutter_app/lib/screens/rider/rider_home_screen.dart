@@ -309,7 +309,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               decoration: BoxDecoration(
                 color: AppColors.surfaceDark,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -321,157 +320,164 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Inputs
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundDark,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
-                      children: [
-                        // Pickup Field
-                        TextField(
-                          controller: _pickupController,
-                          onChanged: (val) => _onQueryChanged(val, isPickup: true),
-                          style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.circle, color: AppColors.success, size: 14),
-                            hintText: 'Pickup location (e.g. Karol Bagh)',
-                            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                            border: InputBorder.none,
-                            suffixIcon: _pickupController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
-                                    onPressed: () {
-                                      _pickupController.clear();
-                                      setState(() => _predictions = []);
-                                    },
-                                  )
-                                : null,
-                          ),
+              child: SafeArea(
+                top: false,
+                bottom: true,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Inputs
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        const Divider(color: Colors.white10, height: 1),
-                        // Dropoff Field
-                        TextField(
-                          controller: _dropoffController,
-                          onChanged: (val) => _onQueryChanged(val, isPickup: false),
-                          style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 16),
-                            hintText: 'Where to? (e.g. Airport, Market)',
-                            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                            border: InputBorder.none,
-                            suffixIcon: _dropoffController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
-                                    onPressed: () {
-                                      _dropoffController.clear();
-                                      setState(() => _predictions = []);
-                                    },
-                                  )
-                                : null,
-                          ),
+                        child: Column(
+                          children: [
+                            // Pickup Field
+                            TextField(
+                              controller: _pickupController,
+                              onChanged: (val) => _onQueryChanged(val, isPickup: true),
+                              style: const TextStyle(color: AppColors.textLight, fontSize: 13),
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.circle, color: AppColors.success, size: 14),
+                                hintText: 'Pickup location (e.g. Karol Bagh)',
+                                hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                border: InputBorder.none,
+                                suffixIcon: _pickupController.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
+                                        onPressed: () {
+                                          _pickupController.clear();
+                                          setState(() => _predictions = []);
+                                        },
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            const Divider(color: Colors.white10, height: 1),
+                            // Dropoff Field
+                            TextField(
+                              controller: _dropoffController,
+                              onChanged: (val) => _onQueryChanged(val, isPickup: false),
+                              style: const TextStyle(color: AppColors.textLight, fontSize: 13),
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 16),
+                                hintText: 'Where to? (e.g. Airport, Market)',
+                                hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                border: InputBorder.none,
+                                suffixIcon: _dropoffController.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
+                                        onPressed: () {
+                                          _dropoffController.clear();
+                                          setState(() => _predictions = []);
+                                        },
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                  // Google Places Autocomplete Suggestions List
-                  if (_isSearchingPlaces || _predictions.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      constraints: const BoxConstraints(maxHeight: 220),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundDark,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                       ),
-                      child: _isSearchingPlaces
-                          ? const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Center(
-                                child: SizedBox(
+
+                      // Google Places Autocomplete Suggestions List
+                      if (_isSearchingPlaces || _predictions.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundDark,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: _isSearchingPlaces
+                              ? const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                    ),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  shrinkWrap: true,
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  itemCount: _predictions.length,
+                                  separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                                  itemBuilder: (context, index) {
+                                    final p = _predictions[index];
+                                    return ListTile(
+                                      dense: true,
+                                      leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
+                                      title: Text(
+                                        p.mainText,
+                                        style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 13),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      subtitle: p.secondaryText.isNotEmpty
+                                          ? Text(
+                                              p.secondaryText,
+                                              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            )
+                                          : null,
+                                      onTap: () => _selectPlace(p),
+                                    );
+                                  },
+                                ),
+                        ),
+
+                      const SizedBox(height: 14),
+
+                      // Vehicle Selector
+                      Row(
+                        children: [
+                          _buildVehicleOption('Standard', 'Sedan', '4 min', '\$35.00', rideProv),
+                          const SizedBox(width: 8),
+                          _buildVehicleOption('Executive', 'SUV', '6 min', '\$55.00', rideProv),
+                          const SizedBox(width: 8),
+                          _buildVehicleOption('Luxury', 'VIP', '10 min', '\$95.00', rideProv),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Request Ride Button
+                      SizedBox(
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: rideProv.isBooking ? null : _handleBookRide,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.backgroundDark,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 4,
+                          ),
+                          child: rideProv.isBooking
+                              ? const SizedBox(
                                   width: 22,
                                   height: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                  child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.backgroundDark),
+                                )
+                              : const Text(
+                                  'Request Ride Now →',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                                 ),
-                              ),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              itemCount: _predictions.length,
-                              separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
-                              itemBuilder: (context, index) {
-                                final p = _predictions[index];
-                                return ListTile(
-                                  dense: true,
-                                  leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
-                                  title: Text(
-                                    p.mainText,
-                                    style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 13),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: p.secondaryText.isNotEmpty
-                                      ? Text(
-                                          p.secondaryText,
-                                          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      : null,
-                                  onTap: () => _selectPlace(p),
-                                );
-                              },
-                            ),
-                    ),
-
-                  const SizedBox(height: 14),
-
-                  // Vehicle Selector
-                  Row(
-                    children: [
-                      _buildVehicleOption('Standard', 'Sedan', '4 min', '\$35.00', rideProv),
-                      const SizedBox(width: 8),
-                      _buildVehicleOption('Executive', 'SUV', '6 min', '\$55.00', rideProv),
-                      const SizedBox(width: 8),
-                      _buildVehicleOption('Luxury', 'VIP', '10 min', '\$95.00', rideProv),
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // Request Ride Button
-                  SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: rideProv.isBooking ? null : _handleBookRide,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.backgroundDark,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 4,
-                      ),
-                      child: rideProv.isBooking
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.backgroundDark),
-                            )
-                          : const Text(
-                              'Request Ride Now →',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                            ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
           ),
