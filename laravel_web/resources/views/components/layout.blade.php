@@ -178,8 +178,8 @@
                         <!-- Notification Dropdown Panel (Styled exactly like User Menu) -->
                         <div x-show="open" 
                              x-transition
-                             class="absolute top-full right-0 mt-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl z-50 overflow-hidden" 
-                             style="display: none; width: 360px; max-width: 90vw;">
+                             class="absolute top-full -right-[52px] sm:right-0 mt-2.5 w-[calc(100vw-32px)] sm:w-[380px] max-w-[380px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl z-50 overflow-hidden" 
+                             style="display: none;">
                             
                             <!-- Header -->
                             <div class="px-4 py-3.5 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
@@ -242,15 +242,15 @@
                                         <!-- Content -->
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center justify-between gap-2 mb-0.5">
-                                                <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="item.title.replace(/^[\p{So}\p{Sk}\p{Sm}\p{Sc}\p{P}\s]+/u, '').trim()"></h4>
-                                                <span class="text-[11px] font-medium text-gray-400 whitespace-nowrap shrink-0" x-text="item.time_ago"></span>
+                                                <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="item && item.title ? item.title.replace(/^[\p{So}\p{Sk}\p{Sm}\p{Sc}\p{P}\s]+/u, '').trim() : ''"></h4>
+                                                <span class="text-[11px] font-medium text-gray-400 whitespace-nowrap shrink-0" x-text="item && item.time_ago ? item.time_ago : ''"></span>
                                             </div>
-                                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-snug break-words" x-text="item.message"></p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-snug break-words" x-text="item && item.message ? item.message : ''"></p>
                                         </div>
 
                                         <!-- Unread Dot -->
                                         <div class="shrink-0 flex items-center pt-1.5">
-                                            <template x-if="!item.is_read">
+                                            <template x-if="item && !item.is_read">
                                                 <span class="w-2 h-2 rounded-full bg-indigo-600 shadow-sm"></span>
                                             </template>
                                         </div>
@@ -260,7 +260,7 @@
                         </div>
 
                         <!-- In-App Floating Toast Notification (When a new event happens live) -->
-                        <template x-if="latestToast">
+                        <template x-if="latestToast && typeof latestToast === 'object'">
                             <div x-show="toastVisible"
                                  x-transition:enter="transition ease-out duration-300"
                                  x-transition:enter-start="opacity-0 translate-y-[-20px] scale-95"
@@ -273,10 +273,10 @@
                                     <span x-text="latestToast.type === 'login' ? '👋' : (latestToast.type === 'completed' ? '🏁' : (latestToast.type === 'arrived' ? '📍' : (latestToast.type === 'in_progress' ? '🟢' : (latestToast.type === 'review' ? '★' : '🚗'))))"></span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="latestToast.title"></h4>
-                                    <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2" x-text="latestToast.message"></p>
+                                    <h4 class="text-xs font-bold text-gray-900 dark:text-white" x-text="latestToast.title || ''"></h4>
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2" x-text="latestToast.message || ''"></p>
                                     <div class="flex items-center gap-2 mt-2">
-                                        <template x-if="latestToast.link">
+                                        <template x-if="typeof latestToast.link === 'string' && latestToast.link.trim() !== '' && !latestToast.link.includes('[native code]')">
                                             <a :href="latestToast.link" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View details →</a>
                                         </template>
                                         <button @click="toastVisible = false" class="text-[11px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">Dismiss</button>
@@ -294,7 +294,7 @@
                             </div>
                         </button>
                         
-                        <div x-show="userMenuOpen" x-transition class="absolute top-full right-0 mt-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 sm:p-5 z-50" style="display: none; width: 340px; max-width: 90vw;">
+                        <div x-show="userMenuOpen" x-transition class="absolute top-full right-0 mt-2.5 sm:mt-4 w-[calc(100vw-32px)] sm:w-[340px] max-w-[340px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 sm:p-5 z-50" style="display: none;">
                             
                             <!-- Header -->
                             <div class="flex items-center justify-between mb-6">
@@ -664,8 +664,12 @@
                         const res = await fetch('/api/notifications');
                         if (res.ok) {
                             const data = await res.json();
-                            const newNotifications = data.notifications || [];
-                            const newUnread = data.unread_count || 0;
+                            let rawNotifications = data.notifications || [];
+                            if (!Array.isArray(rawNotifications) && typeof rawNotifications === 'object') {
+                                rawNotifications = Object.values(rawNotifications);
+                            }
+                            const newNotifications = Array.isArray(rawNotifications) ? rawNotifications.filter(n => n && typeof n === 'object') : [];
+                            const newUnread = typeof data.unread_count === 'number' ? data.unread_count : 0;
 
                             // Detect newly arrived notifications to trigger live toast pop-up
                             if (!isInitial && newNotifications.length > 0) {
@@ -688,10 +692,11 @@
                 },
 
                 async handleItemClick(item) {
-                    if (!item.is_read) {
+                    if (!item || typeof item !== 'object') return;
+                    if (!item.is_read && item.id) {
                         await this.markAsRead(item.id);
                     }
-                    if (item.link) {
+                    if (typeof item.link === 'string' && item.link.trim() !== '' && !item.link.includes('[native code]')) {
                         window.location.href = item.link;
                     }
                 },
@@ -707,10 +712,12 @@
                             },
                             body: JSON.stringify({ id })
                         });
-                        const item = this.notifications.find(n => n.id === id);
-                        if (item) {
-                            item.is_read = true;
-                            this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        if (Array.isArray(this.notifications)) {
+                            const item = this.notifications.find(n => n && n.id === id);
+                            if (item) {
+                                item.is_read = true;
+                                this.unreadCount = Math.max(0, this.unreadCount - 1);
+                            }
                         }
                     } catch (e) {
                         console.error('Error marking as read', e);

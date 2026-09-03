@@ -1022,7 +1022,8 @@ Route::get('/api/notifications', function () {
                     'time_ago' => $n->created_at->diffForHumans(),
                     'created_at' => $n->created_at->toIso8601String(),
                 ];
-            });
+            })
+            ->values();
 
         $unreadCount = \App\Models\UserNotification::where('user_id', $user->id)
             ->where('is_read', false)
