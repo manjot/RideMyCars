@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'screens/webview_screen.dart';
+import 'package:provider/provider.dart';
+import 'core/constants/app_colors.dart';
+import 'providers/auth_provider.dart';
+import 'providers/driver_provider.dart';
+import 'providers/notification_provider.dart';
+import 'providers/ride_provider.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,29 +23,30 @@ class RideMyCarsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'RideMyCars',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316), // Orange 500
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        fontFamily: 'Inter',
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => DriverProvider()),
+        ChangeNotifierProvider(create: (_) => RideProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+      ],
+      child: MaterialApp(
+        title: 'RideMyCars',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
           brightness: Brightness.dark,
+          scaffoldBackgroundColor: AppColors.backgroundDark,
+          primaryColor: AppColors.primary,
+          colorScheme: const ColorScheme.dark(
+            primary: AppColors.primary,
+            secondary: AppColors.primaryDark,
+            surface: AppColors.surfaceDark,
+            error: AppColors.danger,
+          ),
+          useMaterial3: true,
+          fontFamily: 'Inter',
         ),
-        useMaterial3: true,
-        fontFamily: 'Inter',
-      ),
-      themeMode: ThemeMode.system,
-      home: const WebViewScreen(
-        // REPLACE WITH YOUR ACTUAL LIVE URL
-        url: 'https://ridemycars.com/', 
+        home: const SplashScreen(),
       ),
     );
   }
