@@ -44,8 +44,9 @@ class DriverProvider extends ChangeNotifier {
         'is_available': !_isOnline,
       });
 
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        _isOnline = res.data['is_available'] ?? !_isOnline;
+      if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'success')) {
+        final val = res.data['is_available'];
+        _isOnline = val == true || val == 1 || val == '1';
 
         if (_isOnline) {
           _startDispatchLoop();

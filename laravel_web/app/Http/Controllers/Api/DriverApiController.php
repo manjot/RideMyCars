@@ -246,8 +246,21 @@ class DriverApiController extends Controller
         ]);
 
         $user = $request->user();
-        if ($user && $user->driverProfile) {
-            $user->driverProfile->update([
+        if ($user) {
+            $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'license_number' => 'DL-' . strtoupper(bin2hex(random_bytes(4))),
+                    'hourly_rate' => 35.00,
+                    'country' => 'USA',
+                    'is_available' => true,
+                    'verification_status' => 'verified',
+                    'rating' => 5.0,
+                    'total_trips' => 0,
+                ]
+            );
+
+            $profile->update([
                 'current_lat' => $request->lat,
                 'current_lng' => $request->lng,
                 'last_location_update' => now(),
@@ -270,16 +283,29 @@ class DriverApiController extends Controller
     public function toggleAvailability(Request $request)
     {
         $user = $request->user();
-        if (!$user || !$user->driverProfile) {
-            return response()->json(['success' => false, 'message' => 'Driver profile not found'], 404);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $isAvailable = $request->has('is_available') ? $request->boolean('is_available') : !$user->driverProfile->is_available;
-        $user->driverProfile->update(['is_available' => $isAvailable]);
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'license_number' => 'DL-' . strtoupper(bin2hex(random_bytes(4))),
+                'hourly_rate' => 35.00,
+                'country' => 'USA',
+                'is_available' => false,
+                'verification_status' => 'verified',
+                'rating' => 5.0,
+                'total_trips' => 0,
+            ]
+        );
+
+        $isAvailable = $request->has('is_available') ? $request->boolean('is_available') : !$profile->is_available;
+        $profile->update(['is_available' => $isAvailable]);
 
         return response()->json([
             'success' => true,
-            'is_available' => $isAvailable,
+            'is_available' => (bool)$isAvailable,
             'message' => $isAvailable ? 'You are now online and ready for jobs.' : 'You are now offline.',
         ]);
     }

@@ -94,8 +94,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to request ride. Please check network connection.'),
+        SnackBar(
+          content: Text(rideProv.errorMessage ?? 'Failed to request ride. Please try again.'),
           backgroundColor: AppColors.danger,
         ),
       );

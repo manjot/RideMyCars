@@ -9,11 +9,13 @@ class RideProvider extends ChangeNotifier {
 
   Map<String, dynamic>? _activeRide;
   bool _isBooking = false;
+  String? _errorMessage;
   String _selectedVehicle = 'Standard';
   Timer? _ridePollTimer;
 
   Map<String, dynamic>? get activeRide => _activeRide;
   bool get isBooking => _isBooking;
+  String? get errorMessage => _errorMessage;
   String get selectedVehicle => _selectedVehicle;
 
   void setSelectedVehicle(String v) {
@@ -58,6 +60,7 @@ class RideProvider extends ChangeNotifier {
     String paymentMethod = 'cash',
   }) async {
     _isBooking = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -80,8 +83,20 @@ class RideProvider extends ChangeNotifier {
         _isBooking = false;
         notifyListeners();
         return true;
+      } else {
+        _errorMessage = res.data['message'] ?? 'Failed to request ride.';
       }
+    } on DioException catch (e) {
+      if (e.response?.data is Map && e.response?.data['message'] != null) {
+        _errorMessage = e.response!.data['message'].toString();
+      } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.connectionError) {
+        _errorMessage = 'Network connection issue. Please retry.';
+      } else {
+        _errorMessage = 'Failed to request ride (${e.response?.statusCode ?? 'Error'}).';
+      }
+      debugPrint('Error booking ride: $e');
     } catch (e) {
+      _errorMessage = 'An unexpected error occurred.';
       debugPrint('Error booking ride: $e');
     }
 

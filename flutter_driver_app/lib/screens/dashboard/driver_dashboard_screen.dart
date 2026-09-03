@@ -256,74 +256,86 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Widget _buildOnlineStatusCard(DriverProvider driver) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: driver.isOnline
-              ? [const Color(0xFF064E3B), const Color(0xFF065F46)]
-              : [AppColors.surfaceDark, const Color(0xFF1E293B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: driver.isOnline ? AppColors.success : Colors.white10,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: driver.isOnline ? AppColors.success.withValues(alpha: 0.2) : Colors.black26,
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: driver.isLoading ? null : () => driver.toggleOnline(),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: driver.isOnline
+                ? [const Color(0xFF064E3B), const Color(0xFF065F46)]
+                : [AppColors.surfaceDark, const Color(0xFF1E293B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: driver.isOnline ? AppColors.success : AppColors.textMuted,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                driver.isOnline ? 'ONLINE & ACCEPTING JOBS' : 'YOU ARE OFFLINE',
-                style: TextStyle(
-                  color: driver.isOnline ? Colors.white : AppColors.textMuted,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Spacer(),
-              Switch(
-                value: driver.isOnline,
-                activeThumbColor: AppColors.success,
-                activeTrackColor: AppColors.success.withValues(alpha: 0.3),
-                inactiveThumbColor: AppColors.textMuted,
-                inactiveTrackColor: Colors.white10,
-                onChanged: (_) => driver.toggleOnline(),
-              ),
-            ],
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: driver.isOnline ? AppColors.success : Colors.white10,
+            width: 1.5,
           ),
-          const SizedBox(height: 12),
-          Text(
-            driver.isOnline
-                ? 'Your GPS is transmitting live. Nearby rider requests will ring with an alert sound.'
-                : 'Turn your status online to start receiving ride and chauffeur hiring requests.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 13,
-              height: 1.4,
+          boxShadow: [
+            BoxShadow(
+              color: driver.isOnline ? AppColors.success.withValues(alpha: 0.2) : Colors.black26,
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: driver.isOnline ? AppColors.success : AppColors.textMuted,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  driver.isOnline ? 'ONLINE & ACCEPTING JOBS' : 'YOU ARE OFFLINE',
+                  style: TextStyle(
+                    color: driver.isOnline ? Colors.white : AppColors.textMuted,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Spacer(),
+                driver.isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : Switch(
+                        value: driver.isOnline,
+                        activeThumbColor: AppColors.success,
+                        activeTrackColor: AppColors.success.withValues(alpha: 0.3),
+                        inactiveThumbColor: AppColors.textMuted,
+                        inactiveTrackColor: Colors.white10,
+                        onChanged: (val) => driver.toggleOnline(),
+                      ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              driver.isOnline
+                  ? 'Your GPS is transmitting live. Nearby rider requests will ring with an alert sound.'
+                  : 'Turn your status online to start receiving ride and chauffeur hiring requests.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
