@@ -229,14 +229,7 @@
                                                  'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/60 dark:text-yellow-300': item.type === 'review',
                                                  'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300': !['login','ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)
                                              }">
-                                            <template x-if="item.type === 'login'"><span>👋</span></template>
-                                            <template x-if="item.type === 'ride_accepted'"><span>🚗</span></template>
-                                            <template x-if="item.type === 'en_route'"><span>🚗</span></template>
-                                            <template x-if="item.type === 'arrived'"><span>📍</span></template>
-                                            <template x-if="item.type === 'in_progress'"><span>🟢</span></template>
-                                            <template x-if="item.type === 'completed'"><span>🏁</span></template>
-                                            <template x-if="item.type === 'review'"><span>★</span></template>
-                                            <template x-if="!['login','ride_accepted','en_route','arrived','in_progress','completed','review'].includes(item.type)"><span>🔔</span></template>
+                                            <span x-text="getIcon(item.type)"></span>
                                         </div>
 
                                         <!-- Content -->
@@ -249,10 +242,8 @@
                                         </div>
 
                                         <!-- Unread Dot -->
-                                        <div class="shrink-0 flex items-center pt-1.5">
-                                            <template x-if="item && !item.is_read">
-                                                <span class="w-2 h-2 rounded-full bg-indigo-600 shadow-sm"></span>
-                                            </template>
+                                        <div class="shrink-0 flex items-center pt-1.5" x-show="item && !item.is_read">
+                                            <span class="w-2 h-2 rounded-full bg-indigo-600 shadow-sm"></span>
                                         </div>
                                     </div>
                                 </template>
@@ -650,13 +641,32 @@
                 toastVisible: false,
                 lastKnownIds: new Set(),
                 
+                getIcon(type) {
+                    switch (type) {
+                        case 'login': return '👋';
+                        case 'ride_accepted':
+                        case 'en_route': return '🚗';
+                        case 'arrived': return '📍';
+                        case 'in_progress': return '🟢';
+                        case 'completed': return '🏁';
+                        case 'review': return '★';
+                        default: return '🔔';
+                    }
+                },
+
                 init() {
                     this.fetchNotifications(true);
-                    this.pollingTimer = setInterval(() => this.fetchNotifications(false), 12000);
+                    this.pollingTimer = setInterval(() => {
+                        if (this.open) return; // Do not re-poll and disturb user while dropdown is open
+                        this.fetchNotifications(false);
+                    }, 15000);
                 },
 
                 toggleOpen() {
                     this.open = !this.open;
+                    if (this.open) {
+                        this.fetchNotifications(false);
+                    }
                 },
 
                 async fetchNotifications(isInitial = false) {
@@ -691,8 +701,16 @@
                                     }
                                 }
 
-                                this.notifications = newNotifications;
-                                this.unreadCount = newUnread;
+                                // Compare signatures so we NEVER re-render or flicker unchanged lists
+                                const currentSig = this.notifications.map(n => n.id + ':' + (n.is_read ? 1 : 0)).join(',');
+                                const newSig = newNotifications.map(n => n.id + ':' + (n.is_read ? 1 : 0)).join(',');
+
+                                if (currentSig !== newSig) {
+                                    this.notifications = newNotifications;
+                                }
+                                if (this.unreadCount !== newUnread) {
+                                    this.unreadCount = newUnread;
+                                }
                                 this.lastKnownIds = new Set(newNotifications.map(n => n.id));
                             }
                         }
