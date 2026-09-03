@@ -181,6 +181,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 
   Future<void> _handleBookRide() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated || auth.token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to confirm your ride request.'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
     if (_pickupController.text.isEmpty || _dropoffController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter both pickup and destination.')),
@@ -210,12 +225,26 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(rideProv.errorMessage ?? 'Failed to request ride. Please try again.'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
+      if (rideProv.errorMessage?.contains('Unauthenticated') == true ||
+          rideProv.errorMessage?.contains('sign in') == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please sign in to request a ride.'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(rideProv.errorMessage ?? 'Failed to request ride. Please try again.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
 
