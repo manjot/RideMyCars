@@ -464,6 +464,54 @@
         </div>
     </section>
 
+    <!-- Driver Mobile App Download Feature Strip -->
+    <section class="py-20 bg-gray-50 dark:bg-[#0d0d0d] border-t border-gray-200 dark:border-white/10">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 dark:from-[#181712] dark:via-[#161510] dark:to-[#121210] border border-amber-500/30 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="space-y-4 max-w-xl">
+                    <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                        Driver Partner Console
+                    </span>
+                    <h3 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                        Download the RideMyCars <span class="text-amber-500">Driver App</span>
+                    </h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
+                        Receive instant trip requests, navigate turn-by-turn to passenger locations, and track your daily and weekly earnings directly from your Android or iOS device.
+                    </p>
+                    <div class="flex flex-wrap items-center gap-4 pt-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                        <span class="flex items-center gap-1.5"><span class="text-amber-500">⚡</span> Live Dispatch Alerts</span>
+                        <span class="flex items-center gap-1.5"><span class="text-amber-500">🗺️</span> In-App GPS Navigation</span>
+                        <span class="flex items-center gap-1.5"><span class="text-amber-500">💰</span> Real-Time Payouts</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0 w-full sm:w-auto">
+                    <!-- App Store -->
+                    <a href="{{ site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars-driver/id987654321') }}" target="_blank" rel="noopener" class="flex items-center justify-center gap-3 px-6 py-3.5 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-2xl hover:opacity-95 transition-all shadow-md group">
+                        <svg class="w-5 h-5 shrink-0 fill-current" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                        <div class="flex flex-col text-left">
+                            <span class="text-[8px] uppercase tracking-wider opacity-70 leading-none">Download on</span>
+                            <span class="text-xs font-extrabold leading-tight mt-0.5">App Store</span>
+                        </div>
+                    </a>
+
+                    <!-- Google Play / Direct Driver APK -->
+                    <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="flex items-center justify-center gap-3 px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black rounded-2xl transition-all shadow-lg shadow-amber-500/25 group">
+                        <svg class="w-5 h-5 shrink-0 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                        <div class="flex flex-col text-left">
+                            <span class="text-[8px] uppercase tracking-wider text-gray-950/80 leading-none">Download APK /</span>
+                            <span class="text-xs font-black leading-tight mt-0.5">Google Play</span>
+                        </div>
+                    </a>
+
+                    <a href="/apps#driver-app" class="text-center text-xs font-bold text-amber-500 hover:text-amber-400 py-1">
+                        View App QR Code & Specs →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- 8. Strong Driver CTA Section -->
     <section class="relative py-28 overflow-hidden border-t border-gray-100 dark:border-white/10" style="background: radial-gradient(circle at 50% 30%, #151b26 0%, #090c12 100%);">
         <!-- Ambient Gold/Amber Glow -->

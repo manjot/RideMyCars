@@ -443,15 +443,84 @@
             </div>
         </section>
 
-        <!-- Download App CTA Section (Requirement #6) -->
-        <section class="py-16 bg-gradient-to-r from-brand-600 to-brand-500 text-white border-t border-brand-400">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight">Your invitation to experience seamless travel is now active.</h2>
-                <p class="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 font-medium">Access rides, rentals, chauffeurs, and white-glove deliveries on iOS and Android.</p>
-                <div class="flex flex-wrap items-center justify-center gap-4">
-                    <a href="{{ asset('ridemycars.apk') }}" download class="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-extrabold rounded-2xl shadow-xl hover:bg-gray-100 transition-all text-base">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download the App
+        <!-- Dual Download Apps CTA Section (Rider & Driver Editions) -->
+        <section class="py-20 bg-gradient-to-b from-[#0e0e0e] via-[#141414] to-[#0c0c0c] text-white border-t border-white/10 relative overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-40 -z-10"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[350px] bg-brand-500/10 blur-[140px] rounded-full -z-10 pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 font-bold text-xs uppercase tracking-widest mb-4">
+                        Mobile Experience
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black mb-4 tracking-tight">Experience RideMyCars on Your Mobile Device</h2>
+                    <p class="text-base sm:text-lg text-gray-300 font-medium">Download our dedicated mobile applications designed for seamless riding or maximum driving earnings.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    <!-- Rider App Card -->
+                    <div class="p-8 rounded-3xl bg-white/[0.04] border border-white/10 hover:border-brand-500/40 transition-all flex flex-col justify-between group shadow-xl">
+                        <div class="space-y-4 mb-8">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-brand-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.9 2 11.1 2 11.4V16c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                                </div>
+                                <span class="text-xs font-bold text-brand-400 bg-brand-500/15 px-3 py-1 rounded-full border border-brand-500/25 uppercase tracking-wider">Rider App</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-white">RideMyCars for Riders</h3>
+                            <p class="text-sm text-gray-300 leading-relaxed">Book luxury rides, rent executive vehicles, schedule private verified chauffeurs, and track parcels live.</p>
+                            <ul class="text-xs text-gray-400 space-y-2 pt-1 font-medium">
+                                <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> Instant on-demand rides & airport pickups</li>
+                                <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> Live GPS driver & chauffeur tracking</li>
+                                <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> Stripe card checkout & multi-currency wallet</li>
+                            </ul>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-white/10">
+                            <a href="{{ site_setting('rider.ios_url', 'https://apps.apple.com/app/ridemycars/id123456789') }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                                <span>App Store</span>
+                            </a>
+                            <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" class="flex items-center gap-2.5 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-brand-500/20">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                                <span>Google Play / APK</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Driver App Card -->
+                    <div class="p-8 rounded-3xl bg-white/[0.04] border border-amber-500/20 hover:border-amber-500/50 transition-all flex flex-col justify-between group shadow-xl">
+                        <div class="space-y-4 mb-8">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center text-gray-950 shadow-lg shadow-amber-500/30">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+                                </div>
+                                <span class="text-xs font-bold text-amber-400 bg-amber-500/15 px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider">Driver Partner App</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-white">RideMyCars Driver</h3>
+                            <p class="text-sm text-gray-300 leading-relaxed">Keep 90% of revenue with our 10% commission model. Accept trips, turn-by-turn navigation & instant payouts.</p>
+                            <ul class="text-xs text-gray-400 space-y-2 pt-1 font-medium">
+                                <li class="flex items-center gap-2"><span class="text-amber-400">✓</span> Keep 90% from trip #1 (only 10% platform fee)</li>
+                                <li class="flex items-center gap-2"><span class="text-amber-400">✓</span> Instant sound alerts & background dispatch</li>
+                                <li class="flex items-center gap-2"><span class="text-amber-400">✓</span> Live daily & weekly earnings dashboard</li>
+                            </ul>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-white/10">
+                            <a href="{{ site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars-driver/id987654321') }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                                <span>App Store</span>
+                            </a>
+                            <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="flex items-center gap-2.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-gray-950 rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-500/20">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                                <span>Google Play / APK</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 text-center">
+                    <a href="/apps" class="inline-flex items-center gap-2 text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
+                        <span>View complete mobile apps details, QR codes & installation guide</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>
                 </div>
             </div>

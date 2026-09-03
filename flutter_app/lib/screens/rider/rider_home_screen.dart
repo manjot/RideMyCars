@@ -7,7 +7,6 @@ import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/ride_provider.dart';
 import '../auth/login_screen.dart';
-import '../driver/driver_dashboard_screen.dart';
 import '../notifications/notifications_screen.dart';
 import 'ride_tracking_screen.dart';
 import 'widgets/floating_ride_widget.dart';
@@ -387,18 +386,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               ),
             ),
             const Divider(color: Colors.white10),
-            ListTile(
-              leading: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary),
-              title: const Text('Switch to Driver Mode', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(context);
-                auth.switchRole('driver');
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DriverDashboardScreen()),
-                );
-              },
-            ),
             ListTile(
               leading: const Icon(Icons.notifications_rounded, color: AppColors.info),
               title: const Text('Notifications', style: TextStyle(color: AppColors.textLight)),

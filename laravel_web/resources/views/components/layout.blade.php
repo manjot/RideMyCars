@@ -107,6 +107,38 @@
                             <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
                             <a class="text-sm font-medium transition-colors {{ request()->is('membership*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/membership">Memberships</a>
                             
+                            <!-- Apps Dropdown -->
+                            <div x-data="{ open: false }" class="relative" @click.away="open = false">
+                                <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1.5 {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-3.5 py-2 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                                    Apps 
+                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </button>
+                                <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" style="display: none;">
+                                    <div class="space-y-1 pb-2">
+                                        <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                                            <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0 text-base">🚗</span>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <span class="font-bold text-gray-900 dark:text-white">Rider App</span>
+                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Book rides & chauffeurs</span>
+                                            </div>
+                                        </a>
+                                        <a href="/apps#driver-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                                            <span class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 text-base">🚕</span>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <span class="font-bold text-gray-900 dark:text-white">Driver App</span>
+                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Earn & keep 90%</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="pt-2">
+                                        <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-400">
+                                            Downloads & QR Hub →
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Company Dropdown -->
                             <div x-data="{ open: false }" class="relative" @click.away="open = false">
                                 <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1 {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-4 py-2 rounded-full">
@@ -131,6 +163,38 @@
                         <a class="text-sm font-medium transition-colors {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/hire-driver">Hire Driver</a>
                         <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
                         <a class="text-sm font-medium transition-colors {{ request()->is('membership*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/membership">Memberships</a>
+                        
+                        <!-- Apps Dropdown -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false">
+                            <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1.5 {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-3.5 py-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                                Apps 
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" style="display: none;">
+                                <div class="space-y-1 pb-2">
+                                    <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                                        <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0 text-base">🚗</span>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <span class="font-bold text-gray-900 dark:text-white">Rider App</span>
+                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Book rides & chauffeurs</span>
+                                        </div>
+                                    </a>
+                                    <a href="/apps#driver-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                                        <span class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 text-base">🚕</span>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <span class="font-bold text-gray-900 dark:text-white">Driver App</span>
+                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Earn & keep 90%</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="pt-2">
+                                    <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-400">
+                                        Downloads & QR Hub →
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Company Dropdown -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false">
@@ -452,6 +516,10 @@
                             Club Membership
                             <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">VIP</span>
                         </a></li>
+                        <li><a href="/apps#rider-app" class="text-brand-400 hover:text-brand-300 hover:translate-x-1 inline-block transition-all font-semibold flex items-center gap-1">
+                            <span>Download Rider App</span>
+                            <span class="text-[9px] px-1 py-0.2 rounded bg-brand-500/20 uppercase font-black">App</span>
+                        </a></li>
                     </ul>
                 </div>
 
@@ -482,6 +550,10 @@
                         <li><a href="/onboarding" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">How It Works</a></li>
                         <li><a href="/delivery/tracker" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Delivery Tracker</a></li>
                         <li><a href="/driver/dashboard" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Driver Portal</a></li>
+                        <li><a href="/apps#driver-app" class="text-amber-400 hover:text-amber-300 hover:translate-x-1 inline-block transition-all font-semibold flex items-center gap-1">
+                            <span>Download Driver App</span>
+                            <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 uppercase font-black">90%</span>
+                        </a></li>
                     </ul>
                 </div>
                 <!-- Column 4: Legal (Span 2) -->
@@ -568,10 +640,10 @@
                 </div>
             </div>
 
-            <!-- Middle Bar: Contact Info & App Download Buttons -->
-            <div class="py-8 border-y border-white/10 flex flex-col lg:flex-row items-center justify-between gap-6">
+            <!-- Middle Bar: Contact Info & Separate App Download Badges (Rider vs Driver) -->
+            <div class="py-8 border-y border-white/10 flex flex-col xl:flex-row items-center justify-between gap-6">
                 <!-- Direct Contacts -->
-                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-y-3 gap-x-8 text-sm text-gray-300">
+                <div class="flex flex-wrap items-center justify-center xl:justify-start gap-y-3 gap-x-8 text-sm text-gray-300">
                     <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
                         <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
@@ -579,33 +651,63 @@
                         <span>{{ site_setting('footer.support_email', 'support@ridemycars.com') }}</span>
                     </a>
                     
-                    <a href="tel:+18552033177" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
+                    <a href="tel:+18885700008" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
                         <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                         </span>
-                        <span>{{ site_setting('footer.support_phone', '+1 855 203 3177') }}</span>
+                        <span>{{ site_setting('footer.support_phone', '+1 888 570 0008') }}</span>
                     </a>
                 </div>
 
-                <!-- App Buttons -->
-                <div class="flex items-center gap-3">
-                    <!-- App Store -->
-                    <a href="{{ site_setting('driver.ios_url', '#') }}" class="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group">
-                        <svg class="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
-                        <div class="flex flex-col text-left">
-                            <span class="text-[9px] uppercase tracking-wider text-gray-400 leading-none">Download on</span>
-                            <span class="text-xs font-semibold leading-tight mt-0.5">App Store</span>
-                        </div>
-                    </a>
-                    
-                    <!-- Google Play / Direct APK Download -->
-                    <a href="{{ asset('ridemycars.apk') }}" download="RideMyCars.apk" class="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group" title="Download RideMyCars Android APK">
-                        <svg class="w-5 h-5 shrink-0 text-brand-500 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
-                        <div class="flex flex-col text-left">
-                            <span class="text-[9px] uppercase tracking-wider text-gray-400 leading-none">Get it on</span>
-                            <span class="text-xs font-semibold leading-tight mt-0.5">Google Play</span>
-                        </div>
-                    </a>
+                <!-- Separate Rider & Driver App Download Badges -->
+                <div class="flex flex-col lg:flex-row items-center gap-3">
+                    <!-- Rider App Section -->
+                    <div class="flex items-center gap-2 bg-white/[0.03] p-1.5 rounded-2xl border border-white/10">
+                        <a href="/apps#rider-app" class="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 rounded-lg border border-brand-500/25 transition-colors" title="View Rider App Details">
+                            🚗 Rider App
+                        </a>
+                        <!-- App Store -->
+                        <a href="{{ site_setting('rider.ios_url', site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars/id123456789')) }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group" title="Download RideMyCars Rider App on iOS">
+                            <svg class="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                            <div class="flex flex-col text-left">
+                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Download on</span>
+                                <span class="text-[10px] font-bold leading-tight mt-0.5">App Store</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Google Play / Direct APK -->
+                        <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group" title="Download RideMyCars Rider Android APK">
+                            <svg class="w-4 h-4 shrink-0 text-brand-500 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                            <div class="flex flex-col text-left">
+                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Get it on</span>
+                                <span class="text-[10px] font-bold leading-tight mt-0.5">Google Play</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Driver App Section -->
+                    <div class="flex items-center gap-2 bg-white/[0.03] p-1.5 rounded-2xl border border-amber-500/20">
+                        <a href="/apps#driver-app" class="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg border border-amber-500/30 transition-colors" title="View Driver App Details">
+                            🚕 Driver App
+                        </a>
+                        <!-- App Store -->
+                        <a href="{{ site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars-driver/id987654321') }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-amber-500/30 transition-all group" title="Download RideMyCars Driver App on iOS">
+                            <svg class="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                            <div class="flex flex-col text-left">
+                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Download on</span>
+                                <span class="text-[10px] font-bold leading-tight mt-0.5">App Store</span>
+                            </div>
+                        </a>
+                        
+                        <!-- Google Play / Direct APK -->
+                        <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-amber-500/30 transition-all group" title="Download RideMyCars Driver Android APK">
+                            <svg class="w-4 h-4 shrink-0 text-amber-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                            <div class="flex flex-col text-left">
+                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Get it on</span>
+                                <span class="text-[10px] font-bold leading-tight mt-0.5">Google Play</span>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
             

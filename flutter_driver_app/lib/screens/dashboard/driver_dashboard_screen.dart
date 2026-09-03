@@ -5,9 +5,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../notifications/notifications_screen.dart';
-import '../rider/rider_home_screen.dart';
-import '../auth/login_screen.dart';
-import 'active_trip_screen.dart';
+import '../auth/driver_login_screen.dart';
+import '../trip/active_trip_screen.dart';
 import 'incoming_job_dialog.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
@@ -209,7 +208,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Quick Actions
+              // Driver Profile Card
               Card(
                 color: AppColors.surfaceDark,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -220,7 +219,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.15),
+                          color: AppColors.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(Icons.person_pin_rounded, color: AppColors.primary),
@@ -239,7 +238,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                               ),
                             ),
                             const Text(
-                              'Verified Professional Driver',
+                              'Verified Professional Chauffeur',
                               style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                             ),
                           ],
@@ -274,7 +273,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: driver.isOnline ? AppColors.success.withOpacity(0.2) : Colors.black26,
+            color: driver.isOnline ? AppColors.success.withValues(alpha: 0.2) : Colors.black26,
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -305,8 +304,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               const Spacer(),
               Switch(
                 value: driver.isOnline,
-                activeColor: AppColors.success,
-                activeTrackColor: AppColors.success.withOpacity(0.3),
+                activeThumbColor: AppColors.success,
+                activeTrackColor: AppColors.success.withValues(alpha: 0.3),
                 inactiveThumbColor: AppColors.textMuted,
                 inactiveTrackColor: Colors.white10,
                 onChanged: (_) => driver.toggleOnline(),
@@ -319,7 +318,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ? 'Your GPS is transmitting live. Nearby rider requests will ring with an alert sound.'
                 : 'Turn your status online to start receiving ride and chauffeur hiring requests.',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 13,
               height: 1.4,
             ),
@@ -351,7 +350,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.15),
+                    color: AppColors.success.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -412,7 +411,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,18 +486,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ),
             const Divider(color: Colors.white10),
             ListTile(
-              leading: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary),
-              title: const Text('Switch to Rider Mode', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(context);
-                auth.switchRole('customer');
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
-                );
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.notifications_rounded, color: AppColors.info),
               title: const Text('Notifications', style: TextStyle(color: AppColors.textLight)),
               onTap: () {
@@ -519,7 +506,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 if (context.mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
                     (route) => false,
                   );
                 }

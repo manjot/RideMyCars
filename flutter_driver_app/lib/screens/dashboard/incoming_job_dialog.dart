@@ -33,7 +33,7 @@ class IncomingJobDialog extends StatelessWidget {
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.25),
+              color: AppColors.primary.withValues(alpha: 0.25),
               blurRadius: 32,
               offset: const Offset(0, 10),
             ),
@@ -43,13 +43,12 @@ class IncomingJobDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header with animated pulse
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: AppColors.primary.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -96,7 +95,7 @@ class IncomingJobDialog extends StatelessWidget {
               child: Column(
                 children: [
                   const Text(
-                    'ESTIMATED EARNINGS',
+                    'ESTIMATED FARE',
                     style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 11,
@@ -106,7 +105,7 @@ class IncomingJobDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${fare.toStringAsFixed(2)}',
+                    '\$${(fare as num).toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.success,
                       fontSize: 34,
@@ -181,15 +180,12 @@ class IncomingJobDialog extends StatelessWidget {
                       onPressed: onDecline,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.textMuted,
-                        side: BorderSide(color: Colors.white.withOpacity(0.15)),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Decline',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -210,10 +206,7 @@ class IncomingJobDialog extends StatelessWidget {
                       ),
                       child: const Text(
                         '✓ Accept Ride',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),

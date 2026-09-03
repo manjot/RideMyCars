@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import 'auth/login_screen.dart';
-import 'driver/driver_dashboard_screen.dart';
 import 'rider/rider_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -33,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _initApp() async {
-    await Future.delayed(const Duration(milliseconds: 1500));
+    await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -42,17 +41,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (!mounted) return;
 
     if (hasSession) {
-      if (auth.isDriver) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DriverDashboardScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
+      );
     } else {
       Navigator.pushReplacement(
         context,
@@ -78,18 +70,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ScaleTransition(
               scale: _scaleAnimation,
               child: Container(
-                width: 110,
-                height: 110,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppColors.primary, AppColors.primaryDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.35),
+                      color: AppColors.primary.withValues(alpha: 0.35),
                       blurRadius: 28,
                       offset: const Offset(0, 10),
                     ),
@@ -98,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: const Center(
                   child: Icon(
                     Icons.directions_car_filled_rounded,
-                    size: 58,
+                    size: 52,
                     color: AppColors.backgroundDark,
                   ),
                 ),
@@ -134,15 +126,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
             const SizedBox(height: 8),
             Text(
-              'Rides & Chauffeurs On-Demand',
+              'Rider Edition · Request Rides & Chauffeurs',
               style: TextStyle(
-                color: AppColors.textMuted.withOpacity(0.8),
-                fontSize: 14,
+                color: AppColors.textMuted.withValues(alpha: 0.8),
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 40),
             const SizedBox(
               width: 24,
               height: 24,

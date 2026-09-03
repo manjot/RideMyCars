@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'providers/auth_provider.dart';
-import 'providers/driver_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/ride_provider.dart';
 import 'screens/splash_screen.dart';
@@ -15,18 +14,17 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase init: $e');
   }
-  runApp(const RideMyCarsApp());
+  runApp(const RideMyCarsRiderApp());
 }
 
-class RideMyCarsApp extends StatelessWidget {
-  const RideMyCarsApp({super.key});
+class RideMyCarsRiderApp extends StatelessWidget {
+  const RideMyCarsRiderApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => DriverProvider()),
         ChangeNotifierProvider(create: (_) => RideProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],

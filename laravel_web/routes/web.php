@@ -1870,6 +1870,55 @@ Route::get('/payment/failed', function () {
     return view('payment.failed');
 });
 
+// Dedicated Apps Hub & Direct APK Download Endpoints
+Route::get('/apps', function () {
+    return view('apps');
+})->name('apps.index');
+
+Route::get('/download', function () {
+    return view('apps');
+})->name('apps.download');
+
+Route::get('/download/rider', function () {
+    $filePath = public_path('ridemycars-rider.apk');
+    if (file_exists($filePath)) {
+        return response()->download($filePath, 'RideMyCars-Rider.apk', [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
+    }
+    $fallbackPath = public_path('ridemycars.apk');
+    if (file_exists($fallbackPath)) {
+        return response()->download($fallbackPath, 'RideMyCars-Rider.apk', [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
+    }
+    return redirect('/apps')->with('info', 'Rider APK is being prepared.');
+})->name('download.rider');
+
+Route::get('/download/user', function () {
+    return redirect()->route('download.rider');
+});
+
+Route::get('/download/driver', function () {
+    $filePath = public_path('ridemycars-driver.apk');
+    if (file_exists($filePath)) {
+        return response()->download($filePath, 'RideMyCars-Driver.apk', [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
+    }
+    $fallbackPath = public_path('ridemycars.apk');
+    if (file_exists($fallbackPath)) {
+        return response()->download($fallbackPath, 'RideMyCars-Driver.apk', [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
+    }
+    return redirect('/apps')->with('info', 'Driver APK is being prepared.');
+})->name('download.driver');
+
+Route::get('/download/app', function () {
+    return redirect()->route('download.rider');
+});
+
 // Generic & Legal pages
 $pages = [
     'safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 
@@ -1889,3 +1938,4 @@ foreach ($pages as $page) {
         return view('page', ['title' => $title]);
     });
 }
+

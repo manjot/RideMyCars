@@ -15,7 +15,6 @@ class ActiveTripScreen extends StatefulWidget {
 }
 
 class _ActiveTripScreenState extends State<ActiveTripScreen> {
-  GoogleMapController? _mapController;
   late Map<String, dynamic> _ride;
   bool _isUpdating = false;
 
@@ -111,7 +110,6 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
-            onMapCreated: (controller) => _mapController = controller,
             markers: {
               if (pickupLat != null && pickupLng != null)
                 Marker(
@@ -171,7 +169,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 30,
                     offset: const Offset(0, -10),
                   ),
@@ -220,7 +218,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       IconButton(
                         onPressed: _callRider,
                         style: IconButton.styleFrom(
-                          backgroundColor: AppColors.success.withOpacity(0.2),
+                          backgroundColor: AppColors.success.withValues(alpha: 0.2),
                           foregroundColor: AppColors.success,
                         ),
                         icon: const Icon(Icons.phone_rounded),

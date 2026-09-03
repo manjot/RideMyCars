@@ -64,14 +64,12 @@ class DriverProvider extends ChangeNotifier {
   void _startDispatchLoop() {
     _getCurrentLocationAndSend();
 
-    // Poll for pending jobs every 4 seconds
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       pollPendingRequests();
       fetchActiveRides();
     });
 
-    // Update GPS every 10 seconds
     _locationTimer?.cancel();
     _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _getCurrentLocationAndSend();
@@ -123,7 +121,6 @@ class DriverProvider extends ChangeNotifier {
         final List newReqs = res.data['requests'] ?? [];
         final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
 
-        // If new request arrived, play sound
         if (mapped.isNotEmpty && mapped.length > _pendingRequests.length) {
           _playNotificationSound();
         }
@@ -138,7 +135,6 @@ class DriverProvider extends ChangeNotifier {
 
   void _playNotificationSound() {
     try {
-      // Plays system alert or tone
       _audioPlayer.play(AssetSource('audio/notification.mp3')).catchError((_) {});
     } catch (_) {}
   }

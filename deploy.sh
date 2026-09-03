@@ -91,6 +91,14 @@ $PHP_BIN artisan storage:link || true
 echo "🔒 Setting permissions for storage and bootstrap/cache..."
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
+# Ensure Rider & Driver APK files exist in public folder
+if [ -f "public/ridemycars.apk" ]; then
+    [ -f "public/ridemycars-rider.apk" ] || cp "public/ridemycars.apk" "public/ridemycars-rider.apk"
+    [ -f "public/ridemycars-driver.apk" ] || cp "public/ridemycars.apk" "public/ridemycars-driver.apk"
+fi
+chmod 644 public/*.apk 2>/dev/null || true
+
+
 # Step 9: Optimize & Cache
 echo "⚡ Caching Configuration, Routes, and Views..."
 $PHP_BIN artisan config:clear

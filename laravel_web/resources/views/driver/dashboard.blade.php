@@ -21,6 +21,32 @@
                         <span class="w-2 h-2 rounded-full bg-current"></span>
                         License: {{ str_replace('_', ' ', $profile->verification_status) }}
                     </span>
+                    <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold text-xs shadow-md transition-all">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                        <span>Download Driver App</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile App Companion Banner -->
+            <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/5 to-transparent border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-gray-950 flex items-center justify-center font-black text-lg shrink-0">
+                        🚕
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">Get real-time trip alerts on the go</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Install the RideMyCars Driver Mobile App for instant audio alerts, background GPS tracking, and turn-by-turn navigation.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                    <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span>Download Driver APK</span>
+                    </a>
+                    <a href="/apps#driver-app" class="px-3.5 py-2 bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-semibold hover:bg-gray-50 dark:hover:bg-white/15 transition-all">
+                        Store / QR
+                    </a>
                 </div>
             </div>
 

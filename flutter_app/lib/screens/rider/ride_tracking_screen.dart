@@ -17,6 +17,12 @@ class RideTrackingScreen extends StatefulWidget {
 class _RideTrackingScreenState extends State<RideTrackingScreen> {
   GoogleMapController? _mapController;
 
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
+
   Future<void> _launchGoogleMaps() async {
     final pickup = widget.ride['pickup_location'] ?? '';
     final dropoff = widget.ride['dropoff_location'] ?? '';

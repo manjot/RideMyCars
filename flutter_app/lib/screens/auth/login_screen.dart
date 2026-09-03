@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
-import '../driver/driver_dashboard_screen.dart';
 import '../rider/rider_home_screen.dart';
 import 'register_screen.dart';
 
@@ -15,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'sipho@ridemycars.com');
+  final _emailController = TextEditingController(text: 'client@ridemycars.com');
   final _passwordController = TextEditingController(text: 'password');
   bool _obscurePassword = true;
 
@@ -38,17 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (auth.isDriver) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DriverDashboardScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
+      );
     } else if (auth.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -86,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                             blurRadius: 18,
                             offset: const Offset(0, 6),
                           ),
@@ -101,22 +93,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Welcome back',
+                    'RideMyCars',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.textLight,
-                      fontSize: 26,
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Sign in to your RideMyCars account',
+                    'Passenger Sign In',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -163,11 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                           color: AppColors.textMuted,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       filled: true,
                       fillColor: AppColors.surfaceDark,
@@ -180,10 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                       ),
                     ),
-                    validator: (val) {
-                      if (val == null || val.isEmpty) return 'Please enter your password';
-                      return null;
-                    },
+                    validator: (val) => (val == null || val.isEmpty) ? 'Please enter your password' : null,
                   ),
                   const SizedBox(height: 24),
 
@@ -218,48 +204,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Quick Switch Demo Logins
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceDark.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _emailController.text = 'sipho@ridemycars.com';
-                              _passwordController.text = 'password';
-                            });
-                          },
-                          child: const Text(
-                            '🚗 Driver Account',
-                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                        Container(width: 1, height: 20, color: Colors.white12),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _emailController.text = 'client@ridemycars.com';
-                              _passwordController.text = 'password';
-                            });
-                          },
-                          child: const Text(
-                            '👤 Rider Account',
-                            style: TextStyle(color: AppColors.info, fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                   const SizedBox(height: 32),
 
                   // Register Link

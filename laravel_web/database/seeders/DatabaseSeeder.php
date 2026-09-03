@@ -32,6 +32,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $client2 = User::firstOrCreate(
+            ['email' => 'client@ridemycars.com'],
+            [
+                'name' => 'John Client',
+                'password' => Hash::make('password'),
+                'role' => 'customer',
+            ]
+        );
+
         // Driver 1 - USA
         $user1 = User::firstOrCreate(
             ['email' => 'michael.driver@ridemycars.com'],
@@ -126,6 +135,32 @@ class DatabaseSeeder extends Seeder
             ['user_id' => $user4->id],
             [
                 'license_number' => 'DL-ZA-339182',
+                'hourly_rate' => 250.00,
+                'daily_rate' => 1600.00,
+                'weekly_rate' => 9500.00,
+                'experience_years' => 7,
+                'country' => 'South Africa',
+                'service_area' => 'Johannesburg & Sandton',
+                'is_available' => true,
+                'rating' => 4.92,
+                'total_trips' => 41,
+                'verification_status' => 'verified',
+                'bio' => 'Reliable Sandton & JHB private chauffeur and commercial shuttle driver.',
+            ]
+        );
+
+        $user5 = User::firstOrCreate(
+            ['email' => 'sipho@ridemycars.com'],
+            [
+                'name' => 'Sipho Ndlovu',
+                'password' => Hash::make('123456'),
+                'role' => 'driver',
+            ]
+        );
+        DriverProfile::updateOrCreate(
+            ['user_id' => $user5->id],
+            [
+                'license_number' => 'DL-ZA-339183',
                 'hourly_rate' => 250.00,
                 'daily_rate' => 1600.00,
                 'weekly_rate' => 9500.00,
