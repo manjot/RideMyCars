@@ -28,8 +28,7 @@ class AuthProvider extends ChangeNotifier {
     if (_token != null && _token!.isNotEmpty) {
       _userName = await TokenStorage.getUserName();
       _userEmail = await TokenStorage.getUserEmail();
-      _isAuthenticated = true;
-
+      // Validate session in background
       try {
         final res = await _dio.get(ApiConstants.me);
         if (res.statusCode == 200 && res.data['success'] == true) {
@@ -37,9 +36,20 @@ class AuthProvider extends ChangeNotifier {
           _userId = u['id'];
           _userName = u['name'];
           _userEmail = u['email'];
-          await TokenStorage.saveUserData(role: 'driver', name: _userName!, email: _userEmail!);
+          _role = res.data['role'] ?? _role;
+          await TokenStorage.saveUserData(role: _role, name: _userName!, email: _userEmail!);
+        } else {
+          await logout();
+          return false;
         }
-      } catch (_) {}
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          await logout();
+          return false;
+        }
+      } catch (e) {
+        // Offline network error
+      }
 
       notifyListeners();
       return true;

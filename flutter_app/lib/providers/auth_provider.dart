@@ -45,9 +45,17 @@ class AuthProvider extends ChangeNotifier {
           _userEmail = u['email'];
           _role = res.data['role'] ?? _role;
           await TokenStorage.saveUserData(role: _role, name: _userName!, email: _userEmail!);
+        } else {
+          await logout();
+          return false;
+        }
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          await logout();
+          return false;
         }
       } catch (e) {
-        // Offline or token expired
+        // Offline network error
       }
 
       notifyListeners();
