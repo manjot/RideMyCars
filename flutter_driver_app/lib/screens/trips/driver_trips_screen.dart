@@ -34,13 +34,13 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
     setState(() => _isLoading = true);
     try {
       final res = await _dio.get(ApiConstants.rides);
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        final dynamic ridesData = res.data['rides'];
+      if (res.statusCode == 200) {
+        final dynamic raw = res.data is Map ? (res.data['data'] ?? res.data['rides'] ?? res.data) : res.data;
         List rawList = [];
-        if (ridesData is Map && ridesData['data'] is List) {
-          rawList = ridesData['data'];
-        } else if (ridesData is List) {
-          rawList = ridesData;
+        if (raw is Map && raw['data'] is List) {
+          rawList = raw['data'];
+        } else if (raw is List) {
+          rawList = raw;
         }
         setState(() {
           _trips = rawList.map((e) => Map<String, dynamic>.from(e)).toList();
