@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::table('payment_transactions', function (Blueprint $table) {
             if (!Schema::hasColumn('payment_transactions', 'stripe_charge_id')) {
-                $table->string('stripe_charge_id')->nullable()->after('stripe_client_secret');
+                $table->string('stripe_charge_id')->nullable();
             }
             if (!Schema::hasColumn('payment_transactions', 'failure_code')) {
-                $table->string('failure_code')->nullable()->after('status');
+                $table->string('failure_code')->nullable();
             }
             if (!Schema::hasColumn('payment_transactions', 'failure_message')) {
-                $table->text('failure_message')->nullable()->after('failure_code');
+                $table->text('failure_message')->nullable();
             }
         });
     }

@@ -17,10 +17,15 @@ return new class extends Migration
             if (Schema::hasTable($tableName)) {
                 Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                     if (!Schema::hasColumn($tableName, 'verification_status')) {
-                        $table->string('verification_status')->default('pending_verification')->after('payment_status');
+                        $col = $table->string('verification_status')->default('pending_verification');
+                        if (Schema::hasColumn($tableName, 'payment_status')) {
+                            $col->after('payment_status');
+                        } elseif (Schema::hasColumn($tableName, 'status')) {
+                            $col->after('status');
+                        }
                     }
                     if (!Schema::hasColumn($tableName, 'verified_by_driver_id')) {
-                        $table->foreignId('verified_by_driver_id')->nullable()->constrained('users')->onDelete('set null');
+                        $table->unsignedBigInteger('verified_by_driver_id')->nullable();
                     }
                     if (!Schema::hasColumn($tableName, 'verified_at')) {
                         $table->timestamp('verified_at')->nullable();
