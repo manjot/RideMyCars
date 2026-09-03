@@ -76,14 +76,28 @@ class PricingService
     }
 
     /**
-     * Calculate dynamic Uber-style trip fare based on distance (km), duration (minutes), and vehicle tier.
+     * Calculate dynamic Uber-style trip fare based on distance (km), duration (minutes), vehicle tier, and additional stops.
      */
-    public static function calculateTripFare(float $distanceKm, int $durationMinutes, ?string $vehicleType = null): float
+    public static function calculateTripFare(float $distanceKm, int $durationMinutes, ?string $vehicleType = null, int $stopsCount = 0): float
     {
+        $breakdown = static::calculateTripFareWithBreakdown($distanceKm, $durationMinutes, $vehicleType, $stopsCount);
+        return $breakdown['total_fare'];
+    }
+
+    /**
+     * Calculate detailed trip fare breakdown showing base, distance, duration, stops, tax, and total.
+     */
+    public static function calculateTripFareWithBreakdown(
+        float $distanceKm,
+        int $durationMinutes,
+        ?string $vehicleType = null,
+        int $stopsCount = 0
+    ): array {
         $baseFare = (float) config('ride.base_fare', 5.00);
         $perKmRate = (float) config('ride.per_km_rate', 1.50);
         $perMinuteRate = (float) config('ride.per_minute_rate', 0.25);
         $minFare = (float) config('ride.minimum_fare', 10.00);
+        $additionalStopFee = (float) config('ride.additional_stop_fee', 3.50);
 
         $multiplier = 1.0;
         if ($vehicleType) {
@@ -97,7 +111,30 @@ class PricingService
             }
         }
 
-        $calc = ($baseFare + ($distanceKm * $perKmRate) + ($durationMinutes * $perMinuteRate)) * $multiplier;
-        return round(max($minFare, $calc), 2);
+        $distanceFare = round(($distanceKm * $perKmRate) * $multiplier, 2);
+        $durationFare = round(($durationMinutes * $perMinuteRate) * $multiplier, 2);
+        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
+        $scaledBaseFare = round($baseFare * $multiplier, 2);
+
+        $subtotal = round($scaledBaseFare + $distanceFare + $durationFare + $stopsFee, 2);
+        $finalFare = round(max($minFare, $subtotal), 2);
+        $serviceTax = round($finalFare * 0.05, 2);
+        $grandTotal = round($finalFare + $serviceTax, 2);
+
+        return [
+            'base_fare' => $scaledBaseFare,
+            'distance_km' => round($distanceKm, 2),
+            'distance_fare' => $distanceFare,
+            'duration_minutes' => $durationMinutes,
+            'duration_fare' => $durationFare,
+            'stops_count' => max(0, $stopsCount),
+            'stop_fee_per_item' => $additionalStopFee,
+            'stops_fee' => $stopsFee,
+            'subtotal' => $subtotal,
+            'tax' => $serviceTax,
+            'total_fare' => $finalFare,
+            'grand_total' => $grandTotal,
+        ];
     }
 }
+

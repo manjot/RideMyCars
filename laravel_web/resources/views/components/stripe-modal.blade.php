@@ -242,8 +242,23 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
             }
         },
 
+        mapDeclineCode(code, rawMsg) {
+            if (code === 'insufficient_funds') return 'Your card has insufficient funds. Please use another payment method.';
+            if (code === 'expired_card') return 'This card has expired. Please use a valid card.';
+            if (code === 'incorrect_cvc' || code === 'invalid_cvc') return 'The security code (CVC) is incorrect.';
+            if (code === 'incorrect_number' || code === 'invalid_number') return 'The card number is invalid.';
+            if (code === 'card_declined') return 'Your card was declined. Please use another card or payment method.';
+            if (code === 'incomplete_number' || code === 'incomplete_cvc' || code === 'incomplete_expiry') return 'Please complete all required card details.';
+            return rawMsg || 'Your payment could not be completed. Please check your card details or try another payment method.';
+        },
+
         async submitPayment() {
             if (this.isProcessing || !this.stripe || !this.cardElement) return;
+
+            if (!this.cardholderName || !this.cardholderName.trim()) {
+                this.errorMessage = 'Please enter the cardholder name.';
+                return;
+            }
 
             this.isProcessing = true;
             this.errorMessage = '';
@@ -253,14 +268,15 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
                     payment_method: {
                         card: this.cardElement,
                         billing_details: {
-                            name: this.cardholderName || 'RideMyCars Customer'
+                            name: this.cardholderName.trim()
                         }
                     }
                 });
 
                 if (error) {
                     this.isProcessing = false;
-                    this.errorMessage = error.message || 'Payment failed. Please check your card information.';
+                    const code = error.code || error.decline_code || '';
+                    this.errorMessage = this.mapDeclineCode(code, error.message);
                     return;
                 }
 
@@ -279,7 +295,15 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
                     });
 
                     const confirmData = await confirmRes.json();
-                    window.location.href = '/payment/success?intent=' + paymentIntent.id + '&amount=' + this.amount;
+                    if (confirmData.success) {
+                        window.location.href = '/payment/success?intent=' + paymentIntent.id + '&amount=' + this.amount;
+                    } else {
+                        this.isProcessing = false;
+                        this.errorMessage = confirmData.error || 'Payment confirmation pending.';
+                    }
+                } else if (paymentIntent.status === 'requires_action') {
+                    this.isProcessing = false;
+                    this.errorMessage = '3D Secure authentication required. Please follow the instructions on screen.';
                 } else {
                     this.isProcessing = false;
                     this.errorMessage = 'Payment status: ' + paymentIntent.status;

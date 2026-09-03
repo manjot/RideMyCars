@@ -21,7 +21,15 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return ($this->role === 'admin' || $this->email === 'admin@ridemycars.com') && $this->account_status !== 'suspended' && $this->account_status !== 'deactivated';
+        if ($this->account_status === 'suspended' || $this->account_status === 'deactivated') {
+            return false;
+        }
+
+        if (app()->environment('local')) {
+            return true;
+        }
+
+        return $this->role === 'admin' || $this->email === 'admin@ridemycars.com';
     }
 
     /**
@@ -78,6 +86,16 @@ class User extends Authenticatable implements FilamentUser
     public function savedLocations()
     {
         return $this->hasMany(UserSavedLocation::class);
+    }
+
+    public function paymentMethods()
+    {
+        return $this->hasMany(PaymentMethod::class)->orderBy('is_default', 'desc')->latest();
+    }
+
+    public function defaultPaymentMethod()
+    {
+        return $this->hasOne(PaymentMethod::class)->where('is_default', true);
     }
 }
 

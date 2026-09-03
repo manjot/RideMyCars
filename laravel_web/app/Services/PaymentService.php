@@ -19,17 +19,17 @@ class PaymentService
         $isDelivery = $booking instanceof \App\Models\PackageDelivery;
         $country = $isDelivery ? 'USA' : ($booking->country ?? 'USA');
         $currency = $isDelivery ? ($booking->currency ?? 'USD') : CountryService::getCurrencyCode($country);
-        $amount = $booking->total_price;
-        $userId = $isDelivery ? $booking->customer_id : $booking->client_id;
-        $bookingCode = $isDelivery ? $booking->delivery_code : $booking->booking_code;
+        $amount = $booking->total_price ?? $booking->fare ?? $booking->total_amount ?? 0.00;
+        $userId = $isDelivery ? $booking->customer_id : ($booking->client_id ?? $booking->rider_id ?? 1);
+        $bookingCode = $isDelivery ? $booking->delivery_code : ($booking->booking_code ?? 'RIDE-' . $booking->id);
 
         $transactionRef = 'TXN-' . strtoupper(Str::random(10));
 
         // Determine provider based on method & country
         $provider = static::resolveProvider($country, $paymentMethod);
 
-        // Offline payment (Cash) vs Gateway payment
-        $initialStatus = ($paymentMethod === 'cash') ? 'pending' : 'paid';
+        // Offline payment (Cash) vs Gateway payment - All start as pending until authorized by gateway
+        $initialStatus = ($paymentMethod === 'cash') ? 'pending_cash' : 'pending';
 
         // Create transaction record
         $txnData = [
@@ -43,23 +43,41 @@ class PaymentService
             'status' => $initialStatus,
             'service_vertical' => $isDelivery ? 'package_delivery' : 'driver_hiring',
             'gateway_response' => [
-                'processed_at' => now()->toIso8601String(),
+                'created_at' => now()->toIso8601String(),
                 'provider' => $provider,
                 'method' => $paymentMethod,
-                'masked_account' => isset($paymentData['card_number']) ? '**** ' . substr($paymentData['card_number'], -4) : null,
                 'phone' => $paymentData['momo_phone'] ?? null,
             ],
         ];
 
+        // Attach real Stripe PaymentIntent for card payments
+        if (in_array($paymentMethod, ['stripe', 'card', 'credit_card'])) {
+            $serviceType = $isDelivery ? 'package_delivery' : 'driver_booking';
+            try {
+                $intentData = StripeService::createPaymentIntent($serviceType, $booking->id, $userId);
+                $txnData['stripe_payment_intent_id'] = $intentData['payment_intent_id'] ?? null;
+                $txnData['stripe_client_secret'] = $intentData['client_secret'] ?? null;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Stripe PaymentIntent creation warning in PaymentService: " . $e->getMessage());
+            }
+        }
+
+        $isRide = $booking instanceof \App\Models\Ride;
+
         if ($isDelivery) {
             $txnData['package_delivery_id'] = $booking->id;
+            $txnData['service_vertical'] = 'package_delivery';
+        } elseif ($isRide) {
+            $txnData['ride_id'] = $booking->id;
+            $txnData['service_vertical'] = 'RIDE_HAILING';
         } else {
             $txnData['driver_booking_id'] = $booking->id;
+            $txnData['service_vertical'] = 'driver_hiring';
         }
 
         $transaction = PaymentTransaction::create($txnData);
 
-        // Update booking payment status
+        // Update booking payment status (strictly pending until Stripe confirmation)
         $booking->update([
             'payment_method' => $paymentMethod,
             'payment_status' => $initialStatus,

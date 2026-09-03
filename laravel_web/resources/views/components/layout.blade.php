@@ -78,6 +78,7 @@
         } catch(e) { console.warn('Firebase Web init:', e); }
     </script>
     @endif
+    {{ $head ?? '' }}
 </head>
 <body class="font-sans antialiased bg-[#fafafa] dark:bg-[#0a0a0a] text-gray-900 dark:text-white min-h-screen flex flex-col transition-colors duration-200 {{ $theme ?? '' }}">
     

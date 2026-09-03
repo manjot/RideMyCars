@@ -182,9 +182,7 @@ class PackageDeliveryController extends Controller
             ['delivery_id' => $delivery->id, 'total_price' => $delivery->total_price]
         );
 
-        $redirectUrl = ($validated['payment_method'] === 'stripe' || $validated['payment_method'] === 'card')
-            ? route('payment.verify-details', ['serviceType' => 'package_delivery', 'serviceId' => $delivery->id])
-            : route('package-delivery.tracker', $delivery->id);
+        $redirectUrl = route('package-delivery.tracker', $delivery->id);
 
         if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -197,7 +195,7 @@ class PackageDeliveryController extends Controller
             ]);
         }
 
-        return redirect()->route('package-delivery.tracker', $delivery->id)->with('success', 'Package delivery dispatched successfully! Tracking live courier status...');
+        return redirect($redirectUrl)->with('success', 'Package delivery dispatched successfully! Tracking live courier status...');
     }
 
     /**

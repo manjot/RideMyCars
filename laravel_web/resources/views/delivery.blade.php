@@ -533,9 +533,9 @@
                 try {
                     mapInstance = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 13);
 
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,
-                        attribution: '&copy; OpenStreetMap &copy; CARTO'
+                        attribution: '&copy; OpenStreetMap'
                     }).addTo(mapInstance);
 
                     // Add initial pickup area marker
@@ -576,8 +576,8 @@
             }
 
             function setPickup(lat, lng, reverseGeocode = false) {
-                if (pLatInput) pLatInput.value = lat;
-                if (pLngInput) pLngInput.value = lng;
+                if (pLatInput) { pLatInput.value = lat; pLatInput.dispatchEvent(new Event('input')); }
+                if (pLngInput) { pLngInput.value = lng; pLngInput.dispatchEvent(new Event('input')); }
 
                 if (pickupMarker && mapInstance) {
                     pickupMarker.setLatLng([lat, lng]);
@@ -597,11 +597,12 @@
                 }
 
                 updateRouteAndBounds();
+                window.dispatchEvent(new CustomEvent('delivery-location-changed', { detail: { type: 'pickup', lat, lng } }));
             }
 
             function setDropoff(lat, lng, reverseGeocode = false) {
-                if (dLatInput) dLatInput.value = lat;
-                if (dLngInput) dLngInput.value = lng;
+                if (dLatInput) { dLatInput.value = lat; dLatInput.dispatchEvent(new Event('input')); }
+                if (dLngInput) { dLngInput.value = lng; dLngInput.dispatchEvent(new Event('input')); }
 
                 if (dropoffMarker && mapInstance) {
                     dropoffMarker.setLatLng([lat, lng]);
@@ -625,6 +626,7 @@
                 }
 
                 updateRouteAndBounds();
+                window.dispatchEvent(new CustomEvent('delivery-location-changed', { detail: { type: 'dropoff', lat, lng } }));
             }
 
             function updateRouteAndBounds() {
@@ -757,15 +759,30 @@
                     this.$watch('deliveryType', () => this.updatePrice());
                     this.$watch('packageSize', () => this.updatePrice());
                     this.$watch('packageWeight', () => this.updatePrice());
+                    this.$watch('pickupLat', () => this.updatePrice());
+                    this.$watch('dropoffLat', () => this.updatePrice());
+
+                    window.addEventListener('delivery-location-changed', (e) => {
+                        if (e.detail.type === 'pickup') {
+                            this.pickupLat = e.detail.lat;
+                            this.pickupLng = e.detail.lng;
+                        } else if (e.detail.type === 'dropoff') {
+                            this.dropoffLat = e.detail.lat;
+                            this.dropoffLng = e.detail.lng;
+                        }
+                        this.updatePrice();
+                    });
                 },
 
                 async updatePrice() {
                     try {
-                        const res = await fetch('/api/delivery/calculate-price', {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                        const res = await fetch('/delivery/calculate-price', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
                             },
                             body: JSON.stringify({
                                 pickup_lat: this.pickupLat,
@@ -778,10 +795,13 @@
                             })
                         });
                         if (res.ok) {
-                            this.priceBreakdown = await res.json();
+                            const data = await res.json();
+                            if (data && data.total_price) {
+                                this.priceBreakdown = data;
+                            }
                         }
                     } catch (e) {
-                        console.error(e);
+                        console.error("Delivery price calculation error:", e);
                     }
                 },
                 isSubmitting: false,

@@ -74,11 +74,19 @@ class RideResource extends Resource
                                     ->required()
                                     ->default(1),
                                 Forms\Components\TextInput::make('location')
-                                    ->required(),
+                                    ->required()
+                                    ->columnSpan(2),
+                                Forms\Components\TextInput::make('lat')
+                                    ->numeric()
+                                    ->label('Latitude'),
+                                Forms\Components\TextInput::make('lng')
+                                    ->numeric()
+                                    ->label('Longitude'),
                             ])
+                            ->columns(5)
                             ->orderColumn('stop_order')
                             ->columnSpanFull()
-                            ->label('Additional Stops / Destinations'),
+                            ->label('Additional Stops / Intermediate Destinations'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Payment & Rental Policies')

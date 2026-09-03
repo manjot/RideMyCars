@@ -42,4 +42,6 @@ return [
     'per_km_rate' => 1.50,
     'per_minute_rate' => 0.25,
     'minimum_fare' => 10.00,
+    'additional_stop_fee' => 3.50,
+    'max_additional_stops' => 5,
 ];

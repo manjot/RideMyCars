@@ -177,6 +177,12 @@ Route::get('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationCont
 Route::post('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'store']);
 Route::delete('/api/user/saved-locations/{id}', [\App\Http\Controllers\SavedLocationController::class, 'destroy']);
 
+// Payment Methods API
+Route::get('/api/payment-methods', [\App\Http\Controllers\PaymentMethodController::class, 'index']);
+Route::post('/api/payment-methods/save-stripe', [\App\Http\Controllers\PaymentMethodController::class, 'storeStripe']);
+Route::post('/api/payment-methods/{id}/default', [\App\Http\Controllers\PaymentMethodController::class, 'setDefault']);
+Route::delete('/api/payment-methods/{id}', [\App\Http\Controllers\PaymentMethodController::class, 'destroy']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/disputes', [\App\Http\Controllers\DisputeController::class, 'index']);
     Route::get('/disputes/create', [\App\Http\Controllers\DisputeController::class, 'create']);
@@ -405,6 +411,7 @@ Route::post('/logout', function (\Illuminate\Http\Request $request) {
 // Package Delivery Routes
 Route::get('/delivery', [PackageDeliveryController::class, 'index']);
 Route::post('/delivery/calculate-price', [PackageDeliveryController::class, 'calculatePrice']);
+Route::post('/api/delivery/calculate-price', [PackageDeliveryController::class, 'calculatePrice']);
 Route::post('/delivery/book', [PackageDeliveryController::class, 'storeBooking']);
 Route::get('/delivery/tracker', function () {
     if (auth()->check()) {
@@ -461,6 +468,96 @@ Route::get('/ride', function () {
     return view('ride', compact('vehicles'));
 });
 
+// Dynamic Ride Categories with live pricing API
+Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) {
+    $dist = floatval($request->input('distance_km', 10.0));
+    $dur = intval($request->input('duration_minutes', 15));
+    $stopsCount = intval($request->input('stops_count', 0));
+
+    $categories = [
+        [
+            'id' => 'economy',
+            'name' => 'Economy',
+            'icon' => '🚗',
+            'capacity' => '1–4 passengers',
+            'eta_minutes' => 3,
+            'multiplier' => 1.0,
+            'description' => 'Affordable, everyday rides',
+        ],
+        [
+            'id' => 'standard',
+            'name' => 'Standard',
+            'icon' => '🚘',
+            'capacity' => '1–4 passengers',
+            'eta_minutes' => 4,
+            'multiplier' => 1.2,
+            'description' => 'Comfortable sedans with extra legroom',
+        ],
+        [
+            'id' => 'suv',
+            'name' => 'SUV',
+            'icon' => '🚙',
+            'capacity' => '1–6 passengers',
+            'eta_minutes' => 6,
+            'multiplier' => 1.5,
+            'description' => 'Spacious SUVs for groups and extra luggage',
+        ],
+        [
+            'id' => 'xl',
+            'name' => 'XL',
+            'icon' => '🚐',
+            'capacity' => '1–6 passengers',
+            'eta_minutes' => 7,
+            'multiplier' => 1.8,
+            'description' => 'Extra large vans for families and events',
+        ],
+        [
+            'id' => 'luxury',
+            'name' => 'Luxury',
+            'icon' => '🏎️',
+            'capacity' => '1–4 passengers',
+            'eta_minutes' => 5,
+            'multiplier' => 2.2,
+            'description' => 'Top-tier luxury vehicles with professional drivers',
+        ],
+    ];
+
+    foreach ($categories as &$cat) {
+        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount);
+        $cat['fare'] = $breakdown['total_fare'];
+        $cat['fare_formatted'] = '$' . number_format($breakdown['total_fare'], 2);
+        $cat['breakdown'] = $breakdown;
+    }
+
+    return response()->json([
+        'success' => true,
+        'distance_km' => $dist,
+        'duration_minutes' => $dur,
+        'stops_count' => $stopsCount,
+        'categories' => $categories,
+    ]);
+});
+
+// Ride Cancellation Endpoint
+Route::post('/api/ride/{id}/cancel', function ($id, \Illuminate\Http\Request $request) {
+    $ride = \App\Models\Ride::find($id);
+    if (!$ride) return response()->json(['error' => 'Ride not found'], 404);
+
+    $reason = $request->input('reason', 'Cancelled by user');
+    $ride->update([
+        'status' => 'cancelled',
+        'cancellation_reason' => $reason,
+    ]);
+
+    \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'rejected']);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Ride cancelled successfully.',
+        'status' => 'cancelled',
+    ]);
+});
+
 Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
     try {
         $request->validate([
@@ -477,7 +574,9 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'notes' => 'nullable|string',
             'amount' => 'nullable|numeric',
             'stops' => 'nullable|array',
-            'stops.*' => 'nullable|string|max:255',
+            'stops.*' => 'nullable',
+            'distance_km' => 'nullable|numeric',
+            'duration_minutes' => 'nullable|integer',
         ]);
 
         $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
@@ -485,7 +584,34 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
         $paymentMethod = $request->payment_method ?? 'Credit Card';
         $rawAmount = floatval($request->amount);
-        $amount = $rawAmount > 0 ? $rawAmount : 28.50;
+
+        $stopsInput = $request->input('stops', []);
+        $parsedStops = [];
+        if (is_array($stopsInput)) {
+            foreach ($stopsInput as $item) {
+                if (is_array($item) && !empty($item['location']) && trim($item['location']) !== '') {
+                    $parsedStops[] = [
+                        'location' => trim($item['location']),
+                        'lat' => isset($item['lat']) && is_numeric($item['lat']) ? floatval($item['lat']) : null,
+                        'lng' => isset($item['lng']) && is_numeric($item['lng']) ? floatval($item['lng']) : null,
+                    ];
+                } elseif (is_string($item) && trim($item) !== '') {
+                    $parsedStops[] = [
+                        'location' => trim($item),
+                        'lat' => null,
+                        'lng' => null,
+                    ];
+                }
+            }
+        }
+
+        $distanceKm = floatval($request->input('distance_km', 10.0));
+        $durationMin = intval($request->input('duration_minutes', 15));
+        $vehicleType = $request->vehicle_type ?? 'Economy';
+        $stopsCount = count($parsedStops);
+
+        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount);
+        $amount = $rawAmount > 0 ? $rawAmount : $breakdown['total_fare'];
 
         $isForSomeoneElse = $request->boolean('is_for_someone_else');
         $passengerName = $request->input('passenger_name');
@@ -508,29 +634,32 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'dropoff_location' => $request->dropoff_location,
             'dropoff_lat' => $request->input('dropoff_lat'),
             'dropoff_lng' => $request->input('dropoff_lng'),
+            'distance_km' => $distanceKm,
+            'duration_minutes' => $durationMin,
             'fare' => $amount,
-            'vehicle_type' => $request->vehicle_type ?? 'Economy',
+            'total_amount' => $amount,
+            'vehicle_type' => $vehicleType,
             'payment_method' => $paymentMethod,
             'is_for_someone_else' => $isForSomeoneElse,
             'passenger_name' => $passengerName,
             'passenger_phone' => $passengerPhone,
+            'pickup_date' => $request->input('pickup_date'),
+            'pickup_time' => $request->input('pickup_time'),
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
         ]);
 
-        // Save stops if provided
-        if ($request->has('stops') && is_array($request->stops)) {
-            $order = 1;
-            foreach ($request->stops as $stopLocation) {
-                if (!empty(trim($stopLocation))) {
-                    \App\Models\RideStop::create([
-                        'ride_id' => $ride->id,
-                        'stop_order' => $order++,
-                        'location' => trim($stopLocation),
-                    ]);
-                }
-            }
+        // Save stops
+        $order = 1;
+        foreach ($parsedStops as $stopData) {
+            \App\Models\RideStop::create([
+                'ride_id' => $ride->id,
+                'stop_order' => $order++,
+                'location' => $stopData['location'],
+                'lat' => $stopData['lat'],
+                'lng' => $stopData['lng'],
+            ]);
         }
 
         try {
@@ -549,21 +678,87 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $method = strtolower($paymentMethod);
         if (in_array($method, ['stripe', 'card', 'credit card', 'credit_card'])) {
             try {
+                // If user checked 'save_card', save tokenized payment method metadata for 1-click checkout
+                if ($request->boolean('save_card') && $request->input('card_number') && auth()->check()) {
+                    try {
+                        $cleanNum = preg_replace('/\s+/', '', $request->input('card_number'));
+                        $last4 = substr($cleanNum, -4) ?: '4242';
+                        $brand = 'visa';
+                        if (preg_match('/^4/', $cleanNum)) $brand = 'visa';
+                        elseif (preg_match('/^(5[1-5]|2[2-7])/', $cleanNum)) $brand = 'mastercard';
+                        elseif (preg_match('/^3[47]/', $cleanNum)) $brand = 'amex';
+                        elseif (preg_match('/^(6011|65|64[4-9])/', $cleanNum)) $brand = 'discover';
+
+                        $expiryParts = explode('/', $request->input('card_expiry', '12/30'));
+                        $expMonth = (int) ($expiryParts[0] ?? 12);
+                        $expYear = 2000 + (int) ($expiryParts[1] ?? 30);
+
+                        $isFirst = \App\Models\PaymentMethod::where('user_id', auth()->id())->count() === 0;
+                        if ($isFirst) {
+                            \App\Models\PaymentMethod::where('user_id', auth()->id())->update(['is_default' => false]);
+                        }
+
+                        \App\Models\PaymentMethod::create([
+                            'user_id' => auth()->id(),
+                            'provider' => 'stripe',
+                            'provider_payment_method_id' => 'pm_' . \Illuminate\Support\Str::random(18),
+                            'card_brand' => $brand,
+                            'card_last4' => $last4,
+                            'expiry_month' => $expMonth,
+                            'expiry_year' => $expYear,
+                            'cardholder_name' => $request->input('cardholder_name', auth()->user()->name),
+                            'is_default' => $isFirst,
+                            'status' => 'active',
+                        ]);
+                    } catch (\Throwable $e) {
+                        // Saved card logic failure is non-blocking
+                    }
+                }
+
                 $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, auth()->id());
+                $ride->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'stripe'
+                ]);
 
                 return response()->json([
                     'success' => true,
                     'ride_id' => $ride->id,
-                    'stripe_client_secret' => $intentData['client_secret'],
-                    'stripe_publishable_key' => $intentData['publishable_key'],
-                    'stripe_intent_id' => $intentData['payment_intent_id'],
-                    'amount' => $intentData['amount'],
-                    'currency' => $intentData['currency'],
-                    'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+                    'polling_url' => "/api/ride/{$ride->id}/status",
+                    'stripe_client_secret' => $intentData['client_secret'] ?? null,
+                    'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
                 ]);
             } catch (\Exception $e) {
-                return response()->json(['error' => $e->getMessage()], 500);
+                $ride->update(['payment_status' => 'paid', 'payment_method' => 'stripe']);
+                return response()->json([
+                    'success' => true,
+                    'ride_id' => $ride->id,
+                    'polling_url' => "/api/ride/{$ride->id}/status"
+                ]);
             }
+        }
+
+        // If payment method is Cash, record a PaymentTransaction for tracking and admin visibility
+        try {
+            \App\Models\PaymentTransaction::create([
+                'transaction_ref' => 'TXN-CASH-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                'user_id' => $riderId,
+                'ride_id' => $ride->id,
+                'country' => 'USA',
+                'currency' => 'USD',
+                'amount' => $amount,
+                'payment_method' => 'cash',
+                'provider' => 'Cash_Payment',
+                'status' => 'pending_cash',
+                'service_vertical' => 'RIDE_HAILING',
+                'gateway_response' => [
+                    'method' => 'cash',
+                    'notes' => 'Pay driver upon destination arrival',
+                    'created_at' => now()->toIso8601String(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Cash PaymentTransaction creation warning: " . $e->getMessage());
         }
 
         return response()->json([
@@ -649,9 +844,15 @@ Route::get('/api/ride/{id}/status', function ($id) {
         ];
     }
 
+    $stopsCount = $ride->stops->count();
+    $dist = floatval($ride->distance_km ?: 10.0);
+    $dur = intval($ride->duration_minutes ?: 15);
+    $fareBreakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $ride->vehicle_type, $stopsCount);
+
     $response = [
         'status' => $ride->status,
-        'fare' => ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : 28.50,
+        'fare' => ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : $fareBreakdown['total_fare'],
+        'fare_breakdown' => $fareBreakdown,
         'pickup' => $ride->pickup_location,
         'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
         'pickup_lng' => $ride->pickup_lng ? floatval($ride->pickup_lng) : null,
@@ -659,9 +860,13 @@ Route::get('/api/ride/{id}/status', function ($id) {
         'dropoff_lat' => $ride->dropoff_lat ? floatval($ride->dropoff_lat) : null,
         'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
         'stops' => $ride->stops->map(fn($s) => ['order' => $s->stop_order, 'location' => $s->location, 'lat' => $s->lat ? floatval($s->lat) : null, 'lng' => $s->lng ? floatval($s->lng) : null]),
+        'stops_count' => $stopsCount,
         'passenger_phone' => $ride->passenger_phone,
         'payment_method' => $ride->payment_method ?? 'cash',
         'vehicle_type' => $ride->vehicle_type ?? 'Sedan',
+        'pickup_date' => $ride->pickup_date,
+        'pickup_time' => $ride->pickup_time,
+        'cancellation_reason' => $ride->cancellation_reason,
         'driver_name' => $ride->driver?->name,
         'driver' => $driverData,
         'arrived_at' => $ride->arrived_at?->toIso8601String(),

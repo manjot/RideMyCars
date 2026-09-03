@@ -250,8 +250,18 @@
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
                                             <p><strong>Rider:</strong> <span x-text="ride.rider?.name || 'Rider'"></span></p>
-                                            <p><strong>Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
-                                            <p><strong>Dropoff:</strong> <span x-text="ride.dropoff_location"></span></p>
+                                            <p><strong>📍 Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
+                                            <template x-if="ride.stops && ride.stops.length > 0">
+                                                <div class="my-1.5 pl-3 border-l-2 border-dashed border-amber-400 space-y-1">
+                                                    <template x-for="st in ride.stops" :key="st.order">
+                                                        <p class="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                                            <span class="font-extrabold uppercase text-[10px]" x-text="'📍 Stop ' + st.order + ':'"></span>
+                                                            <span x-text="st.location"></span>
+                                                        </p>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <p><strong>🏁 Dropoff:</strong> <span x-text="ride.dropoff_location"></span></p>
                                         </div>
                                         
                                         <!-- Lifecycle action buttons -->

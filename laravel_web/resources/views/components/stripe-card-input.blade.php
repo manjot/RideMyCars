@@ -3,10 +3,9 @@
     'value' => 'stripe'
 ])
 
-<div x-show="{{ $modelName }} === '{{ $value }}'"
-     x-transition:enter="transition ease-out duration-200"
-     x-transition:enter-start="opacity-0 transform -translate-y-2"
-     x-transition:enter-end="opacity-100 transform translate-y-0"
+<div x-show="{{ $modelName }} === '{{ $value }}' || {{ $modelName }} === 'card' || {{ $modelName }} === 'credit_card' || {{ $modelName }} === 'Credit Card'" 
+     x-transition.opacity
+     style="display: none;"
      class="mt-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#161618] dark:to-[#1f1f23] rounded-2xl border-2 border-gray-200 dark:border-white/10 shadow-md space-y-4">
     
     <!-- Card Header & Badges -->
@@ -18,8 +17,8 @@
                 </svg>
             </div>
             <div>
-                <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Credit / Debit Card Information</h4>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400">Required for secure Stripe checkout</p>
+                <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Credit / Debit Card Details</h4>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400">Encrypted Stripe Tokenized Checkout</p>
             </div>
         </div>
         <div class="flex items-center space-x-1.5 bg-white dark:bg-black/40 px-2.5 py-1 rounded-full border border-gray-200 dark:border-white/10 text-[10px] font-bold text-gray-600 dark:text-gray-300">
@@ -27,8 +26,19 @@
         </div>
     </div>
 
-    <!-- Fillup Form Inputs -->
-    <div class="space-y-3">
+    <!-- Card Fillup Inputs -->
+    <div class="space-y-3" x-data="{
+        cardNumber: '',
+        detectedBrand: '',
+        detectBrand(num) {
+            const clean = num.replace(/\s+/g, '');
+            if (/^4/.test(clean)) this.detectedBrand = 'visa';
+            else if (/^(5[1-5]|2[2-7])/.test(clean)) this.detectedBrand = 'mastercard';
+            else if (/^3[47]/.test(clean)) this.detectedBrand = 'amex';
+            else if (/^(6011|65|64[4-9])/.test(clean)) this.detectedBrand = 'discover';
+            else this.detectedBrand = '';
+        }
+    }">
         <!-- Cardholder Name -->
         <div>
             <label class="block text-[11px] font-extrabold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">
@@ -36,8 +46,8 @@
             </label>
             <input type="text" 
                    name="cardholder_name" 
+                   id="stripe_cardholder_name_input"
                    placeholder="e.g. Johnathan Doe" 
-                   required
                    class="w-full px-3.5 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition">
         </div>
 
@@ -47,20 +57,21 @@
                 <label class="block text-[11px] font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Card Number <span class="text-red-500">*</span>
                 </label>
-                <div class="flex items-center space-x-1 text-[9px] font-bold text-gray-400">
-                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">VISA</span>
-                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">MC</span>
-                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">AMEX</span>
-                    <span class="px-1 py-0.5 bg-gray-200 dark:bg-white/10 rounded text-gray-700 dark:text-gray-300">DISCOVER</span>
+                <div class="flex items-center space-x-1 text-[9px] font-bold">
+                    <span :class="detectedBrand === 'visa' ? 'bg-blue-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">VISA</span>
+                    <span :class="detectedBrand === 'mastercard' ? 'bg-orange-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">MC</span>
+                    <span :class="detectedBrand === 'amex' ? 'bg-emerald-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">AMEX</span>
+                    <span :class="detectedBrand === 'discover' ? 'bg-amber-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">DISCOVER</span>
                 </div>
             </div>
             <div class="relative w-full">
                 <input type="text" 
                        name="card_number" 
+                       id="stripe_card_number_input"
                        maxlength="19" 
+                       x-model="cardNumber"
+                       @input="detectBrand($event.target.value); $event.target.value = $event.target.value.replace(/[^0-9]/g, '').replace(/(.{4})/g, '$1 ').trim()"
                        placeholder="4242 4242 4242 4242" 
-                       required
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(.{4})/g, '$1 ').trim()"
                        class="w-full pl-8 pr-2.5 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-[13px] font-mono font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition tracking-wide shadow-inner">
                 <div class="absolute left-2.5 top-2.5 text-gray-400 text-xs">
                     💳
@@ -77,9 +88,9 @@
                 </label>
                 <input type="text" 
                        name="card_expiry" 
+                       id="stripe_card_expiry_input"
                        maxlength="5" 
                        placeholder="MM/YY" 
-                       required
                        oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/^([2-9])/, '0$1').replace(/^(1[3-9])/, '12').replace(/^([0-9]{2})([0-9]+)/, '$1/$2')"
                        class="w-full px-3 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-white placeholder-gray-400 text-center focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition">
             </div>
@@ -91,9 +102,9 @@
                 </label>
                 <input type="password" 
                        name="card_cvc" 
+                       id="stripe_card_cvc_input"
                        maxlength="4" 
                        placeholder="123" 
-                       required
                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                        class="w-full px-3 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-white placeholder-gray-400 text-center focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition">
             </div>
@@ -105,9 +116,9 @@
                 </label>
                 <input type="text" 
                        name="card_zip" 
+                       id="stripe_card_zip_input"
                        maxlength="10" 
                        placeholder="10001" 
-                       required
                        class="w-full px-3 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 text-center focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition">
             </div>
         </div>
@@ -116,11 +127,11 @@
     <!-- Security & Guarantee Footer -->
     <div class="pt-2 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-200/60 dark:border-white/5">
         <span class="flex items-center gap-1">
-            <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span>PCI-DSS Level 1 Compliant</span>
+            <span>Stripe Encrypted & Tokenized</span>
         </span>
-        <span class="font-bold text-gray-700 dark:text-gray-300">Powered by Stripe</span>
+        <span>PCI-DSS Level 1 Compliant</span>
     </div>
 </div>

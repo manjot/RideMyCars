@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PaymentTransactionResource extends Resource
 {
@@ -25,99 +26,112 @@ class PaymentTransactionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('transaction_ref')
-                    ->required()
-                    ->readOnly(),
-                Forms\Components\Select::make('service_vertical')
-                    ->options([
-                        'RIDE_HAILING' => 'Ride Hailing (10% Platform / 90% Owner)',
-                        'DRIVER_HIRING' => 'Driver Hiring (15% Platform / 85% Owner)',
-                        'VEHICLE_RENTAL' => 'Vehicle Rental (20% Platform / 80% Owner)',
-                    ])
-                    ->required(),
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->searchable()
-                    ->required(),
-                Forms\Components\TextInput::make('amount')
-                    ->label('Gross Amount')
-                    ->numeric()
-                    ->prefix('GH₵')
-                    ->required(),
-                Forms\Components\TextInput::make('platform_fee')
-                    ->numeric()
-                    ->prefix('GH₵'),
-                Forms\Components\TextInput::make('maintenance_fee')
-                    ->numeric()
-                    ->prefix('GH₵'),
-                Forms\Components\TextInput::make('net_payout')
-                    ->numeric()
-                    ->prefix('GH₵'),
-                Forms\Components\Select::make('payment_method')
-                    ->options([
-                        'stripe' => 'Stripe Card (PCI-DSS)',
-                        'momo' => 'Mobile Money (MoMo)',
-                        'card' => 'Credit / Debit Card',
-                        'paypal' => 'PayPal',
-                        'cash' => 'Cash',
-                    ])
-                    ->required(),
-                Forms\Components\TextInput::make('stripe_payment_intent_id')
-                    ->label('Stripe PaymentIntent ID')
-                    ->readOnly(),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'paid' => 'Paid / Successful',
-                        'failed' => 'Failed',
-                        'cancelled' => 'Cancelled',
-                    ])
-                    ->required(),
-                Forms\Components\Select::make('payout_status')
-                    ->options([
-                        'pending' => 'Pending Payout',
-                        'completed' => 'Completed Payout',
-                        'failed' => 'Failed Payout',
-                        'on_hold' => 'On Hold',
-                    ]),
-                Forms\Components\Select::make('escrow_status')
-                    ->options([
-                        'none' => 'None',
-                        'held' => 'Escrow Held',
-                        'released' => 'Released',
-                        'partially_deducted' => 'Partially Deducted',
-                        'fully_deducted' => 'Fully Deducted',
-                        'refunded' => 'Refunded',
-                    ]),
+                Forms\Components\Group::make([
+                    Forms\Components\Section::make('Payment & Transaction Information')
+                        ->schema([
+                            Forms\Components\TextInput::make('transaction_ref')
+                                ->label('Payment ID / Ref')
+                                ->required()
+                                ->readOnly(),
+                            Forms\Components\TextInput::make('stripe_payment_intent_id')
+                                ->label('Provider Transaction ID (Stripe PI)')
+                                ->readOnly(),
+                            Forms\Components\Select::make('user_id')
+                                ->label('Customer')
+                                ->relationship('user', 'name')
+                                ->searchable()
+                                ->required(),
+                            Forms\Components\TextInput::make('amount')
+                                ->label('Gross Fare / Amount')
+                                ->numeric()
+                                ->prefix('$')
+                                ->required(),
+                            Forms\Components\TextInput::make('currency')
+                                ->label('Currency')
+                                ->default('USD')
+                                ->required(),
+                            Forms\Components\Select::make('payment_method')
+                                ->label('Payment Method')
+                                ->options([
+                                    'stripe' => 'Stripe Card (Tokenized)',
+                                    'card' => 'Credit / Debit Card',
+                                    'cash' => 'Cash on Arrival',
+                                    'momo' => 'Mobile Money (MoMo)',
+                                    'paypal' => 'PayPal',
+                                ])
+                                ->required(),
+                            Forms\Components\Select::make('status')
+                                ->label('Payment Status')
+                                ->options([
+                                    'pending' => 'PENDING',
+                                    'pending_cash' => 'PENDING CASH',
+                                    'processing' => 'PROCESSING',
+                                    'paid' => 'PAID / SUCCESSFUL',
+                                    'failed' => 'FAILED',
+                                    'cancelled' => 'CANCELLED',
+                                    'refunded' => 'REFUNDED',
+                                ])
+                                ->required(),
+                            Forms\Components\Select::make('service_vertical')
+                                ->label('Service Vertical')
+                                ->options([
+                                    'RIDE_HAILING' => 'Ride Hailing',
+                                    'DRIVER_HIRING' => 'Driver Hiring',
+                                    'VEHICLE_RENTAL' => 'Vehicle Rental',
+                                ])
+                                ->required(),
+                        ])->columns(2),
 
-                Forms\Components\Section::make('Cancellation & Refund Controls')
-                    ->schema([
-                        Forms\Components\TextInput::make('cancellation_fee')
-                            ->numeric()
-                            ->prefix('$'),
-                        Forms\Components\TextInput::make('penalty_amount')
-                            ->numeric()
-                            ->prefix('$'),
-                        Forms\Components\TextInput::make('refund_amount')
-                            ->numeric()
-                            ->prefix('$'),
-                        Forms\Components\Select::make('refund_status')
-                            ->options([
-                                'not_eligible' => 'Not Eligible',
-                                'pending' => 'Pending Review',
-                                'requested' => 'Refund Requested',
-                                'processing' => 'Processing',
-                                'refunded' => 'Refunded',
-                                'partially_refunded' => 'Partially Refunded',
-                                'failed' => 'Failed',
-                                'rejected' => 'Rejected',
-                            ]),
-                        Forms\Components\TextInput::make('refund_reference')
-                            ->readOnly(),
-                        Forms\Components\DateTimePicker::make('refunded_at')
-                            ->readOnly(),
-                    ])->columns(2),
-            ]);
+                    Forms\Components\Section::make('Linked Ride & Booking Details')
+                        ->schema([
+                            Forms\Components\Select::make('ride_id')
+                                ->label('Ride Booking')
+                                ->relationship('ride', 'id')
+                                ->getOptionLabelFromRecordUsing(fn ($record) => "Ride #{$record->id} — {$record->pickup_location} → {$record->dropoff_location}")
+                                ->disabled(),
+                            Forms\Components\Select::make('driver_booking_id')
+                                ->label('Driver Booking')
+                                ->relationship('driverBooking', 'id')
+                                ->disabled(),
+                        ])->columns(2),
+                ])->columnSpan(2),
+
+                Forms\Components\Group::make([
+                    Forms\Components\Section::make('Payout & Settlement')
+                        ->schema([
+                            Forms\Components\Select::make('payout_status')
+                                ->options([
+                                    'pending' => 'Pending Payout',
+                                    'completed' => 'Completed Payout',
+                                    'failed' => 'Failed Payout',
+                                    'on_hold' => 'On Hold',
+                                ]),
+                            Forms\Components\Select::make('escrow_status')
+                                ->options([
+                                    'none' => 'None',
+                                    'held' => 'Escrow Held',
+                                    'released' => 'Released',
+                                    'refunded' => 'Refunded',
+                                ]),
+                        ]),
+
+                    Forms\Components\Section::make('Refund Controls')
+                        ->schema([
+                            Forms\Components\TextInput::make('refund_amount')
+                                ->numeric()
+                                ->prefix('$'),
+                            Forms\Components\Select::make('refund_status')
+                                ->options([
+                                    'not_eligible' => 'Not Eligible',
+                                    'pending' => 'Pending Review',
+                                    'refunded' => 'Refunded',
+                                    'failed' => 'Failed',
+                                ]),
+                            Forms\Components\TextInput::make('refund_reference')
+                                ->readOnly(),
+                        ]),
+                ])->columnSpan(1),
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -125,121 +139,105 @@ class PaymentTransactionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('transaction_ref')
-                    ->label('Ref ID')
+                    ->label('Payment ID')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('service_vertical')
-                    ->label('Vertical')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'RIDE_HAILING' => 'warning',
-                        'DRIVER_HIRING' => 'info',
-                        'VEHICLE_RENTAL' => 'success',
-                        default => 'gray',
-                    })
-                    ->sortable(),
+                    ->sortable()
+                    ->copyable()
+                    ->weight('bold'),
+
                 Tables\Columns\TextColumn::make('user.name')
+                    ->label('Customer')
                     ->searchable()
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('booking_link')
+                    ->label('Booking ID')
+                    ->getStateUsing(function ($record) {
+                        if ($record->ride_id) {
+                            return "Ride #{$record->ride_id}";
+                        }
+                        if ($record->driver_booking_id) {
+                            return "Booking #{$record->driver_booking_id}";
+                        }
+                        return 'N/A';
+                    })
+                    ->badge()
+                    ->color('gray'),
+
                 Tables\Columns\TextColumn::make('amount')
-                    ->label('Gross Fare')
-                    ->money('GHS')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('platform_fee')
-                    ->label('Platform Fee')
-                    ->getStateUsing(function ($record) {
-                        if ((float) $record->platform_fee > 0) return $record->platform_fee;
-                        $calc = \App\Services\CommissionBillingService::calculate((float) ($record->gross_amount ?: $record->amount), $record->service_vertical ?: 'RIDE_HAILING');
-                        return $calc['platform_fee'];
-                    })
-                    ->money('GHS'),
-                Tables\Columns\TextColumn::make('maintenance_fee')
-                    ->label('App Maint (2.5%)')
-                    ->getStateUsing(function ($record) {
-                        if ((float) $record->maintenance_fee > 0) return $record->maintenance_fee;
-                        $calc = \App\Services\CommissionBillingService::calculate((float) ($record->gross_amount ?: $record->amount), $record->service_vertical ?: 'RIDE_HAILING');
-                        return $calc['maintenance_fee'];
-                    })
-                    ->money('GHS'),
-                Tables\Columns\TextColumn::make('net_payout')
-                    ->label('Net Owner Payout')
-                    ->getStateUsing(function ($record) {
-                        if ((float) $record->net_payout > 0) return $record->net_payout;
-                        $calc = \App\Services\CommissionBillingService::calculate((float) ($record->gross_amount ?: $record->amount), $record->service_vertical ?: 'RIDE_HAILING');
-                        return $calc['net_payout'];
-                    })
-                    ->money('GHS')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('payout_status')
-                    ->label('Payout Status')
+                    ->label('Amount')
+                    ->money(fn ($record) => $record->currency ?: 'USD')
+                    ->sortable()
+                    ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('payment_method')
+                    ->label('Method')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'completed' => 'success',
-                        'pending' => 'warning',
+                    ->color(fn (string $state): string => match (strtolower($state)) {
+                        'stripe', 'card', 'credit card' => 'info',
+                        'cash' => 'warning',
+                        'paypal' => 'primary',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match (strtolower($state)) {
+                        'stripe', 'card', 'credit card' => '💳 Stripe Card',
+                        'cash' => '💵 Cash on Arrival',
+                        'paypal' => '🅿️ PayPal',
+                        default => ucfirst($state),
+                    }),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match (strtolower($state)) {
+                        'paid', 'successful' => 'success',
+                        'pending', 'processing' => 'warning',
+                        'pending_cash' => 'warning',
                         'failed' => 'danger',
+                        'refunded' => 'info',
+                        'cancelled' => 'gray',
                         default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('refund_status')
-                    ->label('Refund Status')
-                    ->badge()
-                    ->color(fn (?string $state): string => match ($state) {
-                        'refunded' => 'success',
-                        'processing', 'pending' => 'warning',
-                        'failed', 'rejected' => 'danger',
-                        default => 'gray',
-                    }),
+                    })
+                    ->formatStateUsing(fn (string $state): string => strtoupper(str_replace('_', ' ', $state)))
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Date & Time')
+                    ->dateTime('M d, Y H:i')
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Payment Status')
+                    ->options([
+                        'paid' => 'PAID / SUCCESSFUL',
+                        'pending' => 'PENDING',
+                        'pending_cash' => 'PENDING CASH',
+                        'failed' => 'FAILED',
+                        'cancelled' => 'CANCELLED',
+                        'refunded' => 'REFUNDED',
+                    ]),
+                Tables\Filters\SelectFilter::make('payment_method')
+                    ->label('Payment Method')
+                    ->options([
+                        'stripe' => 'Stripe Card',
+                        'cash' => 'Cash on Arrival',
+                        'paypal' => 'PayPal',
+                    ]),
                 Tables\Filters\SelectFilter::make('service_vertical')
+                    ->label('Service Vertical')
                     ->options([
                         'RIDE_HAILING' => 'Ride Hailing',
                         'DRIVER_HIRING' => 'Driver Hiring',
                         'VEHICLE_RENTAL' => 'Vehicle Rental',
                     ]),
-                Tables\Filters\SelectFilter::make('refund_status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'refunded' => 'Refunded',
-                        'failed' => 'Failed',
-                    ]),
             ])
             ->actions([
-                Tables\Actions\Action::make('approve_refund')
-                    ->label('Approve & Refund')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->action(function (PaymentTransaction $record) {
-                        $record->update([
-                            'refund_status' => 'refunded',
-                            'refund_amount' => $record->eligible_refund_amount ?: $record->amount,
-                            'refund_reference' => 'REFD-ADM-' . strtoupper(\Illuminate\Support\Str::random(6)),
-                            'refunded_at' => now(),
-                        ]);
-                        \Filament\Notifications\Notification::make()
-                            ->title('Refund Processed Successfully')
-                            ->success()
-                            ->send();
-                    }),
-                Tables\Actions\Action::make('retry_payout')
-                    ->label('Retry Payout')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->visible(fn (PaymentTransaction $record) => $record->payout_status === 'failed')
-                    ->action(function (PaymentTransaction $record) {
-                        $ledger = PayoutLedger::where('payment_transaction_id', $record->id)->first();
-                        if ($ledger) {
-                            PayoutAutomationService::retryFailedPayout($ledger);
-                            \Filament\Notifications\Notification::make()
-                                ->title('Payout Retried')
-                                ->success()
-                                ->send();
-                        }
-                    }),
+                Tables\Actions\ViewAction::make()
+                    ->label('View Details')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading(fn ($record) => "Payment Details — {$record->transaction_ref}"),
                 Tables\Actions\EditAction::make(),
             ]);
     }

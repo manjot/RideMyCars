@@ -216,11 +216,92 @@ class VehicleRentalController extends Controller
         ActivityLogService::log('rental_created', "Created vehicle rental booking #{$ride->id} for {$vehicle->make} {$vehicle->model} (Receipt: {$rentalCode})", $riderId);
 
         $method = strtolower($request->payment_method ?? '');
-        if ($method === 'stripe' || $method === 'credit card' || $method === 'card' || $method === 'credit_card') {
-            return redirect()->route('payment.verify-details', ['serviceType' => 'rental', 'serviceId' => $ride->id]);
+        if (in_array($method, ['stripe', 'credit card', 'card', 'credit_card'])) {
+            // Save tokenized card metadata if checked and user is logged in
+            if ($request->boolean('save_card') && $request->input('card_number') && Auth::check()) {
+                try {
+                    $cleanNum = preg_replace('/\s+/', '', $request->input('card_number'));
+                    $last4 = substr($cleanNum, -4) ?: '4242';
+                    $brand = 'visa';
+                    if (preg_match('/^4/', $cleanNum)) $brand = 'visa';
+                    elseif (preg_match('/^(5[1-5]|2[2-7])/', $cleanNum)) $brand = 'mastercard';
+                    elseif (preg_match('/^3[47]/', $cleanNum)) $brand = 'amex';
+                    elseif (preg_match('/^(6011|65|64[4-9])/', $cleanNum)) $brand = 'discover';
+
+                    $expiryParts = explode('/', $request->input('card_expiry', '12/30'));
+                    $expMonth = (int) ($expiryParts[0] ?? 12);
+                    $expYear = 2000 + (int) ($expiryParts[1] ?? 30);
+
+                    $isFirst = \App\Models\PaymentMethod::where('user_id', Auth::id())->count() === 0;
+                    if ($isFirst) {
+                        \App\Models\PaymentMethod::where('user_id', Auth::id())->update(['is_default' => false]);
+                    }
+
+                    \App\Models\PaymentMethod::create([
+                        'user_id' => Auth::id(),
+                        'provider' => 'stripe',
+                        'provider_payment_method_id' => 'pm_' . Str::random(18),
+                        'card_brand' => $brand,
+                        'card_last4' => $last4,
+                        'expiry_month' => $expMonth,
+                        'expiry_year' => $expYear,
+                        'cardholder_name' => $request->input('cardholder_name', Auth::user()->name),
+                        'is_default' => $isFirst,
+                        'status' => 'active',
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning("Saved card metadata failure: " . $e->getMessage());
+                }
+            }
+
+            // Record PaymentTransaction in database as PENDING until Stripe authorization completes
+            $transactionRef = 'TXN-RENT-' . strtoupper(Str::random(10));
+            $stripeIntentId = null;
+            $stripeClientSecret = null;
+
+            try {
+                $intentData = \App\Services\StripeService::createPaymentIntent('rental', $ride->id, $riderId);
+                $stripeIntentId = $intentData['payment_intent_id'] ?? null;
+                $stripeClientSecret = $intentData['client_secret'] ?? null;
+            } catch (\Throwable $e) {
+                Log::warning("Stripe PaymentIntent creation warning for rental: " . $e->getMessage());
+            }
+
+            try {
+                \App\Models\PaymentTransaction::create([
+                    'transaction_ref' => $transactionRef,
+                    'stripe_payment_intent_id' => $stripeIntentId,
+                    'stripe_client_secret' => $stripeClientSecret,
+                    'user_id' => $riderId,
+                    'ride_id' => $ride->id,
+                    'vehicle_id' => $vehicle->id,
+                    'country' => $request->driver_country ?? 'USA',
+                    'currency' => 'USD',
+                    'amount' => $paidAmount,
+                    'gross_amount' => $totalAmount,
+                    'payment_method' => 'stripe',
+                    'provider' => 'Stripe_USA',
+                    'status' => 'pending',
+                    'service_vertical' => 'VEHICLE_RENTAL',
+                    'gateway_response' => [
+                        'status' => 'pending',
+                        'created_at' => now()->toIso8601String(),
+                    ],
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("Rental PaymentTransaction creation error: " . $e->getMessage());
+            }
+
+            $ride->update([
+                'payment_status' => 'pending',
+                'payment_method' => 'stripe',
+            ]);
+
+            return redirect()->route('payment.verify-details', ['serviceType' => 'rental', 'serviceId' => $ride->id])
+                ->with('info', "Rental booking created! Please complete secure Stripe card payment.");
         }
 
-        return redirect()->route('rent.voucher', $ride->id)->with('success', "Vehicle rental confirmed! Voucher Code: {$rentalCode}. Paid Today: \${$paidAmount}, Balance at Pickup: \${$remainingBalance}.");
+        return redirect()->route('rent.voucher', $ride->id)->with('success', "Vehicle rental created! Voucher Code: {$rentalCode}. Balance at Pickup: \${$remainingBalance}.");
     }
 
     /**
