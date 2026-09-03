@@ -37,6 +37,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     if (driver.pendingRequests.isNotEmpty && !_dialogOpen) {
       _dialogOpen = true;
       final job = driver.pendingRequests.first;
+      final assignmentId = (job['assignment_id'] ?? job['id']) as int?;
+      final rideId = (job['ride_id'] ?? job['ride']?['id']) as int?;
 
       showDialog(
         context: context,
@@ -46,7 +48,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           onAccept: () async {
             Navigator.pop(context);
             _dialogOpen = false;
-            final ok = await driver.respondToRequest(job['assignment_id'], 'accept');
+            final ok = await driver.respondToRequest(assignmentId, 'accept', rideId: rideId);
             if (ok && mounted && driver.activeRides.isNotEmpty) {
               Navigator.push(
                 context,
@@ -59,7 +61,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           onDecline: () async {
             Navigator.pop(context);
             _dialogOpen = false;
-            await driver.respondToRequest(job['assignment_id'], 'reject');
+            await driver.respondToRequest(assignmentId, 'reject', rideId: rideId);
           },
         ),
       ).then((_) => _dialogOpen = false);

@@ -15,12 +15,22 @@ class IncomingJobDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fare = request['fare'] ?? request['total_price'] ?? 0.0;
-    final isRide = request['type'] == 'ride';
-    final title = isRide ? 'New Ride Request!' : 'New Chauffeur Request!';
-    final pickup = request['pickup_location'] ?? 'Pickup location';
-    final dropoff = request['dropoff_location'] ?? 'Destination';
-    final clientName = request['rider_name'] ?? request['client_name'] ?? 'Passenger';
+    final ride = request['ride'] is Map ? request['ride'] as Map<String, dynamic> : null;
+    final booking = request['driver_booking'] is Map ? request['driver_booking'] as Map<String, dynamic> : null;
+
+    final rawFare = request['fare'] ?? ride?['fare'] ?? ride?['total_amount'] ?? booking?['total_price'] ?? request['total_price'] ?? 0.0;
+    final fare = double.tryParse(rawFare.toString()) ?? 0.0;
+    
+    final isChauffeur = request['type'] == 'driver_booking' || booking != null;
+    final title = isChauffeur ? 'New Chauffeur Request!' : 'New Ride Request!';
+    
+    final pickup = (request['pickup_location'] ?? ride?['pickup_location'] ?? booking?['pickup_location'] ?? 'Pickup location').toString();
+    final dropoff = (request['dropoff_location'] ?? ride?['dropoff_location'] ?? booking?['dropoff_location'] ?? 'Destination').toString();
+    
+    final clientName = (request['rider_name'] ?? ride?['passenger_name'] ?? ride?['rider']?['name'] ?? booking?['client']?['name'] ?? 'Passenger').toString();
+
+    final distanceKm = request['distance_km'] ?? ride?['distance_km'];
+    final durationMins = request['duration_minutes'] ?? ride?['duration_minutes'] ?? 15;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -105,16 +115,16 @@ class IncomingJobDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${(fare as num).toStringAsFixed(2)}',
+                    '\$${fare.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.success,
                       fontSize: 34,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  if (request['distance_km'] != null)
+                  if (distanceKm != null)
                     Text(
-                      '~${request['distance_km']} km (${request['duration_minutes'] ?? 15} mins)',
+                      '~$distanceKm km ($durationMins mins)',
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 12,
