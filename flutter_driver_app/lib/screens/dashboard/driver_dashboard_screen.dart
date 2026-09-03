@@ -153,6 +153,44 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               _buildOnlineStatusCard(driver),
               const SizedBox(height: 24),
 
+              // Pending Payment & Booking Verification Requests (Parity with Web Dashboard!)
+              if (driver.pendingVerifications.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.amber,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Pending Verifications (${driver.pendingVerifications.length})',
+                          style: const TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, color: Colors.amber, size: 20),
+                      onPressed: () => driver.pollPendingRequests(),
+                      tooltip: 'Refresh Verifications',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ...driver.pendingVerifications.map((item) => _buildPendingVerificationCard(context, item, driver)),
+                const SizedBox(height: 20),
+              ],
+
               // Available Ride Requests Section (Like Web Version!)
               if (driver.pendingRequests.isNotEmpty) ...[
                 Row(
@@ -192,7 +230,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 const SizedBox(height: 12),
                 ...driver.pendingRequests.map((job) => _buildAvailableJobCard(context, job, driver)),
                 const SizedBox(height: 20),
-              ] else if (driver.isOnline) ...[
+              ] else if (driver.isOnline && driver.pendingVerifications.isEmpty) ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 24),
                   padding: const EdgeInsets.all(16),
@@ -491,6 +529,280 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               ),
               icon: const Icon(Icons.navigation_rounded),
               label: const Text('Open Trip Navigation & Controls', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingVerificationCard(BuildContext context, Map<String, dynamic> item, DriverProvider driver) {
+    final type = item['type'] ?? 'ride';
+    final typeLabel = (item['type_label'] ?? (type == 'driver_booking' ? 'Chauffeur Booking' : 'Ride Service')).toString().toUpperCase();
+    final code = item['code'] ?? item['id']?.toString() ?? '';
+    final customer = item['customer_name'] ?? 'Customer';
+    final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
+    final currency = item['currency'] ?? 'USD';
+    final pickup = item['pickup'] ?? 'N/A';
+    final dropoff = item['dropoff'] ?? 'N/A';
+    final schedule = item['schedule'] ?? 'Immediate';
+    final vehicle = item['vehicle'] ?? 'Standard';
+
+    Color typeColor = Colors.amber;
+    if (type == 'driver_booking') {
+      typeColor = AppColors.purple;
+    } else if (type == 'package_delivery') {
+      typeColor = AppColors.info;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.5), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Header: Type badge and Amount
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: typeColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: typeColor, width: 1),
+                        ),
+                        child: Text(
+                          typeLabel,
+                          style: TextStyle(
+                            color: typeColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Booking ID: #$code',
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        'Customer: $customer',
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '\$${amount.toStringAsFixed(2)} $currency',
+                      style: const TextStyle(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.credit_card_rounded, color: Colors.amber, size: 12),
+                        SizedBox(width: 4),
+                        Text(
+                          'Stripe Verification Pending',
+                          style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Details Container
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('📍 ', style: TextStyle(fontSize: 12)),
+                      const Text('Pickup: ', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          pickup,
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('🏁 ', style: TextStyle(fontSize: 12)),
+                      const Text('Dropoff: ', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          dropoff,
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Text('📅 ', style: TextStyle(fontSize: 12)),
+                      const Text('Date & Time: ', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          schedule,
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Text('🚘 ', style: TextStyle(fontSize: 12)),
+                      const Text('Vehicle Info: ', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          vehicle,
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: AppColors.surfaceDark,
+                          title: const Text('Reject Verification', style: TextStyle(color: Colors.white)),
+                          content: const Text(
+                            'Are you sure you want to reject this booking verification request?',
+                            style: TextStyle(color: AppColors.textMuted),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Reject', style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed == true) {
+                        final ok = await driver.verifyBooking(
+                          serviceType: type,
+                          serviceId: item['id'],
+                          action: 'reject',
+                          rejectionReason: 'Driver schedule or vehicle mismatch',
+                        );
+                        if (context.mounted && ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Verification rejected.')),
+                          );
+                        }
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('✕ Reject Verification', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final ok = await driver.verifyBooking(
+                        serviceType: type,
+                        serviceId: item['id'],
+                        action: 'approve',
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(ok ? '✓ Booking details verified and approved!' : 'Failed to approve verification.'),
+                            backgroundColor: ok ? AppColors.success : AppColors.danger,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('✓ Approve & Verify Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -17,6 +17,7 @@ class DriverProvider extends ChangeNotifier {
   double? _currentLng;
 
   List<Map<String, dynamic>> _pendingRequests = [];
+  List<Map<String, dynamic>> _pendingVerifications = [];
   List<Map<String, dynamic>> _activeRides = [];
   Map<String, dynamic> _earnings = {'today': 0.0, 'week': 0.0, 'month': 0.0, 'total_trips': 0};
 
@@ -29,6 +30,7 @@ class DriverProvider extends ChangeNotifier {
   double? get currentLat => _currentLat;
   double? get currentLng => _currentLng;
   List<Map<String, dynamic>> get pendingRequests => _pendingRequests;
+  List<Map<String, dynamic>> get pendingVerifications => _pendingVerifications;
   List<Map<String, dynamic>> get activeRides => _activeRides;
   Map<String, dynamic> get earnings => _earnings;
 
@@ -150,20 +152,36 @@ class DriverProvider extends ChangeNotifier {
 
   Future<void> pollPendingRequests() async {
     try {
-      final res = await _dio.get(ApiConstants.driverRequests);
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        final List newReqs = res.data['requests'] ?? [];
-        final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
-
-        if (mapped.isNotEmpty && mapped.length > _pendingRequests.length) {
-          _playNotificationSound();
+      // 1. Fetch direct incoming dispatch requests
+      try {
+        final res = await _dio.get(ApiConstants.driverRequests);
+        if (res.statusCode == 200 && res.data['success'] == true) {
+          final List newReqs = res.data['requests'] ?? [];
+          _pendingRequests = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
         }
-
-        _pendingRequests = mapped;
-        notifyListeners();
+      } catch (e) {
+        debugPrint('Error polling dispatch requests: $e');
       }
+
+      // 2. Fetch pending payment & booking verification requests (parity with web dashboard!)
+      try {
+        final verifRes = await _dio.get(ApiConstants.driverPendingVerifications);
+        if (verifRes.statusCode == 200 && (verifRes.data['success'] == true || verifRes.data['items'] != null)) {
+          final List items = verifRes.data['items'] ?? [];
+          final mapped = items.map((e) => Map<String, dynamic>.from(e)).toList();
+
+          if (mapped.isNotEmpty && mapped.length > _pendingVerifications.length) {
+            _playNotificationSound();
+          }
+          _pendingVerifications = mapped;
+        }
+      } catch (e) {
+        debugPrint('Error polling verifications: $e');
+      }
+
+      notifyListeners();
     } catch (e) {
-      debugPrint('Error polling requests: $e');
+      debugPrint('Error in pollPendingRequests: $e');
     }
   }
 
@@ -171,6 +189,33 @@ class DriverProvider extends ChangeNotifier {
     try {
       _audioPlayer.play(AssetSource('audio/notification.mp3')).catchError((_) {});
     } catch (_) {}
+  }
+
+  Future<bool> verifyBooking({
+    required String serviceType,
+    required int serviceId,
+    required String action,
+    String? rejectionReason,
+  }) async {
+    try {
+      final res = await _dio.post(ApiConstants.driverVerifyBooking, data: {
+        'service_type': serviceType,
+        'service_id': serviceId,
+        'action': action,
+        if (rejectionReason != null) 'rejection_reason': rejectionReason,
+      });
+
+      if (res.statusCode == 200) {
+        _pendingVerifications.removeWhere((item) => item['type'] == serviceType && item['id'] == serviceId);
+        await fetchActiveRides();
+        await fetchEarnings();
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error verifying booking: $e');
+    }
+    return false;
   }
 
   Future<bool> respondToRequest(int? assignmentId, String action, {int? rideId}) async {

@@ -18,6 +18,8 @@ class ApiConstants {
   static const String driverToggleAvailability = '/driver/toggle-availability';
   static const String driverRequests = '/driver/requests';
   static const String driverRespond = '/driver/respond';
+  static const String driverPendingVerifications = '/driver/pending-verifications';
+  static const String driverVerifyBooking = '/driver/verify-booking';
   static const String driverActiveRides = '/driver/active-rides';
   static const String driverEarnings = '/driver/earnings';
 
