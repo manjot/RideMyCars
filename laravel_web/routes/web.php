@@ -998,9 +998,9 @@ Route::post('/api/ride/{id}/review', function (\Illuminate\Http\Request $request
 })->middleware('auth');
 
 // Get Notifications for Current User
-Route::get('/api/notifications', function () {
-    $user = auth()->user();
-    if (!$user) return response()->json(['notifications' => [], 'unread_count' => 0]);
+Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+    if (!$user) return response()->json(['success' => true, 'notifications' => [], 'unread_count' => 0]);
 
     $notifications = \App\Models\UserNotification::where('user_id', $user->id)
         ->orderBy('created_at', 'desc')
@@ -1026,14 +1026,15 @@ Route::get('/api/notifications', function () {
         ->count();
 
     return response()->json([
+        'success' => true,
         'notifications' => $notifications,
         'unread_count' => $unreadCount,
     ]);
-})->middleware('auth');
+});
 
 // Mark Notifications as Read
 Route::post('/api/notifications/mark-read', function (\Illuminate\Http\Request $request) {
-    $user = auth()->user();
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json(['success' => false], 401);
 
     $id = $request->input('id');
@@ -1044,16 +1045,16 @@ Route::post('/api/notifications/mark-read', function (\Illuminate\Http\Request $
     }
 
     return response()->json(['success' => true]);
-})->middleware('auth');
+});
 
 // Clear All Notifications
-Route::post('/api/notifications/clear', function () {
-    $user = auth()->user();
+Route::post('/api/notifications/clear', function (\Illuminate\Http\Request $request) {
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json(['success' => false], 401);
 
     \App\Models\UserNotification::where('user_id', $user->id)->delete();
     return response()->json(['success' => true]);
-})->middleware('auth');
+});
 
 // My Rides page
 Route::get('/my-rides', function () {
