@@ -1667,7 +1667,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         });
 
         try {
-            \App\Services\NotificationService::notifyRiderRideAccepted($ride);
+            \App\Services\NotificationService::notifyRideAccepted($ride);
         } catch (\Throwable $e) {}
 
         return back()->with('success', "🎉 Ride #{$ride->id} accepted! You can now manage this trip.");

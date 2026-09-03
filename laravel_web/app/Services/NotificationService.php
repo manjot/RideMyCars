@@ -54,6 +54,7 @@ class NotificationService
      */
     public static function notifyRideAccepted(Ride $ride): void
     {
+        $ride->refresh();
         $driver = $ride->driver;
         $rider = $ride->rider;
         $driverName = $driver ? $driver->name : 'Your driver';
@@ -65,7 +66,7 @@ class NotificationService
                 $ride->rider_id,
                 'ride_accepted',
                 'Driver Assigned',
-                "{$driverName} has accepted your ride request and is heading to {$ride->pickup_location}.",
+                "{$driverName} has accepted your ride request and is heading to {$ride->pickup_location}. Tap to track live.",
                 $ride->id,
                 "/ride?resume={$ride->id}",
                 ['status' => 'accepted', 'icon' => 'car', 'color' => 'indigo']
@@ -87,17 +88,34 @@ class NotificationService
     }
 
     /**
+     * Alias for notifyRideAccepted
+     */
+    public static function notifyRiderRideAccepted(Ride $ride): void
+    {
+        self::notifyRideAccepted($ride);
+    }
+
+    /**
+     * Alias for notifyRideAccepted
+     */
+    public static function notifyDriverRideAccepted(Ride $ride): void
+    {
+        self::notifyRideAccepted($ride);
+    }
+
+    /**
      * Notify Rider when driver is en route.
      */
     public static function notifyEnRoute(Ride $ride): void
     {
+        $ride->refresh();
         $driverName = $ride->driver ? $ride->driver->name : 'Your driver';
 
         if ($ride->rider_id) {
             self::send(
                 $ride->rider_id,
                 'en_route',
-                'Driver En Route',
+                'Driver On The Way',
                 "{$driverName} is on the way to your pickup location at {$ride->pickup_location}.",
                 $ride->id,
                 "/ride?resume={$ride->id}",
@@ -111,13 +129,14 @@ class NotificationService
      */
     public static function notifyArrived(Ride $ride): void
     {
+        $ride->refresh();
         $driverName = $ride->driver ? $ride->driver->name : 'Your driver';
 
         if ($ride->rider_id) {
             self::send(
                 $ride->rider_id,
                 'arrived',
-                'Driver Arrived',
+                'Driver Arrived at Pickup',
                 "{$driverName} has arrived at {$ride->pickup_location}. Please meet your driver.",
                 $ride->id,
                 "/ride?resume={$ride->id}",
@@ -131,6 +150,8 @@ class NotificationService
      */
     public static function notifyTripStarted(Ride $ride): void
     {
+        $ride->refresh();
+        $driverName = $ride->driver ? $ride->driver->name : 'Your driver';
         $fare = number_format($ride->fare ?? 0, 2);
 
         if ($ride->rider_id) {
@@ -138,7 +159,7 @@ class NotificationService
                 $ride->rider_id,
                 'in_progress',
                 'Trip Started',
-                "Your journey to {$ride->dropoff_location} has started. Safe travels!",
+                "Your journey to {$ride->dropoff_location} has started with {$driverName}. Safe travels!",
                 $ride->id,
                 "/ride?resume={$ride->id}",
                 ['status' => 'in_progress', 'icon' => 'play', 'color' => 'emerald']
@@ -163,6 +184,7 @@ class NotificationService
      */
     public static function notifyTripCompleted(Ride $ride): void
     {
+        $ride->refresh();
         $fare = number_format($ride->fare ?? 0, 2);
 
         if ($ride->rider_id) {
@@ -170,7 +192,7 @@ class NotificationService
                 $ride->rider_id,
                 'completed',
                 'Trip Completed',
-                "You have arrived at {$ride->dropoff_location}! Total fare: \${$fare}. Please leave a rating.",
+                "You have arrived at {$ride->dropoff_location}! Total fare: \${$fare}. Tap to rate your driver.",
                 $ride->id,
                 '/my-rides',
                 ['status' => 'completed', 'icon' => 'flag', 'color' => 'green', 'fare' => $fare]

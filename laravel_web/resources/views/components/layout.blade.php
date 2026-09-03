@@ -659,7 +659,7 @@
                     this.pollingTimer = setInterval(() => {
                         if (this.open) return; // Do not re-poll and disturb user while dropdown is open
                         this.fetchNotifications(false);
-                    }, 15000);
+                    }, 5000);
                 },
 
                 toggleOpen() {
