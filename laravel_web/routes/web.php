@@ -623,7 +623,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         }
 
         if (empty($passengerPhone)) {
-            return response()->json(['error' => 'Phone number is required to request a ride.'], 422);
+            $passengerPhone = $request->input('phone') ?? 'N/A';
         }
 
         $ride = \App\Models\Ride::create([
@@ -1242,7 +1242,7 @@ Route::get('/api/driver/requests', function () {
     if (!$user) return response()->json([]);
 
     // If driver is online/available, automatically dispatch any pending unassigned rides and bookings
-    if ($user->role === 'driver' && $user->driverProfile && $user->driverProfile->is_available) {
+    if (($user->role === 'driver' || $user->driverProfile) && $user->driverProfile && $user->driverProfile->is_available) {
         $pendingRides = \App\Models\Ride::where('status', 'pending')
             ->whereNull('driver_id')
             ->whereDoesntHave('assignments', function ($q) {

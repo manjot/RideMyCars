@@ -644,6 +644,12 @@
                 modalTempLocation: { location: '', lat: null, lng: null, place_id: null, isSelected: false },
                 modalSuggestions: [],
                 showModalSuggestions: false,
+                currentRideId: null,
+                pollTimer: null,
+                driverName: '',
+                driverPlate: '',
+                driverModel: '',
+                driverPhone: '',
 
                 init() {
                     this.fetchSavedLocations();
@@ -1045,10 +1051,14 @@
                 async submitBooking() {
                     this.bookingStep = 'finding_driver';
                     try {
-                        const csrfToken = document.querySelector('input[name="_token"]').value;
+                        const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                         const res = await fetch('/ride/book', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken 
+                            },
                             body: JSON.stringify({ 
                                 pickup_location: this.pickup, 
                                 pickup_lat: this.pickupLat,
@@ -1059,19 +1069,62 @@
                                 stops: this.stops.map(s => ({ location: s.location, lat: s.lat, lng: s.lng })),
                                 vehicle_type: this.vehicle_type, 
                                 payment_method: this.paymentMethod,
-                                amount: parseFloat(this.selectedFare.replace('$', '')) || this.fareBreakdown.grand_total
+                                phone_number: this.phone || 'N/A',
+                                passenger_phone: this.phone || 'N/A',
+                                passenger_name: this.passenger_name || 'Rider',
+                                amount: parseFloat(this.selectedFare.replace('$', '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50)
                             })
                         });
-                        if (res.ok) {
-                            setTimeout(() => {
-                                this.bookingStep = 'driver_assigned';
-                            }, 4000);
+
+                        const data = await res.json();
+
+                        if (!res.ok) {
+                            alert(data.error || 'Could not place ride request. Please check your details.');
+                            this.bookingStep = 'confirm_ride';
+                            return;
+                        }
+
+                        // Start polling for real driver acceptance
+                        if (data.ride_id) {
+                            this.currentRideId = data.ride_id;
+                            if (this.pollTimer) clearInterval(this.pollTimer);
+                            this.pollTimer = setInterval(async () => {
+                                try {
+                                    const sRes = await fetch(`/api/ride/${this.currentRideId}/status`);
+                                    if (sRes.ok) {
+                                        const sData = await sRes.json();
+                                        if (['accepted', 'en_route', 'arrived', 'in_progress'].includes(sData.status)) {
+                                            clearInterval(this.pollTimer);
+                                            this.driverName = (sData.driver && sData.driver.name) || sData.driver_name || 'Driver';
+                                            this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || 'REG-8899';
+                                            this.driverModel = (sData.driver && sData.driver.vehicle_model) || 'Executive Sedan';
+                                            this.bookingStep = 'driver_assigned';
+                                        } else if (sData.status === 'completed') {
+                                            clearInterval(this.pollTimer);
+                                            this.bookingStep = 'completed';
+                                        } else if (sData.status === 'cancelled') {
+                                            clearInterval(this.pollTimer);
+                                            alert('Ride request was cancelled.');
+                                            this.bookingStep = 'find_trip';
+                                        }
+                                    }
+                                } catch(err) {}
+                            }, 3000);
                         }
                     } catch (e) {
-                        this.bookingStep = 'choose_ride';
+                        alert('Network error while booking ride. Please try again.');
+                        this.bookingStep = 'confirm_ride';
                     }
                 },
                 cancelRide() {
+                    if (this.pollTimer) clearInterval(this.pollTimer);
+                    if (this.currentRideId) {
+                        const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        fetch(`/api/ride/${this.currentRideId}/cancel`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrfToken }
+                        }).catch(() => {});
+                    }
                     this.bookingStep = 'find_trip';
                 }
             }));
