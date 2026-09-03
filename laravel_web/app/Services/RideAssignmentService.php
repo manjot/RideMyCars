@@ -66,6 +66,11 @@ class RideAssignmentService
             return true;
         });
 
+        // Fallback: If no driver updated GPS within 5 mins, include all online available drivers
+        if ($onlineDrivers->isEmpty()) {
+            $onlineDrivers = $query->get();
+        }
+
         if ($onlineDrivers->isEmpty()) {
             return null;
         }
@@ -76,12 +81,14 @@ class RideAssignmentService
         // If pickup coordinates aren't set, fallback to default assignment to first available driver
         if (is_null($pickupLat) || is_null($pickupLng)) {
             $chosenDriver = $onlineDrivers->first();
-            return RideAssignment::create([
+            $assignment = RideAssignment::create([
                 'ride_id' => $ride->id,
                 'driver_id' => $chosenDriver->user_id,
                 'status' => 'pending',
-                'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 45)),
+                'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
             ]);
+            \App\Services\NotificationService::notifyDriverRideAssigned($ride, $chosenDriver->user_id);
+            return $assignment;
         }
 
         // Calculate distance for all drivers
@@ -113,11 +120,13 @@ class RideAssignmentService
         }
 
         // Create assignment for the closest eligible driver
-        return RideAssignment::create([
+        $assignment = RideAssignment::create([
             'ride_id' => $ride->id,
             'driver_id' => $chosenDriver->user_id,
             'status' => 'pending',
-            'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 45)),
+            'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
         ]);
+        \App\Services\NotificationService::notifyDriverRideAssigned($ride, $chosenDriver->user_id);
+        return $assignment;
     }
 }

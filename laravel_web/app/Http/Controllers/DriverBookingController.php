@@ -215,8 +215,12 @@ class DriverBookingController extends Controller
         // Process payment transaction
         PaymentService::processBookingPayment($booking, $validated['payment_method'], $request->all());
 
-        // Initiate proximity driver assignment
-        \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+        // Initiate proximity driver assignment or direct notification
+        if ($booking->driver_id) {
+            \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $booking->driver_id);
+        } else {
+            \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+        }
 
         // Activity log
         ActivityLogService::log(
@@ -269,6 +273,32 @@ class DriverBookingController extends Controller
         $newStatus = $validated['status'];
         $updates = ['booking_status' => $newStatus];
 
+        if ($newStatus === 'accepted') {
+            $updates['driver_id'] = Auth::id();
+            $updates['driver_profile_id'] = Auth::user()?->driverProfile?->id;
+
+            // Mark RideAssignment as accepted
+            \App\Models\RideAssignment::where('driver_booking_id', $booking->id)
+                ->where('driver_id', Auth::id())
+                ->update(['status' => 'accepted']);
+
+            \App\Models\RideAssignment::where('driver_booking_id', $booking->id)
+                ->where('driver_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->update(['status' => 'expired']);
+
+            if ($booking->client_id) {
+                \App\Services\NotificationService::send(
+                    $booking->client_id,
+                    'booking_accepted',
+                    'Booking Accepted',
+                    "Driver " . (Auth::user()->name ?? 'Your driver') . " has accepted your driver booking #{$booking->booking_code}.",
+                    null,
+                    '/my-rides'
+                );
+            }
+        }
+
         if ($newStatus === 'arrived') $updates['arrived_at'] = now();
         if ($newStatus === 'in_progress') $updates['started_at'] = now();
         if ($newStatus === 'completed') {
@@ -284,11 +314,36 @@ class DriverBookingController extends Controller
                 $booking->driverProfile->update(['is_available' => true]);
                 $booking->driverProfile->increment('total_trips');
             }
+
+            if ($booking->client_id) {
+                \App\Services\NotificationService::send(
+                    $booking->client_id,
+                    'completed',
+                    'Driver Service Completed',
+                    "Your driver service #{$booking->booking_code} has completed. Thank you!",
+                    null,
+                    '/my-rides'
+                );
+            }
         }
 
         if ($newStatus === 'cancelled') {
             if ($booking->driverProfile) {
                 $booking->driverProfile->update(['is_available' => true]);
+            }
+            \App\Models\RideAssignment::where('driver_booking_id', $booking->id)
+                ->where('driver_id', Auth::id())
+                ->update(['status' => 'rejected']);
+
+            if ($booking->client_id) {
+                \App\Services\NotificationService::send(
+                    $booking->client_id,
+                    'booking_cancelled',
+                    'Booking Declined',
+                    "Your driver booking #{$booking->booking_code} could not be accepted.",
+                    null,
+                    '/my-rides'
+                );
             }
         }
 

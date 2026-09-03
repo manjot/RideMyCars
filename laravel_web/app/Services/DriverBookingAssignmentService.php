@@ -36,13 +36,15 @@ class DriverBookingAssignmentService
         if ($booking->driver_profile_id && !in_array($booking->driver_id, $excludedDriverIds)) {
             $requestedDriver = DriverProfile::find($booking->driver_profile_id);
             if ($requestedDriver && $requestedDriver->is_available && !in_array($requestedDriver->user_id, $allExcluded)) {
-                return RideAssignment::create([
+                $assignment = RideAssignment::create([
                     'driver_booking_id' => $booking->id,
                     'ride_id' => null,
                     'driver_id' => $requestedDriver->user_id,
                     'status' => 'pending',
-                    'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 45)),
+                    'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
                 ]);
+                \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $requestedDriver->user_id);
+                return $assignment;
             }
         }
 
@@ -60,6 +62,11 @@ class DriverBookingAssignmentService
             return true;
         });
 
+        // Fallback: If no driver updated GPS within 5 mins, include all online available drivers
+        if ($onlineDrivers->isEmpty()) {
+            $onlineDrivers = $query->get();
+        }
+
         if ($onlineDrivers->isEmpty()) {
             return null;
         }
@@ -69,13 +76,15 @@ class DriverBookingAssignmentService
 
         if (is_null($pickupLat) || is_null($pickupLng)) {
             $chosenDriver = $onlineDrivers->first();
-            return RideAssignment::create([
+            $assignment = RideAssignment::create([
                 'driver_booking_id' => $booking->id,
                 'ride_id' => null,
                 'driver_id' => $chosenDriver->user_id,
                 'status' => 'pending',
-                'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 45)),
+                'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
             ]);
+            \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $chosenDriver->user_id);
+            return $assignment;
         }
 
         // Sort by Haversine distance
@@ -104,12 +113,14 @@ class DriverBookingAssignmentService
             return null;
         }
 
-        return RideAssignment::create([
+        $assignment = RideAssignment::create([
             'driver_booking_id' => $booking->id,
             'ride_id' => null,
             'driver_id' => $chosenDriver->user_id,
             'status' => 'pending',
-            'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 45)),
+            'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
         ]);
+        \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $chosenDriver->user_id);
+        return $assignment;
     }
 }

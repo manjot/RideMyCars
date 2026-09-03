@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\UserNotification;
 use App\Models\Ride;
 use App\Models\User;
+use App\Models\DriverBooking;
 
 class NotificationService
 {
@@ -225,6 +226,40 @@ class NotificationService
             null,
             $user->role === 'driver' ? '/driver/dashboard' : '/',
             ['icon' => 'user', 'color' => 'indigo']
+        );
+    }
+
+    /**
+     * Notify Driver of incoming ride assignment.
+     */
+    public static function notifyDriverRideAssigned(Ride $ride, int $driverId): void
+    {
+        $fare = number_format($ride->fare ?? 0, 2);
+        self::send(
+            $driverId,
+            'ride_assignment',
+            'New Ride Request',
+            "New ride request from {$ride->pickup_location} to {$ride->dropoff_location} (\${$fare}). Tap to respond.",
+            $ride->id,
+            '/driver/dashboard',
+            ['ride_id' => $ride->id, 'fare' => $fare, 'icon' => 'car', 'color' => 'indigo']
+        );
+    }
+
+    /**
+     * Notify Driver of incoming hiring request.
+     */
+    public static function notifyDriverHiringAssigned(DriverBooking $booking, int $driverId): void
+    {
+        $total = number_format($booking->total_price ?? 0, 2);
+        self::send(
+            $driverId,
+            'driver_booking',
+            'New Hiring Request',
+            "New {$booking->service_category} driver hiring request for {$booking->start_date} ({$booking->currency} {$total}).",
+            null,
+            '/driver/dashboard',
+            ['booking_id' => $booking->id, 'type' => 'driver_booking', 'icon' => 'user', 'color' => 'emerald']
         );
     }
 }

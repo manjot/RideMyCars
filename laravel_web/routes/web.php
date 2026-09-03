@@ -1441,10 +1441,27 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             'country' => 'USA',
         ]);
         
+        // Keep driver location/activity timestamp fresh so matching doesn't consider them inactive
+        if ($profile->is_available) {
+            $profile->update(['last_location_update' => now()]);
+        }
+
         $vehicles = \App\Models\Vehicle::where('owner_id', $user->id)->get();
         $rides = \App\Models\Ride::where('driver_id', $user->id)->orderBy('created_at', 'desc')->get();
         
-        $driverBookings = \App\Models\DriverBooking::where('driver_id', $user->id)
+        $assignedBookingIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->whereNotNull('driver_booking_id')
+            ->pluck('driver_booking_id')
+            ->toArray();
+
+        $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($user, $assignedBookingIds) {
+                $q->where('driver_id', $user->id);
+                if (!empty($assignedBookingIds)) {
+                    $q->orWhereIn('id', $assignedBookingIds);
+                }
+            })
             ->with(['client', 'review'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -1497,6 +1514,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
 
             $user->driverProfile->update([
                 'is_available' => $wantsAvailable,
+                'last_location_update' => now(),
             ]);
             \App\Services\ActivityLogService::log('status_change', "Driver availability toggled to " . ($user->driverProfile->is_available ? 'Available' : 'Unavailable'), $user->id);
         }
