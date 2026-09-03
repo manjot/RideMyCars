@@ -958,16 +958,28 @@
                         <p x-show="boostSuccess" class="text-xs text-green-600 mt-1.5 font-medium">✓ Fare boosted! Resent to all drivers.</p>
                     </div>
                     
-                    <!-- Actions: Track & Cancel -->
+                    <!-- Actions: Navigate, Track & Cancel -->
                     <div class="space-y-2.5 pt-2">
+                        <!-- Open Google Maps Turn-by-Turn Navigation -->
+                        <a :href="googleMapsUrl" target="_blank" rel="noopener noreferrer"
+                           @click="openNavigation()"
+                           class="block w-full text-center py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                           style="background-color: #059669 !important; color: #ffffff !important;">
+                            <span class="text-base">🧭</span>
+                            <span>Navigate in Google Maps</span>
+                            <span class="text-[10px] bg-white/20 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Turn-by-Turn</span>
+                        </a>
+
+                        <!-- In-App Track on Live Map -->
                         <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
-                           class="block w-full text-center py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl hover:opacity-90 shadow-lg transition-all flex items-center justify-center gap-2">
-                            <span>🗺</span>
-                            <span>Track on Live Map</span>
+                           class="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold text-xs rounded-2xl hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                            <span>🗺️</span>
+                            <span>View in RideMyCars Map</span>
                             <span>→</span>
                         </a>
+
                         <button type="button" @click="cancelRide()" :disabled="cancelling"
-                                class="block w-full text-center py-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-800/30">
+                                class="block w-full text-center py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-800/30">
                             <svg x-show="cancelling" class="w-4 h-4 animate-spin text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
                             <span x-text="cancelling ? 'Cancelling ride...' : '✕ Cancel Ride Request'"></span>
                         </button>
@@ -976,43 +988,65 @@
             </div>
         </div>
 
-        <!-- Collapsed Floating Bottom Pill -->
+        <!-- Uber-Style Floating App Bubble Widget -->
         <div x-show="ride && !dismissed && !expanded" 
-             x-transition.opacity.duration.300ms
-             class="fixed bottom-6 right-4 sm:right-8 max-w-[calc(100vw-32px)] sm:max-w-md"
-             style="display: none; z-index: 999999 !important; position: fixed !important; bottom: 28px !important; right: 24px !important;"
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="opacity-0 translate-y-8 scale-75"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200 transform"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-8 scale-75"
+             class="fixed bottom-6 right-4 sm:right-8 flex items-center gap-2 group"
+             style="display: none; z-index: 999999 !important; position: fixed !important; bottom: 28px !important; right: 20px !important;"
              x-cloak>
-            
+
+            <!-- Floating Trip Status Capsule (Like Uber) -->
             <div @click="expanded = true"
-                 class="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none"
-                 style="background-color: #0f172a !important; color: #ffffff !important; border: 1.5px solid rgba(255, 255, 255, 0.22) !important; box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0,0,0,0.3) !important;">
+                 class="flex items-center gap-3 pl-2 pr-3.5 py-2 rounded-full cursor-pointer select-none transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl backdrop-blur-xl border border-white/20"
+                 style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important; color: #ffffff !important; box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;">
                 
-                <!-- Status Icon Badge -->
-                <div class="relative shrink-0">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background-color: rgba(255, 255, 255, 0.12) !important;">
-                        <span x-show="ride && ride.status === 'pending'" class="animate-pulse">🔍</span>
-                        <span x-show="ride && ride.status === 'accepted'">✓</span>
-                        <span x-show="ride && ride.status === 'en_route'" class="animate-bounce">🚗</span>
-                        <span x-show="ride && ride.status === 'arrived'">📍</span>
-                        <span x-show="ride && ride.status === 'in_progress'">⚡</span>
+                <!-- Circular App Badge with Animated Pulse Radar -->
+                <div class="relative flex items-center justify-center shrink-0">
+                    <span class="absolute inline-flex h-12 w-12 rounded-full bg-emerald-400/40 opacity-75 animate-ping"></span>
+                    
+                    <div class="relative w-11 h-11 rounded-full flex items-center justify-center font-black text-xl shadow-lg border-2 border-white/30"
+                         style="background: linear-gradient(135deg, #ffdc00 0%, #eab308 100%); color: #0f172a !important;">
+                        <span x-show="ride && ride.status === 'pending'" class="animate-spin text-sm">🔍</span>
+                        <span x-show="ride && ride.status === 'accepted'">🚗</span>
+                        <span x-show="ride && ride.status === 'en_route'" class="animate-bounce text-base">🚘</span>
+                        <span x-show="ride && ride.status === 'arrived'" class="text-base">📍</span>
+                        <span x-show="ride && ride.status === 'in_progress'" class="text-base">⚡</span>
                     </div>
+
+                    <span class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-slate-900"></span>
+                    </span>
                 </div>
-                <!-- Info Text -->
-                <div class="flex-1 min-w-0 pr-1">
-                    <p class="font-black text-sm truncate leading-snug" style="color: #ffffff !important;" x-text="statusText"></p>
-                    <p class="text-xs truncate font-medium mt-0.5" style="color: #94a3b8 !important;" x-text="ride ? (ride.dropoff_location || ride.pickup_location || '') : ''"></p>
+
+                <!-- Info Preview -->
+                <div class="flex flex-col min-w-0 max-w-[170px] sm:max-w-[220px]">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-400" x-text="ride && ride.driver_name ? (ride.driver_name + ' · ' + (ride.driver_rating ? '★ ' + parseFloat(ride.driver_rating).toFixed(1) : 'Driver')) : 'Trip in Progress'"></span>
+                    </div>
+                    <p class="font-extrabold text-xs truncate text-white leading-tight" x-text="statusText"></p>
                 </div>
-                <!-- Action Buttons -->
-                <div class="flex items-center gap-1.5 shrink-0">
+
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center gap-1 shrink-0 ml-1">
+                    <a :href="googleMapsUrl" target="_blank" rel="noopener noreferrer"
+                       @click.stop="openNavigation()"
+                       title="Navigate in Google Maps"
+                       class="w-7 h-7 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 flex items-center justify-center text-xs transition-colors border border-emerald-500/30">
+                        🧭
+                    </a>
                     <button type="button" @click.stop="expanded = true" 
-                            class="text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 hover:brightness-110 shadow-sm"
-                            style="background-color: #3b82f6 !important; color: #ffffff !important; font-weight: 700 !important;">
-                        <span>Details</span>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                            title="Expand Details"
+                            class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold transition-colors">
+                        ⤢
                     </button>
-                    <button type="button" @click.stop="dismissed = true" title="Dismiss Banner" 
-                            class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors hover:bg-white/20"
-                            style="background-color: rgba(255, 255, 255, 0.14) !important; color: #ffffff !important;">
+                    <button type="button" @click.stop="dismissed = true" title="Dismiss"
+                            class="w-6 h-6 rounded-full text-slate-400 hover:text-white flex items-center justify-center text-[10px] transition-colors">
                         ✕
                     </button>
                 </div>
@@ -1042,6 +1076,31 @@
                 if (s === 'arrived') return `${d} has arrived at pickup`;
                 if (s === 'in_progress') return 'Trip in progress';
                 return '';
+            },
+            get googleMapsUrl() {
+                if (!this.ride) return '#';
+                let origin = '';
+                let destination = '';
+
+                if (this.ride.pickup_lat && this.ride.pickup_lng) {
+                    origin = `${this.ride.pickup_lat},${this.ride.pickup_lng}`;
+                } else {
+                    origin = encodeURIComponent(this.ride.pickup_location || '');
+                }
+
+                if (this.ride.dropoff_lat && this.ride.dropoff_lng) {
+                    destination = `${this.ride.dropoff_lat},${this.ride.dropoff_lng}`;
+                } else {
+                    destination = encodeURIComponent(this.ride.dropoff_location || '');
+                }
+
+                return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+            },
+            openNavigation() {
+                setTimeout(() => {
+                    this.expanded = false;
+                    this.dismissed = false;
+                }, 500);
             },
             init() {
                 this.check();

@@ -294,6 +294,17 @@
                                                     ✓ Complete Trip
                                                 </button>
                                             </template>
+
+                                            <!-- Turn-by-Turn Google Maps Navigation -->
+                                            <template x-if="ride.status !== 'completed' && ride.status !== 'cancelled'">
+                                                <a :href="getDriverNavUrl(ride)" target="_blank" rel="noopener noreferrer"
+                                                   class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-all border border-slate-700"
+                                                   style="background-color: #0f172a !important; color: #ffffff !important; font-weight: 700 !important; font-size: 12px !important;">
+                                                    <span>🧭</span>
+                                                    <span x-text="ride.status === 'in_progress' ? 'Navigate to Destination' : 'Navigate to Pickup'"></span>
+                                                </a>
+                                            </template>
+
                                             <template x-if="ride.status === 'completed' && !ride.hasReview">
                                                 <div class="w-full" x-data="{ rating: 0, comment: '', submitted: false }">
                                                     <p class="text-sm font-bold text-gray-900 dark:text-white mb-2">Rate this rider:</p>
@@ -742,6 +753,12 @@
                     const p = encodeURIComponent(pickup || '');
                     const d = encodeURIComponent(dropoff || '');
                     return `https://maps.googleapis.com/maps/api/staticmap?size=600x130&scale=2&maptype=roadmap&markers=size:small%7Ccolor:green%7Clabel:A%7C${p}&markers=size:small%7Ccolor:red%7Clabel:B%7C${d}&path=color:${color}%7Cweight:4%7Cgeodesic:true%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                },
+
+                getDriverNavUrl(ride) {
+                    if (!ride) return '#';
+                    const target = ride.status === 'in_progress' ? (ride.dropoff_location || '') : (ride.pickup_location || '');
+                    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}&travelmode=driving`;
                 },
                 
                 init() {
