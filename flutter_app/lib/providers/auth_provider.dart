@@ -29,13 +29,16 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> loadSession() async {
     _token = await TokenStorage.getToken();
-    if (_token != null && _token!.isNotEmpty) {
-      _role = await TokenStorage.getRole() ?? 'customer';
-      _userName = await TokenStorage.getUserName();
-      _userEmail = await TokenStorage.getUserEmail();
-      _isAuthenticated = true;
+    _role = await TokenStorage.getRole() ?? 'customer';
+    _userName = await TokenStorage.getUserName();
+    _userEmail = await TokenStorage.getUserEmail();
+    final savedPassword = await TokenStorage.getSavedPassword();
 
-      // Validate session in background
+    if (_token != null && _token!.isNotEmpty) {
+      _isAuthenticated = true;
+      notifyListeners();
+
+      // Silent background sync
       try {
         final res = await _dio.get(ApiConstants.me);
         if (res.statusCode == 200 && res.data['success'] == true) {
@@ -44,23 +47,29 @@ class AuthProvider extends ChangeNotifier {
           _userName = u['name'];
           _userEmail = u['email'];
           _role = res.data['role'] ?? _role;
-          await TokenStorage.saveUserData(role: _role, name: _userName!, email: _userEmail!);
-        } else {
-          await logout();
-          return false;
+          await TokenStorage.saveUserData(
+            role: _role,
+            name: _userName!,
+            email: _userEmail!,
+            password: savedPassword,
+          );
         }
-      } on DioException catch (e) {
-        if (e.response?.statusCode == 401) {
-          await logout();
-          return false;
+      } catch (_) {
+        if (_userEmail != null && savedPassword != null) {
+          await login(_userEmail!, savedPassword);
         }
-      } catch (e) {
-        // Offline network error
       }
 
       notifyListeners();
       return true;
     }
+
+    // Auto-login with saved credentials if token is absent
+    if (_userEmail != null && savedPassword != null) {
+      final loggedIn = await login(_userEmail!, savedPassword);
+      if (loggedIn) return true;
+    }
+
     _isAuthenticated = false;
     notifyListeners();
     return false;
@@ -113,7 +122,12 @@ class AuthProvider extends ChangeNotifier {
         if (_token != null) {
           await TokenStorage.saveToken(_token!);
         }
-        await TokenStorage.saveUserData(role: _role, name: _userName ?? 'User', email: _userEmail ?? email);
+        await TokenStorage.saveUserData(
+          role: _role,
+          name: _userName ?? 'User',
+          email: _userEmail ?? email,
+          password: password,
+        );
 
         _isLoading = false;
         notifyListeners();
@@ -172,7 +186,12 @@ class AuthProvider extends ChangeNotifier {
         if (_token != null) {
           await TokenStorage.saveToken(_token!);
         }
-        await TokenStorage.saveUserData(role: _role, name: _userName ?? name, email: _userEmail ?? email);
+        await TokenStorage.saveUserData(
+          role: _role,
+          name: _userName ?? name,
+          email: _userEmail ?? email,
+          password: password,
+        );
 
         _isLoading = false;
         notifyListeners();

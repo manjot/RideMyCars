@@ -25,33 +25,44 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> loadSession() async {
     _token = await TokenStorage.getToken();
+    _userName = await TokenStorage.getUserName();
+    _userEmail = await TokenStorage.getUserEmail();
+    final savedPassword = await TokenStorage.getSavedPassword();
+
     if (_token != null && _token!.isNotEmpty) {
-      _userName = await TokenStorage.getUserName();
-      _userEmail = await TokenStorage.getUserEmail();
-      // Validate session in background
+      _isAuthenticated = true;
+      notifyListeners();
+
+      // Silent background validation
       try {
         final res = await _dio.get(ApiConstants.me);
         if (res.statusCode == 200 && res.data['success'] == true) {
           final u = res.data['user'];
           _userId = u['id'];
           _userName = u['name'];
-          await TokenStorage.saveUserData(role: 'driver', name: _userName!, email: _userEmail!);
-        } else {
-          await logout();
-          return false;
+          await TokenStorage.saveUserData(
+            role: 'driver',
+            name: _userName!,
+            email: _userEmail!,
+            password: savedPassword,
+          );
         }
-      } on DioException catch (e) {
-        if (e.response?.statusCode == 401) {
-          await logout();
-          return false;
+      } catch (_) {
+        if (_userEmail != null && savedPassword != null) {
+          await login(_userEmail!, savedPassword);
         }
-      } catch (e) {
-        // Offline network error
       }
 
       notifyListeners();
       return true;
     }
+
+    // Auto-login with saved credentials if token is missing
+    if (_userEmail != null && savedPassword != null) {
+      final loggedIn = await login(_userEmail!, savedPassword);
+      if (loggedIn) return true;
+    }
+
     _isAuthenticated = false;
     notifyListeners();
     return false;
@@ -104,7 +115,12 @@ class AuthProvider extends ChangeNotifier {
         if (_token != null) {
           await TokenStorage.saveToken(_token!);
         }
-        await TokenStorage.saveUserData(role: role, name: _userName ?? 'Driver Partner', email: _userEmail ?? email);
+        await TokenStorage.saveUserData(
+          role: role,
+          name: _userName ?? 'Driver Partner',
+          email: _userEmail ?? email,
+          password: password,
+        );
 
         _isLoading = false;
         notifyListeners();

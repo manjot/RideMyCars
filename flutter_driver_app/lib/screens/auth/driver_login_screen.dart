@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/storage/token_storage.dart';
 import '../../providers/auth_provider.dart';
 import '../dashboard/driver_dashboard_screen.dart';
 import 'driver_register_screen.dart';
@@ -15,8 +16,26 @@ class DriverLoginScreen extends StatefulWidget {
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(text: 'sipho@ridemycars.com');
-  final _passwordController = TextEditingController(text: 'password');
+  final _passwordController = TextEditingController(text: '123456');
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final savedEmail = await TokenStorage.getUserEmail();
+    final savedPass = await TokenStorage.getSavedPassword();
+    if (savedEmail != null && savedEmail.isNotEmpty) {
+      _emailController.text = savedEmail;
+    }
+    if (savedPass != null && savedPass.isNotEmpty) {
+      _passwordController.text = savedPass;
+    }
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
