@@ -102,6 +102,9 @@ class AuthController extends Controller
                 DriverProfile::firstOrCreate(
                     ['user_id' => $user->id],
                     [
+                        'license_number' => 'DL-' . strtoupper(bin2hex(random_bytes(4))),
+                        'hourly_rate' => 35.00,
+                        'country' => 'USA',
                         'is_available' => true,
                         'verification_status' => 'pending',
                         'rating' => 5.0,
