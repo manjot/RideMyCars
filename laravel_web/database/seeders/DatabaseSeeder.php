@@ -175,6 +175,73 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Seed historical completed bookings for Sipho Ndlovu
+        $historicalBookings = [
+            [
+                'booking_code' => 'RMC-BK-8901',
+                'pickup' => 'OR Tambo International Airport (JNB)',
+                'dropoff' => 'The Michelangelo Hotel, Sandton',
+                'vehicle' => 'Mercedes-Benz E-Class',
+                'price' => 250.00,
+                'days_ago' => 1,
+            ],
+            [
+                'booking_code' => 'RMC-BK-8854',
+                'pickup' => 'Rosebank Gautrain Station',
+                'dropoff' => 'Hyde Park Corner, Johannesburg',
+                'vehicle' => 'BMW 5 Series',
+                'price' => 180.00,
+                'days_ago' => 2,
+            ],
+            [
+                'booking_code' => 'RMC-BK-8720',
+                'pickup' => 'Fourways Mall, Sandton',
+                'dropoff' => 'Lanseria International Airport',
+                'vehicle' => 'Audi A6 Executive',
+                'price' => 320.00,
+                'days_ago' => 4,
+            ],
+            [
+                'booking_code' => 'RMC-BK-8605',
+                'pickup' => 'Nelson Mandela Square, Sandton',
+                'dropoff' => 'Pretoria CBD Government Precinct',
+                'vehicle' => 'Mercedes-Benz V-Class',
+                'price' => 450.00,
+                'days_ago' => 6,
+            ],
+            [
+                'booking_code' => 'RMC-BK-8490',
+                'pickup' => 'Bryanston Country Club',
+                'dropoff' => 'Sandton City Executive Towers',
+                'vehicle' => 'Executive Sedan',
+                'price' => 210.00,
+                'days_ago' => 8,
+            ],
+        ];
+
+        foreach ($historicalBookings as $hb) {
+            \App\Models\DriverBooking::updateOrCreate(
+                ['booking_code' => $hb['booking_code']],
+                [
+                    'client_id' => $client->id,
+                    'driver_id' => $user5->id,
+                    'verified_by_driver_id' => $user5->id,
+                    'service_category' => 'chauffeur',
+                    'service_type' => 'hourly',
+                    'car_make_model' => $hb['vehicle'],
+                    'pickup_location' => $hb['pickup'],
+                    'dropoff_location' => $hb['dropoff'],
+                    'total_price' => $hb['price'],
+                    'currency' => 'USD',
+                    'payment_status' => 'paid',
+                    'verification_status' => 'driver_verified',
+                    'booking_status' => 'completed',
+                    'created_at' => now()->subDays($hb['days_ago']),
+                    'updated_at' => now()->subDays($hb['days_ago']),
+                ]
+            );
+        }
+
         $this->call([
             DriverProfileSeeder::class,
             VehicleSeeder::class,
