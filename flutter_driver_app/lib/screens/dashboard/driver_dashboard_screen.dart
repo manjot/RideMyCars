@@ -4,9 +4,13 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../notifications/notifications_screen.dart';
+import '../account/manage_account_screen.dart';
 import '../auth/driver_login_screen.dart';
+import '../earnings/driver_earnings_screen.dart';
+import '../notifications/notifications_screen.dart';
+import '../support/help_support_screen.dart';
 import '../trip/active_trip_screen.dart';
+import '../trips/driver_trips_screen.dart';
 import 'incoming_job_dialog.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
@@ -1050,19 +1054,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       child: SafeArea(
         child: Column(
           children: [
+            // Driver Profile Header
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
+                    radius: 26,
                     backgroundColor: AppColors.primary,
                     child: Text(
                       (auth.userName ?? 'D')[0].toUpperCase(),
                       style: const TextStyle(
                         color: AppColors.backgroundDark,
                         fontWeight: FontWeight.bold,
-                        fontSize: 22,
+                        fontSize: 20,
                       ),
                     ),
                   ),
@@ -1072,7 +1077,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          auth.userName ?? 'Driver',
+                          auth.userName ?? 'Sipho Ndlovu',
                           style: const TextStyle(
                             color: AppColors.textLight,
                             fontWeight: FontWeight.bold,
@@ -1082,6 +1087,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         Text(
                           auth.userEmail ?? '',
                           style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -1089,20 +1096,103 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ],
               ),
             ),
-            const Divider(color: Colors.white10),
-            ListTile(
-              leading: const Icon(Icons.notifications_rounded, color: AppColors.info),
-              title: const Text('Notifications', style: TextStyle(color: AppColors.textLight)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                );
-              },
+            const Divider(color: Colors.white10, height: 1),
+
+            // Quick Action Buttons (Dashboard, Earnings, Help)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildDrawerActionBtn(
+                      icon: Icons.dashboard_rounded,
+                      label: 'Dashboard',
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildDrawerActionBtn(
+                      icon: Icons.monetization_on_outlined,
+                      label: 'Earnings',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverEarningsScreen()));
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildDrawerActionBtn(
+                      icon: Icons.help_outline_rounded,
+                      label: 'Help',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
-            const Divider(color: Colors.white10),
+
+            const Divider(color: Colors.white10, height: 1),
+
+            // Navigation List
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.dashboard_rounded, color: AppColors.primary),
+                    title: const Text('Driver Dashboard', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.directions_car_filled_rounded, color: AppColors.info),
+                    title: const Text('Ride History / My Trips', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverTripsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person_outline_rounded, color: AppColors.purple),
+                    title: const Text('Manage Account & Profile', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageAccountScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.account_balance_wallet_rounded, color: AppColors.success),
+                    title: const Text('Earnings & Payouts', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverEarningsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.notifications_rounded, color: AppColors.primary),
+                    title: const Text('Notifications', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.headset_mic_rounded, color: AppColors.info),
+                    title: const Text('Driver Support & Safety', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(color: Colors.white10, height: 1),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
               title: const Text('Log Out', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
@@ -1117,7 +1207,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 }
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerActionBtn({required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.textLight, size: 20),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(color: AppColors.textLight, fontSize: 11, fontWeight: FontWeight.bold)),
           ],
         ),
       ),

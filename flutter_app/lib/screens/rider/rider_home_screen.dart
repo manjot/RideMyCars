@@ -8,8 +8,12 @@ import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/ride_provider.dart';
 import '../../services/places_service.dart';
+import '../account/manage_account_screen.dart';
 import '../auth/login_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../rides/my_rides_screen.dart';
+import '../support/help_support_screen.dart';
+import '../wallet/wallet_screen.dart';
 import 'ride_tracking_screen.dart';
 import 'widgets/floating_ride_widget.dart';
 
@@ -653,16 +657,17 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       child: SafeArea(
         child: Column(
           children: [
+            // User Header
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
+                    radius: 26,
                     backgroundColor: AppColors.info,
                     child: Text(
                       (auth.userName ?? 'R')[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -677,6 +682,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         Text(
                           auth.userEmail ?? '',
                           style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -684,20 +691,122 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 ],
               ),
             ),
-            const Divider(color: Colors.white10),
-            ListTile(
-              leading: const Icon(Icons.notifications_rounded, color: AppColors.info),
-              title: const Text('Notifications', style: TextStyle(color: AppColors.textLight)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                );
-              },
+            const Divider(color: Colors.white10, height: 1),
+
+            // Action Buttons Row (Help, Wallet, Activity)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildDrawerActionBtn(
+                      icon: Icons.help_outline_rounded,
+                      label: 'Help',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildDrawerActionBtn(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: 'Wallet',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildDrawerActionBtn(
+                      icon: Icons.history_rounded,
+                      label: 'Activity',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRidesScreen()));
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
-            const Divider(color: Colors.white10),
+
+            // Cash Balance Card
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDark,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('RideMyCars Cash', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Text('\$0.00', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w900, fontSize: 16)),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+            const Divider(color: Colors.white10, height: 1),
+
+            // Navigation List
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
+                    title: const Text('Manage Account', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageAccountScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.directions_car_filled_rounded, color: AppColors.info),
+                    title: const Text('My Rides', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRidesScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.account_balance_wallet_rounded, color: AppColors.purple),
+                    title: const Text('Wallet & Payments', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.notifications_rounded, color: AppColors.primary),
+                    title: const Text('Notifications', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.support_agent_rounded, color: AppColors.success),
+                    title: const Text('Help & Support', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(color: Colors.white10, height: 1),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
               title: const Text('Log Out', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
@@ -712,7 +821,28 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 }
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerActionBtn({required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.textLight, size: 20),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(color: AppColors.textLight, fontSize: 11, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
