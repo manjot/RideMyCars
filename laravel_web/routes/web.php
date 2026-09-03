@@ -1005,37 +1005,33 @@ Route::get('/api/notifications', function () {
     $user = auth()->user();
     if (!$user) return response()->json(['notifications' => [], 'unread_count' => 0]);
 
-    $cached = \Illuminate\Support\Facades\Cache::remember('user_notifications_' . $user->id, 2, function () use ($user) {
-        $notifications = \App\Models\UserNotification::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->take(20)
-            ->get()
-            ->map(function ($n) {
-                return [
-                    'id' => $n->id,
-                    'type' => $n->type,
-                    'title' => $n->title,
-                    'message' => $n->message,
-                    'link' => $n->link,
-                    'data' => $n->data,
-                    'is_read' => (bool)$n->is_read,
-                    'time_ago' => $n->created_at->diffForHumans(),
-                    'created_at' => $n->created_at->toIso8601String(),
-                ];
-            })
-            ->values();
+    $notifications = \App\Models\UserNotification::where('user_id', $user->id)
+        ->orderBy('created_at', 'desc')
+        ->take(30)
+        ->get()
+        ->map(function ($n) {
+            return [
+                'id' => $n->id,
+                'type' => $n->type,
+                'title' => $n->title,
+                'message' => $n->message,
+                'link' => $n->link,
+                'data' => $n->data,
+                'is_read' => (bool)$n->is_read,
+                'time_ago' => $n->created_at->diffForHumans(),
+                'created_at' => $n->created_at->toIso8601String(),
+            ];
+        })
+        ->values();
 
-        $unreadCount = \App\Models\UserNotification::where('user_id', $user->id)
-            ->where('is_read', false)
-            ->count();
+    $unreadCount = \App\Models\UserNotification::where('user_id', $user->id)
+        ->where('is_read', false)
+        ->count();
 
-        return [
-            'notifications' => $notifications,
-            'unread_count' => $unreadCount,
-        ];
-    });
-
-    return response()->json($cached);
+    return response()->json([
+        'notifications' => $notifications,
+        'unread_count' => $unreadCount,
+    ]);
 })->middleware('auth');
 
 // Mark Notifications as Read

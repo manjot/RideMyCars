@@ -262,13 +262,14 @@
                         <!-- In-App Floating Toast Notification (When a new event happens live) -->
                         <template x-if="latestToast && typeof latestToast === 'object'">
                             <div x-show="toastVisible"
+                                 @click="handleItemClick(latestToast)"
                                  x-transition:enter="transition ease-out duration-300"
                                  x-transition:enter-start="opacity-0 translate-y-[-20px] scale-95"
                                  x-transition:enter-end="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave="transition ease-in duration-200"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-[-20px] scale-95"
-                                 class="fixed top-24 right-4 sm:right-8 z-50 max-w-sm w-full bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 shadow-2xl rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md">
+                                 class="fixed top-24 right-4 sm:right-8 z-50 max-w-sm w-full bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 shadow-2xl rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md cursor-pointer hover:shadow-indigo-500/10 transition-shadow">
                                 <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-base shadow-sm">
                                     <span x-text="latestToast.type === 'login' ? '👋' : (latestToast.type === 'completed' ? '🏁' : (latestToast.type === 'arrived' ? '📍' : (latestToast.type === 'in_progress' ? '🟢' : (latestToast.type === 'review' ? '★' : '🚗'))))"></span>
                                 </div>
@@ -277,12 +278,12 @@
                                     <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2" x-text="latestToast.message || ''"></p>
                                     <div class="flex items-center gap-2 mt-2">
                                         <template x-if="typeof latestToast.link === 'string' && latestToast.link.trim() !== '' && !latestToast.link.includes('[native code]')">
-                                            <a :href="latestToast.link" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View details →</a>
+                                            <span class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View details →</span>
                                         </template>
-                                        <button @click="toastVisible = false" class="text-[11px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">Dismiss</button>
+                                        <button @click.stop="toastVisible = false" class="text-[11px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">Dismiss</button>
                                     </div>
                                 </div>
-                                <button @click="toastVisible = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs">✕</button>
+                                <button @click.stop="toastVisible = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs p-1">✕</button>
                             </div>
                         </template>
                     </div>
@@ -661,30 +662,39 @@
                 async fetchNotifications(isInitial = false) {
                     if (!isInitial && document.hidden) return;
                     try {
-                        const res = await fetch('/api/notifications');
+                        const res = await fetch('/api/notifications', {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
                         if (res.ok) {
                             const data = await res.json();
-                            let rawNotifications = data.notifications || [];
-                            if (!Array.isArray(rawNotifications) && typeof rawNotifications === 'object') {
-                                rawNotifications = Object.values(rawNotifications);
-                            }
-                            const newNotifications = Array.isArray(rawNotifications) ? rawNotifications.filter(n => n && typeof n === 'object') : [];
-                            const newUnread = typeof data.unread_count === 'number' ? data.unread_count : 0;
-
-                            // Detect newly arrived notifications to trigger live toast pop-up
-                            if (!isInitial && newNotifications.length > 0) {
-                                const newItems = newNotifications.filter(n => !this.lastKnownIds.has(n.id) && !n.is_read);
-                                if (newItems.length > 0) {
-                                    this.latestToast = newItems[0];
-                                    this.toastVisible = true;
-                                    this.playChime();
-                                    setTimeout(() => { this.toastVisible = false; }, 6000);
+                            let rawNotifications = data.notifications;
+                            if (rawNotifications !== undefined && rawNotifications !== null) {
+                                if (!Array.isArray(rawNotifications) && typeof rawNotifications === 'object') {
+                                    rawNotifications = Object.values(rawNotifications);
                                 }
-                            }
+                                const newNotifications = Array.isArray(rawNotifications) 
+                                    ? rawNotifications.filter(n => n && typeof n === 'object') 
+                                    : [];
+                                const newUnread = typeof data.unread_count === 'number' ? data.unread_count : 0;
 
-                            this.notifications = newNotifications;
-                            this.unreadCount = newUnread;
-                            this.lastKnownIds = new Set(newNotifications.map(n => n.id));
+                                // Detect newly arrived notifications to trigger live toast pop-up
+                                if (!isInitial && newNotifications.length > 0) {
+                                    const newItems = newNotifications.filter(n => !this.lastKnownIds.has(n.id) && !n.is_read);
+                                    if (newItems.length > 0) {
+                                        this.latestToast = newItems[0];
+                                        this.toastVisible = true;
+                                        this.playChime();
+                                        setTimeout(() => { this.toastVisible = false; }, 10000);
+                                    }
+                                }
+
+                                this.notifications = newNotifications;
+                                this.unreadCount = newUnread;
+                                this.lastKnownIds = new Set(newNotifications.map(n => n.id));
+                            }
                         }
                     } catch (e) {
                         // Silent catch
@@ -743,6 +753,7 @@
                 },
 
                 async clearAll() {
+                    if (!confirm('Are you sure you want to clear all notifications?')) return;
                     try {
                         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
                         await fetch('/api/notifications/clear', {
