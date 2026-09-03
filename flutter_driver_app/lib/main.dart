@@ -29,7 +29,7 @@ class RideMyCarsDriverApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
-        title: 'RideMyCars Driver',
+        title: 'Driver Partner',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.dark,
