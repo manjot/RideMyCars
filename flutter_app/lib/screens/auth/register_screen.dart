@@ -17,7 +17,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  String _selectedRole = 'customer'; // 'customer' or 'driver'
   bool _obscurePassword = true;
 
   @override
@@ -38,7 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailController.text,
       password: _passwordController.text,
       passwordConfirmation: _confirmPasswordController.text,
-      role: _selectedRole,
+      role: 'customer',
     );
 
     if (!mounted) return;
@@ -83,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Create Account',
+                    'Create Rider Account',
                     style: TextStyle(
                       color: AppColors.textLight,
                       fontSize: 26,
@@ -93,71 +92,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Join RideMyCars today as a Rider or Driver',
+                    'Sign up to book rides, rentals & private chauffeurs',
                     style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Role Selector Tabs
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceDark,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedRole = 'customer'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedRole == 'customer' ? AppColors.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '👤 Passenger / Rider',
-                                  style: TextStyle(
-                                    color: _selectedRole == 'customer' ? AppColors.backgroundDark : AppColors.textMuted,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedRole = 'driver'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedRole == 'driver' ? AppColors.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '🚗 Driver Partner',
-                                  style: TextStyle(
-                                    color: _selectedRole == 'driver' ? AppColors.backgroundDark : AppColors.textMuted,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
 
                   // Full Name Field
                   TextFormField(
@@ -283,12 +224,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             )
                           : const Text(
-                              'Create Account',
+                              'Create Rider Account',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Already have an account
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Already have an account? ',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Text(
+                          'Sign in',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Driver Partner Note
+                  Center(
+                    child: Text(
+                      'Are you a driver? Please use the RideMyCars Driver App.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textMuted.withValues(alpha: 0.7),
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ],
