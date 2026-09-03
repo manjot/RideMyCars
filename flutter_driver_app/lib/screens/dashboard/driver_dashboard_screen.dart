@@ -157,7 +157,45 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             children: [
               // Online / Offline Toggle Banner
               _buildOnlineStatusCard(driver),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // Active Rides Section (PRIORITY #1 AT TOP OF CONSOLE)
+              if (driver.activeRides.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: AppColors.success,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Active Trip (${driver.activeRides.length})',
+                          style: const TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, color: AppColors.success, size: 20),
+                      onPressed: () => driver.fetchActiveRides(),
+                      tooltip: 'Refresh Active Trips',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ...driver.activeRides.map((r) => _buildActiveRideCard(context, r, driver)),
+                const SizedBox(height: 20),
+              ],
 
               // Pending Payment & Booking Verification Requests (Parity with Web Dashboard!)
               if (driver.pendingVerifications.isNotEmpty) ...[
@@ -236,7 +274,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 const SizedBox(height: 12),
                 ...driver.pendingRequests.map((job) => _buildAvailableJobCard(context, job, driver)),
                 const SizedBox(height: 20),
-              ] else if (driver.isOnline && driver.pendingVerifications.isEmpty) ...[
+              ] else if (driver.isOnline && driver.pendingVerifications.isEmpty && driver.activeRides.isEmpty) ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 24),
                   padding: const EdgeInsets.all(16),
@@ -275,27 +313,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     ],
                   ),
                 ),
-              ],
-
-              // Active Rides Section
-              if (driver.activeRides.isNotEmpty) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.near_me_rounded, color: AppColors.success, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Active Trip (${driver.activeRides.length})',
-                      style: const TextStyle(
-                        color: AppColors.textLight,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ...driver.activeRides.map((r) => _buildActiveRideCard(context, r)),
-                const SizedBox(height: 24),
               ],
 
               // Earnings Overview
@@ -465,16 +482,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
-  Widget _buildActiveRideCard(BuildContext context, Map<String, dynamic> ride) {
+  Widget _buildActiveRideCard(BuildContext context, Map<String, dynamic> ride, DriverProvider driver) {
     final fare = ride['fare'] != null ? double.tryParse(ride['fare'].toString()) ?? 0.0 : 0.0;
-    final status = (ride['status'] ?? 'accepted').toString().replaceAll('_', ' ').toUpperCase();
+    final rawStatus = (ride['status'] ?? 'accepted').toString();
+    final status = rawStatus.replaceAll('_', ' ').toUpperCase();
+    final riderName = (ride['rider_name'] ?? ride['rider']?['name'] ?? ride['passenger_name'] ?? 'Passenger').toString();
+    final rideId = int.tryParse(ride['id']?.toString() ?? '0') ?? 0;
 
     return Card(
       color: AppColors.surfaceDark,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.success, width: 1.5),
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: AppColors.success, width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -484,57 +504,228 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    status,
-                    style: const TextStyle(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.circle, color: AppColors.success, size: 8),
+                          const SizedBox(width: 6),
+                          Text(
+                            status,
+                            style: const TextStyle(
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '#RIDE-$rideId',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
                   '\$${fare.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontWeight: FontWeight.w900,
-                    fontSize: 20,
+                    fontSize: 22,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Text(
-              '📍 Pickup: ${ride['pickup_location']}',
-              style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.person, color: AppColors.primary, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'Rider: $riderName',
+                  style: const TextStyle(color: AppColors.textLight, fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              '🏁 Destination: ${ride['dropoff_location']}',
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.circle, color: AppColors.success, size: 12),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${ride['pickup_location']}',
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 5),
+                    child: SizedBox(height: 12, child: VerticalDivider(color: Colors.white24, width: 2)),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 14),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${ride['dropoff_location']}',
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
+
+            // Direct Status Update Buttons right on the card!
+            if (rawStatus == 'accepted') ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await driver.updateRideStatus(rideId, 'en_route');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.info,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.directions_car_rounded, size: 18),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('🚗 En Route', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await driver.updateRideStatus(rideId, 'arrived');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.location_on_rounded, size: 18),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('📍 Arrived', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (rawStatus == 'en_route') ...[
+              SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await driver.updateRideStatus(rideId, 'arrived');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.location_on_rounded, size: 20),
+                  label: const Text('📍 Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+            ] else if (rawStatus == 'arrived') ...[
+              SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await driver.updateRideStatus(rideId, 'in_progress');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                  label: const Text('▶ Start Trip / Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+            ] else if (rawStatus == 'in_progress') ...[
+              SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final ok = await driver.updateRideStatus(rideId, 'completed');
+                    if (ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('🎉 Trip Completed! Fare added to your earnings.'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.check_circle_rounded, size: 20),
+                  label: const Text('✓ Complete Trip & Collect Fare', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: ride)),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.backgroundDark,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              icon: const Icon(Icons.navigation_rounded),
-              label: const Text('Open Trip Navigation & Controls', style: TextStyle(fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.navigation_rounded, size: 18),
+              label: const Text('Open Live Navigation & Map', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),

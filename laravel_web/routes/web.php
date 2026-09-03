@@ -1232,13 +1232,19 @@ Route::post('/api/ride/{id}/cancel', function ($id) {
 })->middleware('auth');
 
 // Get active rides for driver
-Route::get('/api/driver/active-rides', function () {
-    $user = auth()->user();
+Route::get('/api/driver/active-rides', function (\Illuminate\Http\Request $request) {
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json([]);
 
-    $rides = \App\Models\Ride::where('driver_id', $user->id)
+    $userIds = [$user->id];
+    $matchingIds = \App\Models\User::where('name', $user->name)
+        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+        ->pluck('id')
+        ->toArray();
+    $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+    $rides = \App\Models\Ride::whereIn('driver_id', $userIds)
         ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
-        ->where('created_at', '>=', now()->subHours(24)) // Only last 24h
         ->with(['rider', 'driverReview'])
         ->orderBy('created_at', 'desc')
         ->get()
@@ -1248,16 +1254,26 @@ Route::get('/api/driver/active-rides', function () {
                 'status' => $ride->status,
                 'pickup_location' => $ride->pickup_location,
                 'dropoff_location' => $ride->dropoff_location,
-                'fare' => $ride->fare,
-                'payment_method' => $ride->payment_method,
-                'rider' => $ride->rider ? ['name' => $ride->rider->name] : null,
+                'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
+                'pickup_lng' => $ride->pickup_lng ? floatval($ride->pickup_lng) : null,
+                'dropoff_lat' => $ride->dropoff_lat ? floatval($ride->dropoff_lat) : null,
+                'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
+                'fare' => floatval($ride->fare ?: $ride->total_amount),
+                'vehicle_type' => $ride->vehicle_type ?? 'Standard',
+                'payment_method' => $ride->payment_method ?? 'cash',
+                'rider_name' => $ride->rider?->name ?? $ride->passenger_name ?? 'Rider',
+                'rider_phone' => $ride->passenger_phone ?? $ride->rider?->phone,
                 'hasReview' => $ride->driverReview !== null,
                 'created_at' => $ride->created_at->toIso8601String(),
             ];
         });
 
-    return response()->json($rides);
-})->middleware('auth');
+    return response()->json([
+        'success' => true,
+        'rides' => $rides,
+        'data' => $rides,
+    ]);
+});
 
 // Polling endpoint for Driver to get incoming requests
 Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) {

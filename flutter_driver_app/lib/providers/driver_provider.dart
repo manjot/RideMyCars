@@ -183,6 +183,17 @@ class DriverProvider extends ChangeNotifier {
         debugPrint('Error polling verifications: $e');
       }
 
+      // 3. Fetch active rides continuously
+      try {
+        final activeRes = await _dio.get(ApiConstants.driverActiveRides);
+        if (activeRes.statusCode == 200) {
+          final List list = (activeRes.data is Map ? (activeRes.data['rides'] ?? activeRes.data['data']) : (activeRes.data is List ? activeRes.data : [])) ?? [];
+          _activeRides = list.map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+      } catch (e) {
+        debugPrint('Error polling active rides: $e');
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error in pollPendingRequests: $e');
