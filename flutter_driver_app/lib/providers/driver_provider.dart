@@ -33,8 +33,31 @@ class DriverProvider extends ChangeNotifier {
   Map<String, dynamic> get earnings => _earnings;
 
   void init() {
+    checkAvailabilityAndInit();
     fetchEarnings();
     fetchActiveRides();
+  }
+
+  Future<void> checkAvailabilityAndInit() async {
+    try {
+      final res = await _dio.get(ApiConstants.me);
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        final profile = res.data['driver_profile'];
+        if (profile != null && profile['is_available'] == true) {
+          _isOnline = true;
+          _startDispatchLoop();
+          notifyListeners();
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // If online, ensure dispatch loop runs
+    if (_isOnline) {
+      _startDispatchLoop();
+    }
+    // Initial fetch of pending requests
+    pollPendingRequests();
   }
 
   Future<void> toggleOnline() async {
@@ -74,9 +97,11 @@ class DriverProvider extends ChangeNotifier {
 
   void _startDispatchLoop() {
     _getCurrentLocationAndSend();
+    pollPendingRequests();
+    fetchActiveRides();
 
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       pollPendingRequests();
       fetchActiveRides();
     });
@@ -124,8 +149,6 @@ class DriverProvider extends ChangeNotifier {
   }
 
   Future<void> pollPendingRequests() async {
-    if (!_isOnline) return;
-
     try {
       final res = await _dio.get(ApiConstants.driverRequests);
       if (res.statusCode == 200 && res.data['success'] == true) {
@@ -150,17 +173,23 @@ class DriverProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<bool> respondToRequest(int assignmentId, String action) async {
+  Future<bool> respondToRequest(int? assignmentId, String action, {int? rideId}) async {
     try {
       final res = await _dio.post(ApiConstants.driverRespond, data: {
-        'assignment_id': assignmentId,
+        if (assignmentId != null) 'assignment_id': assignmentId,
+        if (rideId != null) 'ride_id': rideId,
         'action': action,
       });
 
       if (res.statusCode == 200 && res.data['success'] == true) {
-        _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId);
-        fetchActiveRides();
-        fetchEarnings();
+        if (assignmentId != null) {
+          _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId);
+        }
+        if (rideId != null) {
+          _pendingRequests.removeWhere((r) => r['ride_id'] == rideId);
+        }
+        await fetchActiveRides();
+        await fetchEarnings();
         notifyListeners();
         return true;
       }

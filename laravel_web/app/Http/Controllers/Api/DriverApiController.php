@@ -316,17 +316,21 @@ class DriverApiController extends Controller
     public function pendingRequests(Request $request)
     {
         $user = $request->user();
-        if (!$user) return response()->json(['requests' => []]);
+        if (!$user) return response()->json(['success' => true, 'requests' => []]);
 
+        $requests = [];
+        $processedRideIds = [];
+
+        // 1. Direct assignments assigned to this driver
         $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client'])
             ->where('driver_id', $user->id)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->get();
 
-        $requests = [];
         foreach ($assignments as $a) {
             if ($a->ride && $a->ride->status === 'pending') {
+                $processedRideIds[] = $a->ride->id;
                 $requests[] = [
                     'assignment_id' => $a->id,
                     'type' => 'ride',
@@ -362,6 +366,41 @@ class DriverApiController extends Controller
             }
         }
 
+        // 2. Also populate all available pending unassigned rides in the system (like web version!)
+        $openPendingRides = \App\Models\Ride::with('rider')
+            ->where('status', 'pending')
+            ->whereNull('driver_id')
+            ->whereNotIn('id', $processedRideIds)
+            ->latest()
+            ->take(15)
+            ->get();
+
+        foreach ($openPendingRides as $pr) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['ride_id' => $pr->id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+
+            $requests[] = [
+                'assignment_id' => $assignment->id,
+                'type' => 'ride',
+                'ride_id' => $pr->id,
+                'pickup_location' => $pr->pickup_location,
+                'pickup_lat' => $pr->pickup_lat,
+                'pickup_lng' => $pr->pickup_lng,
+                'dropoff_location' => $pr->dropoff_location,
+                'dropoff_lat' => $pr->dropoff_lat,
+                'dropoff_lng' => $pr->dropoff_lng,
+                'fare' => floatval($pr->fare ?: $pr->total_amount),
+                'vehicle_type' => $pr->vehicle_type ?? 'Standard',
+                'rider_name' => $pr->rider?->name ?? $pr->passenger_name ?? 'Rider',
+                'rider_phone' => $pr->passenger_phone ?? $pr->rider?->phone,
+                'distance_km' => $pr->distance_km,
+                'duration_minutes' => $pr->duration_minutes,
+                'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),
+            ];
+        }
+
         return response()->json(['success' => true, 'requests' => $requests]);
     }
 
@@ -371,25 +410,31 @@ class DriverApiController extends Controller
     public function respondToAssignment(Request $request)
     {
         $request->validate([
-            'assignment_id' => 'required|exists:ride_assignments,id',
+            'assignment_id' => 'nullable|integer',
+            'ride_id' => 'nullable|integer',
             'action' => 'required|in:accept,reject',
         ]);
 
         $user = $request->user();
-        $assignment = \App\Models\RideAssignment::where('id', $request->assignment_id)
-            ->where('driver_id', $user->id)
-            ->first();
+        $assignment = null;
+
+        if ($request->assignment_id) {
+            $assignment = \App\Models\RideAssignment::where('id', $request->assignment_id)->first();
+        }
+
+        if (!$assignment && $request->ride_id) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['ride_id' => $request->ride_id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+        }
 
         if (!$assignment) {
             return response()->json(['success' => false, 'message' => 'Assignment not found'], 404);
         }
 
         if ($request->action === 'accept') {
-            if ($assignment->status !== 'pending' || $assignment->expires_at->isPast()) {
-                return response()->json(['success' => false, 'message' => 'This offer has already expired or been accepted.'], 410);
-            }
-
-            $assignment->update(['status' => 'accepted']);
+            $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
 
             if ($assignment->ride) {
                 $ride = $assignment->ride;
@@ -414,13 +459,12 @@ class DriverApiController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Ride accepted successfully.',
-                    'ride' => $ride->fresh(),
+                    'ride' => $ride->fresh(['rider', 'stops']),
                 ]);
             }
         } else {
             $assignment->update(['status' => 'rejected']);
 
-            // Assign to next driver
             if ($assignment->ride) {
                 \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
             }

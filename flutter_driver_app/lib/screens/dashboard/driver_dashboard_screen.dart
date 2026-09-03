@@ -139,6 +139,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
+          await driver.pollPendingRequests();
           await driver.fetchActiveRides();
           await driver.fetchEarnings();
         },
@@ -151,6 +152,86 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               // Online / Offline Toggle Banner
               _buildOnlineStatusCard(driver),
               const SizedBox(height: 24),
+
+              // Available Ride Requests Section (Like Web Version!)
+              if (driver.pendingRequests.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Available Jobs (${driver.pendingRequests.length})',
+                          style: const TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      'Live Dispatch',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...driver.pendingRequests.map((job) => _buildAvailableJobCard(context, job, driver)),
+                const SizedBox(height: 20),
+              ] else if (driver.isOnline) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceDark,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.radar_rounded, color: AppColors.primary, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Scanning for nearby ride requests...',
+                              style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'New rider jobs will pop up here in real time.',
+                              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // Active Rides Section
               if (driver.activeRides.isNotEmpty) ...[
@@ -410,6 +491,206 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               ),
               icon: const Icon(Icons.navigation_rounded),
               label: const Text('Open Trip Navigation & Controls', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvailableJobCard(BuildContext context, Map<String, dynamic> job, DriverProvider driver) {
+    final fare = (job['fare'] ?? job['total_price'] ?? 0.0) as num;
+    final pickup = job['pickup_location'] ?? 'Pickup location';
+    final dropoff = job['dropoff_location'] ?? 'Destination';
+    final riderName = job['rider_name'] ?? job['client_name'] ?? 'Rider';
+    final vehicleType = job['vehicle_type'] ?? 'Standard';
+    final isDriverBooking = job['type'] == 'driver_booking';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Row: Type Badge & Fare
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isDriverBooking
+                        ? AppColors.purple.withValues(alpha: 0.2)
+                        : AppColors.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDriverBooking ? AppColors.purple : AppColors.primary,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isDriverBooking ? Icons.badge_rounded : Icons.local_taxi_rounded,
+                        size: 14,
+                        color: isDriverBooking ? AppColors.purple : AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isDriverBooking ? 'DRIVER HIRING' : '$vehicleType RIDE',
+                        style: TextStyle(
+                          color: isDriverBooking ? AppColors.purple : AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '\$${fare.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: AppColors.success,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Rider Name
+            Text(
+              'Rider: $riderName',
+              style: const TextStyle(
+                color: AppColors.textLight,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Locations Card
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.circle, color: AppColors.success, size: 10),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          pickup,
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (dropoff.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(height: 10, child: VerticalDivider(color: Colors.white24)),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 12),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            dropoff,
+                            style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Action Buttons Row: Accept & Decline
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final ok = await driver.respondToRequest(
+                        job['assignment_id'],
+                        'accept',
+                        rideId: job['ride_id'],
+                      );
+                      if (ok && context.mounted && driver.activeRides.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.check_circle_rounded, size: 18),
+                    label: Text(
+                      'Accept & Earn \$${fare.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      await driver.respondToRequest(
+                        job['assignment_id'],
+                        'reject',
+                        rideId: job['ride_id'],
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textMuted,
+                      side: const BorderSide(color: Colors.white24),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
