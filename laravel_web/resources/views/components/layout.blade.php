@@ -21,6 +21,19 @@
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        header.sticky {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 100 !important;
+        }
+        .dropdown-menu-card {
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+            z-index: 110 !important;
+        }
+        .dark .dropdown-menu-card {
+            background-color: #121212 !important;
+        }
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script>
@@ -83,7 +96,7 @@
 <body class="font-sans antialiased bg-[#fafafa] dark:bg-[#0a0a0a] text-gray-900 dark:text-white min-h-screen flex flex-col transition-colors duration-200 {{ $theme ?? '' }}">
     
     <!-- Header -->
-    <header x-data="{ mobileMenuOpen: false }" class="sticky top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-b border-gray-100 dark:border-white/10 transition-colors duration-200">
+    <header x-data="{ mobileMenuOpen: false }" class="sticky top-0 left-0 right-0 z-[100] bg-white dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-white/10 transition-colors duration-200">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex h-20 items-center justify-between">
                 <!-- Logo -->
@@ -121,7 +134,7 @@
                                      x-transition:leave="transition ease-in duration-150"
                                      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                      x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                     class="absolute top-full left-0 mt-2 w-[340px] bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-[340px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
                                      style="display: none;">
                                     
                                     <div class="space-y-1 pb-2">
@@ -231,7 +244,7 @@
                                      x-transition:leave="transition ease-in duration-150"
                                      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                      x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                     class="absolute top-full left-0 mt-2 w-64 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
                                      style="display: none;">
                                     <div class="space-y-1 pb-2">
                                         <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
@@ -270,7 +283,7 @@
                                      x-transition:leave="transition ease-in duration-150"
                                      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                      x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                     class="absolute top-full left-0 mt-2 w-52 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50" 
+                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-52 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
                                      style="display: none;">
                                     <div class="space-y-0.5">
                                         <a href="/about" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">About Us</a>
@@ -306,7 +319,7 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                 class="absolute top-full left-0 mt-2 w-[340px] bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-[340px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
                                  style="display: none;">
                                 
                                 <div class="space-y-1 pb-2">
@@ -416,7 +429,7 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                 class="absolute top-full left-0 mt-2 w-64 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
                                  style="display: none;">
                                 <div class="space-y-1 pb-2">
                                     <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
@@ -455,7 +468,7 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                 class="absolute top-full left-0 mt-2 w-52 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50" 
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-52 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
                                  style="display: none;">
                                 <div class="space-y-0.5">
                                     <a href="/about" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">About Us</a>
@@ -499,7 +512,7 @@
                         <!-- Notification Dropdown Panel (Styled exactly like User Menu) -->
                         <div x-show="open" 
                              x-transition
-                             class="absolute top-full -right-[52px] sm:right-0 mt-2.5 w-[calc(100vw-32px)] sm:w-[380px] max-w-[380px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl z-50 overflow-hidden" 
+                             class="dropdown-menu-card absolute top-full -right-[52px] sm:right-0 mt-2.5 w-[calc(100vw-32px)] sm:w-[380px] max-w-[380px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl z-[110] overflow-hidden" 
                              style="display: none;">
                             
                             <!-- Header -->
@@ -607,7 +620,7 @@
                             </div>
                         </button>
                         
-                        <div x-show="userMenuOpen" x-transition class="absolute top-full right-0 mt-2.5 sm:mt-4 w-[calc(100vw-32px)] sm:w-[340px] max-w-[340px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 sm:p-5 z-50" style="display: none;">
+                        <div x-show="userMenuOpen" x-transition class="dropdown-menu-card absolute top-full right-0 mt-2.5 sm:mt-4 w-[calc(100vw-32px)] sm:w-[340px] max-w-[340px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 sm:p-5 z-[110]" style="display: none;">
                             
                             <!-- Header -->
                             <div class="flex items-center justify-between mb-6">
