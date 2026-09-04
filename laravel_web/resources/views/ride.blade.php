@@ -28,7 +28,7 @@
         </style>
     </x-slot>
 
-    <main class="w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-[1500px]" x-data="rideBooking">
+    <main class="w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-[1500px]" x-data="rideBooking()">
         <!-- Category Banner Component -->
         <x-category-banner category="Ride" />
         
@@ -72,24 +72,187 @@
                         </div>
 
                         <!-- Control Pills: Pickup Now & Rider Selection -->
-                        <div class="flex items-center gap-2">
-                            <!-- Schedule Pill -->
-                            <button type="button" @click="showScheduleModal = true" class="flex-1 py-2.5 px-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] rounded-full text-xs font-extrabold text-gray-900 dark:text-white flex items-center justify-between transition-all">
-                                <div class="flex items-center gap-2">
-                                    <span>🕒</span>
-                                    <span x-text="schedule_type === 'now' ? 'Pickup now' : 'Schedule for later'"></span>
-                                </div>
-                                <span class="text-gray-400">▼</span>
-                            </button>
+                        <div class="flex items-center gap-2 relative">
+                            <!-- Schedule Dropdown -->
+                            <div class="relative flex-1" @click.away="showScheduleDropdown = false">
+                                <button type="button" 
+                                        @click="toggleScheduleDropdown()" 
+                                        class="w-full py-2.5 px-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] rounded-full text-xs font-extrabold text-gray-900 dark:text-white flex items-center justify-between transition-all select-none cursor-pointer"
+                                        :class="showScheduleDropdown ? 'ring-2 ring-black/10 dark:ring-white/20' : ''">
+                                    <div class="flex items-center gap-2 min-w-0 pr-1">
+                                        <span class="shrink-0">🕒</span>
+                                        <span class="truncate" x-text="schedule_type === 'now' ? 'Pickup now' : getFormattedScheduledDate()">Pickup now</span>
+                                    </div>
+                                    <span class="text-gray-400 text-[10px] shrink-0 transition-transform duration-200" :class="showScheduleDropdown ? 'rotate-180' : ''">▼</span>
+                                </button>
 
-                            <!-- Passenger Pill -->
-                            <button type="button" @click="showRiderModal = true" class="flex-1 py-2.5 px-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] rounded-full text-xs font-extrabold text-gray-900 dark:text-white flex items-center justify-between transition-all">
-                                <div class="flex items-center gap-2">
-                                    <span>👤</span>
-                                    <span x-text="riderType === 'me' ? 'For me' : 'Someone else'"></span>
+                                <!-- Schedule Dropdown Popover Card -->
+                                <div x-show="showScheduleDropdown" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                     class="absolute left-0 top-full mt-2 w-[310px] sm:w-[340px] max-w-[calc(100vw-2.5rem)] bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-3.5 z-[99999] space-y-3"
+                                     x-cloak
+                                     style="display: none;">
+                                    
+                                    <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/5">
+                                        <span class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">When do you need a ride?</span>
+                                        <button type="button" @click="showScheduleDropdown = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs p-1">✕</button>
+                                    </div>
+
+                                    <!-- Option 1: Pickup Now -->
+                                    <button type="button" 
+                                            @click="selectPickupNow()"
+                                            class="w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer"
+                                            :class="schedule_type === 'now' ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-500/50 text-emerald-950 dark:text-emerald-300' : 'bg-gray-50 dark:bg-white/5 border-transparent hover:border-gray-200 dark:hover:border-white/10 text-gray-700 dark:text-gray-300'">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold shrink-0">⚡</span>
+                                            <div>
+                                                <div class="text-xs font-bold text-gray-900 dark:text-white">Pickup now</div>
+                                                <div class="text-[11px] text-gray-500 dark:text-gray-400">Driver arrives in ~3–5 mins</div>
+                                            </div>
+                                        </div>
+                                        <span x-show="schedule_type === 'now'" class="text-emerald-600 dark:text-emerald-400 text-sm font-black">✓</span>
+                                    </button>
+
+                                    <!-- Option 2: Schedule for Later -->
+                                    <div class="p-2.5 rounded-xl border transition-all"
+                                         :class="schedule_type === 'later' ? 'bg-brand-500/5 border-brand-500/40' : 'bg-gray-50 dark:bg-white/5 border-transparent'">
+                                        <button type="button" 
+                                                @click="schedule_type = 'later'"
+                                                class="w-full text-left flex items-center justify-between cursor-pointer">
+                                            <div class="flex items-center gap-2.5">
+                                                <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-400 flex items-center justify-center text-sm font-bold shrink-0">📅</span>
+                                                <div>
+                                                    <div class="text-xs font-bold text-gray-900 dark:text-white">Schedule for later</div>
+                                                    <div class="text-[11px] text-gray-500 dark:text-gray-400">Plan up to 30 days ahead</div>
+                                                </div>
+                                            </div>
+                                            <span x-show="schedule_type === 'later'" class="text-brand-500 text-sm font-black">✓</span>
+                                        </button>
+
+                                        <!-- Date & Time Picker Controls (Visible when later is selected) -->
+                                        <div x-show="schedule_type === 'later'" class="mt-3 pt-3 border-t border-gray-200/60 dark:border-white/10 space-y-2.5">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Date</label>
+                                                    <input type="date" 
+                                                           x-model="scheduledDate" 
+                                                           :min="minScheduleDate" 
+                                                           class="w-full px-2.5 py-2 text-xs font-bold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Time</label>
+                                                    <input type="time" 
+                                                           x-model="scheduledTime" 
+                                                           class="w-full px-2.5 py-2 text-xs font-bold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                                                </div>
+                                            </div>
+
+                                            <button type="button" 
+                                                    @click="confirmSchedule()" 
+                                                    class="w-full py-2 px-3 bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black text-xs font-extrabold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+                                                <span>Set Pickup Time</span>
+                                                <span>→</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="text-gray-400">▼</span>
-                            </button>
+                            </div>
+
+                            <!-- Passenger Dropdown -->
+                            <div class="relative flex-1" @click.away="showRiderDropdown = false">
+                                <button type="button" 
+                                        @click="toggleRiderDropdown()" 
+                                        class="w-full py-2.5 px-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] rounded-full text-xs font-extrabold text-gray-900 dark:text-white flex items-center justify-between transition-all select-none cursor-pointer"
+                                        :class="showRiderDropdown ? 'ring-2 ring-black/10 dark:ring-white/20' : ''">
+                                    <div class="flex items-center gap-2 min-w-0 pr-1">
+                                        <span class="shrink-0">👤</span>
+                                        <span class="truncate" x-text="riderType === 'me' ? 'For me' : (riderName ? 'For ' + riderName.split(' ')[0] : 'Someone else')">For me</span>
+                                    </div>
+                                    <span class="text-gray-400 text-[10px] shrink-0 transition-transform duration-200" :class="showRiderDropdown ? 'rotate-180' : ''">▼</span>
+                                </button>
+
+                                <!-- Rider Dropdown Popover Card -->
+                                <div x-show="showRiderDropdown" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                     class="absolute right-0 top-full mt-2 w-[310px] sm:w-[340px] max-w-[calc(100vw-2.5rem)] bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-3.5 z-[99999] space-y-3"
+                                     x-cloak
+                                     style="display: none;">
+                                    
+                                    <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/5">
+                                        <span class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Who is riding?</span>
+                                        <button type="button" @click="showRiderDropdown = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs p-1">✕</button>
+                                    </div>
+
+                                    <!-- Option 1: For Me -->
+                                    <button type="button" 
+                                            @click="selectRiderMe()"
+                                            class="w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer"
+                                            :class="riderType === 'me' ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-500/50 text-emerald-950 dark:text-emerald-300' : 'bg-gray-50 dark:bg-white/5 border-transparent hover:border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold shrink-0">👤</span>
+                                            <div>
+                                                <div class="text-xs font-bold text-gray-900 dark:text-white">For me</div>
+                                                <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ auth()->user()->name ?? 'Account owner' }} (You)</div>
+                                            </div>
+                                        </div>
+                                        <span x-show="riderType === 'me'" class="text-emerald-600 dark:text-emerald-400 text-sm font-black">✓</span>
+                                    </button>
+
+                                    <!-- Option 2: Someone Else -->
+                                    <div class="p-2.5 rounded-xl border transition-all"
+                                         :class="riderType === 'someone_else' ? 'bg-brand-500/5 border-brand-500/40' : 'bg-gray-50 dark:bg-white/5 border-transparent'">
+                                        <button type="button" 
+                                                @click="riderType = 'someone_else'"
+                                                class="w-full text-left flex items-center justify-between cursor-pointer">
+                                            <div class="flex items-center gap-2.5">
+                                                <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-400 flex items-center justify-center text-sm font-bold shrink-0">👥</span>
+                                                <div>
+                                                    <div class="text-xs font-bold text-gray-900 dark:text-white">Someone else</div>
+                                                    <div class="text-[11px] text-gray-500 dark:text-gray-400">Driver contacts the passenger directly</div>
+                                                </div>
+                                            </div>
+                                            <span x-show="riderType === 'someone_else'" class="text-brand-500 text-sm font-black">✓</span>
+                                        </button>
+
+                                        <!-- Someone Else Inputs (Visible when selected) -->
+                                        <div x-show="riderType === 'someone_else'" class="mt-3 pt-3 border-t border-gray-200/60 dark:border-white/10 space-y-2.5">
+                                            <div>
+                                                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Rider Full Name <span class="text-red-500">*</span></label>
+                                                <input type="text" 
+                                                       x-model="riderName" 
+                                                       placeholder="e.g. Sarah Jenkins" 
+                                                       class="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Rider Phone Number <span class="text-red-500">*</span></label>
+                                                <input type="tel" 
+                                                       x-model="riderPhone" 
+                                                       placeholder="e.g. +1 555-0199" 
+                                                       class="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                                                <p class="text-[10px] text-gray-400 mt-1">We'll send driver arrival alerts via SMS to this phone.</p>
+                                            </div>
+
+                                            <button type="button" 
+                                                    @click="confirmRiderSomeoneElse()" 
+                                                    class="w-full py-2 px-3 bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black text-xs font-extrabold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+                                                <span>Save Passenger Details</span>
+                                                <span>✓</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Location Inputs Section -->
@@ -634,6 +797,13 @@
                 paymentStep: 'select',
                 paymentMethod: 'stripe',
                 riderType: 'me',
+                showScheduleDropdown: false,
+                showRiderDropdown: false,
+                scheduledDate: '',
+                minScheduleDate: '',
+                scheduledTime: '',
+                riderName: '',
+                riderPhone: '',
                 savedCards: [],
                 selectedCard: null,
                 selectedFare: '$28.50',
@@ -654,6 +824,85 @@
                 init() {
                     this.fetchSavedLocations();
                     this.fetchSavedCards();
+                    this.initScheduleDefaults();
+                },
+
+                initScheduleDefaults() {
+                    const now = new Date();
+                    const yyyy = now.getFullYear();
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const dd = String(now.getDate()).padStart(2, '0');
+                    this.scheduledDate = `${yyyy}-${mm}-${dd}`;
+                    this.minScheduleDate = `${yyyy}-${mm}-${dd}`;
+
+                    now.setMinutes(now.getMinutes() + 30);
+                    const hh = String(now.getHours()).padStart(2, '0');
+                    const min = String(now.getMinutes()).padStart(2, '0');
+                    this.scheduledTime = `${hh}:${min}`;
+                },
+
+                getFormattedScheduledDate() {
+                    if (!this.scheduledDate || !this.scheduledTime) return 'Scheduled';
+                    try {
+                        const parts = this.scheduledDate.split('-');
+                        if (parts.length < 3) return 'Scheduled';
+                        const y = parseInt(parts[0], 10);
+                        const m = parseInt(parts[1], 10);
+                        const d = parseInt(parts[2], 10);
+                        const tParts = this.scheduledTime.split(':');
+                        const h = parseInt(tParts[0], 10) || 0;
+                        const min = parseInt(tParts[1], 10) || 0;
+                        const dt = new Date(y, m - 1, d, h, min);
+                        const now = new Date();
+                        const isToday = dt.toDateString() === now.toDateString();
+                        const timeStr = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                        if (isToday) return `Today, ${timeStr}`;
+                        return `${dt.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+                    } catch (e) {
+                        return 'Scheduled';
+                    }
+                },
+
+                toggleScheduleDropdown() {
+                    this.showScheduleDropdown = !this.showScheduleDropdown;
+                    if (this.showScheduleDropdown) this.showRiderDropdown = false;
+                },
+
+                toggleRiderDropdown() {
+                    this.showRiderDropdown = !this.showRiderDropdown;
+                    if (this.showRiderDropdown) this.showScheduleDropdown = false;
+                },
+
+                selectPickupNow() {
+                    this.schedule_type = 'now';
+                    this.showScheduleDropdown = false;
+                },
+
+                confirmSchedule() {
+                    if (!this.scheduledDate || !this.scheduledTime) {
+                        alert('Please select both a date and time.');
+                        return;
+                    }
+                    this.schedule_type = 'later';
+                    this.showScheduleDropdown = false;
+                },
+
+                selectRiderMe() {
+                    this.riderType = 'me';
+                    this.showRiderDropdown = false;
+                },
+
+                confirmRiderSomeoneElse() {
+                    if (!this.riderName || !this.riderName.trim()) {
+                        alert('Please enter the passenger\'s name.');
+                        return;
+                    }
+                    if (!this.riderPhone || !this.riderPhone.trim()) {
+                        alert('Please enter the passenger\'s phone number.');
+                        return;
+                    }
+                    this.riderType = 'someone_else';
+                    this.showRiderDropdown = false;
                 },
 
                 async searchPickupLocation() {
@@ -1070,8 +1319,13 @@
                                 vehicle_type: this.vehicle_type, 
                                 payment_method: this.paymentMethod,
                                 phone_number: this.phone || 'N/A',
-                                passenger_phone: this.phone || 'N/A',
-                                passenger_name: this.passenger_name || 'Rider',
+                                is_for_someone_else: this.riderType === 'someone_else',
+                                passenger_phone: this.riderType === 'me' ? (this.phone || 'N/A') : (this.riderPhone || this.phone || 'N/A'),
+                                passenger_name: this.riderType === 'me' ? '{{ auth()->user()->name ?? "Rider" }}' : (this.riderName || 'Someone else'),
+                                schedule_type: this.schedule_type,
+                                scheduled_time: this.schedule_type === 'later' ? (this.scheduledDate + ' ' + this.scheduledTime) : null,
+                                pickup_date: this.schedule_type === 'later' ? this.scheduledDate : null,
+                                pickup_time: this.schedule_type === 'later' ? this.scheduledTime : null,
                                 amount: parseFloat(this.selectedFare.replace('$', '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50)
                             })
                         });
