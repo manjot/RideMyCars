@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -5,7 +6,8 @@ import '../../providers/auth_provider.dart';
 import '../rider/rider_home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final String? initialPhone;
+  const RegisterScreen({super.key, this.initialPhone});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -15,14 +17,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  late final TextEditingController _phoneController;
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    _phoneController = TextEditingController(text: widget.initialPhone ?? '');
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -31,31 +41,263 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your mobile phone number for OTP verification'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final success = await auth.register(
-      name: _nameController.text,
-      email: _emailController.text,
-      password: _passwordController.text,
-      passwordConfirmation: _confirmPasswordController.text,
-      role: 'customer',
-    );
+
+    // 1. Send SMS OTP for registration
+    final res = await auth.sendPhoneOtp(phone: phone, action: 'register');
 
     if (!mounted) return;
 
-    if (success) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
-        (route) => false,
-      );
-    } else if (auth.errorMessage != null) {
+    if (res['success'] == true) {
+      _showOtpVerificationDialog(phone);
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(auth.errorMessage!),
+          content: Text(auth.errorMessage ?? 'Failed to send SMS verification code.'),
           backgroundColor: AppColors.danger,
         ),
       );
     }
+  }
+
+  void _showOtpVerificationDialog(String phone) {
+    final otpController = TextEditingController();
+    int countdown = 120;
+    Timer? timer;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            timer ??= Timer.periodic(const Duration(seconds: 1), (t) {
+              if (countdown > 0) {
+                setSheetState(() => countdown--);
+              } else {
+                t.cancel();
+              }
+            });
+
+            final m = countdown ~/ 60;
+            final s = countdown % 60;
+            final timerStr = '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Verify Mobile Number',
+                        style: TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          countdown > 0 ? timerStr : 'Expired',
+                          style: TextStyle(
+                            color: countdown > 0 ? AppColors.primary : AppColors.danger,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'We sent a 4-digit verification code to $phone. Please enter it below to complete registration.',
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+
+                  TextFormField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.textLight,
+                      fontSize: 26,
+                      letterSpacing: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: '••••',
+                      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 26, letterSpacing: 14),
+                      filled: true,
+                      fillColor: AppColors.backgroundDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          timer?.cancel();
+                          Navigator.pop(sheetContext);
+                        },
+                        child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+                      ),
+                      TextButton(
+                        onPressed: countdown == 0
+                            ? () async {
+                                final auth = Provider.of<AuthProvider>(context, listen: false);
+                                final res = await auth.sendPhoneOtp(phone: phone, action: 'register');
+                                if (res['success'] == true) {
+                                  setSheetState(() {
+                                    countdown = 120;
+                                  });
+                                }
+                              }
+                            : null,
+                        child: Text(
+                          countdown == 0 ? 'Resend SMS OTP' : 'Resend in $timerStr',
+                          style: TextStyle(
+                            color: countdown == 0 ? AppColors.primary : AppColors.textMuted,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  Consumer<AuthProvider>(
+                    builder: (context, auth, _) {
+                      return SizedBox(
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: auth.isLoading
+                              ? null
+                              : () async {
+                                  final code = otpController.text.trim();
+                                  if (code.length < 4) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please enter 4 digits'),
+                                        backgroundColor: AppColors.danger,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  final success = await auth.verifyPhoneOtp(
+                                    phone: phone,
+                                    otp: code,
+                                    name: _nameController.text.trim(),
+                                    email: _emailController.text.trim(),
+                                    password: _passwordController.text,
+                                    role: 'customer',
+                                  );
+
+                                  if (!mounted) return;
+
+                                  if (success) {
+                                    timer?.cancel();
+                                    Navigator.pop(sheetContext);
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
+                                      (route) => false,
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(auth.errorMessage ?? 'Invalid OTP code.'),
+                                        backgroundColor: AppColors.danger,
+                                      ),
+                                    );
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.backgroundDark,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 4,
+                          ),
+                          child: auth.isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: AppColors.backgroundDark,
+                                  ),
+                                )
+                              : const Text(
+                                  'Verify & Complete Registration',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      timer?.cancel();
+    });
   }
 
   @override
@@ -123,6 +365,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Phone Field (With OTP verification notice)
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(color: AppColors.textLight),
+                    decoration: InputDecoration(
+                      labelText: 'Mobile Phone (e.g. +1 555-123-4567) *',
+                      labelStyle: const TextStyle(color: AppColors.textMuted),
+                      prefixIcon: const Icon(Icons.phone_iphone_rounded, color: AppColors.textMuted),
+                      suffixIcon: const Tooltip(
+                        message: 'Verified via Twilio SMS OTP',
+                        child: Icon(Icons.verified_outlined, color: AppColors.primary, size: 20),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.surfaceDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) return 'Please enter mobile number';
+                      if (val.trim().length < 7) return 'Please enter a valid mobile number';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
                   // Email Field
                   TextFormField(
                     controller: _emailController,
@@ -173,8 +447,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
                     ),
-                    validator: (val) => (val == null || val.length < 6) ? 'Password must be at least 6 characters' : null,
+                    validator: (val) {
+                      if (val == null || val.isEmpty) return 'Please enter a password';
+                      if (val.length < 6) return 'Password must be at least 6 characters';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
 
@@ -186,22 +468,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
                       labelStyle: const TextStyle(color: AppColors.textMuted),
-                      prefixIcon: const Icon(Icons.lock_clock_outlined, color: AppColors.textMuted),
+                      prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
                       filled: true,
                       fillColor: AppColors.surfaceDark,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
                     ),
                     validator: (val) {
+                      if (val == null || val.isEmpty) return 'Please confirm your password';
                       if (val != _passwordController.text) return 'Passwords do not match';
                       return null;
                     },
                   ),
                   const SizedBox(height: 28),
 
-                  // Register Button
+                  // Submit Button
                   SizedBox(
                     height: 54,
                     child: ElevatedButton(
@@ -224,7 +511,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             )
                           : const Text(
-                              'Create Rider Account',
+                              'Verify Phone & Create Account',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
@@ -232,40 +519,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Already have an account
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Already have an account? ',
-                        style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Text(
-                          'Sign in',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Driver Partner Note
-                  Center(
-                    child: Text(
-                      'Are you a driver? Please use the RideMyCars Driver App.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.textMuted.withValues(alpha: 0.7),
-                        fontSize: 11,
-                      ),
+                  // Terms notice
+                  const Text(
+                    'By signing up, you agree to the RideMyCars Terms & Conditions and Privacy Policy.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                      height: 1.4,
                     ),
                   ),
                 ],

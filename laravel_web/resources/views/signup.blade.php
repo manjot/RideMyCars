@@ -19,7 +19,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="font-sans antialiased bg-white dark:bg-[#111] text-gray-900 dark:text-white overflow-x-hidden">
-    <div class="flex min-h-screen" x-data="{ currentRole: '{{ $role ?? 'customer' }}' }">
+    <div class="flex min-h-screen" x-data="signupApp()">
         
         <!-- Left Banner (Dark) -->
         <div class="hidden lg:flex w-[45%] bg-[#1a1a1a] flex-col justify-between p-12 fixed h-screen left-0 top-0 overflow-hidden">
@@ -76,7 +76,7 @@
                     </div>
                 @endif
 
-                <form action="/signup" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form action="/signup" method="POST" enctype="multipart/form-data" @submit.prevent="initiateSignup($event)" class="space-y-5" x-ref="signupForm">
                     @csrf
                     <input type="hidden" name="role" :value="currentRole">
                     
@@ -124,12 +124,12 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Phone <span class="text-gray-400 dark:text-gray-500 font-normal">(optional)</span></label>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Mobile Phone <span class="text-brand-500 font-bold">*</span> <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(Twilio SMS OTP verification)</span></label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                             </div>
-                            <input type="tel" name="phone" value="{{ old('phone', request('phone')) }}" placeholder="+1 234 567 8900" class="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                            <input type="tel" name="phone" x-model="phone" required placeholder="+1 234 567 8900" class="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                         </div>
                     </div>
 
@@ -338,13 +338,257 @@
                         @enderror
                     </div>
 
-                    <button type="submit" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98]">
-                        <span x-text="currentRole === 'owner' ? 'Register & List Vehicle' : (currentRole === 'driver' ? 'Register as Driver' : 'Create Account')"></span>
+                    <button type="submit" :disabled="isLoading" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-500/25 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer" :class="isLoading ? 'opacity-70 cursor-wait' : ''">
+                        <svg x-show="isLoading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span x-text="isLoading ? 'Sending SMS Code...' : (currentRole === 'owner' ? 'Verify & List Vehicle' : (currentRole === 'driver' ? 'Verify & Register as Driver' : 'Create Account'))"></span>
                     </button>
                 </form>
             </div>
         </div>
 
     </div>
+
+    <!-- OTP Verification Modal Overlay -->
+    <div x-show="otpModalOpen" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 backdrop-blur-none"
+         x-transition:enter-end="opacity-100 backdrop-blur-md"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 backdrop-blur-md"
+         x-transition:leave-end="opacity-0 backdrop-blur-none"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+         style="display: none;">
+        
+        <div class="relative w-full max-w-md bg-white dark:bg-[#181818] rounded-3xl p-7 sm:p-8 shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden"
+             @click.away="otpModalOpen = false">
+            
+            <div class="flex items-center justify-between mb-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0-2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
+                    <span>Phone Verification</span>
+                </span>
+                <button type="button" @click="otpModalOpen = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Verify your mobile</h3>
+            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                We sent a 4-digit code to <span class="font-bold text-gray-900 dark:text-white" x-text="phone"></span>. Please enter it below to complete your registration.
+            </p>
+
+            <div class="flex items-center gap-2 mb-6">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Valid for 2 minutes</span>
+                </span>
+                <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
+            </div>
+
+            <!-- 4 Digit Input Boxes -->
+            <div class="flex items-center justify-center gap-3 mb-3">
+                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc1" x-model="c1" 
+                       @input="handleDigit($event, 'c1', 'sc2')" 
+                       @keydown.backspace="handleBackspace($event, 'c1', null)" 
+                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc2" x-model="c2" 
+                       @input="handleDigit($event, 'c2', 'sc3')" 
+                       @keydown.backspace="handleBackspace($event, 'c2', 'sc1')" 
+                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc3" x-model="c3" 
+                       @input="handleDigit($event, 'c3', 'sc4')" 
+                       @keydown.backspace="handleBackspace($event, 'c3', 'sc2')" 
+                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc4" x-model="c4" 
+                       @input="handleDigit($event, 'c4', null)" 
+                       @keydown.backspace="handleBackspace($event, 'c4', 'sc3')" 
+                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+            </div>
+
+            <p class="text-red-500 text-xs font-semibold mb-2 h-4 text-center" x-text="otpError"></p>
+            <p class="text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-2 h-4 text-center" x-text="otpSuccess"></p>
+
+            <div class="text-center mb-6">
+                <button type="button" 
+                        x-show="timer === 0" 
+                        @click="resendOtp()" 
+                        class="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
+                        style="display: none;">
+                    Didn't receive code? Resend SMS OTP
+                </button>
+                <span x-show="timer > 0" class="text-xs text-gray-400">
+                    Resend code in <span class="font-mono font-bold" x-text="formattedTimer"></span>
+                </span>
+            </div>
+
+            <button type="button" 
+                    @click="verifyAndRegister()"
+                    class="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                    :class="(c1 && c2 && c3 && c4 && !isLoading) ? 'bg-brand-500 hover:bg-brand-600 text-white cursor-pointer shadow-lg shadow-brand-500/25' : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'"
+                    :disabled="isLoading || !(c1 && c2 && c3 && c4)">
+                <svg x-show="isLoading" class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span x-text="isLoading ? 'Verifying...' : 'Verify & Complete Registration'">Verify & Complete Registration</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function signupApp() {
+            return {
+                currentRole: '{{ $role ?? "customer" }}',
+                phone: '{{ old("phone", request("phone")) }}',
+                otpModalOpen: false,
+                isLoading: false,
+                otpError: '',
+                otpSuccess: '',
+                timer: 120,
+                timerInterval: null,
+                c1: '', c2: '', c3: '', c4: '',
+
+                startTimer(seconds = 120) {
+                    this.timer = seconds;
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+                    this.timerInterval = setInterval(() => {
+                        if (this.timer > 0) {
+                            this.timer--;
+                        } else {
+                            clearInterval(this.timerInterval);
+                        }
+                    }, 1000);
+                },
+
+                get formattedTimer() {
+                    const m = Math.floor(this.timer / 60);
+                    const s = this.timer % 60;
+                    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                },
+
+                handleDigit(e, currentKey, nextRef) {
+                    const val = e.target.value.replace(/\D/g, '');
+                    this[currentKey] = val.slice(-1);
+                    if (this[currentKey] && nextRef && this.$refs[nextRef]) {
+                        this.$refs[nextRef].focus({ preventScroll: true });
+                    }
+                    if (this.c1 && this.c2 && this.c3 && this.c4) {
+                        this.verifyAndRegister();
+                    }
+                },
+
+                handleBackspace(e, currentKey, prevRef) {
+                    if (!this[currentKey] && prevRef && this.$refs[prevRef]) {
+                        this.$refs[prevRef].focus({ preventScroll: true });
+                    }
+                },
+
+                async initiateSignup(e) {
+                    const form = this.$refs.signupForm;
+                    if (!form.checkValidity()) {
+                        form.reportValidity();
+                        return;
+                    }
+
+                    if (!this.phone) {
+                        alert('Please enter your mobile phone number to receive the verification OTP.');
+                        return;
+                    }
+
+                    this.isLoading = true;
+                    this.otpError = '';
+                    this.otpSuccess = '';
+
+                    try {
+                        const res = await fetch('/api/otp/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ phone: this.phone, action: 'register' })
+                        });
+                        const data = await res.json();
+                        this.isLoading = false;
+
+                        if (data.success) {
+                            this.otpModalOpen = true;
+                            this.c1 = this.c2 = this.c3 = this.c4 = '';
+                            this.startTimer(120);
+                            this.$nextTick(() => { this.$refs.sc1?.focus({ preventScroll: true }); });
+                        } else {
+                            alert(data.error || data.message || 'Failed to send SMS OTP. Please check your phone number.');
+                        }
+                    } catch (err) {
+                        this.isLoading = false;
+                        alert('Network error while requesting verification code.');
+                    }
+                },
+
+                async resendOtp() {
+                    if (this.timer > 0 || this.isLoading) return;
+                    this.isLoading = true;
+                    this.otpError = '';
+                    this.otpSuccess = '';
+
+                    try {
+                        const res = await fetch('/api/otp/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ phone: this.phone, action: 'register' })
+                        });
+                        const data = await res.json();
+                        this.isLoading = false;
+                        if (data.success) {
+                            this.startTimer(120);
+                            this.otpSuccess = 'New 4-digit code sent!';
+                            setTimeout(() => { this.otpSuccess = ''; }, 3500);
+                        } else {
+                            this.otpError = data.error || 'Failed to resend code.';
+                        }
+                    } catch (e) {
+                        this.isLoading = false;
+                        this.otpError = 'Network error.';
+                    }
+                },
+
+                async verifyAndRegister() {
+                    if (!(this.c1 && this.c2 && this.c3 && this.c4) || this.isLoading) return;
+                    this.isLoading = true;
+                    this.otpError = '';
+                    this.otpSuccess = '';
+
+                    const code = (this.c1 + this.c2 + this.c3 + this.c4).trim();
+                    const form = this.$refs.signupForm;
+                    const formData = new FormData(form);
+                    formData.append('otp', code);
+
+                    try {
+                        const res = await fetch('/api/otp/verify', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        });
+                        const data = await res.json();
+                        this.isLoading = false;
+
+                        if (data.success) {
+                            window.location.href = data.redirect || '/';
+                        } else {
+                            this.otpError = data.error || data.message || 'Invalid code. Please try again.';
+                            this.c1 = this.c2 = this.c3 = this.c4 = '';
+                            this.$nextTick(() => { this.$refs.sc1?.focus({ preventScroll: true }); });
+                        }
+                    } catch (e) {
+                        this.isLoading = false;
+                        this.otpError = 'Network error during verification.';
+                    }
+                }
+            };
+        }
+    </script>
 </body>
 </html>

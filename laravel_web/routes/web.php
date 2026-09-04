@@ -381,25 +381,68 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
             if (!$user) {
                 $isNewUser = true;
                 $digits = preg_replace('/\D/', '', $formattedPhone);
-                $userName = $request->input('name') ?: ('Rider ' . substr($digits, -4));
-                $userEmail = $request->input('email') ?: ($digits . '@phone.ridemycars.com');
+                $rawName = $request->input('name') ?: (trim($request->input('first_name', '') . ' ' . $request->input('last_name', '')));
+                $userName = $rawName ?: ('Rider ' . substr($digits, -4));
+                
+                $userEmail = trim((string) $request->input('email', ''));
+                if (empty($userEmail)) {
+                    $userEmail = $digits . '@phone.ridemycars.com';
+                } else {
+                    if (\App\Models\User::where('email', $userEmail)->exists()) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'This email address is already in use by another account.',
+                            'message' => 'This email address is already in use by another account.'
+                        ], 422);
+                    }
+                }
+
                 $role = $request->input('role', 'customer');
                 if (!in_array($role, ['customer', 'rider', 'driver', 'owner'])) {
                     $role = 'customer';
                 }
+
+                $rawPassword = $request->input('password');
+                $hashedPassword = !empty($rawPassword) 
+                    ? \Illuminate\Support\Facades\Hash::make($rawPassword) 
+                    : \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(24));
 
                 $user = \App\Models\User::create([
                     'name' => $userName,
                     'phone' => $formattedPhone,
                     'phone_verified_at' => now(),
                     'email' => $userEmail,
-                    'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(24)),
+                    'password' => $hashedPassword,
                     'role' => $role,
                     'terms_accepted' => true,
                     'terms_accepted_at' => now(),
                     'terms_version' => '2026-08-23',
                     'account_status' => 'active',
                 ]);
+
+                if ($role === 'driver') {
+                    try {
+                        $licNumber = trim($request->input('license_number', ''));
+                        if (!$licNumber || \App\Models\DriverProfile::where('license_number', $licNumber)->exists()) {
+                            $licNumber = 'DL-' . strtoupper(\Illuminate\Support\Str::random(6));
+                        }
+                        \App\Models\DriverProfile::firstOrCreate(
+                            ['user_id' => $user->id],
+                            [
+                                'license_number' => $licNumber,
+                                'verification_status' => 'verified',
+                                'is_available' => true,
+                                'rating' => 5.0,
+                                'total_trips' => 0,
+                                'country' => $request->input('country', 'USA'),
+                                'service_area' => 'Global',
+                                'experience_years' => (int) $request->input('experience_years', 5),
+                                'hourly_rate' => (float) $request->input('hourly_rate', 25.00),
+                                'daily_rate' => (float) $request->input('daily_rate', 170.00),
+                            ]
+                        );
+                    } catch (\Throwable $e) {}
+                }
             } else {
                 $user->phone = $formattedPhone;
                 $user->phone_verified_at = now();

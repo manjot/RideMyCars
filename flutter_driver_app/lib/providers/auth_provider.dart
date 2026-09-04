@@ -200,6 +200,113 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
+  Future<Map<String, dynamic>> sendPhoneOtp({
+    required String phone,
+    required String action, // 'login' or 'register'
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final res = await _dio.post(ApiConstants.sendOtp, data: {
+        'phone': phone.trim(),
+        'action': action,
+      });
+
+      _isLoading = false;
+      notifyListeners();
+
+      if (res.data is Map) {
+        return Map<String, dynamic>.from(res.data);
+      }
+      return {'success': true, 'message': 'OTP sent successfully'};
+    } on DioException catch (e) {
+      _isLoading = false;
+      notifyListeners();
+
+      if (e.response?.data is Map) {
+        final data = Map<String, dynamic>.from(e.response!.data);
+        _errorMessage = _extractErrorMessage(data, 'Failed to send OTP.');
+        return data;
+      }
+      _errorMessage = 'Unable to contact server. Please try again.';
+      return {'success': false, 'error': _errorMessage};
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      _errorMessage = 'An error occurred while sending OTP.';
+      return {'success': false, 'error': _errorMessage};
+    }
+  }
+
+  Future<bool> verifyPhoneOtp({
+    required String phone,
+    required String otp,
+    String? name,
+    String? email,
+    String? password,
+    String role = 'driver',
+    Map<String, dynamic>? driverDetails,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final payload = <String, dynamic>{
+        'phone': phone.trim(),
+        'otp': otp.trim(),
+        'role': role,
+      };
+      if (name != null && name.isNotEmpty) payload['name'] = name.trim();
+      if (email != null && email.isNotEmpty) payload['email'] = email.trim();
+      if (password != null && password.isNotEmpty) payload['password'] = password;
+      if (driverDetails != null) payload.addAll(driverDetails);
+
+      final res = await _dio.post(ApiConstants.verifyOtp, data: payload);
+
+      if (res.statusCode == 200 && res.data is Map && res.data['success'] == true) {
+        _token = res.data['token'];
+        final u = res.data['user'];
+        if (u != null) {
+          _userId = u['id'];
+          _userName = u['name'];
+          _userEmail = u['email'];
+        }
+        _isAuthenticated = true;
+
+        if (_token != null) {
+          await TokenStorage.saveToken(_token!);
+        }
+        await TokenStorage.saveUserData(
+          role: 'driver',
+          name: _userName ?? (name ?? 'Driver'),
+          email: _userEmail ?? (email ?? phone),
+          password: password ?? '',
+        );
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = _extractErrorMessage(res.data, 'Verification failed. Please check the code.');
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        _errorMessage = _extractErrorMessage(e.response!.data, 'Invalid OTP code.');
+      } else {
+        _errorMessage = 'Unable to connect to server. Please try again.';
+      }
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred during verification.';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
   Future<void> logout() async {
     try {
       await _dio.post(ApiConstants.logout);
