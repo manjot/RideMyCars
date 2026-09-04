@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/countries_data.dart';
 import '../../core/storage/token_storage.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/country_picker_modal.dart';
 import '../dashboard/driver_dashboard_screen.dart';
 import 'driver_register_screen.dart';
 
@@ -18,8 +20,9 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(text: 'sipho@ridemycars.com');
   final _passwordController = TextEditingController(text: '123456');
-  final _phoneController = TextEditingController();
+  final _mobileNumberController = TextEditingController();
   final _otpController = TextEditingController();
+  Country _selectedCountry = CountriesData.defaultCountry;
 
   bool _isPhoneAuth = true;
   bool _otpSent = false;
@@ -50,7 +53,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     _timer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
-    _phoneController.dispose();
+    _mobileNumberController.dispose();
     _otpController.dispose();
     super.dispose();
   }
@@ -74,16 +77,17 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   }
 
   Future<void> _handleSendPhoneOtp() async {
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
+    final localNum = _mobileNumberController.text.trim();
+    if (localNum.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter your mobile phone number with country code'),
+          content: Text('Please enter your mobile phone number'),
           backgroundColor: AppColors.danger,
         ),
       );
       return;
     }
+    final phone = '${_selectedCountry.dial} $localNum';
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final res = await auth.sendPhoneOtp(phone: phone, action: 'login');
@@ -147,7 +151,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   }
 
   Future<void> _handleVerifyPhoneOtp() async {
-    final phone = _phoneController.text.trim();
+    final phone = '${_selectedCountry.dial} ${_mobileNumberController.text.trim()}';
     final otp = _otpController.text.trim();
     if (otp.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -327,22 +331,78 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
                   // 1. Phone OTP Fields
                   if (_isPhoneAuth) ...[
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(color: AppColors.textLight),
-                      enabled: !_otpSent,
-                      decoration: InputDecoration(
-                        labelText: 'Driver Mobile Phone (e.g. +1 555-123-4567)',
-                        labelStyle: const TextStyle(color: AppColors.textMuted),
-                        prefixIcon: const Icon(Icons.phone_iphone_rounded, color: AppColors.textMuted),
-                        filled: true,
-                        fillColor: AppColors.surfaceDark,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _otpSent ? Colors.white12 : AppColors.primary.withValues(alpha: 0.3),
+                          width: 1.5,
                         ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Country Code Dropdown Trigger with Flag
+                          InkWell(
+                            onTap: _otpSent
+                                ? null
+                                : () {
+                                    showCountryPickerModal(
+                                      context: context,
+                                      selectedCountry: _selectedCountry,
+                                      onSelect: (c) {
+                                        setState(() => _selectedCountry = c);
+                                      },
+                                    );
+                                  },
+                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.03),
+                                border: Border(
+                                  right: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(_selectedCountry.flag, style: const TextStyle(fontSize: 22)),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _selectedCountry.dial,
+                                    style: const TextStyle(
+                                      color: AppColors.textLight,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_drop_down_rounded, color: AppColors.textMuted, size: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Mobile Number Input Field
+                          Expanded(
+                            child: TextFormField(
+                              controller: _mobileNumberController,
+                              keyboardType: TextInputType.phone,
+                              enabled: !_otpSent,
+                              style: const TextStyle(color: AppColors.textLight, fontSize: 16),
+                              decoration: const InputDecoration(
+                                hintText: 'Mobile number',
+                                hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 15),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),

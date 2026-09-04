@@ -125,11 +125,100 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Mobile Phone <span class="text-brand-500 font-bold">*</span> <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(Twilio SMS OTP verification)</span></label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <div class="relative" @click.away="countryDropdownOpen = false">
+                            <div class="flex items-center h-[52px] bg-gray-50/50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all overflow-hidden shadow-sm">
+                                <!-- Country Dropdown Trigger with Flag -->
+                                <button type="button" 
+                                        @click.prevent.stop="toggleCountryDropdown()" 
+                                        class="flex items-center gap-2 h-full px-3.5 bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200/80 dark:hover:bg-white/10 border-r border-gray-200 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
+                                    <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
+                                         :alt="selectedCountry.name"
+                                         class="w-6 h-4 object-cover rounded-sm shadow-sm border border-black/10 dark:border-white/15 shrink-0">
+                                    <span class="text-sm font-bold text-gray-900 dark:text-white" x-text="selectedCountry.dial">+1</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180 text-black dark:text-white' : ''" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+
+                                <!-- Mobile Input -->
+                                <input type="tel" 
+                                       x-model="mobileNumber"
+                                       @input="updatePhone()"
+                                       placeholder="Mobile number" 
+                                       required
+                                       class="flex-1 h-full bg-transparent px-4 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none border-none text-base">
+                                
+                                <div class="pr-3 text-brand-500" title="Verified via Twilio SMS OTP">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                </div>
                             </div>
-                            <input type="tel" name="phone" x-model="phone" required placeholder="+1 234 567 8900" class="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+
+                            <input type="hidden" name="phone" :value="phone">
+
+                            <!-- Country Dropdown Floating Card -->
+                            <div x-show="countryDropdownOpen" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-98"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-98"
+                                 class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#181818] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-gray-200 dark:border-white/15 z-50 overflow-hidden ring-1 ring-black/5"
+                                 style="display: none;">
+                                
+                                <!-- Search Bar Header -->
+                                <div class="p-3 bg-gray-50/90 dark:bg-white/5 border-b border-gray-100 dark:border-white/10 sticky top-0 z-10 backdrop-blur-sm">
+                                    <div class="relative flex items-center bg-white dark:bg-[#121212] rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all shadow-inner px-3 py-2">
+                                        <svg class="w-4 h-4 text-gray-400 shrink-0 mr-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                        <input type="text" 
+                                               x-ref="countrySearchInput"
+                                               x-model="countrySearch" 
+                                               placeholder="Search country or code (e.g. +1, USA)..." 
+                                               class="w-full bg-transparent text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none border-none p-0">
+                                        <button type="button" 
+                                                x-show="countrySearch" 
+                                                @click.prevent.stop="countrySearch = ''; $refs.countrySearchInput?.focus({ preventScroll: true })" 
+                                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0 ml-1 p-0.5"
+                                                style="display: none;">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Country List -->
+                                <div class="max-h-52 sm:max-h-60 overflow-y-auto country-scroll p-1.5 space-y-0.5 text-sm">
+                                    <template x-for="country in filteredCountries" :key="country.code + country.dial">
+                                        <button type="button" 
+                                                @click="selectCountry(country)"
+                                                class="w-full px-3 py-2 rounded-xl flex items-center justify-between hover:bg-gray-100/90 dark:hover:bg-white/10 active:bg-gray-200/80 transition-all text-left group cursor-pointer"
+                                                :class="selectedCountry.code === country.code ? 'bg-brand-500 text-white hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                            <div class="flex items-center gap-3 min-w-0 pr-2">
+                                                <img :src="country.flagUrl || `https://flagcdn.com/w40/${(country.code || 'us').toLowerCase()}.png`" 
+                                                     :alt="country.name" 
+                                                     loading="lazy"
+                                                     class="w-6 h-4 object-cover rounded-sm shadow-sm shrink-0 border border-black/10 dark:border-white/15">
+                                                <span class="text-xs font-semibold truncate" 
+                                                      :class="selectedCountry.code === country.code ? 'text-white' : 'text-gray-900 dark:text-gray-100 group-hover:text-black dark:group-hover:text-white'" 
+                                                      x-text="country.name"></span>
+                                            </div>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-md" 
+                                                      :class="selectedCountry.code === country.code ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white group-hover:bg-gray-200'" 
+                                                      x-text="country.dial"></span>
+                                                <span x-show="selectedCountry.code === country.code" class="text-xs font-bold text-white">✓</span>
+                                            </div>
+                                        </button>
+                                    </template>
+                                    
+                                    <div x-show="filteredCountries.length === 0" class="py-8 text-center" style="display: none;">
+                                        <div class="text-2xl mb-1">🌍</div>
+                                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">No countries found</p>
+                                        <p class="text-[11px] text-gray-400 mt-0.5">Try searching with a different name or dial code</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -437,6 +526,12 @@
             return {
                 currentRole: '{{ $role ?? "customer" }}',
                 phone: '{{ old("phone", request("phone")) }}',
+                mobileNumber: '',
+                countryDropdownOpen: false,
+                countrySearch: '',
+                selectedCountry: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES[0] : { name: 'United States', code: 'US', dial: '+1', flagUrl: 'https://flagcdn.com/w40/us.png' },
+                countries: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES : [],
+
                 otpModalOpen: false,
                 isLoading: false,
                 otpError: '',
@@ -444,6 +539,58 @@
                 timer: 120,
                 timerInterval: null,
                 c1: '', c2: '', c3: '', c4: '',
+
+                init() {
+                    if (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) {
+                        this.countries = window.WORLD_COUNTRIES;
+                        if (!this.selectedCountry || !this.selectedCountry.flagUrl) {
+                            this.selectedCountry = this.countries[0];
+                        }
+                    }
+                    const prefill = '{{ old("phone", request("phone")) }}';
+                    if (prefill) {
+                        const matched = this.countries.find(c => prefill.startsWith(c.dial));
+                        if (matched) {
+                            this.selectedCountry = matched;
+                            this.mobileNumber = prefill.substring(matched.dial.length).trim();
+                        } else {
+                            this.mobileNumber = prefill.replace(/^\+?\d{1,4}/, '').trim();
+                        }
+                    }
+                    this.updatePhone();
+                },
+
+                get filteredCountries() {
+                    if (!this.countrySearch) return this.countries;
+                    const q = this.countrySearch.toLowerCase().trim();
+                    return this.countries.filter(c => 
+                        c.name.toLowerCase().includes(q) || 
+                        c.dial.includes(q) || 
+                        c.code.toLowerCase().includes(q)
+                    );
+                },
+
+                toggleCountryDropdown() {
+                    this.countryDropdownOpen = !this.countryDropdownOpen;
+                    if (this.countryDropdownOpen) {
+                        this.countrySearch = '';
+                        this.$nextTick(() => {
+                            this.$refs.countrySearchInput?.focus({ preventScroll: true });
+                        });
+                    }
+                },
+
+                selectCountry(country) {
+                    this.selectedCountry = country;
+                    this.countryDropdownOpen = false;
+                    this.countrySearch = '';
+                    this.updatePhone();
+                },
+
+                updatePhone() {
+                    const raw = (this.mobileNumber || '').replace(/[^\d]/g, '');
+                    this.phone = this.selectedCountry.dial + (raw ? ' ' + raw : '');
+                },
 
                 startTimer(seconds = 120) {
                     this.timer = seconds;
