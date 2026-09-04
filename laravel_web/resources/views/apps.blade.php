@@ -1,6 +1,17 @@
 <x-layout>
     <x-slot:title>Download RideMyCars Apps — Rider & Driver Partner Editions | RideMyCars</x-slot>
 
+@php
+    $currentHost = request()->getHost();
+    $isLocalHost = in_array($currentHost, ['localhost', '127.0.0.1', '::1']);
+    $serverIp = $isLocalHost ? gethostbyname(gethostname()) : $currentHost;
+    $port = request()->getPort() ? ':' . request()->getPort() : '';
+    $scheme = request()->getScheme();
+    
+    $riderDownloadTargetUrl = $scheme . '://' . $serverIp . $port . route('download.rider', [], false);
+    $driverDownloadTargetUrl = $scheme . '://' . $serverIp . $port . route('download.driver', [], false);
+@endphp
+
     <!-- Hero Header -->
     <section class="relative pt-16 pb-20 lg:pt-24 lg:pb-28 overflow-hidden bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-[#080808] dark:via-[#0f0f0f] dark:to-[#080808]">
         <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-60 -z-10"></div>
@@ -125,11 +136,12 @@
                     <!-- Right Column: Card Preview & QR Code -->
                     <div class="lg:col-span-5 flex flex-col items-center justify-center text-center">
                         <div class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-white/10 shadow-xl max-w-xs w-full">
-                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
-                                <!-- QR Code Visual Generator -->
-                                <svg class="w-44 h-44 text-gray-900 dark:text-white" viewBox="0 0 100 100" fill="currentColor">
-                                    <path d="M0 0h32v32H0V0zm6 6v20h20V6H6zm6 6h8v8h-8v-8zM68 0h32v32H68V0zm6 6v20h20V6H74zm6 6h8v8h-8v-8zM0 68h32v32H0V68zm6 6v20h20V74H6zm6 6h8v8h-8v-8zM42 6h8v8h-8V6zm14 0h6v8h-6V6zm0 14h8v8h-8v-8zm-14 0h8v8h-8v-8zm8 8h6v6h-6v-6zm14-14h6v8h-6V6zm14 36h6v8h-6v-8zm-8 8h8v6h-8v-6zm-6-8h6v8h-6v-8zm-14 0h6v6h-6v-6zm-8 8h6v8h-6v-8zm28 0h6v8h-6v-8zm-20 8h8v6h-8v-6zm14 0h8v6h-8v-6zm-34 0h8v6H40v-6zm20 8h6v6h-6v-6zm14 0h8v6h-8v-6zm-28 0h6v6h-6v-6zm20 8h6v6h-6v-6zm-8 0h6v6h-6v-6zm-12 0h8v6h-8v-6z"/>
-                                </svg>
+                            <div class="p-4 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
+                                <!-- Real Scannable QR Code Generator -->
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ urlencode($riderDownloadTargetUrl) }}" 
+                                     alt="Scan to Download Rider App" 
+                                     class="w-44 h-44 rounded-xl object-contain p-1 bg-white border border-gray-200 dark:border-white/10 shadow-sm"
+                                     loading="lazy">
                             </div>
                             <span class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider block">
                                 Scan to Download Rider App
@@ -233,11 +245,12 @@
                     <!-- Right Column: Card Preview & QR Code -->
                     <div class="lg:col-span-5 flex flex-col items-center justify-center text-center">
                         <div class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-amber-500/20 shadow-xl max-w-xs w-full">
-                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
-                                <!-- QR Code Visual Generator -->
-                                <svg class="w-44 h-44 text-amber-500 dark:text-amber-400" viewBox="0 0 100 100" fill="currentColor">
-                                    <path d="M0 0h32v32H0V0zm6 6v20h20V6H6zm6 6h8v8h-8v-8zM68 0h32v32H68V0zm6 6v20h20V6H74zm6 6h8v8h-8v-8zM0 68h32v32H0V68zm6 6v20h20V74H6zm6 6h8v8h-8v-8zM42 6h8v8h-8V6zm14 0h6v8h-6V6zm0 14h8v8h-8v-8zm-14 0h8v8h-8v-8zm8 8h6v6h-6v-6zm14-14h6v8h-6V6zm14 36h6v8h-6v-8zm-8 8h8v6h-8v-6zm-6-8h6v8h-6v-8zm-14 0h6v6h-6v-6zm-8 8h6v8h-6v-8zm28 0h6v8h-6v-8zm-20 8h8v6h-8v-6zm14 0h8v6h-8v-6zm-34 0h8v6H40v-6zm20 8h6v6h-6v-6zm14 0h8v6h-8v-6zm-28 0h6v6h-6v-6zm20 8h6v6h-6v-6zm-8 0h6v6h-6v-6zm-12 0h8v6h-8v-6z"/>
-                                </svg>
+                            <div class="p-4 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
+                                <!-- Real Scannable QR Code Generator -->
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ urlencode($driverDownloadTargetUrl) }}" 
+                                     alt="Scan to Download Driver App" 
+                                     class="w-44 h-44 rounded-xl object-contain p-1 bg-white border border-gray-200 dark:border-white/10 shadow-sm"
+                                     loading="lazy">
                             </div>
                             <span class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider block">
                                 Scan to Download Driver App

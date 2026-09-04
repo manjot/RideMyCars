@@ -147,15 +147,24 @@
                         Share this 4-digit PIN with recipient <strong>{{ $delivery->recipient_name }}</strong> (<span class="font-bold">{{ $delivery->recipient_phone }}</span>). Courier must enter this PIN to complete delivery.
                     </p>
 
-                    <!-- PIN Input Form for Courier/Admin Validation -->
+                    <!-- PIN Input Form (Visible ONLY to Assigned Courier or Admin) -->
                     @if($delivery->delivery_status !== 'delivered')
-                        <form action="/api/package-delivery/{{ $delivery->id }}/verify-otp" method="POST" class="pt-3 flex gap-3 border-t border-amber-200/60 dark:border-amber-800/30">
-                            @csrf
-                            <input type="text" name="otp" maxLength="4" required placeholder="Enter 4-digit PIN" class="px-4 py-3 bg-white dark:bg-[#111] border border-amber-300 dark:border-amber-700/50 rounded-xl font-mono font-bold text-center text-lg text-gray-900 dark:text-white w-44">
-                            <button type="submit" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">
-                                ✓ Verify PIN & Complete Delivery
-                            </button>
-                        </form>
+                        @if(auth()->check() && (auth()->id() === $delivery->courier_id || auth()->user()->role === 'driver' || auth()->user()->role === 'admin' || auth()->user()->driverProfile))
+                            <form action="/api/package-delivery/{{ $delivery->id }}/verify-otp" method="POST" class="pt-3 flex gap-3 border-t border-amber-200/60 dark:border-amber-800/30">
+                                @csrf
+                                <input type="text" name="otp" maxLength="4" required placeholder="Enter 4-digit PIN" class="px-4 py-3 bg-white dark:bg-[#111] border border-amber-300 dark:border-amber-700/50 rounded-xl font-mono font-bold text-center text-lg text-gray-900 dark:text-white w-44">
+                                <button type="submit" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">
+                                    ✓ Verify PIN & Complete Delivery
+                                </button>
+                            </form>
+                        @else
+                            <div class="pt-3 border-t border-amber-200/60 dark:border-amber-800/30 flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+                                <svg class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                <span>🔒 The courier will ask the recipient for this 4-digit PIN at dropoff to verify package handoff.</span>
+                            </div>
+                        @endif
                     @endif
                 </div>
 
