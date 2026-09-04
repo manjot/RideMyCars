@@ -9,9 +9,24 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
+    <!-- Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        input, button, select, textarea {
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
+        .country-scroll::-webkit-scrollbar { width: 6px; }
+        .country-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
+        .dark .country-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
+        .country-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .dark .country-scroll::-webkit-scrollbar-thumb { background: #374151; }
+        .country-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
     <!-- Alpine.js & Country Dataset -->
     <script src="{{ asset('js/countries-data.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -126,16 +141,16 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Mobile Phone <span class="text-brand-500 font-bold">*</span> <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(Twilio SMS OTP verification)</span></label>
                         <div class="relative" @click.away="countryDropdownOpen = false">
-                            <div class="flex items-center h-[52px] bg-gray-50/50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all overflow-hidden shadow-sm">
+                            <div class="flex items-center h-[52px] sm:h-[54px] bg-gray-50/50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all overflow-hidden shadow-sm">
                                 <!-- Country Dropdown Trigger with Flag -->
                                 <button type="button" 
                                         @click.prevent.stop="toggleCountryDropdown()" 
-                                        class="flex items-center gap-2 h-full px-3.5 bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200/80 dark:hover:bg-white/10 border-r border-gray-200 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
+                                        class="flex items-center gap-2 h-full px-3.5 bg-transparent hover:bg-black/5 dark:hover:bg-white/10 border-r border-gray-200 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
                                     <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
                                          :alt="selectedCountry.name"
                                          class="w-6 h-4 object-cover rounded-sm shadow-sm border border-black/10 dark:border-white/15 shrink-0">
                                     <span class="text-sm font-bold text-gray-900 dark:text-white" x-text="selectedCountry.dial">+1</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180 text-black dark:text-white' : ''" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180 text-black dark:text-white' : ''" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 </button>
@@ -146,11 +161,7 @@
                                        @input="updatePhone()"
                                        placeholder="Mobile number" 
                                        required
-                                       class="flex-1 h-full bg-transparent px-4 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none border-none text-base">
-                                
-                                <div class="pr-3 text-brand-500" title="Verified via Twilio SMS OTP">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                                </div>
+                                       class="flex-1 h-full bg-transparent px-4 text-gray-900 dark:text-white placeholder-gray-400 font-sans focus:outline-none border-none text-base">
                             </div>
 
                             <input type="hidden" name="phone" :value="phone">

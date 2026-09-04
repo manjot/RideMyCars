@@ -2,6 +2,12 @@
     <x-slot:title>Sign In — RideMyCars</x-slot>
 
     <style>
+        * {
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        input, button, select, textarea {
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
         .country-scroll::-webkit-scrollbar { width: 6px; }
         .country-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
         .dark .country-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
@@ -28,11 +34,11 @@
                 <form action="#" method="POST" @submit.prevent="submitMobile()">
                     <div class="relative mb-3" @click.away="countryDropdownOpen = false">
                         <!-- Main Phone Input Bar -->
-                        <div class="flex items-center h-[54px] bg-[#f3f4f6] dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-black dark:focus-within:border-brand-500 focus-within:bg-white dark:focus-within:bg-[#121212] focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-brand-500/20 transition-all duration-200 shadow-sm overflow-hidden">
+                        <div class="flex items-center h-[52px] sm:h-[54px] bg-[#f3f4f6] dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-black dark:focus-within:border-brand-500 focus-within:bg-white dark:focus-within:bg-[#121212] focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-brand-500/20 transition-all duration-200 shadow-sm overflow-hidden">
                             <!-- Country Code Trigger Button -->
                             <button type="button" 
                                     @click.prevent.stop="toggleCountryDropdown()"
-                                    class="flex items-center gap-2 h-full px-3.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] dark:bg-white/5 dark:hover:bg-white/10 border-r border-gray-300/80 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
+                                    class="flex items-center gap-2 h-full px-3.5 bg-transparent hover:bg-black/5 dark:hover:bg-white/10 border-r border-gray-300/80 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
                                 <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
                                      :alt="selectedCountry.name" 
                                      class="w-6 h-4 object-cover rounded-sm shadow-sm shrink-0 border border-black/10 dark:border-white/15">
@@ -45,7 +51,7 @@
                             <!-- Mobile Input -->
                             <input type="tel" 
                                    x-model="mobileNumber"
-                                   :placeholder="`${selectedCountry.dial} Mobile number`"
+                                   placeholder="Mobile number"
                                    required
                                    class="flex-1 h-full bg-transparent px-4 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none border-none text-base">
                         </div>
