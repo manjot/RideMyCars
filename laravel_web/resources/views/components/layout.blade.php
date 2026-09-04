@@ -83,38 +83,156 @@
 <body class="font-sans antialiased bg-[#fafafa] dark:bg-[#0a0a0a] text-gray-900 dark:text-white min-h-screen flex flex-col transition-colors duration-200 {{ $theme ?? '' }}">
     
     <!-- Header -->
-    <header class="top-0 left-0 right-0 z-50 bg-white dark:bg-[#111] dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-white/10 transition-colors duration-200">
+    <header x-data="{ mobileMenuOpen: false }" class="sticky top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-b border-gray-100 dark:border-white/10 transition-colors duration-200">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex h-20 items-center justify-between">
                 <!-- Logo -->
-                <a class="flex items-center gap-2 group" href="/">
-                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-16 md:h-[72px] w-auto object-contain dark:bg-white dark:rounded-xl dark:p-1">
+                <a class="flex items-center gap-2 group shrink-0" href="/">
+                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 md:h-16 w-auto object-contain dark:bg-white dark:rounded-xl dark:p-1">
                 </a>
                 
-                <div class="hidden lg:flex items-center gap-6">
+                <!-- Desktop Navigation Menu (Perfect Alignment) -->
+                <div class="hidden lg:flex items-center gap-1 xl:gap-2">
                     @auth
                         @if(auth()->user()->role === 'driver')
-                            <a class="text-sm font-medium transition-colors {{ request()->is('/') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/">Home</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('driver/dashboard*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/driver/dashboard">Dashboard</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('wallet*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/wallet">Earnings</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('pricing*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/pricing">Pricing</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('driver/dashboard*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/driver/dashboard">Dashboard</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('ride*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/ride">Ride</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('wallet*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/wallet">Earnings</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                         @else
-                            <a class="text-sm font-medium transition-colors {{ request()->is('/') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/">Home</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('rent*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/rent">Rent Vehicle</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/hire-driver">Hire Driver</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
-                            <a class="text-sm font-medium transition-colors {{ request()->is('membership*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/membership">Memberships</a>
+                            <!-- Home -->
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                            
+                            <!-- Services Dropdown with Rich Icons -->
+                            <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                                <button @click="open = !open" 
+                                        class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('ride*') || request()->is('rent*') || request()->is('hire-driver*') || request()->is('driver-booking*') || request()->is('delivery*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                    <span>Services</span>
+                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m6 9 6 6 6-6"/>
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                     class="absolute top-full left-0 mt-2 w-[340px] bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                     style="display: none;">
+                                    
+                                    <div class="space-y-1 pb-2">
+                                        <!-- Ride -->
+                                        <a href="/ride" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('ride*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                                                    <circle cx="7" cy="17" r="2"/>
+                                                    <path d="M9 17h6"/>
+                                                    <circle cx="17" cy="17" r="2"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">Ride</span>
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Instant</span>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Book city rides & on-demand trips</span>
+                                            </div>
+                                        </a>
+
+                                        <!-- Rent Vehicle -->
+                                        <a href="/rent" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('rent*') ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="8" cy="15" r="5"/>
+                                                    <path d="m11.5 11.5 7-7"/>
+                                                    <path d="m16 4 2 2"/>
+                                                    <path d="m19 7 2 2"/>
+                                                    <circle cx="8" cy="15" r="2"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Rent Vehicle</span>
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Fleet</span>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Self-drive & luxury fleet rentals</span>
+                                            </div>
+                                        </a>
+
+                                        <!-- Hire Driver -->
+                                        <a href="/hire-driver" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                                    <circle cx="12" cy="7" r="4"/>
+                                                    <path d="m9 11 2 2 4-4"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Hire Driver</span>
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Verified</span>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Private chauffeurs for your car</span>
+                                            </div>
+                                        </a>
+
+                                        <!-- Package Delivery -->
+                                        <a href="/delivery" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('delivery*') ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="m7.5 4.27 9 5.15"/>
+                                                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                                                    <path d="m3.3 7 8.7 5 8.7-5"/>
+                                                    <path d="M12 22V12"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">Package Delivery</span>
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">Express</span>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Door-to-door courier dispatch</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="pt-2 px-1 flex items-center justify-between">
+                                        <a href="/pricing" class="text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">
+                                            <span>Rates & Calculator</span>
+                                            <span>→</span>
+                                        </a>
+                                        <a href="/onboarding" class="text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                                            How It Works
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Memberships -->
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('membership*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
                             
                             <!-- Apps Dropdown -->
-                            <div x-data="{ open: false }" class="relative" @click.away="open = false">
-                                <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1.5 {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-3.5 py-2 rounded-full">
+                            <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                                <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-                                    Apps 
-                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                    <span>Apps</span> 
+                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
-                                <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" style="display: none;">
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                     class="absolute top-full left-0 mt-2 w-64 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                     style="display: none;">
                                     <div class="space-y-1 pb-2">
                                         <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
                                             <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0 text-base">🚗</span>
@@ -132,7 +250,7 @@
                                         </a>
                                     </div>
                                     <div class="pt-2">
-                                        <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-400">
+                                        <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400">
                                             Downloads & QR Hub →
                                         </a>
                                     </div>
@@ -140,38 +258,166 @@
                             </div>
 
                             <!-- Company Dropdown -->
-                            <div x-data="{ open: false }" class="relative" @click.away="open = false">
-                                <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1 {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-4 py-2 rounded-full">
-                                    Company 
-                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                                <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                    <span>Company</span> 
+                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
-                                <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-xl rounded-xl py-2 z-50" style="display: none;">
-                                    <a href="/about" class="block px-4 py-2.5 text-sm {{ request()->is('about*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">About Us</a>
-                                    <a href="/safety" class="block px-4 py-2.5 text-sm {{ request()->is('safety*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Safety</a>
-                                    <a href="/become-driver" class="block px-4 py-2.5 text-sm {{ request()->is('become-driver*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Become a Driver</a>
-                                    <a href="/become-owner" class="block px-4 py-2.5 text-sm {{ request()->is('become-owner*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">List Your Vehicle</a>
-                                    <a href="/blogs" class="block px-4 py-2.5 text-sm {{ request()->is('blogs*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }} hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Blogs</a>
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                     class="absolute top-full left-0 mt-2 w-52 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50" 
+                                     style="display: none;">
+                                    <div class="space-y-0.5">
+                                        <a href="/about" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">About Us</a>
+                                        <a href="/safety" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Safety & Trust</a>
+                                        <a href="/become-driver" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Become a Driver</a>
+                                        <a href="/become-owner" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">List Your Vehicle</a>
+                                        <a href="/blogs" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Blogs & News</a>
+                                    </div>
                                 </div>
                             </div>
 
-                            <a class="text-sm font-medium transition-colors {{ request()->is('pricing*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/pricing">Pricing</a>
+                            <!-- Pricing -->
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                         @endif
                     @else
-                        <a class="text-sm font-medium transition-colors {{ request()->is('/') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/">Home</a>
-                        <a class="text-sm font-medium transition-colors {{ request()->is('ride*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/ride">Ride</a>
-                        <a class="text-sm font-medium transition-colors {{ request()->is('rent*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/rent">Rent Vehicle</a>
-                        <a class="text-sm font-medium transition-colors {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/hire-driver">Hire Driver</a>
-                        <a class="text-sm font-medium transition-colors {{ request()->is('delivery*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/delivery">Package Delivery</a>
-                        <a class="text-sm font-medium transition-colors {{ request()->is('membership*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/membership">Memberships</a>
+                        <!-- Guest Navigation: Home, Services Dropdown, Memberships, Apps, Company, Pricing -->
+                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                        
+                        <!-- Services Dropdown with Rich Icons -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" 
+                                    class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('ride*') || request()->is('rent*') || request()->is('hire-driver*') || request()->is('driver-booking*') || request()->is('delivery*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span>Services</span>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                            
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="absolute top-full left-0 mt-2 w-[340px] bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                 style="display: none;">
+                                
+                                <div class="space-y-1 pb-2">
+                                    <!-- Ride -->
+                                    <a href="/ride" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('ride*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                                                <circle cx="7" cy="17" r="2"/>
+                                                <path d="M9 17h6"/>
+                                                <circle cx="17" cy="17" r="2"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">Ride</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Instant</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Book city rides & on-demand trips</span>
+                                        </div>
+                                    </a>
+
+                                    <!-- Rent Vehicle -->
+                                    <a href="/rent" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('rent*') ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="8" cy="15" r="5"/>
+                                                <path d="m11.5 11.5 7-7"/>
+                                                <path d="m16 4 2 2"/>
+                                                <path d="m19 7 2 2"/>
+                                                <circle cx="8" cy="15" r="2"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Rent Vehicle</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Fleet</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Self-drive & luxury fleet rentals</span>
+                                        </div>
+                                    </a>
+
+                                    <!-- Hire Driver -->
+                                    <a href="/hire-driver" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                                <circle cx="12" cy="7" r="4"/>
+                                                <path d="m9 11 2 2 4-4"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Hire Driver</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Verified</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Private chauffeurs for your car</span>
+                                        </div>
+                                    </a>
+
+                                    <!-- Package Delivery -->
+                                    <a href="/delivery" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('delivery*') ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="m7.5 4.27 9 5.15"/>
+                                                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                                                <path d="m3.3 7 8.7 5 8.7-5"/>
+                                                <path d="M12 22V12"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">Package Delivery</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">Express</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Door-to-door courier dispatch</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                
+                                <div class="pt-2 px-1 flex items-center justify-between">
+                                    <a href="/pricing" class="text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">
+                                        <span>Rates & Calculator</span>
+                                        <span>→</span>
+                                    </a>
+                                    <a href="/onboarding" class="text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                                        How It Works
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Memberships -->
+                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('membership*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
                         
                         <!-- Apps Dropdown -->
-                        <div x-data="{ open: false }" class="relative" @click.away="open = false">
-                            <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1.5 {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-3.5 py-2 rounded-full">
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-                                Apps 
-                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                <span>Apps</span> 
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
-                            <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" style="display: none;">
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="absolute top-full left-0 mt-2 w-64 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50 divide-y divide-gray-100 dark:divide-white/5" 
+                                 style="display: none;">
                                 <div class="space-y-1 pb-2">
                                     <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
                                         <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0 text-base">🚗</span>
@@ -189,34 +435,45 @@
                                     </a>
                                 </div>
                                 <div class="pt-2">
-                                    <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-400">
+                                    <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400">
                                         Downloads & QR Hub →
                                     </a>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Company Dropdown -->
-                        <div x-data="{ open: false }" class="relative" @click.away="open = false">
-                            <button @click="open = !open" class="text-sm font-medium transition-colors flex items-center gap-1 {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-900 dark:text-white' }} hover:bg-gray-100 dark:hover:bg-white/10 px-4 py-2 rounded-full">
-                                Company 
-                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span>Company</span> 
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
-                            <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 shadow-xl rounded-xl py-2 z-50" style="display: none;">
-                                <a href="/about" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">About Us</a>
-                                <a href="/safety" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Safety</a>
-                                <a href="/become-driver" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Become a Driver</a>
-                                <a href="/become-owner" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">List Your Vehicle</a>
-                                <a href="/blogs" class="block px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Blogs</a>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="absolute top-full left-0 mt-2 w-52 bg-white/98 dark:bg-[#111]/98 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-50" 
+                                 style="display: none;">
+                                <div class="space-y-0.5">
+                                    <a href="/about" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">About Us</a>
+                                    <a href="/safety" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Safety & Trust</a>
+                                    <a href="/become-driver" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Become a Driver</a>
+                                    <a href="/become-owner" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">List Your Vehicle</a>
+                                    <a href="/blogs" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Blogs & News</a>
+                                </div>
                             </div>
                         </div>
 
-                        <a class="text-sm font-medium transition-colors {{ request()->is('pricing*') ? 'text-brand-500 font-bold dark:text-brand-400' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}" href="/pricing">Pricing</a>
+                        <!-- Pricing -->
+                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                     @endauth
                 </div>
                 
                 <!-- Actions -->
-                <div class="flex items-center gap-3 lg:gap-6 shrink-0">
+                <div class="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
                     <button @click="darkMode = !darkMode" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-white/10 shrink-0" aria-label="Toggle theme">
                         <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                         <svg x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
@@ -456,12 +713,197 @@
                         </div>
                     </div>
                     @else
-                    <a class="whitespace-nowrap text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors" href="/login">Sign In</a>
-                    <a class="whitespace-nowrap px-4 py-2 lg:px-6 lg:py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-brand-500/25" href="/signup">Get Started</a>
+                    <a class="hidden sm:inline-block whitespace-nowrap text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-full transition-colors" href="/login">Sign In</a>
+                    <a class="whitespace-nowrap px-4 py-2 lg:px-5 lg:py-2.5 bg-brand-500 hover:bg-brand-600 text-black font-bold text-sm rounded-xl transition-all shadow-md shadow-brand-500/25 hover:shadow-brand-500/40" href="/signup">Get Started</a>
                     @endauth
+
+                    <!-- Mobile Menu Hamburger Button (Visible on < lg) -->
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                            class="lg:hidden w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-gray-700 dark:text-gray-200 border border-gray-200/60 dark:border-white/10 focus:outline-none shrink-0" 
+                            aria-label="Toggle navigation menu">
+                        <svg x-show="!mobileMenuOpen" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                        <svg x-show="mobileMenuOpen" style="display: none;" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </nav>
+
+        <!-- Mobile Navigation Drawer -->
+        <div x-show="mobileMenuOpen" 
+             x-cloak
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="opacity-0 -translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             @click.away="mobileMenuOpen = false"
+             class="lg:hidden border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[#0c0c0c] px-4 pt-3 pb-6 space-y-4 max-h-[calc(100vh-5rem)] overflow-y-auto shadow-2xl" 
+             style="display: none;">
+            
+            <!-- Mobile Links -->
+            <div class="space-y-1">
+                <a href="/" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold {{ request()->is('/') ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5' }} transition-colors">
+                    <span class="text-base">🏠</span>
+                    <span>Home</span>
+                </a>
+            </div>
+
+            <!-- Services Mobile Section -->
+            <div class="space-y-1.5 pt-1">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3.5 flex items-center justify-between">
+                    <span>Services</span>
+                    <a href="/pricing" class="text-[10px] text-brand-500 lowercase tracking-normal font-bold">rates & pricing →</a>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    <!-- Ride -->
+                    <a href="/ride" class="flex items-center gap-3 p-2.5 rounded-xl transition-all {{ request()->is('ride*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <div class="w-9 h-9 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                            <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                                <circle cx="7" cy="17" r="2"/>
+                                <path d="M9 17h6"/>
+                                <circle cx="17" cy="17" r="2"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Ride</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Book on-demand city rides</div>
+                        </div>
+                    </a>
+
+                    <!-- Rent Vehicle -->
+                    <a href="/rent" class="flex items-center gap-3 p-2.5 rounded-xl transition-all {{ request()->is('rent*') ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <div class="w-9 h-9 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="8" cy="15" r="5"/>
+                                <path d="m11.5 11.5 7-7"/>
+                                <path d="m16 4 2 2"/>
+                                <path d="m19 7 2 2"/>
+                                <circle cx="8" cy="15" r="2"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Rent Vehicle</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Self-drive & car rentals</div>
+                        </div>
+                    </a>
+
+                    <!-- Hire Driver -->
+                    <a href="/hire-driver" class="flex items-center gap-3 p-2.5 rounded-xl transition-all {{ request()->is('hire-driver*') || request()->is('driver-booking*') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                                <path d="m9 11 2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Hire Driver</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Verified private chauffeurs</div>
+                        </div>
+                    </a>
+
+                    <!-- Package Delivery -->
+                    <a href="/delivery" class="flex items-center gap-3 p-2.5 rounded-xl transition-all {{ request()->is('delivery*') ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <div class="w-9 h-9 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                            <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m7.5 4.27 9 5.15"/>
+                                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                                <path d="m3.3 7 8.7 5 8.7-5"/>
+                                <path d="M12 22V12"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Package Delivery</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Door-to-door courier dispatch</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Memberships, Pricing & Apps -->
+            <div class="space-y-1 pt-1 border-t border-gray-100 dark:border-white/10">
+                <a href="/membership" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->is('membership*') ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5' }} transition-colors">
+                    <span>Memberships</span>
+                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30">VIP</span>
+                </a>
+                <a href="/pricing" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->is('pricing*') ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5' }} transition-colors">
+                    <span>Pricing & Rates</span>
+                    <span class="text-xs text-gray-400">→</span>
+                </a>
+            </div>
+
+            <!-- Apps Hub Mobile -->
+            <div class="space-y-1.5 pt-1 border-t border-gray-100 dark:border-white/10">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3.5">Apps</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="/apps#rider-app" class="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center gap-2.5 hover:bg-brand-500/10 transition-colors">
+                        <span class="text-base">🚗</span>
+                        <div class="min-w-0">
+                            <span class="block text-xs font-bold text-gray-900 dark:text-white truncate">Rider App</span>
+                            <span class="block text-[10px] text-gray-500 truncate">Book rides</span>
+                        </div>
+                    </a>
+                    <a href="/apps#driver-app" class="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center gap-2.5 hover:bg-amber-500/10 transition-colors">
+                        <span class="text-base">🚕</span>
+                        <div class="min-w-0">
+                            <span class="block text-xs font-bold text-gray-900 dark:text-white truncate">Driver App</span>
+                            <span class="block text-[10px] text-gray-500 truncate">Keep 90%</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Company Links Mobile -->
+            <div class="space-y-1 pt-1 border-t border-gray-100 dark:border-white/10">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3.5">Company</div>
+                <div class="grid grid-cols-2 gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 px-1">
+                    <a href="/about" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">About Us</a>
+                    <a href="/safety" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Safety & Trust</a>
+                    <a href="/become-driver" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Become Driver</a>
+                    <a href="/become-owner" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">List Vehicle</a>
+                    <a href="/blogs" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Blogs & News</a>
+                    <a href="/contact" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Contact</a>
+                </div>
+            </div>
+
+            <!-- Mobile Auth Action Buttons -->
+            <div class="pt-3 border-t border-gray-100 dark:border-white/10">
+                @auth
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/5 mb-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-brand-500 text-black font-black flex items-center justify-center text-sm shrink-0">
+                                {{ substr(auth()->user()->name, 0, 1) }}
+                            </div>
+                            <div class="truncate">
+                                <div class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ auth()->user()->name }}</div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{{ auth()->user()->role ?? 'Member' }}</div>
+                            </div>
+                        </div>
+                        <a href="/account" class="text-xs font-bold text-brand-500 hover:underline shrink-0">Profile →</a>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="/my-rides" class="py-2.5 text-center text-xs font-bold rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">My Rides</a>
+                        <a href="/wallet" class="py-2.5 text-center text-xs font-bold rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">Wallet</a>
+                    </div>
+                    <form method="POST" action="/logout" class="mt-2">
+                        @csrf
+                        <button type="submit" class="w-full py-2 text-center text-xs font-bold text-red-500 hover:text-red-600">Sign Out</button>
+                    </form>
+                @else
+                    <div class="flex flex-col gap-2">
+                        <a href="/login" class="w-full py-2.5 text-center text-sm font-bold text-gray-800 dark:text-white bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">Sign In</a>
+                        <a href="/signup" class="w-full py-2.5 text-center text-sm font-black text-black bg-brand-500 hover:bg-brand-600 rounded-xl shadow-md shadow-brand-500/25 transition-all">Get Started</a>
+                    </div>
+                @endauth
+            </div>
+        </div>
     </header>
 
     {{ $slot }}
