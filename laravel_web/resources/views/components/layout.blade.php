@@ -34,6 +34,22 @@
         .dark .dropdown-menu-card {
             background-color: #121212 !important;
         }
+        .glow-ambient-amber {
+            background: radial-gradient(circle, rgba(249, 197, 42, 0.22) 0%, rgba(249, 115, 22, 0.12) 45%, transparent 70%);
+        }
+        .glow-ambient-blue {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, rgba(37, 99, 235, 0.10) 45%, transparent 70%);
+        }
+        .glow-ambient-emerald {
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.20) 0%, rgba(16, 185, 129, 0.10) 45%, transparent 70%);
+        }
+        .glow-ambient-purple {
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.10) 45%, transparent 70%);
+        }
+        .glass-colorful {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script>
