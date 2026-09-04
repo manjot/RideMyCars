@@ -82,11 +82,12 @@ fi
 
 # Step 7: Run Migrations and Seeders
 echo "🗄️ Running Database Migrations & Seeders..."
-$PHP_BIN artisan migrate --seed --force || echo "⚠️ Migration notice: Please verify your DB credentials in $LARAVEL_DIR/.env if database connection failed."
+$PHP_BIN artisan migrate --force
+$PHP_BIN artisan db:seed --force || echo "⚠️ Seeding notice: Database seeded or partially seeded."
 
 # Step 8: Storage Link & Permissions
 echo "🔗 Creating storage symlink..."
-$PHP_BIN artisan storage:link || true
+[ ! -e "public/storage" ] && $PHP_BIN artisan storage:link || true
 
 echo "🔒 Setting permissions for storage and bootstrap/cache..."
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
