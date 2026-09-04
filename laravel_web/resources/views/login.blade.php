@@ -14,6 +14,272 @@
         .country-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
         .dark .country-scroll::-webkit-scrollbar-thumb { background: #374151; }
         .country-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Bulletproof Phone Input Bar & Country Trigger */
+        .phone-input-bar {
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            height: 52px !important;
+            min-height: 52px !important;
+            max-height: 52px !important;
+            border-radius: 12px !important;
+            background-color: #f3f4f6 !important;
+            border: 1px solid #e5e7eb !important;
+            transition: all 0.2s ease !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+        .dark .phone-input-bar {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .phone-input-bar:focus-within {
+            border-color: #000000 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        .dark .phone-input-bar:focus-within {
+            border-color: #f59e0b !important;
+            background-color: #121212 !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
+        }
+        .phone-country-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            height: 50px !important;
+            min-height: 50px !important;
+            padding: 0 14px 0 16px !important;
+            background: transparent !important;
+            border: none !important;
+            border-right: 1px solid #e5e7eb !important;
+            cursor: pointer !important;
+            flex-shrink: 0 !important;
+            user-select: none !important;
+            transition: background-color 0.15s ease !important;
+            box-sizing: border-box !important;
+        }
+        .dark .phone-country-btn {
+            border-right-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .phone-country-btn:hover {
+            background-color: rgba(0, 0, 0, 0.04) !important;
+        }
+        .dark .phone-country-btn:hover {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        .phone-flag-img {
+            width: 24px !important;
+            height: 16px !important;
+            object-fit: cover !important;
+            border-radius: 3px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            flex-shrink: 0 !important;
+            display: block !important;
+        }
+        .phone-dial-code {
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            color: #111827 !important;
+            letter-spacing: -0.01em !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+        }
+        .dark .phone-dial-code {
+            color: #ffffff !important;
+        }
+        .phone-arrow-icon {
+            width: 14px !important;
+            height: 14px !important;
+            color: #9ca3af !important;
+            flex-shrink: 0 !important;
+            transition: transform 0.2s ease, color 0.2s ease !important;
+        }
+        .phone-country-btn:hover .phone-arrow-icon {
+            color: #4b5563 !important;
+        }
+        .dark .phone-country-btn:hover .phone-arrow-icon {
+            color: #d1d5db !important;
+        }
+        .phone-text-input {
+            flex: 1 1 0% !important;
+            width: 100% !important;
+            height: 50px !important;
+            min-height: 50px !important;
+            padding: 0 16px !important;
+            margin: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            font-size: 15px !important;
+            font-weight: 500 !important;
+            color: #111827 !important;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+            box-sizing: border-box !important;
+        }
+        .dark .phone-text-input {
+            color: #ffffff !important;
+        }
+        .phone-text-input::placeholder {
+            color: #9ca3af !important;
+            font-weight: 400 !important;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+        }
+
+        /* Dropdown Card & Options */
+        .country-dropdown-card {
+            position: absolute !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: calc(100% + 8px) !important;
+            background-color: #ffffff !important;
+            border-radius: 16px !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            border: 1px solid #e5e7eb !important;
+            z-index: 50 !important;
+            overflow: hidden !important;
+        }
+        .dark .country-dropdown-card {
+            background-color: #181818 !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        .country-search-wrapper {
+            padding: 12px !important;
+            background-color: rgba(249, 250, 251, 0.95) !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+        .dark .country-search-wrapper {
+            background-color: rgba(255, 255, 255, 0.04) !important;
+            border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        .country-search-box {
+            display: flex !important;
+            align-items: center !important;
+            background-color: #ffffff !important;
+            border-radius: 10px !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 8px 12px !important;
+            gap: 10px !important;
+        }
+        .dark .country-search-box {
+            background-color: #121212 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        .country-search-input {
+            width: 100% !important;
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            color: #0f172a !important;
+            padding: 0 !important;
+        }
+        .dark .country-search-input {
+            color: #ffffff !important;
+        }
+        .country-search-input::placeholder {
+            color: #94a3b8 !important;
+        }
+        .country-options-list {
+            max-height: 240px !important;
+            overflow-y: auto !important;
+            padding: 6px !important;
+        }
+        .country-option-item {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            min-height: 42px !important;
+            padding: 8px 12px !important;
+            border-radius: 10px !important;
+            border: none !important;
+            background: transparent !important;
+            cursor: pointer !important;
+            transition: background-color 0.15s ease, color 0.15s ease !important;
+            text-align: left !important;
+            margin-bottom: 2px !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+        }
+        .country-option-item:hover {
+            background-color: #f1f5f9 !important;
+        }
+        .dark .country-option-item:hover {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        .country-option-item.selected-item {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        .dark .country-option-item.selected-item {
+            background-color: #f59e0b !important;
+            color: #000000 !important;
+        }
+        .country-option-item.selected-item span {
+            color: #ffffff !important;
+        }
+        .dark .country-option-item.selected-item span {
+            color: #000000 !important;
+        }
+        .country-option-left {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            min-width: 0 !important;
+            padding-right: 8px !important;
+        }
+        .country-option-flag {
+            width: 24px !important;
+            height: 16px !important;
+            object-fit: cover !important;
+            border-radius: 2px !important;
+            flex-shrink: 0 !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+        .country-option-name {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .dark .country-option-name {
+            color: #e2e8f0 !important;
+        }
+        .country-option-right {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            flex-shrink: 0 !important;
+        }
+        .country-option-badge {
+            font-size: 12px !important;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+            font-weight: 700 !important;
+            padding: 2px 8px !important;
+            border-radius: 6px !important;
+            background-color: #f1f5f9 !important;
+            color: #475569 !important;
+        }
+        .dark .country-option-badge {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: #94a3b8 !important;
+        }
+        .country-option-item.selected-item .country-option-badge {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+        }
+        .dark .country-option-item.selected-item .country-option-badge {
+            background-color: rgba(0, 0, 0, 0.15) !important;
+            color: #000000 !important;
+        }
     </style>
 
     <main class="flex-1 flex flex-col items-center justify-center py-12 lg:py-20 px-4 sm:px-6 bg-[#fafafa] dark:bg-[#0a0a0a] min-h-[calc(100vh-80px)] transition-colors duration-200" x-data="loginApp()">
@@ -32,18 +298,19 @@
                 <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">We'll send you a 4-digit code to verify your account.</p>
                 
                 <form action="#" method="POST" @submit.prevent="submitMobile()">
-                    <div class="relative mb-3" @click.away="countryDropdownOpen = false">
+                    <div class="phone-input-container relative mb-3" @click.away="countryDropdownOpen = false">
                         <!-- Main Phone Input Bar -->
-                        <div class="flex items-center h-[52px] sm:h-[54px] bg-[#f3f4f6] dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-black dark:focus-within:border-brand-500 focus-within:bg-white dark:focus-within:bg-[#121212] focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-brand-500/20 transition-all duration-200 shadow-sm overflow-hidden">
+                        <div class="phone-input-bar" style="height: 52px; min-height: 52px;">
                             <!-- Country Code Trigger Button -->
                             <button type="button" 
                                     @click.prevent.stop="toggleCountryDropdown()"
-                                    class="flex items-center gap-2 h-full px-3.5 bg-transparent hover:bg-black/5 dark:hover:bg-white/10 border-r border-gray-300/80 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
+                                    class="phone-country-btn"
+                                    style="height: 50px; min-height: 50px; padding: 0 14px 0 16px;">
                                 <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
                                      :alt="selectedCountry.name" 
-                                     class="w-6 h-4 object-cover rounded-sm shadow-sm shrink-0 border border-black/10 dark:border-white/15">
-                                <span class="text-sm font-bold text-gray-900 dark:text-white tracking-tight" x-text="selectedCountry.dial">+1</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180 text-black dark:text-white' : ''" viewBox="0 0 20 20" fill="currentColor">
+                                     class="phone-flag-img">
+                                <span class="phone-dial-code" x-text="selectedCountry.dial">+1</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="phone-arrow-icon" :class="countryDropdownOpen ? 'rotate-180 text-black dark:text-white' : ''" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </button>
@@ -53,7 +320,8 @@
                                    x-model="mobileNumber"
                                    placeholder="Mobile number"
                                    required
-                                   class="flex-1 h-full bg-transparent px-4 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none border-none text-base">
+                                   class="phone-text-input"
+                                   style="height: 50px; min-height: 50px; padding: 0 16px;">
                         </div>
 
                         <!-- Country Dropdown Floating Card -->
@@ -64,20 +332,20 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-98"
-                             class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#181818] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-gray-200 dark:border-white/15 z-50 overflow-hidden ring-1 ring-black/5"
+                             class="country-dropdown-card"
                              style="display: none;">
                             
                             <!-- Search Bar Header -->
-                            <div class="p-3 bg-gray-50/90 dark:bg-white/5 border-b border-gray-100 dark:border-white/10 sticky top-0 z-10 backdrop-blur-sm">
-                                <div class="relative flex items-center bg-white dark:bg-[#121212] rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-black dark:focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-brand-500/20 transition-all shadow-inner px-3 py-2">
-                                    <svg class="w-4 h-4 text-gray-400 shrink-0 mr-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="country-search-wrapper">
+                                <div class="country-search-box">
+                                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                     </svg>
                                     <input type="text" 
                                            x-ref="countrySearchInput"
                                            x-model="countrySearch" 
                                            placeholder="Search country or code (e.g. +1, USA)..." 
-                                           class="w-full bg-transparent text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none border-none p-0">
+                                           class="country-search-input">
                                     <button type="button" 
                                             x-show="countrySearch" 
                                             @click.prevent.stop="countrySearch = ''; $refs.countrySearchInput?.focus({ preventScroll: true })" 
@@ -89,24 +357,22 @@
                             </div>
 
                             <!-- Country List -->
-                            <div class="max-h-52 sm:max-h-60 overflow-y-auto country-scroll p-1.5 space-y-0.5 text-sm">
+                            <div class="country-options-list country-scroll">
                                 <template x-for="country in filteredCountries" :key="country.code + country.dial">
                                     <button type="button" 
                                             @click="selectCountry(country)"
-                                            class="w-full px-3 py-2 rounded-xl flex items-center justify-between hover:bg-gray-100/90 dark:hover:bg-white/10 active:bg-gray-200/80 transition-all text-left group cursor-pointer"
-                                            :class="selectedCountry.code === country.code ? 'bg-black dark:bg-brand-500 text-white dark:text-black hover:bg-gray-900 dark:hover:bg-brand-400' : 'text-gray-800 dark:text-gray-200'">
-                                        <div class="flex items-center gap-3 min-w-0 pr-2">
+                                            class="country-option-item"
+                                            :class="selectedCountry.code === country.code ? 'selected-item' : ''">
+                                        <div class="country-option-left">
                                             <img :src="country.flagUrl || `https://flagcdn.com/w40/${(country.code || 'us').toLowerCase()}.png`" 
                                                  :alt="country.name" 
                                                  loading="lazy"
-                                                 class="w-6 h-4 object-cover rounded-sm shadow-sm shrink-0 border border-black/10 dark:border-white/15">
-                                            <span class="text-xs font-semibold truncate" 
-                                                  :class="selectedCountry.code === country.code ? 'text-white dark:text-black' : 'text-gray-900 dark:text-gray-100 group-hover:text-black dark:group-hover:text-white'" 
+                                                 class="country-option-flag">
+                                            <span class="country-option-name" 
                                                   x-text="country.name"></span>
                                         </div>
-                                        <div class="flex items-center gap-2 shrink-0">
-                                            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-md" 
-                                                  :class="selectedCountry.code === country.code ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white group-hover:bg-gray-200'" 
+                                        <div class="country-option-right">
+                                            <span class="country-option-badge" 
                                                   x-text="country.dial"></span>
                                             <span x-show="selectedCountry.code === country.code" class="text-xs font-bold text-white dark:text-black">✓</span>
                                         </div>
