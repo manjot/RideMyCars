@@ -288,44 +288,57 @@
                             <div x-data="{
                                 open: false,
                                 search: '',
+                                countries: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES : [],
+                                init() {
+                                    if (!this.countries.length && window.WORLD_COUNTRIES) {
+                                        this.countries = window.WORLD_COUNTRIES;
+                                    }
+                                },
                                 get selectedObj() {
-                                    const all = window.WORLD_COUNTRIES || [];
-                                    return all.find(c => c.cca3 === driverCountry || c.name === driverCountry || c.code === driverCountry) || all[0] || { name: driverCountry || 'USA', code: 'US', flagUrl: 'https://flagcdn.com/w40/us.png' };
+                                    const all = (this.countries && this.countries.length) ? this.countries : (window.WORLD_COUNTRIES || []);
+                                    return all.find(c => c.cca3 === driverCountry || c.name === driverCountry || c.code === driverCountry) || all[0] || { name: driverCountry || 'United States', code: 'US', cca3: 'USA', flagUrl: 'https://flagcdn.com/w40/us.png' };
                                 },
                                 get list() {
-                                    const all = window.WORLD_COUNTRIES || [];
-                                    if (!this.search) return all;
+                                    const all = (this.countries && this.countries.length) ? this.countries : (window.WORLD_COUNTRIES || []);
+                                    if (!this.search || !this.search.trim()) return all;
                                     const q = this.search.toLowerCase().trim();
-                                    return all.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.cca3.toLowerCase().includes(q));
+                                    return all.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.code && c.code.toLowerCase().includes(q)) || (c.cca3 && c.cca3.toLowerCase().includes(q)));
                                 }
                             }" class="relative">
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Residence Country *</label>
                                 <input type="hidden" name="driver_country" :value="driverCountry">
                                 
                                 <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.vehCountrySearch?.focus({ preventScroll: true }))"
-                                        class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white flex items-center justify-between text-left">
-                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white flex items-center justify-between text-left cursor-pointer"
+                                        :class="open ? 'ring-2 ring-brand-500 border-brand-500' : ''">
+                                    <div class="flex items-center gap-2.5 min-w-0 pr-1">
                                         <img :src="selectedObj.flagUrl || `https://flagcdn.com/w40/${(selectedObj.code || 'us').toLowerCase()}.png`" 
                                              :alt="selectedObj.name" 
                                              class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
                                         <span class="truncate" x-text="selectedObj.name"></span>
                                     </div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </button>
                                 
-                                <div x-show="open" @click.away="open = false" style="display: none;"
-                                     class="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden">
-                                    <div class="p-2 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-gray-50 dark:bg-[#181818]">
-                                        <input type="text" x-ref="vehCountrySearch" x-model="search" placeholder="Search country..."
-                                               class="w-full px-3 py-1.5 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500">
+                                <div x-show="open" @click.away="open = false" x-cloak style="display: none;"
+                                     class="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#181818] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden">
+                                    <div class="p-2.5 border-b border-gray-100 dark:border-white/5 sticky top-0 bg-white dark:bg-[#181818] z-10 flex items-center gap-2">
+                                        <span class="text-gray-400 text-xs pl-1">🔍</span>
+                                        <input type="text" x-ref="vehCountrySearch" x-model="search" placeholder="Search from 250 countries..."
+                                               class="w-full px-2 py-1.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <button type="button" x-show="search" @click="search = ''" class="text-gray-400 hover:text-gray-600 text-xs px-1">✕</button>
                                     </div>
-                                    <div class="max-h-56 overflow-y-auto p-1 text-xs space-y-0.5">
+                                    <div class="px-3 py-1 bg-gray-50/70 dark:bg-white/5 border-b border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+                                        <span>Select Residence Country</span>
+                                        <span x-text="list.length + ' countries'"></span>
+                                    </div>
+                                    <div class="max-h-60 overflow-y-auto p-1 text-xs space-y-0.5 divide-y divide-gray-50 dark:divide-white/5">
                                         <template x-for="c in list" :key="c.code">
                                             <button type="button" @click="driverCountry = c.cca3 || c.name; open = false; search = ''"
-                                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
-                                                    :class="(driverCountry === c.cca3 || driverCountry === c.name) ? 'bg-brand-500 text-white font-bold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                                    class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                                                    :class="(driverCountry === c.cca3 || driverCountry === c.name || driverCountry === c.code) ? 'bg-brand-500 text-white font-extrabold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
                                                 <div class="flex items-center gap-2.5 min-w-0">
                                                     <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
                                                          :alt="c.name" 
@@ -333,9 +346,12 @@
                                                          class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
                                                     <span class="truncate" x-text="c.name"></span>
                                                 </div>
-                                                <span class="font-mono text-[10px] opacity-70 shrink-0" x-text="c.cca3 || c.code"></span>
+                                                <span class="font-mono text-[10px] opacity-70 shrink-0 uppercase" x-text="c.cca3 || c.code"></span>
                                             </button>
                                         </template>
+                                        <div x-show="list.length === 0" class="p-4 text-center text-xs text-gray-400 font-semibold">
+                                            No matching country found
+                                        </div>
                                     </div>
                                 </div>
                             </div>

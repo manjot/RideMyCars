@@ -65,7 +65,7 @@
         <x-category-banner category="Rent" />
 
         <!-- Hero & RideMyCars Rental Search Bar Card -->
-        <div class="mb-10 bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-xl relative overflow-hidden">
+        <div class="mb-10 bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-xl relative z-20">
             <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <span class="px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-extrabold text-xs uppercase tracking-wider border border-brand-200 dark:border-brand-800/30">RideMyCars Premium Car Rental</span>
@@ -143,51 +143,77 @@
                         <div x-data="{
                             open: false,
                             search: '',
+                            countries: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES : [],
+                            init() {
+                                if (!this.countries.length && window.WORLD_COUNTRIES) {
+                                    this.countries = window.WORLD_COUNTRIES;
+                                }
+                            },
                             selected: (window.WORLD_COUNTRIES || []).find(c => c.cca3 === '{{ $driverCountry }}' || c.name === '{{ $driverCountry }}' || c.code === '{{ $driverCountry }}') || (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES[0]) || { name: 'United States', code: 'US', cca3: 'USA', flagUrl: 'https://flagcdn.com/w40/us.png' },
                             get list() {
-                                const all = window.WORLD_COUNTRIES || [];
-                                if (!this.search) return all;
+                                const all = (this.countries && this.countries.length) ? this.countries : (window.WORLD_COUNTRIES || []);
+                                if (!this.search || !this.search.trim()) return all;
                                 const q = this.search.toLowerCase().trim();
-                                return all.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.cca3.toLowerCase().includes(q));
+                                return all.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.code && c.code.toLowerCase().includes(q)) || (c.cca3 && c.cca3.toLowerCase().includes(q)));
                             }
                         }" class="relative">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Residence *</label>
                             <input type="hidden" name="driver_country" :value="selected.cca3 || selected.name">
                             
                             <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.residenceSearch?.focus({ preventScroll: true }))"
-                                    class="w-40 px-3 py-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white flex items-center justify-between transition-colors">
-                                <div class="flex items-center gap-2 min-w-0">
+                                    class="w-44 sm:w-48 px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white flex items-center justify-between transition-colors cursor-pointer select-none"
+                                    :class="open ? 'ring-2 ring-brand-500 border-brand-500' : ''">
+                                <div class="flex items-center gap-2 min-w-0 pr-1">
                                     <img :src="selected.flagUrl || `https://flagcdn.com/w40/${(selected.code || 'us').toLowerCase()}.png`" 
                                          :alt="selected.name" 
                                          class="w-4 h-3 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
                                     <span class="truncate" x-text="selected.name"></span>
                                 </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 shrink-0 ml-1 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 shrink-0 ml-1 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
                             
-                            <div x-show="open" @click.away="open = false" style="display: none;"
-                                 class="absolute right-0 sm:left-0 top-full mt-1.5 w-64 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden">
-                                <div class="p-2 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-gray-50 dark:bg-[#181818]">
-                                    <input type="text" x-ref="residenceSearch" x-model="search" placeholder="Search country..."
-                                           class="w-full px-2.5 py-1.5 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500">
+                            <!-- Country Selection Popover Dropdown -->
+                            <div x-show="open" 
+                                 @click.away="open = false" 
+                                 x-cloak
+                                 style="display: none;"
+                                 class="absolute left-0 sm:left-auto sm:right-0 md:left-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2.5rem)] bg-white dark:bg-[#181818] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden">
+                                
+                                <!-- Search Header -->
+                                <div class="p-2.5 border-b border-gray-100 dark:border-white/5 sticky top-0 bg-white dark:bg-[#181818] z-10 flex items-center gap-2">
+                                    <span class="text-gray-400 text-xs pl-1">🔍</span>
+                                    <input type="text" x-ref="residenceSearch" x-model="search" placeholder="Search from 250 countries..."
+                                           class="w-full px-2 py-1.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                    <button type="button" x-show="search" @click="search = ''" class="text-gray-400 hover:text-gray-600 text-xs px-1">✕</button>
                                 </div>
-                                <div class="max-h-52 overflow-y-auto p-1 text-xs space-y-0.5">
+
+                                <!-- Countries Count Subtitle -->
+                                <div class="px-3 py-1 bg-gray-50/70 dark:bg-white/5 border-b border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+                                    <span>Select Residence Country</span>
+                                    <span x-text="list.length + ' countries'"></span>
+                                </div>
+
+                                <!-- Countries List -->
+                                <div class="max-h-64 overflow-y-auto p-1 text-xs space-y-0.5 divide-y divide-gray-50 dark:divide-white/5">
                                     <template x-for="c in list" :key="c.code">
                                         <button type="button" @click="selected = c; open = false; search = ''"
-                                                class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
-                                                :class="selected.code === c.code ? 'bg-brand-500 text-white font-bold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
-                                            <div class="flex items-center gap-2 min-w-0">
+                                                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                                                :class="selected.code === c.code ? 'bg-brand-500 text-white font-extrabold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                            <div class="flex items-center gap-2.5 min-w-0">
                                                 <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
                                                      :alt="c.name" 
                                                      loading="lazy"
-                                                     class="w-4 h-3 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                                                     class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
                                                 <span class="truncate" x-text="c.name"></span>
                                             </div>
-                                            <span class="font-mono text-[10px] opacity-70 shrink-0" x-text="c.cca3 || c.code"></span>
+                                            <span class="font-mono text-[10px] opacity-70 shrink-0 uppercase" x-text="c.cca3 || c.code"></span>
                                         </button>
                                     </template>
+                                    <div x-show="list.length === 0" class="p-4 text-center text-xs text-gray-400 font-semibold">
+                                        No matching country found
+                                    </div>
                                 </div>
                             </div>
                         </div>
