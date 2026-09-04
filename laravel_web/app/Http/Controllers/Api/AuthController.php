@@ -324,10 +324,12 @@ class AuthController extends Controller
     {
         $phone = $request->input('phone');
         $email = $request->input('email');
+        $action = $request->input('action', 'login'); // 'login' or 'register'
 
         if (!empty($phone)) {
             $smsService = app(\App\Services\TwilioSmsService::class);
             $formattedPhone = $smsService->formatE164($phone);
+            $cleanPhone = preg_replace('/\s+/', '', $phone);
 
             $digitsOnly = preg_replace('/\D/', '', $formattedPhone);
             if (strlen($digitsOnly) < 7) {
@@ -337,11 +339,39 @@ class AuthController extends Controller
                 ], 422);
             }
 
+            // Check if phone number exists in database
+            $user = User::where('phone', $formattedPhone)
+                ->orWhere('phone', $phone)
+                ->orWhere('phone', $cleanPhone)
+                ->first();
+
+            // If phone is not in database during login, initiate registration process
+            if ($action === 'login' && !$user) {
+                return response()->json([
+                    'success' => false,
+                    'user_exists' => false,
+                    'not_found' => true,
+                    'message' => "No account found with {$formattedPhone}. Starting registration...",
+                    'redirect' => '/signup?phone=' . urlencode($formattedPhone) . '&from=login',
+                    'phone' => $formattedPhone,
+                ], 404);
+            }
+
+            // If attempting to register with already existing phone:
+            if ($action === 'register' && $user) {
+                return response()->json([
+                    'success' => false,
+                    'user_exists' => true,
+                    'message' => "This phone number is already registered. Please sign in instead.",
+                    'redirect' => '/login?phone=' . urlencode($formattedPhone),
+                    'phone' => $formattedPhone,
+                ], 422);
+            }
+
             $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
             // Store in Cache with 2-minute validity
             \Illuminate\Support\Facades\Cache::put('otp_phone_' . $formattedPhone, $otp, now()->addMinutes(2));
-            $cleanPhone = preg_replace('/\s+/', '', $phone);
             if ($cleanPhone !== $formattedPhone) {
                 \Illuminate\Support\Facades\Cache::put('otp_phone_' . $cleanPhone, $otp, now()->addMinutes(2));
             }
@@ -349,7 +379,7 @@ class AuthController extends Controller
             // Send via Twilio
             $result = $smsService->sendOtp($formattedPhone, $otp);
 
-            Log::info("API OTP for phone {$formattedPhone}: {$otp}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+            Log::info("API OTP for phone {$formattedPhone}: {$otp}. Action: {$action}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
 
             if (!$result['success']) {
                 return response()->json([
@@ -361,6 +391,8 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
+                'user_exists' => ($user !== null),
+                'action' => $action,
                 'message' => "Verification code sent to {$formattedPhone}",
                 'phone' => $formattedPhone,
                 'expires_in' => 120,

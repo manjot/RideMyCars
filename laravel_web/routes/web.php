@@ -232,11 +232,13 @@ Route::middleware('auth')->group(function () {
 Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
     $phone = $request->input('phone');
     $email = $request->input('email');
+    $action = $request->input('action', 'login'); // 'login' or 'register'
 
     // 1. Phone OTP (Worldwide SMS via Twilio)
     if (!empty($phone)) {
         $smsService = app(\App\Services\TwilioSmsService::class);
         $formattedPhone = $smsService->formatE164($phone);
+        $rawCleanPhone = preg_replace('/\s+/', '', $phone);
 
         $digitsOnly = preg_replace('/\D/', '', $formattedPhone);
         if (strlen($digitsOnly) < 7) {
@@ -246,12 +248,40 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
             ], 422);
         }
 
+        // Check if phone number exists in database
+        $user = \App\Models\User::where('phone', $formattedPhone)
+            ->orWhere('phone', $phone)
+            ->orWhere('phone', $rawCleanPhone)
+            ->first();
+
+        // If phone is not in database during login, initiate registration process
+        if ($action === 'login' && !$user) {
+            return response()->json([
+                'success' => false,
+                'user_exists' => false,
+                'not_found' => true,
+                'error' => "No account found with {$formattedPhone}. Starting registration...",
+                'redirect' => '/signup?phone=' . urlencode($formattedPhone) . '&from=login',
+                'phone' => $formattedPhone,
+            ], 404);
+        }
+
+        // If attempting to register with already existing phone:
+        if ($action === 'register' && $user) {
+            return response()->json([
+                'success' => false,
+                'user_exists' => true,
+                'error' => "This phone number is already registered. Please sign in instead.",
+                'redirect' => '/login?phone=' . urlencode($formattedPhone),
+                'phone' => $formattedPhone,
+            ], 422);
+        }
+
         // Generate 4-digit OTP code
         $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
         // Store OTP in Cache with exact 2-minute validity
         \Illuminate\Support\Facades\Cache::put('otp_phone_' . $formattedPhone, $otp, now()->addMinutes(2));
-        $rawCleanPhone = preg_replace('/\s+/', '', $phone);
         if ($rawCleanPhone !== $formattedPhone) {
             \Illuminate\Support\Facades\Cache::put('otp_phone_' . $rawCleanPhone, $otp, now()->addMinutes(2));
         }
@@ -259,7 +289,7 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         // Dispatch SMS via Twilio Gateway
         $result = $smsService->sendOtp($formattedPhone, $otp);
 
-        \Illuminate\Support\Facades\Log::info("OTP generated for phone {$formattedPhone}: {$otp}. Twilio: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+        \Illuminate\Support\Facades\Log::info("OTP generated for phone {$formattedPhone}: {$otp}. Action: {$action}. Twilio: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
 
         if (!$result['success']) {
             return response()->json([
@@ -271,6 +301,8 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
 
         return response()->json([
             'success' => true,
+            'user_exists' => ($user !== null),
+            'action' => $action,
             'message' => "Verification code sent to {$formattedPhone}",
             'phone' => $formattedPhone,
             'expires_in' => 120, // 2 minutes

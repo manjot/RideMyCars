@@ -64,6 +64,18 @@
                     <p class="text-gray-500 dark:text-gray-400 text-lg" x-text="currentRole === 'driver' ? 'Start earning by driving with RideMyCars.' : (currentRole === 'owner' ? 'Earn passive income by renting out your car.' : 'Join RideMyCars — it\'s free forever.')"></p>
                 </div>
 
+                @if(request('phone'))
+                    <div class="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 text-sm shadow-sm flex items-start gap-3">
+                        <span class="text-2xl shrink-0">📝</span>
+                        <div>
+                            <p class="font-bold text-gray-900 dark:text-white">Complete Your Registration</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                                No existing account was found for <span class="font-bold underline text-black dark:text-white">{{ request('phone') }}</span>. Please complete your registration below to get started.
+                            </p>
+                        </div>
+                    </div>
+                @endif
+
                 <form action="/signup" method="POST" enctype="multipart/form-data" class="space-y-5">
                     @csrf
                     <input type="hidden" name="role" :value="currentRole">
@@ -117,7 +129,7 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                             </div>
-                            <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="+1 234 567 8900" class="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                            <input type="tel" name="phone" value="{{ old('phone', request('phone')) }}" placeholder="+1 234 567 8900" class="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                         </div>
                     </div>
 
@@ -196,7 +208,7 @@
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Country</label>
                                 <input type="hidden" name="country" :value="selected.name">
                                 
-                                <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.signupCountrySearch?.focus())"
+                                <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.signupCountrySearch?.focus({ preventScroll: true }))"
                                         class="w-full flex items-center justify-between px-3.5 py-3 bg-gray-50/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white transition-all text-left">
                                     <div class="flex items-center gap-2.5 min-w-0">
                                         <img :src="selected.flagUrl || `https://flagcdn.com/w40/${(selected.code || 'us').toLowerCase()}.png`" 

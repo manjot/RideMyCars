@@ -154,7 +154,7 @@
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Residence *</label>
                             <input type="hidden" name="driver_country" :value="selected.cca3 || selected.name">
                             
-                            <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.residenceSearch?.focus())"
+                            <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.residenceSearch?.focus({ preventScroll: true }))"
                                     class="w-40 px-3 py-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white flex items-center justify-between transition-colors">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <img :src="selected.flagUrl || `https://flagcdn.com/w40/${(selected.code || 'us').toLowerCase()}.png`" 

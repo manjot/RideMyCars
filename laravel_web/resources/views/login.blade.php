@@ -31,7 +31,7 @@
                         <div class="flex items-center h-[54px] bg-[#f3f4f6] dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-black dark:focus-within:border-brand-500 focus-within:bg-white dark:focus-within:bg-[#121212] focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-brand-500/20 transition-all duration-200 shadow-sm overflow-hidden">
                             <!-- Country Code Trigger Button -->
                             <button type="button" 
-                                    @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.countrySearchInput?.focus())"
+                                    @click.prevent.stop="toggleCountryDropdown()"
                                     class="flex items-center gap-2 h-full px-3.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] dark:bg-white/5 dark:hover:bg-white/10 border-r border-gray-300/80 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
                                 <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
                                      :alt="selectedCountry.name" 
@@ -74,7 +74,7 @@
                                            class="w-full bg-transparent text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none border-none p-0">
                                     <button type="button" 
                                             x-show="countrySearch" 
-                                            @click="countrySearch = ''; $refs.countrySearchInput?.focus()" 
+                                            @click.prevent.stop="countrySearch = ''; $refs.countrySearchInput?.focus({ preventScroll: true })" 
                                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0 ml-1 p-0.5"
                                             style="display: none;">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -83,7 +83,7 @@
                             </div>
 
                             <!-- Country List -->
-                            <div class="max-h-64 sm:max-h-72 overflow-y-auto country-scroll p-1.5 space-y-0.5 text-sm">
+                            <div class="max-h-52 sm:max-h-60 overflow-y-auto country-scroll p-1.5 space-y-0.5 text-sm">
                                 <template x-for="country in filteredCountries" :key="country.code + country.dial">
                                     <button type="button" 
                                             @click="selectCountry(country)"
@@ -114,6 +114,29 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Registration Start Notice (when phone not in DB) -->
+                    <div x-show="registerNotice" x-transition class="mb-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 text-xs shadow-sm" style="display: none;">
+                        <div class="flex items-start gap-2.5">
+                            <span class="text-base shrink-0">📝</span>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-xs text-gray-900 dark:text-white">Phone not registered yet</h4>
+                                <p class="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
+                                    No account found for <span class="font-bold text-black dark:text-white" x-text="registerNotice?.phone"></span>. Starting registration...
+                                </p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <a :href="registerNotice?.url" class="inline-flex items-center gap-1 px-3 py-1.5 bg-black dark:bg-brand-500 text-white dark:text-black text-xs font-bold rounded-lg hover:bg-gray-800 dark:hover:bg-brand-400 transition-all shadow-sm">
+                                        <span>Create Account Now</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <p x-show="mobileError" x-text="mobileError" class="text-red-500 text-xs font-semibold mb-3 px-1" style="display: none;"></p>
 
                     <button type="submit" :disabled="isLoading || !mobileNumber" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all shadow-md shadow-black/10 dark:shadow-brand-500/20 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2" :class="isLoading ? 'opacity-70 cursor-wait' : ''">
@@ -331,8 +354,21 @@
                     countryDropdownOpen: false,
                     countrySearch: '',
                     mobileNumber: '',
+                    registerNotice: null,
                     selectedCountry: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES[0] : { name: 'United States', code: 'US', dial: '+1', flagUrl: 'https://flagcdn.com/w40/us.png' },
                     countries: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES : [],
+
+                    toggleCountryDropdown() {
+                        this.countryDropdownOpen = !this.countryDropdownOpen;
+                        if (this.countryDropdownOpen) {
+                            this.countrySearch = '';
+                            this.$nextTick(() => {
+                                if (this.$refs.countrySearchInput) {
+                                    this.$refs.countrySearchInput.focus({ preventScroll: true });
+                                }
+                            });
+                        }
+                    },
 
                     init() {
                         if (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) {
@@ -383,6 +419,7 @@
                         this.mobileError = '';
                         this.otpError = '';
                         this.otpSuccess = '';
+                        this.registerNotice = null;
                         
                         const fullPhone = this.selectedCountry.dial + this.mobileNumber.replace(/\s+/g, '');
                         this.targetDestination = fullPhone;
@@ -394,16 +431,33 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({ phone: fullPhone })
+                            body: JSON.stringify({ phone: fullPhone, action: 'login' })
                         })
-                        .then(res => res.json())
-                        .then(data => {
+                        .then(async res => {
+                            let data = {};
+                            try {
+                                data = await res.json();
+                            } catch (e) {
+                                data = {};
+                            }
+                            return { status: res.status, data };
+                        })
+                        .then(({ status, data }) => {
                             this.isLoading = false;
                             if (data.success) {
                                 this.view = 'otp';
                                 this.c1 = this.c2 = this.c3 = this.c4 = '';
                                 this.startTimer(120);
                                 this.$nextTick(() => { this.$refs.c1?.focus(); });
+                            } else if (data.not_found || !data.user_exists || status === 404) {
+                                const targetUrl = data.redirect || ('/signup?phone=' + encodeURIComponent(fullPhone) + '&from=login');
+                                this.registerNotice = {
+                                    phone: fullPhone,
+                                    url: targetUrl
+                                };
+                                setTimeout(() => {
+                                    window.location.href = targetUrl;
+                                }, 1800);
                             } else {
                                 this.mobileError = data.error || 'Failed to send SMS code. Please try again.';
                             }

@@ -302,7 +302,7 @@
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Residence Country *</label>
                                 <input type="hidden" name="driver_country" :value="driverCountry">
                                 
-                                <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.vehCountrySearch?.focus())"
+                                <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.vehCountrySearch?.focus({ preventScroll: true }))"
                                         class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white flex items-center justify-between text-left">
                                     <div class="flex items-center gap-2.5 min-w-0">
                                         <img :src="selectedObj.flagUrl || `https://flagcdn.com/w40/${(selectedObj.code || 'us').toLowerCase()}.png`" 

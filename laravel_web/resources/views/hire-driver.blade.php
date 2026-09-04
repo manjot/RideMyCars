@@ -71,7 +71,7 @@
                     <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2.5">Region:</span>
                     
                     <button type="button" 
-                            @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.regionSearchInput?.focus())"
+                            @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.regionSearchInput?.focus({ preventScroll: true }))"
                             class="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-[#1a1a1a] dark:hover:bg-[#222] text-gray-900 dark:text-white font-bold py-2 px-3 rounded-xl border border-gray-200 dark:border-white/10 text-sm transition-all cursor-pointer select-none">
                         <template x-if="selectedCountryObj.key === 'All'">
                             <span class="text-base leading-none">🌐</span>
@@ -112,7 +112,7 @@
                                    class="w-full bg-transparent text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none border-none p-0">
                             <button type="button" 
                                     x-show="regionSearch" 
-                                    @click="regionSearch = ''; $refs.regionSearchInput?.focus()" 
+                                    @click="regionSearch = ''; $refs.regionSearchInput?.focus({ preventScroll: true })" 
                                     class="text-gray-400 hover:text-gray-600 dark:hover:text-white shrink-0 ml-1 p-0.5"
                                     style="display: none;">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
