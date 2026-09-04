@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -317,6 +318,222 @@ class AuthController extends Controller
     }
 
     /**
+     * Send Phone or Email OTP (valid for 2 minutes)
+     */
+    public function sendOtp(Request $request): JsonResponse
+    {
+        $phone = $request->input('phone');
+        $email = $request->input('email');
+
+        if (!empty($phone)) {
+            $smsService = app(\App\Services\TwilioSmsService::class);
+            $formattedPhone = $smsService->formatE164($phone);
+
+            $digitsOnly = preg_replace('/\D/', '', $formattedPhone);
+            if (strlen($digitsOnly) < 7) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please enter a valid mobile number with country code.'
+                ], 422);
+            }
+
+            $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+
+            // Store in Cache with 2-minute validity
+            \Illuminate\Support\Facades\Cache::put('otp_phone_' . $formattedPhone, $otp, now()->addMinutes(2));
+            $cleanPhone = preg_replace('/\s+/', '', $phone);
+            if ($cleanPhone !== $formattedPhone) {
+                \Illuminate\Support\Facades\Cache::put('otp_phone_' . $cleanPhone, $otp, now()->addMinutes(2));
+            }
+
+            // Send via Twilio
+            $result = $smsService->sendOtp($formattedPhone, $otp);
+
+            Log::info("API OTP for phone {$formattedPhone}: {$otp}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+
+            if (!$result['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['error'] ?? 'Unable to send SMS verification code.',
+                    'code' => $result['code'] ?? 500,
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Verification code sent to {$formattedPhone}",
+                'phone' => $formattedPhone,
+                'expires_in' => 120,
+            ]);
+        }
+
+        if (!empty($email)) {
+            $request->validate(['email' => 'required|email']);
+            $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(2));
+
+            try {
+                \Illuminate\Support\Facades\Mail::raw("{$otp} is OTP for your RideMyCars account. OTP is valid for 2 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com", function ($message) use ($email) {
+                    $message->to($email)->subject('RideMyCars Verification Code');
+                });
+            } catch (\Throwable $e) {
+                Log::error('API Mail OTP error: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP sent successfully to email.',
+                'expires_in' => 120,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Please provide phone or email.',
+        ], 422);
+    }
+
+    /**
+     * Verify Phone or Email OTP (Registration or Login)
+     */
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $phone = $request->input('phone');
+        $email = $request->input('email');
+        $inputOtp = trim((string) $request->input('otp', ''));
+
+        if (empty($inputOtp)) {
+            return response()->json(['success' => false, 'message' => 'Verification code is required.'], 422);
+        }
+
+        if (!empty($phone)) {
+            $smsService = app(\App\Services\TwilioSmsService::class);
+            $formattedPhone = $smsService->formatE164($phone);
+            $cleanPhone = preg_replace('/\s+/', '', $phone);
+
+            $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
+                      ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $cleanPhone)
+                      ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone);
+
+            if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
+                \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $formattedPhone);
+                \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $cleanPhone);
+                \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $phone);
+
+                $user = User::where('phone', $formattedPhone)
+                    ->orWhere('phone', $phone)
+                    ->orWhere('phone', $cleanPhone)
+                    ->first();
+
+                $isNewUser = false;
+                if (!$user) {
+                    $isNewUser = true;
+                    $digits = preg_replace('/\D/', '', $formattedPhone);
+                    $userName = $request->input('name') ?: ('Rider ' . substr($digits, -4));
+                    $userEmail = $request->input('email') ?: ($digits . '@phone.ridemycars.com');
+                    $role = $request->input('role', 'customer');
+                    if (!in_array($role, ['customer', 'rider', 'driver', 'owner'])) {
+                        $role = 'customer';
+                    }
+
+                    $user = User::create([
+                        'name' => $userName,
+                        'phone' => $formattedPhone,
+                        'phone_verified_at' => now(),
+                        'email' => $userEmail,
+                        'password' => Hash::make(Str::random(24)),
+                        'role' => $role,
+                        'terms_accepted' => true,
+                        'terms_accepted_at' => now(),
+                        'terms_version' => '2026-08-23',
+                        'account_status' => 'active',
+                    ]);
+                } else {
+                    $user->phone = $formattedPhone;
+                    $user->phone_verified_at = now();
+                    $user->save();
+                }
+
+                if (isset($user->account_status) && in_array($user->account_status, ['suspended', 'deactivated'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your account has been suspended or deactivated.',
+                    ], 403);
+                }
+
+                $token = $this->issueToken($user);
+
+                $driverProfile = null;
+                try {
+                    if ($user->role === 'driver' || $user->driverProfile) {
+                        $driverProfile = $user->driverProfile;
+                    }
+                } catch (\Throwable $e) {}
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $isNewUser ? 'Account registered successfully!' : 'Login successful!',
+                    'is_new_user' => $isNewUser,
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $user->phone,
+                        'role' => $user->role,
+                    ],
+                    'role' => $user->role,
+                    'driver_profile' => $driverProfile,
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired OTP. OTP is valid for 2 minutes.'
+            ], 422);
+        }
+
+        if (!empty($email)) {
+            $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $email);
+            if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
+                \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
+                $user = User::firstOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => explode('@', $email)[0],
+                        'password' => Hash::make(Str::random(16)),
+                        'role' => 'customer',
+                        'terms_accepted' => true,
+                        'terms_accepted_at' => now(),
+                        'terms_version' => '2026-08-23',
+                        'account_status' => 'active',
+                    ]
+                );
+                $token = $this->issueToken($user);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Verified successfully.',
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                    ],
+                    'role' => $user->role,
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired OTP. OTP is valid for 2 minutes.'
+            ], 422);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Phone or Email required.'], 422);
+    }
+
+    /**
      * User logout
      */
     public function logout(Request $request): JsonResponse
@@ -335,3 +552,4 @@ class AuthController extends Controller
         ]);
     }
 }
+

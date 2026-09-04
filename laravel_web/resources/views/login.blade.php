@@ -25,8 +25,8 @@
                 <h1 class="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white tracking-tight">Enter your mobile number</h1>
                 <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">We'll send you a 4-digit code to verify your account.</p>
                 
-                <form action="#" method="GET" @submit.prevent="emailForOtp = selectedCountry.dial + ' ' + mobileNumber; view = 'otp';">
-                    <div class="relative mb-5" @click.away="countryDropdownOpen = false">
+                <form action="#" method="POST" @submit.prevent="submitMobile()">
+                    <div class="relative mb-3" @click.away="countryDropdownOpen = false">
                         <!-- Main Phone Input Bar -->
                         <div class="flex items-center h-[54px] bg-[#f3f4f6] dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-black dark:focus-within:border-brand-500 focus-within:bg-white dark:focus-within:bg-[#121212] focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-brand-500/20 transition-all duration-200 shadow-sm overflow-hidden">
                             <!-- Country Code Trigger Button -->
@@ -114,10 +114,11 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    <p x-show="mobileError" x-text="mobileError" class="text-red-500 text-xs font-semibold mb-3 px-1" style="display: none;"></p>
 
-                    <button type="submit" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all shadow-md shadow-black/10 dark:shadow-brand-500/20 active:scale-[0.99] cursor-pointer">
-                        Continue
+                    <button type="submit" :disabled="isLoading || !mobileNumber" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all shadow-md shadow-black/10 dark:shadow-brand-500/20 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2" :class="isLoading ? 'opacity-70 cursor-wait' : ''">
+                        <svg x-show="isLoading" class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span x-text="isLoading ? 'Sending SMS code...' : 'Continue'">Continue</span>
                     </button>
                 </form>
 
@@ -162,55 +163,72 @@
             <div x-show="view === 'otp'" x-transition.opacity.duration.300ms style="display: none;">
                 <h1 class="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white tracking-tight">Enter your code</h1>
                 
-                <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                    Enter the 4-digit code sent to <span class="font-bold text-gray-900 dark:text-white" x-text="emailForOtp"></span>.
+                <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2">
+                    Enter the 4-digit code sent to <span class="font-bold text-gray-900 dark:text-white" x-text="targetDestination"></span>.
                 </p>
 
-                <button type="button" @click="view = 'email_otp'" class="text-xs text-amber-600 dark:text-amber-400 font-bold underline underline-offset-4 mb-8 hover:opacity-80 transition-opacity block">
-                    Changed your email or phone?
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>OTP valid for 2 minutes</span>
+                    </span>
+                    <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
+                </div>
+
+                <button type="button" @click="view = isPhoneAuth ? 'mobile' : 'email_otp'" class="text-xs text-amber-600 dark:text-amber-400 font-bold underline underline-offset-4 mb-6 hover:opacity-80 transition-opacity block">
+                    Change phone number or email?
                 </button>
 
+                <!-- 4 Digit Input Boxes -->
                 <div class="flex items-center justify-center gap-3 mb-2">
-                    <input type="text" maxlength="1" x-model="c1" @input="$event.target.value ? $refs.c2.focus() : null" class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all">
-                    <input type="text" maxlength="1" x-model="c2" x-ref="c2" @input="$event.target.value ? $refs.c3.focus() : $refs.c1.focus()" class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all">
-                    <input type="text" maxlength="1" x-model="c3" x-ref="c3" @input="$event.target.value ? $refs.c4.focus() : $refs.c2.focus()" class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all">
-                    <input type="text" maxlength="1" x-model="c4" x-ref="c4" @input="!$event.target.value ? $refs.c3.focus() : null" class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="c1" x-model="c1" 
+                           @input="handleDigit($event, 'c1', 'c2')" 
+                           @keydown.backspace="handleBackspace($event, 'c1', null)" 
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="c2" x-model="c2" 
+                           @input="handleDigit($event, 'c2', 'c3')" 
+                           @keydown.backspace="handleBackspace($event, 'c2', 'c1')" 
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="c3" x-model="c3" 
+                           @input="handleDigit($event, 'c3', 'c4')" 
+                           @keydown.backspace="handleBackspace($event, 'c3', 'c2')" 
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="c4" x-model="c4" 
+                           @input="handleDigit($event, 'c4', null)" 
+                           @keydown.backspace="handleBackspace($event, 'c4', 'c3')" 
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-black dark:focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
                 </div>
-                <p class="text-red-500 text-sm font-semibold mb-6 h-5 text-center" x-text="otpError"></p>
+                
+                <p class="text-red-500 text-xs font-semibold mb-2 h-4 text-center" x-text="otpError"></p>
+                <p class="text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-2 h-4 text-center" x-text="otpSuccess"></p>
+
+                <!-- Resend Link -->
+                <div class="text-center mb-6">
+                    <button type="button" 
+                            x-show="timer === 0" 
+                            @click="resendOtp()" 
+                            class="text-xs font-bold text-black dark:text-brand-400 hover:underline cursor-pointer"
+                            style="display: none;">
+                        Didn't receive code? Resend SMS OTP
+                    </button>
+                    <span x-show="timer > 0" class="text-xs text-gray-400">
+                        Resend code in <span class="font-mono font-bold" x-text="formattedTimer"></span>
+                    </span>
+                </div>
 
                 <!-- Footer Navigation -->
-                <div class="flex items-center justify-between mt-8 pt-4 border-t border-gray-100 dark:border-white/10">
-                    <button type="button" @click="view = 'mobile'" class="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-full transition-colors text-gray-900 dark:text-white">
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-white/10">
+                    <button type="button" @click="view = isPhoneAuth ? 'mobile' : 'email_otp'" class="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-full transition-colors text-gray-900 dark:text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     </button>
                     
                     <button type="button" 
-                            @click="
-                                if(c1 && c2 && c3 && c4) {
-                                    isLoading = true;
-                                    otpError = '';
-                                    const csrfToken = '{{ csrf_token() }}';
-                                    fetch('/api/otp/verify', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                                        body: JSON.stringify({ email: emailForOtp, otp: c1+c2+c3+c4 })
-                                    })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        isLoading = false;
-                                        if (data.error) {
-                                            otpError = data.error;
-                                        } else {
-                                            window.location.href = data.redirect || '/';
-                                        }
-                                    })
-                                    .catch(() => { isLoading = false; otpError = 'Network error. Please try again.'; });
-                                }
-                            "
+                            @click="verifyOtp()"
                             class="h-12 px-6 rounded-xl font-bold flex items-center gap-2 transition-all"
                             :class="(c1 && c2 && c3 && c4 && !isLoading) ? 'bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black cursor-pointer shadow-md' : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'"
                             :disabled="isLoading || !(c1 && c2 && c3 && c4)">
-                        <span x-text="isLoading ? 'Verifying...' : 'Verify'"></span>
+                        <svg x-show="isLoading" class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span x-text="isLoading ? 'Verifying...' : 'Verify & Continue'">Verify & Continue</span>
                         <svg x-show="!isLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                 </div>
@@ -221,36 +239,15 @@
                 <h1 class="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white tracking-tight">Enter your email</h1>
                 <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">We'll send a 4-digit verification code to your email.</p>
                 
-                <form @submit.prevent="
-                    isLoading = true;
-                    otpError = '';
-                    const csrfToken = '{{ csrf_token() }}';
-                    fetch('/api/otp/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                        body: JSON.stringify({ email: emailForOtp })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        isLoading = false;
-                        if(data.mail_error) {
-                            otpError = 'Email failed: ' + data.mail_error + '. Your code is: ' + data.debug_otp;
-                            view = 'otp';
-                            c1 = c2 = c3 = c4 = '';
-                        } else {
-                            view = 'otp';
-                            c1 = c2 = c3 = c4 = '';
-                        }
-                    })
-                    .catch(() => { isLoading = false; otpError = 'Network error.'; });
-                " class="space-y-4">
+                <form @submit.prevent="submitEmail()" class="space-y-4">
                     <div>
                         <input type="email" x-model="emailForOtp" required placeholder="you@example.com" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
                         <p class="text-red-500 text-sm font-semibold mt-1" x-text="otpError"></p>
                     </div>
                     
-                    <button type="submit" :disabled="isLoading" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all mt-2" :class="isLoading ? 'opacity-70 cursor-wait' : ''">
-                        <span x-text="isLoading ? 'Sending code...' : 'Continue'"></span>
+                    <button type="submit" :disabled="isLoading || !emailForOtp" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all mt-2 flex items-center justify-center gap-2" :class="isLoading ? 'opacity-70 cursor-wait' : ''">
+                        <svg x-show="isLoading" class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span x-text="isLoading ? 'Sending code...' : 'Continue'">Continue</span>
                     </button>
                 </form>
 
@@ -320,8 +317,14 @@
                 Alpine.data('loginApp', () => ({
                     view: '{{ $errors->any() || old("email") ? "email" : "mobile" }}',
                     emailForOtp: '',
+                    targetDestination: '',
+                    isPhoneAuth: true,
+                    mobileError: '',
                     otpError: '',
+                    otpSuccess: '',
                     isLoading: false,
+                    timer: 120,
+                    timerInterval: null,
                     c1: '', c2: '', c3: '', c4: '',
                     
                     // Country Code Selector
@@ -354,6 +357,184 @@
                         this.selectedCountry = country;
                         this.countryDropdownOpen = false;
                         this.countrySearch = '';
+                    },
+
+                    startTimer(seconds = 120) {
+                        this.timer = seconds;
+                        if (this.timerInterval) clearInterval(this.timerInterval);
+                        this.timerInterval = setInterval(() => {
+                            if (this.timer > 0) {
+                                this.timer--;
+                            } else {
+                                clearInterval(this.timerInterval);
+                            }
+                        }, 1000);
+                    },
+
+                    get formattedTimer() {
+                        const m = Math.floor(this.timer / 60);
+                        const s = this.timer % 60;
+                        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    },
+
+                    submitMobile() {
+                        if (!this.mobileNumber || this.isLoading) return;
+                        this.isLoading = true;
+                        this.mobileError = '';
+                        this.otpError = '';
+                        this.otpSuccess = '';
+                        
+                        const fullPhone = this.selectedCountry.dial + this.mobileNumber.replace(/\s+/g, '');
+                        this.targetDestination = fullPhone;
+                        this.isPhoneAuth = true;
+
+                        fetch('/api/otp/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ phone: fullPhone })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isLoading = false;
+                            if (data.success) {
+                                this.view = 'otp';
+                                this.c1 = this.c2 = this.c3 = this.c4 = '';
+                                this.startTimer(120);
+                                this.$nextTick(() => { this.$refs.c1?.focus(); });
+                            } else {
+                                this.mobileError = data.error || 'Failed to send SMS code. Please try again.';
+                            }
+                        })
+                        .catch(err => {
+                            this.isLoading = false;
+                            this.mobileError = 'Network error while contacting server. Please try again.';
+                        });
+                    },
+
+                    submitEmail() {
+                        if (!this.emailForOtp || this.isLoading) return;
+                        this.isLoading = true;
+                        this.otpError = '';
+                        this.otpSuccess = '';
+                        this.targetDestination = this.emailForOtp;
+                        this.isPhoneAuth = false;
+
+                        fetch('/api/otp/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ email: this.emailForOtp })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isLoading = false;
+                            if (data.success || data.debug_otp) {
+                                this.view = 'otp';
+                                this.c1 = this.c2 = this.c3 = this.c4 = '';
+                                this.startTimer(120);
+                                if (data.debug_otp) {
+                                    this.otpError = 'Demo mode code: ' + data.debug_otp;
+                                }
+                                this.$nextTick(() => { this.$refs.c1?.focus(); });
+                            } else {
+                                this.otpError = data.error || data.message || 'Failed to send email verification code.';
+                            }
+                        })
+                        .catch(() => {
+                            this.isLoading = false;
+                            this.otpError = 'Network error. Please try again.';
+                        });
+                    },
+
+                    resendOtp() {
+                        if (this.timer > 0 || this.isLoading) return;
+                        this.isLoading = true;
+                        this.otpError = '';
+                        this.otpSuccess = '';
+                        const payload = this.isPhoneAuth 
+                            ? { phone: this.targetDestination } 
+                            : { email: this.targetDestination };
+
+                        fetch('/api/otp/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isLoading = false;
+                            if (data.success) {
+                                this.startTimer(120);
+                                this.otpSuccess = 'A new 4-digit code was sent!';
+                                setTimeout(() => { this.otpSuccess = ''; }, 3500);
+                            } else {
+                                this.otpError = data.error || 'Failed to resend code.';
+                            }
+                        })
+                        .catch(() => {
+                            this.isLoading = false;
+                            this.otpError = 'Network error. Please try again.';
+                        });
+                    },
+
+                    handleDigit(e, currentKey, nextKey) {
+                        const val = e.target.value.replace(/\D/g, '');
+                        this[currentKey] = val.slice(-1);
+                        if (this[currentKey] && nextKey && this.$refs[nextKey]) {
+                            this.$refs[nextKey].focus();
+                        }
+                        if (this.c1 && this.c2 && this.c3 && this.c4) {
+                            this.verifyOtp();
+                        }
+                    },
+
+                    handleBackspace(e, currentKey, prevKey) {
+                        if (!this[currentKey] && prevKey && this.$refs[prevKey]) {
+                            this.$refs[prevKey].focus();
+                        }
+                    },
+
+                    verifyOtp() {
+                        if (!(this.c1 && this.c2 && this.c3 && this.c4) || this.isLoading) return;
+                        this.isLoading = true;
+                        this.otpError = '';
+                        this.otpSuccess = '';
+                        const code = (this.c1 + this.c2 + this.c3 + this.c4).trim();
+                        const payload = this.isPhoneAuth
+                            ? { phone: this.targetDestination, otp: code }
+                            : { email: this.targetDestination, otp: code };
+
+                        fetch('/api/otp/verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isLoading = false;
+                            if (data.success) {
+                                window.location.href = data.redirect || '/';
+                            } else {
+                                this.otpError = data.error || 'Invalid verification code. Please check and try again.';
+                                this.c1 = this.c2 = this.c3 = this.c4 = '';
+                                this.$nextTick(() => { this.$refs.c1?.focus(); });
+                            }
+                        })
+                        .catch(() => {
+                            this.isLoading = false;
+                            this.otpError = 'Network error during verification. Please try again.';
+                        });
                     }
                 }));
             }

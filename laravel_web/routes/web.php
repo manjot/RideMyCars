@@ -230,52 +230,227 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
-    $request->validate(['email' => 'required|email']);
-    $email = $request->email;
-    $otp = rand(1000, 9999);
-    \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
-    
-    $mailError = null;
-    try {
-        \Illuminate\Support\Facades\Mail::raw("Your RideMyCars login code is: {$otp}", function ($message) use ($email) {
-            $message->to($email)->subject('Your RideMyCars Login Code');
-        });
-    } catch (\Throwable $e) {
-        $mailError = $e->getMessage();
-        \Illuminate\Support\Facades\Log::error('Mail error: ' . $mailError);
-        \Illuminate\Support\Facades\Log::info("OTP for {$email} is {$otp}");
+    $phone = $request->input('phone');
+    $email = $request->input('email');
+
+    // 1. Phone OTP (Worldwide SMS via Twilio)
+    if (!empty($phone)) {
+        $smsService = app(\App\Services\TwilioSmsService::class);
+        $formattedPhone = $smsService->formatE164($phone);
+
+        $digitsOnly = preg_replace('/\D/', '', $formattedPhone);
+        if (strlen($digitsOnly) < 7) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Please enter a valid mobile number with country code.'
+            ], 422);
+        }
+
+        // Generate 4-digit OTP code
+        $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+
+        // Store OTP in Cache with exact 2-minute validity
+        \Illuminate\Support\Facades\Cache::put('otp_phone_' . $formattedPhone, $otp, now()->addMinutes(2));
+        $rawCleanPhone = preg_replace('/\s+/', '', $phone);
+        if ($rawCleanPhone !== $formattedPhone) {
+            \Illuminate\Support\Facades\Cache::put('otp_phone_' . $rawCleanPhone, $otp, now()->addMinutes(2));
+        }
+
+        // Dispatch SMS via Twilio Gateway
+        $result = $smsService->sendOtp($formattedPhone, $otp);
+
+        \Illuminate\Support\Facades\Log::info("OTP generated for phone {$formattedPhone}: {$otp}. Twilio: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'error' => $result['error'] ?? 'Unable to send SMS verification code. Please try again.',
+                'code' => $result['code'] ?? 500,
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Verification code sent to {$formattedPhone}",
+            'phone' => $formattedPhone,
+            'expires_in' => 120, // 2 minutes
+        ]);
     }
-    
-    if ($mailError) {
-        return response()->json(['message' => 'OTP generated but email failed', 'mail_error' => $mailError, 'debug_otp' => $otp]);
+
+    // 2. Email OTP Fallback
+    if (!empty($email)) {
+        $request->validate(['email' => 'required|email']);
+        $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(2));
+
+        $mailError = null;
+        try {
+            \Illuminate\Support\Facades\Mail::raw("{$otp} is OTP for your RideMyCars account. OTP is valid for 2 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com", function ($message) use ($email) {
+                $message->to($email)->subject('Your RideMyCars Verification Code');
+            });
+        } catch (\Throwable $e) {
+            $mailError = $e->getMessage();
+            \Illuminate\Support\Facades\Log::error('Mail error: ' . $mailError);
+            \Illuminate\Support\Facades\Log::info("OTP for {$email} is {$otp}");
+        }
+
+        if ($mailError) {
+            return response()->json([
+                'success' => false,
+                'message' => 'OTP generated but email failed',
+                'mail_error' => $mailError,
+                'debug_otp' => $otp
+            ]);
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent successfully to email',
+            'expires_in' => 120,
+        ]);
     }
-    return response()->json(['message' => 'OTP sent successfully']);
+
+    return response()->json([
+        'success' => false,
+        'error' => 'Please provide a mobile phone number or email address.'
+    ], 422);
 });
 
 Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
-    $request->validate([
-        'email' => 'required|email',
-        'otp' => 'required|numeric'
-    ]);
-    
-    $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $request->email);
-    if ($cachedOtp && (string) $cachedOtp === (string) $request->otp) {
-        \Illuminate\Support\Facades\Cache::forget('otp_' . $request->email);
-        $user = \App\Models\User::firstOrCreate(
-            ['email' => $request->email],
-            [
-                'name' => explode('@', $request->email)[0],
-                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
-                'role' => 'customer'
-            ]
-        );
-        auth()->login($user);
-        $request->session()->regenerate();
-        \App\Services\NotificationService::notifyLogin($user);
-        return response()->json(['message' => 'Verified successfully', 'redirect' => session()->pull('url.intended', '/')]);
+    $phone = $request->input('phone');
+    $email = $request->input('email');
+    $inputOtp = trim((string) $request->input('otp', ''));
+
+    if (empty($inputOtp)) {
+        return response()->json(['success' => false, 'error' => 'Verification code is required.'], 422);
     }
-    
-    return response()->json(['error' => 'Invalid or expired OTP'], 422);
+
+    // 1. Phone Verification (Login or Registration)
+    if (!empty($phone)) {
+        $smsService = app(\App\Services\TwilioSmsService::class);
+        $formattedPhone = $smsService->formatE164($phone);
+        $rawCleanPhone = preg_replace('/\s+/', '', $phone);
+
+        $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
+                  ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $rawCleanPhone)
+                  ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone);
+
+        if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
+            \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $formattedPhone);
+            \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $rawCleanPhone);
+            \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $phone);
+
+            // Find existing user or Register new user via phone
+            $user = \App\Models\User::where('phone', $formattedPhone)
+                ->orWhere('phone', $phone)
+                ->orWhere('phone', $rawCleanPhone)
+                ->first();
+
+            $isNewUser = false;
+            if (!$user) {
+                $isNewUser = true;
+                $digits = preg_replace('/\D/', '', $formattedPhone);
+                $userName = $request->input('name') ?: ('Rider ' . substr($digits, -4));
+                $userEmail = $request->input('email') ?: ($digits . '@phone.ridemycars.com');
+                $role = $request->input('role', 'customer');
+                if (!in_array($role, ['customer', 'rider', 'driver', 'owner'])) {
+                    $role = 'customer';
+                }
+
+                $user = \App\Models\User::create([
+                    'name' => $userName,
+                    'phone' => $formattedPhone,
+                    'phone_verified_at' => now(),
+                    'email' => $userEmail,
+                    'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(24)),
+                    'role' => $role,
+                    'terms_accepted' => true,
+                    'terms_accepted_at' => now(),
+                    'terms_version' => '2026-08-23',
+                    'account_status' => 'active',
+                ]);
+            } else {
+                $user->phone = $formattedPhone;
+                $user->phone_verified_at = now();
+                $user->save();
+            }
+
+            if (in_array($user->account_status, ['suspended', 'deactivated'])) {
+                $reason = $user->suspension_reason ?? 'Administrative policy violation';
+                return response()->json([
+                    'success' => false,
+                    'error' => "Your account is {$user->account_status}. Reason: {$reason}. Contact legal@ridemycars.com."
+                ], 403);
+            }
+
+            auth()->login($user);
+            $request->session()->regenerate();
+
+            \App\Services\ActivityLogService::log(
+                $isNewUser ? 'register' : 'login',
+                $isNewUser ? "User registered via Phone OTP ({$formattedPhone})" : "User logged in via Phone OTP ({$formattedPhone})",
+                $user->id
+            );
+            \App\Services\NotificationService::notifyLogin($user);
+
+            $token = method_exists($user, 'createToken') ? $user->createToken('auth_token')->plainTextToken : null;
+            $redirectUrl = session()->pull('url.intended', $user->role === 'driver' ? '/driver/dashboard' : '/');
+
+            return response()->json([
+                'success' => true,
+                'message' => $isNewUser ? 'Account registered successfully! Welcome to RideMyCars.' : 'Login successful!',
+                'is_new_user' => $isNewUser,
+                'token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                ],
+                'redirect' => $redirectUrl,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'error' => 'Invalid or expired OTP. OTP is valid for 2 minutes.'
+        ], 422);
+    }
+
+    // 2. Email Verification
+    if (!empty($email)) {
+        $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $email);
+        if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
+            \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
+            $user = \App\Models\User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => explode('@', $email)[0],
+                    'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+                    'role' => 'customer',
+                    'terms_accepted' => true,
+                    'terms_accepted_at' => now(),
+                    'terms_version' => '2026-08-23',
+                    'account_status' => 'active',
+                ]
+            );
+            auth()->login($user);
+            $request->session()->regenerate();
+            \App\Services\NotificationService::notifyLogin($user);
+            return response()->json([
+                'success' => true,
+                'message' => 'Verified successfully',
+                'redirect' => session()->pull('url.intended', '/')
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'error' => 'Invalid or expired OTP. OTP is valid for 2 minutes.'
+        ], 422);
+    }
+
+    return response()->json(['success' => false, 'error' => 'Phone or Email required.'], 422);
 });
 
 Route::get('/signup', function () {
@@ -306,9 +481,10 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
         'password' => ['required', 'string', 'min:8', 'confirmed'],
         'role' => ['nullable', 'string', 'in:customer,driver,owner'],
         'terms' => ['required', 'accepted'],
+        'phone' => ['nullable', 'string', 'max:50'],
     ]);
 
-    $user = \App\Models\User::create([
+    $userData = [
         'name' => $validated['first_name'] . ' ' . $validated['last_name'],
         'email' => $validated['email'],
         'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
@@ -317,7 +493,14 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
         'terms_accepted_at' => now(),
         'terms_version' => '2026-08-23',
         'account_status' => 'active',
-    ]);
+    ];
+
+    if (!empty($request->phone)) {
+        $smsService = app(\App\Services\TwilioSmsService::class);
+        $userData['phone'] = $smsService->formatE164($request->phone);
+    }
+
+    $user = \App\Models\User::create($userData);
 
     if ($user->role === 'driver') {
         $photoPath = null;

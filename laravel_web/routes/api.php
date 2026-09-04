@@ -14,6 +14,10 @@ use App\Http\Controllers\Api\StripeWebhookController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/otp/send', [AuthController::class, 'sendOtp']);
+Route::post('/otp/verify', [AuthController::class, 'verifyOtp']);
+Route::post('/auth/phone/send-otp', [AuthController::class, 'sendOtp']);
+Route::post('/auth/phone/verify-otp', [AuthController::class, 'verifyOtp']);
 
 use App\Http\Controllers\StripeVerificationController;
 

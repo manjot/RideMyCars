@@ -126,11 +126,11 @@ class TwilioSmsService
     }
 
     /**
-     * Send an OTP verification code.
+     * Send an OTP verification code for login or registration.
      */
     public function sendOtp(string $to, string $code): array
     {
-        $message = "Your RideMyCars verification code is: {$code}. Valid for 10 minutes. Do not share this code with anyone.";
+        $message = "{$code} is OTP for your RideMyCars account. OTP is valid for 2 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com";
         return $this->sendSms($to, $message);
     }
 
