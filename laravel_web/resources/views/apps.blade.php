@@ -14,7 +14,6 @@
 
     <!-- Hero Header -->
     <section class="relative pt-16 pb-20 lg:pt-24 lg:pb-28 overflow-hidden bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-[#080808] dark:via-[#0f0f0f] dark:to-[#080808]">
-        <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-60 -z-10"></div>
         <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-brand-500/10 dark:bg-brand-500/10 blur-[140px] rounded-full -z-10 pointer-events-none"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -26,7 +25,7 @@
 
             <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-6">
                 Two Dedicated Apps.<br class="hidden sm:inline">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-amber-500 to-brand-600 dark:from-brand-400 dark:via-amber-400 dark:to-brand-500">
+                <span class="text-brand-600 dark:text-brand-400 font-black">
                     One Unified Mobility Platform.
                 </span>
             </h1>

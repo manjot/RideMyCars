@@ -110,14 +110,13 @@
 
         <!-- Header Section -->
         <section class="relative pt-16 pb-16 lg:pt-24 lg:pb-20 bg-gradient-to-b from-orange-500/5 via-white to-gray-50 dark:from-[#0a0a0a] dark:via-[#111] dark:to-[#0a0a0a]">
-            <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-60 -z-10"></div>
             
             <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 dark:bg-orange-950/60 border border-orange-300 dark:border-orange-800/40 text-orange-800 dark:text-orange-300 font-extrabold text-xs uppercase tracking-widest mb-6 shadow-sm">
                     <span>📰</span> Mobility Pulse & Insights
                 </div>
                 <h1 class="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.08] mb-6">
-                    Stories, Guides & <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600">Fleet News.</span>
+                    Stories, Guides & <span class="text-orange-600 dark:text-orange-400 font-black">Fleet News.</span>
                 </h1>
                 <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-normal max-w-2xl mx-auto">
                     Expert travel tips, driver wealth-building strategies, vehicle host guides, and architectural updates from the team building the future of mobility.
@@ -288,7 +287,6 @@
         <!-- Newsletter Subscription Section -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ subscribed: false, email: '' }">
             <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 text-white shadow-2xl relative overflow-hidden">
-                <div class="absolute inset-0 bg-[radial-gradient(white_1px,transparent_1px)] [background-size:20px_20px] opacity-20"></div>
                 <div class="relative z-10 max-w-2xl mx-auto">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         Weekly Mobility Digest

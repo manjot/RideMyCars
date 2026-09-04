@@ -5,7 +5,6 @@
 
         <!-- Hero Section -->
         <section class="relative pt-16 pb-20 lg:pt-24 lg:pb-28 overflow-hidden bg-gradient-to-b from-emerald-500/5 via-white to-gray-50 dark:from-[#0a0a0a] dark:via-[#111] dark:to-[#0a0a0a]">
-            <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-60 -z-10"></div>
             <div class="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/15 blur-[120px] rounded-full -z-10"></div>
 
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,7 +13,7 @@
                         <span>🛡️</span> Zero-Compromise Security
                     </div>
                     <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.08] mb-6">
-                        Safety is Built Into <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600">Every Mile.</span>
+                        Safety is Built Into <span class="text-emerald-600 dark:text-emerald-400 font-black">Every Mile.</span>
                     </h1>
                     <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
                         Your peace of mind is our non-negotiable benchmark. From biometric driver verification to live satellite route telemetry and 24/7 rapid emergency dispatch, here is how we protect every passenger, driver, and vehicle.
@@ -349,7 +348,6 @@
         <!-- 24/7 Dedicated Emergency Hotline Card -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-600 text-white shadow-2xl relative overflow-hidden">
-                <div class="absolute inset-0 bg-[radial-gradient(white_1px,transparent_1px)] [background-size:20px_20px] opacity-20"></div>
                 <div class="relative z-10">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         24 Hours a Day • 7 Days a Week • 365 Days

@@ -43,7 +43,6 @@
                 <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-[#f8f8f8] dark:bg-[#1a1a1a]">
                     <!-- Banner Graphic (Placeholder) -->
                     <div class="h-32 bg-gradient-to-r from-green-700 via-green-600 to-emerald-800 relative flex items-end">
-                        <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                         <!-- Abstract road/car shapes -->
                         <div class="absolute bottom-0 left-[40%] w-24 h-16 bg-white/20 skew-x-[30deg]"></div>
                         <div class="absolute bottom-4 right-8 w-32 h-12 bg-white/90 rounded-t-lg">
@@ -113,7 +112,6 @@
                         <div class="border border-gray-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-[#111]">
                             <div class="w-full sm:w-[45%] h-40 sm:h-auto bg-[#e8eaed] dark:bg-[#222] relative flex-shrink-0">
                                 <!-- Fake Map Graphic -->
-                                <div class="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/cartographer.png')]"></div>
                                 <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                                     <path d="M 20 80 Q 40 60 50 30 T 80 20" fill="none" stroke="black" stroke-width="2" class="dark:stroke-white"/>
                                     <circle cx="20" cy="80" r="3" fill="black" class="dark:fill-white"/>

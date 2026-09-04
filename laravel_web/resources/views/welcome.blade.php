@@ -9,7 +9,6 @@
             <div class="absolute top-6 left-1/4 w-[450px] h-[450px] glow-ambient-amber blur-3xl pointer-events-none -z-10 opacity-75"></div>
             <div class="absolute top-12 right-1/4 w-[450px] h-[450px] glow-ambient-blue blur-3xl pointer-events-none -z-10 opacity-65"></div>
             <div class="absolute bottom-8 left-1/3 w-[550px] h-[300px] glow-ambient-purple blur-3xl pointer-events-none -z-10 opacity-55"></div>
-            <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-40 -z-10"></div>
             
             <div class="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-2">
                 <!-- Header -->

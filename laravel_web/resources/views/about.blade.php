@@ -5,7 +5,6 @@
         
         <!-- Hero Section -->
         <section class="relative pt-16 pb-20 lg:pt-24 lg:pb-28 overflow-hidden bg-gradient-to-b from-amber-500/5 via-white to-gray-50 dark:from-[#0a0a0a] dark:via-[#111] dark:to-[#0a0a0a]">
-            <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px] opacity-60 -z-10"></div>
             <div class="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-r from-orange-500/15 via-amber-500/15 to-blue-500/15 blur-[120px] rounded-full -z-10"></div>
 
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,7 +13,7 @@
                         <span>🌟</span> Our Story & Purpose
                     </div>
                     <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.08] mb-6">
-                        Moving People & Commerce <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600">Forward.</span>
+                        Moving People & Commerce <span class="text-orange-600 dark:text-orange-400 font-black">Forward.</span>
                     </h1>
                     <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
                         RideMyCars was born from a fundamental conviction: urban mobility shouldn’t be fractured into multiple apps, exorbitant commissions, and opaque fees. We built one unified platform for instant rides, premier car rentals, verified executive chauffeurs, and rapid parcel deliveries.
@@ -336,7 +335,6 @@
         <!-- Final CTA Strip -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 text-white shadow-2xl relative overflow-hidden">
-                <div class="absolute inset-0 bg-[radial-gradient(white_1px,transparent_1px)] [background-size:20px_20px] opacity-20"></div>
                 <div class="relative z-10">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         Join Over 50,000 Happy Travelers
