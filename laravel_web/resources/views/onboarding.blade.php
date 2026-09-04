@@ -81,8 +81,8 @@
     <template x-if="step === 'splash'">
         <div class="fixed inset-0 z-50 bg-[#070707] flex flex-col items-center justify-center p-6 transition-opacity duration-700">
             <div class="animate-pulse flex flex-col items-center">
-                <div class="w-24 h-24 rounded-3xl bg-white/10 p-2 flex items-center justify-center shadow-2xl mb-8 border border-white/10">
-                    <img src="{{ asset('images/logo.png') }}" alt="Ride My Cars Logo" class="h-16 w-auto mix-blend-normal rounded-xl bg-white p-1">
+                <div class="flex items-center justify-center mb-8">
+                    <img src="{{ asset('images/logo.png') }}" alt="Ride My Cars Logo" class="h-14 w-auto object-contain">
                 </div>
                 <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-2">Ride My Cars</h1>
                 <p class="text-brand-400 font-medium tracking-widest uppercase text-xs">Redefining Mobility</p>
@@ -101,7 +101,7 @@
             <!-- Header Progress -->
             <div class="flex items-center justify-between py-4 border-b border-white/10 mb-8">
                 <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars" class="h-10 w-auto bg-white rounded-lg p-0.5">
+                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars" class="h-14 w-auto object-contain">
                     <span class="text-xs font-bold tracking-widest text-gray-400 uppercase">Onboarding</span>
                 </div>
                 <div class="flex gap-2">

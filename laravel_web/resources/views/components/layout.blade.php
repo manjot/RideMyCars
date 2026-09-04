@@ -117,7 +117,7 @@
             <div class="flex h-20 items-center justify-between">
                 <!-- Logo -->
                 <a class="flex items-center gap-2 group shrink-0" href="/">
-                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 md:h-16 w-auto object-contain dark:bg-white dark:rounded-xl dark:p-1">
+                    <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 w-auto object-contain">
                 </a>
                 
                 <!-- Desktop Navigation Menu (Perfect Alignment) -->
@@ -947,7 +947,7 @@
                 <!-- Brand Column (Span 4) -->
                 <div class="lg:col-span-4 space-y-5">
                     <a class="inline-flex items-center gap-2 group" href="/">
-                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 w-auto bg-white rounded-xl p-1 shadow-md object-contain transition-transform group-hover:scale-105">
+                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 w-auto object-contain transition-transform group-hover:scale-105">
                     </a>
                     <p class="text-gray-300 text-sm leading-relaxed max-w-sm">
                         Your unified mobility platform. Book rides, rent vehicles, hire verified private chauffeurs, and track parcel deliveries in real time.
