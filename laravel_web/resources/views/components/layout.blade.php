@@ -300,14 +300,31 @@
                                      x-transition:leave="transition ease-in duration-150"
                                      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                      x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-52 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
+                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
                                      style="display: none;">
-                                    <div class="space-y-0.5">
-                                        <a href="/about" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">About Us</a>
-                                        <a href="/safety" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Safety & Trust</a>
-                                        <a href="/become-driver" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Become a Driver</a>
-                                        <a href="/become-owner" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">List Your Vehicle</a>
-                                        <a href="/blogs" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Blogs & News</a>
+                                    <div class="space-y-1">
+                                        <a href="/about" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                            <span class="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 flex items-center justify-center shrink-0 text-xs">🏢</span>
+                                            <span class="flex-1 truncate">About Us</span>
+                                        </a>
+                                        <a href="/safety" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                            <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs">🛡️</span>
+                                            <span class="flex-1 truncate">Safety & Trust</span>
+                                        </a>
+                                        <a href="/become-driver" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                            <span class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-sm">👨‍✈️</span>
+                                            <span class="flex-1 truncate">Become a Driver</span>
+                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Earn</span>
+                                        </a>
+                                        <a href="/become-owner" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                            <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-sm">🔑</span>
+                                            <span class="flex-1 truncate">List Your Vehicle</span>
+                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Host</span>
+                                        </a>
+                                        <a href="/blogs" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                            <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📰</span>
+                                            <span class="flex-1 truncate">Blogs & News</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -485,14 +502,31 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-52 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
                                  style="display: none;">
-                                <div class="space-y-0.5">
-                                    <a href="/about" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">About Us</a>
-                                    <a href="/safety" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Safety & Trust</a>
-                                    <a href="/become-driver" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Become a Driver</a>
-                                    <a href="/become-owner" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">List Your Vehicle</a>
-                                    <a href="/blogs" class="block px-3.5 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">Blogs & News</a>
+                                <div class="space-y-1">
+                                    <a href="/about" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 flex items-center justify-center shrink-0 text-xs">🏢</span>
+                                        <span class="flex-1 truncate">About Us</span>
+                                    </a>
+                                    <a href="/safety" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs">🛡️</span>
+                                        <span class="flex-1 truncate">Safety & Trust</span>
+                                    </a>
+                                    <a href="/become-driver" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-sm">👨‍✈️</span>
+                                        <span class="flex-1 truncate">Become a Driver</span>
+                                        <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Earn</span>
+                                    </a>
+                                    <a href="/become-owner" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-sm">🔑</span>
+                                        <span class="flex-1 truncate">List Your Vehicle</span>
+                                        <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Host</span>
+                                    </a>
+                                    <a href="/blogs" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📰</span>
+                                        <span class="flex-1 truncate">Blogs & News</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -894,12 +928,27 @@
             <div class="space-y-1 pt-1 border-t border-gray-100 dark:border-white/10">
                 <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3.5">Company</div>
                 <div class="grid grid-cols-2 gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 px-1">
-                    <a href="/about" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">About Us</a>
-                    <a href="/safety" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Safety & Trust</a>
-                    <a href="/become-driver" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Become Driver</a>
-                    <a href="/become-owner" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">List Vehicle</a>
-                    <a href="/blogs" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Blogs & News</a>
-                    <a href="/contact" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">Contact</a>
+                    <a href="/about" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>🏢</span> <span>About Us</span>
+                    </a>
+                    <a href="/safety" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>🛡️</span> <span>Safety & Trust</span>
+                    </a>
+                    <a href="/become-driver" class="px-2.5 py-1.5 rounded-lg hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-400">
+                        <span>👨‍✈️</span> <span>Become Driver</span>
+                    </a>
+                    <a href="/become-owner" class="px-2.5 py-1.5 rounded-lg hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5 font-semibold text-blue-600 dark:text-blue-400">
+                        <span>🔑</span> <span>List Vehicle</span>
+                    </a>
+                    <a href="/signup" class="px-2.5 py-1.5 rounded-lg hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5 font-semibold text-brand-600 dark:text-brand-400">
+                        <span>👤</span> <span>Rider Signup</span>
+                    </a>
+                    <a href="/blogs" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>📰</span> <span>Blogs & News</span>
+                    </a>
+                    <a href="/contact" class="col-span-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>💬</span> <span>Contact Concierge</span>
+                    </a>
                 </div>
             </div>
 
@@ -1005,8 +1054,27 @@
                         <li><a href="/about" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">About Us</a></li>
                         <li><a href="/safety" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Safety & Trust</a></li>
                         <li><a href="/blogs" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">News & Insights</a></li>
-                        <li><a href="/become-driver" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Become a Driver</a></li>
-                        <li><a href="/become-owner" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">List Your Vehicle</a></li>
+                        <li>
+                            <a href="/signup" class="text-gray-300 hover:text-brand-400 hover:translate-x-1 inline-flex items-center gap-2 transition-all group">
+                                <span class="text-sm shrink-0">👤</span>
+                                <span>Rider Signup</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">Free</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/become-driver" class="text-gray-300 hover:text-amber-400 hover:translate-x-1 inline-flex items-center gap-2 transition-all group">
+                                <span class="text-sm shrink-0">👨‍✈️</span>
+                                <span>Become a Driver</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">Earn</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/become-owner" class="text-gray-300 hover:text-blue-400 hover:translate-x-1 inline-flex items-center gap-2 transition-all group">
+                                <span class="text-sm shrink-0">🔑</span>
+                                <span>List Your Vehicle</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Host</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
