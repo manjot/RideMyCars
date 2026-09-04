@@ -742,7 +742,7 @@
                         </div>
                     </div>
                     @else
-                    <a class="hidden sm:inline-block whitespace-nowrap text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-full transition-colors" href="/login">Sign In</a>
+                    <a class="hidden sm:inline-block whitespace-nowrap text-sm font-semibold px-3.5 py-2 rounded-full transition-colors {{ request()->is('login*') ? 'text-brand-600 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/login">Sign In</a>
                     <a class="whitespace-nowrap px-4 py-2 lg:px-5 lg:py-2.5 bg-brand-500 hover:bg-brand-600 text-black font-bold text-sm rounded-xl transition-all shadow-md shadow-brand-500/25 hover:shadow-brand-500/40" href="/signup">Get Started</a>
                     @endauth
 
