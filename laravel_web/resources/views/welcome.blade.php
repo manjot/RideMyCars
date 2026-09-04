@@ -57,7 +57,7 @@
                             <!-- Vehicle Image with Radiant Glow Behind -->
                             <div class="relative w-[120%] h-40 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-5">
                                 <div class="absolute w-28 h-28 rounded-full bg-amber-400/30 blur-2xl -z-10 pointer-events-none"></div>
-                                <img src="{{ asset('images/hero-ride.png') }}" alt="Ride" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-ride.png') }}" alt="Ride" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105">
                             </div>
                             
                             <!-- Button -->
@@ -91,7 +91,7 @@
                             <!-- Vehicle Image with Radiant Glow Behind -->
                             <div class="relative w-[120%] h-40 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-5">
                                 <div class="absolute w-28 h-28 rounded-full bg-blue-400/30 blur-2xl -z-10 pointer-events-none"></div>
-                                <img src="{{ asset('images/hero-rent.png') }}" alt="Rent" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-rent.png') }}" alt="Rent" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105">
                             </div>
                             
                             <!-- Button -->
@@ -128,7 +128,7 @@
                             <!-- Vehicle Image with Radiant Glow Behind -->
                             <div class="relative w-[120%] h-40 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-5">
                                 <div class="absolute w-28 h-28 rounded-full bg-emerald-400/30 blur-2xl -z-10 pointer-events-none"></div>
-                                <img src="{{ asset('images/hero-hire.png') }}" alt="Driver" class="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105 drop-shadow-md" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-hire.png') }}" alt="Driver" class="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105">
                             </div>
                             
                             <!-- Button -->
@@ -164,7 +164,7 @@
                             <!-- Vehicle Image with Radiant Glow Behind -->
                             <div class="relative w-[120%] h-40 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-5">
                                 <div class="absolute w-28 h-28 rounded-full bg-purple-400/30 blur-2xl -z-10 pointer-events-none"></div>
-                                <img src="{{ asset('images/hero-delivery.png') }}" alt="Deliver" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md" style="mix-blend-mode: multiply;">
+                                <img src="{{ asset('images/hero-delivery.png') }}" alt="Deliver" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105">
                             </div>
                             
                             <!-- Button -->
