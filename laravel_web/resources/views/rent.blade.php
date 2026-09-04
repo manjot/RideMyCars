@@ -140,15 +140,56 @@
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Driver Age (18+) *</label>
                             <input type="number" name="driver_age" value="{{ $driverAge }}" min="18" max="120" required class="w-32 px-3 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
                         </div>
-                        <div>
+                        <div x-data="{
+                            open: false,
+                            search: '',
+                            selected: (window.WORLD_COUNTRIES || []).find(c => c.cca3 === '{{ $driverCountry }}' || c.name === '{{ $driverCountry }}' || c.code === '{{ $driverCountry }}') || (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES[0]) || { name: 'United States', code: 'US', cca3: 'USA', flagUrl: 'https://flagcdn.com/w40/us.png' },
+                            get list() {
+                                const all = window.WORLD_COUNTRIES || [];
+                                if (!this.search) return all;
+                                const q = this.search.toLowerCase().trim();
+                                return all.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.cca3.toLowerCase().includes(q));
+                            }
+                        }" class="relative">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Residence *</label>
-                            <select name="driver_country" class="w-36 px-3 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
-                                <option value="USA" {{ $driverCountry === 'USA' ? 'selected' : '' }}>🇺🇸 USA</option>
-                                <option value="Ghana" {{ $driverCountry === 'Ghana' ? 'selected' : '' }}>🇬🇭 Ghana</option>
-                                <option value="Nigeria" {{ $driverCountry === 'Nigeria' ? 'selected' : '' }}>🇳🇬 Nigeria</option>
-                                <option value="South Africa" {{ $driverCountry === 'South Africa' ? 'selected' : '' }}>🇿🇦 S. Africa</option>
-                                <option value="UK" {{ $driverCountry === 'UK' ? 'selected' : '' }}>🇬🇧 UK</option>
-                            </select>
+                            <input type="hidden" name="driver_country" :value="selected.cca3 || selected.name">
+                            
+                            <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.residenceSearch?.focus())"
+                                    class="w-40 px-3 py-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white flex items-center justify-between transition-colors">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <img :src="selected.flagUrl || `https://flagcdn.com/w40/${(selected.code || 'us').toLowerCase()}.png`" 
+                                         :alt="selected.name" 
+                                         class="w-4 h-3 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                                    <span class="truncate" x-text="selected.name"></span>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 shrink-0 ml-1 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            
+                            <div x-show="open" @click.away="open = false" style="display: none;"
+                                 class="absolute right-0 sm:left-0 top-full mt-1.5 w-64 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden">
+                                <div class="p-2 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-gray-50 dark:bg-[#181818]">
+                                    <input type="text" x-ref="residenceSearch" x-model="search" placeholder="Search country..."
+                                           class="w-full px-2.5 py-1.5 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500">
+                                </div>
+                                <div class="max-h-52 overflow-y-auto p-1 text-xs space-y-0.5">
+                                    <template x-for="c in list" :key="c.code">
+                                        <button type="button" @click="selected = c; open = false; search = ''"
+                                                class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                                                :class="selected.code === c.code ? 'bg-brand-500 text-white font-bold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
+                                                     :alt="c.name" 
+                                                     loading="lazy"
+                                                     class="w-4 h-3 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                                                <span class="truncate" x-text="c.name"></span>
+                                            </div>
+                                            <span class="font-mono text-[10px] opacity-70 shrink-0" x-text="c.cca3 || c.code"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

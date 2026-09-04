@@ -12,7 +12,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
-    <!-- Alpine.js -->
+    <!-- Alpine.js & Country Dataset -->
+    <script src="{{ asset('js/countries-data.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -181,14 +182,56 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
+                            <div x-data="{
+                                open: false,
+                                search: '',
+                                selected: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES[0]) || { name: 'United States', code: 'US', flagUrl: 'https://flagcdn.com/w40/us.png' },
+                                get list() {
+                                    const all = window.WORLD_COUNTRIES || [];
+                                    if (!this.search) return all;
+                                    const q = this.search.toLowerCase().trim();
+                                    return all.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+                                }
+                            }" class="relative">
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Country</label>
-                                <select name="country" :required="currentRole === 'driver'" class="w-full px-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
-                                    <option value="USA">USA</option>
-                                    <option value="Ghana">Ghana</option>
-                                    <option value="Nigeria">Nigeria</option>
-                                    <option value="South Africa">South Africa</option>
-                                </select>
+                                <input type="hidden" name="country" :value="selected.name">
+                                
+                                <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.signupCountrySearch?.focus())"
+                                        class="w-full flex items-center justify-between px-3.5 py-3 bg-gray-50/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white transition-all text-left">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <img :src="selected.flagUrl || `https://flagcdn.com/w40/${(selected.code || 'us').toLowerCase()}.png`" 
+                                             :alt="selected.name" 
+                                             class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 dark:border-white/15 shrink-0">
+                                        <span class="text-sm font-medium truncate" x-text="selected.name">United States</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="open" @click.away="open = false" style="display: none;"
+                                     class="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden">
+                                    <div class="p-2 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-gray-50 dark:bg-[#181818]">
+                                        <input type="text" x-ref="signupCountrySearch" x-model="search" placeholder="Search country..."
+                                               class="w-full px-3 py-1.5 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div class="max-h-56 overflow-y-auto p-1 text-sm space-y-0.5">
+                                        <template x-for="c in list" :key="c.code">
+                                            <button type="button" @click="selected = c; open = false; search = ''"
+                                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                                                    :class="selected.code === c.code ? 'bg-brand-500 text-white font-bold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
+                                                         :alt="c.name" 
+                                                         loading="lazy"
+                                                         class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                                                    <span class="truncate" x-text="c.name"></span>
+                                                </div>
+                                                <span class="font-mono text-[10px] opacity-70 shrink-0" x-text="c.code"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Driving Experience (Years)</label>

@@ -223,7 +223,7 @@
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-5">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
-                                    <span>🇺🇸</span> USA
+                                    <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> USA
                                 </span>
                                 <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">Global HQ</span>
                             </div>
@@ -256,7 +256,7 @@
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-5">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                                    <span>🇿🇦</span> RSA
+                                    <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> RSA
                                 </span>
                                 <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Southern Africa</span>
                             </div>
@@ -289,7 +289,7 @@
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-5">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
-                                    <span>🇬🇭</span> GHA
+                                    <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> GHA
                                 </span>
                                 <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">West Africa</span>
                             </div>

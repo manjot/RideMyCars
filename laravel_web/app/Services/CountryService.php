@@ -93,4 +93,21 @@ class CountryService
         $config = static::get($countryKey);
         return $config['currency'] ?? 'USD';
     }
+
+    /**
+     * Get list of all 250 countries and territories worldwide.
+     */
+    public static function getWorldCountries(): array
+    {
+        return config('world_countries') ?? [];
+    }
+
+    /**
+     * Get flag image CDN URL for a country code.
+     */
+    public static function getFlagUrl(string $countryCode): string
+    {
+        $code = strtolower(trim($countryCode));
+        return "https://flagcdn.com/w40/{$code}.png";
+    }
 }

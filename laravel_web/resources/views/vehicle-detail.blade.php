@@ -285,9 +285,59 @@
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Driver Age (Min {{ $vehicle->min_driver_age ?? 18 }}+) *</label>
                                 <input type="number" name="customer_age" x-model="driverAge" required min="{{ $vehicle->min_driver_age ?? 18 }}" max="120" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
                             </div>
-                            <div>
+                            <div x-data="{
+                                open: false,
+                                search: '',
+                                get selectedObj() {
+                                    const all = window.WORLD_COUNTRIES || [];
+                                    return all.find(c => c.cca3 === driverCountry || c.name === driverCountry || c.code === driverCountry) || all[0] || { name: driverCountry || 'USA', code: 'US', flagUrl: 'https://flagcdn.com/w40/us.png' };
+                                },
+                                get list() {
+                                    const all = window.WORLD_COUNTRIES || [];
+                                    if (!this.search) return all;
+                                    const q = this.search.toLowerCase().trim();
+                                    return all.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.cca3.toLowerCase().includes(q));
+                                }
+                            }" class="relative">
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Residence Country *</label>
-                                <input type="text" name="driver_country" x-model="driverCountry" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                <input type="hidden" name="driver_country" :value="driverCountry">
+                                
+                                <button type="button" @click="open = !open; if(open) $nextTick(() => $refs.vehCountrySearch?.focus())"
+                                        class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white flex items-center justify-between text-left">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <img :src="selectedObj.flagUrl || `https://flagcdn.com/w40/${(selectedObj.code || 'us').toLowerCase()}.png`" 
+                                             :alt="selectedObj.name" 
+                                             class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                                        <span class="truncate" x-text="selectedObj.name"></span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="open" @click.away="open = false" style="display: none;"
+                                     class="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden">
+                                    <div class="p-2 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-gray-50 dark:bg-[#181818]">
+                                        <input type="text" x-ref="vehCountrySearch" x-model="search" placeholder="Search country..."
+                                               class="w-full px-3 py-1.5 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div class="max-h-56 overflow-y-auto p-1 text-xs space-y-0.5">
+                                        <template x-for="c in list" :key="c.code">
+                                            <button type="button" @click="driverCountry = c.cca3 || c.name; open = false; search = ''"
+                                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                                                    :class="(driverCountry === c.cca3 || driverCountry === c.name) ? 'bg-brand-500 text-white font-bold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
+                                                         :alt="c.name" 
+                                                         loading="lazy"
+                                                         class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                                                    <span class="truncate" x-text="c.name"></span>
+                                                </div>
+                                                <span class="font-mono text-[10px] opacity-70 shrink-0" x-text="c.cca3 || c.code"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

@@ -266,7 +266,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 flex items-center gap-1.5">
-                                <span>🇺🇸</span> USA
+                                <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> USA
                             </span>
                             <span class="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">Americas HQ</span>
                         </div>
@@ -289,7 +289,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1.5">
-                                <span>🇿🇦</span> RSA
+                                <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> RSA
                             </span>
                             <span class="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Southern Africa</span>
                         </div>
@@ -312,7 +312,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1.5">
-                                <span>🇬🇭</span> GHA
+                                <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> GHA
                             </span>
                             <span class="text-[11px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">West Africa</span>
                         </div>

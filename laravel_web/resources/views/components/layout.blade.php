@@ -51,6 +51,7 @@
             -webkit-backdrop-filter: blur(12px);
         }
     </style>
+    <script src="{{ asset('js/countries-data.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script>
     <!-- Vite -->
@@ -1063,8 +1064,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- USA Global HQ -->
                     <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
-                        <span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0 text-lg group-hover:scale-105 transition-transform">
-                            🇺🇸
+                        <span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                            <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-6 h-4 object-cover rounded-sm shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
@@ -1079,8 +1080,8 @@
 
                     <!-- RSA Regional Hub -->
                     <a href="https://maps.google.com/?q=11+Corona+Road,+Sandhurst,+Sandton,+Gauteng+2196" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
-                        <span class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 text-lg group-hover:scale-105 transition-transform">
-                            🇿🇦
+                        <span class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                            <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-6 h-4 object-cover rounded-sm shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
@@ -1095,8 +1096,8 @@
 
                     <!-- Ghana Regional Hub -->
                     <a href="https://maps.google.com/?q=No+1+Airport+Square,+Airport+City,+Accra,+Ghana" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
-                        <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0 text-lg group-hover:scale-105 transition-transform">
-                            🇬🇭
+                        <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                            <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-6 h-4 object-cover rounded-sm shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">

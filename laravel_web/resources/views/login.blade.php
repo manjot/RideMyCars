@@ -33,7 +33,9 @@
                             <button type="button" 
                                     @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.countrySearchInput?.focus())"
                                     class="flex items-center gap-2 h-full px-3.5 bg-[#f3f4f6] hover:bg-[#e5e7eb] dark:bg-white/5 dark:hover:bg-white/10 border-r border-gray-300/80 dark:border-white/10 transition-colors shrink-0 cursor-pointer select-none">
-                                <span class="text-2xl leading-none" x-text="selectedCountry.flag">🇺🇸</span>
+                                <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
+                                     :alt="selectedCountry.name" 
+                                     class="w-6 h-4 object-cover rounded-sm shadow-sm shrink-0 border border-black/10 dark:border-white/15">
                                 <span class="text-sm font-bold text-gray-900 dark:text-white tracking-tight" x-text="selectedCountry.dial">+1</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180 text-black dark:text-white' : ''" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -88,7 +90,10 @@
                                             class="w-full px-3 py-2 rounded-xl flex items-center justify-between hover:bg-gray-100/90 dark:hover:bg-white/10 active:bg-gray-200/80 transition-all text-left group cursor-pointer"
                                             :class="selectedCountry.code === country.code ? 'bg-black dark:bg-brand-500 text-white dark:text-black hover:bg-gray-900 dark:hover:bg-brand-400' : 'text-gray-800 dark:text-gray-200'">
                                         <div class="flex items-center gap-3 min-w-0 pr-2">
-                                            <span class="text-xl leading-none shrink-0" x-text="country.flag"></span>
+                                            <img :src="country.flagUrl || `https://flagcdn.com/w40/${(country.code || 'us').toLowerCase()}.png`" 
+                                                 :alt="country.name" 
+                                                 loading="lazy"
+                                                 class="w-6 h-4 object-cover rounded-sm shadow-sm shrink-0 border border-black/10 dark:border-white/15">
                                             <span class="text-xs font-semibold truncate" 
                                                   :class="selectedCountry.code === country.code ? 'text-white dark:text-black' : 'text-gray-900 dark:text-gray-100 group-hover:text-black dark:group-hover:text-white'" 
                                                   x-text="country.name"></span>
@@ -323,144 +328,17 @@
                     countryDropdownOpen: false,
                     countrySearch: '',
                     mobileNumber: '',
-                    selectedCountry: { name: 'United States', code: 'US', dial: '+1', flag: '🇺🇸' },
-                    
-                    countries: [
-                        { name: 'United States', code: 'US', dial: '+1', flag: '🇺🇸' },
-                    { name: 'South Africa', code: 'ZA', dial: '+27', flag: '🇿🇦' },
-                    { name: 'Ghana', code: 'GH', dial: '+233', flag: '🇬🇭' },
-                    { name: 'United Kingdom', code: 'GB', dial: '+44', flag: '🇬🇧' },
-                    { name: 'Canada', code: 'CA', dial: '+1', flag: '🇨🇦' },
-                    { name: 'India', code: 'IN', dial: '+91', flag: '🇮🇳' },
-                    { name: 'Nigeria', code: 'NG', dial: '+234', flag: '🇳🇬' },
-                    { name: 'Kenya', code: 'KE', dial: '+254', flag: '🇰🇪' },
-                    { name: 'United Arab Emirates', code: 'AE', dial: '+971', flag: '🇦🇪' },
-                    { name: 'Australia', code: 'AU', dial: '+61', flag: '🇦🇺' },
-                    { name: 'Germany', code: 'DE', dial: '+49', flag: '🇩🇪' },
-                    { name: 'France', code: 'FR', dial: '+33', flag: '🇫🇷' },
-                    { name: 'Afghanistan', code: 'AF', dial: '+93', flag: '🇦🇫' },
-                    { name: 'Albania', code: 'AL', dial: '+355', flag: '🇦🇱' },
-                    { name: 'Algeria', code: 'DZ', dial: '+213', flag: '🇩🇿' },
-                    { name: 'Andorra', code: 'AD', dial: '+376', flag: '🇦🇩' },
-                    { name: 'Angola', code: 'AO', dial: '+244', flag: '🇦🇴' },
-                    { name: 'Antigua & Barbuda', code: 'AG', dial: '+1268', flag: '🇦🇬' },
-                    { name: 'Argentina', code: 'AR', dial: '+54', flag: '🇦🇷' },
-                    { name: 'Armenia', code: 'AM', dial: '+374', flag: '🇦🇲' },
-                    { name: 'Austria', code: 'AT', dial: '+43', flag: '🇦🇹' },
-                    { name: 'Azerbaijan', code: 'AZ', dial: '+994', flag: '🇦🇿' },
-                    { name: 'Bahamas', code: 'BS', dial: '+1242', flag: '🇧🇸' },
-                    { name: 'Bahrain', code: 'BH', dial: '+973', flag: '🇧🇭' },
-                    { name: 'Bangladesh', code: 'BD', dial: '+880', flag: '🇧🇩' },
-                    { name: 'Barbados', code: 'BB', dial: '+1246', flag: '🇧🇧' },
-                    { name: 'Belarus', code: 'BY', dial: '+375', flag: '🇧🇾' },
-                    { name: 'Belgium', code: 'BE', dial: '+32', flag: '🇧🇪' },
-                    { name: 'Belize', code: 'BZ', dial: '+501', flag: '🇧🇿' },
-                    { name: 'Benin', code: 'BJ', dial: '+229', flag: '🇧🇯' },
-                    { name: 'Bermuda', code: 'BM', dial: '+1441', flag: '🇧🇲' },
-                    { name: 'Bolivia', code: 'BO', dial: '+591', flag: '🇧🇴' },
-                    { name: 'Bosnia & Herzegovina', code: 'BA', dial: '+387', flag: '🇧🇦' },
-                    { name: 'Botswana', code: 'BW', dial: '+267', flag: '🇧🇼' },
-                    { name: 'Brazil', code: 'BR', dial: '+55', flag: '🇧🇷' },
-                    { name: 'Brunei', code: 'BN', dial: '+673', flag: '🇧🇳' },
-                    { name: 'Bulgaria', code: 'BG', dial: '+359', flag: '🇧🇬' },
-                    { name: 'Burkina Faso', code: 'BF', dial: '+226', flag: '🇧🇫' },
-                    { name: 'Cambodia', code: 'KH', dial: '+855', flag: '🇰🇭' },
-                    { name: 'Cameroon', code: 'CM', dial: '+237', flag: '🇨🇲' },
-                    { name: 'Chile', code: 'CL', dial: '+56', flag: '🇨🇱' },
-                    { name: 'China', code: 'CN', dial: '+86', flag: '🇨🇳' },
-                    { name: 'Colombia', code: 'CO', dial: '+57', flag: '🇨🇴' },
-                    { name: 'Costa Rica', code: 'CR', dial: '+506', flag: '🇨🇷' },
-                    { name: 'Croatia', code: 'HR', dial: '+385', flag: '🇭🇷' },
-                    { name: 'Cyprus', code: 'CY', dial: '+357', flag: '🇨🇾' },
-                    { name: 'Czech Republic', code: 'CZ', dial: '+420', flag: '🇨🇿' },
-                    { name: 'Denmark', code: 'DK', dial: '+45', flag: '🇩🇰' },
-                    { name: 'Dominican Republic', code: 'DO', dial: '+1809', flag: '🇩🇴' },
-                    { name: 'Ecuador', code: 'EC', dial: '+593', flag: '🇪🇨' },
-                    { name: 'Egypt', code: 'EG', dial: '+20', flag: '🇪🇬' },
-                    { name: 'El Salvador', code: 'SV', dial: '+503', flag: '🇸🇻' },
-                    { name: 'Estonia', code: 'EE', dial: '+372', flag: '🇪🇪' },
-                    { name: 'Ethiopia', code: 'ET', dial: '+251', flag: '🇪🇹' },
-                    { name: 'Fiji', code: 'FJ', dial: '+679', flag: '🇫🇯' },
-                    { name: 'Finland', code: 'FI', dial: '+358', flag: '🇫🇮' },
-                    { name: 'Gabon', code: 'GA', dial: '+241', flag: '🇬🇦' },
-                    { name: 'Gambia', code: 'GM', dial: '+220', flag: '🇬🇲' },
-                    { name: 'Georgia', code: 'GE', dial: '+995', flag: '🇬🇪' },
-                    { name: 'Greece', code: 'GR', dial: '+30', flag: '🇬🇷' },
-                    { name: 'Guatemala', code: 'GT', dial: '+502', flag: '🇬🇹' },
-                    { name: 'Guinea', code: 'GN', dial: '+224', flag: '🇬🇳' },
-                    { name: 'Guyana', code: 'GY', dial: '+592', flag: '🇬🇾' },
-                    { name: 'Honduras', code: 'HN', dial: '+504', flag: '🇭🇳' },
-                    { name: 'Hong Kong', code: 'HK', dial: '+852', flag: '🇭🇰' },
-                    { name: 'Hungary', code: 'HU', dial: '+36', flag: '🇭🇺' },
-                    { name: 'Iceland', code: 'IS', dial: '+354', flag: '🇮🇸' },
-                    { name: 'Indonesia', code: 'ID', dial: '+62', flag: '🇮🇩' },
-                    { name: 'Ireland', code: 'IE', dial: '+353', flag: '🇮🇪' },
-                    { name: 'Israel', code: 'IL', dial: '+972', flag: '🇮🇱' },
-                    { name: 'Italy', code: 'IT', dial: '+39', flag: '🇮🇹' },
-                    { name: 'Ivory Coast', code: 'CI', dial: '+225', flag: '🇨🇮' },
-                    { name: 'Jamaica', code: 'JM', dial: '+1876', flag: '🇯🇲' },
-                    { name: 'Japan', code: 'JP', dial: '+81', flag: '🇯🇵' },
-                    { name: 'Jordan', code: 'JO', dial: '+962', flag: '🇯🇴' },
-                    { name: 'Kazakhstan', code: 'KZ', dial: '+7', flag: '🇰🇿' },
-                    { name: 'Kuwait', code: 'KW', dial: '+965', flag: '🇰🇼' },
-                    { name: 'Lebanon', code: 'LB', dial: '+961', flag: '🇱🇧' },
-                    { name: 'Liberia', code: 'LR', dial: '+231', flag: '🇱🇷' },
-                    { name: 'Luxembourg', code: 'LU', dial: '+352', flag: '🇱🇺' },
-                    { name: 'Malaysia', code: 'MY', dial: '+60', flag: '🇲🇾' },
-                    { name: 'Maldives', code: 'MV', dial: '+960', flag: '🇲🇻' },
-                    { name: 'Malta', code: 'MT', dial: '+356', flag: '🇲🇹' },
-                    { name: 'Mauritius', code: 'MU', dial: '+230', flag: '🇲🇺' },
-                    { name: 'Mexico', code: 'MX', dial: '+52', flag: '🇲🇽' },
-                    { name: 'Monaco', code: 'MC', dial: '+377', flag: '🇲🇨' },
-                    { name: 'Morocco', code: 'MA', dial: '+212', flag: '🇲🇦' },
-                    { name: 'Mozambique', code: 'MZ', dial: '+258', flag: '🇲🇿' },
-                    { name: 'Namibia', code: 'NA', dial: '+264', flag: '🇳🇦' },
-                    { name: 'Nepal', code: 'NP', dial: '+977', flag: '🇳🇵' },
-                    { name: 'Netherlands', code: 'NL', dial: '+31', flag: '🇳🇱' },
-                    { name: 'New Zealand', code: 'NZ', dial: '+64', flag: '🇳🇿' },
-                    { name: 'Nicaragua', code: 'NI', dial: '+505', flag: '🇳🇮' },
-                    { name: 'Norway', code: 'NO', dial: '+47', flag: '🇳🇴' },
-                    { name: 'Oman', code: 'OM', dial: '+968', flag: '🇴🇲' },
-                    { name: 'Pakistan', code: 'PK', dial: '+92', flag: '🇵🇰' },
-                    { name: 'Panama', code: 'PA', dial: '+507', flag: '🇵🇦' },
-                    { name: 'Paraguay', code: 'PY', dial: '+595', flag: '🇵🇾' },
-                    { name: 'Peru', code: 'PE', dial: '+51', flag: '🇵🇪' },
-                    { name: 'Philippines', code: 'PH', dial: '+63', flag: '🇵🇭' },
-                    { name: 'Poland', code: 'PL', dial: '+48', flag: '🇵🇱' },
-                    { name: 'Portugal', code: 'PT', dial: '+351', flag: '🇵🇹' },
-                    { name: 'Puerto Rico', code: 'PR', dial: '+1787', flag: '🇵🇷' },
-                    { name: 'Qatar', code: 'QA', dial: '+974', flag: '🇶🇦' },
-                    { name: 'Romania', code: 'RO', dial: '+40', flag: '🇷🇴' },
-                    { name: 'Rwanda', code: 'RW', dial: '+250', flag: '🇷🇼' },
-                    { name: 'Saudi Arabia', code: 'SA', dial: '+966', flag: '🇸🇦' },
-                    { name: 'Senegal', code: 'SN', dial: '+221', flag: '🇸🇳' },
-                    { name: 'Serbia', code: 'RS', dial: '+381', flag: '🇷🇸' },
-                    { name: 'Seychelles', code: 'SC', dial: '+248', flag: '🇸🇨' },
-                    { name: 'Sierra Leone', code: 'SL', dial: '+232', flag: '🇸🇱' },
-                    { name: 'Singapore', code: 'SG', dial: '+65', flag: '🇸🇬' },
-                    { name: 'Slovakia', code: 'SK', dial: '+421', flag: '🇸🇰' },
-                    { name: 'Slovenia', code: 'SI', dial: '+386', flag: '🇸🇮' },
-                    { name: 'South Korea', code: 'KR', dial: '+82', flag: '🇰🇷' },
-                    { name: 'Spain', code: 'ES', dial: '+34', flag: '🇪🇸' },
-                    { name: 'Sri Lanka', code: 'LK', dial: '+94', flag: '🇱🇰' },
-                    { name: 'Sweden', code: 'SE', dial: '+46', flag: '🇸🇪' },
-                    { name: 'Switzerland', code: 'CH', dial: '+41', flag: '🇨🇭' },
-                    { name: 'Taiwan', code: 'TW', dial: '+886', flag: '🇹🇼' },
-                    { name: 'Tanzania', code: 'TZ', dial: '+255', flag: '🇹🇿' },
-                    { name: 'Thailand', code: 'TH', dial: '+66', flag: '🇹🇭' },
-                    { name: 'Togo', code: 'TG', dial: '+228', flag: '🇹🇬' },
-                    { name: 'Trinidad & Tobago', code: 'TT', dial: '+1868', flag: '🇹🇹' },
-                    { name: 'Tunisia', code: 'TN', dial: '+216', flag: '🇹🇳' },
-                    { name: 'Turkey', code: 'TR', dial: '+90', flag: '🇹🇷' },
-                    { name: 'Uganda', code: 'UG', dial: '+256', flag: '🇺🇬' },
-                    { name: 'Ukraine', code: 'UA', dial: '+380', flag: '🇺🇦' },
-                    { name: 'Uruguay', code: 'UY', dial: '+598', flag: '🇺🇾' },
-                    { name: 'Uzbekistan', code: 'UZ', dial: '+998', flag: '🇺🇿' },
-                    { name: 'Venezuela', code: 'VE', dial: '+58', flag: '🇻🇪' },
-                    { name: 'Vietnam', code: 'VN', dial: '+84', flag: '🇻🇳' },
-                    { name: 'Zambia', code: 'ZM', dial: '+260', flag: '🇿🇲' },
-                    { name: 'Zimbabwe', code: 'ZW', dial: '+263', flag: '🇿🇼' }
-                    ],
+                    selectedCountry: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES[0] : { name: 'United States', code: 'US', dial: '+1', flagUrl: 'https://flagcdn.com/w40/us.png' },
+                    countries: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES : [],
+
+                    init() {
+                        if (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) {
+                            this.countries = window.WORLD_COUNTRIES;
+                            if (!this.selectedCountry || !this.selectedCountry.flagUrl) {
+                                this.selectedCountry = this.countries[0];
+                            }
+                        }
+                    },
 
                     get filteredCountries() {
                         if (!this.countrySearch) return this.countries;
