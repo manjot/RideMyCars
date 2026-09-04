@@ -263,23 +263,47 @@
                                 <input type="text" id="pickup_location" name="pickup_location" x-model="pickup" required
                                        @input.debounce.300ms="searchPickupLocation()"
                                        @focus="if(pickupSuggestions.length > 0) showPickupSuggestions = true"
+                                       @keydown.enter.prevent="autoSelectOrGeocodePickup()"
+                                       @blur="setTimeout(() => autoSelectOrGeocodePickup(), 300)"
                                        placeholder="Search pickup location (address, hotel, airport...)" 
                                        class="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all">
-                                <button type="button" id="use_my_location_btn" title="Use current location" class="absolute right-3 top-3 text-gray-400 hover:text-emerald-500 font-bold text-xs">📍</button>
+                                
+                                <button type="button" 
+                                        id="use_my_location_btn" 
+                                        @click="useCurrentLocation()" 
+                                        :disabled="isDetectingLocation"
+                                        :title="isDetectingLocation ? 'Detecting high-accuracy GPS...' : 'Use exact current location'" 
+                                        class="absolute right-3 top-3 p-1 text-gray-400 hover:text-emerald-500 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50">
+                                    <span x-show="!isDetectingLocation" class="text-sm">📍</span>
+                                    <svg x-show="isDetectingLocation" class="animate-spin h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                </button>
 
                                 <!-- Pickup Suggestions Dropdown -->
                                 <div x-show="showPickupSuggestions && pickupSuggestions.length > 0" 
                                      @click.away="showPickupSuggestions = false"
                                      style="display: none;"
-                                     class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-52 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                     class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                     <template x-for="item in pickupSuggestions" :key="item.place_id || item.osm_id">
                                         <button type="button" @click="selectPickupSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
                                             <span class="text-emerald-500 text-xs shrink-0 mt-0.5">●</span>
                                             <div class="min-w-0 flex-1">
-                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.display_name"></span>
+                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.clean_name || item.display_name"></span>
+                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.sub_name || item.display_name"></span>
                                             </div>
                                         </button>
                                     </template>
+                                </div>
+
+                                <!-- Real-Time Accuracy / Mode Badge -->
+                                <div x-show="locationAccuracyText" x-cloak class="mt-1 flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-bold px-1">
+                                    <div class="flex items-center gap-1">
+                                        <span>🎯</span>
+                                        <span x-text="locationAccuracyText"></span>
+                                    </div>
+                                    <span class="text-gray-400 font-medium text-[10px]">Click map or drag pin to adjust</span>
                                 </div>
                             </div>
 
@@ -301,12 +325,13 @@
                                     <div x-show="stop.showSuggestions && stop.suggestions && stop.suggestions.length > 0" 
                                          @click.away="stop.showSuggestions = false"
                                          style="display: none;"
-                                         class="absolute left-0 right-12 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-52 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                         class="absolute left-0 right-12 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                         <template x-for="item in stop.suggestions" :key="item.place_id || item.osm_id">
                                             <button type="button" @click="selectStopSuggestion(stop, item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
                                                 <span class="text-amber-500 text-xs shrink-0 mt-0.5">📍</span>
                                                 <div class="min-w-0 flex-1">
-                                                    <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.display_name"></span>
+                                                    <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.clean_name || item.display_name"></span>
+                                                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.sub_name || item.display_name"></span>
                                                 </div>
                                             </button>
                                         </template>
@@ -320,6 +345,8 @@
                                 <input type="text" id="dropoff_location" name="dropoff_location" x-model="dropoff" required
                                        @input.debounce.300ms="searchDropoffLocation()"
                                        @focus="if(dropoffSuggestions.length > 0) showDropoffSuggestions = true"
+                                       @keydown.enter.prevent="autoSelectOrGeocodeDropoff()"
+                                       @blur="setTimeout(() => autoSelectOrGeocodeDropoff(), 300)"
                                        placeholder="Where to? (Search destination)" 
                                        class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all">
 
@@ -327,12 +354,13 @@
                                 <div x-show="showDropoffSuggestions && dropoffSuggestions.length > 0" 
                                      @click.away="showDropoffSuggestions = false"
                                      style="display: none;"
-                                     class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-52 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                     class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                     <template x-for="item in dropoffSuggestions" :key="item.place_id || item.osm_id">
                                         <button type="button" @click="selectDropoffSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
                                             <span class="text-black dark:text-white text-xs shrink-0 mt-0.5">□</span>
                                             <div class="min-w-0 flex-1">
-                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.display_name"></span>
+                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.clean_name || item.display_name"></span>
+                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.sub_name || item.display_name"></span>
                                             </div>
                                         </button>
                                     </template>
@@ -580,6 +608,29 @@
                 <!-- RIGHT SIDE: LARGE LIVE INTERACTIVE MAP (~60% width) -->
                 <div class="w-full md:flex-1 h-[550px] md:h-[680px] lg:h-[720px] bg-gray-100 dark:bg-[#181818] rounded-[24px] border border-gray-200 dark:border-white/10 overflow-hidden relative shadow-md md:sticky md:top-24">
                     <div id="map" style="width: 100%; height: 100%; min-height: 450px; display: block;" class="relative z-0"></div>
+
+                    <!-- Floating Map Control: Locate Me Button -->
+                    <div class="absolute bottom-6 right-6 z-[1000] flex flex-col gap-2">
+                        <button type="button" 
+                                @click="useCurrentLocation()" 
+                                :disabled="isDetectingLocation"
+                                :title="isDetectingLocation ? 'Locating exact GPS...' : 'Locate my position accurately'"
+                                class="w-12 h-12 bg-white dark:bg-[#1f1f1f] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] text-gray-800 dark:text-white rounded-2xl shadow-xl border border-gray-200 dark:border-white/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50">
+                            <span x-show="!isDetectingLocation" class="text-xl">🎯</span>
+                            <svg x-show="isDetectingLocation" class="animate-spin h-5 w-5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Floating Map Guide / Hint Badge -->
+                    <div class="absolute top-4 left-4 z-[1000] pointer-events-none">
+                        <div class="bg-white/95 dark:bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/60 dark:border-white/10 shadow-lg text-[11px] font-extrabold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Click map or drag pin to adjust pickup</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -820,11 +871,17 @@
                 driverPlate: '',
                 driverModel: '',
                 driverPhone: '',
+                userLat: null,
+                userLng: null,
+                userAccuracy: null,
+                isDetectingLocation: false,
+                locationAccuracyText: '',
 
                 init() {
                     this.fetchSavedLocations();
                     this.fetchSavedCards();
                     this.initScheduleDefaults();
+                    this.initUserLocation();
                 },
 
                 initScheduleDefaults() {
@@ -905,18 +962,187 @@
                     this.showRiderDropdown = false;
                 },
 
+                initUserLocation() {
+                    window.addEventListener('map-clicked', async (e) => {
+                        await this.setPickupFromCoordinates(e.detail.lat, e.detail.lng, 'Pinned on map');
+                    });
+
+                    window.addEventListener('map-pickup-dragged', async (e) => {
+                        await this.setPickupFromCoordinates(e.detail.lat, e.detail.lng, 'Pin adjusted');
+                    });
+
+                    // Detect high-accuracy location automatically on load
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                const accuracy = Math.round(pos.coords.accuracy || 15);
+                                this.userLat = lat;
+                                this.userLng = lng;
+                                this.userAccuracy = accuracy;
+
+                                window.dispatchEvent(new CustomEvent('map-user-located', {
+                                    detail: { lat, lng, accuracy, flyTo: false }
+                                }));
+
+                                // If pickup is blank on load, auto-populate with reverse-geocoded GPS address
+                                if (!this.pickup || this.pickup.trim() === '') {
+                                    await this.setPickupFromCoordinates(lat, lng, `GPS Accurate (±${accuracy}m)`);
+                                }
+                            },
+                            async (err) => {
+                                console.warn('Browser GPS not available on load, using IP fallback:', err);
+                                try {
+                                    const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                                    if (ipRes.ok) {
+                                        const ipData = await ipRes.json();
+                                        const lat = parseFloat(ipData.latitude);
+                                        const lng = parseFloat(ipData.longitude);
+                                        this.userLat = lat;
+                                        this.userLng = lng;
+                                        window.dispatchEvent(new CustomEvent('map-user-located', {
+                                            detail: { lat, lng, accuracy: 5000, flyTo: false }
+                                        }));
+                                    }
+                                } catch (e) {}
+                            },
+                            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+                        );
+                    }
+                },
+
+                async useCurrentLocation() {
+                    if (!navigator.geolocation) {
+                        alert("Geolocation is not supported by your browser.");
+                        return;
+                    }
+                    this.isDetectingLocation = true;
+                    this.locationAccuracyText = 'Locating exact GPS...';
+
+                    const getPos = () => new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 12000,
+                            maximumAge: 0
+                        });
+                    });
+
+                    try {
+                        let lat, lng, accuracy;
+                        try {
+                            const pos = await getPos();
+                            lat = pos.coords.latitude;
+                            lng = pos.coords.longitude;
+                            accuracy = Math.round(pos.coords.accuracy || 10);
+                            this.userLat = lat;
+                            this.userLng = lng;
+                            this.userAccuracy = accuracy;
+                            this.locationAccuracyText = `GPS Accurate (±${accuracy}m)`;
+                        } catch (gpsErr) {
+                            console.warn('High accuracy GPS error, trying network IP:', gpsErr);
+                            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                            if (ipRes.ok) {
+                                const ipData = await ipRes.json();
+                                lat = parseFloat(ipData.latitude);
+                                lng = parseFloat(ipData.longitude);
+                                accuracy = 3000;
+                                this.userLat = lat;
+                                this.userLng = lng;
+                                this.userAccuracy = accuracy;
+                                this.locationAccuracyText = `Approximate location (${ipData.city || 'Network'})`;
+                            } else {
+                                throw gpsErr;
+                            }
+                        }
+
+                        window.dispatchEvent(new CustomEvent('map-user-located', {
+                            detail: { lat, lng, accuracy, flyTo: true }
+                        }));
+
+                        await this.setPickupFromCoordinates(lat, lng, this.locationAccuracyText);
+                    } catch (err) {
+                        console.error('Locate error:', err);
+                        alert('Could not determine your exact location. Please allow browser location permissions or click on the map to place your pin.');
+                        this.locationAccuracyText = '';
+                    } finally {
+                        this.isDetectingLocation = false;
+                    }
+                },
+
+                async setPickupFromCoordinates(lat, lng, accuracyText = 'Selected on map') {
+                    this.pickupLat = lat;
+                    this.pickupLng = lng;
+                    this.locationAccuracyText = accuracyText;
+
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            const clean = this.formatOsmAddress(data);
+                            this.pickup = clean || data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                        } else {
+                            this.pickup = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                        }
+                    } catch (e) {
+                        this.pickup = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    }
+                    this.showPickupSuggestions = false;
+                    this.updateMapRoute();
+                },
+
+                formatOsmAddress(data) {
+                    if (!data) return '';
+                    const a = data.address || {};
+                    const poi = a.amenity || a.building || a.tourism || a.hotel || a.shop || a.leisure || a.house_name || '';
+                    const street = [a.house_number, a.road || a.pedestrian || a.path].filter(Boolean).join(' ');
+                    const area = a.neighbourhood || a.suburb || a.residential || a.village || '';
+                    const city = a.city || a.town || a.county || a.state || '';
+
+                    const parts = [poi, street, area, city].filter(p => Boolean(p) && p.trim() !== '');
+                    if (parts.length > 0) {
+                        const clean = [];
+                        parts.forEach(p => {
+                            if (!clean.some(c => c.toLowerCase() === p.toLowerCase())) {
+                                clean.push(p);
+                            }
+                        });
+                        return clean.join(', ');
+                    }
+                    return data.display_name ? data.display_name.split(',').slice(0, 3).join(', ').trim() : '';
+                },
+
+                formatOsmSubtitle(data) {
+                    if (!data) return '';
+                    const a = data.address || {};
+                    const city = a.city || a.town || a.county || a.state || '';
+                    const country = a.country || '';
+                    return [city, country].filter(Boolean).join(', ') || (data.display_name ? data.display_name.split(',').slice(2).join(', ').trim() : '');
+                },
+
                 async searchPickupLocation() {
                     this.pickupLat = null;
                     this.pickupLng = null;
-                    if (!this.pickup || this.pickup.trim().length < 3) {
+                    this.locationAccuracyText = '';
+                    if (!this.pickup || this.pickup.trim().length < 2) {
                         this.pickupSuggestions = [];
                         this.showPickupSuggestions = false;
                         return;
                     }
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.pickup)}&limit=5`);
+                        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.pickup)}&addressdetails=1&limit=6`;
+                        if (this.userLat && this.userLng) {
+                            const delta = 0.5;
+                            url += `&viewbox=${this.userLng - delta},${this.userLat + delta},${this.userLng + delta},${this.userLat - delta}&bounded=0`;
+                        }
+                        const res = await fetch(url);
                         if (res.ok) {
-                            this.pickupSuggestions = await res.json();
+                            const raw = await res.json();
+                            this.pickupSuggestions = raw.map(item => ({
+                                ...item,
+                                clean_name: this.formatOsmAddress(item) || item.display_name,
+                                sub_name: this.formatOsmSubtitle(item)
+                            }));
                             this.showPickupSuggestions = this.pickupSuggestions.length > 0;
                         }
                     } catch (e) {
@@ -924,10 +1150,35 @@
                     }
                 },
 
+                async autoSelectOrGeocodePickup() {
+                    if (this.pickupLat && this.pickupLng) return;
+                    if (this.pickupSuggestions && this.pickupSuggestions.length > 0) {
+                        this.selectPickupSuggestion(this.pickupSuggestions[0]);
+                        return;
+                    }
+                    if (this.pickup && this.pickup.trim().length >= 2) {
+                        try {
+                            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.pickup)}&addressdetails=1&limit=1`;
+                            if (this.userLat && this.userLng) {
+                                const delta = 0.5;
+                                url += `&viewbox=${this.userLng - delta},${this.userLat + delta},${this.userLng + delta},${this.userLat - delta}&bounded=0`;
+                            }
+                            const res = await fetch(url);
+                            if (res.ok) {
+                                const items = await res.json();
+                                if (items && items.length > 0) {
+                                    this.selectPickupSuggestion(items[0]);
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                },
+
                 selectPickupSuggestion(item) {
-                    this.pickup = item.display_name;
+                    this.pickup = item.clean_name || item.display_name;
                     this.pickupLat = parseFloat(item.lat);
                     this.pickupLng = parseFloat(item.lon);
+                    this.locationAccuracyText = 'Selected from search';
                     this.showPickupSuggestions = false;
                     this.updateMapRoute();
                 },
@@ -935,15 +1186,27 @@
                 async searchDropoffLocation() {
                     this.dropoffLat = null;
                     this.dropoffLng = null;
-                    if (!this.dropoff || this.dropoff.trim().length < 3) {
+                    if (!this.dropoff || this.dropoff.trim().length < 2) {
                         this.dropoffSuggestions = [];
                         this.showDropoffSuggestions = false;
                         return;
                     }
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.dropoff)}&limit=5`);
+                        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.dropoff)}&addressdetails=1&limit=6`;
+                        const biasLat = this.pickupLat || this.userLat;
+                        const biasLng = this.pickupLng || this.userLng;
+                        if (biasLat && biasLng) {
+                            const delta = 0.5;
+                            url += `&viewbox=${biasLng - delta},${biasLat + delta},${biasLng + delta},${biasLat - delta}&bounded=0`;
+                        }
+                        const res = await fetch(url);
                         if (res.ok) {
-                            this.dropoffSuggestions = await res.json();
+                            const raw = await res.json();
+                            this.dropoffSuggestions = raw.map(item => ({
+                                ...item,
+                                clean_name: this.formatOsmAddress(item) || item.display_name,
+                                sub_name: this.formatOsmSubtitle(item)
+                            }));
                             this.showDropoffSuggestions = this.dropoffSuggestions.length > 0;
                         }
                     } catch (e) {
@@ -951,8 +1214,34 @@
                     }
                 },
 
+                async autoSelectOrGeocodeDropoff() {
+                    if (this.dropoffLat && this.dropoffLng) return;
+                    if (this.dropoffSuggestions && this.dropoffSuggestions.length > 0) {
+                        this.selectDropoffSuggestion(this.dropoffSuggestions[0]);
+                        return;
+                    }
+                    if (this.dropoff && this.dropoff.trim().length >= 2) {
+                        try {
+                            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.dropoff)}&addressdetails=1&limit=1`;
+                            const biasLat = this.pickupLat || this.userLat;
+                            const biasLng = this.pickupLng || this.userLng;
+                            if (biasLat && biasLng) {
+                                const delta = 0.5;
+                                url += `&viewbox=${biasLng - delta},${biasLat + delta},${biasLng + delta},${biasLat - delta}&bounded=0`;
+                            }
+                            const res = await fetch(url);
+                            if (res.ok) {
+                                const items = await res.json();
+                                if (items && items.length > 0) {
+                                    this.selectDropoffSuggestion(items[0]);
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                },
+
                 selectDropoffSuggestion(item) {
-                    this.dropoff = item.display_name;
+                    this.dropoff = item.clean_name || item.display_name;
                     this.dropoffLat = parseFloat(item.lat);
                     this.dropoffLng = parseFloat(item.lon);
                     this.showDropoffSuggestions = false;
@@ -963,15 +1252,27 @@
                     stop.isSelected = false;
                     stop.lat = null;
                     stop.lng = null;
-                    if (!stop.location || stop.location.trim().length < 3) {
+                    if (!stop.location || stop.location.trim().length < 2) {
                         stop.suggestions = [];
                         stop.showSuggestions = false;
                         return;
                     }
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stop.location)}&limit=5`);
+                        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stop.location)}&addressdetails=1&limit=6`;
+                        const biasLat = this.pickupLat || this.userLat;
+                        const biasLng = this.pickupLng || this.userLng;
+                        if (biasLat && biasLng) {
+                            const delta = 0.5;
+                            url += `&viewbox=${biasLng - delta},${biasLat + delta},${biasLng + delta},${biasLat - delta}&bounded=0`;
+                        }
+                        const res = await fetch(url);
                         if (res.ok) {
-                            stop.suggestions = await res.json();
+                            const raw = await res.json();
+                            stop.suggestions = raw.map(item => ({
+                                ...item,
+                                clean_name: this.formatOsmAddress(item) || item.display_name,
+                                sub_name: this.formatOsmSubtitle(item)
+                            }));
                             stop.showSuggestions = stop.suggestions.length > 0;
                         }
                     } catch (e) {
@@ -980,7 +1281,7 @@
                 },
 
                 selectStopSuggestion(stop, item) {
-                    stop.location = item.display_name;
+                    stop.location = item.clean_name || item.display_name;
                     stop.lat = parseFloat(item.lat);
                     stop.lng = parseFloat(item.lon);
                     stop.isSelected = true;
@@ -1389,7 +1690,7 @@
             if (mapEl) {
                 // Initialize Leaflet map with OpenStreetMap tiles
                 const map = L.map('map', {
-                    center: [28.6139, 77.2090], // Default center
+                    center: [5.6037, -0.1870], // Default center
                     zoom: 13,
                     zoomControl: true
                 });
@@ -1399,21 +1700,78 @@
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
 
-                // Nearby driver markers
-                const carIcon = L.divIcon({
-                    html: '<div class="w-8 h-8 rounded-full bg-black text-white dark:bg-white dark:text-black font-black text-sm flex items-center justify-center shadow-lg border-2 border-white dark:border-black">🚗</div>',
-                    className: 'car-marker-icon',
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                let driverMarkers = [];
+                function updateNearbyDrivers(centerLat, centerLng) {
+                    driverMarkers.forEach(m => map.removeLayer(m));
+                    driverMarkers = [];
+                    const carIcon = L.divIcon({
+                        html: '<div class="w-8 h-8 rounded-full bg-black text-white dark:bg-white dark:text-black font-black text-sm flex items-center justify-center shadow-lg border-2 border-white dark:border-black hover:scale-110 transition-transform select-none">🚗</div>',
+                        className: 'car-marker-icon',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+                    for (let i = 0; i < 5; i++) {
+                        const offsetLat = (Math.random() - 0.5) * 0.025;
+                        const offsetLng = (Math.random() - 0.5) * 0.025;
+                        const m = L.marker([centerLat + offsetLat, centerLng + offsetLng], { icon: carIcon }).addTo(map);
+                        driverMarkers.push(m);
+                    }
+                }
+
+                // Initial drivers near center
+                updateNearbyDrivers(5.6037, -0.1870);
+
+                let userAccuracyCircle = null;
+                let userBeaconMarker = null;
+
+                // Handle user location detection event
+                window.addEventListener('map-user-located', function(e) {
+                    const { lat, lng, accuracy, flyTo } = e.detail;
+                    if (!map) return;
+
+                    if (flyTo) {
+                        map.flyTo([lat, lng], 16, { duration: 1.2 });
+                    } else {
+                        map.setView([lat, lng], 15);
+                    }
+
+                    if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+                    if (accuracy && accuracy < 10000) {
+                        userAccuracyCircle = L.circle([lat, lng], {
+                            radius: Math.max(accuracy, 25),
+                            color: '#10b981',
+                            fillColor: '#10b981',
+                            fillOpacity: 0.12,
+                            weight: 1.5,
+                            dashArray: '4, 4'
+                        }).addTo(map);
+                    }
+
+                    if (userBeaconMarker) map.removeLayer(userBeaconMarker);
+                    const beaconIcon = L.divIcon({
+                        html: `
+                            <div class="relative flex items-center justify-center w-8 h-8">
+                                <span class="absolute w-7 h-7 rounded-full bg-emerald-500/35 animate-ping"></span>
+                                <span class="relative w-4 h-4 rounded-full bg-emerald-600 border-2 border-white shadow-lg ring-2 ring-emerald-300"></span>
+                            </div>
+                        `,
+                        className: 'user-beacon-icon',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+                    userBeaconMarker = L.marker([lat, lng], { icon: beaconIcon, zIndexOffset: 1000 })
+                        .addTo(map)
+                        .bindPopup("<b>Your GPS Location</b>");
+
+                    updateNearbyDrivers(lat, lng);
                 });
 
-                const centerLat = 28.6139;
-                const centerLng = 77.2090;
-                for (let i = 0; i < 5; i++) {
-                    const offsetLat = (Math.random() - 0.5) * 0.02;
-                    const offsetLng = (Math.random() - 0.5) * 0.02;
-                    L.marker([centerLat + offsetLat, centerLng + offsetLng], { icon: carIcon }).addTo(map);
-                }
+                // Click anywhere on map to set/adjust pickup location
+                map.on('click', function(e) {
+                    window.dispatchEvent(new CustomEvent('map-clicked', {
+                        detail: { lat: e.latlng.lat, lng: e.latlng.lng }
+                    }));
+                });
 
                 // Global event listener for updating route & waypoints on map
                 window.addEventListener('update-ride-route', function(e) {
@@ -1431,6 +1789,7 @@
                     waypoints.forEach((wp, idx) => {
                         latLngs.push([wp.lat, wp.lng]);
 
+                        const isPickup = wp.type === 'pickup';
                         let iconHtml = '●';
                         let bgClass = 'bg-emerald-500 text-white';
                         if (wp.type === 'stop') {
@@ -1442,13 +1801,34 @@
                         }
 
                         const icon = L.divIcon({
-                            html: `<div class="px-2.5 py-1 rounded-full ${bgClass} text-xs font-bold shadow-lg border-2 border-white flex items-center justify-center gap-1">${wp.label}</div>`,
+                            html: `<div class="px-3 py-1.5 rounded-full ${bgClass} text-xs font-extrabold shadow-2xl border-2 border-white flex items-center justify-center gap-1.5 select-none ${isPickup ? 'cursor-grab active:cursor-grabbing hover:scale-105 transition-transform' : ''}">
+                                <span>${isPickup ? '📍' : (wp.type === 'dropoff' ? '🏁' : '🛑')}</span>
+                                <span>${wp.label}</span>
+                                ${isPickup ? '<span class="text-[10px] opacity-80">(Drag)</span>' : ''}
+                            </div>`,
                             className: 'waypoint-marker-icon',
-                            iconSize: [110, 28],
-                            iconAnchor: [55, 14]
+                            iconSize: [120, 32],
+                            iconAnchor: [60, 16]
                         });
 
-                        const marker = L.marker([wp.lat, wp.lng], { icon }).addTo(map).bindPopup(`<b>${wp.label}</b>`);
+                        const marker = L.marker([wp.lat, wp.lng], { 
+                            icon,
+                            draggable: isPickup,
+                            zIndexOffset: isPickup ? 900 : 500
+                        }).addTo(map);
+
+                        if (isPickup) {
+                            marker.bindPopup(`<b>Pickup Location</b><br><span style="font-size:11px;color:#666;">Drag pin to fine-tune exact pickup spot</span>`);
+                            marker.on('dragend', function(evt) {
+                                const pos = evt.target.getLatLng();
+                                window.dispatchEvent(new CustomEvent('map-pickup-dragged', {
+                                    detail: { lat: pos.lat, lng: pos.lng }
+                                }));
+                            });
+                        } else {
+                            marker.bindPopup(`<b>${wp.label}</b>`);
+                        }
+
                         window.rideWaypointsMarkers.push(marker);
                     });
 
@@ -1456,32 +1836,15 @@
                         window.rideRoutePolyline = L.polyline(latLngs, {
                             color: '#10b981',
                             weight: 5,
-                            opacity: 0.8,
+                            opacity: 0.85,
                             dashArray: '8, 8'
                         }).addTo(map);
 
-                        map.fitBounds(window.rideRoutePolyline.getBounds(), { padding: [50, 50] });
+                        map.fitBounds(window.rideRoutePolyline.getBounds(), { padding: [60, 60] });
                     } else if (latLngs.length === 1) {
-                        map.setView(latLngs[0], 14);
+                        map.setView(latLngs[0], 16);
                     }
                 });
-
-                // Geolocation detection
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        map.setView([lat, lng], 14);
-
-                        const userIcon = L.divIcon({
-                            html: '<div class="w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-emerald-200 shadow-md"></div>',
-                            className: 'user-marker-icon',
-                            iconSize: [16, 16],
-                            iconAnchor: [8, 8]
-                        });
-                        L.marker([lat, lng], { icon: userIcon }).addTo(map).bindPopup("Your Location");
-                    }, (err) => {}, { enableHighAccuracy: true });
-                }
             }
         });
     </script>
