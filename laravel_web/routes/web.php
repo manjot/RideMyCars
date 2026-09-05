@@ -2465,6 +2465,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Artisan::call('route:clear');
     \Illuminate\Support\Facades\Artisan::call('config:clear');
     \Illuminate\Support\Facades\Artisan::call('view:clear');
+
+    // Include recent laravel.log lines for debugging
+    $logPath = storage_path('logs/laravel.log');
+    if (file_exists($logPath)) {
+        $lines = file($logPath);
+        $output['last_log'] = array_slice($lines, -35);
+    }
     
     return response()->json([
         'status' => 'success',
