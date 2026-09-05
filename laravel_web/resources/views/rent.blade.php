@@ -399,10 +399,12 @@
                     navigator.geolocation.getCurrentPosition(
                         async (pos) => {
                             try {
-                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                                const res = await fetch(`/api/places/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
                                 if (res.ok) {
                                     const data = await res.json();
-                                    if (data && data.display_name) pInput.value = data.display_name;
+                                    if (data && data.place) {
+                                        pInput.value = data.place.formatted_address || data.place.name;
+                                    }
                                 }
                             } catch (e) {}
                             locBtn.disabled = false;

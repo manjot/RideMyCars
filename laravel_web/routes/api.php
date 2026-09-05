@@ -11,6 +11,13 @@ use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\StripePaymentController;
 use App\Http\Controllers\Api\StripeWebhookController;
+use App\Http\Controllers\Api\PlacesApiController;
+
+// Places Autocomplete, Geocoding & Reverse Geocoding
+Route::get('/places/autocomplete', [PlacesApiController::class, 'autocomplete']);
+Route::get('/places/details', [PlacesApiController::class, 'details']);
+Route::get('/places/geocode', [PlacesApiController::class, 'geocode']);
+Route::get('/places/reverse', [PlacesApiController::class, 'reverse']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);

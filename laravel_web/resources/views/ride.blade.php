@@ -261,7 +261,7 @@
                             <div class="relative">
                                 <div class="absolute left-3.5 top-3.5 text-emerald-500 font-black text-sm">●</div>
                                 <input type="text" id="pickup_location" name="pickup_location" x-model="pickup" required
-                                       @input.debounce.300ms="searchPickupLocation()"
+                                       @input.debounce.250ms="onPickupInput()"
                                        @focus="if(pickupSuggestions.length > 0) showPickupSuggestions = true"
                                        @keydown.enter.prevent="autoSelectOrGeocodePickup()"
                                        @blur="setTimeout(() => autoSelectOrGeocodePickup(), 300)"
@@ -286,12 +286,12 @@
                                      @click.away="showPickupSuggestions = false"
                                      style="display: none;"
                                      class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
-                                    <template x-for="item in pickupSuggestions" :key="item.place_id || item.osm_id">
+                                    <template x-for="item in pickupSuggestions" :key="item.place_id || item.description">
                                         <button type="button" @click="selectPickupSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
                                             <span class="text-emerald-500 text-xs shrink-0 mt-0.5">●</span>
                                             <div class="min-w-0 flex-1">
-                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.clean_name || item.display_name"></span>
-                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.sub_name || item.display_name"></span>
+                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
+                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
                                             </div>
                                         </button>
                                     </template>
@@ -313,7 +313,7 @@
                                     <div class="relative flex items-center gap-2">
                                         <div class="absolute left-3.5 top-3.5 text-amber-500 font-bold text-xs">📍</div>
                                         <input type="text" x-model="stop.location" 
-                                               @input.debounce.300ms="searchStopLocation(stop)"
+                                               @input.debounce.250ms="searchStopLocation(stop)"
                                                @focus="if(stop.suggestions && stop.suggestions.length > 0) stop.showSuggestions = true"
                                                :placeholder="'Search Stop ' + (index + 1) + ' location (hotel, airport, landmark...)'"
                                                class="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
@@ -326,12 +326,12 @@
                                          @click.away="stop.showSuggestions = false"
                                          style="display: none;"
                                          class="absolute left-0 right-12 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
-                                        <template x-for="item in stop.suggestions" :key="item.place_id || item.osm_id">
+                                        <template x-for="item in stop.suggestions" :key="item.place_id || item.description">
                                             <button type="button" @click="selectStopSuggestion(stop, item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
                                                 <span class="text-amber-500 text-xs shrink-0 mt-0.5">📍</span>
                                                 <div class="min-w-0 flex-1">
-                                                    <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.clean_name || item.display_name"></span>
-                                                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.sub_name || item.display_name"></span>
+                                                    <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
+                                                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
                                                 </div>
                                             </button>
                                         </template>
@@ -343,7 +343,7 @@
                             <div class="relative">
                                 <div class="absolute left-3.5 top-3.5 text-black dark:text-white font-black text-sm">□</div>
                                 <input type="text" id="dropoff_location" name="dropoff_location" x-model="dropoff" required
-                                       @input.debounce.300ms="searchDropoffLocation()"
+                                       @input.debounce.250ms="onDropoffInput()"
                                        @focus="if(dropoffSuggestions.length > 0) showDropoffSuggestions = true"
                                        @keydown.enter.prevent="autoSelectOrGeocodeDropoff()"
                                        @blur="setTimeout(() => autoSelectOrGeocodeDropoff(), 300)"
@@ -355,12 +355,12 @@
                                      @click.away="showDropoffSuggestions = false"
                                      style="display: none;"
                                      class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
-                                    <template x-for="item in dropoffSuggestions" :key="item.place_id || item.osm_id">
+                                    <template x-for="item in dropoffSuggestions" :key="item.place_id || item.description">
                                         <button type="button" @click="selectDropoffSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
                                             <span class="text-black dark:text-white text-xs shrink-0 mt-0.5">□</span>
                                             <div class="min-w-0 flex-1">
-                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.clean_name || item.display_name"></span>
-                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.sub_name || item.display_name"></span>
+                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
+                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
                                             </div>
                                         </button>
                                     </template>
@@ -788,11 +788,12 @@
                         <div x-show="showModalSuggestions && modalSuggestions.length > 0" 
                              @click.away="showModalSuggestions = false"
                              class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
-                            <template x-for="item in modalSuggestions" :key="item.place_id || item.osm_id">
+                            <template x-for="item in modalSuggestions" :key="item.place_id || item.description">
                                 <button type="button" @click="selectModalSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5">
                                     <span class="text-amber-500 text-xs shrink-0 mt-0.5">📍</span>
                                     <div class="min-w-0 flex-1">
-                                        <span class="font-bold block text-xs truncate" x-text="item.display_name"></span>
+                                        <span class="font-extrabold block text-xs truncate" x-text="item.main_text || item.description"></span>
+                                        <span class="block text-[10px] text-gray-500 truncate" x-text="item.secondary_text || item.description"></span>
                                     </div>
                                 </button>
                             </template>
@@ -1076,11 +1077,14 @@
                     this.locationAccuracyText = accuracyText;
 
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                        const res = await fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`);
                         if (res.ok) {
                             const data = await res.json();
-                            const clean = this.formatOsmAddress(data);
-                            this.pickup = clean || data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                            if (data.success && data.place) {
+                                this.pickup = data.place.formatted_address || data.place.name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                            } else {
+                                this.pickup = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                            }
                         } else {
                             this.pickup = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
                         }
@@ -1091,33 +1095,14 @@
                     this.updateMapRoute();
                 },
 
-                formatOsmAddress(data) {
-                    if (!data) return '';
-                    const a = data.address || {};
-                    const poi = a.amenity || a.building || a.tourism || a.hotel || a.shop || a.leisure || a.house_name || '';
-                    const street = [a.house_number, a.road || a.pedestrian || a.path].filter(Boolean).join(' ');
-                    const area = a.neighbourhood || a.suburb || a.residential || a.village || '';
-                    const city = a.city || a.town || a.county || a.state || '';
-
-                    const parts = [poi, street, area, city].filter(p => Boolean(p) && p.trim() !== '');
-                    if (parts.length > 0) {
-                        const clean = [];
-                        parts.forEach(p => {
-                            if (!clean.some(c => c.toLowerCase() === p.toLowerCase())) {
-                                clean.push(p);
-                            }
-                        });
-                        return clean.join(', ');
+                onPickupInput() {
+                    if (this.pickupLat !== null || this.pickupLng !== null) {
+                        this.pickupLat = null;
+                        this.pickupLng = null;
+                        this.locationAccuracyText = '';
+                        this.updateMapRoute();
                     }
-                    return data.display_name ? data.display_name.split(',').slice(0, 3).join(', ').trim() : '';
-                },
-
-                formatOsmSubtitle(data) {
-                    if (!data) return '';
-                    const a = data.address || {};
-                    const city = a.city || a.town || a.county || a.state || '';
-                    const country = a.country || '';
-                    return [city, country].filter(Boolean).join(', ') || (data.display_name ? data.display_name.split(',').slice(2).join(', ').trim() : '');
+                    this.searchPickupLocation();
                 },
 
                 async searchPickupLocation() {
@@ -1130,19 +1115,12 @@
                         return;
                     }
                     try {
-                        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.pickup)}&addressdetails=1&limit=6`;
-                        if (this.userLat && this.userLng) {
-                            const delta = 0.5;
-                            url += `&viewbox=${this.userLng - delta},${this.userLat + delta},${this.userLng + delta},${this.userLat - delta}&bounded=0`;
-                        }
-                        const res = await fetch(url);
+                        const biasLat = this.userLat || '';
+                        const biasLng = this.userLng || '';
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.pickup.trim())}&lat=${biasLat}&lng=${biasLng}`);
                         if (res.ok) {
-                            const raw = await res.json();
-                            this.pickupSuggestions = raw.map(item => ({
-                                ...item,
-                                clean_name: this.formatOsmAddress(item) || item.display_name,
-                                sub_name: this.formatOsmSubtitle(item)
-                            }));
+                            const data = await res.json();
+                            this.pickupSuggestions = data.predictions || [];
                             this.showPickupSuggestions = this.pickupSuggestions.length > 0;
                         }
                     } catch (e) {
@@ -1153,34 +1131,64 @@
                 async autoSelectOrGeocodePickup() {
                     if (this.pickupLat && this.pickupLng) return;
                     if (this.pickupSuggestions && this.pickupSuggestions.length > 0) {
-                        this.selectPickupSuggestion(this.pickupSuggestions[0]);
+                        await this.selectPickupSuggestion(this.pickupSuggestions[0]);
                         return;
                     }
                     if (this.pickup && this.pickup.trim().length >= 2) {
                         try {
-                            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.pickup)}&addressdetails=1&limit=1`;
-                            if (this.userLat && this.userLng) {
-                                const delta = 0.5;
-                                url += `&viewbox=${this.userLng - delta},${this.userLat + delta},${this.userLng + delta},${this.userLat - delta}&bounded=0`;
-                            }
-                            const res = await fetch(url);
+                            const res = await fetch(`/api/places/geocode?query=${encodeURIComponent(this.pickup.trim())}`);
                             if (res.ok) {
-                                const items = await res.json();
-                                if (items && items.length > 0) {
-                                    this.selectPickupSuggestion(items[0]);
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.pickupLat = parseFloat(data.place.lat);
+                                    this.pickupLng = parseFloat(data.place.lng);
+                                    this.locationAccuracyText = 'Matched address';
+                                    this.showPickupSuggestions = false;
+                                    this.updateMapRoute();
                                 }
                             }
                         } catch (e) {}
                     }
                 },
 
-                selectPickupSuggestion(item) {
-                    this.pickup = item.clean_name || item.display_name;
-                    this.pickupLat = parseFloat(item.lat);
-                    this.pickupLng = parseFloat(item.lon);
-                    this.locationAccuracyText = 'Selected from search';
+                async selectPickupSuggestion(item) {
+                    this.pickup = item.main_text || item.description;
                     this.showPickupSuggestions = false;
-                    this.updateMapRoute();
+                    this.locationAccuracyText = 'Selected from search';
+
+                    if (item.lat && item.lng) {
+                        this.pickupLat = parseFloat(item.lat);
+                        this.pickupLng = parseFloat(item.lng);
+                        this.updateMapRoute();
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.pickupLat = parseFloat(data.place.lat);
+                                    this.pickupLng = parseFloat(data.place.lng);
+                                    this.pickup = data.place.formatted_address || data.place.name || this.pickup;
+                                    this.updateMapRoute();
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Place details error:', e);
+                        }
+                    }
+                },
+
+                onDropoffInput() {
+                    // Stale coordinates cleared immediately so previous destination is erased from map
+                    if (this.dropoffLat !== null || this.dropoffLng !== null) {
+                        this.dropoffLat = null;
+                        this.dropoffLng = null;
+                        this.updateMapRoute();
+                    }
+                    this.searchDropoffLocation();
                 },
 
                 async searchDropoffLocation() {
@@ -1192,21 +1200,12 @@
                         return;
                     }
                     try {
-                        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.dropoff)}&addressdetails=1&limit=6`;
-                        const biasLat = this.pickupLat || this.userLat;
-                        const biasLng = this.pickupLng || this.userLng;
-                        if (biasLat && biasLng) {
-                            const delta = 0.5;
-                            url += `&viewbox=${biasLng - delta},${biasLat + delta},${biasLng + delta},${biasLat - delta}&bounded=0`;
-                        }
-                        const res = await fetch(url);
+                        const biasLat = this.pickupLat || this.userLat || '';
+                        const biasLng = this.pickupLng || this.userLng || '';
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.dropoff.trim())}&lat=${biasLat}&lng=${biasLng}`);
                         if (res.ok) {
-                            const raw = await res.json();
-                            this.dropoffSuggestions = raw.map(item => ({
-                                ...item,
-                                clean_name: this.formatOsmAddress(item) || item.display_name,
-                                sub_name: this.formatOsmSubtitle(item)
-                            }));
+                            const data = await res.json();
+                            this.dropoffSuggestions = data.predictions || [];
                             this.showDropoffSuggestions = this.dropoffSuggestions.length > 0;
                         }
                     } catch (e) {
@@ -1217,62 +1216,73 @@
                 async autoSelectOrGeocodeDropoff() {
                     if (this.dropoffLat && this.dropoffLng) return;
                     if (this.dropoffSuggestions && this.dropoffSuggestions.length > 0) {
-                        this.selectDropoffSuggestion(this.dropoffSuggestions[0]);
+                        await this.selectDropoffSuggestion(this.dropoffSuggestions[0]);
                         return;
                     }
                     if (this.dropoff && this.dropoff.trim().length >= 2) {
                         try {
-                            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.dropoff)}&addressdetails=1&limit=1`;
-                            const biasLat = this.pickupLat || this.userLat;
-                            const biasLng = this.pickupLng || this.userLng;
-                            if (biasLat && biasLng) {
-                                const delta = 0.5;
-                                url += `&viewbox=${biasLng - delta},${biasLat + delta},${biasLng + delta},${biasLat - delta}&bounded=0`;
-                            }
-                            const res = await fetch(url);
+                            const res = await fetch(`/api/places/geocode?query=${encodeURIComponent(this.dropoff.trim())}`);
                             if (res.ok) {
-                                const items = await res.json();
-                                if (items && items.length > 0) {
-                                    this.selectDropoffSuggestion(items[0]);
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.dropoffLat = parseFloat(data.place.lat);
+                                    this.dropoffLng = parseFloat(data.place.lng);
+                                    this.showDropoffSuggestions = false;
+                                    this.updateMapRoute();
                                 }
                             }
                         } catch (e) {}
                     }
                 },
 
-                selectDropoffSuggestion(item) {
-                    this.dropoff = item.clean_name || item.display_name;
-                    this.dropoffLat = parseFloat(item.lat);
-                    this.dropoffLng = parseFloat(item.lon);
+                async selectDropoffSuggestion(item) {
+                    this.dropoff = item.main_text || item.description;
                     this.showDropoffSuggestions = false;
-                    this.updateMapRoute();
+
+                    if (item.lat && item.lng) {
+                        this.dropoffLat = parseFloat(item.lat);
+                        this.dropoffLng = parseFloat(item.lng);
+                        this.updateMapRoute();
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.dropoffLat = parseFloat(data.place.lat);
+                                    this.dropoffLng = parseFloat(data.place.lng);
+                                    this.dropoff = data.place.formatted_address || data.place.name || this.dropoff;
+                                    this.updateMapRoute();
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Place details error:', e);
+                        }
+                    }
                 },
 
                 async searchStopLocation(stop) {
                     stop.isSelected = false;
-                    stop.lat = null;
-                    stop.lng = null;
+                    if (stop.lat !== null || stop.lng !== null) {
+                        stop.lat = null;
+                        stop.lng = null;
+                        this.updateMapRoute();
+                    }
                     if (!stop.location || stop.location.trim().length < 2) {
                         stop.suggestions = [];
                         stop.showSuggestions = false;
                         return;
                     }
                     try {
-                        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stop.location)}&addressdetails=1&limit=6`;
-                        const biasLat = this.pickupLat || this.userLat;
-                        const biasLng = this.pickupLng || this.userLng;
-                        if (biasLat && biasLng) {
-                            const delta = 0.5;
-                            url += `&viewbox=${biasLng - delta},${biasLat + delta},${biasLng + delta},${biasLat - delta}&bounded=0`;
-                        }
-                        const res = await fetch(url);
+                        const biasLat = this.pickupLat || this.userLat || '';
+                        const biasLng = this.pickupLng || this.userLng || '';
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(stop.location.trim())}&lat=${biasLat}&lng=${biasLng}`);
                         if (res.ok) {
-                            const raw = await res.json();
-                            stop.suggestions = raw.map(item => ({
-                                ...item,
-                                clean_name: this.formatOsmAddress(item) || item.display_name,
-                                sub_name: this.formatOsmSubtitle(item)
-                            }));
+                            const data = await res.json();
+                            stop.suggestions = data.predictions || [];
                             stop.showSuggestions = stop.suggestions.length > 0;
                         }
                     } catch (e) {
@@ -1280,13 +1290,33 @@
                     }
                 },
 
-                selectStopSuggestion(stop, item) {
-                    stop.location = item.clean_name || item.display_name;
-                    stop.lat = parseFloat(item.lat);
-                    stop.lng = parseFloat(item.lon);
-                    stop.isSelected = true;
+                async selectStopSuggestion(stop, item) {
+                    stop.location = item.main_text || item.description;
                     stop.showSuggestions = false;
-                    this.updateMapRoute();
+
+                    if (item.lat && item.lng) {
+                        stop.lat = parseFloat(item.lat);
+                        stop.lng = parseFloat(item.lng);
+                        stop.isSelected = true;
+                        this.updateMapRoute();
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    stop.lat = parseFloat(data.place.lat);
+                                    stop.lng = parseFloat(data.place.lng);
+                                    stop.location = data.place.formatted_address || data.place.name || stop.location;
+                                    stop.isSelected = true;
+                                    this.updateMapRoute();
+                                }
+                            }
+                        } catch (e) {}
+                    }
                 },
 
                 addStop() {
@@ -1465,30 +1495,53 @@
 
                 async searchModalLocation() {
                     this.modalTempLocation.isSelected = false;
-                    if (!this.modalTempLocation.location || this.modalTempLocation.location.trim().length < 3) {
+                    if (!this.modalTempLocation.location || this.modalTempLocation.location.trim().length < 2) {
                         this.modalSuggestions = [];
                         this.showModalSuggestions = false;
                         return;
                     }
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.modalTempLocation.location)}&limit=5`);
+                        const biasLat = this.userLat || '';
+                        const biasLng = this.userLng || '';
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.modalTempLocation.location.trim())}&lat=${biasLat}&lng=${biasLng}`);
                         if (res.ok) {
                             const data = await res.json();
-                            this.modalSuggestions = data;
-                            this.showModalSuggestions = data.length > 0;
+                            this.modalSuggestions = data.predictions || [];
+                            this.showModalSuggestions = this.modalSuggestions.length > 0;
                         }
                     } catch (e) {
                         console.warn('Modal map search error:', e);
                     }
                 },
 
-                selectModalSuggestion(item) {
-                    this.modalTempLocation.location = item.display_name;
-                    this.modalTempLocation.lat = parseFloat(item.lat);
-                    this.modalTempLocation.lng = parseFloat(item.lon);
+                async selectModalSuggestion(item) {
+                    this.modalTempLocation.location = item.description || item.main_text;
                     this.modalTempLocation.place_id = item.place_id ? String(item.place_id) : null;
-                    this.modalTempLocation.isSelected = true;
                     this.showModalSuggestions = false;
+
+                    if (item.lat && item.lng) {
+                        this.modalTempLocation.lat = parseFloat(item.lat);
+                        this.modalTempLocation.lng = parseFloat(item.lng);
+                        this.modalTempLocation.isSelected = true;
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.modalTempLocation.lat = parseFloat(data.place.lat);
+                                    this.modalTempLocation.lng = parseFloat(data.place.lng);
+                                    this.modalTempLocation.location = data.place.formatted_address || data.place.name || this.modalTempLocation.location;
+                                    this.modalTempLocation.isSelected = true;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Modal details error:', e);
+                        }
+                    }
                 },
 
                 async saveLocationFromModal() {
@@ -1775,14 +1828,16 @@
 
                 // Global event listener for updating route & waypoints on map
                 window.addEventListener('update-ride-route', function(e) {
-                    const waypoints = e.detail.waypoints || [];
-                    if (!map || waypoints.length === 0) return;
+                    if (!map) return;
 
                     if (window.rideRoutePolyline) map.removeLayer(window.rideRoutePolyline);
                     if (window.rideWaypointsMarkers) {
                         window.rideWaypointsMarkers.forEach(m => map.removeLayer(m));
                     }
                     window.rideWaypointsMarkers = [];
+
+                    const waypoints = e.detail.waypoints || [];
+                    if (waypoints.length === 0) return;
 
                     const latLngs = [];
 
@@ -1840,7 +1895,7 @@
                             dashArray: '8, 8'
                         }).addTo(map);
 
-                        map.fitBounds(window.rideRoutePolyline.getBounds(), { padding: [60, 60] });
+                        map.fitBounds(window.rideRoutePolyline.getBounds(), { padding: [60, 60], maxZoom: 16 });
                     } else if (latLngs.length === 1) {
                         map.setView(latLngs[0], 16);
                     }

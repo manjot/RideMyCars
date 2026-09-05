@@ -70,7 +70,7 @@ return [
     ],
 
     'google_maps' => [
-        'api_key' => env('GOOGLE_MAPS_API_KEY'),
+        'api_key' => env('GOOGLE_MAPS_API_KEY', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0'),
     ],
 
     'stripe' => [

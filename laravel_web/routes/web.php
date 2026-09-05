@@ -174,6 +174,12 @@ Route::get('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationCont
 Route::post('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'store']);
 Route::delete('/api/user/saved-locations/{id}', [\App\Http\Controllers\SavedLocationController::class, 'destroy']);
 
+// Places Autocomplete, Geocoding & Reverse Geocoding API
+Route::get('/api/places/autocomplete', [\App\Http\Controllers\Api\PlacesApiController::class, 'autocomplete']);
+Route::get('/api/places/details', [\App\Http\Controllers\Api\PlacesApiController::class, 'details']);
+Route::get('/api/places/geocode', [\App\Http\Controllers\Api\PlacesApiController::class, 'geocode']);
+Route::get('/api/places/reverse', [\App\Http\Controllers\Api\PlacesApiController::class, 'reverse']);
+
 // Payment Methods API
 Route::get('/api/payment-methods', [\App\Http\Controllers\PaymentMethodController::class, 'index']);
 Route::post('/api/payment-methods/save-stripe', [\App\Http\Controllers\PaymentMethodController::class, 'storeStripe']);

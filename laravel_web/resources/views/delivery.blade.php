@@ -586,11 +586,11 @@
                 }
 
                 if (reverseGeocode && pInput) {
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`)
                         .then(r => r.json())
                         .then(data => {
-                            if (data && data.display_name) {
-                                pInput.value = data.display_name;
+                            if (data && data.place) {
+                                pInput.value = data.place.formatted_address || data.place.name;
                                 pInput.dispatchEvent(new Event('input'));
                             }
                         }).catch(() => {});
@@ -615,11 +615,11 @@
                 }
 
                 if (reverseGeocode && dInput) {
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`)
                         .then(r => r.json())
                         .then(data => {
-                            if (data && data.display_name) {
-                                dInput.value = data.display_name;
+                            if (data && data.place) {
+                                dInput.value = data.place.formatted_address || data.place.name;
                                 dInput.dispatchEvent(new Event('input'));
                             }
                         }).catch(() => {});

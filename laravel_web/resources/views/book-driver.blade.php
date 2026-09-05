@@ -163,14 +163,14 @@
                                         <div x-show="stop.showSuggestions && stop.suggestions && stop.suggestions.length > 0"
                                              x-transition.opacity
                                              class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-200 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
-                                            <template x-for="item in stop.suggestions" :key="item.place_id || item.osm_id">
+                                            <template x-for="item in stop.suggestions" :key="item.place_id || item.description">
                                                 <button type="button" 
                                                         @click="selectStopSuggestion(stop, item)" 
-                                                        class="w-full px-3.5 py-2.5 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2 transition-colors">
+                                                        class="w-full px-3.5 py-2.5 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2 transition-colors cursor-pointer">
                                                     <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
                                                     <div>
-                                                        <span class="font-bold block" x-text="item.display_name"></span>
-                                                        <span class="text-[10px] text-gray-400 font-normal block" x-text="item.type ? (item.type.toUpperCase() + ' • ' + (item.class || 'location')) : 'Map Location'"></span>
+                                                        <span class="font-bold block" x-text="item.main_text || item.description || item.display_name"></span>
+                                                        <span class="text-[10px] text-gray-400 font-normal block" x-text="item.secondary_text || 'Map Location'"></span>
                                                     </div>
                                                 </button>
                                             </template>
@@ -445,14 +445,14 @@
                     <div x-show="showModalSuggestions && modalSuggestions.length > 0"
                          x-transition.opacity
                          class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-300 dark:border-white/20 rounded-2xl shadow-2xl z-[999999999] overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-56 overflow-y-auto">
-                        <template x-for="item in modalSuggestions" :key="item.place_id || item.osm_id">
+                        <template x-for="item in modalSuggestions" :key="item.place_id || item.description">
                             <button type="button" 
                                     @click="selectModalSuggestion(item)" 
                                     class="w-full px-3.5 py-3 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2.5 transition-colors cursor-pointer">
                                 <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
                                 <div>
-                                    <span class="font-bold block text-xs" x-text="item.display_name"></span>
-                                    <span class="text-[10px] text-gray-400 font-normal block" x-text="item.type ? (item.type.toUpperCase() + ' • ' + (item.class || 'location')) : 'Map Location'"></span>
+                                    <span class="font-bold block text-xs" x-text="item.main_text || item.description || item.display_name"></span>
+                                    <span class="text-[10px] text-gray-400 font-normal block" x-text="item.secondary_text || 'Map Location'"></span>
                                 </div>
                             </button>
                         </template>
@@ -583,30 +583,51 @@
 
                 async searchModalLocation() {
                     this.modalTempLocation.isSelected = false;
-                    if (!this.modalTempLocation.location || this.modalTempLocation.location.trim().length < 3) {
+                    if (!this.modalTempLocation.location || this.modalTempLocation.location.trim().length < 2) {
                         this.modalSuggestions = [];
                         this.showModalSuggestions = false;
                         return;
                     }
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.modalTempLocation.location)}&limit=5`);
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.modalTempLocation.location.trim())}`);
                         if (res.ok) {
                             const data = await res.json();
-                            this.modalSuggestions = data;
-                            this.showModalSuggestions = data.length > 0;
+                            this.modalSuggestions = data.predictions || [];
+                            this.showModalSuggestions = this.modalSuggestions.length > 0;
                         }
                     } catch (e) {
                         console.warn('Modal map search error:', e);
                     }
                 },
 
-                selectModalSuggestion(item) {
-                    this.modalTempLocation.location = item.display_name;
-                    this.modalTempLocation.lat = parseFloat(item.lat);
-                    this.modalTempLocation.lng = parseFloat(item.lon);
+                async selectModalSuggestion(item) {
+                    this.modalTempLocation.location = item.description || item.main_text;
                     this.modalTempLocation.place_id = item.place_id ? String(item.place_id) : null;
-                    this.modalTempLocation.isSelected = true;
                     this.showModalSuggestions = false;
+
+                    if (item.lat && item.lng) {
+                        this.modalTempLocation.lat = parseFloat(item.lat);
+                        this.modalTempLocation.lng = parseFloat(item.lng);
+                        this.modalTempLocation.isSelected = true;
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.modalTempLocation.lat = parseFloat(data.place.lat);
+                                    this.modalTempLocation.lng = parseFloat(data.place.lng);
+                                    this.modalTempLocation.location = data.place.formatted_address || data.place.name || this.modalTempLocation.location;
+                                    this.modalTempLocation.isSelected = true;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Modal details error:', e);
+                        }
+                    }
                 },
 
                 async saveLocationFromModal() {
@@ -692,29 +713,49 @@
                     this.searchStopLocation(stop);
                 },
 
-                selectStopSuggestion(stop, item) {
-                    stop.location = item.display_name;
-                    stop.lat = parseFloat(item.lat);
-                    stop.lng = parseFloat(item.lon);
+                async selectStopSuggestion(stop, item) {
+                    stop.location = item.description || item.main_text;
                     stop.place_id = item.place_id ? String(item.place_id) : null;
-                    stop.isSelected = true;
                     stop.validationError = null;
                     stop.showSuggestions = false;
                     this.validationErrorMessage = null;
+
+                    if (item.lat && item.lng) {
+                        stop.lat = parseFloat(item.lat);
+                        stop.lng = parseFloat(item.lng);
+                        stop.isSelected = true;
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    stop.lat = parseFloat(data.place.lat);
+                                    stop.lng = parseFloat(data.place.lng);
+                                    stop.location = data.place.formatted_address || data.place.name || stop.location;
+                                    stop.isSelected = true;
+                                }
+                            }
+                        } catch (e) {}
+                    }
                 },
 
                 async searchStopLocation(stop) {
-                    if (!stop.location || stop.location.trim().length < 3) {
+                    stop.isSelected = false;
+                    if (!stop.location || stop.location.trim().length < 2) {
                         stop.suggestions = [];
                         stop.showSuggestions = false;
                         return;
                     }
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stop.location)}&limit=5`);
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(stop.location.trim())}`);
                         if (res.ok) {
                             const data = await res.json();
-                            stop.suggestions = data;
-                            stop.showSuggestions = data.length > 0;
+                            stop.suggestions = data.predictions || [];
+                            stop.showSuggestions = stop.suggestions.length > 0;
                         }
                     } catch (e) {
                         console.warn('Map search error:', e);
@@ -856,10 +897,12 @@
                             if (pLngInput) pLngInput.value = pos.coords.longitude;
 
                             try {
-                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                                const res = await fetch(`/api/places/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
                                 if (res.ok) {
                                     const data = await res.json();
-                                    if (data && data.display_name) pInput.value = data.display_name;
+                                    if (data && data.place) {
+                                        pInput.value = data.place.formatted_address || data.place.name;
+                                    }
                                 }
                             } catch (e) {}
                             locBtn.disabled = false;
