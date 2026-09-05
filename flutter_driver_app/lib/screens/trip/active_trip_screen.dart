@@ -51,9 +51,9 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     }
   }
 
-  Future<void> _callRider() async {
-    final phone = _ride['rider']?['phone'] ?? _ride['passenger_phone'];
-    if (phone != null && phone.isNotEmpty) {
+  Future<void> _callRider([String? overridePhone]) async {
+    final phone = overridePhone ?? _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'];
+    if (phone != null && phone.toString().isNotEmpty) {
       final uri = Uri.parse('tel:$phone');
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
@@ -90,7 +90,11 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   Widget build(BuildContext context) {
     final status = _ride['status'] ?? 'accepted';
     final fare = _ride['fare'] != null ? double.tryParse(_ride['fare'].toString()) ?? 0.0 : 0.0;
-    final riderName = _ride['rider']?['name'] ?? _ride['passenger_name'] ?? 'Passenger';
+    final customerName = (_ride['customer_name'] ?? _ride['rider']?['name'] ?? _ride['rider_name'] ?? _ride['passenger_name'] ?? 'Customer').toString();
+    final customerPhone = _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'];
+    final pocName = _ride['poc_name'];
+    final pocPhone = _ride['poc_phone'];
+    final bool hasPoc = pocName != null && pocName.toString().isNotEmpty && pocName.toString() != customerName;
 
     final pickupLat = _ride['pickup_lat'] != null ? double.tryParse(_ride['pickup_lat'].toString()) : null;
     final pickupLng = _ride['pickup_lng'] != null ? double.tryParse(_ride['pickup_lng'].toString()) : null;
@@ -183,14 +187,14 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Rider Info Row
+                      // Customer Info Row
                       Row(
                         children: [
                           CircleAvatar(
                             radius: 24,
                             backgroundColor: AppColors.purple,
                             child: Text(
-                              riderName.isNotEmpty ? riderName[0].toUpperCase() : 'R',
+                              customerName.isNotEmpty ? customerName[0].toUpperCase() : 'C',
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                             ),
                           ),
@@ -200,33 +204,46 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  riderName,
+                                  customerName,
                                   style: const TextStyle(
                                     color: AppColors.textLight,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
                                 ),
+                                if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                                  Text(
+                                    customerPhone.toString(),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 Text(
                                   status.replaceAll('_', ' ').toUpperCase(),
                                   style: const TextStyle(
-                                    color: AppColors.primary,
+                                    color: AppColors.textMuted,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 11,
+                                    fontSize: 10,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          IconButton(
-                            onPressed: _callRider,
-                            style: IconButton.styleFrom(
-                              backgroundColor: AppColors.success.withValues(alpha: 0.2),
-                              foregroundColor: AppColors.success,
+                          if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                            ElevatedButton.icon(
+                              onPressed: () => _callRider(customerPhone.toString()),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.phone_rounded, size: 15),
+                              label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                             ),
-                            icon: const Icon(Icons.phone_rounded),
-                          ),
                           const SizedBox(width: 8),
                           Text(
                             '\$${fare.toStringAsFixed(2)}',
@@ -238,6 +255,64 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                           ),
                         ],
                       ),
+
+                      if (hasPoc) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.badge_rounded, color: Colors.amber, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'PASSENGER / POC',
+                                      style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                                    ),
+                                    Text(
+                                      pocName.toString(),
+                                      style: const TextStyle(
+                                        color: AppColors.textLight,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (pocPhone != null && pocPhone.toString().isNotEmpty)
+                                      Text(
+                                        pocPhone.toString(),
+                                        style: const TextStyle(
+                                          color: AppColors.textMuted,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (pocPhone != null && pocPhone.toString().isNotEmpty)
+                                ElevatedButton.icon(
+                                  onPressed: () => _callRider(pocPhone.toString()),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.amber.shade700,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    minimumSize: Size.zero,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  icon: const Icon(Icons.phone_rounded, size: 13),
+                                  label: const Text('Call POC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 18),
                       const Divider(color: Colors.white10),
                       const SizedBox(height: 12),

@@ -240,10 +240,18 @@ class DriverApiController extends Controller
      */
     public function updateLocation(Request $request)
     {
-        $request->validate([
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
-        ]);
+        $lat = $request->input('lat') ?? $request->input('latitude');
+        $lng = $request->input('lng') ?? $request->input('longitude');
+
+        if ($lat === null || $lng === null || !is_numeric($lat) || !is_numeric($lng)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Valid latitude and longitude coordinates are required.',
+            ], 422);
+        }
+
+        $lat = floatval($lat);
+        $lng = floatval($lng);
 
         $user = $request->user();
         if ($user) {
@@ -261,20 +269,161 @@ class DriverApiController extends Controller
             );
 
             $profile->update([
-                'current_lat' => $request->lat,
-                'current_lng' => $request->lng,
+                'current_lat' => $lat,
+                'current_lng' => $lng,
                 'last_location_update' => now(),
             ]);
+
+            // Update current position for any active ongoing ride
+            \App\Models\Ride::where('driver_id', $user->id)
+                ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
+                ->update([
+                    'current_lat' => $lat,
+                    'current_lng' => $lng,
+                ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Location updated',
-                'lat' => $request->lat,
-                'lng' => $request->lng,
+                'lat' => $lat,
+                'lng' => $lng,
             ]);
         }
 
         return response()->json(['success' => false, 'message' => 'Driver profile not found'], 404);
+    }
+
+    /**
+     * Update driver profile details (name, phone, hourly rate, bio, etc.)
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'hourly_rate' => 'nullable|numeric|min:5',
+            'daily_rate' => 'nullable|numeric|min:20',
+            'bio' => 'nullable|string|max:1000',
+            'service_area' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:100',
+            'photo' => 'nullable|image|max:10240',
+        ]);
+
+        if (!empty($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+        if (!empty($validated['phone'])) {
+            $user->phone = $validated['phone'];
+        }
+        $user->save();
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'license_number' => 'DL-' . strtoupper(bin2hex(random_bytes(4))),
+                'hourly_rate' => 35.00,
+                'country' => 'USA',
+                'is_available' => true,
+                'verification_status' => 'verified',
+                'rating' => 5.0,
+                'total_trips' => 0,
+            ]
+        );
+
+        $profileUpdates = [];
+        if (isset($validated['hourly_rate'])) $profileUpdates['hourly_rate'] = $validated['hourly_rate'];
+        if (isset($validated['daily_rate'])) $profileUpdates['daily_rate'] = $validated['daily_rate'];
+        if (isset($validated['bio'])) $profileUpdates['bio'] = $validated['bio'];
+        if (isset($validated['service_area'])) $profileUpdates['service_area'] = $validated['service_area'];
+        if (isset($validated['country'])) $profileUpdates['country'] = $validated['country'];
+
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('drivers/photos', 'public');
+            $profileUpdates['image_url'] = $photoPath;
+            $profileUpdates['photo_formality_status'] = 'verified';
+        }
+
+        if (!empty($profileUpdates)) {
+            $profile->update($profileUpdates);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+            ],
+            'driver_profile' => $profile->fresh(),
+            'photo_url' => $profile->fresh()->photo_url,
+        ]);
+    }
+
+    /**
+     * Upload or update driver profile photo
+     */
+    public function uploadPhoto(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'license_number' => 'DL-' . strtoupper(bin2hex(random_bytes(4))),
+                'hourly_rate' => 35.00,
+                'country' => 'USA',
+                'is_available' => true,
+                'verification_status' => 'verified',
+                'rating' => 5.0,
+                'total_trips' => 0,
+            ]
+        );
+
+        $photoPath = null;
+
+        if ($request->hasFile('photo')) {
+            $request->validate(['photo' => 'required|image|max:10240']);
+            $photoPath = $request->file('photo')->store('drivers/photos', 'public');
+        } elseif ($request->hasFile('driver_photo')) {
+            $request->validate(['driver_photo' => 'required|image|max:10240']);
+            $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+        } elseif ($request->filled('base64_photo')) {
+            $imageData = $request->input('base64_photo');
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                $type = strtolower($type[1]);
+            } else {
+                $type = 'jpg';
+            }
+            $imageData = base64_decode($imageData);
+            if ($imageData !== false) {
+                $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
+                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $imageData);
+                $photoPath = $fileName;
+            }
+        }
+
+        if (!$photoPath) {
+            return response()->json(['success' => false, 'message' => 'No image file or data provided.'], 422);
+        }
+
+        $profile->update([
+            'image_url' => $photoPath,
+            'photo_formality_status' => 'verified',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Driver profile photo updated successfully.',
+            'photo_url' => $profile->fresh()->photo_url,
+            'driver_profile' => $profile->fresh(),
+        ]);
     }
 
     /**
@@ -322,7 +471,7 @@ class DriverApiController extends Controller
         $processedRideIds = [];
 
         // 1. Direct assignments assigned to this driver
-        $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client'])
+        $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client', 'packageDelivery.customer'])
             ->where('driver_id', $user->id)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
@@ -331,6 +480,12 @@ class DriverApiController extends Controller
         foreach ($assignments as $a) {
             if ($a->ride && $a->ride->status === 'pending') {
                 $processedRideIds[] = $a->ride->id;
+
+                $customerName = $a->ride->rider?->name ?? 'Customer';
+                $customerPhone = $a->ride->rider?->phone;
+                $pocName = $a->ride->passenger_name;
+                $pocPhone = $a->ride->passenger_phone;
+
                 $requests[] = [
                     'assignment_id' => $a->id,
                     'type' => 'ride',
@@ -343,13 +498,21 @@ class DriverApiController extends Controller
                     'dropoff_lng' => $a->ride->dropoff_lng,
                     'fare' => floatval($a->ride->fare ?: $a->ride->total_amount),
                     'vehicle_type' => $a->ride->vehicle_type ?? 'Standard',
-                    'rider_name' => $a->ride->rider?->name ?? $a->ride->passenger_name ?? 'Rider',
-                    'rider_phone' => $a->ride->passenger_phone ?? $a->ride->rider?->phone,
+                    'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone,
+                    'poc_name' => $pocName,
+                    'poc_phone' => $pocPhone,
+                    'rider_name' => $pocName ?: $customerName,
+                    'rider_phone' => $pocPhone ?: $customerPhone,
+                    'is_for_someone_else' => (bool)$a->ride->is_for_someone_else,
                     'distance_km' => $a->ride->distance_km,
                     'duration_minutes' => $a->ride->duration_minutes,
                     'expires_at' => $a->expires_at->toIso8601String(),
                 ];
-            } elseif ($a->driverBooking && $a->driverBooking->status === 'pending') {
+            } elseif ($a->driverBooking && $a->driverBooking->booking_status === 'pending') {
+                $clientName = $a->driverBooking->client?->name ?? 'Client';
+                $clientPhone = $a->driverBooking->client?->phone;
+
                 $requests[] = [
                     'assignment_id' => $a->id,
                     'type' => 'driver_booking',
@@ -359,14 +522,41 @@ class DriverApiController extends Controller
                     'duration_type' => $a->driverBooking->duration_type,
                     'duration_count' => $a->driverBooking->duration_count,
                     'total_price' => floatval($a->driverBooking->total_price),
-                    'client_name' => $a->driverBooking->client?->name ?? 'Client',
+                    'customer_name' => $clientName,
+                    'customer_phone' => $clientPhone,
+                    'client_name' => $clientName,
+                    'client_phone' => $clientPhone,
+                    'poc_name' => null,
+                    'poc_phone' => null,
                     'start_date' => $a->driverBooking->start_date,
+                    'expires_at' => $a->expires_at->toIso8601String(),
+                ];
+            } elseif ($a->packageDelivery && $a->packageDelivery->delivery_status === 'pending') {
+                $custName = $a->packageDelivery->customer?->name ?? $a->packageDelivery->sender_name ?? 'Sender';
+                $custPhone = $a->packageDelivery->customer?->phone ?? $a->packageDelivery->sender_phone;
+                $pocName = $a->packageDelivery->recipient_name;
+                $pocPhone = $a->packageDelivery->recipient_phone;
+
+                $requests[] = [
+                    'assignment_id' => $a->id,
+                    'type' => 'package_delivery',
+                    'delivery_id' => $a->packageDelivery->id,
+                    'pickup_location' => $a->packageDelivery->pickup_location,
+                    'dropoff_location' => $a->packageDelivery->dropoff_location,
+                    'total_price' => floatval($a->packageDelivery->total_price),
+                    'fare' => floatval($a->packageDelivery->total_price),
+                    'customer_name' => $custName,
+                    'customer_phone' => $custPhone,
+                    'poc_name' => $pocName,
+                    'poc_phone' => $pocPhone,
+                    'rider_name' => $pocName ?: $custName,
+                    'rider_phone' => $pocPhone ?: $custPhone,
                     'expires_at' => $a->expires_at->toIso8601String(),
                 ];
             }
         }
 
-        // 2. Also populate all available pending unassigned rides in the system (like web version!)
+        // 2. Also populate all available pending unassigned rides in the system
         $openPendingRides = \App\Models\Ride::with('rider')
             ->where('status', 'pending')
             ->whereNull('driver_id')
@@ -381,6 +571,11 @@ class DriverApiController extends Controller
                 ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
             );
 
+            $customerName = $pr->rider?->name ?? 'Customer';
+            $customerPhone = $pr->rider?->phone;
+            $pocName = $pr->passenger_name;
+            $pocPhone = $pr->passenger_phone;
+
             $requests[] = [
                 'assignment_id' => $assignment->id,
                 'type' => 'ride',
@@ -393,8 +588,13 @@ class DriverApiController extends Controller
                 'dropoff_lng' => $pr->dropoff_lng,
                 'fare' => floatval($pr->fare ?: $pr->total_amount),
                 'vehicle_type' => $pr->vehicle_type ?? 'Standard',
-                'rider_name' => $pr->rider?->name ?? $pr->passenger_name ?? 'Rider',
-                'rider_phone' => $pr->passenger_phone ?? $pr->rider?->phone,
+                'customer_name' => $customerName,
+                'customer_phone' => $customerPhone,
+                'poc_name' => $pocName,
+                'poc_phone' => $pocPhone,
+                'rider_name' => $pocName ?: $customerName,
+                'rider_phone' => $pocPhone ?: $customerPhone,
+                'is_for_someone_else' => (bool)$pr->is_for_someone_else,
                 'distance_km' => $pr->distance_km,
                 'duration_minutes' => $pr->duration_minutes,
                 'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),

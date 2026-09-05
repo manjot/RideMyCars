@@ -1052,22 +1052,26 @@
     {{ $slot }}
 
     <!-- Footer -->
-    <footer class="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-white/10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer class="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-white/[0.08] relative overflow-hidden">
+        <!-- Subtle Ambient Background Light -->
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/[0.015] rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/[0.015] rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             
             <!-- Guest Ongoing Ride Live Tracker Banner -->
-            <div class="mb-12 p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-emerald-950/50 via-slate-900 to-amber-950/40 border border-emerald-500/30 hover:border-emerald-400/60 transition-all shadow-2xl relative overflow-hidden backdrop-blur-md group"
+            <div class="mb-14 p-6 sm:p-8 lg:p-7 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-slate-900/95 to-slate-900/90 border border-emerald-500/20 hover:border-emerald-500/40 shadow-[0_12px_40px_-15px_rgba(16,185,129,0.15)] relative overflow-hidden backdrop-blur-xl transition-all duration-300 group"
                  x-data="{ activeRideId: localStorage.getItem('rmc_active_ride_id') || '' }">
-                <!-- Ambient background glow -->
-                <div class="absolute -top-12 -right-12 w-52 h-52 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="absolute -bottom-12 -left-12 w-52 h-52 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <!-- Ambient banner glow -->
+                <div class="absolute -top-16 -right-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-16 -left-16 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
                 <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                     <div class="flex items-start sm:items-center gap-4">
                         <!-- High-Tech Animated Radar GPS Icon -->
                         <div class="relative flex items-center justify-center shrink-0 mt-1 sm:mt-0">
-                            <span class="absolute inline-flex h-14 w-14 rounded-full bg-emerald-400/25 animate-ping"></span>
-                            <div class="relative w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 border border-emerald-300/50 p-2.5">
+                            <span class="absolute inline-flex h-14 w-14 rounded-2xl bg-emerald-400/20 animate-ping"></span>
+                            <div class="relative w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 border border-emerald-300/40 p-2.5">
                                 <svg class="w-7 h-7 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -1076,29 +1080,29 @@
                         </div>
 
                         <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                     Live Ongoing Ride Tracking
                                 </span>
-                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-white/10 text-gray-300 border border-white/10">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
                                     Guest Access • No Login Required
                                 </span>
                             </div>
-                            <h3 class="text-base sm:text-lg font-black text-white tracking-tight">
+                            <h3 class="text-lg sm:text-xl font-black text-white tracking-tight">
                                 Track Your Ongoing Ride in Real-Time
                             </h3>
-                            <p class="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed mt-0.5">
+                            <p class="text-xs sm:text-sm text-zinc-300/90 max-w-xl leading-relaxed mt-1">
                                 Booked as a guest or tracking for someone else? Follow live driver GPS location, turn-by-turn routes, and estimated arrival time instantly.
                             </p>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto shrink-0">
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0 justify-start lg:justify-end">
                         <!-- When active guest ride found in browser storage -->
                         <template x-if="activeRideId">
                             <a :href="'/ride/track/' + activeRideId" 
-                               class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs tracking-wide shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 group cursor-pointer hover:scale-[1.02]">
+                               class="w-full sm:w-auto px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs tracking-wider uppercase shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 group cursor-pointer hover:scale-[1.02]">
                                 <span class="w-2 h-2 rounded-full bg-slate-950 animate-ping"></span>
                                 <span>Track Active Ride #<span x-text="activeRideId"></span> Live</span>
                                 <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -1107,10 +1111,14 @@
 
                         <!-- General Direct Link to Tracker Portal -->
                         <a href="/ride/track" 
-                           class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/15 hover:border-emerald-400/40 font-black text-xs tracking-wide transition-all flex items-center justify-center gap-2 group cursor-pointer">
-                            <span>🛰️</span>
+                           class="w-full sm:w-auto px-5 py-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/15 hover:border-emerald-400/50 font-bold text-xs sm:text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2.5 group cursor-pointer shadow-sm">
+                            <svg class="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3m9-9h-3m-12 0H3"/>
+                                <circle cx="12" cy="12" r="3" class="fill-emerald-400"/>
+                            </svg>
                             <span>Open Guest Ride Tracker</span>
-                            <svg class="w-4 h-4 text-emerald-400 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                            <svg class="w-4 h-4 text-zinc-400 group-hover:text-emerald-400 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </a>
                     </div>
                 </div>
@@ -1124,23 +1132,23 @@
                     <a class="inline-flex items-center gap-2 group" href="/">
                         <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 w-auto object-contain transition-transform group-hover:scale-105">
                     </a>
-                    <p class="text-gray-300 text-sm leading-relaxed max-w-sm">
+                    <p class="text-zinc-400 text-sm leading-relaxed max-w-sm">
                         Your unified mobility platform. Book rides, rent vehicles, hire verified private chauffeurs, and track parcel deliveries in real time.
                     </p>
-                    <div class="flex items-center gap-3 pt-2">
-                        <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on X (Twitter)">
+                    <div class="flex items-center gap-2.5 pt-1">
+                        <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on X (Twitter)">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                         </a>
-                        <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on Instagram">
+                        <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on Instagram">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                         </a>
-                        <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on Facebook">
+                        <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on Facebook">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
                         </a>
-                        <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on LinkedIn">
+                        <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on LinkedIn">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                         </a>
-                        <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-black text-gray-300 flex items-center justify-center transition-all duration-200 border border-white/5 hover:border-brand-400" title="Follow RideMyCars on TikTok">
+                        <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on TikTok">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.33-6.33V9.05a8.3 8.3 0 0 0 4.92 1.6V7.21a4.85 4.85 0 0 1-1-.52z"/></svg>
                         </a>
                     </div>
@@ -1148,66 +1156,101 @@
 
                 <!-- Column 1: Services (Span 2) -->
                 <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
                         Services
                     </h4>
-                    <ul class="space-y-2.5 text-sm">
-                        <li><a href="/ride" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Book a Ride</a></li>
+                    <ul class="space-y-3 text-[13px] sm:text-sm">
                         <li>
-                            <a href="/ride/track" class="text-emerald-400 hover:text-emerald-300 hover:translate-x-1 inline-flex items-center gap-1.5 transition-all font-bold group">
-                                <span class="relative flex h-2 w-2">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </span>
-                                <span>Track Ongoing Ride</span>
-                                <span class="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 uppercase font-black">Live</span>
+                            <a href="/ride" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Book a Ride</span>
                             </a>
                         </li>
-                        <li><a href="/rent" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Rent a Vehicle</a></li>
-                        <li><a href="/hire-driver" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Hire a Driver</a></li>
-                        <li><a href="/delivery" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Package Delivery</a></li>
-                        <li><a href="/pricing" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Pricing & Rates</a></li>
-                        <li><a href="/membership" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all flex items-center gap-1.5">
-                            Club Membership
-                            <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">VIP</span>
-                        </a></li>
-                        <li><a href="/apps#rider-app" class="text-brand-400 hover:text-brand-300 hover:translate-x-1 inline-block transition-all font-semibold flex items-center gap-1">
-                            <span>Download Rider App</span>
-                            <span class="text-[9px] px-1 py-0.2 rounded bg-brand-500/20 uppercase font-black">App</span>
-                        </a></li>
+                        <li>
+                            <a href="/ride/track" class="text-zinc-400 hover:text-emerald-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    <span>Track Ongoing Ride</span>
+                                </span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Live</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/rent" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Rent a Vehicle</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/hire-driver" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Hire a Driver</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/delivery" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Package Delivery</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/pricing" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Pricing & Rates</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/membership" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Club Membership</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">VIP</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/apps#rider-app" class="text-brand-400/90 hover:text-brand-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Download Rider App</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">App</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
                 <!-- Column 2: Company (Span 2) -->
                 <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
                         Company
                     </h4>
-                    <ul class="space-y-2.5 text-sm">
-                        <li><a href="/about" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">About Us</a></li>
-                        <li><a href="/safety" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Safety & Trust</a></li>
-                        <li><a href="/blogs" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">News & Insights</a></li>
+                    <ul class="space-y-3 text-[13px] sm:text-sm">
                         <li>
-                            <a href="/signup" class="text-gray-300 hover:text-brand-400 hover:translate-x-1 inline-flex items-center gap-2 transition-all group">
-                                <span class="text-sm shrink-0">👤</span>
-                                <span>Rider Signup</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">Free</span>
+                            <a href="/about" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">About Us</span>
                             </a>
                         </li>
                         <li>
-                            <a href="/become-driver" class="text-gray-300 hover:text-amber-400 hover:translate-x-1 inline-flex items-center gap-2 transition-all group">
-                                <span class="text-sm shrink-0">👨‍✈️</span>
-                                <span>Become a Driver</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">Earn</span>
+                            <a href="/safety" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Safety & Trust</span>
                             </a>
                         </li>
                         <li>
-                            <a href="/become-owner" class="text-gray-300 hover:text-blue-400 hover:translate-x-1 inline-flex items-center gap-2 transition-all group">
-                                <span class="text-sm shrink-0">🔑</span>
-                                <span>List Your Vehicle</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Host</span>
+                            <a href="/blogs" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">News & Insights</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/signup" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Rider Signup</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/30">Free</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/become-driver" class="text-zinc-400 hover:text-amber-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Become a Driver</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">Earn</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/become-owner" class="text-zinc-400 hover:text-purple-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">List Your Vehicle</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/30">Host</span>
                             </a>
                         </li>
                     </ul>
@@ -1215,105 +1258,161 @@
 
                 <!-- Column 3: Support (Span 2) -->
                 <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
                         Support
                     </h4>
-                    <ul class="space-y-2.5 text-sm">
-                        <li><a href="/about" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Help Center</a></li>
-                        <li><a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Concierge Support</a></li>
-                        <li><a href="/onboarding" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">How It Works</a></li>
-                        <li><a href="/delivery/tracker" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Delivery Tracker</a></li>
+                    <ul class="space-y-3 text-[13px] sm:text-sm">
                         <li>
-                            <a href="/ride/track" class="text-gray-300 hover:text-emerald-400 hover:translate-x-1 inline-flex items-center gap-1.5 transition-all font-medium">
-                                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                <span>Guest Ride Tracker</span>
+                            <a href="/about" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Help Center</span>
                             </a>
                         </li>
-                        <li><a href="/driver/dashboard" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Driver Portal</a></li>
-                        <li><a href="/apps#driver-app" class="text-amber-400 hover:text-amber-300 hover:translate-x-1 inline-block transition-all font-semibold flex items-center gap-1">
-                            <span>Download Driver App</span>
-                            <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 uppercase font-black">90%</span>
-                        </a></li>
+                        <li>
+                            <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Concierge Support</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/onboarding" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">How It Works</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/delivery/tracker" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Delivery Tracker</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/ride/track" class="text-zinc-400 hover:text-emerald-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span>Guest Ride Tracker</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/driver/dashboard" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Portal</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/apps#driver-app" class="text-amber-400/90 hover:text-amber-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Download Driver App</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">90%</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
+
                 <!-- Column 4: Legal (Span 2) -->
                 <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
                         Legal & Compliance
                     </h4>
-                    <ul class="space-y-2.5 text-sm">
-                        <li><a href="/terms-and-conditions" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Terms & Conditions</a></li>
-                        <li><a href="/privacy-policy" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Privacy Policy</a></li>
-                        <li><a href="/refund-cancellation-policy" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Refund & Cancellation Policy</a></li>
-                        <li><a href="/privacy-requests" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Privacy Data Rights Portal</a></li>
-                        <li><a href="/disputes" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Disputes & Claims (72h)</a></li>
-                        <li><a href="/contact" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Contact Us</a></li>
-                        <li><a href="/legal" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Compliance & Trust</a></li>
+                    <ul class="space-y-3 text-[13px] sm:text-sm">
+                        <li>
+                            <a href="/terms-and-conditions" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Terms & Conditions</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/privacy-policy" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Privacy Policy</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/refund-cancellation-policy" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Refund & Cancellation</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/privacy-requests" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Privacy Data Rights</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/disputes" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Disputes & Claims (72h)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/contact" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Contact Us</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/legal" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Compliance & Trust</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
 
             <!-- Corporate Regional Offices Strip (New Development Finance Group) -->
-            <div class="pt-10 pb-8 border-t border-white/10">
+            <div class="pt-10 pb-8 border-t border-white/[0.08]">
                 <div class="flex items-center justify-between gap-4 mb-5 flex-wrap">
                     <div class="flex items-center gap-2.5">
-                        <span class="w-2 h-2 rounded-full bg-brand-500"></span>
-                        <span class="text-xs font-black uppercase tracking-wider text-white">
+                        <span class="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
+                        <span class="text-xs font-black uppercase tracking-wider text-zinc-200">
                             New Development Finance Group — Global Corporate & Regional Offices
                         </span>
                     </div>
-                    <a href="/contact" class="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1">
+                    <a href="/contact" class="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1.5 group">
                         <span>View Office Directory</span>
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        <svg class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- USA Global HQ -->
-                    <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
-                        <span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
-                            <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-6 h-4 object-cover rounded-sm shadow-sm">
+                    <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" 
+                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
+                            <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">United States</span>
-                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase tracking-wider">Global HQ</span>
+                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">United States</span>
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 uppercase tracking-wider">Global HQ</span>
                             </div>
-                            <p class="text-xs text-gray-300 font-medium leading-snug mt-1" title="4301 Saddle River Drive, Bowie, MD 20720">
+                            <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="4301 Saddle River Drive, Bowie, MD 20720">
                                 4301 Saddle River Drive, Bowie, MD 20720
                             </p>
                         </div>
                     </a>
 
                     <!-- RSA Regional Hub -->
-                    <a href="https://maps.google.com/?q=11+Corona+Road,+Sandhurst,+Sandton,+Gauteng+2196" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
-                        <span class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
-                            <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-6 h-4 object-cover rounded-sm shadow-sm">
+                    <a href="https://maps.google.com/?q=11+Corona+Road,+Sandhurst,+Sandton,+Gauteng+2196" target="_blank" rel="noopener" 
+                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
+                            <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">South Africa</span>
-                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">RSA Hub</span>
+                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">South Africa</span>
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 uppercase tracking-wider">RSA Hub</span>
                             </div>
-                            <p class="text-xs text-gray-300 font-medium leading-snug mt-1" title="11 Corona Road, Sandhurst, Sandton, Gauteng 2196">
+                            <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="11 Corona Road, Sandhurst, Sandton, Gauteng 2196">
                                 11 Corona Rd, Sandhurst, Sandton 2196
                             </p>
                         </div>
                     </a>
 
                     <!-- Ghana Regional Hub -->
-                    <a href="https://maps.google.com/?q=No+1+Airport+Square,+Airport+City,+Accra,+Ghana" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-brand-500/40 transition-all duration-200 group flex items-start gap-3.5">
-                        <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
-                            <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-6 h-4 object-cover rounded-sm shadow-sm">
+                    <a href="https://maps.google.com/?q=No+1+Airport+Square,+Airport+City,+Accra,+Ghana" target="_blank" rel="noopener" 
+                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
+                            <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-white group-hover:text-brand-400 transition-colors">Ghana</span>
-                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider">GHA Hub</span>
+                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">Ghana</span>
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 uppercase tracking-wider">GHA Hub</span>
                             </div>
-                            <p class="text-xs text-gray-300 font-medium leading-snug mt-1" title="No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana">
+                            <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana">
                                 No 1 Airport Square, 8th FL, Airport City, Accra
                             </p>
                         </div>
@@ -1322,69 +1421,77 @@
             </div>
 
             <!-- Middle Bar: Contact Info & Separate App Download Badges (Rider vs Driver) -->
-            <div class="py-8 border-y border-white/10 flex flex-col xl:flex-row items-center justify-between gap-6">
-                <!-- Direct Contacts -->
-                <div class="flex flex-wrap items-center justify-center xl:justify-start gap-y-3 gap-x-8 text-sm text-gray-300">
-                    <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
-                        <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
+            <div class="py-8 border-y border-white/[0.08] flex flex-col xl:flex-row items-center justify-between gap-6">
+                <!-- Direct Contacts in Premium Interactive Pills -->
+                <div class="flex flex-wrap items-center justify-center xl:justify-start gap-3 w-full xl:w-auto">
+                    <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" 
+                       class="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-brand-500/40 text-xs sm:text-sm text-zinc-300 hover:text-white transition-all duration-200 group shadow-sm">
+                        <span class="w-8 h-8 rounded-lg bg-white/[0.05] group-hover:bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0 transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                         </span>
-                        <span>{{ site_setting('footer.support_email', 'support@ridemycars.com') }}</span>
+                        <span class="font-medium truncate">{{ site_setting('footer.support_email', 'support@ridemycars.com') }}</span>
                     </a>
                     
-                    <a href="tel:+18885700008" class="flex items-center gap-2.5 hover:text-brand-400 transition-colors">
-                        <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-500">
+                    <a href="tel:{{ site_setting('footer.support_phone', '+1 888 570 0008') }}" 
+                       class="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-brand-500/40 text-xs sm:text-sm text-zinc-300 hover:text-white transition-all duration-200 group shadow-sm">
+                        <span class="w-8 h-8 rounded-lg bg-white/[0.05] group-hover:bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0 transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                         </span>
-                        <span>{{ site_setting('footer.support_phone', '+1 888 570 0008') }}</span>
+                        <span class="font-medium">{{ site_setting('footer.support_phone', '+1 888 570 0008') }}</span>
                     </a>
                 </div>
 
-                <!-- Separate Rider & Driver App Download Badges -->
-                <div class="flex flex-col lg:flex-row items-center gap-3">
-                    <!-- Rider App Section -->
-                    <div class="flex items-center gap-2 bg-white/[0.03] p-1.5 rounded-2xl border border-white/10">
-                        <a href="/apps#rider-app" class="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 rounded-lg border border-brand-500/25 transition-colors" title="View Rider App Details">
+                <!-- Symmetrical Separate App Download Pods -->
+                <div class="flex flex-col sm:flex-row items-center gap-3.5 w-full xl:w-auto justify-center xl:justify-end flex-wrap">
+                    <!-- Rider App Pod -->
+                    <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.08] shadow-sm">
+                        <a href="/apps#rider-app" class="px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 rounded-xl border border-brand-500/25 transition-colors shrink-0" title="View Rider App Details">
                             🚗 Rider App
                         </a>
                         <!-- App Store -->
-                        <a href="{{ site_setting('rider.ios_url', site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars/id123456789')) }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group" title="Download RideMyCars Rider App on iOS">
-                            <svg class="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                        <a href="{{ site_setting('rider.ios_url', site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars/id123456789')) }}" 
+                           target="_blank" rel="noopener" 
+                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-white/20 transition-all group shrink-0" title="Download RideMyCars Rider App on iOS">
+                            <svg class="w-4 h-4 shrink-0 text-white group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
                             <div class="flex flex-col text-left">
-                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Download on</span>
+                                <span class="text-[7px] uppercase tracking-wider text-zinc-400 leading-none">Download on</span>
                                 <span class="text-[10px] font-bold leading-tight mt-0.5">App Store</span>
                             </div>
                         </a>
                         
                         <!-- Google Play / Direct APK -->
-                        <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/20 transition-all group" title="Download RideMyCars Rider Android APK">
-                            <svg class="w-4 h-4 shrink-0 text-brand-500 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
+                        <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" 
+                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-white/20 transition-all group shrink-0" title="Download RideMyCars Rider Android APK">
+                            <svg class="w-4 h-4 shrink-0 text-brand-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                             <div class="flex flex-col text-left">
-                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Get it on</span>
+                                <span class="text-[7px] uppercase tracking-wider text-zinc-400 leading-none">Get it on</span>
                                 <span class="text-[10px] font-bold leading-tight mt-0.5">Google Play</span>
                             </div>
                         </a>
                     </div>
 
-                    <!-- Driver App Section -->
-                    <div class="flex items-center gap-2 bg-white/[0.03] p-1.5 rounded-2xl border border-amber-500/20">
-                        <a href="/apps#driver-app" class="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg border border-amber-500/30 transition-colors" title="View Driver App Details">
+                    <!-- Driver App Pod -->
+                    <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.02] border border-amber-500/20 shadow-sm">
+                        <a href="/apps#driver-app" class="px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl border border-amber-500/30 transition-colors shrink-0" title="View Driver App Details">
                             🚕 Driver App
                         </a>
                         <!-- App Store -->
-                        <a href="{{ site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars-driver/id987654321') }}" target="_blank" rel="noopener" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-amber-500/30 transition-all group" title="Download RideMyCars Driver App on iOS">
-                            <svg class="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
+                        <a href="{{ site_setting('driver.ios_url', 'https://apps.apple.com/app/ridemycars-driver/id987654321') }}" 
+                           target="_blank" rel="noopener" 
+                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-amber-500/30 transition-all group shrink-0" title="Download RideMyCars Driver App on iOS">
+                            <svg class="w-4 h-4 shrink-0 text-white group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.61 1.35-.55.63-1.03 1.68-.9 2.7.99.08 2.01-.5 2.59-1.2z"/></svg>
                             <div class="flex flex-col text-left">
-                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Download on</span>
+                                <span class="text-[7px] uppercase tracking-wider text-zinc-400 leading-none">Download on</span>
                                 <span class="text-[10px] font-bold leading-tight mt-0.5">App Store</span>
                             </div>
                         </a>
                         
                         <!-- Google Play / Direct APK -->
-                        <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-amber-500/30 transition-all group" title="Download RideMyCars Driver Android APK">
+                        <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" 
+                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-amber-500/30 transition-all group shrink-0" title="Download RideMyCars Driver Android APK">
                             <svg class="w-4 h-4 shrink-0 text-amber-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                             <div class="flex flex-col text-left">
-                                <span class="text-[7px] uppercase tracking-wider text-gray-400 leading-none">Get it on</span>
+                                <span class="text-[7px] uppercase tracking-wider text-zinc-400 leading-none">Get it on</span>
                                 <span class="text-[10px] font-bold leading-tight mt-0.5">Google Play</span>
                             </div>
                         </a>
@@ -1393,19 +1500,26 @@
             </div>
             
             <!-- Bottom Footer Bar -->
-            <div class="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-                <p class="text-center md:text-left">{{ site_setting('footer.copyright', '© 2026 RideMyCars • A New Development Finance Group Company. All rights reserved.') }}</p>
+            <div class="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
+                <p class="text-center md:text-left font-medium">
+                    {{ site_setting('footer.copyright', '© 2026 RideMyCars • A New Development Finance Group Company. All rights reserved.') }}
+                </p>
                 
-                <div class="flex flex-wrap items-center justify-center gap-4 text-gray-400">
-                    <span class="flex items-center gap-1.5 text-gray-300">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Systems Operational
-                    </span>
-                    <span class="text-gray-600 hidden sm:inline">•</span>
-                    <span class="flex items-center gap-1.5 text-gray-300">
-                        <svg class="w-3.5 h-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        256-Bit SSL Encrypted
-                    </span>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <!-- Systems Operational Badge -->
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span>Systems Operational</span>
+                    </div>
+
+                    <!-- 256-Bit SSL Encrypted Badge -->
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.08] text-zinc-300 text-xs font-medium">
+                        <svg class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        <span>256-Bit SSL Encrypted</span>
+                    </div>
                 </div>
             </div>
 

@@ -1168,13 +1168,14 @@ Route::get('/api/ride/{id}/status', function ($id) {
         $dp = $ride->driver->driverProfile;
         $driverData = [
             'name' => $ride->driver->name,
+            'phone' => $ride->driver->phone,
             'photo_url' => $dp?->photo_url,
             'rating' => $dp ? floatval($dp->rating) : 5.0,
             'total_trips' => $dp ? intval($dp->total_trips) : 0,
             'vehicle_model' => $dp ? ($dp->vehicle_make . ' ' . $dp->vehicle_model) : ($ride->vehicle_type ?? 'Executive Sedan'),
             'vehicle_plate' => $dp?->vehicle_plate ?? 'REG-8899',
-            'current_lat' => $dp ? floatval($dp->current_lat) : null,
-            'current_lng' => $dp ? floatval($dp->current_lng) : null,
+            'current_lat' => $ride->current_lat ? floatval($ride->current_lat) : ($dp ? floatval($dp->current_lat) : null),
+            'current_lng' => $ride->current_lng ? floatval($ride->current_lng) : ($dp ? floatval($dp->current_lng) : null),
             'last_location_update' => $dp?->last_location_update?->toIso8601String(),
         ];
     }
@@ -1196,13 +1197,21 @@ Route::get('/api/ride/{id}/status', function ($id) {
         'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
         'stops' => $ride->stops->map(fn($s) => ['order' => $s->stop_order, 'location' => $s->location, 'lat' => $s->lat ? floatval($s->lat) : null, 'lng' => $s->lng ? floatval($s->lng) : null]),
         'stops_count' => $stopsCount,
-        'passenger_phone' => $ride->passenger_phone,
+        'customer_name' => $ride->rider?->name ?? 'Customer',
+        'customer_phone' => $ride->rider?->phone,
+        'poc_name' => $ride->passenger_name,
+        'poc_phone' => $ride->passenger_phone,
+        'rider_name' => $ride->passenger_name ?: ($ride->rider?->name ?? 'Customer'),
+        'rider_phone' => $ride->passenger_phone ?: $ride->rider?->phone,
+        'is_for_someone_else' => (bool)$ride->is_for_someone_else,
+        'passenger_phone' => $ride->passenger_phone ?? $ride->rider?->phone,
         'payment_method' => $ride->payment_method ?? 'cash',
         'vehicle_type' => $ride->vehicle_type ?? 'Sedan',
         'pickup_date' => $ride->pickup_date,
         'pickup_time' => $ride->pickup_time,
         'cancellation_reason' => $ride->cancellation_reason,
         'driver_name' => $ride->driver?->name,
+        'driver_phone' => $ride->driver?->phone,
         'driver' => $driverData,
         'arrived_at' => $ride->arrived_at?->toIso8601String(),
         'started_at' => $ride->started_at?->toIso8601String(),
@@ -2189,6 +2198,48 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             \App\Services\ActivityLogService::log('status_change', "Driver availability toggled to " . ($user->driverProfile->is_available ? 'Available' : 'Unavailable'), $user->id);
         }
         return back()->with('success', 'Availability updated.');
+    });
+
+    Route::post('/profile/update', function (\Illuminate\Http\Request $request) {
+        $user = auth()->user();
+        if (!$user) return redirect('/login');
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'hourly_rate' => 'nullable|numeric|min:5',
+            'daily_rate' => 'nullable|numeric|min:20',
+            'weekly_rate' => 'nullable|numeric|min:100',
+            'bio' => 'nullable|string|max:1000',
+            'service_area' => 'nullable|string|max:255',
+            'driver_photo' => 'nullable|image|max:10240',
+        ]);
+
+        $userUpdates = ['name' => $validated['name']];
+        if (!empty($validated['phone'])) {
+            $userUpdates['phone'] = $validated['phone'];
+        }
+        $user->update($userUpdates);
+
+        $profile = $user->driverProfile ?? \App\Models\DriverProfile::firstOrCreate(['user_id' => $user->id]);
+
+        $profileUpdates = [
+            'hourly_rate' => $validated['hourly_rate'] ?? $profile->hourly_rate,
+            'daily_rate' => $validated['daily_rate'] ?? $profile->daily_rate,
+            'weekly_rate' => $validated['weekly_rate'] ?? $profile->weekly_rate,
+            'bio' => $validated['bio'] ?? $profile->bio,
+            'service_area' => $validated['service_area'] ?? $profile->service_area,
+        ];
+
+        if ($request->hasFile('driver_photo')) {
+            $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+            $profileUpdates['image_url'] = $photoPath;
+            $profileUpdates['photo_formality_status'] = 'verified';
+        }
+
+        $profile->update($profileUpdates);
+
+        return back()->with('success', 'Driver profile and photo updated successfully!');
     });
 });
 

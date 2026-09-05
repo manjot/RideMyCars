@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/ride_provider.dart';
 
@@ -16,6 +17,14 @@ class RideTrackingScreen extends StatefulWidget {
 
 class _RideTrackingScreenState extends State<RideTrackingScreen> {
   GoogleMapController? _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<RideProvider>(context, listen: false).startActiveRidePolling();
+    });
+  }
 
   @override
   void dispose() {
@@ -37,14 +46,44 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     }
   }
 
-  Future<void> _callDriver() async {
-    final phone = widget.ride['driver']?['phone'];
-    if (phone != null && phone.isNotEmpty) {
+  Future<void> _callDriver([String? overridePhone]) async {
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
+    final currentRide = rideProv.activeRide ?? widget.ride;
+    final phone = overridePhone ?? currentRide['driver']?['phone'] ?? widget.ride['driver']?['phone'];
+    if (phone != null && phone.toString().isNotEmpty) {
       final uri = Uri.parse('tel:$phone');
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       }
     }
+  }
+
+  Widget _buildAvatar(String? photoUrl, String name) {
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      final fullUrl = photoUrl.startsWith('http') ? photoUrl : '${ApiConstants.storageBaseUrl}/$photoUrl';
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Image.network(
+          fullUrl,
+          width: 52,
+          height: 52,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildLetterAvatar(name),
+        ),
+      );
+    }
+    return _buildLetterAvatar(name);
+  }
+
+  Widget _buildLetterAvatar(String name) {
+    return CircleAvatar(
+      radius: 26,
+      backgroundColor: AppColors.primary,
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : 'D',
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+      ),
+    );
   }
 
   @override
@@ -178,59 +217,120 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
                       // Driver Details (if assigned)
                       if (driver != null) ...[
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 26,
-                              backgroundColor: AppColors.purple,
-                              child: Text(
-                                (driver['name'] ?? 'D')[0].toUpperCase(),
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    driver['name'] ?? 'Driver',
-                                    style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 17),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.star_rounded, color: AppColors.primary, size: 16),
-                                      const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundDark,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildAvatar(driver['photo_url'] ?? driver['image_url'], driver['name'] ?? 'Driver'),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      driver['name'] ?? 'Driver',
+                                      style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 16),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (driver['phone'] != null && driver['phone'].toString().isNotEmpty)
                                       Text(
-                                        '${driver['rating'] ?? 4.9} · ${driver['total_trips'] ?? 40} trips',
-                                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                                        driver['phone'].toString(),
+                                        style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (driver['phone'] != null)
-                              IconButton(
-                                onPressed: _callDriver,
-                                style: IconButton.styleFrom(
-                                  backgroundColor: AppColors.success.withValues(alpha: 0.2),
-                                  foregroundColor: AppColors.success,
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star_rounded, color: AppColors.primary, size: 15),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          '${driver['rating'] ?? 4.9} · ${driver['total_trips'] ?? 40} trips',
+                                          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                icon: const Icon(Icons.phone_rounded),
                               ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '\$${fare.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 22,
+                              if (driver['phone'] != null && driver['phone'].toString().isNotEmpty)
+                                ElevatedButton.icon(
+                                  onPressed: () => _callDriver(driver['phone'].toString()),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.success,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    elevation: 2,
+                                  ),
+                                  icon: const Icon(Icons.phone_rounded, size: 16),
+                                  label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '\$${fare.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Passenger / POC Details (if booked for someone else)
+                      if ((currentRide['poc_name'] != null && currentRide['poc_name'].toString().isNotEmpty) ||
+                          (currentRide['is_for_someone_else'] == true && currentRide['passenger_name'] != null)) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person_pin_rounded, color: Colors.amber, size: 22),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'PASSENGER / POC',
+                                      style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                    ),
+                                    Text(
+                                      currentRide['poc_name'] ?? currentRide['passenger_name'] ?? 'Passenger',
+                                      style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.bold),
+                                    ),
+                                    if ((currentRide['poc_phone'] ?? currentRide['passenger_phone']) != null)
+                                      Text(
+                                        (currentRide['poc_phone'] ?? currentRide['passenger_phone']).toString(),
+                                        style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if ((currentRide['poc_phone'] ?? currentRide['passenger_phone']) != null)
+                                IconButton(
+                                  onPressed: () => _callDriver((currentRide['poc_phone'] ?? currentRide['passenger_phone']).toString()),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.amber.withValues(alpha: 0.2),
+                                    foregroundColor: Colors.amber,
+                                  ),
+                                  icon: const Icon(Icons.phone_rounded, size: 18),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                       ],
 
                       // Route Information

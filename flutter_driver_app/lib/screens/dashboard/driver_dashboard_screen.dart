@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/driver_provider.dart';
@@ -22,6 +23,14 @@ class DriverDashboardScreen extends StatefulWidget {
 
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   bool _dialogOpen = false;
+
+  Future<void> _callPhone(String? phone) async {
+    if (phone == null || phone.isEmpty) return;
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
 
   @override
   void initState() {
@@ -1011,7 +1020,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final fare = (job['fare'] ?? job['total_price'] ?? 0.0) as num;
     final pickup = job['pickup_location'] ?? 'Pickup location';
     final dropoff = job['dropoff_location'] ?? 'Destination';
-    final riderName = job['rider_name'] ?? job['client_name'] ?? 'Rider';
+    final customerName = (job['customer_name'] ?? job['rider_name'] ?? job['client_name'] ?? 'Customer').toString();
+    final customerPhone = job['customer_phone'] ?? job['rider_phone'] ?? job['client_phone'];
+    final pocName = job['poc_name'];
+    final pocPhone = job['poc_phone'];
+    final bool hasPoc = pocName != null && pocName.toString().isNotEmpty && pocName.toString() != customerName;
     final vehicleType = job['vehicle_type'] ?? 'Standard';
     final isDriverBooking = job['type'] == 'driver_booking';
 
@@ -1083,15 +1096,116 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Rider Name
-            Text(
-              'Rider: $riderName',
-              style: const TextStyle(
-                color: AppColors.textLight,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            // Customer Details Row
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.person_rounded, color: AppColors.primary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Customer: $customerName',
+                          style: const TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                          Text(
+                            customerPhone.toString(),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                    ElevatedButton.icon(
+                      onPressed: () => _callPhone(customerPhone.toString()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.phone_rounded, size: 13),
+                      label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                    ),
+                ],
               ),
             ),
+
+            // POC Details Row (if available)
+            if (hasPoc) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.badge_rounded, color: Colors.amber, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'PASSENGER / POC',
+                            style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          ),
+                          Text(
+                            pocName.toString(),
+                            style: const TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (pocPhone != null && pocPhone.toString().isNotEmpty)
+                            Text(
+                              pocPhone.toString(),
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 11,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (pocPhone != null && pocPhone.toString().isNotEmpty)
+                      ElevatedButton.icon(
+                        onPressed: () => _callPhone(pocPhone.toString()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.phone_rounded, size: 13),
+                        label: const Text('Call POC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
 
             // Locations Card

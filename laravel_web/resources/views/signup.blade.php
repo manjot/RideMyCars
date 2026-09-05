@@ -521,10 +521,24 @@
                     </div>
 
                     <!-- Driver Credentials & Rates Section -->
-                    <div x-show="currentRole === 'driver'" class="pt-4 border-t border-gray-200 dark:border-white/10 space-y-4">
+                    <div x-show="currentRole === 'driver'" class="pt-4 border-t border-gray-200 dark:border-white/10 space-y-4" x-data="{ photoPreview: null }">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Formal Profile Photo <span class="text-xs text-amber-600 font-normal">(Suit, Long-sleeve shirt, or Tie required)</span></label>
-                            <input type="file" name="driver_photo" accept="image/*" class="w-full px-4 py-2 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-500 file:text-white">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Formal Profile Photo <span class="text-xs text-amber-600 font-normal">(Suit, Long-sleeve shirt, or Tie recommended)</span></label>
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center shrink-0 shadow-sm">
+                                    <template x-if="photoPreview">
+                                        <img :src="photoPreview" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="!photoPreview">
+                                        <span class="text-2xl text-gray-400">👤</span>
+                                    </template>
+                                </div>
+                                <div class="flex-1">
+                                    <input type="file" name="driver_photo" accept="image/*" 
+                                        @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => { photoPreview = e.target.result }; reader.readAsDataURL(file); }"
+                                        class="w-full px-4 py-2 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-500 file:text-white cursor-pointer">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">

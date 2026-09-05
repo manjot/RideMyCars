@@ -125,6 +125,27 @@ class AuthController extends Controller
             $driverProfile = null;
             if ($role === 'driver') {
                 try {
+                    $photoPath = null;
+                    if ($request->hasFile('driver_photo')) {
+                        $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+                    } elseif ($request->hasFile('photo')) {
+                        $photoPath = $request->file('photo')->store('drivers/photos', 'public');
+                    } elseif ($request->filled('base64_photo')) {
+                        $imageData = $request->input('base64_photo');
+                        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                            $type = strtolower($type[1]);
+                        } else {
+                            $type = 'jpg';
+                        }
+                        $decoded = base64_decode($imageData);
+                        if ($decoded !== false) {
+                            $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
+                            \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                            $photoPath = $fileName;
+                        }
+                    }
+
                     $driverProfile = DriverProfile::firstOrCreate(
                         ['user_id' => $user->id],
                         [
@@ -137,8 +158,17 @@ class AuthController extends Controller
                             'service_area' => 'Delhi NCR',
                             'hourly_rate' => 30.00,
                             'daily_rate' => 150.00,
+                            'image_url' => $photoPath,
+                            'photo_formality_status' => $photoPath ? 'verified' : 'pending',
                         ]
                     );
+
+                    if ($photoPath && empty($driverProfile->image_url)) {
+                        $driverProfile->update([
+                            'image_url' => $photoPath,
+                            'photo_formality_status' => 'verified',
+                        ]);
+                    }
                 } catch (\Throwable $e) {
                     Log::warning('Could not create driver profile on register: ' . $e->getMessage());
                 }
@@ -540,11 +570,32 @@ class AuthController extends Controller
 
                     if ($role === 'driver') {
                         try {
+                            $photoPath = null;
+                            if ($request->hasFile('driver_photo')) {
+                                $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+                            } elseif ($request->hasFile('photo')) {
+                                $photoPath = $request->file('photo')->store('drivers/photos', 'public');
+                            } elseif ($request->filled('base64_photo')) {
+                                $imageData = $request->input('base64_photo');
+                                if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                                    $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                                    $type = strtolower($type[1]);
+                                } else {
+                                    $type = 'jpg';
+                                }
+                                $decoded = base64_decode($imageData);
+                                if ($decoded !== false) {
+                                    $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
+                                    \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                                    $photoPath = $fileName;
+                                }
+                            }
+
                             $licNumber = trim($request->input('license_number', ''));
                             if (!$licNumber || DriverProfile::where('license_number', $licNumber)->exists()) {
                                 $licNumber = 'DL-' . strtoupper(Str::random(6));
                             }
-                            DriverProfile::firstOrCreate(
+                            $dp = DriverProfile::firstOrCreate(
                                 ['user_id' => $user->id],
                                 [
                                     'license_number' => $licNumber,
@@ -557,8 +608,16 @@ class AuthController extends Controller
                                     'experience_years' => (int) $request->input('experience_years', 5),
                                     'hourly_rate' => (float) $request->input('hourly_rate', 25.00),
                                     'daily_rate' => (float) $request->input('daily_rate', 170.00),
+                                    'image_url' => $photoPath,
+                                    'photo_formality_status' => $photoPath ? 'verified' : 'pending',
                                 ]
                             );
+                            if ($photoPath && empty($dp->image_url)) {
+                                $dp->update([
+                                    'image_url' => $photoPath,
+                                    'photo_formality_status' => 'verified',
+                                ]);
+                            }
                         } catch (\Throwable $e) {
                             Log::warning('Driver profile creation warning: ' . $e->getMessage());
                         }

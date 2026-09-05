@@ -200,38 +200,64 @@
                         </h2>
                         
                         <div class="space-y-4 relative z-10">
-                            <template x-for="req in requests" :key="req.id">
+                            <template x-for="req in requests" :key="req.assignment_id || req.id">
                                 <div class="border border-indigo-300 dark:border-indigo-700 rounded-2xl bg-white/90 dark:bg-black/60 backdrop-blur-sm shadow-md overflow-hidden">
                                     <!-- Map Preview with Route Path -->
-                                    <img :src="getMapUrl(req.ride ? req.ride.pickup_location : (req.driver_booking ? req.driver_booking.pickup_location : ''), req.ride ? req.ride.dropoff_location : (req.driver_booking ? req.driver_booking.dropoff_location : ''), '0x6366f1ff')" alt="Route map" class="w-full h-[120px] object-cover" loading="lazy" onerror="this.style.display='none'">
+                                    <img :src="getMapUrl(req.pickup_location || (req.ride ? req.ride.pickup_location : ''), req.dropoff_location || (req.ride ? req.ride.dropoff_location : ''), '0x6366f1ff')" alt="Route map" class="w-full h-[120px] object-cover" loading="lazy" onerror="this.style.display='none'">
                                     
                                     <div class="p-5">
                                         <div class="flex justify-between items-start mb-3">
                                             <div>
-                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg" x-text="req.driver_booking ? 'New Driver Hiring Request' : 'New Ride Request'">
+                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg" x-text="req.type === 'driver_booking' ? 'New Driver Hiring Request' : (req.type === 'package_delivery' ? 'New Delivery Request' : 'New Ride Request')">
                                                 </span>
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="req.driver_booking ? 'Booking #' + req.driver_booking.booking_code : 'Ride #' + req.ride.id"></h4>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="req.booking_id ? ('Booking #' + req.booking_id) : (req.ride_id ? ('Ride #' + req.ride_id) : (req.delivery_id ? ('Delivery #' + req.delivery_id) : 'New Request'))"></h4>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="req.driver_booking ? (req.driver_booking.currency + ' ' + parseFloat(req.driver_booking.total_price).toFixed(2)) : (req.ride && req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00')"></p>
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="(req.driver_booking ? req.driver_booking.payment_method : req.ride?.payment_method) || 'Cash'"></span>
+                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="'$' + parseFloat(req.fare || req.total_price || 35.00).toFixed(2)"></p>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.payment_method || 'Cash'"></span>
                                             </div>
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
-                                            <p><strong>Pickup:</strong> <span x-text="req.ride ? req.ride.pickup_location : (req.driver_booking ? req.driver_booking.pickup_location : '')"></span></p>
-                                            <p x-show="(req.ride && req.ride.dropoff_location) || (req.driver_booking && req.driver_booking.dropoff_location)"><strong>Dropoff:</strong> <span x-text="req.ride ? req.ride.dropoff_location : (req.driver_booking ? req.driver_booking.dropoff_location : '')"></span></p>
-                                            <p x-show="req.driver_booking"><strong>Schedule & Duration:</strong> <span x-text="req.driver_booking ? (req.driver_booking.start_date + ' (' + req.driver_booking.duration_count + ' ' + req.driver_booking.duration_type + ')') : ''"></span></p>
-                                            <p x-show="req.ride && req.ride.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.ride ? req.ride.vehicle_type : ''"></span></p>
-                                            <p><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
+
+                                        <!-- Customer & POC Contact Details -->
+                                        <div class="p-3 bg-gray-50 dark:bg-white/5 rounded-xl text-xs space-y-1.5 mb-3 border border-gray-100 dark:border-white/10">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-500 font-medium">Customer:</span>
+                                                <span class="font-bold text-gray-900 dark:text-white" x-text="req.customer_name || req.rider_name || 'Customer'"></span>
+                                            </div>
+                                            <template x-if="req.poc_name && req.poc_name !== (req.customer_name || req.rider_name)">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-amber-600 font-bold">POC / Passenger:</span>
+                                                    <span class="font-extrabold text-amber-600 dark:text-amber-400" x-text="req.poc_name"></span>
+                                                </div>
+                                            </template>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-500 font-medium">Contact Phone:</span>
+                                                <span class="font-mono font-bold text-gray-800 dark:text-gray-200" x-text="req.poc_phone || req.customer_phone || req.rider_phone || 'Available on accept'"></span>
+                                            </div>
                                         </div>
-                                        <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
-                                            <button type="button" @click.stop.prevent="respondToRequest(req.id, 'accepted')" :disabled="responding" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
+
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
+                                            <p><strong>📍 Pickup:</strong> <span x-text="req.pickup_location || (req.ride ? req.ride.pickup_location : '')"></span></p>
+                                            <p x-show="req.dropoff_location || (req.ride && req.ride.dropoff_location)"><strong>🏁 Dropoff:</strong> <span x-text="req.dropoff_location || (req.ride ? req.ride.dropoff_location : '')"></span></p>
+                                            <p x-show="req.duration_type"><strong>Schedule:</strong> <span x-text="req.start_date + ' (' + req.duration_count + ' ' + req.duration_type + ')'"></span></p>
+                                            <p x-show="req.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.vehicle_type"></span></p>
+                                            <p x-show="req.expires_at"><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
+                                        </div>
+
+                                        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
+                                            <button type="button" @click.stop.prevent="respondToRequest(req.assignment_id || req.id, 'accepted')" :disabled="responding" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
                                                 <svg x-show="responding" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
-                                                <span>✓ Accept Request & Earn</span> <span x-text="req.driver_booking ? (req.driver_booking.currency + ' ' + parseFloat(req.driver_booking.total_price).toFixed(2)) : (req.ride && req.ride.fare && parseFloat(req.ride.fare) > 0 ? '$' + parseFloat(req.ride.fare).toFixed(2) : '$35.00')"></span>
+                                                <span>✓ Accept Request & Earn</span> <span x-text="'$' + parseFloat(req.fare || req.total_price || 35.00).toFixed(2)"></span>
                                             </button>
-                                            <button type="button" @click.stop.prevent="respondToRequest(req.id, 'rejected')" :disabled="responding" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
+                                            <button type="button" @click.stop.prevent="respondToRequest(req.assignment_id || req.id, 'rejected')" :disabled="responding" class="px-4 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
                                                 Decline
                                             </button>
+                                            <template x-if="req.poc_phone || req.customer_phone || req.client_phone || req.rider_phone">
+                                                <a :href="'tel:' + (req.poc_phone || req.customer_phone || req.client_phone || req.rider_phone)" 
+                                                   class="px-4 py-2.5 bg-green-50 hover:bg-green-100 dark:bg-green-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/40 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all">
+                                                    <span>📞 Call Customer</span>
+                                                </a>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -280,10 +306,29 @@
                                                 <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Cash'"></span>
                                             </div>
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
-                                            <p><strong>Rider:</strong> <span x-text="ride.rider?.name || ride.rider_name || 'Guest Rider'"></span></p>
-                                            <template x-if="ride.rider_phone">
-                                                <p><strong>📞 Phone:</strong> <a :href="'tel:' + ride.rider_phone" class="text-emerald-600 font-bold hover:underline" x-text="ride.rider_phone"></a></p>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-4">
+                                            <div class="flex items-center justify-between">
+                                                <p><strong>Customer:</strong> <span class="font-bold text-gray-900 dark:text-white" x-text="ride.customer_name || ride.rider?.name || ride.rider_name || 'Customer'"></span></p>
+                                                <template x-if="ride.customer_phone || ride.rider_phone">
+                                                    <a :href="'tel:' + (ride.customer_phone || ride.rider_phone)" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
+                                                        <span>📞 Call</span>
+                                                        <span x-text="ride.customer_phone || ride.rider_phone"></span>
+                                                    </a>
+                                                </template>
+                                            </div>
+                                            <template x-if="ride.poc_name && ride.poc_name !== (ride.customer_name || ride.rider?.name || ride.rider_name)">
+                                                <div class="flex items-center justify-between bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40">
+                                                    <div>
+                                                        <span class="text-[10px] font-extrabold uppercase text-amber-700 dark:text-amber-400 block">Passenger / POC</span>
+                                                        <p class="font-bold text-gray-900 dark:text-white text-xs" x-text="ride.poc_name"></p>
+                                                    </div>
+                                                    <template x-if="ride.poc_phone">
+                                                        <a :href="'tel:' + ride.poc_phone" class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-sm" style="color: #ffffff !important;">
+                                                            <span>📞 Call POC</span>
+                                                            <span x-text="ride.poc_phone"></span>
+                                                        </a>
+                                                    </template>
+                                                </div>
                                             </template>
                                             <p><strong>📍 Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
                                             <template x-if="ride.stops && ride.stops.length > 0">
@@ -461,11 +506,40 @@
                                                 <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
                                                     {{ $pr->vehicle_type ?? 'Standard' }} Ride #{{ $pr->id }}
                                                 </span>
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2">Rider: {{ $pr->rider->name ?? $pr->passenger_name ?? 'Guest Passenger' }}</h4>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2">
+                                                    Customer: {{ $pr->customer_name ?? $pr->rider->name ?? $pr->passenger_name ?? 'Guest Passenger' }}
+                                                </h4>
+                                                @php
+                                                    $custPhone = $pr->customer_phone ?? $pr->rider->phone ?? $pr->passenger_phone;
+                                                    $pocName = $pr->poc_name ?? $pr->passenger_name;
+                                                    $pocPhone = $pr->poc_phone ?? $pr->passenger_phone;
+                                                    $isPocDifferent = $pocName && $pocName !== ($pr->customer_name ?? $pr->rider->name);
+                                                @endphp
+                                                @if($custPhone)
+                                                    <div class="mt-1">
+                                                        <a href="tel:{{ $custPhone }}" class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                                                            📞 Customer Phone: {{ $custPhone }}
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                                @if($isPocDifferent)
+                                                    <div class="mt-1.5 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl">
+                                                        <span class="text-[10px] font-extrabold uppercase text-amber-700 dark:text-amber-300 block">Passenger / POC</span>
+                                                        <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $pocName }}</span>
+                                                        @if($pocPhone)
+                                                            <a href="tel:{{ $pocPhone }}" class="block text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline mt-0.5">📞 {{ $pocPhone }}</a>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div class="text-right">
                                                 <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400">${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
                                                 <span class="text-xs text-gray-400 block font-bold uppercase">{{ $pr->payment_method ?? 'Cash' }}</span>
+                                                @if($custPhone)
+                                                    <a href="tel:{{ $custPhone }}" class="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
+                                                        📞 Call Rider
+                                                    </a>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -513,10 +587,36 @@
                                                     {{ ucfirst($bk->service_category) }} Driver Booking
                                                 </span>
                                                 <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2">Client: {{ $bk->client->name ?? 'Client' }}</h4>
+                                                @php
+                                                    $clientPhone = $bk->client->phone ?? $bk->contact_phone;
+                                                    $pocName = $bk->contact_person_name;
+                                                    $pocPhone = $bk->contact_phone;
+                                                @endphp
+                                                @if($clientPhone)
+                                                    <div class="mt-1">
+                                                        <a href="tel:{{ $clientPhone }}" class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                                                            📞 Client Phone: {{ $clientPhone }}
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                                @if($pocName && $pocName !== ($bk->client->name ?? ''))
+                                                    <div class="mt-1.5 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl">
+                                                        <span class="text-[10px] font-extrabold uppercase text-amber-700 dark:text-amber-300 block">Person of Contact</span>
+                                                        <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $pocName }}</span>
+                                                        @if($pocPhone)
+                                                            <a href="tel:{{ $pocPhone }}" class="block text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline mt-0.5">📞 {{ $pocPhone }}</a>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div class="text-right">
                                                 <span class="font-extrabold text-lg text-gray-900 dark:text-white">{{ $bk->currency }} {{ number_format($bk->total_price, 2) }}</span>
-                                                <span class="text-xs text-gray-400 block">Method: {{ strtoupper($bk->payment_method) }}</span>
+                                                <span class="text-xs text-gray-400 block font-bold">Method: {{ strtoupper($bk->payment_method) }}</span>
+                                                @if($clientPhone)
+                                                    <a href="tel:{{ $clientPhone }}" class="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
+                                                        📞 Call Client
+                                                    </a>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -663,7 +763,75 @@
                 <!-- Sidebar (Profile & Rates) -->
                 <div class="space-y-8">
                     <!-- Driver Profile Details -->
-                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm" x-data="{ showEditModal: false }">
+                        <div class="flex items-center gap-4 mb-5 pb-5 border-b border-gray-100 dark:border-white/10">
+                            <div class="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 flex-shrink-0 border-2 border-brand-500 shadow-md">
+                                @if($profile->image_url)
+                                    <img src="{{ str_starts_with($profile->image_url, 'http') ? $profile->image_url : asset('storage/' . $profile->image_url) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                @elseif($user->profile_photo_path)
+                                    <img src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center bg-brand-500/10 text-brand-500 font-extrabold text-2xl">
+                                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                                <button type="button" @click="showEditModal = true" class="absolute bottom-0 right-0 left-0 bg-black/70 hover:bg-black text-[10px] text-white py-0.5 text-center font-bold transition-colors">
+                                    Edit
+                                </button>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-black text-gray-900 dark:text-white text-base truncate">{{ $user->name }}</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $user->phone ?? 'No phone added' }}</p>
+                                <button type="button" @click="showEditModal = true" class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline">
+                                    <span>📸 Edit Profile & Photo</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Edit Profile & Photo Modal -->
+                        <div x-show="showEditModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @keydown.escape.window="showEditModal = false">
+                            <div class="bg-white dark:bg-[#1e1e1e] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 dark:border-white/10 overflow-y-auto max-h-[90vh]" @click.away="showEditModal = false">
+                                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Edit Driver Profile & Photo</h3>
+                                    <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">&times;</button>
+                                </div>
+                                <form action="/driver/profile/update" method="POST" enctype="multipart/form-data" class="space-y-4 text-left">
+                                    @csrf
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
+                                        <input type="text" name="name" value="{{ $user->name }}" required class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+                                        <input type="text" name="phone" value="{{ $user->phone }}" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Driver Profile Picture</label>
+                                        <input type="file" name="driver_photo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white hover:file:bg-brand-600 cursor-pointer">
+                                        <p class="text-[11px] text-gray-400 mt-1">Upload a clear photo of yourself.</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Hourly Rate ($)</label>
+                                            <input type="number" step="0.5" name="hourly_rate" value="{{ $profile->hourly_rate ?? 25.00 }}" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Daily Rate ($)</label>
+                                            <input type="number" step="1" name="daily_rate" value="{{ $profile->daily_rate ?? 170.00 }}" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Bio / Experience</label>
+                                        <textarea name="bio" rows="3" class="w-full px-4 py-2 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-900 dark:text-white">{{ $profile->bio }}</textarea>
+                                    </div>
+                                    <div class="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                                        <button type="button" @click="showEditModal = false" class="px-4 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl">Cancel</button>
+                                        <button type="submit" class="px-5 py-2 text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-md">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Profile & Status</h2>
                         <ul class="space-y-3 text-sm">
                             <li class="flex justify-between">
@@ -868,6 +1036,8 @@
                             'X-CSRF-TOKEN': csrfToken || ''
                         },
                         body: JSON.stringify({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
                             latitude: pos.coords.latitude,
                             longitude: pos.coords.longitude
                         })

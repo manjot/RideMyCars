@@ -1,5 +1,6 @@
 class ApiConstants {
   static const String baseUrl = 'https://ridemycars.com/api';
+  static const String storageBaseUrl = 'https://ridemycars.com/storage';
 
   // Auth
   static const String login = '/login';
@@ -24,6 +25,8 @@ class ApiConstants {
   static const String driverVerifyBooking = '/driver/verify-booking';
   static const String driverActiveRides = '/driver/active-rides';
   static const String driverEarnings = '/driver/earnings';
+  static const String driverProfile = '/driver/profile';
+  static const String driverPhoto = '/driver/photo';
 
   // Notifications
   static const String notifications = '/notifications';

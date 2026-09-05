@@ -19,6 +19,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _photoController = TextEditingController();
   late final TextEditingController _mobileNumberController;
   late Country _selectedCountry;
   final _passwordController = TextEditingController();
@@ -45,6 +46,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _photoController.dispose();
     _mobileNumberController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -260,6 +262,12 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                                     email: _emailController.text.trim(),
                                     password: _passwordController.text,
                                     role: 'driver',
+                                    driverDetails: _photoController.text.trim().isNotEmpty
+                                        ? {
+                                            'driver_photo': _photoController.text.trim(),
+                                            'photo_url': _photoController.text.trim(),
+                                          }
+                                        : null,
                                   );
 
                                   if (!mounted) return;
@@ -539,6 +547,103 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                       ),
                     ),
                     validator: (val) => (val != _passwordController.text) ? 'Passwords do not match' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Driver Profile Photo Section
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceDark,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.backgroundDark,
+                                border: Border.all(color: AppColors.primary, width: 1.5),
+                              ),
+                              child: ClipOval(
+                                child: _photoController.text.isNotEmpty
+                                    ? Image.network(
+                                        _photoController.text,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary),
+                                      )
+                                    : const Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 22),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Profile Picture (Recommended)',
+                                    style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  Text(
+                                    'Formal suit or shirt photo for verification',
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _photoController,
+                          onChanged: (_) => setState(() {}),
+                          style: const TextStyle(color: AppColors.textLight, fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'Photo URL or select a preset below',
+                            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            filled: true,
+                            fillColor: AppColors.backgroundDark,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Quick Select Preset Avatar:', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400',
+                            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
+                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
+                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+                          ].map((url) => Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _photoController.text = url),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _photoController.text == url ? AppColors.primary : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(url, width: 38, height: 38, fit: BoxFit.cover),
+                                ),
+                              ),
+                            ),
+                          )).toList(),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 28),
 

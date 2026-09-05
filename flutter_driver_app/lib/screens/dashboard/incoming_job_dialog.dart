@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 
 class IncomingJobDialog extends StatelessWidget {
@@ -12,6 +13,14 @@ class IncomingJobDialog extends StatelessWidget {
     required this.onAccept,
     required this.onDecline,
   });
+
+  Future<void> _callPhone(String? phone) async {
+    if (phone == null || phone.isEmpty) return;
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +44,11 @@ class IncomingJobDialog extends StatelessWidget {
     final pickup = (request['pickup_location'] ?? ride?['pickup_location'] ?? booking?['pickup_location'] ?? 'Pickup location').toString();
     final dropoff = (request['dropoff_location'] ?? ride?['dropoff_location'] ?? booking?['dropoff_location'] ?? 'Destination').toString();
     
-    final clientName = (request['rider_name'] ?? request['passenger_name'] ?? request['client_name'] ?? ride?['passenger_name'] ?? ride?['rider']?['name'] ?? booking?['client']?['name'] ?? 'Passenger').toString();
+    final customerName = (request['customer_name'] ?? request['rider_name'] ?? request['passenger_name'] ?? request['client_name'] ?? ride?['passenger_name'] ?? ride?['rider']?['name'] ?? booking?['client']?['name'] ?? 'Customer').toString();
+    final customerPhone = request['customer_phone'] ?? request['rider_phone'] ?? request['passenger_phone'] ?? ride?['rider_phone'] ?? ride?['rider']?['phone'] ?? booking?['client']?['phone'];
+    final pocName = request['poc_name'] ?? ride?['poc_name'] ?? booking?['contact_person_name'];
+    final pocPhone = request['poc_phone'] ?? ride?['poc_phone'] ?? booking?['contact_phone'];
+    final bool hasPoc = pocName != null && pocName.toString().isNotEmpty && pocName.toString() != customerName;
 
     final distanceKm = request['distance_km'] ?? ride?['distance_km'];
     final durationMins = request['duration_minutes'] ?? ride?['duration_minutes'] ?? 15;
@@ -90,18 +103,99 @@ class IncomingJobDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Rider: $clientName',
+                        'Customer: $customerName',
                         style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 13,
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
                       ),
+                      if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                        Text(
+                          customerPhone.toString(),
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                 ),
+                if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                  ElevatedButton.icon(
+                    onPressed: () => _callPhone(customerPhone.toString()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.phone_rounded, size: 14),
+                    label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                  ),
               ],
             ),
-            const SizedBox(height: 18),
+
+            if (hasPoc) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.badge_rounded, color: Colors.amber, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'PASSENGER / POC',
+                            style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          ),
+                          Text(
+                            pocName.toString(),
+                            style: const TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (pocPhone != null && pocPhone.toString().isNotEmpty)
+                            Text(
+                              pocPhone.toString(),
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 11,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (pocPhone != null && pocPhone.toString().isNotEmpty)
+                      ElevatedButton.icon(
+                        onPressed: () => _callPhone(pocPhone.toString()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.phone_rounded, size: 14),
+                        label: const Text('Call POC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
 
             // Huge Fare Badge
             Container(

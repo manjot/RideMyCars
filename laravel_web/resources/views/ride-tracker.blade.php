@@ -351,6 +351,26 @@
                         </div>
                     </div>
 
+                    <!-- Customer & Contact Person Info -->
+                    <div class="pt-3 border-t border-gray-100 dark:border-white/10 space-y-1 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400 font-medium">Customer:</span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="ride.customer_name || '{{ $ride->rider->name ?? 'Customer' }}'"></span>
+                        </div>
+                        <template x-if="ride.poc_name && ride.poc_name !== (ride.customer_name || '{{ $ride->rider->name ?? 'Customer' }}')">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400 font-medium">POC / Passenger:</span>
+                                <span class="font-bold text-amber-600 dark:text-amber-400" x-text="ride.poc_name"></span>
+                            </div>
+                        </template>
+                        <template x-if="ride.poc_phone || ride.customer_phone">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400 font-medium">Contact Number:</span>
+                                <span class="font-mono text-gray-700 dark:text-gray-300" x-text="ride.poc_phone || ride.customer_phone"></span>
+                            </div>
+                        </template>
+                    </div>
+
                     <!-- Digital Receipt -->
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-xs">
                         <span class="text-gray-400">Digital Receipt:</span>
@@ -384,6 +404,10 @@
                     dropoff: @json($ride->dropoff_location),
                     vehicle_type: '{{ $ride->vehicle_type }}',
                     payment_method: '{{ $ride->payment_method }}',
+                    customer_name: @json($ride->rider->name ?? 'Customer'),
+                    customer_phone: @json($ride->rider->phone ?? null),
+                    poc_name: @json($ride->passenger_name ?? null),
+                    poc_phone: @json($ride->passenger_phone ?? null),
                     pickup_lat: {{ $ride->pickup_lat ? floatval($ride->pickup_lat) : 'null' }},
                     pickup_lng: {{ $ride->pickup_lng ? floatval($ride->pickup_lng) : 'null' }},
                     dropoff_lat: {{ $ride->dropoff_lat ? floatval($ride->dropoff_lat) : 'null' }},
@@ -411,6 +435,10 @@
                             this.ride.fare = data.fare;
                             this.ride.pickup = data.pickup;
                             this.ride.dropoff = data.dropoff;
+                            if (data.customer_name) this.ride.customer_name = data.customer_name;
+                            if (data.customer_phone) this.ride.customer_phone = data.customer_phone;
+                            if (data.poc_name) this.ride.poc_name = data.poc_name;
+                            if (data.poc_phone) this.ride.poc_phone = data.poc_phone;
                             if (data.driver) {
                                 this.driver = data.driver;
                             }
@@ -424,7 +452,11 @@
                 get mapUrl() {
                     const p = encodeURIComponent(this.ride.pickup || '');
                     const d = encodeURIComponent(this.ride.dropoff || '');
-                    return `https://maps.googleapis.com/maps/api/staticmap?size=800x380&scale=2&maptype=roadmap&markers=size:mid%7Ccolor:green%7Clabel:A%7C${p}&markers=size:mid%7Ccolor:red%7Clabel:B%7C${d}&path=color:0x10b981ff%7Cweight:5%7Cgeodesic:true%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                    let url = `https://maps.googleapis.com/maps/api/staticmap?size=800x380&scale=2&maptype=roadmap&markers=size:mid%7Ccolor:green%7Clabel:A%7C${p}&markers=size:mid%7Ccolor:red%7Clabel:B%7C${d}&path=color:0x10b981ff%7Cweight:5%7Cgeodesic:true%7C${p}%7C${d}&key=${this.mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified`;
+                    if (this.driver && this.driver.current_lat && this.driver.current_lng) {
+                        url += `&markers=size:mid%7Ccolor:yellow%7Clabel:D%7C${this.driver.current_lat},${this.driver.current_lng}`;
+                    }
+                    return url;
                 },
 
                 get googleMapsNavUrl() {

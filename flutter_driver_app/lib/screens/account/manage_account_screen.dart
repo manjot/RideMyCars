@@ -42,6 +42,204 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     }
   }
 
+  Widget _buildAvatarFallback(String name) {
+    return CircleAvatar(
+      radius: 46,
+      backgroundColor: AppColors.primary,
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : 'D',
+        style: const TextStyle(
+          color: AppColors.backgroundDark,
+          fontSize: 36,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
+  void _showEditProfileDialog() {
+    final nameCtrl = TextEditingController(text: _userProfile?['name'] ?? '');
+    final phoneCtrl = TextEditingController(text: _userProfile?['phone'] ?? '');
+    final photoCtrl = TextEditingController(text: _driverProfile?['image_url'] ?? '');
+    final hourlyCtrl = TextEditingController(text: (_driverProfile?['hourly_rate'] ?? 25.0).toString());
+    final bioCtrl = TextEditingController(text: _driverProfile?['bio'] ?? '');
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Edit Driver Profile & Photo',
+                  style: TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  style: const TextStyle(color: AppColors.textLight),
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    labelStyle: const TextStyle(color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneCtrl,
+                  style: const TextStyle(color: AppColors.textLight),
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    labelStyle: const TextStyle(color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: photoCtrl,
+                  style: const TextStyle(color: AppColors.textLight),
+                  decoration: InputDecoration(
+                    labelText: 'Driver Photo URL',
+                    hintText: 'https://... or sample URL',
+                    hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    labelStyle: const TextStyle(color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Or pick a formal driver photo preset:',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400',
+                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
+                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+                  ].map((url) => Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        setSheetState(() => photoCtrl.text = url);
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(url, width: 44, height: 44, fit: BoxFit.cover),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: hourlyCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(color: AppColors.textLight),
+                  decoration: InputDecoration(
+                    labelText: 'Hourly Rate (\$)',
+                    labelStyle: const TextStyle(color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: bioCtrl,
+                  maxLines: 2,
+                  style: const TextStyle(color: AppColors.textLight),
+                  decoration: InputDecoration(
+                    labelText: 'Bio / Experience',
+                    labelStyle: const TextStyle(color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                ElevatedButton(
+                  onPressed: isSaving ? null : () async {
+                    setSheetState(() => isSaving = true);
+                    try {
+                      await _dio.post(ApiConstants.driverProfile, data: {
+                        'name': nameCtrl.text.trim(),
+                        'phone': phoneCtrl.text.trim(),
+                        'photo_url': photoCtrl.text.trim(),
+                        'driver_photo': photoCtrl.text.trim(),
+                        'hourly_rate': double.tryParse(hourlyCtrl.text.trim()),
+                        'bio': bioCtrl.text.trim(),
+                      });
+                      if (context.mounted) {
+                        Navigator.pop(sheetContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Profile and photo updated successfully!'), backgroundColor: AppColors.success),
+                        );
+                        _fetchProfile();
+                      }
+                    } catch (e) {
+                      setSheetState(() => isSaving = false);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to update: $e'), backgroundColor: AppColors.danger),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.backgroundDark,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: isSaving
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.backgroundDark))
+                      : const Text('Save Profile & Photo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
@@ -52,6 +250,11 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     final totalTrips = (_driverProfile?['total_trips'] ?? 40).toString();
     final hourlyRate = (_driverProfile?['hourly_rate'] ?? 35.0).toString();
     final isVerified = _driverProfile?['is_verified'] == true || _driverProfile?['verification_status'] == 'verified';
+
+    final rawPhoto = _driverProfile?['image_url'] ?? _userProfile?['profile_photo_path'];
+    final photoUrl = rawPhoto != null && rawPhoto.toString().isNotEmpty
+        ? (rawPhoto.toString().startsWith('http') ? rawPhoto.toString() : '${ApiConstants.storageBaseUrl}/${rawPhoto.toString()}')
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -76,34 +279,61 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                 children: [
                   // Profile Avatar Banner
                   Center(
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 46,
-                          backgroundColor: AppColors.primary,
-                          child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : 'D',
-                            style: const TextStyle(
-                              color: AppColors.backgroundDark,
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
+                    child: GestureDetector(
+                      onTap: _showEditProfileDialog,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 92,
+                            height: 92,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.primary, width: 2.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: photoUrl != null
+                                  ? Image.network(
+                                      photoUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => _buildAvatarFallback(name),
+                                    )
+                                  : _buildAvatarFallback(name),
                             ),
                           ),
-                        ),
-                        if (isVerified)
                           Positioned(
                             bottom: 0,
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: const BoxDecoration(
-                                color: AppColors.surfaceDark,
+                                color: AppColors.primary,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
+                              child: const Icon(Icons.camera_alt_rounded, color: AppColors.backgroundDark, size: 16),
                             ),
                           ),
-                      ],
+                          if (isVerified)
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surfaceDark,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.verified_rounded, color: AppColors.success, size: 18),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -132,7 +362,21 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: _showEditProfileDialog,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      icon: const Icon(Icons.edit_rounded, size: 15),
+                      label: const Text('Edit Profile & Photo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
                   // Key Metrics Row
                   Row(
