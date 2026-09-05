@@ -60,6 +60,25 @@
                     
                     <!-- STEP 1: FIND A TRIP (bookingStep === 'find_trip') -->
                     <div x-show="bookingStep === 'find_trip'" class="w-full bg-white dark:bg-[#111] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-[24px] border border-gray-100 dark:border-white/10 space-y-5">
+                        <!-- Active Ongoing Ride Alert Banner -->
+                        <div x-show="currentRideId" style="display: none;" class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="relative flex h-2.5 w-2.5 shrink-0">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="font-black text-gray-900 dark:text-white truncate">Ongoing Ride in Progress (<span x-text="'#' + currentRideId"></span>)</p>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Driver is dispatched or searching nearby</p>
+                                </div>
+                            </div>
+                            <a :href="'/ride/track/' + currentRideId" 
+                               class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shrink-0 transition-colors shadow-sm flex items-center gap-1">
+                                <span>📍 Track Live</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+
                         <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Find a trip</h1>
                         
                         <!-- Promo Offer Badge -->
@@ -537,6 +556,17 @@
                             </div>
                         </div>
 
+                        <!-- Guest Ongoing Ride Live Tracking Reassurance -->
+                        <div class="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 text-left space-y-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-sm">🛰️</span>
+                                <span class="text-xs font-black text-amber-800 dark:text-amber-300">Guest Ongoing Ride Tracking</span>
+                            </div>
+                            <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                                No account or login required. As soon as you confirm, you will be provided a direct ongoing ride tracking link to follow your driver live on GPS and share with friends.
+                            </p>
+                        </div>
+
                         <!-- Final CTA Button: Confirm Ride -->
                         <button type="submit" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg rounded-2xl shadow-xl transition-all active:scale-[0.99]">
                             Confirm Ride →
@@ -558,11 +588,59 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connecting with top-rated nearby drivers</p>
                         </div>
 
+                        <!-- Guest Ongoing Ride Tracking Card with Message & Direct Link -->
                         <template x-if="currentRideId">
-                            <a :href="'/ride/track/' + currentRideId" 
-                               class="block w-full py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-2xl shadow-md transition-all text-center">
-                               📍 Open Live GPS Tracker Page →
-                            </a>
+                            <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-slate-900/5 dark:to-slate-950/40 border border-emerald-500/30 dark:border-emerald-500/20 text-left space-y-3.5 shadow-sm">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="relative flex h-3 w-3">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                        </span>
+                                        <span class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                                            Guest Ongoing Ride Tracking
+                                        </span>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40" x-text="'Ride #' + currentRideId"></span>
+                                </div>
+
+                                <div class="p-3 bg-white/75 dark:bg-black/40 rounded-xl border border-emerald-500/20">
+                                    <p class="text-xs text-gray-700 dark:text-gray-200 leading-relaxed font-medium">
+                                        📢 <strong>Live Guest Tracking:</strong> Your ride request has been dispatched! You can track your driver's real-time GPS location, route, and ETA live without logging in. Keep this page open or copy your personal tracking link below:
+                                    </p>
+                                </div>
+
+                                <!-- Live Link Box + 1-Click Copy -->
+                                <div class="space-y-1.5">
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Your Personal Live Tracking Link</label>
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1 min-w-0">
+                                            <input type="text" readonly :value="trackingUrl" 
+                                                   @click="$event.target.select()"
+                                                   class="w-full px-3 py-2.5 text-xs font-mono font-bold bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white select-all truncate shadow-inner focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                        </div>
+                                        <button type="button" @click="copyTrackingLink()" 
+                                                class="px-3.5 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                                                :class="copiedTrackingLink ? 'bg-emerald-600 text-white ring-2 ring-emerald-400' : 'bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900'">
+                                            <span x-text="copiedTrackingLink ? '✓ Copied!' : '📋 Copy Link'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Direct Action Buttons -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                    <a :href="'/ride/track/' + currentRideId" target="_blank"
+                                       class="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]">
+                                        <span>📍</span>
+                                        <span>Open Dedicated GPS Tracker ↗</span>
+                                    </a>
+                                    <button type="button" @click="shareTripWhatsapp()"
+                                            class="w-full py-2.5 px-3 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <span>💬</span>
+                                        <span>Share on WhatsApp</span>
+                                    </button>
+                                </div>
+                            </div>
                         </template>
 
                         <button type="button" @click="cancelRide()" class="w-full py-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 text-rose-600 font-extrabold text-sm rounded-2xl transition-all">
@@ -574,7 +652,10 @@
                     <div x-show="['driver_assigned', 'en_route', 'arrived', 'in_progress'].includes(bookingStep)" style="display: none;" class="w-full bg-white dark:bg-[#111] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-[24px] border border-gray-100 dark:border-white/10 space-y-5">
                         
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full">✓ Driver Matched</span>
+                            <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Driver Matched & Connected</span>
+                            </span>
                             <span class="text-xs font-bold text-gray-400" x-text="driverPlate || 'ABC-1234'"></span>
                         </div>
 
@@ -589,12 +670,40 @@
                             </div>
                         </div>
 
-                        <!-- Dedicated GPS Tracker Link -->
+                        <!-- Dedicated Guest Tracking Card -->
                         <template x-if="currentRideId">
-                            <a :href="'/ride/track/' + currentRideId" 
-                               class="block w-full py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-2xl shadow-md transition-all text-center">
-                               📍 Open Live GPS Tracker Page →
-                            </a>
+                            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-transparent border border-emerald-500/30 dark:border-emerald-500/20 text-left space-y-3 shadow-sm">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                                        <span>🛰️</span>
+                                        <span>Live Guest Tracking Active</span>
+                                    </span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300" x-text="'Ride #' + currentRideId"></span>
+                                </div>
+                                <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                                    You can share this live tracking link with friends & family or open the dedicated full-screen GPS tracker:
+                                </p>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" readonly :value="trackingUrl" 
+                                           @click="$event.target.select()"
+                                           class="w-full px-3 py-2 text-xs font-mono font-bold bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white select-all truncate">
+                                    <button type="button" @click="copyTrackingLink()" 
+                                            class="px-3 py-2 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1 cursor-pointer"
+                                            :class="copiedTrackingLink ? 'bg-emerald-600 text-white' : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'">
+                                        <span x-text="copiedTrackingLink ? '✓ Copied' : '📋 Copy'"></span>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <a :href="'/ride/track/' + currentRideId" target="_blank"
+                                       class="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-sm transition-all text-center flex items-center justify-center gap-1.5">
+                                        <span>📍 Open Dedicated GPS Tracker ↗</span>
+                                    </a>
+                                    <button type="button" @click="shareTripWhatsapp()"
+                                            class="w-full py-2.5 px-3 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <span>💬 WhatsApp</span>
+                                    </button>
+                                </div>
+                            </div>
                         </template>
 
                         <!-- Action Buttons -->
@@ -892,6 +1001,47 @@
                 userAccuracy: null,
                 isDetectingLocation: false,
                 locationAccuracyText: '',
+                copiedTrackingLink: false,
+
+                get trackingUrl() {
+                    return this.currentRideId ? `${window.location.origin}/ride/track/${this.currentRideId}` : '';
+                },
+
+                copyTrackingLink() {
+                    if (!this.trackingUrl) return;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(this.trackingUrl).then(() => {
+                            this.copiedTrackingLink = true;
+                            setTimeout(() => { this.copiedTrackingLink = false; }, 3500);
+                        }).catch(() => {
+                            this.fallbackCopyTrackingLink(this.trackingUrl);
+                        });
+                    } else {
+                        this.fallbackCopyTrackingLink(this.trackingUrl);
+                    }
+                },
+
+                fallbackCopyTrackingLink(text) {
+                    const el = document.createElement('textarea');
+                    el.value = text;
+                    el.setAttribute('readonly', '');
+                    el.style.position = 'absolute';
+                    el.style.left = '-9999px';
+                    document.body.appendChild(el);
+                    el.select();
+                    try {
+                        document.execCommand('copy');
+                        this.copiedTrackingLink = true;
+                        setTimeout(() => { this.copiedTrackingLink = false; }, 3500);
+                    } catch(e) {}
+                    document.body.removeChild(el);
+                },
+
+                shareTripWhatsapp() {
+                    if (!this.trackingUrl) return;
+                    const msg = encodeURIComponent(`Track my RideMyCars ride in real time: ${this.trackingUrl}`);
+                    window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+                },
 
                 init() {
                     this.fetchSavedLocations();

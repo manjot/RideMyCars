@@ -3,18 +3,70 @@
 
     @if(!$ride)
     <div x-data="{
+        isChecking: true,
+        lookupRideId: '',
+        lookupError: '',
         init() {
-            const guestId = localStorage.getItem('rmc_active_ride_id');
-            if (guestId) {
-                window.location.replace('/ride/track/' + encodeURIComponent(guestId));
-            } else {
-                window.location.replace('/ride');
+            try {
+                const storedId = localStorage.getItem('rmc_active_ride_id');
+                if (storedId) {
+                    window.location.replace('/ride/track/' + encodeURIComponent(storedId));
+                    return;
+                }
+            } catch(e) {}
+            this.isChecking = false;
+        },
+        submitLookup() {
+            const id = (this.lookupRideId || '').trim();
+            if (!id) {
+                this.lookupError = 'Please enter your Ride ID (e.g. 104)';
+                return;
             }
+            window.location.href = '/ride/track/' + encodeURIComponent(id);
         }
-    }" x-init="init()" class="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
-        <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h2 class="text-xl font-black text-gray-900 dark:text-white">Connecting to your active trip...</h2>
-        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Retrieving latest GPS & driver status...</p>
+    }" x-init="init()" class="min-h-[65vh] flex flex-col items-center justify-center p-4 sm:p-8 text-center">
+        
+        <div x-show="isChecking" class="space-y-4">
+            <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 class="text-xl font-black text-gray-900 dark:text-white">Connecting to your ongoing ride...</h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Retrieving active session GPS status...</p>
+        </div>
+
+        <div x-show="!isChecking" style="display: none;" class="w-full max-w-md bg-white dark:bg-[#111] p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-white/10 shadow-2xl space-y-6 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black text-2xl mx-auto shadow-lg shadow-amber-500/20">
+                🛰️
+            </div>
+
+            <div>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 mb-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    Guest Ongoing Ride Tracker
+                </div>
+                <h2 class="text-2xl font-black text-gray-900 dark:text-white">Track Your Ride</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Enter your Ride ID number to follow driver arrival, route updates, and live GPS without signing in.
+                </p>
+            </div>
+
+            <form @submit.prevent="submitLookup()" class="space-y-3">
+                <div>
+                    <input type="text" x-model="lookupRideId" placeholder="Enter Ride ID (e.g. 104)" 
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-center text-base font-black text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
+                    <p x-show="lookupError" class="text-xs text-rose-500 font-bold mt-1.5 text-center" x-text="lookupError"></p>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm rounded-2xl shadow-md transition-all cursor-pointer">
+                    Track Ride Live →
+                </button>
+            </form>
+
+            <div class="pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-xs">
+                <span class="text-gray-400">Need to request a ride?</span>
+                <a href="/ride" class="font-extrabold text-brand-600 dark:text-brand-400 hover:underline">
+                    Book a Ride Now →
+                </a>
+            </div>
+        </div>
     </div>
     @else
 

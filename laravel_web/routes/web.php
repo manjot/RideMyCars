@@ -1446,13 +1446,6 @@ Route::get('/ride/track/{id?}', function ($id = null) {
             ->first();
     }
 
-    if (!$ride) {
-        $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'stops'])
-            ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
-            ->latest()
-            ->first();
-    }
-
     $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
 
     $driverData = null;

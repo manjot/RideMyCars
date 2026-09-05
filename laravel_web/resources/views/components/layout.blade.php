@@ -1039,6 +1039,67 @@
     <footer class="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-white/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
+            <!-- Guest Ongoing Ride Live Tracker Banner -->
+            <div class="mb-12 p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-emerald-950/50 via-slate-900 to-amber-950/40 border border-emerald-500/30 hover:border-emerald-400/60 transition-all shadow-2xl relative overflow-hidden backdrop-blur-md group"
+                 x-data="{ activeRideId: localStorage.getItem('rmc_active_ride_id') || '' }">
+                <!-- Ambient background glow -->
+                <div class="absolute -top-12 -right-12 w-52 h-52 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -left-12 w-52 h-52 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                    <div class="flex items-start sm:items-center gap-4">
+                        <!-- High-Tech Animated Radar GPS Icon -->
+                        <div class="relative flex items-center justify-center shrink-0 mt-1 sm:mt-0">
+                            <span class="absolute inline-flex h-14 w-14 rounded-full bg-emerald-400/25 animate-ping"></span>
+                            <div class="relative w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 border border-emerald-300/50 p-2.5">
+                                <svg class="w-7 h-7 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Live Ongoing Ride Tracking
+                                </span>
+                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-white/10 text-gray-300 border border-white/10">
+                                    Guest Access • No Login Required
+                                </span>
+                            </div>
+                            <h3 class="text-base sm:text-lg font-black text-white tracking-tight">
+                                Track Your Ongoing Ride in Real-Time
+                            </h3>
+                            <p class="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed mt-0.5">
+                                Booked as a guest or tracking for someone else? Follow live driver GPS location, turn-by-turn routes, and estimated arrival time instantly.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto shrink-0">
+                        <!-- When active guest ride found in browser storage -->
+                        <template x-if="activeRideId">
+                            <a :href="'/ride/track/' + activeRideId" 
+                               class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs tracking-wide shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 group cursor-pointer hover:scale-[1.02]">
+                                <span class="w-2 h-2 rounded-full bg-slate-950 animate-ping"></span>
+                                <span>Track Active Ride #<span x-text="activeRideId"></span> Live</span>
+                                <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </a>
+                        </template>
+
+                        <!-- General Direct Link to Tracker Portal -->
+                        <a href="/ride/track" 
+                           class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/15 hover:border-emerald-400/40 font-black text-xs tracking-wide transition-all flex items-center justify-center gap-2 group cursor-pointer">
+                            <span>🛰️</span>
+                            <span>Open Guest Ride Tracker</span>
+                            <svg class="w-4 h-4 text-emerald-400 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Main Grid: 12-Column Responsive Layout -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-14">
                 
@@ -1077,6 +1138,16 @@
                     </h4>
                     <ul class="space-y-2.5 text-sm">
                         <li><a href="/ride" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Book a Ride</a></li>
+                        <li>
+                            <a href="/ride/track" class="text-emerald-400 hover:text-emerald-300 hover:translate-x-1 inline-flex items-center gap-1.5 transition-all font-bold group">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span>Track Ongoing Ride</span>
+                                <span class="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 uppercase font-black">Live</span>
+                            </a>
+                        </li>
                         <li><a href="/rent" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Rent a Vehicle</a></li>
                         <li><a href="/hire-driver" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Hire a Driver</a></li>
                         <li><a href="/delivery" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Package Delivery</a></li>
@@ -1137,6 +1208,12 @@
                         <li><a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Concierge Support</a></li>
                         <li><a href="/onboarding" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">How It Works</a></li>
                         <li><a href="/delivery/tracker" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Delivery Tracker</a></li>
+                        <li>
+                            <a href="/ride/track" class="text-gray-300 hover:text-emerald-400 hover:translate-x-1 inline-flex items-center gap-1.5 transition-all font-medium">
+                                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span>Guest Ride Tracker</span>
+                            </a>
+                        </li>
                         <li><a href="/driver/dashboard" class="text-gray-300 hover:text-white hover:translate-x-1 inline-block transition-all">Driver Portal</a></li>
                         <li><a href="/apps#driver-app" class="text-amber-400 hover:text-amber-300 hover:translate-x-1 inline-block transition-all font-semibold flex items-center gap-1">
                             <span>Download Driver App</span>
