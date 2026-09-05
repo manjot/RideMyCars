@@ -241,9 +241,15 @@
 
                     <!-- Active Rides (Accepted rides with lifecycle controls) -->
                     <div x-data="activeRides()" x-init="init()" class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-                            Active Rides
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                                <span>Active Rides</span>
+                                <span class="px-2 py-0.5 text-xs font-extrabold rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300" x-text="rides.length"></span>
+                            </div>
+                            <button type="button" @click="fetchRides()" class="text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                                ↻ Refresh
+                            </button>
                         </h2>
                         
                         <template x-if="rides.length === 0">
@@ -275,7 +281,10 @@
                                             </div>
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
-                                            <p><strong>Rider:</strong> <span x-text="ride.rider?.name || 'Rider'"></span></p>
+                                            <p><strong>Rider:</strong> <span x-text="ride.rider?.name || ride.rider_name || 'Guest Rider'"></span></p>
+                                            <template x-if="ride.rider_phone">
+                                                <p><strong>📞 Phone:</strong> <a :href="'tel:' + ride.rider_phone" class="text-emerald-600 font-bold hover:underline" x-text="ride.rider_phone"></a></p>
+                                            </template>
                                             <p><strong>📍 Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
                                             <template x-if="ride.stops && ride.stops.length > 0">
                                                 <div class="my-1.5 pl-3 border-l-2 border-dashed border-amber-400 space-y-1">
@@ -771,7 +780,7 @@
             }));
 
             Alpine.data('activeRides', () => ({
-                rides: [],
+                rides: @json($activeRides->values()),
                 pollingTimer: null,
                 mapKey: '{{ $mapKey }}',
                 
@@ -789,14 +798,18 @@
                 
                 init() {
                     this.fetchRides();
-                    this.pollingTimer = setInterval(() => this.fetchRides(), 5000);
+                    this.pollingTimer = setInterval(() => this.fetchRides(), 4000);
                 },
                 
                 async fetchRides() {
                     try {
-                        const res = await fetch('/api/driver/active-rides');
+                        let res = await fetch('/driver/active-rides-data');
+                        if (!res.ok) {
+                            res = await fetch('/api/driver/active-rides');
+                        }
                         if (res.ok) {
-                            this.rides = await res.json();
+                            const data = await res.json();
+                            this.rides = Array.isArray(data) ? data : (data.rides || data.data || []);
                         }
                     } catch (e) {
                         console.error('Error fetching active rides', e);

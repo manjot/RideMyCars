@@ -558,6 +558,13 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connecting with top-rated nearby drivers</p>
                         </div>
 
+                        <template x-if="currentRideId">
+                            <a :href="'/ride/track/' + currentRideId" 
+                               class="block w-full py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-2xl shadow-md transition-all text-center">
+                               📍 Open Live GPS Tracker Page →
+                            </a>
+                        </template>
+
                         <button type="button" @click="cancelRide()" class="w-full py-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 text-rose-600 font-extrabold text-sm rounded-2xl transition-all">
                             Cancel Request
                         </button>
@@ -581,6 +588,14 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 font-bold" x-text="(driverModel || 'Toyota Camry') + ' • ⭐ 4.9'"></p>
                             </div>
                         </div>
+
+                        <!-- Dedicated GPS Tracker Link -->
+                        <template x-if="currentRideId">
+                            <a :href="'/ride/track/' + currentRideId" 
+                               class="block w-full py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-2xl shadow-md transition-all text-center">
+                               📍 Open Live GPS Tracker Page →
+                            </a>
+                        </template>
 
                         <!-- Action Buttons -->
                         <div class="grid grid-cols-2 gap-3">
@@ -883,6 +898,66 @@
                     this.fetchSavedCards();
                     this.initScheduleDefaults();
                     this.initUserLocation();
+                    this.checkForActiveRide();
+                },
+
+                async checkForActiveRide() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const resumeId = urlParams.get('resume') || localStorage.getItem('rmc_active_ride_id');
+                    if (!resumeId) return;
+
+                    try {
+                        const res = await fetch(`/api/ride/${resumeId}/status`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (['pending', 'accepted', 'en_route', 'arrived', 'in_progress'].includes(data.status)) {
+                                this.currentRideId = resumeId;
+                                localStorage.setItem('rmc_active_ride_id', resumeId);
+                                if (data.pickup) this.pickup = data.pickup;
+                                if (data.dropoff) this.dropoff = data.dropoff;
+                                if (data.driver) {
+                                    this.driverName = data.driver.name || 'Driver';
+                                    this.driverPlate = data.driver.vehicle_plate || '';
+                                    this.driverModel = data.driver.vehicle_model || 'Executive Sedan';
+                                    this.driverPhone = data.driver.phone || '';
+                                    this.bookingStep = 'driver_assigned';
+                                } else {
+                                    this.bookingStep = (data.status === 'pending') ? 'finding_driver' : 'driver_assigned';
+                                }
+                                this.startRideStatusPolling(resumeId);
+                            } else if (['completed', 'cancelled'].includes(data.status)) {
+                                localStorage.removeItem('rmc_active_ride_id');
+                            }
+                        }
+                    } catch(e) {}
+                },
+
+                startRideStatusPolling(rideId) {
+                    if (this.pollTimer) clearInterval(this.pollTimer);
+                    this.pollTimer = setInterval(async () => {
+                        try {
+                            const sRes = await fetch(`/api/ride/${rideId}/status`);
+                            if (sRes.ok) {
+                                const sData = await sRes.json();
+                                if (['accepted', 'en_route', 'arrived', 'in_progress'].includes(sData.status)) {
+                                    this.driverName = (sData.driver && sData.driver.name) || sData.driver_name || 'Driver';
+                                    this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || 'REG-8899';
+                                    this.driverModel = (sData.driver && sData.driver.vehicle_model) || 'Executive Sedan';
+                                    this.driverPhone = (sData.driver && sData.driver.phone) || '';
+                                    this.bookingStep = 'driver_assigned';
+                                } else if (sData.status === 'completed') {
+                                    clearInterval(this.pollTimer);
+                                    localStorage.removeItem('rmc_active_ride_id');
+                                    this.bookingStep = 'completed';
+                                } else if (sData.status === 'cancelled') {
+                                    clearInterval(this.pollTimer);
+                                    localStorage.removeItem('rmc_active_ride_id');
+                                    alert('Ride request was cancelled.');
+                                    this.bookingStep = 'find_trip';
+                                }
+                            }
+                        } catch(err) {}
+                    }, 3000);
                 },
 
                 initScheduleDefaults() {
@@ -1695,29 +1770,8 @@
                         // Start polling for real driver acceptance
                         if (data.ride_id) {
                             this.currentRideId = data.ride_id;
-                            if (this.pollTimer) clearInterval(this.pollTimer);
-                            this.pollTimer = setInterval(async () => {
-                                try {
-                                    const sRes = await fetch(`/api/ride/${this.currentRideId}/status`);
-                                    if (sRes.ok) {
-                                        const sData = await sRes.json();
-                                        if (['accepted', 'en_route', 'arrived', 'in_progress'].includes(sData.status)) {
-                                            clearInterval(this.pollTimer);
-                                            this.driverName = (sData.driver && sData.driver.name) || sData.driver_name || 'Driver';
-                                            this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || 'REG-8899';
-                                            this.driverModel = (sData.driver && sData.driver.vehicle_model) || 'Executive Sedan';
-                                            this.bookingStep = 'driver_assigned';
-                                        } else if (sData.status === 'completed') {
-                                            clearInterval(this.pollTimer);
-                                            this.bookingStep = 'completed';
-                                        } else if (sData.status === 'cancelled') {
-                                            clearInterval(this.pollTimer);
-                                            alert('Ride request was cancelled.');
-                                            this.bookingStep = 'find_trip';
-                                        }
-                                    }
-                                } catch(err) {}
-                            }, 3000);
+                            localStorage.setItem('rmc_active_ride_id', data.ride_id);
+                            this.startRideStatusPolling(data.ride_id);
                         }
                     } catch (e) {
                         alert('Network error while booking ride. Please try again.');
@@ -1726,6 +1780,7 @@
                 },
                 cancelRide() {
                     if (this.pollTimer) clearInterval(this.pollTimer);
+                    localStorage.removeItem('rmc_active_ride_id');
                     if (this.currentRideId) {
                         const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                         fetch(`/api/ride/${this.currentRideId}/cancel`, {

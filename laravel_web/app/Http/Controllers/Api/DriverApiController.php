@@ -480,9 +480,18 @@ class DriverApiController extends Controller
      */
     public function activeRides(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+        if (!$user) return response()->json(['success' => false, 'rides' => [], 'data' => []]);
+
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
         $rides = \App\Models\Ride::with(['rider', 'stops'])
-            ->where('driver_id', $user->id)
+            ->whereIn('driver_id', $userIds)
             ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -490,6 +499,7 @@ class DriverApiController extends Controller
         return response()->json([
             'success' => true,
             'rides' => $rides,
+            'data' => $rides,
         ]);
     }
 

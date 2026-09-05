@@ -230,6 +230,23 @@
                                                 <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Door-to-door courier dispatch</span>
                                             </div>
                                         </a>
+
+                                        <!-- Track My Ride -->
+                                        <a href="/ride/track" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('ride/track*') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="12" r="10"/>
+                                                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Track My Ride</span>
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">GPS Live</span>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Live GPS ride tracking for riders & guests</span>
+                                            </div>
+                                        </a>
                                     </div>
                                     
                                     <div class="pt-2 px-1 flex items-center justify-between">
@@ -430,6 +447,23 @@
                                                 <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">Express</span>
                                             </div>
                                             <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Door-to-door courier dispatch</span>
+                                        </div>
+                                    </a>
+
+                                    <!-- Track My Ride -->
+                                    <a href="/ride/track" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('ride/track*') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Track My Ride</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">GPS Live</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Live GPS ride tracking for riders & guests</span>
                                         </div>
                                     </a>
                                 </div>
@@ -886,6 +920,20 @@
                         <div class="min-w-0">
                             <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Package Delivery</div>
                             <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Door-to-door courier dispatch</div>
+                        </div>
+                    </a>
+
+                    <!-- Track My Ride -->
+                    <a href="/ride/track" class="flex items-center gap-3 p-2.5 rounded-xl transition-all {{ request()->is('ride/track*') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Track My Ride</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Live GPS trip tracker</div>
                         </div>
                     </a>
                 </div>
@@ -1453,7 +1501,7 @@
     @endauth
 
     <!-- Ongoing Ride Banner & Details Modal (Placed at bottom of body for topmost stacking) -->
-    @auth
+    @if(!request()->is('driver*') && (!auth()->check() || auth()->user()->role !== 'driver'))
     <div x-data="ongoingRide()" x-init="init()" x-cloak>
         
         <!-- Expanded Fullscreen / Centered Detail Modal (Topmost z-index above Google Maps) -->
@@ -1620,6 +1668,14 @@
                             <span>→</span>
                         </a>
 
+                        <!-- Dedicated Full Live GPS Tracking Page -->
+                        <a :href="'/ride/track/' + (ride ? ride.id : '')" 
+                           class="block w-full text-center py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold text-xs rounded-2xl shadow-md transition-all flex items-center justify-center gap-2">
+                            <span>📍</span>
+                            <span>Open Dedicated Live GPS Tracker</span>
+                            <span>→</span>
+                        </a>
+
                         <button type="button" @click="cancelRide()" :disabled="cancelling"
                                 class="block w-full text-center py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-800/30">
                             <svg x-show="cancelling" class="w-4 h-4 animate-spin text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
@@ -1751,7 +1807,9 @@
             async check() {
                 if (document.hidden) return;
                 try {
-                    const res = await fetch('/api/user/ongoing-ride');
+                    const guestRideId = localStorage.getItem('rmc_active_ride_id') || '';
+                    const url = '/api/user/ongoing-ride' + (guestRideId ? `?guest_ride_id=${encodeURIComponent(guestRideId)}` : '');
+                    const res = await fetch(url);
                     if (res.ok) {
                         const data = await res.json();
                         const newRide = data.ride || null;
@@ -1760,6 +1818,9 @@
                                 this.dismissed = false; // re-show banner on new status
                             }
                             this.lastStatus = newRide.status;
+                            localStorage.setItem('rmc_active_ride_id', newRide.id);
+                        } else if (guestRideId && !data.ride) {
+                            localStorage.removeItem('rmc_active_ride_id');
                         }
                         this.ride = newRide;
                         if (this.ride && !this.boostFare) {
@@ -1828,7 +1889,7 @@
         }));
     });
     </script>
-    @endauth
+    @endif
 
 </body>
 </html>

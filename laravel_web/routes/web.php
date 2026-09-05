@@ -1048,18 +1048,23 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'payment_method' => 'stripe'
                 ]);
 
+                session(['active_guest_ride_id' => $ride->id]);
+
                 return response()->json([
                     'success' => true,
                     'ride_id' => $ride->id,
+                    'tracking_url' => "/ride/track/{$ride->id}",
                     'polling_url' => "/api/ride/{$ride->id}/status",
                     'stripe_client_secret' => $intentData['client_secret'] ?? null,
                     'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
                 ]);
             } catch (\Exception $e) {
                 $ride->update(['payment_status' => 'paid', 'payment_method' => 'stripe']);
+                session(['active_guest_ride_id' => $ride->id]);
                 return response()->json([
                     'success' => true,
                     'ride_id' => $ride->id,
+                    'tracking_url' => "/ride/track/{$ride->id}",
                     'polling_url' => "/api/ride/{$ride->id}/status"
                 ]);
             }
@@ -1088,9 +1093,12 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             \Illuminate\Support\Facades\Log::warning("Cash PaymentTransaction creation warning: " . $e->getMessage());
         }
 
+        session(['active_guest_ride_id' => $ride->id]);
+
         return response()->json([
             'success' => true,
             'ride_id' => $ride->id,
+            'tracking_url' => "/ride/track/{$ride->id}",
             'polling_url' => "/api/ride/{$ride->id}/status"
         ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1421,69 +1429,110 @@ Route::get('/my-rides', function () {
     return view('my-rides', compact('user', 'rides'));
 })->middleware('auth');
 
+// Dedicated Live Ride Tracker Page (For Guests and Logged-In Customers)
+Route::get('/ride/track/{id?}', function ($id = null) {
+    $guestRideId = $id ?? session('active_guest_ride_id') ?? request()->query('ride_id');
+    
+    $ride = null;
+    if ($guestRideId) {
+        $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'stops'])->find($guestRideId);
+    }
+    
+    if (!$ride && auth()->check()) {
+        $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'stops'])
+            ->where('rider_id', auth()->id())
+            ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
+            ->latest()
+            ->first();
+    }
 
+    if (!$ride) {
+        $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'stops'])
+            ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
+            ->latest()
+            ->first();
+    }
 
-// Get ongoing ride for current user (rider or driver)
-Route::get('/api/user/ongoing-ride', function () {
+    $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
+
+    // If ride is null on server (e.g. guest opening /ride/track with ID in client localStorage),
+    // serve view so client script can inspect localStorage and redirect to /ride/track/{id}
+    return view('ride-tracker', compact('ride', 'mapKey'));
+})->name('ride.tracker');
+
+// Get ongoing ride for current user (rider or guest or driver)
+Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request) {
     $user = auth()->user();
-    if (!$user) return response()->json(['ride' => null]);
+    $guestRideId = $request->query('guest_ride_id') ?? session('active_guest_ride_id');
 
-    $cached = \Illuminate\Support\Facades\Cache::remember('user_ongoing_ride_' . $user->id, 2, function () use ($user) {
+    // If driver is currently on the driver dashboard, suppress the customer-facing popup banner
+    $referer = $request->header('referer') ?: '';
+    $isDriverDashboard = $user && $user->role === 'driver' && str_contains($referer, '/driver');
+
+    $ride = null;
+
+    if ($user && !$isDriverDashboard) {
         // Check as rider first
         $ride = \App\Models\Ride::where('rider_id', $user->id)
             ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
             ->latest()
             ->first();
+    }
 
-        // Check as driver if not found as rider
-        if (!$ride && $user->role === 'driver') {
-            $ride = \App\Models\Ride::where('driver_id', $user->id)
-                ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
-                ->latest()
-                ->first();
+    // Check guest ride ID or session if not found as authenticated rider
+    if (!$ride && $guestRideId) {
+        $ride = \App\Models\Ride::where('id', $guestRideId)
+            ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
+            ->first();
+    }
+
+    // Check as driver only if not on driver dashboard
+    if (!$ride && $user && $user->role === 'driver' && !$isDriverDashboard) {
+        $ride = \App\Models\Ride::where('driver_id', $user->id)
+            ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
+            ->latest()
+            ->first();
+    }
+
+    if (!$ride) return response()->json(['ride' => null]);
+
+    // If ride is pending with no driver, ensure an active assignment exists
+    if ($ride->status === 'pending' && is_null($ride->driver_id)) {
+        $hasActiveOffer = \App\Models\RideAssignment::where('ride_id', $ride->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        if (!$hasActiveOffer) {
+            \App\Services\RideAssignmentService::assignNextDriver($ride);
         }
+    }
 
-        if (!$ride) return ['ride' => null];
+    $driverProfile = $ride->driver && $ride->driver->driverProfile ? $ride->driver->driverProfile : null;
 
-        // If ride is pending with no driver, ensure an active assignment exists
-        if ($ride->status === 'pending' && is_null($ride->driver_id)) {
-            $hasActiveOffer = \App\Models\RideAssignment::where('ride_id', $ride->id)
-                ->where('status', 'pending')
-                ->where('expires_at', '>', now())
-                ->exists();
-
-            if (!$hasActiveOffer) {
-                \App\Services\RideAssignmentService::assignNextDriver($ride);
-            }
-        }
-
-        $driverProfile = $ride->driver && $ride->driver->driverProfile ? $ride->driver->driverProfile : null;
-
-        return ['ride' => [
-            'id' => $ride->id,
-            'status' => $ride->status,
-            'pickup_location' => $ride->pickup_location,
-            'pickup_lat' => $ride->pickup_lat,
-            'pickup_lng' => $ride->pickup_lng,
-            'dropoff_location' => $ride->dropoff_location,
-            'dropoff_lat' => $ride->dropoff_lat,
-            'dropoff_lng' => $ride->dropoff_lng,
-            'fare' => $ride->fare,
-            'vehicle_type' => $ride->vehicle_type ?? 'Standard',
-            'payment_method' => $ride->payment_method ?? 'cash',
-            'created_at' => $ride->created_at->toIso8601String(),
-            'driver_name' => $ride->driver ? $ride->driver->name : null,
-            'driver_phone' => $ride->driver ? $ride->driver->phone : null,
-            'driver_rating' => $driverProfile ? $driverProfile->rating : null,
-            'driver_total_trips' => $driverProfile ? $driverProfile->total_completed_trips : null,
-            'driver_vehicle' => $driverProfile ? ($driverProfile->vehicle_make . ' ' . $driverProfile->vehicle_model) : null,
-            'driver_plate' => $driverProfile ? $driverProfile->vehicle_plate : null,
-            'rider_name' => $ride->rider ? $ride->rider->name : null,
-        ]];
-    });
-
-    return response()->json($cached);
-})->middleware('auth');
+    return response()->json(['ride' => [
+        'id' => $ride->id,
+        'status' => $ride->status,
+        'pickup_location' => $ride->pickup_location,
+        'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
+        'pickup_lng' => $ride->pickup_lng ? floatval($ride->pickup_lng) : null,
+        'dropoff_location' => $ride->dropoff_location,
+        'dropoff_lat' => $ride->dropoff_lat ? floatval($ride->dropoff_lat) : null,
+        'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
+        'fare' => floatval($ride->fare ?: $ride->total_amount),
+        'vehicle_type' => $ride->vehicle_type ?? 'Standard',
+        'payment_method' => $ride->payment_method ?? 'cash',
+        'created_at' => $ride->created_at->toIso8601String(),
+        'driver_name' => $ride->driver ? $ride->driver->name : null,
+        'driver_phone' => $ride->driver ? $ride->driver->phone : null,
+        'driver_rating' => $driverProfile ? $driverProfile->rating : null,
+        'driver_total_trips' => $driverProfile ? $driverProfile->total_completed_trips : null,
+        'driver_vehicle' => $driverProfile ? ($driverProfile->vehicle_make . ' ' . $driverProfile->vehicle_model) : 'Executive Sedan',
+        'driver_plate' => $driverProfile ? $driverProfile->license_number : null,
+        'rider_name' => $ride->rider ? $ride->rider->name : ($ride->passenger_name ?? 'Guest Rider'),
+        'tracking_url' => '/ride/track/' . $ride->id,
+    ]]);
+});
 
 // Boost fare and resend ride to all drivers
 Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $request, $id) {
@@ -1562,9 +1611,9 @@ Route::post('/api/ride/{id}/cancel', function ($id) {
 })->middleware('auth');
 
 // Get active rides for driver
-Route::get('/api/driver/active-rides', function (\Illuminate\Http\Request $request) {
+$driverActiveRidesHandler = function (\Illuminate\Http\Request $request) {
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
-    if (!$user) return response()->json([]);
+    if (!$user) return response()->json(['success' => false, 'rides' => [], 'data' => []]);
 
     $userIds = [$user->id];
     $matchingIds = \App\Models\User::where('name', $user->name)
@@ -1603,7 +1652,9 @@ Route::get('/api/driver/active-rides', function (\Illuminate\Http\Request $reque
         'rides' => $rides,
         'data' => $rides,
     ]);
-});
+};
+Route::get('/api/driver/active-rides', $driverActiveRidesHandler);
+Route::get('/driver/active-rides-data', $driverActiveRidesHandler);
 
 // Polling endpoint for Driver to get incoming requests
 Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) {
@@ -1969,9 +2020,16 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             $profile->update(['last_location_update' => now()]);
         }
 
-        $vehicles = \App\Models\Vehicle::where('owner_id', $user->id)->get();
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+        $vehicles = \App\Models\Vehicle::whereIn('owner_id', $userIds)->get();
         
-        $assignedRideIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+        $assignedRideIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->whereNotNull('ride_id')
@@ -1990,8 +2048,8 @@ Route::prefix('driver')->middleware('auth')->group(function () {
 
         $allPendingRideIds = array_unique(array_merge($assignedRideIds, $unassignedPendingRideIds));
 
-        $rides = \App\Models\Ride::where(function ($q) use ($user, $allPendingRideIds) {
-                $q->where('driver_id', $user->id);
+        $rides = \App\Models\Ride::where(function ($q) use ($userIds, $allPendingRideIds) {
+                $q->whereIn('driver_id', $userIds);
                 if (!empty($allPendingRideIds)) {
                     $q->orWhereIn('id', $allPendingRideIds);
                 }
@@ -2000,7 +2058,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->orderBy('created_at', 'desc')
             ->get();
         
-        $assignedBookingIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+        $assignedBookingIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->whereNotNull('driver_booking_id')
@@ -2019,8 +2077,8 @@ Route::prefix('driver')->middleware('auth')->group(function () {
 
         $allPendingBookingIds = array_unique(array_merge($assignedBookingIds, $unassignedBookingIds));
 
-        $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($user, $allPendingBookingIds) {
-                $q->where('driver_id', $user->id);
+        $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($userIds, $allPendingBookingIds) {
+                $q->whereIn('driver_id', $userIds);
                 if (!empty($allPendingBookingIds)) {
                     $q->orWhereIn('id', $allPendingBookingIds);
                 }
