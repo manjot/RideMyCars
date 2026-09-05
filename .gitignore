@@ -5,3 +5,4 @@ laravel_web/.env
 .DS_Store
 .vscode/
 .idea/
+*.zip
