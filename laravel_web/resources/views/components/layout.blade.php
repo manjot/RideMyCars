@@ -50,6 +50,22 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
+        /* High-contrast safety: prevent white text on bright yellow brand-500 */
+        .bg-brand-500.text-white,
+        .bg-amber-400.text-white,
+        .bg-yellow-400.text-white {
+            color: #020617 !important;
+        }
+        /* Tailwind v3 to v4 Gradient Compatibility */
+        .bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
+        }
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
+        }
+        .bg-gradient-to-b {
+            background-image: linear-gradient(to bottom, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
+        }
     </style>
     <script src="{{ asset('js/countries-data.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>

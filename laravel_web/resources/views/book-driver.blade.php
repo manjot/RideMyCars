@@ -247,12 +247,12 @@
                     <!-- Book Now vs Schedule Later -->
                     <div class="grid grid-cols-2 gap-3">
                         <button type="button" @click="scheduleMode = 'now'"
-                                :class="scheduleMode === 'now' ? 'bg-brand-500 text-white font-extrabold shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 font-bold border border-gray-200 dark:border-white/10'"
+                                :class="scheduleMode === 'now' ? 'bg-brand-500 text-slate-950 font-black shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 font-bold border border-gray-200 dark:border-white/10'"
                                 class="py-3 px-4 rounded-xl text-xs transition-all text-center">
                             ⚡ Book Now (Immediate Dispatch)
                         </button>
                         <button type="button" @click="scheduleMode = 'later'"
-                                :class="scheduleMode === 'later' ? 'bg-brand-500 text-white font-extrabold shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 font-bold border border-gray-200 dark:border-white/10'"
+                                :class="scheduleMode === 'later' ? 'bg-brand-500 text-slate-950 font-black shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 font-bold border border-gray-200 dark:border-white/10'"
                                 class="py-3 px-4 rounded-xl text-xs transition-all text-center">
                             📅 Schedule for Later
                         </button>

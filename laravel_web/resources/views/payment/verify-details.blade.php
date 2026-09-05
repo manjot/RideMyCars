@@ -43,7 +43,7 @@
 
                     <!-- Step 3: Secure Payment -->
                     <div :class="{
-                            'bg-brand-500 text-white shadow-md font-black': currentVerificationStatus === 'driver_verified' && currentPaymentStatus !== 'paid',
+                            'bg-brand-500 text-slate-950 shadow-md font-black': currentVerificationStatus === 'driver_verified' && currentPaymentStatus !== 'paid',
                             'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300': currentPaymentStatus === 'paid',
                             'bg-gray-100 dark:bg-white/5 text-gray-400': currentVerificationStatus !== 'driver_verified' && currentPaymentStatus !== 'paid'
                         }"
@@ -222,19 +222,19 @@
 
                 <!-- Assigned Driver Card -->
                 @if(!empty($driver))
-                    <div class="p-5 bg-gradient-to-r from-gray-900 to-black text-white rounded-2xl flex items-center justify-between shadow-md">
+                    <div class="p-5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl flex items-center justify-between shadow-sm">
                         <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 rounded-full bg-brand-500 flex items-center justify-center font-bold text-lg border-2 border-white/20">
+                            <div class="w-12 h-12 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center font-bold text-lg border-2 border-brand-300 shadow-sm">
                                 👨‍✈️
                             </div>
                             <div>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assigned Driver</span>
-                                <h4 class="font-extrabold text-base text-white">{{ $driver['name'] }}</h4>
-                                <p class="text-xs text-gray-300">{{ $driver['vehicle'] ?? 'Executive Vehicle' }} • ⭐ {{ $driver['rating'] ?? 4.9 }}</p>
+                                <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Driver</span>
+                                <h4 class="font-extrabold text-base text-gray-900 dark:text-white">{{ $driver['name'] }}</h4>
+                                <p class="text-xs text-gray-600 dark:text-gray-300">{{ $driver['vehicle'] ?? 'Executive Vehicle' }} • ⭐ {{ $driver['rating'] ?? 4.9 }}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <a href="tel:{{ $driver['phone'] }}" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition">
+                            <a href="tel:{{ $driver['phone'] }}" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition">
                                 📞 Call Driver
                             </a>
                         </div>

@@ -44,7 +44,7 @@
                     <div class="relative w-28 h-28 mx-auto flex items-center justify-center">
                         <div class="absolute inset-0 rounded-full bg-brand-500/20 animate-ping"></div>
                         <div class="absolute inset-2 rounded-full bg-brand-500/30 animate-pulse"></div>
-                        <div class="w-16 h-16 rounded-full bg-brand-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg z-10">
+                        <div class="w-16 h-16 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center text-2xl font-bold shadow-lg z-10">
                             👨‍✈️
                         </div>
                     </div>

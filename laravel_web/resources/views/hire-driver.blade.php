@@ -126,7 +126,7 @@
                             <button type="button" 
                                     @click="selectedCountry = c.key; countryDropdownOpen = false; regionSearch = ''; window.history.pushState({}, '', '/hire-driver?country=' + c.key);"
                                     class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-left group cursor-pointer"
-                                    :class="selectedCountry === c.key ? 'bg-brand-500 text-white hover:bg-brand-600 font-bold' : 'text-gray-800 dark:text-gray-200'">
+                                    :class="selectedCountry === c.key ? 'bg-brand-500 text-slate-950 hover:bg-brand-600 font-black' : 'text-gray-800 dark:text-gray-200'">
                                 <div class="flex items-center gap-2.5 min-w-0 pr-2">
                                     <template x-if="c.key === 'All'">
                                         <span class="text-base leading-none shrink-0">🌐</span>

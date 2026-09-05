@@ -25,7 +25,7 @@
             @if(auth()->user()->membership_type && auth()->user()->membership_type !== 'none')
                 <div class="max-w-4xl mx-auto mb-12 p-6 rounded-3xl bg-gradient-to-r from-brand-500/10 via-brand-500/5 to-transparent border border-brand-500/30 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-bold text-2xl shadow-lg shadow-brand-500/30 shrink-0">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-500 text-slate-950 flex items-center justify-center font-black text-2xl shadow-lg shadow-brand-500/30 shrink-0">
                             👑
                         </div>
                         <div>
@@ -47,8 +47,8 @@
                         </div>
                     </div>
                     <div class="shrink-0">
-                        <span class="bg-brand-500 text-white inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-extrabold shadow-md shadow-brand-500/25">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                        <span class="bg-brand-500 text-slate-950 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-xs font-black shadow-md shadow-brand-500/25">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                             Privileges Active
                         </span>
                     </div>
@@ -73,7 +73,7 @@
             
             <!-- Tier 1: Club Membership -->
             <div class="bg-white dark:bg-[#111] border-2 border-brand-500 rounded-3xl p-8 lg:p-10 shadow-2xl relative flex flex-col justify-between overflow-hidden">
-                <div class="absolute top-6 right-6 bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                <div class="absolute top-6 right-6 bg-brand-500 text-slate-950 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                     Popular
                 </div>
                 <div>

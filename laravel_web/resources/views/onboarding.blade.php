@@ -193,7 +193,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>
 
-                <button x-show="slide === 4" @click="nextSlide()" class="px-8 py-4 bg-brand-500 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/30 hover:bg-brand-600 transition-all flex items-center gap-2">
+                <button x-show="slide === 4" @click="nextSlide()" class="px-8 py-4 bg-brand-500 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/30 hover:bg-brand-400 transition-all flex items-center gap-2">
                     Access the Platform
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </button>

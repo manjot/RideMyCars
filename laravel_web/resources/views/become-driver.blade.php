@@ -44,7 +44,8 @@
                         </p>
 
                         <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-6">
-                            <a href="/driver-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/30 hover:scale-105 hover:shadow-2xl">
+                            <a href="/driver-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/30 hover:scale-105 hover:shadow-2xl"
+                               style="background: linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #ea580c 100%) !important; color: #ffffff !important;">
                                 Join RideMyCars (Keep 90%)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                             </a>
@@ -167,11 +168,12 @@
                             </div>
 
                             <!-- Big Profit Highlight Box -->
-                            <div class="p-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xl mb-6">
-                                <div class="text-xs uppercase font-extrabold tracking-widest text-amber-100 mb-1">Extra Profit in Your Pocket</div>
-                                <div class="text-4xl sm:text-5xl font-black tracking-tight mb-2" x-text="'+' + currencySymbol + monthlyExtra + ' / mo'"></div>
-                                <p class="text-xs text-white/90 font-medium">
-                                    That's <span class="font-extrabold" x-text="'+' + currencySymbol + dailyExtra"></span> extra every single day, or <span class="font-extrabold" x-text="'+' + currencySymbol + weeklyExtra"></span> more each week.
+                            <div class="p-6 rounded-2xl text-white shadow-xl mb-6 relative overflow-hidden"
+                                 style="background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important; color: #ffffff !important;">
+                                <div class="text-xs uppercase font-extrabold tracking-widest mb-1" style="color: #fef3c7 !important;">Extra Profit in Your Pocket</div>
+                                <div class="text-4xl sm:text-5xl font-black tracking-tight mb-2 text-white" style="color: #ffffff !important;" x-text="'+' + currencySymbol + monthlyExtra + ' / mo'"></div>
+                                <p class="text-xs font-medium" style="color: #fffbeb !important;">
+                                    That's <span class="font-extrabold" style="color: #ffffff !important;" x-text="'+' + currencySymbol + dailyExtra"></span> extra every single day, or <span class="font-extrabold" style="color: #ffffff !important;" x-text="'+' + currencySymbol + weeklyExtra"></span> more each week.
                                 </p>
                             </div>
                         </div>
@@ -373,7 +375,8 @@
 
         <!-- 7. Strong Driver CTA Section -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 text-white shadow-2xl relative overflow-hidden">
+            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center text-white shadow-2xl relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #ea580c 0%, #f59e0b 50%, #ea580c 100%) !important; color: #ffffff !important;">
                 <div class="relative z-10">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         Join Over 3,200+ Verified Driver Partners

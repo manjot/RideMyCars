@@ -40,7 +40,8 @@
                         </p>
 
                         <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-8">
-                            <a href="/owner-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-blue-500/30 hover:scale-105 hover:shadow-2xl">
+                            <a href="/owner-signup" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-blue-500/30 hover:scale-105 hover:shadow-2xl"
+                               style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #1d4ed8 100%) !important; color: #ffffff !important;">
                                 List Your Vehicle Now
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                             </a>
@@ -171,11 +172,12 @@
                             </div>
 
                             <!-- Big Profit Highlight Box -->
-                            <div class="p-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl mb-6">
-                                <div class="text-xs uppercase font-extrabold tracking-widest text-blue-100 mb-1">Estimated Net Host Profit</div>
-                                <div class="text-4xl sm:text-5xl font-black tracking-tight mb-2" x-text="'$' + monthlyEarnings + ' / month'"></div>
-                                <p class="text-xs text-white/90 font-medium">
-                                    That equals <strong class="font-extrabold" x-text="'$' + annualEarnings.toLocaleString() + ' / year'"></strong> in recurring passive cash flow from a single vehicle.
+                            <div class="p-6 rounded-2xl text-white shadow-xl mb-6 relative overflow-hidden"
+                                 style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important; color: #ffffff !important;">
+                                <div class="text-xs uppercase font-extrabold tracking-widest mb-1" style="color: #dbeafe !important;">Estimated Net Host Profit</div>
+                                <div class="text-4xl sm:text-5xl font-black tracking-tight mb-2 text-white" style="color: #ffffff !important;" x-text="'$' + monthlyEarnings + ' / month'"></div>
+                                <p class="text-xs font-medium" style="color: #eff6ff !important;">
+                                    That equals <strong class="font-extrabold" style="color: #ffffff !important;" x-text="'$' + annualEarnings.toLocaleString() + ' / year'"></strong> in recurring passive cash flow from a single vehicle.
                                 </p>
                             </div>
                         </div>
@@ -379,7 +381,8 @@
 
         <!-- 6. Strong CTA Section -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-600 text-white shadow-2xl relative overflow-hidden">
+            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center text-white shadow-2xl relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 50%, #2563eb 100%) !important; color: #ffffff !important;">
                 <div class="relative z-10">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         Unlock High-Yield Passive Cash Flow

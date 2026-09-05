@@ -347,7 +347,8 @@
 
         <!-- 24/7 Dedicated Emergency Hotline Card -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-600 text-white shadow-2xl relative overflow-hidden">
+            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center text-white shadow-2xl relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #047857 0%, #0d9488 50%, #059669 100%) !important; color: #ffffff !important;">
                 <div class="relative z-10">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         24 Hours a Day • 7 Days a Week • 365 Days

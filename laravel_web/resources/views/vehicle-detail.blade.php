@@ -338,7 +338,7 @@
                                         <template x-for="c in list" :key="c.code">
                                             <button type="button" @click="driverCountry = c.cca3 || c.name; open = false; search = ''"
                                                     class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
-                                                    :class="(driverCountry === c.cca3 || driverCountry === c.name || driverCountry === c.code) ? 'bg-brand-500 text-white font-extrabold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                                    :class="(driverCountry === c.cca3 || driverCountry === c.name || driverCountry === c.code) ? 'bg-brand-500 text-slate-950 font-black hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
                                                 <div class="flex items-center gap-2.5 min-w-0">
                                                     <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
                                                          :alt="c.name" 

@@ -200,7 +200,7 @@
                                     <template x-for="c in list" :key="c.code">
                                         <button type="button" @click="selected = c; open = false; search = ''"
                                                 class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
-                                                :class="selected.code === c.code ? 'bg-brand-500 text-white font-extrabold hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
+                                                :class="selected.code === c.code ? 'bg-brand-500 text-slate-950 font-black hover:bg-brand-600' : 'text-gray-800 dark:text-gray-200'">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
                                                      :alt="c.name" 
@@ -219,7 +219,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-sm rounded-xl transition-all shadow-md shadow-brand-500/25 flex items-center justify-center gap-2 cursor-pointer">
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-xl transition-all shadow-md shadow-brand-500/25 flex items-center justify-center gap-2 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         Search Available Cars
                     </button>
@@ -234,7 +234,7 @@
             <div class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 scrollbar-none">
                 <template x-for="cat in categories" :key="cat">
                     <button @click="selectedCategory = cat"
-                            :class="selectedCategory === cat ? 'bg-brand-500 text-white shadow-sm font-extrabold' : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-white/10'"
+                            :class="selectedCategory === cat ? 'bg-brand-500 text-slate-950 shadow-sm font-black' : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-white/10'"
                             class="px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all">
                         <span x-text="cat"></span>
                     </button>

@@ -447,23 +447,26 @@
                     </div>
 
                     <!-- 6. Custom Multi-City & Corporate -->
-                    <div class="bg-gradient-to-br from-gray-900 to-slate-950 text-white rounded-3xl p-7 border border-white/15 shadow-xl flex flex-col justify-between">
+                    <div class="bg-white dark:bg-[#111622] rounded-3xl p-7 border-2 border-indigo-500/30 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group">
                         <div class="space-y-4">
-                            <span class="text-2xl">🏢</span>
-                            <div>
-                                <h3 class="text-xl font-black">Corporate & Event Fleets</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">Dedicated business transportation & conferences</p>
+                            <div class="flex items-center justify-between">
+                                <span class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🏢</span>
+                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50">Enterprise</span>
                             </div>
-                            <p class="text-xs text-gray-300 leading-relaxed">
+                            <div>
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white">Corporate & Event Fleets</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Dedicated business transportation & conferences</p>
+                            </div>
+                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
                                 Need multiple vehicles, intercity transfers, or monthly billing for your executive team? We provide customized enterprise rates with consolidated invoicing.
                             </p>
-                            <div class="pt-2 space-y-2 text-xs text-gray-300">
-                                <p class="flex items-center gap-2"><span>✓</span> Consolidated monthly corporate invoices</p>
-                                <p class="flex items-center gap-2"><span>✓</span> Dedicated VIP account manager</p>
-                                <p class="flex items-center gap-2"><span>✓</span> Custom SLA response guarantees</p>
+                            <div class="pt-2 space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                                <p class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Consolidated monthly corporate invoices</p>
+                                <p class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Dedicated VIP account manager</p>
+                                <p class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Custom SLA response guarantees</p>
                             </div>
                         </div>
-                        <a href="/contact" class="mt-6 block w-full py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-extrabold text-xs rounded-xl transition-all text-center">
+                        <a href="/contact" class="mt-6 block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all text-center">
                             Inquire for Business →
                         </a>
                     </div>
@@ -990,27 +993,31 @@
             </section>
 
             <!-- SECTION 8: BOTTOM CONVERSION CTA -->
-            <div class="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border border-brand-500/30 shadow-2xl relative overflow-hidden text-center space-y-6">
-                <div class="max-w-2xl mx-auto space-y-3">
-                    <span class="px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30">
+            <div class="p-8 sm:p-14 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 dark:from-[#111622] dark:via-[#161d2b] dark:to-[#0f141c] border-2 border-brand-500/40 dark:border-brand-500/30 shadow-2xl relative overflow-hidden text-center space-y-6">
+                <!-- Subtle Ambient Glow -->
+                <div class="absolute -top-24 -right-24 w-80 h-80 bg-brand-500/15 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 max-w-2xl mx-auto space-y-3">
+                    <span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 inline-block">
                         Experience Premium Mobility
                     </span>
-                    <h3 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                    <h3 class="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                         Ready to book your next journey?
                     </h3>
-                    <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                    <p class="text-xs sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                         Join thousands of business travelers, executives, and daily commuters who trust RideMyCars for transparent, verified mobility.
                     </p>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
-                    <a href="/ride" class="px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-2xl shadow-xl shadow-brand-500/30 transition-all hover:scale-105 active:scale-95">
+                <div class="relative z-10 flex flex-wrap items-center justify-center gap-4 pt-2">
+                    <a href="/ride" class="px-8 py-4 bg-brand-500 hover:bg-brand-400 text-slate-950 font-black text-sm rounded-2xl shadow-xl shadow-brand-500/30 transition-all hover:scale-105 active:scale-95">
                         Book a Ride Now →
                     </a>
-                    <a href="/rent" class="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-black text-sm rounded-2xl transition-all hover:scale-105 active:scale-95">
+                    <a href="/rent" class="px-8 py-4 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-black text-sm rounded-2xl shadow-md transition-all hover:scale-105 active:scale-95">
                         Rent a Vehicle →
                     </a>
-                    <a href="/membership" class="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-500/30 font-black text-sm rounded-2xl transition-all hover:scale-105 active:scale-95">
+                    <a href="/membership" class="px-8 py-4 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-300 border border-amber-500/40 font-black text-sm rounded-2xl shadow-sm transition-all hover:scale-105 active:scale-95">
                         Join VIP Club →
                     </a>
                 </div>

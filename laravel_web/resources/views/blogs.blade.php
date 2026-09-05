@@ -284,9 +284,9 @@
             </div>
         </div>
 
-        <!-- Newsletter Subscription Section -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ subscribed: false, email: '' }">
-            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 text-white shadow-2xl relative overflow-hidden">
+            <div class="rounded-[2.5rem] p-8 sm:p-14 text-center text-white shadow-2xl relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #ea580c 0%, #f59e0b 50%, #ea580c 100%) !important; color: #ffffff !important;">
                 <div class="relative z-10 max-w-2xl mx-auto">
                     <span class="px-4 py-1.5 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest inline-block mb-4">
                         Weekly Mobility Digest

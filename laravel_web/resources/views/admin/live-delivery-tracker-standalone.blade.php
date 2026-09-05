@@ -58,7 +58,7 @@
 
                     <!-- Status Filters -->
                     <div class="flex flex-wrap gap-2">
-                        <button @click="selectedFilter = 'ALL'" :class="selectedFilter === 'ALL' ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200'" class="px-3.5 py-1.5 rounded-xl text-xs transition-colors">
+                        <button @click="selectedFilter = 'ALL'" :class="selectedFilter === 'ALL' ? 'bg-brand-500 text-slate-950 font-black' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200'" class="px-3.5 py-1.5 rounded-xl text-xs transition-colors">
                             All
                         </button>
                         <button @click="selectedFilter = 'PENDING PICKUP'" :class="selectedFilter === 'PENDING PICKUP' ? 'bg-amber-500 text-white font-bold' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200'" class="px-3.5 py-1.5 rounded-xl text-xs transition-colors">
@@ -271,7 +271,7 @@
                                         <span class="text-gray-400 block text-[10px]">Distance / Route</span>
                                         <span class="font-bold text-gray-900 dark:text-white">Active Polyline Breadcrumb</span>
                                     </div>
-                                    <div class="bg-brand-500 text-white font-black px-4 py-2 rounded-xl text-sm">
+                                    <div class="bg-brand-500 text-slate-950 font-black px-4 py-2 rounded-xl text-sm">
                                         <span x-text="`${selectedOrder.estimated_minutes} min`"></span>
                                     </div>
                                 </div>
