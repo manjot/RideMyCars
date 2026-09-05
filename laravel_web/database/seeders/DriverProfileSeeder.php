@@ -55,22 +55,26 @@ class DriverProfileSeeder extends Seeder
         ];
 
         foreach ($drivers as $data) {
-            $user = User::firstOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make('123456'),
+                    'role' => 'driver',
+                    'account_status' => 'active',
+                    'email_verified_at' => now(),
                 ]
             );
 
-            DriverProfile::firstOrCreate(
-                ['license_number' => $data['license']],
+            DriverProfile::updateOrCreate(
+                ['user_id' => $user->id],
                 [
-                    'user_id' => $user->id,
+                    'license_number' => $data['license'],
                     'hourly_rate' => $data['rate'],
                     'rating' => $data['rating'],
                     'bio' => $data['bio'],
                     'is_available' => true,
+                    'verification_status' => 'verified',
                 ]
             );
         }

@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
                 'name' => 'John Client',
                 'password' => Hash::make('123456'),
                 'role' => 'customer',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
 
@@ -38,16 +40,78 @@ class DatabaseSeeder extends Seeder
                 'name' => 'John Client',
                 'password' => Hash::make('123456'),
                 'role' => 'customer',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
 
-        // Driver 1 - USA
-        $user1 = User::firstOrCreate(
+        // Sarah Johnson - sarah@example.com (Driver)
+        $userSarah = User::updateOrCreate(
+            ['email' => 'sarah@example.com'],
+            [
+                'name' => 'Sarah Johnson',
+                'password' => Hash::make('123456'),
+                'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
+            ]
+        );
+        DriverProfile::updateOrCreate(
+            ['user_id' => $userSarah->id],
+            [
+                'license_number' => 'DL-67890',
+                'hourly_rate' => 28.50,
+                'daily_rate' => 200.00,
+                'weekly_rate' => 1200.00,
+                'experience_years' => 5,
+                'country' => 'USA',
+                'service_area' => 'New York Metro Area',
+                'is_available' => true,
+                'rating' => 4.85,
+                'total_trips' => 52,
+                'verification_status' => 'verified',
+                'bio' => 'Friendly and punctual driver. Know all the best routes in the city.',
+            ]
+        );
+
+        // Michael Chen / Scott - michael@example.com & michael.driver@ridemycars.com (Driver)
+        $userMichaelEx = User::updateOrCreate(
+            ['email' => 'michael@example.com'],
+            [
+                'name' => 'Michael Chen',
+                'password' => Hash::make('123456'),
+                'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
+            ]
+        );
+        DriverProfile::updateOrCreate(
+            ['user_id' => $userMichaelEx->id],
+            [
+                'license_number' => 'DL-12345',
+                'hourly_rate' => 35.00,
+                'daily_rate' => 240.00,
+                'weekly_rate' => 1400.00,
+                'experience_years' => 10,
+                'country' => 'USA',
+                'service_area' => 'New York Metro Area',
+                'is_available' => true,
+                'rating' => 4.95,
+                'total_trips' => 48,
+                'verification_status' => 'verified',
+                'bio' => 'Professional chauffeur with 10 years of experience driving luxury vehicles.',
+            ]
+        );
+
+        // Driver 1 - USA (michael.driver@ridemycars.com)
+        $user1 = User::updateOrCreate(
             ['email' => 'michael.driver@ridemycars.com'],
             [
                 'name' => 'Michael Scott',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
         DriverProfile::updateOrCreate(
@@ -69,12 +133,14 @@ class DatabaseSeeder extends Seeder
         );
 
         // Driver 2 - Ghana
-        $user2 = User::firstOrCreate(
+        $user2 = User::updateOrCreate(
             ['email' => 'kwame.driver@ridemycars.com'],
             [
                 'name' => 'Kwame Mensah',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
         DriverProfile::updateOrCreate(
@@ -96,12 +162,14 @@ class DatabaseSeeder extends Seeder
         );
 
         // Driver 3 - Nigeria
-        $user3 = User::firstOrCreate(
+        $user3 = User::updateOrCreate(
             ['email' => 'emeka.driver@ridemycars.com'],
             [
                 'name' => 'Emeka Okafor',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
         DriverProfile::updateOrCreate(
@@ -122,13 +190,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Driver 4 - South Africa
-        $user4 = User::firstOrCreate(
+        // Driver 4 - South Africa (sipho.driver@ridemycars.com)
+        $user4 = User::updateOrCreate(
             ['email' => 'sipho.driver@ridemycars.com'],
             [
                 'name' => 'Sipho Ndlovu',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
                 'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
         DriverProfile::updateOrCreate(
@@ -149,12 +219,14 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $user5 = User::firstOrCreate(
+        $user5 = User::updateOrCreate(
             ['email' => 'sipho@ridemycars.com'],
             [
                 'name' => 'Sipho Ndlovu',
                 'password' => Hash::make('123456'),
                 'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
             ]
         );
         DriverProfile::updateOrCreate(

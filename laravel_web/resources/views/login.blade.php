@@ -565,7 +565,7 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Email Address</label>
-                        <input type="email" name="email" required value="{{ old('email') }}" placeholder="you@example.com" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
+                        <input type="email" name="email" x-model="loginEmail" required placeholder="you@example.com" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
                         @error('email')
                             <p class="text-red-600 text-sm mt-1.5 font-semibold flex items-center gap-1.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -577,7 +577,7 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Password</label>
                         <div x-data="{ show: false }" class="relative">
-                            <input :type="show ? 'text' : 'password'" name="password" required placeholder="Enter your password" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 pr-12 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
+                            <input :type="show ? 'text' : 'password'" name="password" x-model="loginPassword" required placeholder="Enter your password" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 pr-12 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
                             <div @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                             </div>
@@ -591,6 +591,47 @@
                         Sign In
                     </button>
                 </form>
+
+                <!-- Demo Credentials Quick Fill Box -->
+                <div class="mt-6 p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-400/5 border border-amber-500/20 dark:border-amber-400/20 text-left">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                            Quick Demo Logins (Pass: 123456)
+                        </span>
+                        <span class="text-[10px] font-bold text-amber-700/70 dark:text-amber-300/70">Click to autofill</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" @click="fillCredentials('sarah@example.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                            <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                                <span>Sarah</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Driver</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">sarah@example.com</div>
+                        </button>
+                        <button type="button" @click="fillCredentials('michael@example.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                            <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                                <span>Michael</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Driver</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">michael@example.com</div>
+                        </button>
+                        <button type="button" @click="fillCredentials('sipho.driver@ridemycars.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                            <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                                <span>Sipho</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Driver</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">sipho.driver@...</div>
+                        </button>
+                        <button type="button" @click="fillCredentials('customer@ridemycars.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                            <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                                <span>Customer</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold">Rider</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">customer@...</div>
+                        </button>
+                    </div>
+                </div>
 
                 <div class="mt-6 text-center space-y-2">
                     <button type="button" @click="view = 'email_otp'" class="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors block w-full py-1">
@@ -611,6 +652,13 @@
                 window.__loginAppRegistered = true;
                 Alpine.data('loginApp', () => ({
                     view: '{{ $errors->any() || old("email") ? "email" : "mobile" }}',
+                    loginEmail: '{{ old("email", "") }}',
+                    loginPassword: '',
+                    fillCredentials(email, pwd = '123456') {
+                        this.view = 'email';
+                        this.loginEmail = email;
+                        this.loginPassword = pwd;
+                    },
                     emailForOtp: '',
                     targetDestination: '',
                     isPhoneAuth: true,
