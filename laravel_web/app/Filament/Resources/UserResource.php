@@ -26,11 +26,34 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\FileUpload::make('avatar')
+                    ->label('Profile Photo')
+                    ->image()
+                    ->avatar()
+                    ->disk('public')
+                    ->directory('avatars')
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('name')
                     ->required(),
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required(),
+                Forms\Components\TextInput::make('phone')
+                    ->tel()
+                    ->maxLength(50),
+                Forms\Components\TextInput::make('referral_code')
+                    ->label('User Referral Code')
+                    ->helperText('Unique referral code generated for this user.')
+                    ->disabled()
+                    ->dehydrated(false),
+                Forms\Components\TextInput::make('referred_by')
+                    ->label('Referred By (Code)')
+                    ->helperText('Referral code used during registration.'),
+                Forms\Components\Select::make('referrer_id')
+                    ->label('Referred By (User)')
+                    ->relationship('referrer', 'name')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn ($state) => \Illuminate\Support\Facades\Hash::make($state))
@@ -101,10 +124,19 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('avatar')
+                    ->circular()
+                    ->defaultImageUrl(fn ($record) => $record->avatar_url)
+                    ->label('Photo'),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable(),
+                Tables\Columns\TextColumn::make('phone')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('role')
                     ->searchable()
                     ->badge()
@@ -115,6 +147,30 @@ class UserResource extends Resource
                         'customer' => 'success',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('referral_code')
+                    ->label('Referral Code')
+                    ->badge()
+                    ->color('warning')
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Referral code copied!'),
+                Tables\Columns\TextColumn::make('referred_by')
+                    ->label('Referred By')
+                    ->badge()
+                    ->color('info')
+                    ->searchable()
+                    ->formatStateUsing(function ($state, $record) {
+                        if (empty($state)) return '—';
+                        $referrerName = $record->referrer ? $record->referrer->name : null;
+                        return $referrerName ? "{$state} ({$referrerName})" : $state;
+                    }),
+                Tables\Columns\TextColumn::make('referrals_count')
+                    ->counts('referrals')
+                    ->label('Referrals Made')
+                    ->sortable()
+                    ->badge()
+                    ->color('success')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('account_status')
                     ->label('Account Status')
                     ->badge()

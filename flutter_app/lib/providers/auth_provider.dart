@@ -15,6 +15,9 @@ class AuthProvider extends ChangeNotifier {
   String? _userEmail;
   int? _userId;
   String? _errorMessage;
+  String? _referralCode;
+  String? _referredBy;
+  String? _avatarUrl;
 
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
@@ -24,6 +27,9 @@ class AuthProvider extends ChangeNotifier {
   String? get userEmail => _userEmail;
   int? get userId => _userId;
   String? get errorMessage => _errorMessage;
+  String? get referralCode => _referralCode;
+  String? get referredBy => _referredBy;
+  String? get avatarUrl => _avatarUrl;
 
   bool get isDriver => _role == 'driver';
 
@@ -32,6 +38,9 @@ class AuthProvider extends ChangeNotifier {
     _role = await TokenStorage.getRole() ?? 'customer';
     _userName = await TokenStorage.getUserName();
     _userEmail = await TokenStorage.getUserEmail();
+    _referralCode = await TokenStorage.getReferralCode();
+    _referredBy = await TokenStorage.getReferredBy();
+    _avatarUrl = await TokenStorage.getAvatarUrl();
     final savedPassword = await TokenStorage.getSavedPassword();
 
     if (_token != null && _token!.isNotEmpty) {
@@ -46,12 +55,18 @@ class AuthProvider extends ChangeNotifier {
           _userId = u['id'];
           _userName = u['name'];
           _userEmail = u['email'];
+          _referralCode = u['referral_code']?.toString();
+          _referredBy = u['referred_by']?.toString();
+          _avatarUrl = u['avatar_url']?.toString();
           _role = res.data['role'] ?? _role;
           await TokenStorage.saveUserData(
             role: _role,
             name: _userName!,
             email: _userEmail!,
             password: savedPassword,
+            referralCode: _referralCode,
+            referredBy: _referredBy,
+            avatarUrl: _avatarUrl,
           );
         }
       } catch (_) {
@@ -116,6 +131,9 @@ class AuthProvider extends ChangeNotifier {
         _userId = u['id'];
         _userName = u['name'];
         _userEmail = u['email'];
+        _referralCode = u['referral_code']?.toString();
+        _referredBy = u['referred_by']?.toString();
+        _avatarUrl = u['avatar_url']?.toString();
         _role = res.data['role'] ?? 'customer';
         _isAuthenticated = true;
 
@@ -127,6 +145,9 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? 'User',
           email: _userEmail ?? email,
           password: password,
+          referralCode: _referralCode,
+          referredBy: _referredBy,
+          avatarUrl: _avatarUrl,
         );
 
         _isLoading = false;
@@ -160,19 +181,25 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String passwordConfirmation,
     required String role,
+    String? referralCode,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final res = await _dio.post(ApiConstants.register, data: {
+      final payload = <String, dynamic>{
         'name': name.trim(),
         'email': email.trim(),
         'password': password,
         'password_confirmation': passwordConfirmation,
         'role': role,
-      });
+      };
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        payload['referral_code'] = referralCode.trim().toUpperCase();
+      }
+
+      final res = await _dio.post(ApiConstants.register, data: payload);
 
       if ((res.statusCode == 200 || res.statusCode == 201) && res.data is Map && res.data['success'] == true) {
         _token = res.data['token'];
@@ -180,6 +207,9 @@ class AuthProvider extends ChangeNotifier {
         _userId = u['id'];
         _userName = u['name'];
         _userEmail = u['email'];
+        _referralCode = u['referral_code']?.toString();
+        _referredBy = u['referred_by']?.toString();
+        _avatarUrl = u['avatar_url']?.toString();
         _role = res.data['role'] ?? role;
         _isAuthenticated = true;
 
@@ -191,6 +221,9 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? name,
           email: _userEmail ?? email,
           password: password,
+          referralCode: _referralCode,
+          referredBy: _referredBy,
+          avatarUrl: _avatarUrl,
         );
 
         _isLoading = false;
@@ -261,6 +294,7 @@ class AuthProvider extends ChangeNotifier {
     String? email,
     String? password,
     String role = 'customer',
+    String? referralCode,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -274,6 +308,9 @@ class AuthProvider extends ChangeNotifier {
       if (name != null && name.isNotEmpty) payload['name'] = name.trim();
       if (email != null && email.isNotEmpty) payload['email'] = email.trim();
       if (password != null && password.isNotEmpty) payload['password'] = password;
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        payload['referral_code'] = referralCode.trim().toUpperCase();
+      }
       payload['role'] = role;
 
       final res = await _dio.post(ApiConstants.verifyOtp, data: payload);
@@ -285,6 +322,9 @@ class AuthProvider extends ChangeNotifier {
           _userId = u['id'];
           _userName = u['name'];
           _userEmail = u['email'];
+          _referralCode = u['referral_code']?.toString();
+          _referredBy = u['referred_by']?.toString();
+          _avatarUrl = u['avatar_url']?.toString();
         }
         _role = res.data['role'] ?? role;
         _isAuthenticated = true;
@@ -297,6 +337,9 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? (name ?? 'Rider'),
           email: _userEmail ?? (email ?? phone),
           password: password ?? '',
+          referralCode: _referralCode,
+          referredBy: _referredBy,
+          avatarUrl: _avatarUrl,
         );
 
         _isLoading = false;
@@ -338,6 +381,9 @@ class AuthProvider extends ChangeNotifier {
     _userId = null;
     _userName = null;
     _userEmail = null;
+    _referralCode = null;
+    _referredBy = null;
+    _avatarUrl = null;
     _isAuthenticated = false;
     notifyListeners();
   }

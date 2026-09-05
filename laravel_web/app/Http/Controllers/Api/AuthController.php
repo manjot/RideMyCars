@@ -93,7 +93,12 @@ class AuthController extends Controller
                         'id' => $existingUser->id,
                         'name' => $existingUser->name,
                         'email' => $existingUser->email,
+                        'phone' => $existingUser->phone,
                         'role' => $existingUser->role ?? $role,
+                        'avatar' => $existingUser->avatar,
+                        'avatar_url' => $existingUser->avatar_url,
+                        'referral_code' => $existingUser->referral_code,
+                        'referred_by' => $existingUser->referred_by,
                     ],
                     'role' => $existingUser->role ?? $role,
                 ], 200);
@@ -117,6 +122,35 @@ class AuthController extends Controller
             }
             if (!empty($validated['phone']) && Schema::hasColumn('users', 'phone')) {
                 $userData['phone'] = $validated['phone'];
+            }
+
+            // Referral Code Processing
+            $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));
+            if (!empty($inputReferral)) {
+                $userData['referred_by'] = $inputReferral;
+                $referrer = User::where('referral_code', $inputReferral)->first();
+                if ($referrer) {
+                    $userData['referrer_id'] = $referrer->id;
+                }
+            }
+
+            // Customer/Rider Profile Avatar Upload
+            if ($request->hasFile('avatar')) {
+                $userData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            } elseif ($request->filled('base64_avatar')) {
+                $avatarData = $request->input('base64_avatar');
+                if (preg_match('/^data:image\/(\w+);base64,/', $avatarData, $type)) {
+                    $avatarData = substr($avatarData, strpos($avatarData, ',') + 1);
+                    $type = strtolower($type[1]);
+                } else {
+                    $type = 'jpg';
+                }
+                $decoded = base64_decode($avatarData);
+                if ($decoded !== false) {
+                    $fileName = 'avatars/avatar_' . uniqid() . '_' . time() . '.' . $type;
+                    \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                    $userData['avatar'] = $fileName;
+                }
             }
 
             $user = User::create($userData);
@@ -144,6 +178,11 @@ class AuthController extends Controller
                             \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
                             $photoPath = $fileName;
                         }
+                    }
+
+                    if ($photoPath && empty($user->avatar)) {
+                        $user->avatar = $photoPath;
+                        $user->saveQuietly();
                     }
 
                     $driverProfile = DriverProfile::firstOrCreate(
@@ -184,7 +223,12 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'phone' => $user->phone,
                     'role' => $user->role,
+                    'avatar' => $user->avatar,
+                    'avatar_url' => $user->avatar_url,
+                    'referral_code' => $user->referral_code,
+                    'referred_by' => $user->referred_by,
                 ],
                 'role' => $user->role,
                 'driver_profile' => $driverProfile,
@@ -298,7 +342,12 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'phone' => $user->phone,
                     'role' => $user->role,
+                    'avatar' => $user->avatar,
+                    'avatar_url' => $user->avatar_url,
+                    'referral_code' => $user->referral_code,
+                    'referred_by' => $user->referred_by,
                 ],
                 'role' => $user->role,
                 'driver_profile' => $driverProfile,
@@ -370,7 +419,13 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'phone' => $user->phone,
                     'role' => $user->role,
+                    'avatar' => $user->avatar,
+                    'avatar_url' => $user->avatar_url,
+                    'referral_code' => $user->referral_code,
+                    'referred_by' => $user->referred_by,
+                    'referrer_name' => $user->referrer?->name,
                 ],
                 'role' => $user->role,
                 'driver_profile' => $driverProfile,
@@ -555,6 +610,36 @@ class AuthController extends Controller
                         ? Hash::make($rawPassword) 
                         : Hash::make(Str::random(24));
 
+                    // Referral Code Processing
+                    $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));
+                    $referrerId = null;
+                    if (!empty($inputReferral)) {
+                        $referrer = User::where('referral_code', $inputReferral)->first();
+                        if ($referrer) {
+                            $referrerId = $referrer->id;
+                        }
+                    }
+
+                    // Avatar processing
+                    $avatarPath = null;
+                    if ($request->hasFile('avatar')) {
+                        $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                    } elseif ($request->filled('base64_avatar')) {
+                        $avatarData = $request->input('base64_avatar');
+                        if (preg_match('/^data:image\/(\w+);base64,/', $avatarData, $type)) {
+                            $avatarData = substr($avatarData, strpos($avatarData, ',') + 1);
+                            $type = strtolower($type[1]);
+                        } else {
+                            $type = 'jpg';
+                        }
+                        $decoded = base64_decode($avatarData);
+                        if ($decoded !== false) {
+                            $fileName = 'avatars/avatar_' . uniqid() . '_' . time() . '.' . $type;
+                            \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                            $avatarPath = $fileName;
+                        }
+                    }
+
                     $user = User::create([
                         'name' => $userName,
                         'phone' => $formattedPhone,
@@ -562,6 +647,9 @@ class AuthController extends Controller
                         'email' => $userEmail,
                         'password' => $hashedPassword,
                         'role' => $role,
+                        'avatar' => $avatarPath,
+                        'referred_by' => !empty($inputReferral) ? $inputReferral : null,
+                        'referrer_id' => $referrerId,
                         'terms_accepted' => true,
                         'terms_accepted_at' => now(),
                         'terms_version' => '2026-08-23',
@@ -589,6 +677,11 @@ class AuthController extends Controller
                                     \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
                                     $photoPath = $fileName;
                                 }
+                            }
+
+                            if ($photoPath && empty($user->avatar)) {
+                                $user->avatar = $photoPath;
+                                $user->saveQuietly();
                             }
 
                             $licNumber = trim($request->input('license_number', ''));
@@ -655,6 +748,10 @@ class AuthController extends Controller
                         'email' => $user->email,
                         'phone' => $user->phone,
                         'role' => $user->role,
+                        'avatar' => $user->avatar,
+                        'avatar_url' => $user->avatar_url,
+                        'referral_code' => $user->referral_code,
+                        'referred_by' => $user->referred_by,
                     ],
                     'role' => $user->role,
                     'driver_profile' => $driverProfile,
@@ -671,12 +768,24 @@ class AuthController extends Controller
             $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $email);
             if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
                 \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
+
+                $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));
+                $referrerId = null;
+                if (!empty($inputReferral)) {
+                    $referrer = User::where('referral_code', $inputReferral)->first();
+                    if ($referrer) {
+                        $referrerId = $referrer->id;
+                    }
+                }
+
                 $user = User::firstOrCreate(
                     ['email' => $email],
                     [
                         'name' => explode('@', $email)[0],
                         'password' => Hash::make(Str::random(16)),
                         'role' => 'customer',
+                        'referred_by' => !empty($inputReferral) ? $inputReferral : null,
+                        'referrer_id' => $referrerId,
                         'terms_accepted' => true,
                         'terms_accepted_at' => now(),
                         'terms_version' => '2026-08-23',
@@ -692,7 +801,12 @@ class AuthController extends Controller
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
+                        'phone' => $user->phone,
                         'role' => $user->role,
+                        'avatar' => $user->avatar,
+                        'avatar_url' => $user->avatar_url,
+                        'referral_code' => $user->referral_code,
+                        'referred_by' => $user->referred_by,
                     ],
                     'role' => $user->role,
                 ]);

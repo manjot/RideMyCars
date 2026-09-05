@@ -1242,13 +1242,13 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/become-driver" class="text-zinc-400 hover:text-amber-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                            <a href="/driver-signup" class="text-zinc-400 hover:text-amber-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">Become a Driver</span>
                                 <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">Earn</span>
                             </a>
                         </li>
                         <li>
-                            <a href="/become-owner" class="text-zinc-400 hover:text-purple-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                            <a href="/owner-signup" class="text-zinc-400 hover:text-purple-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">List Your Vehicle</span>
                                 <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/30">Host</span>
                             </a>

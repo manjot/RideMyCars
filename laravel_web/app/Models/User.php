@@ -12,12 +12,62 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'phone', 'phone_verified_at', 'password', 'role', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
+#[Fillable(['name', 'email', 'phone', 'phone_verified_at', 'password', 'role', 'avatar', 'referral_code', 'referred_by', 'referrer_id', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
+
+    protected $appends = ['avatar_url'];
+
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = static::generateUniqueReferralCode();
+            }
+        });
+    }
+
+    public static function generateUniqueReferralCode(): string
+    {
+        do {
+            $code = 'RMC' . strtoupper(\Illuminate\Support\Str::random(6));
+        } while (static::where('referral_code', $code)->exists());
+        return $code;
+    }
+
+    public function getReferralCodeAttribute($value): string
+    {
+        if (empty($value)) {
+            $newCode = static::generateUniqueReferralCode();
+            $this->attributes['referral_code'] = $newCode;
+            if ($this->exists) {
+                $this->saveQuietly();
+            }
+            return $newCode;
+        }
+        return $value;
+    }
+
+    public function getAvatarUrlAttribute(): string
+    {
+        if (!empty($this->avatar)) {
+            return str_starts_with($this->avatar, 'http') ? $this->avatar : asset('storage/' . $this->avatar);
+        }
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=f9c52a&color=102b54&bold=true';
+    }
+
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referrer_id');
+    }
+
+    public function referrals()
+    {
+        return $this->hasMany(User::class, 'referrer_id');
+    }
 
     public function canAccessPanel(Panel $panel): bool
     {

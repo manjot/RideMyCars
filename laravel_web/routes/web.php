@@ -647,6 +647,21 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
         $userData['phone'] = $smsService->formatE164($request->phone);
     }
 
+    // Customer/Rider Profile Photo Upload
+    if ($request->hasFile('avatar')) {
+        $userData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+    }
+
+    // Referral Code Processing
+    $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));
+    if (!empty($inputReferral)) {
+        $userData['referred_by'] = $inputReferral;
+        $referrer = \App\Models\User::where('referral_code', $inputReferral)->first();
+        if ($referrer) {
+            $userData['referrer_id'] = $referrer->id;
+        }
+    }
+
     $user = \App\Models\User::create($userData);
 
     if ($user->role === 'driver') {
@@ -656,6 +671,9 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
 
         if ($request->hasFile('driver_photo')) {
             $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+            if (empty($user->avatar)) {
+                $user->update(['avatar' => $photoPath]);
+            }
         }
         if ($request->hasFile('license_front_image')) {
             $frontPath = $request->file('license_front_image')->store('drivers/licenses', 'public');
@@ -2293,6 +2311,16 @@ Route::get('/activity', function () {
 Route::get('/account', function () {
     $user = auth()->user();
     return view('account', compact('user'));
+})->middleware('auth');
+
+Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'avatar' => 'required|image|max:5120',
+    ]);
+    $user = auth()->user();
+    $path = $request->file('avatar')->store('avatars', 'public');
+    $user->update(['avatar' => $path]);
+    return back()->with('success', 'Profile photo updated successfully!');
 })->middleware('auth');
 
 Route::get('/wallet', function () {

@@ -23,6 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late Country _selectedCountry;
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _referralCodeController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
@@ -48,6 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _mobileNumberController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -260,6 +262,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     email: _emailController.text.trim(),
                                     password: _passwordController.text,
                                     role: 'customer',
+                                    referralCode: _referralCodeController.text.trim(),
                                   );
 
                                   if (!mounted) return;
@@ -547,6 +550,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (val != _passwordController.text) return 'Passwords do not match';
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Referral Code (Optional) Field
+                  TextFormField(
+                    controller: _referralCodeController,
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(
+                      color: AppColors.textLight,
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Referral Code (Optional)',
+                      labelStyle: const TextStyle(color: AppColors.textMuted),
+                      hintText: 'e.g. RMC7K9A2',
+                      hintStyle: const TextStyle(color: AppColors.textMuted, letterSpacing: 1),
+                      prefixIcon: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary),
+                      filled: true,
+                      fillColor: AppColors.surfaceDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 28),
 

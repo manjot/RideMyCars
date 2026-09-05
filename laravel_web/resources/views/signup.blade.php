@@ -515,10 +515,46 @@
                         </div>
                     </div>
 
+                    <!-- Rider / Customer Profile Photo Upload -->
+                    <div x-show="currentRole === 'customer'" class="pt-1" x-data="{ riderPhotoPreview: null }">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                            Profile Photo <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(optional - helps drivers recognize you)</span>
+                        </label>
+                        <div class="flex items-center gap-4 p-3.5 bg-gray-50/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl">
+                            <div class="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center shrink-0 shadow-sm relative">
+                                <template x-if="riderPhotoPreview">
+                                    <img :src="riderPhotoPreview" class="w-full h-full object-cover">
+                                </template>
+                                <template x-if="!riderPhotoPreview">
+                                    <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <input type="file" name="avatar" accept="image/*" 
+                                    @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => { riderPhotoPreview = e.target.result }; reader.readAsDataURL(file); }"
+                                    class="w-full text-xs text-gray-600 dark:text-gray-300 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-black hover:file:bg-brand-600 file:cursor-pointer cursor-pointer">
+                                <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Upload a clear JPG, PNG or WebP photo</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Referral Code <span class="text-gray-400 dark:text-gray-500 font-normal">(optional)</span></label>
-                        <input type="text" name="referral_code" value="{{ old('referral_code') }}" placeholder="Enter referral code" class="w-full px-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
+                                <span class="text-base">🎁</span>
+                            </div>
+                            <input type="text" name="referral_code" value="{{ old('referral_code', request('ref', request('referral_code'))) }}" placeholder="e.g. RMC7K9A2X" class="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white uppercase font-mono tracking-wider placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                        </div>
+                        @if(request('ref') || request('referral_code'))
+                            <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold flex items-center gap-1">
+                                <span>✓</span> Referral code applied: {{ request('ref') ?? request('referral_code') }}
+                            </p>
+                        @endif
                     </div>
+
 
                     <!-- Driver Credentials & Rates Section -->
                     <div x-show="currentRole === 'driver'" class="pt-4 border-t border-gray-200 dark:border-white/10 space-y-4" x-data="{ photoPreview: null }">

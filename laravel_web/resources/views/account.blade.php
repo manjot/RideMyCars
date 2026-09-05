@@ -31,6 +31,15 @@
                             class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer">
                         Home
                     </button>
+                    <button @click="currentTab = 'referral'" 
+                            :class="currentTab === 'referral' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border-l-4 border-amber-500' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-300'" 
+                            class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span>🎁</span>
+                            <span>Refer & Earn</span>
+                        </div>
+                        <span class="text-[11px] font-black uppercase tracking-wider bg-amber-400 text-black px-2 py-0.5 rounded-full">New</span>
+                    </button>
                     <button @click="currentTab = 'personal_info'" 
                             :class="currentTab === 'personal_info' ? 'bg-gray-100 dark:bg-[#222] font-semibold text-gray-900 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-300'" 
                             class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer">
@@ -55,16 +64,71 @@
                 <!-- HOME TAB -->
                 <div x-show="currentTab === 'home'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
                     
-                    <div class="text-center mb-10">
-                        <div class="w-24 h-24 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-4xl mx-auto mb-4 font-bold overflow-hidden shadow-md">
-                            @if(isset($user->avatar))
-                                <img src="{{ $user->avatar }}" class="w-full h-full object-cover">
-                            @else
-                                <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                    <div class="text-center mb-8">
+                        <div class="relative w-28 h-28 rounded-full mx-auto mb-4 group">
+                            <div class="w-full h-full rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-4xl font-bold overflow-hidden shadow-lg border-2 border-amber-400">
+                                @if(!empty($user->avatar))
+                                    <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
+                                @else
+                                    <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                                @endif
+                            </div>
+                            <!-- Change Avatar Form -->
+                            <form action="/account/avatar" method="POST" enctype="multipart/form-data" id="avatarUploadForm">
+                                @csrf
+                                <input type="file" name="avatar" id="avatarFileInput" accept="image/*" class="hidden" onchange="document.getElementById('avatarUploadForm').submit()">
+                                <label for="avatarFileInput" class="absolute bottom-0 right-0 p-2 bg-[#f9c52a] text-[#102b54] rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-white dark:border-[#111]" title="Upload Profile Photo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                </label>
+                            </form>
+                        </div>
+                        <h1 class="text-3xl font-black text-gray-900 dark:text-white" x-text="userName"></h1>
+                        <p class="text-gray-500 dark:text-gray-400 mt-1" x-text="userEmail"></p>
+                    </div>
+
+                    <!-- YOUR REFERRAL CODE CARD -->
+                    <div class="mb-10 bg-gradient-to-br from-[#102b54] via-[#133261] to-[#0a1b35] text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-amber-400/30 relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="relative z-10">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 border border-amber-400/40 rounded-full text-xs font-bold text-amber-300 uppercase tracking-wider mb-2">
+                                        <span>🎁</span> Exclusive Referral Code
+                                    </div>
+                                    <h2 class="text-2xl font-black text-white">Your Referral Code</h2>
+                                    <p class="text-gray-300 text-sm mt-1">Share this code with friends & family. When they register, both of you earn exclusive ride perks!</p>
+                                </div>
+                                <div class="shrink-0 text-left sm:text-right">
+                                    <span class="text-xs text-amber-200/80 font-semibold block mb-1">Referral Code</span>
+                                    <div class="inline-flex items-center gap-3 bg-black/50 border border-amber-400/50 px-4 py-2.5 rounded-2xl shadow-inner">
+                                        <span class="text-2xl font-mono font-black text-amber-300 tracking-widest">{{ $user->referral_code ?? 'RMC000000' }}</span>
+                                        <button type="button" @click="copyReferralCode('{{ $user->referral_code ?? '' }}')" class="p-2 bg-amber-400 text-[#102b54] hover:bg-amber-300 rounded-xl font-black transition active:scale-90 text-xs flex items-center gap-1 shadow cursor-pointer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                            <span>Copy</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/10">
+                                <a href="https://wa.me/?text={{ urlencode('Sign up on RideMyCars with my referral code ' . ($user->referral_code ?? '') . ' to get special ride perks! ' . url('/signup?ref=' . ($user->referral_code ?? ''))) }}" target="_blank" class="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold py-3 px-4 rounded-xl transition text-sm shadow">
+                                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                    <span>Share on WhatsApp</span>
+                                </a>
+
+                                <button type="button" @click="copyReferralLink('{{ url('/signup?ref=' . ($user->referral_code ?? '')) }}')" class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-4 rounded-xl transition text-sm border border-white/20 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                    <span>Copy Invite Link</span>
+                                </button>
+                            </div>
+
+                            @if(!empty($user->referred_by))
+                                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-300">
+                                    <span>Referred By</span>
+                                    <span class="font-bold text-amber-300">{{ $user->referred_by }} {{ $user->referrer ? '('.$user->referrer->name.')' : '' }}</span>
+                                </div>
                             @endif
                         </div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white" x-text="userName"></h1>
-                        <p class="text-gray-500 dark:text-gray-400 mt-1" x-text="userEmail"></p>
                     </div>
 
                     <!-- Profiles -->
@@ -127,6 +191,108 @@
                         </div>
                     </div>
 
+                </div>
+
+                <!-- REFERRAL & REWARDS TAB -->
+                <div x-show="currentTab === 'referral'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Referral Program</h1>
+                            <p class="text-gray-500 dark:text-gray-400 mt-1">Invite your friends and earn rewards when they join and ride.</p>
+                        </div>
+                        <span class="px-3.5 py-1.5 bg-amber-400 text-[#102b54] font-black text-xs uppercase tracking-wider rounded-full shadow-sm">
+                            Active
+                        </span>
+                    </div>
+
+                    <!-- Code Hero Box -->
+                    <div class="bg-gradient-to-br from-[#102b54] to-[#081528] text-white rounded-3xl p-8 mb-8 border border-amber-400/30 shadow-2xl relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-40 h-40 bg-amber-400/20 rounded-full blur-2xl"></div>
+                        <div class="relative z-10">
+                            <span class="text-xs font-black tracking-widest text-amber-300 uppercase">Your Unique Referral Code</span>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3">
+                                <div class="text-4xl font-mono font-black text-white tracking-widest bg-white/10 px-6 py-3 rounded-2xl inline-block border border-white/20">
+                                    {{ $user->referral_code ?? 'RMC000000' }}
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" @click="copyReferralCode('{{ $user->referral_code ?? '' }}')" class="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-[#102b54] font-black rounded-xl text-sm transition active:scale-95 shadow flex items-center gap-2 cursor-pointer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                        <span>Copy Code</span>
+                                    </button>
+                                    <a href="https://wa.me/?text={{ urlencode('Sign up on RideMyCars using my referral code ' . ($user->referral_code ?? '') . ' to get special ride perks! ' . url('/signup?ref=' . ($user->referral_code ?? ''))) }}" target="_blank" class="p-3.5 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-xl shadow transition" title="Share via WhatsApp">
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between text-sm text-gray-300 gap-2">
+                                <span>Direct Invitation Link:</span>
+                                <button type="button" @click="copyReferralLink('{{ url('/signup?ref=' . ($user->referral_code ?? '')) }}')" class="text-amber-300 font-mono hover:underline text-left cursor-pointer truncate max-w-md">
+                                    {{ url('/signup?ref=' . ($user->referral_code ?? '')) }}
+                                </button>
+                            </div>
+
+                            @if(!empty($user->referred_by))
+                                <div class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-gray-300">
+                                    <span>Who Referred You:</span>
+                                    <span class="font-bold text-amber-300">{{ $user->referred_by }} {{ $user->referrer ? '('.$user->referrer->name.')' : '' }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- How it Works -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                        <div class="p-5 rounded-2xl bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 shadow-sm text-center">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-amber-400/20 text-amber-500 flex items-center justify-center font-black text-xl">1</div>
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-1">Share Your Code</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Send your code or link to friends, family, and colleagues.</p>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 shadow-sm text-center">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center font-black text-xl">2</div>
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-1">They Sign Up</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">They enter your code when creating their account on web or app.</p>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 shadow-sm text-center">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-xl">3</div>
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-1">Unlock Rewards</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Both of you get discounts, priority booking, and credit perks.</p>
+                        </div>
+                    </div>
+
+                    <!-- Friends Referred by You -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Your Referrals ({{ $user->referrals ? $user->referrals->count() : 0 }})</h2>
+                        </div>
+                        @if($user->referrals && $user->referrals->count() > 0)
+                            <div class="divide-y divide-gray-100 dark:divide-white/10 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden bg-white dark:bg-[#151515]">
+                                @foreach($user->referrals as $ref)
+                                    <div class="p-4 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-amber-400/20 text-amber-600 font-bold flex items-center justify-center">
+                                                {{ strtoupper(substr($ref->name, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-gray-900 dark:text-white text-sm">{{ $ref->name }}</div>
+                                                <div class="text-xs text-gray-500">Joined {{ $ref->created_at ? $ref->created_at->format('M d, Y') : 'Recently' }}</div>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs font-bold px-2.5 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">Active</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="p-8 text-center border border-dashed border-gray-300 dark:border-white/20 rounded-2xl">
+                                <span class="text-3xl mb-2 block">🤝</span>
+                                <h3 class="font-bold text-gray-900 dark:text-white text-sm">No referrals yet</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-4">Share your referral code <span class="font-mono font-bold text-amber-500">{{ $user->referral_code ?? '' }}</span> to start inviting people!</p>
+                                <button type="button" @click="copyReferralLink('{{ url('/signup?ref=' . ($user->referral_code ?? '')) }}')" class="px-5 py-2.5 bg-[#102b54] text-white text-xs font-bold rounded-xl hover:bg-[#0c203e] transition">
+                                    Copy Referral Link
+                                </button>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- PERSONAL INFO TAB -->
@@ -598,7 +764,7 @@
     <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('accountManager', () => ({
-            currentTab: 'security',
+            currentTab: 'home',
             toast: '',
             
             userName: '{{ $user->name ?? 'Michael Driver' }}',
@@ -609,6 +775,24 @@
             tempName: '{{ $user->name ?? 'Michael Driver' }}',
             tempEmail: '{{ $user->email ?? 'michael@example.com' }}',
             tempPhone: '{{ $user->phone ?? '+1 (555) 000-0000' }}',
+            
+            copyReferralCode(code) {
+                if (!code) return;
+                navigator.clipboard.writeText(code).then(() => {
+                    this.showToast('Referral code copied to clipboard: ' + code);
+                }).catch(() => {
+                    this.showToast('Referral Code: ' + code);
+                });
+            },
+            
+            copyReferralLink(link) {
+                if (!link) return;
+                navigator.clipboard.writeText(link).then(() => {
+                    this.showToast('Referral invite link copied to clipboard!');
+                }).catch(() => {
+                    this.showToast('Invite link copied!');
+                });
+            },
             
             // Security Modals
             showPasskeyModal: false,
