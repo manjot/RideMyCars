@@ -515,27 +515,138 @@
                         </div>
                     </div>
 
-                    <!-- Rider / Customer Profile Photo Upload -->
-                    <div x-show="currentRole === 'customer'" class="pt-1" x-data="{ riderPhotoPreview: null }">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Profile Photo <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(optional - helps drivers recognize you)</span>
-                        </label>
-                        <div class="flex items-center gap-4 p-3.5 bg-gray-50/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl">
-                            <div class="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center shrink-0 shadow-sm relative">
-                                <template x-if="riderPhotoPreview">
-                                    <img :src="riderPhotoPreview" class="w-full h-full object-cover">
+                    <!-- Rider / Customer & Owner Profile Photo Upload -->
+                    <div x-show="currentRole !== 'driver'" class="pt-1" x-data="{
+                        avatarPreview: null,
+                        fileName: '',
+                        fileSize: '',
+                        isDragging: false,
+                        handleFile(file) {
+                            if (!file || !file.type.startsWith('image/')) return;
+                            this.fileName = file.name;
+                            const bytes = file.size;
+                            this.fileSize = bytes < 1024 * 1024 
+                                ? (bytes / 1024).toFixed(0) + ' KB' 
+                                : (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                            const reader = new FileReader();
+                            reader.onload = (e) => { this.avatarPreview = e.target.result; };
+                            reader.readAsDataURL(file);
+                        },
+                        clearFile() {
+                            this.avatarPreview = null;
+                            this.fileName = '';
+                            this.fileSize = '';
+                            if ($refs.riderAvatarInput) $refs.riderAvatarInput.value = '';
+                        }
+                    }">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                Profile Photo <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(optional)</span>
+                            </label>
+                            <span class="text-[11px] font-semibold text-gray-400 dark:text-gray-500">JPG, PNG, WebP • Max 5MB</span>
+                        </div>
+
+                        <!-- Hidden File Input -->
+                        <input type="file" 
+                               name="avatar" 
+                               id="riderAvatarInput" 
+                               x-ref="riderAvatarInput" 
+                               accept="image/*" 
+                               class="hidden" 
+                               @change="handleFile($event.target.files[0])">
+
+                        <!-- Interactive Upload Card -->
+                        <div @click="$refs.riderAvatarInput.click()"
+                             @dragover.prevent="isDragging = true"
+                             @dragleave.prevent="isDragging = false"
+                             @drop.prevent="isDragging = false; if($event.dataTransfer.files[0]) { $refs.riderAvatarInput.files = $event.dataTransfer.files; handleFile($event.dataTransfer.files[0]); }"
+                             :class="{
+                                 'border-brand-500 bg-brand-500/10 ring-4 ring-brand-500/20 scale-[1.01]': isDragging,
+                                 'border-emerald-500/50 bg-emerald-50/40 dark:bg-emerald-950/20': avatarPreview && !isDragging,
+                                 'border-gray-200 dark:border-white/10 hover:border-brand-500/60 hover:bg-gray-100/70 dark:hover:bg-white/[0.08]': !avatarPreview && !isDragging
+                             }"
+                             class="group relative flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border-2 border-dashed bg-gray-50/50 dark:bg-white/5 transition-all duration-200 cursor-pointer select-none">
+                            
+                            <!-- Left: Avatar Preview / Silhouette -->
+                            <div class="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-black/5 dark:border-white/10 transition-transform duration-200 group-hover:scale-105">
+                                <!-- Selected Image Preview -->
+                                <template x-if="avatarPreview">
+                                    <img :src="avatarPreview" alt="Profile preview" class="w-full h-full object-cover">
                                 </template>
-                                <template x-if="!riderPhotoPreview">
-                                    <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
-                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                <!-- Default Placeholder Silhouette -->
+                                <template x-if="!avatarPreview">
+                                    <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/10 dark:to-white/5 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
                                     </div>
                                 </template>
+
+                                <!-- Camera / Checkmark Mini Badge -->
+                                <div class="absolute bottom-1 right-1 w-5 h-5 rounded-md flex items-center justify-center shadow-md text-slate-950 text-[10px] font-black"
+                                     :class="avatarPreview ? 'bg-emerald-500 text-white' : 'bg-brand-500'">
+                                    <template x-if="avatarPreview">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </template>
+                                    <template x-if="!avatarPreview">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    </template>
+                                </div>
                             </div>
+
+                            <!-- Middle: Clear Context & Details -->
                             <div class="flex-1 min-w-0">
-                                <input type="file" name="avatar" accept="image/*" 
-                                    @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => { riderPhotoPreview = e.target.result }; reader.readAsDataURL(file); }"
-                                    class="w-full text-xs text-gray-600 dark:text-gray-300 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-black hover:file:bg-brand-600 file:cursor-pointer cursor-pointer">
-                                <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Upload a clear JPG, PNG or WebP photo</p>
+                                <!-- When No Photo Selected -->
+                                <div x-show="!avatarPreview">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors">
+                                            Upload Profile Photo
+                                        </p>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                                            Recommended
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                                        Click to browse or drag & drop. Helps drivers identify you smoothly.
+                                    </p>
+                                </div>
+
+                                <!-- When Photo IS Selected -->
+                                <div x-show="avatarPreview" style="display: none;">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            Photo Selected
+                                        </span>
+                                        <span class="text-[11px] font-mono text-gray-400 dark:text-gray-500" x-text="fileSize"></span>
+                                    </div>
+                                    <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate mt-0.5" x-text="fileName"></p>
+                                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Click to replace photo or use buttons on the right</p>
+                                </div>
+                            </div>
+
+                            <!-- Right: Clear Action Buttons -->
+                            <div class="shrink-0 flex items-center gap-2">
+                                <!-- If NOT selected: Browse Button -->
+                                <div x-show="!avatarPreview" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-800 dark:text-white border border-gray-200 dark:border-white/15 shadow-xs group-hover:bg-brand-500 group-hover:text-slate-950 group-hover:border-brand-500 transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                    <span>Browse</span>
+                                </div>
+
+                                <!-- If selected: Change & Delete Buttons -->
+                                <div x-show="avatarPreview" class="flex items-center gap-1.5" style="display: none;">
+                                    <button type="button" 
+                                            @click.stop="$refs.riderAvatarInput.click()" 
+                                            class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/15 hover:bg-gray-100 dark:hover:bg-white/20 transition-all shadow-xs">
+                                        Change
+                                    </button>
+                                    <button type="button" 
+                                            @click.stop="clearFile()" 
+                                            title="Remove photo"
+                                            class="p-1.5 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all shadow-xs">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -557,22 +668,118 @@
 
 
                     <!-- Driver Credentials & Rates Section -->
-                    <div x-show="currentRole === 'driver'" class="pt-4 border-t border-gray-200 dark:border-white/10 space-y-4" x-data="{ photoPreview: null }">
+                    <div x-show="currentRole === 'driver'" class="pt-4 border-t border-gray-200 dark:border-white/10 space-y-4" x-data="{
+                        driverPhotoPreview: null,
+                        driverFileName: '',
+                        driverFileSize: '',
+                        isDraggingDriver: false,
+                        handleDriverFile(file) {
+                            if (!file || !file.type.startsWith('image/')) return;
+                            this.driverFileName = file.name;
+                            const bytes = file.size;
+                            this.driverFileSize = bytes < 1024 * 1024 
+                                ? (bytes / 1024).toFixed(0) + ' KB' 
+                                : (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                            const reader = new FileReader();
+                            reader.onload = (e) => { this.driverPhotoPreview = e.target.result; };
+                            reader.readAsDataURL(file);
+                        },
+                        clearDriverFile() {
+                            this.driverPhotoPreview = null;
+                            this.driverFileName = '';
+                            this.driverFileSize = '';
+                            if ($refs.driverPhotoInput) $refs.driverPhotoInput.value = '';
+                        }
+                    }">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Formal Profile Photo <span class="text-xs text-amber-600 font-normal">(Suit, Long-sleeve shirt, or Tie recommended)</span></label>
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center shrink-0 shadow-sm">
-                                    <template x-if="photoPreview">
-                                        <img :src="photoPreview" class="w-full h-full object-cover">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    Formal Profile Photo <span class="text-xs text-amber-600 font-semibold">(Suit, Shirt, or Tie recommended)</span>
+                                </label>
+                                <span class="text-[11px] font-semibold text-gray-400 dark:text-gray-500">Max 5MB</span>
+                            </div>
+
+                            <!-- Hidden Driver Photo Input -->
+                            <input type="file" 
+                                   name="driver_photo" 
+                                   id="driverPhotoInput" 
+                                   x-ref="driverPhotoInput" 
+                                   accept="image/*" 
+                                   class="hidden" 
+                                   @change="handleDriverFile($event.target.files[0])">
+
+                            <!-- Interactive Driver Photo Card -->
+                            <div @click="$refs.driverPhotoInput.click()"
+                                 @dragover.prevent="isDraggingDriver = true"
+                                 @dragleave.prevent="isDraggingDriver = false"
+                                 @drop.prevent="isDraggingDriver = false; if($event.dataTransfer.files[0]) { $refs.driverPhotoInput.files = $event.dataTransfer.files; handleDriverFile($event.dataTransfer.files[0]); }"
+                                 :class="{
+                                     'border-brand-500 bg-brand-500/10 ring-4 ring-brand-500/20 scale-[1.01]': isDraggingDriver,
+                                     'border-emerald-500/50 bg-emerald-50/40 dark:bg-emerald-950/20': driverPhotoPreview && !isDraggingDriver,
+                                     'border-gray-200 dark:border-white/10 hover:border-brand-500/60 hover:bg-gray-100/70 dark:hover:bg-white/[0.08]': !driverPhotoPreview && !isDraggingDriver
+                                 }"
+                                 class="group relative flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border-2 border-dashed bg-gray-50/50 dark:bg-white/5 transition-all duration-200 cursor-pointer select-none">
+                                
+                                <div class="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-black/5 dark:border-white/10 transition-transform duration-200 group-hover:scale-105">
+                                    <template x-if="driverPhotoPreview">
+                                        <img :src="driverPhotoPreview" alt="Driver profile photo" class="w-full h-full object-cover">
                                     </template>
-                                    <template x-if="!photoPreview">
-                                        <span class="text-2xl text-gray-400">👤</span>
+                                    <template x-if="!driverPhotoPreview">
+                                        <div class="w-full h-full bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                                            <span class="text-3xl">👨‍✈️</span>
+                                        </div>
                                     </template>
+                                    <div class="absolute bottom-1 right-1 w-5 h-5 rounded-md flex items-center justify-center shadow-md text-slate-950 text-[10px] font-black"
+                                         :class="driverPhotoPreview ? 'bg-emerald-500 text-white' : 'bg-brand-500'">
+                                        <template x-if="driverPhotoPreview">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                        </template>
+                                        <template x-if="!driverPhotoPreview">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        </template>
+                                    </div>
                                 </div>
-                                <div class="flex-1">
-                                    <input type="file" name="driver_photo" accept="image/*" 
-                                        @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => { photoPreview = e.target.result }; reader.readAsDataURL(file); }"
-                                        class="w-full px-4 py-2 bg-gray-50/50 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-500 file:text-white cursor-pointer">
+
+                                <div class="flex-1 min-w-0">
+                                    <div x-show="!driverPhotoPreview">
+                                        <p class="text-sm font-bold text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors">
+                                            Upload Chauffeur Photo
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                                            Professional attire required. Displays to riders on booking.
+                                        </p>
+                                    </div>
+                                    <div x-show="driverPhotoPreview" style="display: none;">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                Driver Photo Ready
+                                            </span>
+                                            <span class="text-[11px] font-mono text-gray-400 dark:text-gray-500" x-text="driverFileSize"></span>
+                                        </div>
+                                        <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate mt-0.5" x-text="driverFileName"></p>
+                                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Click to replace or remove</p>
+                                    </div>
+                                </div>
+
+                                <div class="shrink-0 flex items-center gap-2">
+                                    <div x-show="!driverPhotoPreview" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-800 dark:text-white border border-gray-200 dark:border-white/15 shadow-xs group-hover:bg-brand-500 group-hover:text-slate-950 group-hover:border-brand-500 transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                        <span>Browse</span>
+                                    </div>
+                                    <div x-show="driverPhotoPreview" class="flex items-center gap-1.5" style="display: none;">
+                                        <button type="button" 
+                                                @click.stop="$refs.driverPhotoInput.click()" 
+                                                class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/15 hover:bg-gray-100 dark:hover:bg-white/20 transition-all shadow-xs">
+                                            Change
+                                        </button>
+                                        <button type="button" 
+                                                @click.stop="clearDriverFile()" 
+                                                title="Remove photo"
+                                                class="p-1.5 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all shadow-xs">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

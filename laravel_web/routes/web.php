@@ -479,6 +479,24 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
                     ? \Illuminate\Support\Facades\Hash::make($rawPassword) 
                     : \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(24));
 
+                $avatarPath = null;
+                if ($request->hasFile('avatar')) {
+                    $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                } elseif ($request->hasFile('driver_photo')) {
+                    $avatarPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+                }
+
+                $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));
+                $referredBy = null;
+                $referrerId = null;
+                if (!empty($inputReferral)) {
+                    $referredBy = $inputReferral;
+                    $referrer = \App\Models\User::where('referral_code', $inputReferral)->first();
+                    if ($referrer) {
+                        $referrerId = $referrer->id;
+                    }
+                }
+
                 $user = \App\Models\User::create([
                     'name' => $userName,
                     'phone' => $formattedPhone,
@@ -486,6 +504,10 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
                     'email' => $userEmail,
                     'password' => $hashedPassword,
                     'role' => $role,
+                    'avatar' => $avatarPath,
+                    'referral_code' => null, // Booted auto-generates unique RMC code
+                    'referred_by' => $referredBy,
+                    'referrer_id' => $referrerId,
                     'terms_accepted' => true,
                     'terms_accepted_at' => now(),
                     'terms_version' => '2026-08-23',
