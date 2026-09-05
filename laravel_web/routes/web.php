@@ -1455,25 +1455,24 @@ Route::get('/ride/track/{id?}', function ($id = null) {
 
     $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
 
+    $driverData = null;
+    if ($ride && $ride->driver) {
+        $dp = $ride->driver->driverProfile;
+        $driverData = [
+            'name' => $ride->driver->name,
+            'phone' => $ride->driver->phone,
+            'rating' => $dp?->rating ?? 4.9,
+            'total_trips' => $dp?->total_trips ?? 48,
+            'vehicle_model' => trim(($dp?->vehicle_make ?? '') . ' ' . ($dp?->vehicle_model ?? '')) ?: 'Executive Sedan',
+            'vehicle_plate' => $dp?->license_number ?? 'REG-8899',
+            'photo_url' => $dp?->photo_url,
+        ];
+    }
+
     // If ride is null on server (e.g. guest opening /ride/track with ID in client localStorage),
     // serve view so client script can inspect localStorage and redirect to /ride/track/{id}
-    return view('ride-tracker', compact('ride', 'mapKey'));
+    return view('ride-tracker', compact('ride', 'mapKey', 'driverData'));
 })->name('ride.tracker');
-
-Route::get('/debug-tracker/{id}', function ($id) {
-    try {
-        $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'stops'])->find($id);
-        $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
-        return response(view('ride-tracker', compact('ride', 'mapKey'))->render());
-    } catch (\Throwable $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 10)
-        ], 200);
-    }
-});
 
 // Get ongoing ride for current user (rider or guest or driver)
 Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request) {

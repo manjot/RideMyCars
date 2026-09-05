@@ -337,15 +337,7 @@
                     dropoff_lat: {{ $ride->dropoff_lat ? floatval($ride->dropoff_lat) : 'null' }},
                     dropoff_lng: {{ $ride->dropoff_lng ? floatval($ride->dropoff_lng) : 'null' }}
                 },
-                driver: @json($ride->driver ? [
-                    'name' => $ride->driver->name,
-                    'phone' => $ride->driver->phone,
-                    'rating' => $ride->driver->driverProfile?->rating ?? 4.9,
-                    'total_trips' => $ride->driver->driverProfile?->total_trips ?? 48,
-                    'vehicle_model' => ($ride->driver->driverProfile?->vehicle_make . ' ' . $ride->driver->driverProfile?->vehicle_model) ?: 'Executive Sedan',
-                    'vehicle_plate' => $ride->driver->driverProfile?->license_number ?? 'REG-8899',
-                    'photo_url' => $ride->driver->driverProfile?->photo_url,
-                ] : null),
+                driver: @json($driverData),
                 mapKey: '{{ $mapKey }}',
                 pollingTimer: null,
                 shareSuccess: false,
