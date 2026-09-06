@@ -25,6 +25,21 @@
                 </div>
             @endif
 
+            <!-- Validation Errors Message -->
+            @if($errors->any())
+                <div class="max-w-4xl mx-auto mb-8 p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-800 dark:text-rose-200 text-sm font-bold flex items-start gap-3 shadow-sm">
+                    <svg class="w-6 h-6 shrink-0 text-rose-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <p class="font-extrabold mb-1">Please correct the following before submitting:</p>
+                        <ul class="list-disc list-inside text-xs font-semibold space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 max-w-6xl mx-auto">
                 
                 <!-- Left Column: Contact Cards -->
@@ -59,7 +74,7 @@
                     </div>
 
                     <!-- Headquarters Location -->
-                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5">
+                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5 hover:shadow-md transition-shadow">
                         <div class="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-500/20">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         </div>
@@ -70,67 +85,89 @@
                                 Washington, DC, USA
                             </span>
                         </div>
-                    <!-- Official Instagram & Social Card -->
-                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-pink-500/20 to-purple-500/20 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0 border border-pink-500/20">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                    </div>
+
+                    <!-- Official Social Media Channels -->
+                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-extrabold text-gray-900 dark:text-white">Official Social Channels</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Connect with our team & community</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Follow Us on Instagram</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Official RideMyCars profile, updates & community</p>
-                            <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 text-white text-xs font-black rounded-xl shadow-md transition-all group">
-                                <span>@ridemycars1</span>
-                                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+
+                        <div class="space-y-2.5 pt-2">
+                            <!-- Instagram -->
+                            <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-amber-500/10 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200/60 dark:border-white/10 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-500 text-white flex items-center justify-center shadow-sm">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white">Instagram</div>
+                                        <div class="text-[11px] text-gray-500 dark:text-gray-400">@ridemycars1</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-black text-pink-600 dark:text-pink-400 group-hover:translate-x-0.5 transition-transform">Follow →</span>
                             </a>
-                        </div>
-                    <!-- Official X (Twitter) Card -->
-                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white flex items-center justify-center shrink-0 border border-gray-200 dark:border-white/20">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Follow Us on X</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Official RideMyCars announcements, support & news</p>
-                            <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 text-xs font-black rounded-xl shadow-md transition-all group">
-                                <span>@ridemycars</span>
-                                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+
+                            <!-- X (Twitter) -->
+                            <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200/60 dark:border-white/10 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center shadow-sm">
+                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white">X (Twitter)</div>
+                                        <div class="text-[11px] text-gray-500 dark:text-gray-400">@ridemycars</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-black text-gray-900 dark:text-white group-hover:translate-x-0.5 transition-transform">Follow →</span>
                             </a>
-                        </div>
-                    <!-- Official TikTok Card -->
-                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-2xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center shrink-0 border border-gray-200 dark:border-white/20">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.33-6.33V9.05a8.3 8.3 0 0 0 4.92 1.6V7.21a4.85 4.85 0 0 1-1-.52z"/></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Follow Us on TikTok</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Official RideMyCars videos, viral shorts & promos</p>
-                            <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-xs font-black rounded-xl shadow-md transition-all group">
-                                <span>@ridemycars</span>
-                                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+
+                            <!-- TikTok -->
+                            <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200/60 dark:border-white/10 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center shadow-sm">
+                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.33-6.33V9.05a8.3 8.3 0 0 0 4.92 1.6V7.21a4.85 4.85 0 0 1-1-.52z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white">TikTok</div>
+                                        <div class="text-[11px] text-gray-500 dark:text-gray-400">@ridemycars</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-black text-gray-900 dark:text-white group-hover:translate-x-0.5 transition-transform">Watch →</span>
                             </a>
-                        </div>
-                    <!-- Official Facebook Card -->
-                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-600/20">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Follow Us on Facebook</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Official RideMyCars Facebook page, news & community</p>
-                            <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md transition-all group">
-                                <span>Facebook Profile</span>
-                                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    <!-- Official LinkedIn Card -->
-                    <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-600/20">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Follow Us on LinkedIn</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Official RideMyCars corporate LinkedIn profile & news</p>
-                            <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md transition-all group">
-                                <span>LinkedIn Profile</span>
-                                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+
+                            <!-- Facebook -->
+                            <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-blue-50 dark:bg-white/5 dark:hover:bg-blue-950/20 border border-gray-200/60 dark:border-white/10 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white">Facebook</div>
+                                        <div class="text-[11px] text-gray-500 dark:text-gray-400">RideMyCars Official</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-black text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">Visit →</span>
+                            </a>
+
+                            <!-- LinkedIn -->
+                            <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 dark:bg-white/5 dark:hover:bg-indigo-950/20 border border-gray-200/60 dark:border-white/10 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white">LinkedIn</div>
+                                        <div class="text-[11px] text-gray-500 dark:text-gray-400">RideMyCars Corporate</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-black text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">Connect →</span>
                             </a>
                         </div>
                     </div>
