@@ -522,8 +522,24 @@
             let pickupMarker = null;
             let dropoffMarker = null;
             let routeLine = null;
-            let defaultLat = 40.7128;
-            let defaultLng = -74.0060;
+            let courierMarkers = [];
+
+            const countryCoordinates = {
+                'IND': { lat: 28.6139, lng: 77.2090 }, // New Delhi / India
+                'USA': { lat: 40.7128, lng: -74.0060 }, // New York / USA
+                'GHA': { lat: 5.6037, lng: -0.1870 },   // Accra / Ghana
+                'NGA': { lat: 6.5244, lng: 3.3792 },    // Lagos / Nigeria
+                'ZAF': { lat: -26.2041, lng: 28.0473 }, // Johannesburg / South Africa
+                'GBR': { lat: 51.5074, lng: -0.1278 },  // London / UK
+                'CAN': { lat: 43.6532, lng: -79.3832 }, // Toronto / Canada
+                'ARE': { lat: 25.2048, lng: 55.2708 },  // Dubai / UAE
+                'KEN': { lat: -1.2921, lng: 36.8219 },  // Nairobi / Kenya
+                'AUS': { lat: -33.8688, lng: 151.2093 } // Sydney / Australia
+            };
+            const currentCountry = @json($currentCountryCode ?? 'USA');
+            const defaultCenter = countryCoordinates[currentCountry] || countryCoordinates['USA'];
+            let defaultLat = defaultCenter.lat;
+            let defaultLng = defaultCenter.lng;
 
             // Custom Leaflet Icons
             const createIcon = (emoji, bg) => L.divIcon({
@@ -536,6 +552,26 @@
             const pickupIcon = createIcon('📍', '#f59e0b');
             const dropoffIcon = createIcon('🏁', '#ef4444');
             const courierIcon = createIcon('🛵', '#10b981');
+
+            function updateNearbyCouriers(centerLat, centerLng) {
+                if (!mapInstance) return;
+                courierMarkers.forEach(m => {
+                    try { mapInstance.removeLayer(m); } catch (e) {}
+                });
+                courierMarkers = [];
+
+                const offsets = [
+                    [0.008, 0.006],
+                    [-0.007, 0.009],
+                    [0.005, -0.008],
+                    [-0.006, -0.005]
+                ];
+                offsets.forEach((off, i) => {
+                    const m = L.marker([centerLat + off[0], centerLng + off[1]], { icon: courierIcon }).addTo(mapInstance)
+                        .bindPopup(`<b>🛵 Active Courier #${i+1}</b><br><span class="text-xs text-emerald-600 font-bold">● Available (2-4 mins away)</span>`);
+                    courierMarkers.push(m);
+                });
+            }
 
             function initMap() {
                 const mapEl = document.getElementById('map');
@@ -558,17 +594,8 @@
                         setPickup(pos.lat, pos.lng, true);
                     });
 
-                    // Add simulated active delivery couriers in the city
-                    const offsets = [
-                        [0.008, 0.006],
-                        [-0.007, 0.009],
-                        [0.005, -0.008],
-                        [-0.006, -0.005]
-                    ];
-                    offsets.forEach((off, i) => {
-                        L.marker([defaultLat + off[0], defaultLng + off[1]], { icon: courierIcon }).addTo(mapInstance)
-                            .bindPopup(`<b>🛵 Active Courier #${i+1}</b><br><span class="text-xs text-emerald-600 font-bold">● Available (2-4 mins away)</span>`);
-                    });
+                    // Add active couriers near initial center
+                    updateNearbyCouriers(defaultLat, defaultLng);
 
                     // Map Click Handler: alternates setting pickup / dropoff
                     mapInstance.on('click', function(e) {
@@ -594,7 +621,13 @@
                     pickupMarker.setLatLng([lat, lng]);
                 } else if (mapInstance) {
                     pickupMarker = L.marker([lat, lng], { icon: pickupIcon, draggable: true }).addTo(mapInstance);
+                    pickupMarker.on('dragend', function(e) {
+                        const pos = e.target.getLatLng();
+                        setPickup(pos.lat, pos.lng, true);
+                    });
                 }
+
+                updateNearbyCouriers(lat, lng);
 
                 if (reverseGeocode && pInput) {
                     fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`)
@@ -668,6 +701,61 @@
 
             initMap();
 
+            // Auto-detect user current location on load (GPS with fast IP fallback)
+            let autoLocationResolved = false;
+
+            const applyAutoLocation = (lat, lng, isGps = false) => {
+                if (autoLocationResolved && !isGps) return;
+                autoLocationResolved = true;
+                defaultLat = lat;
+                defaultLng = lng;
+
+                if (mapInstance) {
+                    mapInstance.setView([lat, lng], isGps ? 15 : 13);
+                }
+                setPickup(lat, lng, true);
+            };
+
+            const fetchIpLocation = async () => {
+                try {
+                    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                    if (res.ok) {
+                        const data = await res.json();
+                        const lat = parseFloat(data.latitude);
+                        const lng = parseFloat(data.longitude);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            applyAutoLocation(lat, lng, false);
+                        }
+                    }
+                } catch (e) {
+                    console.warn("IP geolocation fallback failed:", e);
+                }
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        applyAutoLocation(pos.coords.latitude, pos.coords.longitude, true);
+                    },
+                    (err) => {
+                        console.warn("GPS auto-detect failed, using IP fallback:", err);
+                        if (!autoLocationResolved) {
+                            fetchIpLocation();
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 300000 }
+                );
+
+                // If GPS takes more than 1.5s (e.g. pending permission prompt), fetch IP in parallel
+                setTimeout(() => {
+                    if (!autoLocationResolved) {
+                        fetchIpLocation();
+                    }
+                }, 1500);
+            } else {
+                fetchIpLocation();
+            }
+
             // Google Places Autocomplete if available
             window.addEventListener('load', () => {
                 if (window.google && google.maps && google.maps.places) {
@@ -694,30 +782,33 @@
                 }
             });
 
-            // Geolocation Button
+            // Geolocation Button ("Use My Location")
             if (locBtn) {
                 locBtn.addEventListener("click", () => {
-                    if (!navigator.geolocation) {
-                        alert("Geolocation is not supported by your browser.");
-                        return;
-                    }
                     const orig = locBtn.innerHTML;
                     locBtn.disabled = true;
                     locBtn.innerText = "Locating...";
 
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            setPickup(pos.coords.latitude, pos.coords.longitude, true);
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                applyAutoLocation(pos.coords.latitude, pos.coords.longitude, true);
+                                locBtn.disabled = false;
+                                locBtn.innerHTML = orig;
+                            },
+                            async () => {
+                                await fetchIpLocation();
+                                locBtn.disabled = false;
+                                locBtn.innerHTML = orig;
+                            },
+                            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                        );
+                    } else {
+                        fetchIpLocation().then(() => {
                             locBtn.disabled = false;
                             locBtn.innerHTML = orig;
-                        },
-                        () => {
-                            locBtn.disabled = false;
-                            locBtn.innerHTML = orig;
-                            alert("Unable to retrieve your location automatically.");
-                        },
-                        { timeout: 8000 }
-                    );
+                        });
+                    }
                 });
             }
         });

@@ -1222,10 +1222,38 @@
                         await this.setPickupFromCoordinates(e.detail.lat, e.detail.lng, 'Pin adjusted');
                     });
 
-                    // Detect high-accuracy location automatically on load
+                    // Detect location automatically on load (GPS with fast IP fallback)
+                    let locatedOnLoad = false;
+                    const fallbackIpOnLoad = async () => {
+                        if (locatedOnLoad) return;
+                        try {
+                            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                            if (ipRes.ok) {
+                                const ipData = await ipRes.json();
+                                const lat = parseFloat(ipData.latitude);
+                                const lng = parseFloat(ipData.longitude);
+                                if (!isNaN(lat) && !isNaN(lng) && !locatedOnLoad) {
+                                    locatedOnLoad = true;
+                                    this.userLat = lat;
+                                    this.userLng = lng;
+                                    this.userAccuracy = 5000;
+                                    window.dispatchEvent(new CustomEvent('map-user-located', {
+                                        detail: { lat, lng, accuracy: 5000, flyTo: false }
+                                    }));
+                                    if (!this.pickup || this.pickup.trim() === '') {
+                                        await this.setPickupFromCoordinates(lat, lng, `Approximate location (${ipData.city || 'Network'})`);
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('IP fallback failed on load:', e);
+                        }
+                    };
+
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             async (pos) => {
+                                locatedOnLoad = true;
                                 const lat = pos.coords.latitude;
                                 const lng = pos.coords.longitude;
                                 const accuracy = Math.round(pos.coords.accuracy || 15);
@@ -1244,22 +1272,19 @@
                             },
                             async (err) => {
                                 console.warn('Browser GPS not available on load, using IP fallback:', err);
-                                try {
-                                    const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
-                                    if (ipRes.ok) {
-                                        const ipData = await ipRes.json();
-                                        const lat = parseFloat(ipData.latitude);
-                                        const lng = parseFloat(ipData.longitude);
-                                        this.userLat = lat;
-                                        this.userLng = lng;
-                                        window.dispatchEvent(new CustomEvent('map-user-located', {
-                                            detail: { lat, lng, accuracy: 5000, flyTo: false }
-                                        }));
-                                    }
-                                } catch (e) {}
+                                fallbackIpOnLoad();
                             },
-                            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+                            { enableHighAccuracy: true, timeout: 6000, maximumAge: 300000 }
                         );
+
+                        // If GPS permission prompt takes more than 1.5s, fetch IP in parallel so map shows user's city immediately
+                        setTimeout(() => {
+                            if (!locatedOnLoad) {
+                                fallbackIpOnLoad();
+                            }
+                        }, 1500);
+                    } else {
+                        fallbackIpOnLoad();
                     }
                 },
 
@@ -1972,9 +1997,24 @@
         document.addEventListener("DOMContentLoaded", function() {
             const mapEl = document.getElementById('map');
             if (mapEl) {
+                const countryCoords = {
+                    'IND': [28.6139, 77.2090], // New Delhi / India
+                    'USA': [40.7128, -74.0060], // New York / USA
+                    'GHA': [5.6037, -0.1870],   // Accra / Ghana
+                    'NGA': [6.5244, 3.3792],    // Lagos / Nigeria
+                    'ZAF': [-26.2041, 28.0473], // Johannesburg / South Africa
+                    'GBR': [51.5074, -0.1278],  // London / UK
+                    'CAN': [43.6532, -79.3832], // Toronto / Canada
+                    'ARE': [25.2048, 55.2708],  // Dubai / UAE
+                    'KEN': [-1.2921, 36.8219],  // Nairobi / Kenya
+                    'AUS': [-33.8688, 151.2093] // Sydney / Australia
+                };
+                const activeCountry = @json($currentCountryCode ?? 'USA');
+                const initialCenter = countryCoords[activeCountry] || countryCoords['USA'];
+
                 // Initialize Leaflet map with OpenStreetMap tiles
                 const map = L.map('map', {
-                    center: [5.6037, -0.1870], // Default center
+                    center: initialCenter, // Baseline center based on user detected country
                     zoom: 13,
                     zoomControl: true
                 });
@@ -2003,7 +2043,7 @@
                 }
 
                 // Initial drivers near center
-                updateNearbyDrivers(5.6037, -0.1870);
+                updateNearbyDrivers(initialCenter[0], initialCenter[1]);
 
                 let userAccuracyCircle = null;
                 let userBeaconMarker = null;

@@ -526,8 +526,14 @@
                     const mapEl = document.getElementById("live_tracker_map");
                     if (!mapEl) return;
 
-                    const defaultLat = this.selectedOrder ? this.selectedOrder.current_lat : 5.6037;
-                    const defaultLng = this.selectedOrder ? this.selectedOrder.current_lng : -0.1870;
+                    const countryCoords = {
+                        'IND': [28.6139, 77.2090],
+                        'USA': [40.7128, -74.0060],
+                        'GHA': [5.6037, -0.1870]
+                    };
+                    const fallbackCenter = countryCoords[@json($currentCountryCode ?? 'USA')] || [28.6139, 77.2090];
+                    const defaultLat = this.selectedOrder ? this.selectedOrder.current_lat : fallbackCenter[0];
+                    const defaultLng = this.selectedOrder ? this.selectedOrder.current_lng : fallbackCenter[1];
 
                     if (typeof google !== 'undefined' && google.maps) {
                         try {
