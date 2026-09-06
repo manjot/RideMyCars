@@ -959,90 +959,94 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- OTP Verification Modal Overlay -->
-    <div x-show="otpModalOpen" 
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 backdrop-blur-none"
-         x-transition:enter-end="opacity-100 backdrop-blur-md"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 backdrop-blur-md"
-         x-transition:leave-end="opacity-0 backdrop-blur-none"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-         style="display: none;">
-        
-        <div class="relative w-full max-w-md bg-white dark:bg-[#181818] rounded-3xl p-7 sm:p-8 shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden"
-             @click.away="otpModalOpen = false">
+        <!-- OTP Verification Modal Overlay (INSIDE x-data="signupApp()") -->
+        <div x-show="otpModalOpen" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 backdrop-blur-none"
+             x-transition:enter-end="opacity-100 backdrop-blur-md"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 backdrop-blur-md"
+             x-transition:leave-end="opacity-0 backdrop-blur-none"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+             style="display: none;">
             
-            <div class="flex items-center justify-between mb-4">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0-2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
-                    <span>Phone Verification</span>
-                </span>
-                <button type="button" @click="otpModalOpen = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+            <div class="relative w-full max-w-md bg-white dark:bg-[#181818] rounded-3xl p-7 sm:p-8 shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden"
+                 @click.away="otpModalOpen = false">
+                
+                <div class="flex items-center justify-between mb-4">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0-2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
+                        <span>Phone Verification</span>
+                    </span>
+                    <button type="button" @click="otpModalOpen = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
 
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Verify your mobile</h3>
-            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                We sent a 4-digit code to <span class="font-bold text-gray-900 dark:text-white" x-text="phone"></span>. Please enter it below to complete your registration.
-            </p>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Verify your mobile</h3>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    We sent a 4-digit code to <span class="font-bold text-gray-900 dark:text-white" x-text="phone"></span>. Please enter it below to complete your registration.
+                </p>
 
-            <div class="flex items-center gap-2 mb-6">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span>Valid for 2 minutes</span>
-                </span>
-                <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
-            </div>
+                <div class="flex items-center gap-2 mb-6">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Valid for 2 minutes</span>
+                    </span>
+                    <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
+                </div>
 
-            <!-- 4 Digit Input Boxes -->
-            <div class="flex items-center justify-center gap-3 mb-3">
-                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc1" x-model="c1" 
-                       @input="handleDigit($event, 'c1', 'sc2')" 
-                       @keydown.backspace="handleBackspace($event, 'c1', null)" 
-                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
-                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc2" x-model="c2" 
-                       @input="handleDigit($event, 'c2', 'sc3')" 
-                       @keydown.backspace="handleBackspace($event, 'c2', 'sc1')" 
-                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
-                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc3" x-model="c3" 
-                       @input="handleDigit($event, 'c3', 'sc4')" 
-                       @keydown.backspace="handleBackspace($event, 'c3', 'sc2')" 
-                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
-                <input type="text" maxlength="1" inputmode="numeric" x-ref="sc4" x-model="c4" 
-                       @input="handleDigit($event, 'c4', null)" 
-                       @keydown.backspace="handleBackspace($event, 'c4', 'sc3')" 
-                       class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
-            </div>
+                <!-- 4 Digit Input Boxes -->
+                <div class="flex items-center justify-center gap-3 mb-3">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="sc1" x-model="c1" 
+                           @input="handleDigit($event, 'c1', 'sc2')" 
+                           @keydown.backspace="handleBackspace($event, 'c1', null)" 
+                           @paste="handlePaste($event)"
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="sc2" x-model="c2" 
+                           @input="handleDigit($event, 'c2', 'sc3')" 
+                           @keydown.backspace="handleBackspace($event, 'c2', 'sc1')" 
+                           @paste="handlePaste($event)"
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="sc3" x-model="c3" 
+                           @input="handleDigit($event, 'c3', 'sc4')" 
+                           @keydown.backspace="handleBackspace($event, 'c3', 'sc2')" 
+                           @paste="handlePaste($event)"
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                    <input type="text" maxlength="1" inputmode="numeric" x-ref="sc4" x-model="c4" 
+                           @input="handleDigit($event, 'c4', null)" 
+                           @keydown.backspace="handleBackspace($event, 'c4', 'sc3')" 
+                           @paste="handlePaste($event)"
+                           class="w-12 h-14 bg-gray-100 dark:bg-white/5 rounded-xl text-center text-xl font-bold text-gray-900 dark:text-white border-2 border-transparent focus:border-brand-500 focus:bg-white dark:focus:bg-[#121212] transition-all shadow-inner">
+                </div>
 
-            <p class="text-red-500 text-xs font-semibold mb-2 h-4 text-center" x-text="otpError"></p>
-            <p class="text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-2 h-4 text-center" x-text="otpSuccess"></p>
+                <p class="text-red-500 text-xs font-semibold mb-2 h-4 text-center" x-text="otpError"></p>
+                <p class="text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-2 h-4 text-center" x-text="otpSuccess"></p>
 
-            <div class="text-center mb-6">
+                <div class="text-center mb-6">
+                    <button type="button" 
+                            x-show="timer === 0" 
+                            @click="resendOtp()" 
+                            class="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
+                            style="display: none;">
+                        Didn't receive code? Resend SMS OTP
+                    </button>
+                    <span x-show="timer > 0" class="text-xs text-gray-400">
+                        Resend code in <span class="font-mono font-bold" x-text="formattedTimer"></span>
+                    </span>
+                </div>
+
                 <button type="button" 
-                        x-show="timer === 0" 
-                        @click="resendOtp()" 
-                        class="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
-                        style="display: none;">
-                    Didn't receive code? Resend SMS OTP
+                        @click="verifyAndRegister()"
+                        class="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
+                        :class="(c1 && c2 && c3 && c4 && !isLoading) ? 'bg-brand-500 hover:bg-brand-600 text-white cursor-pointer shadow-lg shadow-brand-500/25' : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'"
+                        :disabled="isLoading || !(c1 && c2 && c3 && c4)">
+                    <svg x-show="isLoading" class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span x-text="isLoading ? 'Verifying...' : 'Verify & Complete Registration'">Verify & Complete Registration</span>
                 </button>
-                <span x-show="timer > 0" class="text-xs text-gray-400">
-                    Resend code in <span class="font-mono font-bold" x-text="formattedTimer"></span>
-                </span>
             </div>
-
-            <button type="button" 
-                    @click="verifyAndRegister()"
-                    class="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all"
-                    :class="(c1 && c2 && c3 && c4 && !isLoading) ? 'bg-brand-500 hover:bg-brand-600 text-white cursor-pointer shadow-lg shadow-brand-500/25' : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'"
-                    :disabled="isLoading || !(c1 && c2 && c3 && c4)">
-                <svg x-show="isLoading" class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <span x-text="isLoading ? 'Verifying...' : 'Verify & Complete Registration'">Verify & Complete Registration</span>
-            </button>
         </div>
+
     </div>
 
     <script>
@@ -1136,6 +1140,14 @@
 
                 handleDigit(e, currentKey, nextRef) {
                     const val = e.target.value.replace(/\D/g, '');
+                    if (val.length >= 4) {
+                        this.c1 = val[0] || '';
+                        this.c2 = val[1] || '';
+                        this.c3 = val[2] || '';
+                        this.c4 = val[3] || '';
+                        this.verifyAndRegister();
+                        return;
+                    }
                     this[currentKey] = val.slice(-1);
                     if (this[currentKey] && nextRef && this.$refs[nextRef]) {
                         this.$refs[nextRef].focus({ preventScroll: true });
@@ -1151,10 +1163,33 @@
                     }
                 },
 
+                handlePaste(e) {
+                    const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+                    if (paste.length >= 4) {
+                        e.preventDefault();
+                        this.c1 = paste[0] || '';
+                        this.c2 = paste[1] || '';
+                        this.c3 = paste[2] || '';
+                        this.c4 = paste[3] || '';
+                        this.verifyAndRegister();
+                    }
+                },
+
                 async initiateSignup(e) {
                     const form = this.$refs.signupForm;
                     if (!form.checkValidity()) {
                         form.reportValidity();
+                        return;
+                    }
+
+                    const p1 = form.querySelector('input[name="password"]')?.value;
+                    const p2 = form.querySelector('input[name="password_confirmation"]')?.value;
+                    if (p1 && p2 && p1 !== p2) {
+                        alert('Passwords do not match. Please ensure Password and Confirm Password are the same.');
+                        return;
+                    }
+                    if (p1 && p1.length < 8) {
+                        alert('Password must be at least 8 characters long.');
                         return;
                     }
 
@@ -1167,6 +1202,8 @@
                     this.otpError = '';
                     this.otpSuccess = '';
 
+                    const emailVal = form.querySelector('input[name="email"]')?.value || '';
+
                     try {
                         const res = await fetch('/api/otp/send', {
                             method: 'POST',
@@ -1174,7 +1211,11 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({ phone: this.phone, action: 'register' })
+                            body: JSON.stringify({ 
+                                phone: this.phone, 
+                                email: emailVal,
+                                action: 'register' 
+                            })
                         });
                         const data = await res.json();
                         this.isLoading = false;
@@ -1199,6 +1240,9 @@
                     this.otpError = '';
                     this.otpSuccess = '';
 
+                    const form = this.$refs.signupForm;
+                    const emailVal = form?.querySelector('input[name="email"]')?.value || '';
+
                     try {
                         const res = await fetch('/api/otp/send', {
                             method: 'POST',
@@ -1206,7 +1250,11 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({ phone: this.phone, action: 'register' })
+                            body: JSON.stringify({ 
+                                phone: this.phone, 
+                                email: emailVal,
+                                action: 'register' 
+                            })
                         });
                         const data = await res.json();
                         this.isLoading = false;
@@ -1232,7 +1280,8 @@
                     const code = (this.c1 + this.c2 + this.c3 + this.c4).trim();
                     const form = this.$refs.signupForm;
                     const formData = new FormData(form);
-                    formData.append('otp', code);
+                    formData.set('phone', this.phone);
+                    formData.set('otp', code);
 
                     try {
                         const res = await fetch('/api/otp/verify', {
@@ -1244,11 +1293,17 @@
                             body: formData
                         });
                         const data = await res.json();
-                        this.isLoading = false;
 
                         if (data.success) {
-                            window.location.href = data.redirect || '/';
+                            if (data.token) {
+                                try { localStorage.setItem('auth_token', data.token); } catch(e) {}
+                            }
+                            this.otpSuccess = data.message || 'Registration successful! Redirecting...';
+                            setTimeout(() => {
+                                window.location.href = data.redirect || '/';
+                            }, 400);
                         } else {
+                            this.isLoading = false;
                             this.otpError = data.error || data.message || 'Invalid code. Please try again.';
                             this.c1 = this.c2 = this.c3 = this.c4 = '';
                             this.$nextTick(() => { this.$refs.sc1?.focus({ preventScroll: true }); });

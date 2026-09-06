@@ -339,14 +339,25 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         }
 
         // If attempting to register with already existing phone:
-        if ($action === 'register' && $user) {
-            return response()->json([
-                'success' => false,
-                'user_exists' => true,
-                'error' => "This phone number is already registered. Please sign in instead.",
-                'redirect' => '/login?phone=' . urlencode($formattedPhone),
-                'phone' => $formattedPhone,
-            ], 422);
+        if ($action === 'register') {
+            if ($user) {
+                return response()->json([
+                    'success' => false,
+                    'user_exists' => true,
+                    'error' => "This phone number is already registered. Please sign in instead.",
+                    'redirect' => '/login?phone=' . urlencode($formattedPhone),
+                    'phone' => $formattedPhone,
+                ], 422);
+            }
+            if (!empty($email) && \App\Models\User::where('email', $email)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'user_exists' => true,
+                    'error' => "This email address is already registered. Please sign in instead.",
+                    'redirect' => '/login?email=' . urlencode($email),
+                    'email' => $email,
+                ], 422);
+            }
         }
 
         // Generate 4-digit OTP code
@@ -357,6 +368,11 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         if ($rawCleanPhone !== $formattedPhone) {
             \Illuminate\Support\Facades\Cache::put('otp_phone_' . $rawCleanPhone, $otp, now()->addMinutes(2));
         }
+
+        // Backup in Session for guaranteed multi-request persistence
+        $request->session()->put('otp_phone_' . $formattedPhone, $otp);
+        $request->session()->put('otp_phone_' . $rawCleanPhone, $otp);
+        $request->session()->put('otp_phone_expires', now()->addMinutes(2)->timestamp);
 
         // Dispatch SMS via Twilio Gateway
         $result = $smsService->sendOtp($formattedPhone, $otp);
@@ -434,14 +450,21 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
         $formattedPhone = $smsService->formatE164($phone);
         $rawCleanPhone = preg_replace('/\s+/', '', $phone);
 
+        $sessionExpires = (int) $request->session()->get('otp_phone_expires', 0);
+        $sessionOtp = ($sessionExpires > time()) 
+            ? ($request->session()->get('otp_phone_' . $formattedPhone) ?? $request->session()->get('otp_phone_' . $rawCleanPhone)) 
+            : null;
+
         $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
                   ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $rawCleanPhone)
-                  ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone);
+                  ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone)
+                  ?? $sessionOtp;
 
         if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
             \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $formattedPhone);
             \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $rawCleanPhone);
             \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $phone);
+            $request->session()->forget(['otp_phone_' . $formattedPhone, 'otp_phone_' . $rawCleanPhone, 'otp_phone_expires']);
 
             // Find existing user or Register new user via phone
             $user = \App\Models\User::where('phone', $formattedPhone)
