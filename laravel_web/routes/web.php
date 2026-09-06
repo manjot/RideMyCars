@@ -2737,10 +2737,12 @@ Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) 
     $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
     $service = app(\App\Services\EmailOtpService::class);
     $result = $service->sendOtp($email, $otp);
+    $mailq = shell_exec('mailq 2>&1 || /usr/sbin/exim -bp 2>&1') ?? 'N/A';
     return response()->json([
         'email' => $email,
         'otp' => $otp,
         'result' => $result,
+        'mailq' => $mailq,
         'mail_default' => config('mail.default'),
         'mail_host' => config('mail.mailers.smtp.host'),
         'mail_port' => config('mail.mailers.smtp.port'),
