@@ -437,21 +437,6 @@
                         <span>Continue with email</span>
                     </button>
                 </div>
-
-                <div class="flex items-center my-6">
-                    <div class="flex-1 border-t border-gray-200 dark:border-white/10"></div>
-                    <span class="px-4 text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold">or</span>
-                    <div class="flex-1 border-t border-gray-200 dark:border-white/10"></div>
-                </div>
-
-                <button type="button" class="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-900 dark:text-white font-semibold rounded-xl border border-transparent dark:border-white/5 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
-                    <span>Log in with QR code</span>
-                </button>
-
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-8 leading-relaxed text-center">
-                    You consent to receive a verification code by text or WhatsApp. Message and data rates may apply.
-                </p>
             </div>
 
             <!-- 2. OTP Verification View -->
