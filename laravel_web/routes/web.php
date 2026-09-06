@@ -2720,6 +2720,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         } else {
             $output['tokens_table'] = 'Exists';
         }
+
+        $output['oauth_columns'] = [
+            'google_id' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'google_id'),
+            'apple_id' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'apple_id'),
+            'oauth_provider' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'oauth_provider'),
+            'oauth_avatar' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'oauth_avatar'),
+        ];
     } catch (\Throwable $e) {
         $output['tokens_table_err'] = $e->getMessage();
     }
