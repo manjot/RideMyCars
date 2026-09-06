@@ -2720,7 +2720,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     $logPath = storage_path('logs/laravel.log');
     if (file_exists($logPath)) {
         $lines = file($logPath);
-        $output['last_log'] = array_slice($lines, -35);
+        $output['last_log'] = array_slice($lines, -150);
     }
     
     return response()->json([
