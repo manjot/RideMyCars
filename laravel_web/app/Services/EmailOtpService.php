@@ -18,8 +18,8 @@ class EmailOtpService
     {
         $toEmail = trim(strtolower($toEmail));
         $fromEmail = config('mail.from.address') ?: env('MAIL_FROM_ADDRESS', 'support@ridemycars.com');
-        $fromName = config('mail.from.name') ?: env('MAIL_FROM_NAME', 'RideMyCars');
-        $subject = "Your RideMyCars Verification Code: {$otp}";
+        $timeStr = date('g:i A');
+        $subject = "Your RideMyCars Security Code: {$otp} ({$timeStr})";
 
         $htmlContent = $this->buildHtmlTemplate($otp);
         $textContent = "{$otp} is your RideMyCars verification code. This code is valid for 5 minutes. Do not share this code with anyone. For assistance, visit https://ridemycars.com";
@@ -40,6 +40,7 @@ class EmailOtpService
                 $headers->addTextHeader('X-Priority', '1');
                 $headers->addTextHeader('Importance', 'High');
                 $headers->addTextHeader('X-Mailer', 'RideMyCars-Mailer/2.0');
+                $headers->addTextHeader('X-Entity-Ref-ID', (string) uniqid('rmc_', true));
             });
 
             Log::info("Email OTP {$otp} successfully dispatched via Laravel Mailer to {$toEmail}");
@@ -174,6 +175,7 @@ class EmailOtpService
                 "Auto-Submitted: auto-generated",
                 "X-Priority: 1",
                 "Importance: High",
+                "X-Entity-Ref-ID: " . uniqid('rmc_', true),
                 "MIME-Version: 1.0",
                 "Content-Type: multipart/alternative; boundary=\"{$boundary}\"",
                 "X-Mailer: RideMyCars-Mailer/2.0",

@@ -470,10 +470,15 @@
                     <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
                 </div>
 
-                <div x-show="!isPhoneAuth" class="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 text-xs">
-                    <div class="flex items-center gap-2">
-                        <span>✉️</span>
-                        <span>A 4-digit verification code has been dispatched to your email.</span>
+                <div x-show="!isPhoneAuth" class="mb-4 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-amber-900 dark:text-amber-200 text-xs">
+                    <div class="flex items-start gap-2">
+                        <span class="text-base">✉️</span>
+                        <div class="leading-relaxed">
+                            <span class="font-bold">Code sent to <span x-text="targetDestination"></span></span>
+                            <span class="block text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                                Please check your inbox. In Gmail, check the newest reply at the bottom of your <strong>RideMyCars</strong> thread.
+                            </span>
+                        </div>
                     </div>
                 </div>
 
