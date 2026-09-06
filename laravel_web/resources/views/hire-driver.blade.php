@@ -12,24 +12,19 @@
               countryDropdownOpen: false,
               regionSearch: '',
               countryList: [
-                  { key: 'All', name: 'All Regions', fullName: 'All Global Regions', code: 'ALL', flagUrl: '', symbol: '{{ $currentCurrencySymbol ?? "$" }}' }
+                  { key: 'All', name: 'All Regions', fullName: 'All Global Regions', code: 'ALL', flagUrl: '', symbol: '{{ $currentCurrencySymbol ?? "$" }}' },
+                  @foreach($allCountries ?? [] as $code => $c)
+                  {
+                      key: '{{ $code }}',
+                      name: '{{ $c['name'] }}',
+                      fullName: '{{ $c['name'] }}',
+                      code: '{{ $c['code'] }}',
+                      flagUrl: '{{ $c['flag_url'] }}',
+                      symbol: '{{ $c['symbol'] }}'
+                  },
+                  @endforeach
               ],
-              init() {
-                  if (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) {
-                      this.countryList = [
-                          { key: 'All', name: 'All Regions', fullName: 'All Global Regions', code: 'ALL', flagUrl: '', symbol: '$' },
-                          ...window.WORLD_COUNTRIES.map(c => ({
-                              key: c.cca3 || c.name,
-                              name: c.name,
-                              fullName: c.name,
-                              code: c.code,
-                              cca3: c.cca3,
-                              flagUrl: c.flagUrl,
-                              symbol: c.symbol
-                          }))
-                      ];
-                  }
-              },
+              init() {},
               get filteredCountryList() {
                   if (!this.regionSearch) return this.countryList;
                   const q = this.regionSearch.toLowerCase().trim();
@@ -41,10 +36,10 @@
                   );
               },
               get selectedCountryObj() {
-                  return this.countryList.find(c => c.key === this.selectedCountry) || { key: this.selectedCountry, name: this.selectedCountry, flag: '🌍', symbol: '$' };
+                  return this.countryList.find(c => c.key === this.selectedCountry) || { key: this.selectedCountry, name: this.selectedCountry, flag: '', symbol: '{{ $currentCurrencySymbol ?? "$" }}' };
               },
               get currencySymbol() {
-                  return this.selectedCountryObj.symbol || '$';
+                  return this.selectedCountryObj.symbol || '{{ $currentCurrencySymbol ?? "$" }}';
               },
               get filteredDrivers() {
                   return this.drivers.filter(d => {
@@ -59,7 +54,7 @@
           }">
         
         <!-- Header Text -->
-        <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Hire a Professional Driver</h1>
                 <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced drivers for Private & Commercial hiring across USA & Africa.</p>
@@ -68,18 +63,36 @@
             <!-- Country Switcher Dropdown with Search -->
             <div class="relative shrink-0" @click.away="countryDropdownOpen = false">
                 <div class="flex items-center gap-2 bg-white dark:bg-[#111] p-1.5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
-                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2.5">Region:</span>
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2.5 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-brand-500 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                        Region:
+                    </span>
                     
                     <button type="button" 
                             @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.regionSearchInput?.focus({ preventScroll: true }))"
                             class="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-[#1a1a1a] dark:hover:bg-[#222] text-gray-900 dark:text-white font-bold py-2 px-3 rounded-xl border border-gray-200 dark:border-white/10 text-sm transition-all cursor-pointer select-none">
                         <template x-if="selectedCountryObj.key === 'All'">
-                            <span class="text-base leading-none">🌐</span>
+                            <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                <path d="M2 12h20"/>
+                            </svg>
                         </template>
                         <template x-if="selectedCountryObj.key !== 'All'">
-                            <img :src="selectedCountryObj.flagUrl || `https://flagcdn.com/w40/${(selectedCountryObj.code || 'us').toLowerCase()}.png`" 
-                                 :alt="selectedCountryObj.name" 
-                                 class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                    <path d="M2 12h20"/>
+                                </svg>
+                                <img :src="selectedCountryObj.flagUrl || `https://flagcdn.com/w40/${(selectedCountryObj.code || 'us').toLowerCase()}.png`" 
+                                     :alt="selectedCountryObj.name" 
+                                     class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
+                            </div>
                         </template>
                         <span class="text-xs font-bold" x-text="`${selectedCountryObj.name} (${selectedCountryObj.symbol})`">USA ($)</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
@@ -128,9 +141,11 @@
                                     class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-left group cursor-pointer"
                                     :class="selectedCountry === c.key ? 'bg-brand-500 text-slate-950 hover:bg-brand-600 font-black' : 'text-gray-800 dark:text-gray-200'">
                                 <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                    <template x-if="c.key === 'All'">
-                                        <span class="text-base leading-none shrink-0">🌐</span>
-                                    </template>
+                                    <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                        <path d="M2 12h20"/>
+                                    </svg>
                                     <template x-if="c.key !== 'All'">
                                         <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
                                              :alt="c.name" 
@@ -157,6 +172,17 @@
                 </div>
             </div>
         </div>
+
+        @if($isUnsupportedRegion ?? false)
+        <div class="mb-8 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                <path d="M2 12h20"/>
+            </svg>
+            <span>Detected Region: <strong>{{ $detectedLocationName ?? 'Your Region' }}</strong>. We do not support your local currency right now, so you need to pay in <strong>USD ($)</strong>.</span>
+        </div>
+        @endif
 
         <!-- Search and Filters Bar -->
         <div class="flex flex-col lg:flex-row gap-4 mb-12 bg-white dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm items-center">

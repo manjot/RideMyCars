@@ -595,11 +595,20 @@
                                 class="h-10 px-2.5 sm:px-3 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center gap-1.5 sm:gap-2 transition-all border border-gray-200/60 dark:border-white/10 shrink-0 text-gray-800 dark:text-gray-200 hover:border-brand-500/50" 
                                 title="Active Country & Currency (Click to Change)"
                                 aria-label="Select Country and Currency">
+                            <!-- Universal Globe Icon -->
+                            <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                <path d="M2 12h20"/>
+                            </svg>
                             <img src="{{ \App\Services\CountryService::getFlagUrl($currentCountryCode ?? 'USA') }}" 
                                  alt="{{ $currentCountryCode ?? 'USA' }} flag" 
                                  class="w-5 h-3.5 object-cover rounded-xs shadow-xs shrink-0">
                             <span class="text-xs font-extrabold uppercase tracking-wide text-gray-900 dark:text-white hidden sm:inline">{{ $currentCountryCode ?? 'USA' }}</span>
                             <span class="text-[11px] font-bold text-brand-700 dark:text-brand-300 bg-brand-500/15 px-1.5 py-0.5 rounded">{{ $currentCurrencySymbol ?? '$' }}</span>
+                            @if($isUnsupportedRegion ?? false)
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" title="Your detected region uses USD ($)"></span>
+                            @endif
                             <svg :class="{'rotate-180': countryOpen}" class="w-3 h-3 transition-transform text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="m6 9 6 6 6-6"/>
                             </svg>
@@ -614,17 +623,43 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="dropdown-menu-card absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[120]" 
+                             class="dropdown-menu-card absolute right-0 top-full mt-2 w-72 sm:w-84 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[120]" 
                              style="display: none;">
                             
+                            <!-- Header with Globe Icon -->
                             <div class="px-3 py-2 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs font-bold text-gray-900 dark:text-white">Region & Currency</p>
-                                    <p class="text-[10px] text-gray-500 dark:text-gray-400">Updates rates for Rent, Driver, Ride & Delivery</p>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                        <path d="M2 12h20"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-900 dark:text-white">Region & Currency</p>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Available countries set by Admin</p>
+                                    </div>
                                 </div>
                                 <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-700 dark:text-brand-300">Live</span>
                             </div>
 
+                            <!-- Small Notice if User's Region is Not Yet Supported in Admin -->
+                            @if($isUnsupportedRegion ?? false)
+                            <div class="p-2.5 my-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-left">
+                                <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
+                                    <svg class="w-3.5 h-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                        <path d="M2 12h20"/>
+                                    </svg>
+                                    <span>Detected Region: {{ $detectedLocationName ?? 'Your Region' }}</span>
+                                </div>
+                                <p class="text-[11px] text-amber-800 dark:text-amber-300/90 mt-1 leading-snug font-medium">
+                                    We do not support your local currency right now, so you need to pay in <strong>USD ($)</strong>.
+                                </p>
+                            </div>
+                            @endif
+
+                            <!-- Available Countries Configured in Admin -->
                             <div class="max-h-72 overflow-y-auto py-1.5 space-y-1">
                                 @foreach($allCountries ?? [] as $code => $country)
                                 @php
@@ -632,19 +667,30 @@
                                 @endphp
                                 <a href="/set-country/{{ $code }}" 
                                    class="flex items-center justify-between p-2.5 rounded-xl transition-all {{ $isActive ? 'bg-brand-500/15 text-brand-700 dark:text-brand-300 font-bold border border-brand-500/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
-                                    <div class="flex items-center gap-3 min-w-0">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                            <path d="M2 12h20"/>
+                                        </svg>
                                         <img src="{{ $country['flag_url'] ?? \App\Services\CountryService::getFlagUrl($code) }}" 
                                              alt="{{ $country['name'] }} flag" 
-                                             class="w-6 h-4 object-cover rounded shadow-xs shrink-0">
+                                             class="w-5 h-3.5 object-cover rounded-xs shadow-xs shrink-0">
                                         <div class="truncate text-left">
                                             <div class="text-xs font-bold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
                                                 <span>{{ $country['name'] }}</span>
+                                                @if(!empty($country['is_visitor_location']))
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">Your Location</span>
+                                                @endif
                                                 @if($isActive)
                                                     <span class="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block"></span>
                                                 @endif
                                             </div>
-                                            <div class="text-[10px] text-gray-500 dark:text-gray-400">
-                                                {{ $country['currency'] }} • {{ $country['symbol'] }}
+                                            <div class="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                                <span>{{ $country['currency'] }} • {{ $country['symbol'] }}</span>
+                                                @if(!($country['is_supported'] ?? true))
+                                                    <span class="text-amber-600 dark:text-amber-400 font-bold">• USD</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -663,8 +709,11 @@
                             </div>
 
                             <div class="pt-2 px-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
-                                <span>Default: USA (USD $)</span>
-                                <span class="font-medium text-emerald-600 dark:text-emerald-400">IP-Enabled</span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-brand-500 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                    Auto IP Location Active
+                                </span>
+                                <span class="font-medium text-emerald-600 dark:text-emerald-400">Live Rates</span>
                             </div>
                         </div>
                     </div>
@@ -943,9 +992,25 @@
             <!-- Mobile Country & Currency Selector -->
             <div class="px-2 pt-1 pb-2 border-b border-gray-100 dark:border-white/10">
                 <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1 flex items-center justify-between">
-                    <span>Region & Currency</span>
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-brand-500 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                        Region & Currency
+                    </span>
                     <span class="text-xs font-bold text-brand-500">{{ $currentCountryCode ?? 'USA' }} ({{ $currentCurrencySymbol ?? '$' }})</span>
                 </div>
+
+                @if($isUnsupportedRegion ?? false)
+                <div class="p-2 mb-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-left">
+                    <p class="text-[11px] text-amber-800 dark:text-amber-300 font-medium leading-snug">
+                        📍 <strong>{{ $detectedLocationName ?? 'Your Region' }}</strong>: Local currency is not yet supported. Payments are processed in <strong>USD ($)</strong>.
+                    </p>
+                </div>
+                @endif
+
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     @foreach($allCountries ?? [] as $code => $country)
                     @php
@@ -953,6 +1018,11 @@
                     @endphp
                     <a href="/set-country/{{ $code }}" 
                        class="flex items-center gap-2 p-2 rounded-xl border text-xs font-semibold transition-all {{ $isActive ? 'bg-brand-500/15 border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'border-gray-200/70 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <svg class="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                            <path d="M2 12h20"/>
+                        </svg>
                         <img src="{{ $country['flag_url'] ?? \App\Services\CountryService::getFlagUrl($code) }}" 
                              alt="{{ $country['name'] }}" 
                              class="w-4 h-3 object-cover rounded-xs shrink-0">
@@ -1475,12 +1545,16 @@
                     <a href="/set-country/USA" 
                        title="Click to set active pricing to United States"
                        class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isUsActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
-                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm relative">
                             <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-6 h-4 object-cover rounded shadow-sm">
+                            <svg class="w-3 h-3 text-brand-500 absolute bottom-0.5 right-0.5 bg-black/80 rounded-full p-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">United States</span>
+                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                    United States
+                                </span>
                                 @if($isUsActive)
                                     <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
                                 @else
@@ -1499,12 +1573,16 @@
                     <a href="/set-country/ZAF" 
                        title="Click to set active pricing to South Africa"
                        class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isZaActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
-                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm relative">
                             <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-6 h-4 object-cover rounded shadow-sm">
+                            <svg class="w-3 h-3 text-brand-500 absolute bottom-0.5 right-0.5 bg-black/80 rounded-full p-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">South Africa</span>
+                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                    South Africa
+                                </span>
                                 @if($isZaActive)
                                     <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
                                 @else
@@ -1523,12 +1601,16 @@
                     <a href="/set-country/GHA" 
                        title="Click to set active pricing to Ghana"
                        class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isGhActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
-                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm relative">
                             <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-6 h-4 object-cover rounded shadow-sm">
+                            <svg class="w-3 h-3 text-brand-500 absolute bottom-0.5 right-0.5 bg-black/80 rounded-full p-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">Ghana</span>
+                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                    Ghana
+                                </span>
                                 @if($isGhActive)
                                     <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
                                 @else

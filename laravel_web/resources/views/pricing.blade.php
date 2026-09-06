@@ -59,12 +59,24 @@
                     <span>100% Upfront, Transparent Pricing</span>
                 </div>
 
-                <div class="flex items-center justify-center mb-5">
-                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-700 dark:text-brand-300 font-bold text-xs shadow-xs">
+                <div class="flex items-center justify-center mb-5 flex-col gap-2">
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-700 dark:text-brand-300 font-bold text-xs shadow-xs">
+                        <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                            <path d="M2 12h20"/>
+                        </svg>
                         <span>Active Region:</span>
                         <img src="{{ \App\Services\CountryService::getFlagUrl($currentCountryCode ?? 'USA') }}" class="w-4 h-3 rounded-xs object-cover">
-                        <span>{{ $currentCountry['name'] ?? 'United States' }} ({{ $currentCurrencyCode ?? 'USD' }} {{ $currentCurrencySymbol ?? '$' }})</span>
+                        <span>{{ is_array($currentCountry) ? ($currentCountry['name'] ?? 'United States') : ($currentCountry ?? 'United States') }} ({{ $currentCurrencyCode ?? 'USD' }} {{ $currentCurrencySymbol ?? '$' }})</span>
                     </span>
+
+                    @if($isUnsupportedRegion ?? false)
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold max-w-xl text-center">
+                        <svg class="w-4 h-4 text-amber-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                        <span>Detected Region: <strong>{{ $detectedLocationName ?? 'Your Region' }}</strong>. We do not support your local currency right now, so you need to pay in <strong>USD ($)</strong>.</span>
+                    </div>
+                    @endif
                 </div>
                 
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-5">

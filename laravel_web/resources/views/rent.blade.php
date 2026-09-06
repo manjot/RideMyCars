@@ -64,6 +64,17 @@
         <!-- Category Banner Component -->
         <x-category-banner category="Rent" />
 
+        @if($isUnsupportedRegion ?? false)
+        <div class="mb-6 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                <path d="M2 12h20"/>
+            </svg>
+            <span>Detected Region: <strong>{{ $detectedLocationName ?? 'Your Region' }}</strong>. We do not support your local currency right now, so you need to pay in <strong>USD ($)</strong>.</span>
+        </div>
+        @endif
+
         <!-- Hero & RideMyCars Rental Search Bar Card -->
         <div class="mb-10 bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 md:p-8 shadow-xl relative z-20">
             <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

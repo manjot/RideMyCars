@@ -52,7 +52,14 @@ Route::get('/products/{id}', [ProductApiController::class, 'show']);
 // Public driver listing & country info
 Route::get('/drivers', [DriverApiController::class, 'drivers']);
 Route::get('/drivers/{id}', [DriverApiController::class, 'driverDetail']);
-Route::get('/countries', [DriverApiController::class, 'countries']);
+Route::get('/countries', function (\Illuminate\Http\Request $request) {
+    return response()->json([
+        'status' => 'success',
+        'data' => \App\Services\CountryService::getAll(),
+        'visitor_location' => \App\Services\CountryService::getVisitorLocationInfo($request),
+        'is_unsupported_region' => \App\Services\CountryService::isUnsupportedRegion($request),
+    ]);
+});
 Route::get('/country-pricing', function (Request $request) {
     $country = $request->query('country');
     $pricing = $country ? \App\Models\CountryPricing::forCountry($country) : \App\Services\CountryService::getCurrentPricing($request);

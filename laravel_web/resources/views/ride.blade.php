@@ -81,6 +81,17 @@
 
                         <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Find a trip</h1>
                         
+                        @if($isUnsupportedRegion ?? false)
+                        <div class="p-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                                <path d="M2 12h20"/>
+                            </svg>
+                            <span>Detected Region: <strong>{{ $detectedLocationName ?? 'Your Region' }}</strong>. We do not support your local currency right now, so you need to pay in <strong>USD ($)</strong>.</span>
+                        </div>
+                        @endif
+                        
                         <!-- Promo Offer Badge -->
                         <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 rounded-2xl flex items-center justify-between text-xs font-extrabold text-emerald-800 dark:text-emerald-300 shadow-sm">
                             <div class="flex items-center gap-2">

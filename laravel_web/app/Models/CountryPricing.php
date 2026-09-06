@@ -75,24 +75,12 @@ class CountryPricing extends Model
     protected static function booted()
     {
         static::saved(function ($model) {
-            Cache::forget('country_pricings_all');
-            Cache::forget('country_pricings_active');
-            Cache::forget('country_pricing_default');
-            Cache::forget('country_pricing_' . strtoupper($model->country_code));
-
             // If marked as default, unset previous default
             if ($model->is_default) {
                 static::where('id', '!=', $model->id)
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
             }
-        });
-
-        static::deleted(function ($model) {
-            Cache::forget('country_pricings_all');
-            Cache::forget('country_pricings_active');
-            Cache::forget('country_pricing_default');
-            Cache::forget('country_pricing_' . strtoupper($model->country_code));
         });
     }
 
@@ -102,27 +90,15 @@ class CountryPricing extends Model
     public static function defaultPricing(): self
     {
         try {
-            $pricing = Cache::remember('country_pricing_default', 3600, function () {
-                try {
-                    $record = static::where('is_default', true)->where('is_active', true)->first()
-                        ?? static::where('country_code', 'USA')->first()
-                        ?? static::query()->first();
+            $record = static::where('is_default', true)->where('is_active', true)->first()
+                ?? static::where('country_code', 'USA')->first()
+                ?? static::query()->first();
 
-                    if ($record instanceof self) {
-                        return $record;
-                    }
-                } catch (\Throwable $e) {
-                    // database might not be migrated yet or connection error
-                }
-
-                return static::fallbackUsdInstance();
-            });
-
-            if ($pricing instanceof self) {
-                return $pricing;
+            if ($record instanceof self) {
+                return $record;
             }
         } catch (\Throwable $e) {
-            // ignore
+            // database might not be migrated yet or connection error
         }
 
         return static::fallbackUsdInstance();
@@ -140,25 +116,13 @@ class CountryPricing extends Model
         $code = strtoupper(trim($country));
 
         try {
-            $pricing = Cache::remember('country_pricing_' . $code, 3600, function () use ($code, $country) {
-                try {
-                    $pricing = static::where('is_active', true)
-                        ->where(function ($q) use ($code, $country) {
-                            $q->where('country_code', $code)
-                              ->orWhere('country_name', 'LIKE', $country)
-                              ->orWhere('currency_code', $code);
-                        })
-                        ->first();
-
-                    if ($pricing instanceof self) {
-                        return $pricing;
-                    }
-                } catch (\Throwable $e) {
-                    // fallback
-                }
-
-                return static::defaultPricing();
-            });
+            $pricing = static::where('is_active', true)
+                ->where(function ($q) use ($code, $country) {
+                    $q->where('country_code', $code)
+                      ->orWhere('country_name', 'LIKE', $country)
+                      ->orWhere('currency_code', $code);
+                })
+                ->first();
 
             if ($pricing instanceof self) {
                 return $pricing;
@@ -167,7 +131,59 @@ class CountryPricing extends Model
             // fallback
         }
 
+        // Check if country metadata is known (e.g. IND / India)
+        $meta = \App\Services\CountryService::getCountryMetaByIso($code);
+        if ($meta && !empty($meta['name'])) {
+            return static::createUnsupportedInstance($meta['code_3'], $meta['name']);
+        }
+
         return static::defaultPricing();
+    }
+
+    /**
+     * Create an in-memory CountryPricing instance for a visitor's location that isn't configured in admin yet.
+     * All rates fallback to USD ($), with unsupported indicator.
+     */
+    public static function createUnsupportedInstance(string $code, ?string $name = null): self
+    {
+        $instance = new self();
+        $instance->id = 0;
+        $instance->country_code = strtoupper($code);
+        $instance->country_name = $name ?? strtoupper($code);
+        $instance->currency_code = 'USD';
+        $instance->currency_symbol = '$';
+        $instance->exchange_rate = 1.0;
+        $instance->is_default = false;
+        $instance->is_active = true;
+
+        // Fares in USD ($)
+        $instance->ride_base_fare = 5.00;
+        $instance->ride_per_km_rate = 1.50;
+        $instance->ride_per_minute_rate = 0.35;
+        $instance->ride_minimum_fare = 8.00;
+        $instance->ride_additional_stop_fee = 3.00;
+
+        $instance->delivery_base_fare = 4.50;
+        $instance->delivery_per_km_rate = 1.20;
+        $instance->delivery_instant_addon = 3.50;
+        $instance->delivery_express_addon = 2.00;
+        $instance->delivery_same_day_addon = 0.00;
+        $instance->delivery_scheduled_addon = 0.00;
+        $instance->delivery_per_kg_rate = 0.50;
+
+        $instance->driver_hourly_rate = 15.00;
+        $instance->driver_daily_rate = 90.00;
+        $instance->driver_weekly_rate = 450.00;
+
+        $instance->rental_price_multiplier = 1.00;
+        $instance->rental_protection_daily_rate = 15.00;
+        $instance->rental_additional_driver_rate = 10.00;
+        $instance->rental_child_seat_rate = 7.00;
+        $instance->rental_gps_rate = 5.00;
+
+        $instance->setAttribute('is_unsupported_region', true);
+
+        return $instance;
     }
 
     /**

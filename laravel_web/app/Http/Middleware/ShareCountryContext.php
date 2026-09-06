@@ -20,8 +20,10 @@ class ShareCountryContext
         try {
             $countryCode = CountryService::getCurrentCountryCode($request);
             $pricing = CountryService::getCurrentPricing($request);
-            $allCountries = CountryService::getAll();
+            $allCountries = CountryService::getAll($request);
             $activeCountries = CountryService::getAllActivePricings();
+            $isUnsupported = CountryService::isUnsupportedRegion($request);
+            $visitorLoc = CountryService::getVisitorLocationInfo($request);
 
             // Share globally with all Blade views
             View::share('currentCountryCode', $countryCode);
@@ -31,6 +33,10 @@ class ShareCountryContext
             View::share('activeCountries', $activeCountries);
             View::share('currentCurrencySymbol', $pricing->currency_symbol ?? '$');
             View::share('currentCurrencyCode', $pricing->currency_code ?? 'USD');
+            View::share('isUnsupportedRegion', $isUnsupported);
+            View::share('detectedLocationName', $visitorLoc['name'] ?? 'Your Location');
+            View::share('detectedLocationCode', $visitorLoc['code'] ?? 'INT');
+            View::share('unsupportedMessage', 'We do not support your local currency right now, so you need to pay in USD ($).');
         } catch (\Throwable $e) {
             Log::warning('ShareCountryContext warning: ' . $e->getMessage());
             $fallback = CountryPricing::fallbackUsdInstance();
@@ -50,6 +56,10 @@ class ShareCountryContext
             View::share('activeCountries', collect([$fallback]));
             View::share('currentCurrencySymbol', '$');
             View::share('currentCurrencyCode', 'USD');
+            View::share('isUnsupportedRegion', false);
+            View::share('detectedLocationName', 'Your Location');
+            View::share('detectedLocationCode', 'INT');
+            View::share('unsupportedMessage', null);
         }
 
         return $next($request);
