@@ -55,7 +55,7 @@ Route::get('/drivers/{id}', [DriverApiController::class, 'driverDetail']);
 Route::get('/countries', function (\Illuminate\Http\Request $request) {
     return response()->json([
         'status' => 'success',
-        'data' => \App\Services\CountryService::getAll(),
+        'data' => \App\Services\CountryService::getAll($request),
         'visitor_location' => \App\Services\CountryService::getVisitorLocationInfo($request),
         'is_unsupported_region' => \App\Services\CountryService::isUnsupportedRegion($request),
     ]);

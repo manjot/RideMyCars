@@ -113,13 +113,16 @@ class CountryPricing extends Model
             return static::defaultPricing();
         }
 
-        $code = strtoupper(trim($country));
+        $normalized = \App\Services\CountryService::normalizeToCode($country);
+        $code = $normalized ? strtoupper($normalized) : strtoupper(trim($country));
+        $raw = trim($country);
 
         try {
             $pricing = static::where('is_active', true)
-                ->where(function ($q) use ($code, $country) {
+                ->where(function ($q) use ($code, $raw) {
                     $q->where('country_code', $code)
-                      ->orWhere('country_name', 'LIKE', $country)
+                      ->orWhere('country_name', 'LIKE', $raw)
+                      ->orWhere('country_name', 'LIKE', $code)
                       ->orWhere('currency_code', $code);
                 })
                 ->first();
