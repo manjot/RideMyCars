@@ -2732,4 +2732,22 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     ]);
 });
 
+Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) {
+    $email = $request->input('email', 'shachisheh@gmail.com');
+    $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+    $service = app(\App\Services\EmailOtpService::class);
+    $result = $service->sendOtp($email, $otp);
+    return response()->json([
+        'email' => $email,
+        'otp' => $otp,
+        'result' => $result,
+        'mail_default' => config('mail.default'),
+        'mail_host' => config('mail.mailers.smtp.host'),
+        'mail_port' => config('mail.mailers.smtp.port'),
+        'mail_scheme' => config('mail.mailers.smtp.scheme'),
+        'mail_encryption' => config('mail.mailers.smtp.encryption'),
+        'mail_from' => config('mail.from'),
+    ]);
+});
+
 
