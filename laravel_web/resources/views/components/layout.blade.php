@@ -1804,7 +1804,7 @@
             <!-- Bottom Footer Bar -->
             <div class="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
                 <p class="text-center md:text-left font-medium">
-                    {{ site_setting('footer.copyright', '© 2026 RideMyCars • A New Development Finance Group Company. All rights reserved.') }}
+                    {{ site_setting('footer.copyright', '© 2026 New Development Finance Group Pty Ltd. All rights reserved.') }}
                 </p>
                 
                 <div class="flex flex-wrap items-center justify-center gap-3">

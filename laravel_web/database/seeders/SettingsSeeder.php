@@ -22,7 +22,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'footer.support_email', 'label' => 'Footer - Support Email', 'value' => 'support@ridemycars.com', 'group' => 'Footer', 'type' => 'text'],
             ['key' => 'footer.support_phone', 'label' => 'Footer - Support Phone', 'value' => '+1 855 203 3177', 'group' => 'Footer', 'type' => 'text'],
             ['key' => 'footer.location', 'label' => 'Footer - Location', 'value' => 'Washington, DC', 'group' => 'Footer', 'type' => 'text'],
-            ['key' => 'footer.copyright', 'label' => 'Footer - Copyright', 'value' => '© 2026 RideMyCars • A New Development Finance Group Company. All rights reserved.', 'group' => 'Footer', 'type' => 'text'],
+            ['key' => 'footer.copyright', 'label' => 'Footer - Copyright', 'value' => '© 2026 New Development Finance Group Pty Ltd. All rights reserved.', 'group' => 'Footer', 'type' => 'text'],
 
             // Social Media
             ['key' => 'social.instagram_url', 'label' => 'Social - Instagram Profile URL', 'value' => 'https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr', 'group' => 'Social Media', 'type' => 'text'],

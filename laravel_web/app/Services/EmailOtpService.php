@@ -344,7 +344,7 @@ class EmailOtpService
 
         <!-- Footer -->
         <div style="background-color: #f8fafc; padding: 20px 32px; border-top: 1px solid #f1f5f9; text-align: center; font-size: 11px; color: #94a3b8; line-height: 1.6;">
-            &copy; {$year} RideMyCars &bull; A New Development Finance Group Company<br>
+            &copy; {$year} New Development Finance Group Pty Ltd. All rights reserved.<br>
             4301 Saddle River Drive, Bowie, MD 20720, USA<br>
             <a href="https://ridemycars.com" style="color: #d97706; text-decoration: none; font-weight: 600;">ridemycars.com</a>
         </div>

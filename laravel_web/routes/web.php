@@ -2727,6 +2727,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             'oauth_provider' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'oauth_provider'),
             'oauth_avatar' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'oauth_avatar'),
         ];
+        if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+            \Illuminate\Support\Facades\DB::table('settings')->where('key', 'footer.copyright')->update([
+                'value' => '© 2026 New Development Finance Group Pty Ltd. All rights reserved.'
+            ]);
+            \Illuminate\Support\Facades\Cache::flush();
+            $output['footer_copyright_updated'] = true;
+        }
     } catch (\Throwable $e) {
         $output['tokens_table_err'] = $e->getMessage();
     }
