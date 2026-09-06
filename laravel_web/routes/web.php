@@ -397,34 +397,36 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         ]);
     }
 
-    // 2. Email OTP Fallback
+    // 2. Email OTP
     if (!empty($email)) {
         $request->validate(['email' => 'required|email']);
+        $cleanEmail = trim(strtolower($email));
         $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-        \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(5));
 
-        $mailError = null;
-        try {
-            \Illuminate\Support\Facades\Mail::raw("{$otp} is OTP for your RideMyCars account. OTP is valid for 5 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com", function ($message) use ($email) {
-                $message->to($email)->subject('Your RideMyCars Verification Code');
-            });
-        } catch (\Throwable $e) {
-            $mailError = $e->getMessage();
-            \Illuminate\Support\Facades\Log::error('Mail error: ' . $mailError);
-            \Illuminate\Support\Facades\Log::info("OTP for {$email} is {$otp}");
-        }
+        // Store in Cache with exact 5-minute validity
+        \Illuminate\Support\Facades\Cache::put('otp_' . $cleanEmail, $otp, now()->addMinutes(5));
 
-        if ($mailError) {
+        // Backup in Session for guaranteed multi-request persistence (5 minutes)
+        $request->session()->put('otp_' . $cleanEmail, $otp);
+        $request->session()->put('otp_expires_' . $cleanEmail, now()->addMinutes(5)->timestamp);
+
+        $emailService = app(\App\Services\EmailOtpService::class);
+        $result = $emailService->sendOtp($cleanEmail, $otp);
+
+        \Illuminate\Support\Facades\Log::info("Email OTP for {$cleanEmail}: {$otp}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'OTP generated but email failed',
-                'mail_error' => $mailError,
-                'debug_otp' => $otp
-            ]);
+                'error' => $result['error'] ?? 'Unable to send email verification code. Please try again.',
+                'message' => $result['error'] ?? 'Unable to send email verification code. Please try again.',
+            ], 422);
         }
+
         return response()->json([
             'success' => true,
-            'message' => 'OTP sent successfully to email',
+            'message' => "Verification code sent to {$cleanEmail}",
+            'email' => $cleanEmail,
             'expires_in' => 300, // 5 minutes
         ]);
     }
@@ -647,9 +649,18 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
 
         // 2. Email Verification
         if (!empty($email)) {
-            $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $email);
+            $cleanEmail = trim(strtolower($email));
+            $sessionExpires = (int) $request->session()->get('otp_expires_' . $cleanEmail, 0);
+            $sessionOtp = ($sessionExpires > time()) ? $request->session()->get('otp_' . $cleanEmail) : null;
+
+            $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail)
+                      ?? \Illuminate\Support\Facades\Cache::get('otp_' . $email)
+                      ?? $sessionOtp;
+
             if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
+                \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
                 \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
+                $request->session()->forget(['otp_' . $cleanEmail, 'otp_expires_' . $cleanEmail]);
                 $createEmailUser = [
                     'name' => explode('@', $email)[0],
                     'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),

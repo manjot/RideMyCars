@@ -525,20 +525,27 @@ class AuthController extends Controller
 
             if (!empty($email)) {
                 $request->validate(['email' => 'required|email']);
+                $cleanEmail = trim(strtolower($email));
                 $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-                \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(5));
+                \Illuminate\Support\Facades\Cache::put('otp_' . $cleanEmail, $otp, now()->addMinutes(5));
 
-                try {
-                    \Illuminate\Support\Facades\Mail::raw("{$otp} is OTP for your RideMyCars account. OTP is valid for 5 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com", function ($message) use ($email) {
-                        $message->to($email)->subject('RideMyCars Verification Code');
-                    });
-                } catch (\Throwable $e) {
-                    Log::error('API Mail OTP error: ' . $e->getMessage());
+                $emailService = app(\App\Services\EmailOtpService::class);
+                $result = $emailService->sendOtp($cleanEmail, $otp);
+
+                Log::info("API Email OTP for {$cleanEmail}: {$otp}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+
+                if (!$result['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['error'] ?? 'Unable to send email verification code.',
+                        'error' => $result['error'] ?? 'Unable to send email verification code.',
+                    ], 422);
                 }
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'OTP sent successfully to email.',
+                    'message' => "Verification code sent to {$cleanEmail}",
+                    'email' => $cleanEmail,
                     'expires_in' => 300,
                 ]);
             }
@@ -795,8 +802,11 @@ class AuthController extends Controller
             }
 
             if (!empty($email)) {
-                $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $email);
+                $cleanEmail = trim(strtolower($email));
+                $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail)
+                          ?? \Illuminate\Support\Facades\Cache::get('otp_' . $email);
                 if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
+                    \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
                     \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
 
                     $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));

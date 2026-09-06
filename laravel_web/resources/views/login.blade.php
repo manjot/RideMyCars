@@ -504,7 +504,7 @@
                             @click="resendOtp()" 
                             class="text-xs font-bold text-black dark:text-brand-400 hover:underline cursor-pointer"
                             style="display: none;">
-                        Didn't receive code? Resend SMS OTP
+                        <span x-text="isPhoneAuth ? 'Didn\'t receive code? Resend SMS OTP' : 'Didn\'t receive code? Resend Email OTP'"></span>
                     </button>
                     <span x-show="timer > 0" class="text-xs text-gray-400">
                         Resend code in <span class="font-mono font-bold" x-text="formattedTimer"></span>
