@@ -2763,27 +2763,17 @@ Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) 
     $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
     $service = app(\App\Services\EmailOtpService::class);
     $result = $service->sendOtp($email, $otp);
-    $mailq = shell_exec('mailq 2>&1 || /usr/sbin/exim -bp 2>&1') ?? 'N/A';
-    $dbUser = \App\Models\User::where('email', $email)->orWhereRaw('LOWER(email) = ?', [strtolower($email)])->first();
+    $logPath = storage_path('logs/laravel.log');
+    $recentLogs = [];
+    if (file_exists($logPath)) {
+        $lines = file($logPath);
+        $recentLogs = array_slice($lines, -25);
+    }
     return response()->json([
         'email' => $email,
         'otp' => $otp,
         'result' => $result,
-        'user_found' => ($dbUser !== null),
-        'user_details' => $dbUser ? [
-            'id' => $dbUser->id,
-            'name' => $dbUser->name,
-            'email' => $dbUser->email,
-            'role' => $dbUser->role,
-            'account_status' => $dbUser->account_status,
-        ] : null,
-        'mailq' => $mailq,
-        'mail_default' => config('mail.default'),
-        'mail_host' => config('mail.mailers.smtp.host'),
-        'mail_port' => config('mail.mailers.smtp.port'),
-        'mail_scheme' => config('mail.mailers.smtp.scheme'),
-        'mail_encryption' => config('mail.mailers.smtp.encryption'),
-        'mail_from' => config('mail.from'),
+        'recent_logs' => $recentLogs,
     ]);
 });
 
