@@ -2065,9 +2065,15 @@
                     <div x-show="ride && ride.driver_name" class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
                         <div class="flex items-center gap-3.5">
                             <!-- Avatar with explicit solid styling -->
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shadow-md shrink-0" 
-                                 style="background-color: #4f46e5 !important; color: #ffffff !important;"
-                                 x-text="ride && ride.driver_name ? ride.driver_name.charAt(0).toUpperCase() : 'D'"></div>
+                            <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-lg font-black shadow-md shrink-0 border border-brand-500/30" 
+                                 style="background-color: #4f46e5 !important; color: #ffffff !important;">
+                                <template x-if="ride && (ride.driver_photo_url || ride.driver_photo)">
+                                    <img :src="ride.driver_photo_url || ride.driver_photo" :alt="ride.driver_name" class="w-full h-full object-cover">
+                                </template>
+                                <template x-if="!ride || (!ride.driver_photo_url && !ride.driver_photo)">
+                                    <span x-text="ride && ride.driver_name ? ride.driver_name.charAt(0).toUpperCase() : 'D'"></span>
+                                </template>
+                            </div>
                             
                             <div class="flex-1 min-w-0">
                                 <p class="font-extrabold text-base text-gray-900 dark:text-white truncate" x-text="ride ? ride.driver_name : ''"></p>

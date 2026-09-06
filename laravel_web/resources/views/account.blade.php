@@ -68,7 +68,10 @@
                         <div class="relative w-28 h-28 rounded-full mx-auto mb-4 group">
                             <div class="w-full h-full rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-4xl font-bold overflow-hidden shadow-lg border-2 border-amber-400">
                                 @if(!empty($user->avatar_url))
-                                    <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
+                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div style="display: none;" class="w-full h-full items-center justify-center font-bold text-4xl">
+                                        <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                                    </div>
                                 @else
                                     <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
                                 @endif
@@ -138,7 +141,10 @@
                             <button @click="showNameModal = true" class="w-full flex items-center gap-4 py-4 border-b border-gray-200 dark:border-white/10 group hover:bg-gray-50 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors text-left cursor-pointer">
                                 <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black text-white dark:bg-white dark:text-black font-bold text-lg border border-gray-200 dark:border-white/10">
                                     @if(!empty($user->avatar_url))
-                                        <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
+                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div style="display: none;" class="w-full h-full items-center justify-center font-bold text-lg">
+                                            <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                                        </div>
                                     @else
                                         <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
                                     @endif
@@ -274,8 +280,15 @@
                                 @foreach($user->referrals as $ref)
                                     <div class="p-4 flex items-center justify-between">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-full bg-amber-400/20 text-amber-600 font-bold flex items-center justify-center">
-                                                {{ strtoupper(substr($ref->name, 0, 1)) }}
+                                            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-amber-400/20 text-amber-600 font-bold border border-amber-400/30">
+                                                @if(!empty($ref->avatar_url))
+                                                    <img src="{{ $ref->avatar_url }}" alt="{{ $ref->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                    <div style="display: none;" class="w-full h-full items-center justify-center font-bold">
+                                                        {{ strtoupper(substr($ref->name ?? 'U', 0, 1)) }}
+                                                    </div>
+                                                @else
+                                                    {{ strtoupper(substr($ref->name ?? 'U', 0, 1)) }}
+                                                @endif
                                             </div>
                                             <div>
                                                 <div class="font-bold text-gray-900 dark:text-white text-sm">{{ $ref->name }}</div>
@@ -303,8 +316,24 @@
                 <div x-show="currentTab === 'personal_info'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">Personal info</h1>
                     
-                    <div class="w-24 h-24 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-4xl mb-8 font-bold overflow-hidden shadow-md">
-                        <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                    <div class="relative w-28 h-28 rounded-full mb-8 group">
+                        <div class="w-full h-full rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-4xl font-bold overflow-hidden shadow-lg border-2 border-brand-500">
+                            @if(!empty($user->avatar_url))
+                                <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none;" class="w-full h-full items-center justify-center font-bold text-4xl">
+                                    <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                                </div>
+                            @else
+                                <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                            @endif
+                        </div>
+                        <form action="/account/avatar" method="POST" enctype="multipart/form-data" id="personalAvatarUploadForm">
+                            @csrf
+                            <input type="file" name="avatar" id="personalAvatarFileInput" accept="image/*" class="hidden" onchange="document.getElementById('personalAvatarUploadForm').submit()">
+                            <label for="personalAvatarFileInput" class="absolute bottom-0 right-0 p-2 bg-[#f9c52a] text-[#102b54] rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-white dark:border-[#111]" title="Upload Profile Photo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </label>
+                        </form>
                     </div>
 
                     <div class="space-y-0 border-t border-gray-100 dark:border-white/10">
