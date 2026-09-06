@@ -1637,88 +1637,67 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- USA Global HQ -->
-                    @php $isUsActive = strtoupper($currentCountryCode ?? 'USA') === 'USA'; @endphp
-                    <a href="/set-country/USA" 
-                       title="Click to set active pricing to United States"
-                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isUsActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
-                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm relative">
+                    <div class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] transition-all duration-300 group flex items-start gap-3.5 shadow-sm">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-sm relative">
                             <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                             <svg class="w-3 h-3 text-brand-500 absolute bottom-0.5 right-0.5 bg-black/80 rounded-full p-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                                <span class="text-sm font-bold text-white flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                                     United States
                                 </span>
-                                @if($isUsActive)
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
-                                @else
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 uppercase tracking-wider">Global HQ</span>
-                                @endif
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 uppercase tracking-wider">Global HQ</span>
                             </div>
-                            <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="4301 Saddle River Drive, Bowie, MD 20720">
+                            <p class="text-xs text-zinc-400 font-medium leading-relaxed mt-1" title="4301 Saddle River Drive, Bowie, MD 20720">
                                 4301 Saddle River Drive, Bowie, MD 20720
                             </p>
-                            <span class="text-[10px] text-brand-400 font-semibold mt-1 inline-block">Pricing in USD ($) • Tap to switch</span>
+                            <span class="text-[10px] text-zinc-500 font-medium mt-1 inline-block">Global Headquarters & Executive Office</span>
                         </div>
-                    </a>
+                    </div>
 
                     <!-- RSA Regional Hub -->
-                    @php $isZaActive = strtoupper($currentCountryCode ?? 'USA') === 'ZAF'; @endphp
-                    <a href="/set-country/ZAF" 
-                       title="Click to set active pricing to South Africa"
-                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isZaActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
-                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm relative">
+                    <div class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] transition-all duration-300 group flex items-start gap-3.5 shadow-sm">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-sm relative">
                             <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                             <svg class="w-3 h-3 text-brand-500 absolute bottom-0.5 right-0.5 bg-black/80 rounded-full p-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                                <span class="text-sm font-bold text-white flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                                     South Africa
                                 </span>
-                                @if($isZaActive)
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
-                                @else
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 uppercase tracking-wider">RSA Hub</span>
-                                @endif
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 uppercase tracking-wider">RSA Hub</span>
                             </div>
-                            <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="11 Corona Road, Sandhurst, Sandton, Gauteng 2196">
+                            <p class="text-xs text-zinc-400 font-medium leading-relaxed mt-1" title="11 Corona Road, Sandhurst, Sandton, Gauteng 2196">
                                 11 Corona Rd, Sandhurst, Sandton 2196
                             </p>
-                            <span class="text-[10px] text-brand-400 font-semibold mt-1 inline-block">Pricing in ZAR (R) • Tap to switch</span>
+                            <span class="text-[10px] text-zinc-500 font-medium mt-1 inline-block">Southern Africa Regional Hub</span>
                         </div>
-                    </a>
+                    </div>
 
                     <!-- Ghana Regional Hub -->
-                    @php $isGhActive = strtoupper($currentCountryCode ?? 'USA') === 'GHA'; @endphp
-                    <a href="/set-country/GHA" 
-                       title="Click to set active pricing to Ghana"
-                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isGhActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
-                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm relative">
+                    <div class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] transition-all duration-300 group flex items-start gap-3.5 shadow-sm">
+                        <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-sm relative">
                             <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                             <svg class="w-3 h-3 text-brand-500 absolute bottom-0.5 right-0.5 bg-black/80 rounded-full p-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                                <span class="text-sm font-bold text-white flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                                     Ghana
                                 </span>
-                                @if($isGhActive)
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
-                                @else
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 uppercase tracking-wider">GHA Hub</span>
-                                @endif
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 uppercase tracking-wider">GHA Hub</span>
                             </div>
-                            <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana">
+                            <p class="text-xs text-zinc-400 font-medium leading-relaxed mt-1" title="No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana">
                                 No 1 Airport Square, 8th FL, Airport City, Accra
                             </p>
-                            <span class="text-[10px] text-brand-400 font-semibold mt-1 inline-block">Pricing in GHS (GH₵) • Tap to switch</span>
+                            <span class="text-[10px] text-zinc-500 font-medium mt-1 inline-block">West Africa Operations Hub</span>
                         </div>
-                    </a>
+                    </div>
                 </div>
             </div>
 

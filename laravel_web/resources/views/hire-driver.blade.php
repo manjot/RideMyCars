@@ -4,48 +4,16 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
           x-data="{ 
               search: '{{ request('search') }}', 
-              selectedCountry: '{{ request('country', $currentCountryCode ?? 'USA') }}',
+              selectedCountry: '{{ $currentCountryCode ?? 'USA' }}',
+              currencySymbol: '{{ $currentCurrencySymbol ?? '$' }}',
               minRating: '{{ request('rating', '') }}',
               availability: '{{ request('availability', '') }}',
               drivers: {{ Js::from($drivers) }},
-              countries: {{ Js::from($countries) }},
-              countryDropdownOpen: false,
-              regionSearch: '',
-              countryList: [
-                  { key: 'All', name: 'All Regions', fullName: 'All Global Regions', code: 'ALL', flagUrl: '', symbol: '{{ $currentCurrencySymbol ?? "$" }}' },
-                  @foreach($allCountries ?? [] as $code => $c)
-                  {
-                      key: '{{ $code }}',
-                      name: '{{ $c['name'] }}',
-                      fullName: '{{ $c['name'] }}',
-                      code: '{{ $c['code'] }}',
-                      flagUrl: '{{ $c['flag_url'] }}',
-                      symbol: '{{ $c['symbol'] }}'
-                  },
-                  @endforeach
-              ],
-              init() {},
-              get filteredCountryList() {
-                  if (!this.regionSearch) return this.countryList;
-                  const q = this.regionSearch.toLowerCase().trim();
-                  return this.countryList.filter(c => 
-                      c.name.toLowerCase().includes(q) || 
-                      c.fullName.toLowerCase().includes(q) || 
-                      c.symbol.toLowerCase().includes(q) || 
-                      c.key.toLowerCase().includes(q)
-                  );
-              },
-              get selectedCountryObj() {
-                  return this.countryList.find(c => c.key === this.selectedCountry) || { key: this.selectedCountry, name: this.selectedCountry, flag: '', symbol: '{{ $currentCurrencySymbol ?? "$" }}' };
-              },
-              get currencySymbol() {
-                  return this.selectedCountryObj.symbol || '{{ $currentCurrencySymbol ?? "$" }}';
-              },
               get filteredDrivers() {
                   return this.drivers.filter(d => {
                       const searchStr = this.search.toLowerCase();
-                      const matchesSearch = !this.search || d.user.name.toLowerCase().includes(searchStr);
-                      const matchesCountry = this.selectedCountry === 'All' || d.country === this.selectedCountry;
+                      const matchesSearch = !this.search || (d.user && d.user.name && d.user.name.toLowerCase().includes(searchStr)) || (d.bio && d.bio.toLowerCase().includes(searchStr));
+                      const matchesCountry = this.selectedCountry === 'All' || !d.country || d.country === this.selectedCountry || !this.drivers.some(item => item.country === this.selectedCountry);
                       const matchesAvail = !this.availability || (this.availability === 'available' ? d.is_available : true);
                       const matchesRating = !this.minRating || (parseFloat(d.rating) >= parseFloat(this.minRating));
                       return matchesSearch && matchesCountry && matchesAvail && matchesRating;
@@ -54,123 +22,9 @@
           }">
         
         <!-- Header Text -->
-        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Hire a Professional Driver</h1>
-                <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced drivers for Private & Commercial hiring across USA & Africa.</p>
-            </div>
-
-            <!-- Country Switcher Dropdown with Search -->
-            <div class="relative shrink-0" @click.away="countryDropdownOpen = false">
-                <div class="flex items-center gap-2 bg-white dark:bg-[#111] p-1.5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
-                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2.5 flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5 text-brand-500 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                            <path d="M2 12h20"/>
-                        </svg>
-                        Region:
-                    </span>
-                    
-                    <button type="button" 
-                            @click="countryDropdownOpen = !countryDropdownOpen; if(countryDropdownOpen) $nextTick(() => $refs.regionSearchInput?.focus({ preventScroll: true }))"
-                            class="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-[#1a1a1a] dark:hover:bg-[#222] text-gray-900 dark:text-white font-bold py-2 px-3 rounded-xl border border-gray-200 dark:border-white/10 text-sm transition-all cursor-pointer select-none">
-                        <template x-if="selectedCountryObj.key === 'All'">
-                            <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                                <path d="M2 12h20"/>
-                            </svg>
-                        </template>
-                        <template x-if="selectedCountryObj.key !== 'All'">
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <svg class="w-3.5 h-3.5 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                                    <path d="M2 12h20"/>
-                                </svg>
-                                <img :src="selectedCountryObj.flagUrl || `https://flagcdn.com/w40/${(selectedCountryObj.code || 'us').toLowerCase()}.png`" 
-                                     :alt="selectedCountryObj.name" 
-                                     class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
-                            </div>
-                        </template>
-                        <span class="text-xs font-bold" x-text="`${selectedCountryObj.name} (${selectedCountryObj.symbol})`">USA ($)</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0" :class="countryDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Floating Searchable Dropdown -->
-                <div x-show="countryDropdownOpen" 
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                     x-transition:leave="transition ease-in duration-100"
-                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                     class="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#141414] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden"
-                     style="display: none;">
-                    
-                    <!-- Search Input -->
-                    <div class="p-3 bg-gray-50 dark:bg-[#1a1a1a] border-b border-gray-100 dark:border-white/10 sticky top-0 z-10">
-                        <div class="relative flex items-center bg-white dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10 focus-within:border-brand-500 dark:focus-within:border-brand-500 transition-all px-3 py-2">
-                            <svg class="w-4 h-4 text-gray-400 shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                            <input type="text" 
-                                   x-ref="regionSearchInput"
-                                   x-model="regionSearch" 
-                                   placeholder="Search region or currency..." 
-                                   class="w-full bg-transparent text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none border-none p-0">
-                            <button type="button" 
-                                    x-show="regionSearch" 
-                                    @click="regionSearch = ''; $refs.regionSearchInput?.focus({ preventScroll: true })" 
-                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-white shrink-0 ml-1 p-0.5"
-                                    style="display: none;">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Country List -->
-                    <div class="max-h-64 overflow-y-auto p-1.5 space-y-0.5 text-sm">
-                        <template x-for="c in filteredCountryList" :key="c.key">
-                            <button type="button" 
-                                    @click="selectedCountry = c.key; countryDropdownOpen = false; regionSearch = ''; window.history.pushState({}, '', '/hire-driver?country=' + c.key); if (c.key !== 'All') { fetch('/set-country', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'}, body: JSON.stringify({ country: c.key }) }); }"
-                                    class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-left group cursor-pointer"
-                                    :class="selectedCountry === c.key ? 'bg-brand-500 text-slate-950 hover:bg-brand-600 font-black' : 'text-gray-800 dark:text-gray-200'">
-                                <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                    <svg class="w-4 h-4 text-brand-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                                        <path d="M2 12h20"/>
-                                    </svg>
-                                    <template x-if="c.key !== 'All'">
-                                        <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
-                                             :alt="c.name" 
-                                             loading="lazy"
-                                             class="w-5 h-3.5 object-cover rounded-sm shadow-sm border border-black/10 shrink-0">
-                                    </template>
-                                    <span class="text-xs truncate" 
-                                          :class="selectedCountry === c.key ? 'text-white' : 'text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-white font-medium'" 
-                                          x-text="c.name"></span>
-                                </div>
-                                <div class="flex items-center gap-2 shrink-0">
-                                    <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-md" 
-                                          :class="selectedCountry === c.key ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white'"
-                                          x-text="c.symbol"></span>
-                                    <span x-show="selectedCountry === c.key" class="text-xs font-bold text-white">✓</span>
-                                </div>
-                            </button>
-                        </template>
-                        
-                        <div x-show="filteredCountryList.length === 0" class="py-6 text-center" style="display: none;">
-                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">No countries found</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="mb-6">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Hire a Professional Driver</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced drivers for Private & Commercial hiring worldwide.</p>
         </div>
 
         @if($isUnsupportedRegion ?? false)
