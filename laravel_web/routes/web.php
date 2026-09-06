@@ -2753,6 +2753,39 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Artisan::call('config:clear');
     \Illuminate\Support\Facades\Artisan::call('view:clear');
 
+    // Securely update OAuth .env credentials if provided
+    $envPath = base_path('.env');
+    if (file_exists($envPath)) {
+        $envContent = file_get_contents($envPath);
+        $updatedEnv = false;
+        
+        $keysToUpdate = [
+            'GOOGLE_CLIENT_ID' => $request->query('google_client_id'),
+            'GOOGLE_CLIENT_SECRET' => $request->query('google_client_secret'),
+            'GOOGLE_REDIRECT_URI' => $request->query('google_redirect_uri', 'https://ridemycars.com/auth/google/callback'),
+            'APPLE_CLIENT_ID' => $request->query('apple_client_id'),
+            'APPLE_CLIENT_SECRET' => $request->query('apple_client_secret'),
+            'APPLE_REDIRECT_URI' => $request->query('apple_redirect_uri', 'https://ridemycars.com/auth/apple/callback'),
+        ];
+
+        foreach ($keysToUpdate as $k => $v) {
+            if (!empty($v)) {
+                if (preg_match("/^{$k}=.*/m", $envContent)) {
+                    $envContent = preg_replace("/^{$k}=.*/m", "{$k}=\"{$v}\"", $envContent);
+                } else {
+                    $envContent .= "\n{$k}=\"{$v}\"";
+                }
+                $updatedEnv = true;
+            }
+        }
+
+        if ($updatedEnv) {
+            file_put_contents($envPath, $envContent);
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            $output['env_updated'] = true;
+        }
+    }
+
     // Include recent laravel.log lines for debugging
     $logFiles = glob(storage_path('logs/*.log'));
     $output['log_files'] = $logFiles;
