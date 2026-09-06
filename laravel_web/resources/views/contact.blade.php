@@ -81,9 +81,9 @@
                         <div>
                             <h3 class="text-base font-extrabold text-gray-900 dark:text-white mb-1">Headquarters</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">RideMyCars Operations</p>
-                            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
-                                Washington, DC, USA
-                            </span>
+                            <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" class="text-sm font-bold text-gray-800 dark:text-gray-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors leading-relaxed block">
+                                4301 Saddle River Drive, Bowie, MD 20720
+                            </a>
                         </div>
                     </div>
 
