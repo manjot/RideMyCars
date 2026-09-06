@@ -30,7 +30,18 @@ class VehicleRentalController extends Controller
         $dropoffLocation = $request->query('dropoff_location', '');
         $differentDropoff = $request->boolean('different_dropoff');
         $driverAge = (int) $request->query('driver_age', 25);
-        $driverCountry = $request->query('driver_country', 'USA');
+        $driverCountry = $request->query('driver_country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($driverCountry);
+
+        // Convert vehicle daily rates for active country
+        $vehicles->transform(function ($v) use ($pricing) {
+            $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
+            $v->daily_rate = round((float) $v->daily_rate * $mult, 2);
+            $v->security_deposit_amount = round((float) ($v->security_deposit_amount ?: 200.00) * $mult, 2);
+            $v->currency_symbol = $pricing->currency_symbol;
+            $v->currency = $pricing->currency_code;
+            return $v;
+        });
 
         $categories = ['All', 'Economy', 'Compact', 'Sedan', 'SUV', 'Luxury', 'Van'];
 
@@ -45,7 +56,8 @@ class VehicleRentalController extends Controller
             'dropoffLocation',
             'differentDropoff',
             'driverAge',
-            'driverCountry'
+            'driverCountry',
+            'pricing'
         ));
     }
 
@@ -55,9 +67,23 @@ class VehicleRentalController extends Controller
     public function searchApi(Request $request)
     {
         $vehicles = VehicleAvailabilityService::searchAvailableVehicles($request->all());
+        $country = $request->query('driver_country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($country);
+
+        $vehicles->transform(function ($v) use ($pricing) {
+            $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
+            $v->daily_rate = round((float) $v->daily_rate * $mult, 2);
+            $v->security_deposit_amount = round((float) ($v->security_deposit_amount ?: 200.00) * $mult, 2);
+            $v->currency_symbol = $pricing->currency_symbol;
+            $v->currency = $pricing->currency_code;
+            return $v;
+        });
+
         return response()->json([
             'status' => 'success',
             'count' => $vehicles->count(),
+            'currency_symbol' => $pricing->currency_symbol,
+            'currency' => $pricing->currency_code,
             'data' => $vehicles,
         ]);
     }
@@ -75,7 +101,8 @@ class VehicleRentalController extends Controller
         $dropoffLocation = $request->query('dropoff_location', '');
         $differentDropoff = $request->boolean('different_dropoff');
         $driverAge = (int) $request->query('driver_age', 25);
-        $driverCountry = $request->query('driver_country', 'USA');
+        $driverCountry = $request->query('driver_country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($driverCountry);
 
         try {
             $sC = Carbon::parse("{$startDate} {$pickupTime}");
@@ -85,7 +112,8 @@ class VehicleRentalController extends Controller
             $days = 1;
         }
 
-        $baseTotal = round($days * $vehicle->daily_rate, 2);
+        $dailyRate = round((float) $vehicle->daily_rate * (float) ($pricing->rental_price_multiplier ?: 1.0), 2);
+        $baseTotal = round($days * $dailyRate, 2);
 
         return view('vehicle-detail', compact(
             'vehicle',
@@ -99,7 +127,9 @@ class VehicleRentalController extends Controller
             'driverAge',
             'driverCountry',
             'days',
-            'baseTotal'
+            'dailyRate',
+            'baseTotal',
+            'pricing'
         ));
     }
 
@@ -148,20 +178,27 @@ class VehicleRentalController extends Controller
 
         $startDate = Carbon::parse("{$request->start_date} {$pickupTime}");
         $endDate = Carbon::parse("{$request->end_date} {$returnTime}");
-        $days = max(1, (int) ceil($startDate->diffInHours($endDate) / 24));
+        $driverCountry = $request->driver_country ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($driverCountry);
+        $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
+        $dailyRate = round((float) $vehicle->daily_rate * $mult, 2);
+        $baseTotal = round($days * $dailyRate, 2);
 
-        $baseTotal = round($days * $vehicle->daily_rate, 2);
-
-        // Protection Fee calculation ($12/day if Full Cover selected)
+        // Protection Fee calculation with country rate
+        $protectionDaily = (float) ($pricing->rental_protection_daily_rate ?: 12.00);
         $protectionOption = $request->protection_option ?? 'basic';
-        $protectionFee = ($protectionOption === 'full_cover') ? round($days * 12.00, 2) : 0.00;
+        $protectionFee = ($protectionOption === 'full_cover') ? round($days * $protectionDaily, 2) : 0.00;
 
-        // Extras Fee calculation ($10/day Add'l Driver, $8/day Child Seat, $5/day GPS)
+        // Extras Fee calculation with country rate
+        $extraDriverDaily = (float) ($pricing->rental_additional_driver_rate ?: 10.00);
+        $childSeatDaily = (float) ($pricing->rental_child_seat_rate ?: 8.00);
+        $gpsDaily = (float) ($pricing->rental_gps_rate ?: 5.00);
+
         $extras = $request->input('selected_extras', []);
         $extrasFee = 0.00;
-        if (in_array('additional_driver', $extras)) $extrasFee += round($days * 10.00, 2);
-        if (in_array('child_seat', $extras)) $extrasFee += round($days * 8.00, 2);
-        if (in_array('gps', $extras)) $extrasFee += round($days * 5.00, 2);
+        if (in_array('additional_driver', $extras)) $extrasFee += round($days * $extraDriverDaily, 2);
+        if (in_array('child_seat', $extras)) $extrasFee += round($days * $childSeatDaily, 2);
+        if (in_array('gps', $extras)) $extrasFee += round($days * $gpsDaily, 2);
 
         $totalAmount = round($baseTotal + $protectionFee + $extrasFee, 2);
         $paymentOption = $request->payment_option ?? 'part';

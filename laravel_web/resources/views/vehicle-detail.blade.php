@@ -13,7 +13,12 @@
               selectedExtras: [], // additional_driver, child_seat, gps
               paymentOption: 'part', // part (20%), full (100%)
               paymentMethod: 'stripe',
-              dailyRate: {{ $vehicle->daily_rate }},
+              dailyRate: {{ $dailyRate ?? $vehicle->daily_rate }},
+              currencySymbol: '{{ $pricing->currency_symbol ?? "$" }}',
+              protectionRateDaily: {{ $pricing->rental_protection_daily_rate ?? 12.00 }},
+              extraDriverRateDaily: {{ $pricing->rental_additional_driver_rate ?? 10.00 }},
+              childSeatRateDaily: {{ $pricing->rental_child_seat_rate ?? 8.00 }},
+              gpsRateDaily: {{ $pricing->rental_gps_rate ?? 5.00 }},
 
               get daysCount() {
                   try {
@@ -30,13 +35,13 @@
                   return (this.daysCount * this.dailyRate).toFixed(2);
               },
               get protectionTotal() {
-                  return this.protectionOption === 'full_cover' ? (this.daysCount * 12.00).toFixed(2) : (0).toFixed(2);
+                  return this.protectionOption === 'full_cover' ? (this.daysCount * this.protectionRateDaily).toFixed(2) : (0).toFixed(2);
               },
               get extrasTotal() {
                   let fee = 0;
-                  if (this.selectedExtras.includes('additional_driver')) fee += this.daysCount * 10.00;
-                  if (this.selectedExtras.includes('child_seat')) fee += this.daysCount * 8.00;
-                  if (this.selectedExtras.includes('gps')) fee += this.daysCount * 5.00;
+                  if (this.selectedExtras.includes('additional_driver')) fee += this.daysCount * this.extraDriverRateDaily;
+                  if (this.selectedExtras.includes('child_seat')) fee += this.daysCount * this.childSeatRateDaily;
+                  if (this.selectedExtras.includes('gps')) fee += this.daysCount * this.gpsRateDaily;
                   return fee.toFixed(2);
               },
               get totalAmount() {
@@ -187,7 +192,7 @@
                                     <div>
                                         <span class="px-2 py-0.5 bg-amber-500 text-white font-extrabold text-[10px] uppercase rounded">Recommended</span>
                                         <h3 class="font-extrabold text-gray-900 dark:text-white text-base mt-1">Full Protection Cover</h3>
-                                        <span class="text-xs text-brand-600 dark:text-brand-400 font-bold">+$12.00 / day</span>
+                                        <span class="text-xs text-brand-600 dark:text-brand-400 font-bold" x-text="`+${currencySymbol}${protectionRateDaily.toFixed(2)} / day`"></span>
                                     </div>
                                     <input type="radio" name="protection_choice" value="full_cover" :checked="protectionOption === 'full_cover'" class="w-5 h-5 text-brand-500 mt-1">
                                 </div>
@@ -214,7 +219,7 @@
                                  class="p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between">
                                 <div>
                                     <span class="font-extrabold text-gray-900 dark:text-white block">👨‍✈️ Additional Driver</span>
-                                    <span class="text-[11px] text-gray-500">+$10.00 / day</span>
+                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${extraDriverRateDaily.toFixed(2)} / day`"></span>
                                 </div>
                                 <input type="checkbox" :checked="selectedExtras.includes('additional_driver')" class="w-4 h-4 text-brand-500 rounded">
                             </div>
@@ -225,7 +230,7 @@
                                  class="p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between">
                                 <div>
                                     <span class="font-extrabold text-gray-900 dark:text-white block">👶 Child Safety Seat</span>
-                                    <span class="text-[11px] text-gray-500">+$8.00 / day</span>
+                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${childSeatRateDaily.toFixed(2)} / day`"></span>
                                 </div>
                                 <input type="checkbox" :checked="selectedExtras.includes('child_seat')" class="w-4 h-4 text-brand-500 rounded">
                             </div>
@@ -236,7 +241,7 @@
                                  class="p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between">
                                 <div>
                                     <span class="font-extrabold text-gray-900 dark:text-white block">🗺️ GPS Navigation</span>
-                                    <span class="text-[11px] text-gray-500">+$5.00 / day</span>
+                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${gpsRateDaily.toFixed(2)} / day`"></span>
                                 </div>
                                 <input type="checkbox" :checked="selectedExtras.includes('gps')" class="w-4 h-4 text-brand-500 rounded">
                             </div>
@@ -384,21 +389,21 @@
                         <!-- Itemized Price Breakdown -->
                         <div class="space-y-2.5 text-xs border-t border-b border-gray-100 dark:border-white/10 py-4">
                             <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                <span>Base Rental (<span x-text="daysCount"></span> Days @ $<span x-text="dailyRate"></span>):</span>
-                                <span class="font-bold text-gray-900 dark:text-white" x-text="`$${baseTotal}`"></span>
+                                <span>Base Rental (<span x-text="daysCount"></span> Days @ <span x-text="currencySymbol"></span><span x-text="dailyRate"></span>):</span>
+                                <span class="font-bold text-gray-900 dark:text-white" x-text="`${currencySymbol}${baseTotal}`"></span>
                             </div>
                             <div class="flex justify-between text-gray-600 dark:text-gray-400">
                                 <span>Protection Cover:</span>
-                                <span class="font-bold text-gray-900 dark:text-white" x-text="`+$${protectionTotal}`"></span>
+                                <span class="font-bold text-gray-900 dark:text-white" x-text="`+${currencySymbol}${protectionTotal}`"></span>
                             </div>
                             <div class="flex justify-between text-gray-600 dark:text-gray-400">
                                 <span>Optional Extras:</span>
-                                <span class="font-bold text-gray-900 dark:text-white" x-text="`+$${extrasTotal}`"></span>
+                                <span class="font-bold text-gray-900 dark:text-white" x-text="`+${currencySymbol}${extrasTotal}`"></span>
                             </div>
 
                             <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-black">
                                 <span class="text-gray-900 dark:text-white">Estimated Total:</span>
-                                <span class="text-xl text-brand-500" x-text="`$${totalAmount}`"></span>
+                                <span class="text-xl text-brand-500" x-text="`${currencySymbol}${totalAmount}`"></span>
                             </div>
                         </div>
 
@@ -413,7 +418,7 @@
                                         <input type="radio" name="payment_option" value="part" x-model="paymentOption" class="text-brand-500">
                                         <span class="text-gray-900 dark:text-white">20% Deposit Online</span>
                                     </div>
-                                    <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="`$${(totalAmount * 0.20).toFixed(2)}`"></span>
+                                    <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="`${currencySymbol}${(totalAmount * 0.20).toFixed(2)}`"></span>
                                 </label>
 
                                 <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all"
@@ -422,7 +427,7 @@
                                         <input type="radio" name="payment_option" value="full" x-model="paymentOption" class="text-brand-500">
                                         <span class="text-gray-900 dark:text-white">Full Payment (100%)</span>
                                     </div>
-                                    <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="`$${totalAmount}`"></span>
+                                    <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="`${currencySymbol}${totalAmount}`"></span>
                                 </label>
                             </div>
                         </div>
@@ -431,11 +436,11 @@
                         <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-white/5 space-y-2 text-xs">
                             <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
                                 <span>Payable Online Today:</span>
-                                <span class="text-base font-black" x-text="`$${payNowDeposit}`"></span>
+                                <span class="text-base font-black" x-text="`${currencySymbol}${payNowDeposit}`"></span>
                             </div>
                             <div class="flex justify-between text-amber-600 dark:text-amber-400 font-bold" x-show="paymentOption === 'part'">
                                 <span>Remaining Balance at Pickup:</span>
-                                <span class="text-base font-black" x-text="`$${balanceAtPickup}`"></span>
+                                <span class="text-base font-black" x-text="`${currencySymbol}${balanceAtPickup}`"></span>
                             </div>
                         </div>
 

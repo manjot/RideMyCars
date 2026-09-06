@@ -36,9 +36,13 @@ class PackageDeliveryController extends Controller
             'delivery_type' => 'nullable|string',
             'package_size' => 'nullable|string|in:Small,Medium,Large',
             'package_weight_kg' => 'nullable|numeric|min:0.1',
+            'country' => 'nullable|string',
         ]);
 
-        $baseFare = 15.00;
+        $country = $validated['country'] ?? $request->input('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($country);
+
+        $baseFare = (float) ($pricing->delivery_base_fare ?: 15.00);
         $distanceKm = 5.0;
 
         if (!empty($validated['pickup_lat']) && !empty($validated['pickup_lng']) && !empty($validated['dropoff_lat']) && !empty($validated['dropoff_lng'])) {
@@ -50,7 +54,8 @@ class PackageDeliveryController extends Controller
             );
         }
 
-        $distanceRate = max(1.0, $distanceKm) * 1.50;
+        $perKmRate = (float) ($pricing->delivery_per_km_rate ?: 1.50);
+        $distanceRate = max(1.0, $distanceKm) * $perKmRate;
 
         $sizeMultiplier = match ($validated['package_size'] ?? 'Small') {
             'Medium' => 1.25,
@@ -59,14 +64,15 @@ class PackageDeliveryController extends Controller
         };
 
         $typeAddon = match ($validated['delivery_type'] ?? 'Hyperlocal') {
-            'Instant' => 10.00,
-            'Express' => 8.00,
-            'Same Day' => 4.00,
-            'Scheduled' => 2.00,
+            'Instant' => (float) ($pricing->delivery_instant_addon ?: 10.00),
+            'Express' => (float) ($pricing->delivery_express_addon ?: 8.00),
+            'Same Day' => (float) ($pricing->delivery_same_day_addon ?: 4.00),
+            'Scheduled' => (float) ($pricing->delivery_scheduled_addon ?: 2.00),
             default => 0.00, // Hyperlocal (Standard base rate)
         };
 
-        $weightAddon = max(0, ((float)($validated['package_weight_kg'] ?? 1.0) - 1.0)) * 0.75;
+        $perKgRate = (float) ($pricing->delivery_per_kg_rate ?: 0.75);
+        $weightAddon = max(0, ((float)($validated['package_weight_kg'] ?? 1.0) - 1.0)) * $perKgRate;
 
         $subtotal = round(($baseFare + $distanceRate + $typeAddon + $weightAddon) * $sizeMultiplier, 2);
         $serviceFee = round($subtotal * 0.05, 2);
@@ -75,12 +81,23 @@ class PackageDeliveryController extends Controller
 
         return response()->json([
             'distance_km' => round($distanceKm, 2),
+            'base_fare' => $baseFare,
+            'per_km_rate' => $perKmRate,
             'subtotal' => $subtotal,
             'service_fee' => $serviceFee,
             'tax' => $tax,
             'total_price' => $totalPrice,
-            'currency_symbol' => '$',
-            'currency' => 'USD',
+            'currency_symbol' => $pricing->currency_symbol,
+            'currency' => $pricing->currency_code,
+            'country_code' => $pricing->country_code,
+            'country_name' => $pricing->country_name,
+            'addons' => [
+                'Instant' => (float) ($pricing->delivery_instant_addon ?: 10.00),
+                'Express' => (float) ($pricing->delivery_express_addon ?: 8.00),
+                'Same Day' => (float) ($pricing->delivery_same_day_addon ?: 4.00),
+                'Scheduled' => (float) ($pricing->delivery_scheduled_addon ?: 2.00),
+                'Hyperlocal' => 0.00,
+            ],
         ]);
     }
 
@@ -164,7 +181,7 @@ class PackageDeliveryController extends Controller
             'service_fee' => $priceRes['service_fee'],
             'tax' => $priceRes['tax'],
             'total_price' => $priceRes['total_price'],
-            'currency' => 'USD',
+            'currency' => $priceRes['currency'] ?? 'USD',
             'payment_method' => $validated['payment_method'],
             'payment_status' => 'pending',
         ]);

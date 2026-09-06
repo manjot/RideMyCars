@@ -22,7 +22,7 @@ class DriverBookingController extends Controller
      */
     public function index(Request $request)
     {
-        $country = $request->query('country', 'USA');
+        $country = $request->query('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
         $rating = $request->query('rating');
         $availability = $request->query('availability');
         $search = $request->query('search');

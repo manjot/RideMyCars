@@ -126,11 +126,11 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold">
                             <template x-for="dt in [
-                                { name: 'Hyperlocal', desc: '🛵 City Local Bike Courier', fee: '+$0.00' },
-                                { name: 'Scheduled', desc: '🕒 Pick your exact time window', fee: '+$2.00' },
-                                { name: 'Same Day', desc: '📅 Delivered by end of today', fee: '+$4.00' },
-                                { name: 'Express', desc: '🚀 Priority Direct Route (< 2 hrs)', fee: '+$8.00' },
-                                { name: 'Instant', desc: '⚡ Immediate Courier Pickup (~30 mins)', fee: '+$10.00' }
+                                { name: 'Hyperlocal', desc: '🛵 City Local Bike Courier' },
+                                { name: 'Scheduled', desc: '🕒 Pick your exact time window' },
+                                { name: 'Same Day', desc: '📅 Delivered by end of today' },
+                                { name: 'Express', desc: '🚀 Priority Direct Route (< 2 hrs)' },
+                                { name: 'Instant', desc: '⚡ Immediate Courier Pickup (~30 mins)' }
                             ]" :key="dt.name">
                                 <div @click="deliveryType = dt.name"
                                      :class="deliveryType === dt.name ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20' : 'border-gray-200 dark:border-white/10 hover:border-amber-300'"
@@ -139,7 +139,7 @@
                                         <h4 class="font-extrabold text-sm text-gray-900 dark:text-white" x-text="dt.name"></h4>
                                         <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-0.5" x-text="dt.desc"></p>
                                     </div>
-                                    <span class="text-xs font-black text-amber-600 dark:text-amber-400" x-text="dt.fee"></span>
+                                    <span class="text-xs font-black text-amber-600 dark:text-amber-400" x-text="getSpeedOptionFee(dt.name)"></span>
                                 </div>
                             </template>
                         </div>
@@ -435,7 +435,7 @@
                         </button>
                         <button type="submit" :disabled="isSubmitting" class="px-8 py-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-sm rounded-2xl shadow-lg shadow-amber-500/25 uppercase tracking-wider flex items-center justify-center gap-2">
                             <svg x-show="isSubmitting" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span x-text="isSubmitting ? 'Dispatching Parcel...' : '🚀 Confirm & Dispatch Parcel ($' + Number(priceBreakdown.total_price || 0).toFixed(2) + ')'"></span>
+                            <span x-text="isSubmitting ? 'Dispatching Parcel...' : '🚀 Confirm & Dispatch Parcel (' + (priceBreakdown.currency_symbol || '$') + Number(priceBreakdown.total_price || 0).toFixed(2) + ')'"></span>
                         </button>
                     </div>
                 </div>
@@ -751,7 +751,20 @@
                     service_fee: 0,
                     tax: 0,
                     total_price: 0,
-                    currency_symbol: '$'
+                    currency_symbol: '{{ $currentCurrencySymbol ?? "$" }}'
+                },
+
+                getSpeedOptionFee(name) {
+                    const sym = this.priceBreakdown.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}';
+                    const addons = this.priceBreakdown.addons || {
+                        'Instant': {{ $currentPricing->delivery_instant_addon ?? 10.00 }},
+                        'Express': {{ $currentPricing->delivery_express_addon ?? 8.00 }},
+                        'Same Day': {{ $currentPricing->delivery_same_day_addon ?? 4.00 }},
+                        'Scheduled': {{ $currentPricing->delivery_scheduled_addon ?? 2.00 }},
+                        'Hyperlocal': 0.00
+                    };
+                    const val = addons[name] || 0.00;
+                    return `+${sym}${Number(val).toFixed(2)}`;
                 },
 
                 init() {

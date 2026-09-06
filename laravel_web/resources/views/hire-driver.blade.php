@@ -4,7 +4,7 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
           x-data="{ 
               search: '{{ request('search') }}', 
-              selectedCountry: '{{ request('country', 'USA') }}',
+              selectedCountry: '{{ request('country', $currentCountryCode ?? 'USA') }}',
               minRating: '{{ request('rating', '') }}',
               availability: '{{ request('availability', '') }}',
               drivers: {{ Js::from($drivers) }},
@@ -12,7 +12,7 @@
               countryDropdownOpen: false,
               regionSearch: '',
               countryList: [
-                  { key: 'All', name: 'All Regions', fullName: 'All Global Regions', code: 'ALL', flagUrl: '', symbol: '$' }
+                  { key: 'All', name: 'All Regions', fullName: 'All Global Regions', code: 'ALL', flagUrl: '', symbol: '{{ $currentCurrencySymbol ?? "$" }}' }
               ],
               init() {
                   if (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) {
@@ -124,7 +124,7 @@
                     <div class="max-h-64 overflow-y-auto p-1.5 space-y-0.5 text-sm">
                         <template x-for="c in filteredCountryList" :key="c.key">
                             <button type="button" 
-                                    @click="selectedCountry = c.key; countryDropdownOpen = false; regionSearch = ''; window.history.pushState({}, '', '/hire-driver?country=' + c.key);"
+                                    @click="selectedCountry = c.key; countryDropdownOpen = false; regionSearch = ''; window.history.pushState({}, '', '/hire-driver?country=' + c.key); if (c.key !== 'All') { fetch('/set-country', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'}, body: JSON.stringify({ country: c.key }) }); }"
                                     class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-left group cursor-pointer"
                                     :class="selectedCountry === c.key ? 'bg-brand-500 text-slate-950 hover:bg-brand-600 font-black' : 'text-gray-800 dark:text-gray-200'">
                                 <div class="flex items-center gap-2.5 min-w-0 pr-2">

@@ -85,7 +85,7 @@
                         <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 rounded-2xl flex items-center justify-between text-xs font-extrabold text-emerald-800 dark:text-emerald-300 shadow-sm">
                             <div class="flex items-center gap-2">
                                 <span>🏷️</span>
-                                <span>100% off your next ride. Up to $10.00</span>
+                                <span>100% off your next ride. Up to {{ $currentCurrencySymbol ?? '$' }}10.00</span>
                             </div>
                             <span class="text-emerald-500 font-extrabold cursor-pointer" title="Offer details">ⓘ</span>
                         </div>
@@ -463,11 +463,11 @@
                             </div>
                             <div class="flex justify-between text-gray-500 dark:text-gray-400">
                                 <span>Base & Distance Fare</span>
-                                <span class="font-bold text-gray-900 dark:text-white" x-text="'$' + (fareBreakdown.base_fare + fareBreakdown.distance_fare).toFixed(2)"></span>
+                                <span class="font-bold text-gray-900 dark:text-white" x-text="currencySymbol + (fareBreakdown.base_fare + fareBreakdown.distance_fare).toFixed(2)"></span>
                             </div>
                             <div class="flex justify-between font-extrabold text-sm text-gray-900 dark:text-white pt-1 border-t border-gray-200 dark:border-white/10">
                                 <span>Total Estimated Fare</span>
-                                <span x-text="'$' + fareBreakdown.grand_total.toFixed(2)"></span>
+                                <span x-text="currencySymbol + fareBreakdown.grand_total.toFixed(2)"></span>
                             </div>
                         </div>
 
@@ -961,14 +961,28 @@
                 stops: [],
                 estimatedDistanceKm: 10.0,
                 estimatedDurationMin: 15,
+                currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
+                currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
+                countryPricing: {
+                    base_fare: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }},
+                    per_km: {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }},
+                    per_minute: {{ (float) ($currentPricing->ride_per_minute_rate ?? 0.25) }},
+                    minimum_fare: {{ (float) ($currentPricing->ride_minimum_fare ?? 7.00) }}
+                },
                 categories: [
-                    { id: 'economy', name: 'Economy', icon: '🚗', capacity: '1–4 seats', eta_minutes: 3, fare_formatted: '$28.50', description: 'Affordable everyday rides' },
-                    { id: 'standard', name: 'Standard', icon: '🚘', capacity: '1–4 seats', eta_minutes: 4, fare_formatted: '$34.20', description: 'Comfortable sedans' },
-                    { id: 'suv', name: 'SUV', icon: '🚙', capacity: '1–6 seats', eta_minutes: 6, fare_formatted: '$42.75', description: 'Spacious SUVs' },
-                    { id: 'xl', name: 'XL', icon: '🚐', capacity: '1–6 seats', eta_minutes: 7, fare_formatted: '$51.30', description: 'Large vans for groups' },
-                    { id: 'luxury', name: 'Luxury', icon: '🏎️', capacity: '1–4 seats', eta_minutes: 5, fare_formatted: '$62.70', description: 'Premium luxury vehicles' },
+                    { id: 'economy', name: 'Economy', icon: '🚗', capacity: '1–4 seats', eta_minutes: 3, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + ({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}).toFixed(2), description: 'Affordable everyday rides' },
+                    { id: 'standard', name: 'Standard', icon: '🚘', capacity: '1–4 seats', eta_minutes: 4, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 1.2).toFixed(2), description: 'Comfortable sedans' },
+                    { id: 'suv', name: 'SUV', icon: '🚙', capacity: '1–6 seats', eta_minutes: 6, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 1.5).toFixed(2), description: 'Spacious SUVs' },
+                    { id: 'xl', name: 'XL', icon: '🚐', capacity: '1–6 seats', eta_minutes: 7, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 1.8).toFixed(2), description: 'Large vans for groups' },
+                    { id: 'luxury', name: 'Luxury', icon: '🏎️', capacity: '1–4 seats', eta_minutes: 5, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 2.2).toFixed(2), description: 'Premium luxury vehicles' },
                 ],
-                fareBreakdown: { base_fare: 5.00, distance_fare: 15.00, stops_fee: 0.00, tax: 1.19, grand_total: 29.69 },
+                fareBreakdown: { 
+                    base_fare: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }}, 
+                    distance_fare: {{ (float) (10 * ($currentPricing->ride_per_km_rate ?? 1.50)) }}, 
+                    stops_fee: 0.00, 
+                    tax: {{ round(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 0.05, 2) }}, 
+                    grand_total: {{ round(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.05, 2) }} 
+                },
                 paymentModal: false,
                 paymentStep: 'select',
                 paymentMethod: 'stripe',
@@ -1588,10 +1602,10 @@
                         this.estimatedDistanceKm = totalDist;
                         this.estimatedDurationMin = Math.round((totalDist / 30) * 60) + (this.stops.length * 5);
                         
-                        const stopsFee = this.stops.length * 3.50;
-                        const baseFare = 5.00;
-                        const distFare = totalDist * 1.50;
-                        const grandTotal = baseFare + distFare + stopsFee;
+                        const baseFare = this.countryPricing.base_fare || 5.00;
+                        const distFare = totalDist * (this.countryPricing.per_km || 1.50);
+                        const stopsFee = this.stops.length * (baseFare * 0.5);
+                        const grandTotal = Math.max(this.countryPricing.minimum_fare || 7.00, baseFare + distFare + stopsFee);
 
                         this.fareBreakdown = {
                             base_fare: baseFare,
@@ -1605,9 +1619,9 @@
                         this.categories.forEach(cat => {
                             const mult = baseMults[cat.id] || 1.0;
                             const fare = (grandTotal * mult).toFixed(2);
-                            cat.fare_formatted = '$' + fare;
+                            cat.fare_formatted = this.currencySymbol + fare;
                         });
-                        this.selectedFare = this.categories.find(c => c.name === this.vehicle_type)?.fare_formatted || '$' + grandTotal.toFixed(2);
+                        this.selectedFare = this.categories.find(c => c.name === this.vehicle_type)?.fare_formatted || (this.currencySymbol + grandTotal.toFixed(2));
                     }
                 },
 
@@ -1866,9 +1880,9 @@
                 getFormattedFare() {
                     if (this.selectedFare && this.selectedFare !== '') return this.selectedFare;
                     if (this.fareBreakdown && this.fareBreakdown.grand_total) {
-                        return '$' + parseFloat(this.fareBreakdown.grand_total).toFixed(2);
+                        return this.currencySymbol + parseFloat(this.fareBreakdown.grand_total).toFixed(2);
                     }
-                    return '$28.50';
+                    return this.currencySymbol + '28.50';
                 },
 
                 goToChooseRide() {
@@ -1905,7 +1919,8 @@
                                 scheduled_time: this.schedule_type === 'later' ? (this.scheduledDate + ' ' + this.scheduledTime) : null,
                                 pickup_date: this.schedule_type === 'later' ? this.scheduledDate : null,
                                 pickup_time: this.schedule_type === 'later' ? this.scheduledTime : null,
-                                amount: parseFloat(this.selectedFare.replace('$', '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50)
+                                country: '{{ $currentCountryCode ?? "USA" }}',
+                                amount: parseFloat(String(this.selectedFare).replace(/[^0-9.]/g, '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50)
                             })
                         });
 

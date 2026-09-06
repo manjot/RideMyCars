@@ -830,6 +830,33 @@ Route::get('/rent/booking/{ride}/voucher', [\App\Http\Controllers\VehicleRentalC
 Route::post('/rent/booking/{ride}/cancel', [\App\Http\Controllers\VehicleRentalController::class, 'cancelBooking']);
 Route::post('/rent/booking/{ride}/modify', [\App\Http\Controllers\VehicleRentalController::class, 'modifyBooking']);
 
+// Country Switching Routes
+Route::post('/set-country', function (\Illuminate\Http\Request $request) {
+    $country = $request->input('country') ?? $request->input('country_code');
+    $code = \App\Services\CountryService::normalizeToCode($country) ?? 'USA';
+    \App\Services\CountryService::persistCountry($code);
+
+    if ($request->wantsJson() || $request->ajax()) {
+        $pricing = \App\Models\CountryPricing::forCountry($code);
+        return response()->json([
+            'success' => true,
+            'country_code' => $code,
+            'country_name' => $pricing->country_name,
+            'currency_code' => $pricing->currency_code,
+            'currency_symbol' => $pricing->currency_symbol,
+            'pricing' => $pricing,
+        ]);
+    }
+
+    return redirect()->back();
+});
+
+Route::get('/set-country/{code}', function ($code, \Illuminate\Http\Request $request) {
+    $normalized = \App\Services\CountryService::normalizeToCode($code) ?? 'USA';
+    \App\Services\CountryService::persistCountry($normalized);
+    return redirect()->back();
+});
+
 Route::get('/ride', function () {
     $vehicles = \App\Models\Vehicle::all();
     return view('ride', compact('vehicles'));
@@ -840,6 +867,7 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
     $dist = floatval($request->input('distance_km', 10.0));
     $dur = intval($request->input('duration_minutes', 15));
     $stopsCount = intval($request->input('stops_count', 0));
+    $country = $request->input('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
 
     $categories = [
         [
@@ -889,15 +917,20 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
         ],
     ];
 
+    $countryPricing = \App\Models\CountryPricing::forCountry($country);
+
     foreach ($categories as &$cat) {
-        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount);
+        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount, $country);
         $cat['fare'] = $breakdown['total_fare'];
-        $cat['fare_formatted'] = '$' . number_format($breakdown['total_fare'], 2);
+        $cat['fare_formatted'] = $breakdown['currency_symbol'] . number_format($breakdown['total_fare'], 2);
         $cat['breakdown'] = $breakdown;
     }
 
     return response()->json([
         'success' => true,
+        'country_code' => $countryPricing->country_code,
+        'currency_code' => $countryPricing->currency_code,
+        'currency_symbol' => $countryPricing->currency_symbol,
         'distance_km' => $dist,
         'duration_minutes' => $dur,
         'stops_count' => $stopsCount,
@@ -977,7 +1010,8 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $vehicleType = $request->vehicle_type ?? 'Economy';
         $stopsCount = count($parsedStops);
 
-        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount);
+        $country = $request->input('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
         $amount = $rawAmount > 0 ? $rawAmount : $breakdown['total_fare'];
 
         $isForSomeoneElse = $request->boolean('is_for_someone_else');
@@ -1223,7 +1257,7 @@ Route::get('/api/ride/{id}/status', function ($id) {
     $stopsCount = $ride->stops->count();
     $dist = floatval($ride->distance_km ?: 10.0);
     $dur = intval($ride->duration_minutes ?: 15);
-    $fareBreakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $ride->vehicle_type, $stopsCount);
+    $fareBreakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $ride->vehicle_type, $stopsCount, $ride->country ?? null);
 
     $response = [
         'status' => $ride->status,

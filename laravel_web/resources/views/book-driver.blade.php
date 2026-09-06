@@ -343,7 +343,15 @@
                 <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-xl sticky top-24 space-y-6">
                     
                     <div>
-                        <span class="text-xs font-extrabold text-brand-500 uppercase tracking-widest block mb-1">Price Estimate</span>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-extrabold text-brand-500 uppercase tracking-widest">Price Estimate</span>
+                            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-brand-500/15 text-brand-700 dark:text-brand-300 flex items-center gap-1">
+                                <span>🌍</span>
+                                <span x-text="country"></span>
+                                <span>•</span>
+                                <span x-text="priceBreakdown.currency_symbol || '{{ $currentCurrencySymbol ?? '$' }}'"></span>
+                            </span>
+                        </div>
                         <h2 class="text-2xl font-black text-gray-900 dark:text-white">Estimated Fare</h2>
                         <p class="text-xs text-gray-400 mt-1" x-text="priceBreakdown.applied_rate_text || 'Standard Driver Hiring Rates'"></p>
                     </div>
@@ -486,7 +494,7 @@
                 startTime: '09:00',
                 durationType: 'hourly',
                 durationCount: 4,
-                country: '{{ $selectedCountry ?? "USA" }}',
+                country: '{{ $selectedCountry ?? ($currentCountryCode ?? "USA") }}',
                 driverProfileId: '{{ $driverProfile->id ?? "" }}',
                 paymentMethod: 'stripe',
                 vehicleSource: 'personal',
@@ -511,7 +519,7 @@
                     service_fee: 0,
                     tax: 0,
                     total_price: 0,
-                    currency_symbol: '$',
+                    currency_symbol: '{{ $currentCurrencySymbol ?? "$" }}',
                     applied_rate_text: ''
                 },
 

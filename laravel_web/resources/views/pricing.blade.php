@@ -13,12 +13,20 @@
                   calcVehicle: 'economy',
                   rentalPeriod: 'daily', // 'daily', 'weekly', 'monthly'
                   activeFaq: null,
+                  currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
+                  currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
+                  rentalMultiplier: {{ (float) ($currentPricing->rental_price_multiplier ?? 1.0) }},
+                  driverHourlyRate: {{ (float) ($currentPricing->driver_hourly_rate ?? 25.00) }},
+                  driverDailyRate: {{ (float) ($currentPricing->driver_daily_rate ?? 160.00) }},
+                  driverWeeklyRate: {{ (float) ($currentPricing->driver_weekly_rate ?? 890.00) }},
+                  deliveryBaseRate: {{ (float) ($currentPricing->delivery_base_fare ?? 8.00) }},
+                  deliveryPerKmRate: {{ (float) ($currentPricing->delivery_per_km_rate ?? 1.00) }},
                   vehicles: {
-                      economy: { name: 'Economy', icon: '🚗', multiplier: 1.0, base: 5.00, perKm: 1.50, perMin: 0.25, min: 10.00, seats: '4 Seats', luggage: '2 Bags', desc: 'Affordable, reliable everyday city mobility' },
-                      comfort: { name: 'Standard / Comfort', icon: '🚘', multiplier: 1.2, base: 6.00, perKm: 1.80, perMin: 0.30, min: 12.00, seats: '4 Seats', luggage: '3 Bags', desc: 'Spacious, newer executive sedans with climate control' },
-                      suv: { name: 'Executive SUV', icon: '🚙', multiplier: 1.4, base: 7.00, perKm: 2.10, perMin: 0.35, min: 15.00, seats: '6 Seats', luggage: '5 Bags', desc: 'Luxury high-ride SUVs for comfort, safety & groups' },
-                      xl: { name: 'Van XL', icon: '🚐', multiplier: 1.5, base: 7.50, perKm: 2.25, perMin: 0.38, min: 18.00, seats: '7–8 Seats', luggage: '6 Bags', desc: 'Large premium passenger vans for families & delegations' },
-                      luxury: { name: 'VIP Chauffeur', icon: '🏎️', multiplier: 1.8, base: 9.00, perKm: 2.70, perMin: 0.45, min: 25.00, seats: '4 Seats', luggage: '3 Bags', desc: 'Flagship luxury sedans with suited, vetted private drivers' }
+                      economy: { name: 'Economy', icon: '🚗', multiplier: 1.0, base: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }}, perKm: {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}, perMin: {{ (float) ($currentPricing->ride_per_minute_rate ?? 0.25) }}, min: {{ (float) ($currentPricing->ride_minimum_fare ?? 10.00) }}, seats: '4 Seats', luggage: '2 Bags', desc: 'Affordable, reliable everyday city mobility' },
+                      comfort: { name: 'Standard / Comfort', icon: '🚘', multiplier: 1.2, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.2) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.2) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.2) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.2) }}, seats: '4 Seats', luggage: '3 Bags', desc: 'Spacious, newer executive sedans with climate control' },
+                      suv: { name: 'Executive SUV', icon: '🚙', multiplier: 1.4, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.4) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.4) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.4) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.4) }}, seats: '6 Seats', luggage: '5 Bags', desc: 'Luxury high-ride SUVs for comfort, safety & groups' },
+                      xl: { name: 'Van XL', icon: '🚐', multiplier: 1.5, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.5) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.5) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.5) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.5) }}, seats: '7–8 Seats', luggage: '6 Bags', desc: 'Large premium passenger vans for families & delegations' },
+                      luxury: { name: 'VIP Chauffeur', icon: '🏎️', multiplier: 1.8, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.8) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.8) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.8) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.8) }}, seats: '4 Seats', luggage: '3 Bags', desc: 'Flagship luxury sedans with suited, vetted private drivers' }
                   },
                   get calcDuration() {
                       return Math.max(5, Math.round(this.calcDistance * 1.6 + 4));
@@ -27,7 +35,7 @@
                       const v = this.vehicles[this.calcVehicle] || this.vehicles.economy;
                       const distFare = this.calcDistance * v.perKm;
                       const durFare = this.calcDuration * v.perMin;
-                      const stopsFee = this.calcStops * 3.50;
+                      const stopsFee = this.calcStops * (v.base * 0.7);
                       const subtotal = v.base + distFare + durFare + stopsFee;
                       const finalFare = Math.max(v.min, subtotal);
                       const tax = finalFare * 0.05;
@@ -46,9 +54,17 @@
 
             <!-- HERO HEADER -->
             <div class="text-center max-w-3xl mx-auto pt-6 sm:pt-10">
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 dark:bg-brand-500/15 border border-brand-500/25 text-brand-600 dark:text-brand-400 font-extrabold text-xs uppercase tracking-widest mb-5 shadow-xs">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 dark:bg-brand-500/15 border border-brand-500/25 text-brand-600 dark:text-brand-400 font-extrabold text-xs uppercase tracking-widest mb-3 shadow-xs">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span>100% Upfront, Transparent Pricing</span>
+                </div>
+
+                <div class="flex items-center justify-center mb-5">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-700 dark:text-brand-300 font-bold text-xs shadow-xs">
+                        <span>Active Region:</span>
+                        <img src="{{ \App\Services\CountryService::getFlagUrl($currentCountryCode ?? 'USA') }}" class="w-4 h-3 rounded-xs object-cover">
+                        <span>{{ $currentCountry['name'] ?? 'United States' }} ({{ $currentCurrencyCode ?? 'USD' }} {{ $currentCurrencySymbol ?? '$' }})</span>
+                    </span>
                 </div>
                 
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-5">
@@ -236,23 +252,23 @@
                                 <div class="space-y-2.5 text-xs">
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
                                         <span>Base Fare</span>
-                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="'$' + calcFare.base"></span>
+                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.base"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>Distance (<span x-text="calcDistance"></span> km @ $<span x-text="vehicles[calcVehicle].perKm.toFixed(2)"></span>/km)</span>
-                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="'$' + calcFare.distFare"></span>
+                                        <span>Distance (<span x-text="calcDistance"></span> km @ <span x-text="currencySymbol"></span><span x-text="vehicles[calcVehicle].perKm.toFixed(2)"></span>/km)</span>
+                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.distFare"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>Duration (~<span x-text="calcDuration"></span> min @ $<span x-text="vehicles[calcVehicle].perMin.toFixed(2)"></span>/min)</span>
-                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="'$' + calcFare.durFare"></span>
+                                        <span>Duration (~<span x-text="calcDuration"></span> min @ <span x-text="currencySymbol"></span><span x-text="vehicles[calcVehicle].perMin.toFixed(2)"></span>/min)</span>
+                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.durFare"></span>
                                     </div>
                                     <div x-show="calcStops > 0" class="flex justify-between text-gray-600 dark:text-gray-400">
                                         <span><span x-text="calcStops"></span> Additional Stop(s)</span>
-                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="'$' + calcFare.stopsFee"></span>
+                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.stopsFee"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
                                         <span>Service Tax & Regulatory (5%)</span>
-                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="'$' + calcFare.tax"></span>
+                                        <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.tax"></span>
                                     </div>
                                 </div>
 
@@ -260,7 +276,7 @@
                                 <div class="pt-4 border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
                                     <div>
                                         <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Estimated Total</p>
-                                        <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight" x-text="'$' + calcFare.total"></p>
+                                        <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight" x-text="currencySymbol + calcFare.total"></p>
                                     </div>
                                     <div class="text-right">
                                         <span class="text-[10px] text-gray-400 block font-medium">No surge multiplier</span>
@@ -315,10 +331,10 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toyota Yaris, Honda Fit, Hyundai Accent</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$5.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">$1.50 / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">$0.25 / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">$10.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_base_fare ?? 5.00, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_per_km_rate ?? 1.50, 2) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_per_minute_rate ?? 0.25, 2) }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_minimum_fare ?? 10.00, 2) }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Up to 4 passengers & 2 bags</li>
@@ -524,7 +540,7 @@
                             <div>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-black text-gray-900 dark:text-white"
-                                          x-text="rentalPeriod === 'daily' ? '$35' : (rentalPeriod === 'weekly' ? '$208' : '$735')"></span>
+                                          x-text="rentalPeriod === 'daily' ? (currencySymbol + Math.round(35 * rentalMultiplier)) : (rentalPeriod === 'weekly' ? (currencySymbol + Math.round(208 * rentalMultiplier)) : (currencySymbol + Math.round(735 * rentalMultiplier)))"></span>
                                     <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))"></span>
                                 </div>
                                 <p class="text-[11px] text-emerald-600 font-bold mt-1">✓ Unlimited mileage included</p>
@@ -627,7 +643,7 @@
                             <span class="text-xs font-black uppercase text-gray-400">1. Short Errands</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Hourly Chauffeur</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-gray-900 dark:text-white">$25</span>
+                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->driver_hourly_rate ?? 25.00, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ hour</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -646,7 +662,7 @@
                             <span class="text-xs font-black uppercase text-amber-500">2. Business Meetings</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Half Day (4–8h)</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-amber-500">$85</span>
+                                <span class="text-3xl font-black text-amber-500">{{ $currentCurrencySymbol }}{{ number_format(($currentPricing->driver_hourly_rate ?? 25.00) * 4 * 0.95, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ 4h block</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -665,7 +681,7 @@
                             <span class="text-xs font-black uppercase text-brand-600 dark:text-brand-400">3. Full Day Freedom</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Full Day (8–12h)</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-brand-600 dark:text-brand-400">$160</span>
+                                <span class="text-3xl font-black text-brand-600 dark:text-brand-400">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->driver_daily_rate ?? 160.00, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ full day</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -684,7 +700,7 @@
                             <span class="text-xs font-black uppercase text-purple-500">4. Family & Corporate</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Weekly Dedicated</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-gray-900 dark:text-white">$890</span>
+                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->driver_weekly_rate ?? 890.00, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ 7 days</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -730,8 +746,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Documents, keys, pharmacy, lightweight goods (≤ 5 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$8.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">$1.00 / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->delivery_base_fare ?? 8.00, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->delivery_per_km_rate ?? 1.00, 2) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Typical Speed:</span><span class="font-bold text-emerald-600">~30–45 mins</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Live GPS tracking link generated automatically for sender & recipient.</p>

@@ -321,7 +321,7 @@
                             ✓ <span x-text="vehicle.mileage_policy || 'Unlimited Mileage'"></span>
                         </div>
                         <div class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                            🛡️ $<span x-text="vehicle.security_deposit_amount || 200"></span> Refundable Deposit
+                            🛡️ <span x-text="(vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}') + (vehicle.security_deposit_amount || 200)"></span> Refundable Deposit
                         </div>
                     </div>
 
@@ -330,7 +330,7 @@
                         <div class="flex items-baseline justify-between mb-1">
                             <span class="text-xs font-bold text-gray-400">Rate / Day</span>
                             <div>
-                                <span class="text-2xl font-black text-gray-900 dark:text-white" x-text="`$${parseFloat(vehicle.daily_rate).toFixed(2)}`"></span>
+                                <span class="text-2xl font-black text-gray-900 dark:text-white" x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${parseFloat(vehicle.daily_rate).toFixed(2)}`"></span>
                                 <span class="text-xs text-gray-400">/day</span>
                             </div>
                         </div>
@@ -338,15 +338,15 @@
                         <div class="bg-brand-50/50 dark:bg-brand-950/20 p-2.5 rounded-xl border border-brand-200 dark:border-brand-800/30 mb-4 space-y-1 text-xs">
                             <div class="flex justify-between font-bold text-brand-700 dark:text-brand-300">
                                 <span>Total (<span x-text="vehicle.rental_days || 1"></span> Days):</span>
-                                <span x-text="`$${(vehicle.total_rental_price || vehicle.daily_rate).toFixed(2)}`"></span>
+                                <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.total_rental_price || vehicle.daily_rate).toFixed(2)}`"></span>
                             </div>
                             <div class="flex justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
                                 <span>20% Online Deposit:</span>
-                                <span x-text="`$${(vehicle.deposit_amount || (vehicle.daily_rate * 0.20)).toFixed(2)}`"></span>
+                                <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.deposit_amount || (vehicle.daily_rate * 0.20)).toFixed(2)}`"></span>
                             </div>
                             <div class="flex justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
                                 <span>80% Balance at Pickup:</span>
-                                <span x-text="`$${(vehicle.pickup_balance || (vehicle.daily_rate * 0.80)).toFixed(2)}`"></span>
+                                <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.pickup_balance || (vehicle.daily_rate * 0.80)).toFixed(2)}`"></span>
                             </div>
                         </div>
 

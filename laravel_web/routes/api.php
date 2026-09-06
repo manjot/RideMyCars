@@ -53,6 +53,14 @@ Route::get('/products/{id}', [ProductApiController::class, 'show']);
 Route::get('/drivers', [DriverApiController::class, 'drivers']);
 Route::get('/drivers/{id}', [DriverApiController::class, 'driverDetail']);
 Route::get('/countries', [DriverApiController::class, 'countries']);
+Route::get('/country-pricing', function (Request $request) {
+    $country = $request->query('country');
+    $pricing = $country ? \App\Models\CountryPricing::forCountry($country) : \App\Services\CountryService::getCurrentPricing($request);
+    return response()->json([
+        'status' => 'success',
+        'data' => $pricing,
+    ]);
+});
 Route::post('/drivers/calculate-price', [DriverApiController::class, 'calculatePrice']);
 
 Route::middleware('auth:sanctum')->group(function () {

@@ -321,7 +321,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        $this->call([
+        $seeders = [
             DriverProfileSeeder::class,
             VehicleSeeder::class,
             SettingsSeeder::class,
@@ -334,6 +334,16 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             DisputeSeeder::class,
             PackageDeliverySeeder::class,
-        ]);
+        ];
+
+        if (file_exists(__DIR__ . '/CountryPricingSeeder.php')) {
+            require_once __DIR__ . '/CountryPricingSeeder.php';
+            $seeders[] = CountryPricingSeeder::class;
+        } elseif (class_exists(\Database\Seeders\CountryPricingSeeder::class)) {
+            $seeders[] = \Database\Seeders\CountryPricingSeeder::class;
+        }
+
+        $this->call($seeders);
     }
 }
+

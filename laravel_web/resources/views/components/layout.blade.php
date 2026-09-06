@@ -588,6 +588,87 @@
                 
                 <!-- Actions -->
                 <div class="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
+                    <!-- Country & Currency Selector Dropdown -->
+                    <div x-data="{ countryOpen: false }" class="relative" @click.away="countryOpen = false" @keydown.escape="countryOpen = false">
+                        <button @click="countryOpen = !countryOpen" 
+                                type="button"
+                                class="h-10 px-2.5 sm:px-3 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center gap-1.5 sm:gap-2 transition-all border border-gray-200/60 dark:border-white/10 shrink-0 text-gray-800 dark:text-gray-200 hover:border-brand-500/50" 
+                                title="Active Country & Currency (Click to Change)"
+                                aria-label="Select Country and Currency">
+                            <img src="{{ \App\Services\CountryService::getFlagUrl($currentCountryCode ?? 'USA') }}" 
+                                 alt="{{ $currentCountryCode ?? 'USA' }} flag" 
+                                 class="w-5 h-3.5 object-cover rounded-xs shadow-xs shrink-0">
+                            <span class="text-xs font-extrabold uppercase tracking-wide text-gray-900 dark:text-white hidden sm:inline">{{ $currentCountryCode ?? 'USA' }}</span>
+                            <span class="text-[11px] font-bold text-brand-700 dark:text-brand-300 bg-brand-500/15 px-1.5 py-0.5 rounded">{{ $currentCurrencySymbol ?? '$' }}</span>
+                            <svg :class="{'rotate-180': countryOpen}" class="w-3 h-3 transition-transform text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6"/>
+                            </svg>
+                        </button>
+
+                        <!-- Country Dropdown Menu -->
+                        <div x-show="countryOpen" 
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                             class="dropdown-menu-card absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[120]" 
+                             style="display: none;">
+                            
+                            <div class="px-3 py-2 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-900 dark:text-white">Region & Currency</p>
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400">Updates rates for Rent, Driver, Ride & Delivery</p>
+                                </div>
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-700 dark:text-brand-300">Live</span>
+                            </div>
+
+                            <div class="max-h-72 overflow-y-auto py-1.5 space-y-1">
+                                @foreach($allCountries ?? [] as $code => $country)
+                                @php
+                                    $isActive = strtoupper($currentCountryCode ?? 'USA') === strtoupper($code);
+                                @endphp
+                                <a href="/set-country/{{ $code }}" 
+                                   class="flex items-center justify-between p-2.5 rounded-xl transition-all {{ $isActive ? 'bg-brand-500/15 text-brand-700 dark:text-brand-300 font-bold border border-brand-500/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <img src="{{ $country['flag_url'] ?? \App\Services\CountryService::getFlagUrl($code) }}" 
+                                             alt="{{ $country['name'] }} flag" 
+                                             class="w-6 h-4 object-cover rounded shadow-xs shrink-0">
+                                        <div class="truncate text-left">
+                                            <div class="text-xs font-bold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
+                                                <span>{{ $country['name'] }}</span>
+                                                @if($isActive)
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block"></span>
+                                                @endif
+                                            </div>
+                                            <div class="text-[10px] text-gray-500 dark:text-gray-400">
+                                                {{ $country['currency'] }} • {{ $country['symbol'] }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="text-xs font-black px-2 py-0.5 rounded-md {{ $isActive ? 'bg-brand-500 text-black shadow-xs' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300' }}">
+                                            {{ $country['symbol'] }}
+                                        </span>
+                                        @if($isActive)
+                                        <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        @endif
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
+
+                            <div class="pt-2 px-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                                <span>Default: USA (USD $)</span>
+                                <span class="font-medium text-emerald-600 dark:text-emerald-400">IP-Enabled</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <button @click="darkMode = !darkMode" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-white/10 shrink-0" aria-label="Toggle theme">
                         <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                         <svg x-show="darkMode" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
@@ -859,6 +940,28 @@
              class="lg:hidden border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[#0c0c0c] px-4 pt-3 pb-6 space-y-4 max-h-[calc(100vh-5rem)] overflow-y-auto shadow-2xl" 
              style="display: none;">
             
+            <!-- Mobile Country & Currency Selector -->
+            <div class="px-2 pt-1 pb-2 border-b border-gray-100 dark:border-white/10">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1 flex items-center justify-between">
+                    <span>Region & Currency</span>
+                    <span class="text-xs font-bold text-brand-500">{{ $currentCountryCode ?? 'USA' }} ({{ $currentCurrencySymbol ?? '$' }})</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    @foreach($allCountries ?? [] as $code => $country)
+                    @php
+                        $isActive = strtoupper($currentCountryCode ?? 'USA') === strtoupper($code);
+                    @endphp
+                    <a href="/set-country/{{ $code }}" 
+                       class="flex items-center gap-2 p-2 rounded-xl border text-xs font-semibold transition-all {{ $isActive ? 'bg-brand-500/15 border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'border-gray-200/70 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
+                        <img src="{{ $country['flag_url'] ?? \App\Services\CountryService::getFlagUrl($code) }}" 
+                             alt="{{ $country['name'] }}" 
+                             class="w-4 h-3 object-cover rounded-xs shrink-0">
+                        <span class="truncate">{{ $country['code'] }} ({{ $country['symbol'] }})</span>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+
             <!-- Mobile Links -->
             <div class="space-y-1">
                 <a href="/" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold {{ request()->is('/') ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5' }} transition-colors">
@@ -1368,53 +1471,74 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- USA Global HQ -->
-                    <a href="https://maps.google.com/?q=4301+Saddle+River+Drive,+Bowie,+MD+20720" target="_blank" rel="noopener" 
-                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5">
+                    @php $isUsActive = strtoupper($currentCountryCode ?? 'USA') === 'USA'; @endphp
+                    <a href="/set-country/USA" 
+                       title="Click to set active pricing to United States"
+                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isUsActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
                         <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
                             <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">United States</span>
-                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 uppercase tracking-wider">Global HQ</span>
+                                @if($isUsActive)
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
+                                @else
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 uppercase tracking-wider">Global HQ</span>
+                                @endif
                             </div>
                             <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="4301 Saddle River Drive, Bowie, MD 20720">
                                 4301 Saddle River Drive, Bowie, MD 20720
                             </p>
+                            <span class="text-[10px] text-brand-400 font-semibold mt-1 inline-block">Pricing in USD ($) • Tap to switch</span>
                         </div>
                     </a>
 
                     <!-- RSA Regional Hub -->
-                    <a href="https://maps.google.com/?q=11+Corona+Road,+Sandhurst,+Sandton,+Gauteng+2196" target="_blank" rel="noopener" 
-                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5">
+                    @php $isZaActive = strtoupper($currentCountryCode ?? 'USA') === 'ZAF'; @endphp
+                    <a href="/set-country/ZAF" 
+                       title="Click to set active pricing to South Africa"
+                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isZaActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
                         <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
                             <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">South Africa</span>
-                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 uppercase tracking-wider">RSA Hub</span>
+                                @if($isZaActive)
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
+                                @else
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 uppercase tracking-wider">RSA Hub</span>
+                                @endif
                             </div>
                             <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="11 Corona Road, Sandhurst, Sandton, Gauteng 2196">
                                 11 Corona Rd, Sandhurst, Sandton 2196
                             </p>
+                            <span class="text-[10px] text-brand-400 font-semibold mt-1 inline-block">Pricing in ZAR (R) • Tap to switch</span>
                         </div>
                     </a>
 
                     <!-- Ghana Regional Hub -->
-                    <a href="https://maps.google.com/?q=No+1+Airport+Square,+Airport+City,+Accra,+Ghana" target="_blank" rel="noopener" 
-                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5">
+                    @php $isGhActive = strtoupper($currentCountryCode ?? 'USA') === 'GHA'; @endphp
+                    <a href="/set-country/GHA" 
+                       title="Click to set active pricing to Ghana"
+                       class="p-4 sm:p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border transition-all duration-300 group flex items-start gap-3.5 hover:shadow-xl hover:-translate-y-0.5 {{ $isGhActive ? 'border-brand-500/50 bg-brand-500/5 ring-1 ring-brand-500/30' : 'border-white/[0.08] hover:border-white/20' }}">
                         <span class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-sm">
                             <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-6 h-4 object-cover rounded shadow-sm">
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">Ghana</span>
-                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 uppercase tracking-wider">GHA Hub</span>
+                                @if($isGhActive)
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 uppercase tracking-wider">Active Region</span>
+                                @else
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 uppercase tracking-wider">GHA Hub</span>
+                                @endif
                             </div>
                             <p class="text-xs text-zinc-400 group-hover:text-zinc-300 font-medium leading-relaxed mt-1" title="No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana">
                                 No 1 Airport Square, 8th FL, Airport City, Accra
                             </p>
+                            <span class="text-[10px] text-brand-400 font-semibold mt-1 inline-block">Pricing in GHS (GH₵) • Tap to switch</span>
                         </div>
                     </a>
                 </div>
