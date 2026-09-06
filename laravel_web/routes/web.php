@@ -834,7 +834,8 @@ Route::post('/rent/booking/{ride}/modify', [\App\Http\Controllers\VehicleRentalC
 Route::post('/set-country', function (\Illuminate\Http\Request $request) {
     $country = $request->input('country') ?? $request->input('country_code');
     $code = \App\Services\CountryService::normalizeToCode($country) ?? 'USA';
-    \App\Services\CountryService::persistCountry($code, true);
+    $isAuto = $request->boolean('auto', false);
+    \App\Services\CountryService::persistCountry($code, !$isAuto);
 
     if ($request->wantsJson() || $request->ajax()) {
         $pricing = \App\Models\CountryPricing::forCountry($code);

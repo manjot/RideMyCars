@@ -18,11 +18,14 @@ class CountryService
     /**
      * Detect or resolve the current active country code (e.g. USA, GHA, ZAF, NGA, IND).
      */
+    /**
+     * Detect or resolve the current active country code (e.g. USA, GHA, ZAF, NGA, IND).
+     */
     public static function getCurrentCountryCode(?Request $request = null): string
     {
         $request = $request ?? request();
 
-        // 1. Explicit query parameter override: ?country=GHA or ?country=Ghana
+        // 1. Explicit query parameter override: ?country=GHA or ?country=Ghana or ?country=IND
         if ($request && $request->has('country') && !empty($request->query('country'))) {
             $code = static::normalizeToCode($request->query('country'));
             if ($code) {
@@ -31,26 +34,25 @@ class CountryService
             }
         }
 
-        // 2. Session
-        if (session()->has('user_country')) {
-            $sessionVal = session('user_country');
-            $code = static::normalizeToCode($sessionVal);
-            if ($code) {
-                return $code;
+        // 2. User selection (manual click) OR auto-detected country from session/cookie
+        $isManual = session('user_country_manual') 
+            || ($request && $request->cookie('user_country_manual') === '1')
+            || (isset($_COOKIE['user_country_manual']) && $_COOKIE['user_country_manual'] === '1');
+
+        $sessionVal = session('user_country');
+        $cookieVal = ($request ? $request->cookie('user_country') : null) ?? ($_COOKIE['user_country'] ?? null);
+        $savedVal = $sessionVal ?? $cookieVal;
+
+        if ($savedVal) {
+            $savedCode = static::normalizeToCode($savedVal);
+            // If the user manually chose this country, always respect it (even if USA).
+            // If it was auto-detected into session/cookie (e.g. IND, GHA, etc.) and NOT the old fallback 'USA', respect it!
+            if ($savedCode && ($isManual || $savedCode !== 'USA')) {
+                return $savedCode;
             }
         }
 
-        // 3. Cookie
-        $cookieVal = $request ? $request->cookie('user_country') : ($_COOKIE['user_country'] ?? null);
-        if ($cookieVal) {
-            $code = static::normalizeToCode($cookieVal);
-            if ($code) {
-                session(['user_country' => $code]);
-                return $code;
-            }
-        }
-
-        // 4. Authenticated user profile preference (customer, driver, or owner)
+        // 3. Authenticated user profile preference (customer, driver, or owner)
         if (auth()->check()) {
             $u = auth()->user();
             if ($u && !empty($u->country)) {
@@ -67,13 +69,13 @@ class CountryService
             }
         }
 
-        // 5. IP Geolocation detection: auto-selects visitor's current location
+        // 4. IP, Browser & Location Geolocation detection: auto-selects visitor's current location
         $visitor = static::getVisitorLocationInfo($request);
         if (!empty($visitor['code'])) {
             return $visitor['code'];
         }
 
-        // 6. Default fallback: USA
+        // 5. Default fallback: USA
         return 'USA';
     }
 
@@ -100,7 +102,8 @@ class CountryService
     }
 
     /**
-     * Get visitor physical location details.
+     * Get visitor physical location details via multi-tier detection:
+     * CDN headers -> Browser Timezone/Offset -> Real IP Lookup -> Accept-Language
      */
     public static function getVisitorLocationInfo(?Request $request = null): array
     {
@@ -108,47 +111,111 @@ class CountryService
 
         $iso = null;
         if ($request) {
+            // A. Direct CDN / Cloudflare country headers
             $iso = $request->header('CF-IPCountry')
-                ?? $request->header('X-Country-Code')
                 ?? $request->server('HTTP_CF_IPCOUNTRY')
-                ?? $request->server('GEOIP_COUNTRY_CODE');
-        }
+                ?? ($_SERVER['HTTP_CF_IPCOUNTRY'] ?? null)
+                ?? $request->header('X-Country-Code')
+                ?? $request->header('GEOIP_COUNTRY_CODE')
+                ?? $request->server('GEOIP_COUNTRY_CODE')
+                ?? ($_SERVER['GEOIP_COUNTRY_CODE'] ?? null)
+                ?? $request->header('X-AppEngine-Country')
+                ?? ($request->cookie('user_detected_country') ?? ($_COOKIE['user_detected_country'] ?? null));
 
-        $ip = $request ? $request->ip() : null;
-
-        if (empty($iso) || strtoupper($iso) === 'XX') {
-            if ($ip && !in_array($ip, ['127.0.0.1', '::1', 'localhost']) && !str_starts_with($ip, '192.168.') && !str_starts_with($ip, '10.')) {
-                $cacheKey = 'ip_geo_iso_' . md5($ip);
-                $iso = Cache::remember($cacheKey, 86400, function () use ($ip) {
-                    try {
-                        $res = Http::timeout(2)->get("https://ipapi.co/{$ip}/country/");
-                        if ($res->successful()) {
-                            $c = trim($res->body());
-                            if (strlen($c) === 2) {
-                                return strtoupper($c);
-                            }
-                        }
-                    } catch (\Throwable $e) {}
-
-                    try {
-                        $res2 = Http::timeout(2)->get("http://ip-api.com/line/{$ip}?fields=countryCode");
-                        if ($res2->successful()) {
-                            $c2 = trim($res2->body());
-                            if (strlen($c2) === 2) {
-                                return strtoupper($c2);
-                            }
-                        }
-                    } catch (\Throwable $e) {}
-
-                    return null;
-                });
+            if ($iso && (strtoupper($iso) === 'XX' || strtoupper($iso) === 'T1')) {
+                $iso = null;
             }
         }
 
-        // Local development fallback: infer country from Accept-Language header
+        // B. Client Timezone & Offset detection (sent via cookies or headers from browser)
+        if (empty($iso)) {
+            $tz = ($request ? $request->cookie('user_timezone') : null)
+                ?? ($_COOKIE['user_timezone'] ?? null)
+                ?? ($request ? $request->header('X-Timezone') : null);
+            if ($tz) {
+                $iso = static::getIsoFromTimezone($tz);
+            }
+            if (empty($iso)) {
+                $tzOffset = ($request ? $request->cookie('user_tz_offset') : null)
+                    ?? ($_COOKIE['user_tz_offset'] ?? null)
+                    ?? ($request ? $request->header('X-Timezone-Offset') : null);
+                if ($tzOffset !== null && $tzOffset !== '') {
+                    $iso = static::getIsoFromOffset($tzOffset);
+                }
+            }
+        }
+
+        // C. Real Client IP Resolution (handles Cloudflare, reverse proxies, and direct connections)
+        $realIp = null;
+        if ($request) {
+            $realIp = $request->header('CF-Connecting-IP')
+                ?? $request->header('True-Client-IP')
+                ?? $request->header('X-Real-IP');
+
+            if (!$realIp && $request->header('X-Forwarded-For')) {
+                $parts = explode(',', $request->header('X-Forwarded-For'));
+                $realIp = trim($parts[0]);
+            }
+
+            if (!$realIp) {
+                $realIp = $request->server('HTTP_CF_CONNECTING_IP')
+                    ?? $request->server('HTTP_X_REAL_IP')
+                    ?? $request->ip();
+            }
+        }
+
+        // D. Remote IP Geolocation API lookup
+        if (empty($iso) && $realIp && !in_array($realIp, ['127.0.0.1', '::1', 'localhost']) && !str_starts_with($realIp, '192.168.') && !str_starts_with($realIp, '10.')) {
+            $cacheKey = 'ip_geo_iso_v3_' . md5($realIp);
+            $iso = Cache::remember($cacheKey, 86400, function () use ($realIp) {
+                try {
+                    $res = Http::timeout(2)->get("https://api.country.is/{$realIp}");
+                    if ($res->successful()) {
+                        $json = $res->json();
+                        if (!empty($json['country']) && strlen($json['country']) === 2) {
+                            return strtoupper($json['country']);
+                        }
+                    }
+                } catch (\Throwable $e) {}
+
+                try {
+                    $res2 = Http::timeout(2)->get("http://ip-api.com/line/{$realIp}?fields=countryCode");
+                    if ($res2->successful()) {
+                        $c2 = trim($res2->body());
+                        if (strlen($c2) === 2) {
+                            return strtoupper($c2);
+                        }
+                    }
+                } catch (\Throwable $e) {}
+
+                try {
+                    $res3 = Http::timeout(2)->get("https://ipapi.co/{$realIp}/country/");
+                    if ($res3->successful()) {
+                        $c3 = trim($res3->body());
+                        if (strlen($c3) === 2) {
+                            return strtoupper($c3);
+                        }
+                    }
+                } catch (\Throwable $e) {}
+
+                return null;
+            });
+        }
+
+        // E. Browser Accept-Language header detection
         if (empty($iso) && $request) {
-            $acceptLang = $request->header('Accept-Language', '');
-            if (preg_match('/[a-z]{2}-([A-Z]{2})/i', $acceptLang, $matches)) {
+            $acceptLang = strtolower($request->header('Accept-Language', ''));
+            if (str_contains($acceptLang, 'en-in') || str_contains($acceptLang, 'hi') || str_contains($acceptLang, 'pa-in') || str_contains($acceptLang, 'gu-in') || str_contains($acceptLang, 'ta-in') || str_contains($acceptLang, 'te-in') || str_contains($acceptLang, 'mr-in')) {
+                $iso = 'IN';
+            } elseif (str_contains($acceptLang, 'en-gh')) {
+                $iso = 'GH';
+            } elseif (str_contains($acceptLang, 'en-za') || str_contains($acceptLang, 'af-za') || str_contains($acceptLang, 'zu')) {
+                $iso = 'ZA';
+            } elseif (str_contains($acceptLang, 'en-ng') || str_contains($acceptLang, 'yo') || str_contains($acceptLang, 'ig') || str_contains($acceptLang, 'ha')) {
+                $iso = 'NG';
+            } elseif (str_contains($acceptLang, 'en-gb')) {
+                $iso = 'GB';
+            } elseif (preg_match('/[a-z]{2}-([a-z]{2})/i', $acceptLang, $matches)) {
                 $iso = strtoupper($matches[1]);
             }
         }
@@ -180,6 +247,77 @@ class CountryService
                 ? 'We do not support your local currency right now, so you need to pay in USD ($).' 
                 : null,
         ];
+    }
+
+    /**
+     * Map timezone name to ISO 2-letter country code.
+     */
+    public static function getIsoFromTimezone(?string $tz): ?string
+    {
+        if (empty($tz)) {
+            return null;
+        }
+
+        $tzLower = strtolower(trim($tz));
+
+        if (str_contains($tzLower, 'kolkata') || str_contains($tzLower, 'calcutta') || str_contains($tzLower, 'india')) {
+            return 'IN';
+        }
+        if (str_contains($tzLower, 'accra')) {
+            return 'GH';
+        }
+        if (str_contains($tzLower, 'johannesburg')) {
+            return 'ZA';
+        }
+        if (str_contains($tzLower, 'lagos')) {
+            return 'NG';
+        }
+        if (str_contains($tzLower, 'london')) {
+            return 'GB';
+        }
+        if (str_contains($tzLower, 'dubai')) {
+            return 'AE';
+        }
+        if (str_contains($tzLower, 'nairobi')) {
+            return 'KE';
+        }
+        if (str_contains($tzLower, 'toronto') || str_contains($tzLower, 'vancouver') || str_contains($tzLower, 'montreal')) {
+            return 'CA';
+        }
+        if (str_contains($tzLower, 'new_york') || str_contains($tzLower, 'chicago') || str_contains($tzLower, 'los_angeles') || str_contains($tzLower, 'denver') || str_contains($tzLower, 'phoenix') || str_contains($tzLower, 'detroit')) {
+            return 'US';
+        }
+
+        return null;
+    }
+
+    /**
+     * Map JavaScript timezone offset (minutes) to ISO 2-letter country code.
+     */
+    public static function getIsoFromOffset($offset): ?string
+    {
+        if ($offset === null || $offset === '') {
+            return null;
+        }
+        $val = (int) $offset;
+        // JS new Date().getTimezoneOffset(): India is UTC+5:30 -> offset is -330
+        if ($val === -330) {
+            return 'IN';
+        }
+        if ($val === -120) {
+            return 'ZA'; // South Africa (UTC+2)
+        }
+        if ($val === -60) {
+            return 'NG'; // Nigeria (UTC+1)
+        }
+        if ($val === -240) {
+            return 'AE'; // UAE (UTC+4)
+        }
+        if ($val === -180) {
+            return 'KE'; // Kenya (UTC+3)
+        }
+
+        return null;
     }
 
     /**
@@ -236,6 +374,12 @@ class CountryService
             return $map[$upper];
         }
 
+        foreach ($map as $k => $v) {
+            if ($v['code_3'] === $upper) {
+                return $v;
+            }
+        }
+
         return ['code_3' => $upper, 'name' => $upper];
     }
 
@@ -257,6 +401,9 @@ class CountryService
         session(['user_country' => $code]);
         if ($isManual) {
             session(['user_country_manual' => true]);
+            if (function_exists('cookie')) {
+                cookie()->queue(cookie('user_country_manual', '1', 60 * 24 * 30));
+            }
         }
 
         // Also queue cookie for 30 days
@@ -536,6 +683,7 @@ class CountryService
             'CAN' => '+1',
             'ARE' => '+971',
             'KEN' => '+254',
+            'IND' => '+91',
             default => '+1',
         };
     }

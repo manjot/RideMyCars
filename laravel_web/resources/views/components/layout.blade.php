@@ -16,7 +16,101 @@
     <!-- Fonts: Plus Jakarta Sans & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Client Location & Timezone Auto-Sync (Instant Detection for Customer & Member) -->
+    <script>
+        (function() {
+            try {
+                // If user manually chose a country from the dropdown, respect their choice
+                var isManual = localStorage.getItem('rmc_manual_country') === 'true' || document.cookie.indexOf('user_country_manual=1') !== -1;
+                if (isManual) return;
+
+                var serverCountry = "{{ strtoupper($currentCountryCode ?? 'USA') }}";
+                var tz = (window.Intl && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+                var tzOffset = new Date().getTimezoneOffset(); // -330 for India (UTC+5:30)
+
+                // Store timezone and offset in cookies so server gets them on every request
+                if (tz) document.cookie = "user_timezone=" + encodeURIComponent(tz) + "; path=/; max-age=" + (86400 * 30);
+                document.cookie = "user_tz_offset=" + tzOffset + "; path=/; max-age=" + (86400 * 30);
+
+                var detectedCode = null;
+                // India detection: Asia/Kolkata, Asia/Calcutta, or timezone offset -330
+                if (tz === 'Asia/Kolkata' || tz === 'Asia/Calcutta' || tzOffset === -330) {
+                    detectedCode = 'IND';
+                } else if (tz === 'Africa/Accra' || (tzOffset === 0 && tz && tz.indexOf('Accra') !== -1)) {
+                    detectedCode = 'GHA';
+                } else if (tz === 'Africa/Johannesburg' || (tzOffset === -120 && tz && tz.indexOf('Johannesburg') !== -1)) {
+                    detectedCode = 'ZAF';
+                } else if (tz === 'Africa/Lagos' || (tzOffset === -60 && tz && tz.indexOf('Lagos') !== -1)) {
+                    detectedCode = 'NGA';
+                } else if (tz === 'Europe/London') {
+                    detectedCode = 'GBR';
+                } else if (tz === 'Asia/Dubai') {
+                    detectedCode = 'ARE';
+                } else if (tz === 'Africa/Nairobi') {
+                    detectedCode = 'KEN';
+                } else if (tz && (tz.indexOf('New_York') !== -1 || tz.indexOf('Chicago') !== -1 || tz.indexOf('Los_Angeles') !== -1 || tz.indexOf('Denver') !== -1)) {
+                    detectedCode = 'USA';
+                } else if (tz && (tz.indexOf('Toronto') !== -1 || tz.indexOf('Vancouver') !== -1)) {
+                    detectedCode = 'CAN';
+                }
+
+                // If detected code is resolved and doesn't match the currently rendered country
+                if (detectedCode && detectedCode !== serverCountry) {
+                    document.cookie = "user_country=" + detectedCode + "; path=/; max-age=" + (86400 * 30);
+                    var iso2 = (detectedCode === 'IND') ? 'IN' : (detectedCode === 'USA' ? 'US' : detectedCode.substring(0, 2));
+                    document.cookie = "user_detected_country=" + iso2 + "; path=/; max-age=" + (86400 * 30);
+
+                    var syncAttempts = parseInt(sessionStorage.getItem('rmc_sync_attempts') || '0', 10);
+                    if (syncAttempts < 2) {
+                        sessionStorage.setItem('rmc_sync_attempts', (syncAttempts + 1).toString());
+                        var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+                        fetch('/set-country', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ country: detectedCode, auto: true })
+                        }).then(function() {
+                            window.location.reload();
+                        }).catch(function() {
+                            window.location.reload();
+                        });
+                    }
+                    return;
+                } else if (detectedCode && detectedCode === serverCountry) {
+                    sessionStorage.removeItem('rmc_sync_attempts');
+                }
+
+                // If timezone was inconclusive, perform fast background IP detection via api.country.is
+                if (!detectedCode && !sessionStorage.getItem('rmc_ip_lookup_done')) {
+                    sessionStorage.setItem('rmc_ip_lookup_done', '1');
+                    fetch('https://api.country.is')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data && data.country) {
+                                var iso = data.country.toUpperCase();
+                                document.cookie = "user_detected_country=" + iso + "; path=/; max-age=" + (86400 * 30);
+                                var map = { 'IN': 'IND', 'GH': 'GHA', 'ZA': 'ZAF', 'NG': 'NGA', 'GB': 'GBR', 'US': 'USA', 'CA': 'CAN', 'AE': 'ARE', 'KE': 'KEN' };
+                                var target = map[iso] || iso;
+                                if (target && target !== serverCountry && !localStorage.getItem('rmc_manual_country')) {
+                                    document.cookie = "user_country=" + target + "; path=/; max-age=" + (86400 * 30);
+                                    var token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+                                    fetch('/set-country', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                                        body: JSON.stringify({ country: target, auto: true })
+                                    }).then(function() {
+                                        window.location.reload();
+                                    });
+                                }
+                            }
+                        }).catch(function() {});
+                }
+            } catch(e) {}
+        })();
+    </script>
+
     <!-- Alpine.js & Instant Page Prefetching -->
     <style>
         [x-cloak] { display: none !important; }
@@ -666,6 +760,7 @@
                                     $isActive = strtoupper($currentCountryCode ?? 'USA') === strtoupper($code);
                                 @endphp
                                 <a href="/set-country/{{ $code }}" 
+                                   onclick="localStorage.setItem('rmc_manual_country', 'true'); document.cookie='user_country_manual=1; path=/; max-age=' + (86400*30);"
                                    class="flex items-center justify-between p-2.5 rounded-xl transition-all {{ $isActive ? 'bg-brand-500/15 text-brand-700 dark:text-brand-300 font-bold border border-brand-500/25' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
                                     <div class="flex items-center gap-2.5 min-w-0">
                                         <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1017,6 +1112,7 @@
                         $isActive = strtoupper($currentCountryCode ?? 'USA') === strtoupper($code);
                     @endphp
                     <a href="/set-country/{{ $code }}" 
+                       onclick="localStorage.setItem('rmc_manual_country', 'true'); document.cookie='user_country_manual=1; path=/; max-age=' + (86400*30);"
                        class="flex items-center gap-2 p-2 rounded-xl border text-xs font-semibold transition-all {{ $isActive ? 'bg-brand-500/15 border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'border-gray-200/70 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5' }}">
                         <svg class="w-3 h-3 text-gray-400 dark:text-gray-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"/>
