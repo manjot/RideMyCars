@@ -770,9 +770,11 @@
                                     <img src="{{ str_starts_with($profile->image_url, 'http') ? $profile->image_url : asset('storage/' . $profile->image_url) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                                 @elseif($user->profile_photo_path)
                                     <img src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                @elseif($user->avatar_url)
+                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-brand-500/10 text-brand-500 font-extrabold text-2xl">
-                                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                                        {{ strtoupper(substr($user->name ?? 'D', 0, 1)) }}
                                     </div>
                                 @endif
                                 <button type="button" @click="showEditModal = true" class="absolute bottom-0 right-0 left-0 bg-black/70 hover:bg-black text-[10px] text-white py-0.5 text-center font-bold transition-colors">

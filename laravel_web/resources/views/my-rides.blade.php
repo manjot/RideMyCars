@@ -157,9 +157,16 @@
                             <!-- Driver Info -->
                             @if($ride->driver)
                                 <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
-                                    <div class="w-9 h-9 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 shrink-0">
-                                        {{ strtoupper(substr($ride->driver->name, 0, 1)) }}
-                                    </div>
+                                    @if($ride->driver->avatar_url)
+                                        <img src="{{ $ride->driver->avatar_url }}" alt="{{ $ride->driver->name }}" class="w-9 h-9 rounded-full object-cover border border-brand-500 shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div style="display: none;" class="w-9 h-9 rounded-full bg-brand-500 text-black items-center justify-center text-sm font-bold shrink-0">
+                                            {{ strtoupper(substr($ride->driver->name ?? 'D', 0, 1)) }}
+                                        </div>
+                                    @else
+                                        <div class="w-9 h-9 rounded-full bg-brand-500 text-black flex items-center justify-center text-sm font-bold shrink-0">
+                                            {{ strtoupper(substr($ride->driver->name ?? 'D', 0, 1)) }}
+                                        </div>
+                                    @endif
                                     <div class="min-w-0">
                                         <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $ride->driver->name }}</p>
                                         <p class="text-xs text-gray-400">Driver</p>

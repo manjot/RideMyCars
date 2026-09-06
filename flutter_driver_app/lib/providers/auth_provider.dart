@@ -13,6 +13,7 @@ class AuthProvider extends ChangeNotifier {
   String? _userName;
   String? _userEmail;
   int? _userId;
+  String? _avatarUrl;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
@@ -21,12 +22,20 @@ class AuthProvider extends ChangeNotifier {
   String? get userName => _userName;
   String? get userEmail => _userEmail;
   int? get userId => _userId;
+  String? get avatarUrl => _avatarUrl;
   String? get errorMessage => _errorMessage;
+
+  void setAvatarUrl(String? url) {
+    _avatarUrl = url;
+    TokenStorage.saveAvatarUrl(url);
+    notifyListeners();
+  }
 
   Future<bool> loadSession() async {
     _token = await TokenStorage.getToken();
     _userName = await TokenStorage.getUserName();
     _userEmail = await TokenStorage.getUserEmail();
+    _avatarUrl = await TokenStorage.getAvatarUrl();
     final savedPassword = await TokenStorage.getSavedPassword();
 
     if (_token != null && _token!.isNotEmpty) {
@@ -40,11 +49,13 @@ class AuthProvider extends ChangeNotifier {
           final u = res.data['user'];
           _userId = u['id'];
           _userName = u['name'];
+          _avatarUrl = u['avatar_url']?.toString();
           await TokenStorage.saveUserData(
             role: 'driver',
             name: _userName!,
             email: _userEmail!,
             password: savedPassword,
+            avatarUrl: _avatarUrl,
           );
         }
       } catch (_) {
@@ -110,6 +121,7 @@ class AuthProvider extends ChangeNotifier {
         _userId = u['id'];
         _userName = u['name'];
         _userEmail = u['email'];
+        _avatarUrl = u['avatar_url']?.toString();
         _isAuthenticated = true;
 
         if (_token != null) {
@@ -120,6 +132,7 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? 'Driver Partner',
           email: _userEmail ?? email,
           password: password,
+          avatarUrl: _avatarUrl,
         );
 
         _isLoading = false;

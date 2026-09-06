@@ -126,7 +126,7 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('avatar')
                     ->circular()
-                    ->defaultImageUrl(fn ($record) => $record->avatar_url)
+                    ->defaultImageUrl(fn ($record) => $record->avatar_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($record->name ?? 'User') . '&background=f9c52a&color=102b54&bold=true'))
                     ->label('Photo'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()

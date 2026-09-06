@@ -34,6 +34,14 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
           _userProfile = res.data['user'];
           _driverProfile = res.data['driver_profile'];
         });
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final foundAvatar = _driverProfile?['image_url'] ?? _userProfile?['avatar_url'] ?? _userProfile?['avatar'];
+        if (foundAvatar != null && foundAvatar.toString().isNotEmpty) {
+          final resolved = foundAvatar.toString().startsWith('http')
+              ? foundAvatar.toString()
+              : '${ApiConstants.storageBaseUrl}/${foundAvatar.toString().replaceFirst(RegExp(r"^storage/"), "")}';
+          auth.setAvatarUrl(resolved);
+        }
       }
     } catch (e) {
       debugPrint('Error fetching driver profile: $e');
@@ -251,9 +259,9 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     final hourlyRate = (_driverProfile?['hourly_rate'] ?? 35.0).toString();
     final isVerified = _driverProfile?['is_verified'] == true || _driverProfile?['verification_status'] == 'verified';
 
-    final rawPhoto = _driverProfile?['image_url'] ?? _userProfile?['profile_photo_path'];
+    final rawPhoto = _driverProfile?['image_url'] ?? _userProfile?['avatar_url'] ?? _userProfile?['avatar'] ?? _userProfile?['profile_photo_path'] ?? auth.avatarUrl;
     final photoUrl = rawPhoto != null && rawPhoto.toString().isNotEmpty
-        ? (rawPhoto.toString().startsWith('http') ? rawPhoto.toString() : '${ApiConstants.storageBaseUrl}/${rawPhoto.toString()}')
+        ? (rawPhoto.toString().startsWith('http') ? rawPhoto.toString() : '${ApiConstants.storageBaseUrl}/${rawPhoto.toString().replaceFirst(RegExp(r"^storage/"), "")}')
         : null;
 
     return Scaffold(

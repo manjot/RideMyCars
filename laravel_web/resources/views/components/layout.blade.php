@@ -940,10 +940,17 @@
                     </div>
 
                     <div x-data="{ userMenuOpen: false }" class="relative" @click.away="userMenuOpen = false">
-                        <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 focus:outline-none">
-                            <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-lg border border-gray-300 shadow-sm">
-                                {{ substr(auth()->user()->name, 0, 1) }}
-                            </div>
+                        <button @click="userMenuOpen = !userMenuOpen" class="flex items-center gap-2 focus:outline-none rounded-full p-0.5 hover:ring-2 hover:ring-brand-500/50 transition-all" aria-label="User profile menu">
+                            @if(auth()->user()->avatar_url)
+                                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none;" class="w-10 h-10 rounded-full bg-brand-500 text-black items-center justify-center font-bold text-lg border border-brand-500/30 shadow-sm">
+                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                </div>
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-brand-500 text-black flex items-center justify-center font-bold text-lg border border-brand-500/30 shadow-sm">
+                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                </div>
+                            @endif
                         </button>
                         
                         <div x-show="userMenuOpen" x-transition class="dropdown-menu-card absolute top-full right-0 mt-2.5 sm:mt-4 w-[calc(100vw-32px)] sm:w-[340px] max-w-[340px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 sm:p-5 z-[110]" style="display: none;">
@@ -957,9 +964,16 @@
                                         <span class="text-xs font-bold text-gray-900 dark:text-white">5.00</span>
                                     </div>
                                 </div>
-                                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-100 text-gray-900 flex items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
-                                    {{ substr(auth()->user()->name, 0, 1) }}
-                                </div>
+                                @if(auth()->user()->avatar_url)
+                                    <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-brand-500 shadow-md shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div style="display: none;" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-500 text-black items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
+                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                    </div>
+                                @else
+                                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-500 text-black flex items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
+                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                    </div>
+                                @endif
                             </div>
 
                             @if(auth()->user()->role === 'driver')
@@ -1290,9 +1304,16 @@
                 @auth
                     <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/5 mb-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-full bg-brand-500 text-black font-black flex items-center justify-center text-sm shrink-0">
-                                {{ substr(auth()->user()->name, 0, 1) }}
-                            </div>
+                            @if(auth()->user()->avatar_url)
+                                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-9 h-9 rounded-full object-cover border border-brand-500 shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none;" class="w-9 h-9 rounded-full bg-brand-500 text-black font-black items-center justify-center text-sm shrink-0">
+                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                </div>
+                            @else
+                                <div class="w-9 h-9 rounded-full bg-brand-500 text-black font-black flex items-center justify-center text-sm shrink-0">
+                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                </div>
+                            @endif
                             <div class="truncate">
                                 <div class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ auth()->user()->name }}</div>
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{{ auth()->user()->role ?? 'Member' }}</div>

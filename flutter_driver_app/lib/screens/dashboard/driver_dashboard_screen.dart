@@ -148,7 +148,38 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
             ],
           ),
-          const SizedBox(width: 8),
+          // Driver Avatar in top corner
+          Builder(
+            builder: (btnCtx) => GestureDetector(
+              onTap: () => Scaffold.of(btnCtx).openDrawer(),
+              child: Container(
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 17,
+                  backgroundColor: AppColors.primary,
+                  backgroundImage: (auth.avatarUrl != null && auth.avatarUrl!.isNotEmpty)
+                      ? NetworkImage(auth.avatarUrl!)
+                      : null,
+                  child: (auth.avatarUrl == null || auth.avatarUrl!.isEmpty)
+                      ? Text(
+                          (auth.userName ?? 'D').trim().isNotEmpty
+                              ? (auth.userName ?? 'D').trim()[0].toUpperCase()
+                              : 'D',
+                          style: const TextStyle(
+                            color: AppColors.backgroundDark,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -368,12 +399,35 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primary, width: 2),
                         ),
-                        child: const Icon(Icons.person_pin_rounded, color: AppColors.primary),
+                        child: ClipOval(
+                          child: (auth.avatarUrl != null && auth.avatarUrl!.isNotEmpty)
+                              ? Image.network(
+                                  auth.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: AppColors.primary,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      (auth.userName ?? 'D').trim().isNotEmpty ? (auth.userName ?? 'D').trim()[0].toUpperCase() : 'D',
+                                      style: const TextStyle(color: AppColors.backgroundDark, fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  color: AppColors.primary,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    (auth.userName ?? 'D').trim().isNotEmpty ? (auth.userName ?? 'D').trim()[0].toUpperCase() : 'D',
+                                    style: const TextStyle(color: AppColors.backgroundDark, fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                ),
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -1369,14 +1423,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   CircleAvatar(
                     radius: 26,
                     backgroundColor: AppColors.primary,
-                    child: Text(
-                      (auth.userName ?? 'D')[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.backgroundDark,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
+                    backgroundImage: (auth.avatarUrl != null && auth.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(auth.avatarUrl!)
+                        : null,
+                    child: (auth.avatarUrl == null || auth.avatarUrl!.isEmpty)
+                        ? Text(
+                            (auth.userName ?? 'D').trim().isNotEmpty
+                                ? (auth.userName ?? 'D').trim()[0].toUpperCase()
+                                : 'D',
+                            style: const TextStyle(
+                              color: AppColors.backgroundDark,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 14),
                   Expanded(

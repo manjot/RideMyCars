@@ -19,7 +19,7 @@ class User extends Authenticatable implements FilamentUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
-    protected $appends = ['avatar_url'];
+    protected $appends = ['avatar_url', 'has_avatar', 'initial'];
 
     protected static function booted()
     {
@@ -51,12 +51,40 @@ class User extends Authenticatable implements FilamentUser
         return $value;
     }
 
-    public function getAvatarUrlAttribute(): string
+    public function getAvatarUrlAttribute(): ?string
     {
-        if (!empty($this->avatar)) {
-            return str_starts_with($this->avatar, 'http') ? $this->avatar : asset('storage/' . $this->avatar);
+        $path = $this->avatar;
+
+        if (empty($path) && !empty($this->profile_photo_path)) {
+            $path = $this->profile_photo_path;
         }
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=f9c52a&color=102b54&bold=true';
+
+        if (empty($path)) {
+            if ($this->relationLoaded('driverProfile') && $this->driverProfile) {
+                $path = $this->driverProfile->image_url;
+            } else {
+                $path = $this->driverProfile()->value('image_url');
+            }
+        }
+
+        if (!empty($path)) {
+            return (str_starts_with($path, 'http://') || str_starts_with($path, 'https://'))
+                ? $path
+                : asset('storage/' . ltrim($path, '/'));
+        }
+
+        return null;
+    }
+
+    public function getHasAvatarAttribute(): bool
+    {
+        return !empty($this->avatar_url);
+    }
+
+    public function getInitialAttribute(): string
+    {
+        $name = trim($this->name ?? 'U');
+        return strtoupper(mb_substr($name, 0, 1, 'UTF-8'));
     }
 
     public function referrer()

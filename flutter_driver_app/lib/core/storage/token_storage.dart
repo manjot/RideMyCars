@@ -9,6 +9,7 @@ class TokenStorage {
   static const _userNameKey = 'user_name';
   static const _userEmailKey = 'user_email';
   static const _savedPasswordKey = 'saved_password';
+  static const _avatarUrlKey = 'avatar_url';
 
   static Future<void> saveToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
@@ -23,6 +24,7 @@ class TokenStorage {
     required String name,
     required String email,
     String? password,
+    String? avatarUrl,
   }) async {
     await _storage.write(key: _roleKey, value: role);
     await _storage.write(key: _userNameKey, value: name);
@@ -30,6 +32,21 @@ class TokenStorage {
     if (password != null && password.isNotEmpty) {
       await _storage.write(key: _savedPasswordKey, value: password);
     }
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      await _storage.write(key: _avatarUrlKey, value: avatarUrl);
+    }
+  }
+
+  static Future<void> saveAvatarUrl(String? avatarUrl) async {
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      await _storage.write(key: _avatarUrlKey, value: avatarUrl);
+    } else {
+      await _storage.delete(key: _avatarUrlKey);
+    }
+  }
+
+  static Future<String?> getAvatarUrl() async {
+    return await _storage.read(key: _avatarUrlKey);
   }
 
   static Future<void> saveCredentials(String email, String password) async {

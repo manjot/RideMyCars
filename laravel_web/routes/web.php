@@ -2389,6 +2389,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
             $profileUpdates['image_url'] = $photoPath;
             $profileUpdates['photo_formality_status'] = 'verified';
+            $user->update(['avatar' => $photoPath]);
         }
 
         $profile->update($profileUpdates);
@@ -2456,6 +2457,9 @@ Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {
     $user = auth()->user();
     $path = $request->file('avatar')->store('avatars', 'public');
     $user->update(['avatar' => $path]);
+    if ($user->driverProfile) {
+        $user->driverProfile->update(['image_url' => $path]);
+    }
     return back()->with('success', 'Profile photo updated successfully!');
 })->middleware('auth');
 

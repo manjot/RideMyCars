@@ -67,7 +67,7 @@
                     <div class="text-center mb-8">
                         <div class="relative w-28 h-28 rounded-full mx-auto mb-4 group">
                             <div class="w-full h-full rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-4xl font-bold overflow-hidden shadow-lg border-2 border-amber-400">
-                                @if(!empty($user->avatar))
+                                @if(!empty($user->avatar_url))
                                     <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
                                 @else
                                     <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
@@ -136,8 +136,12 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Profiles</p>
                         <div class="space-y-1">
                             <button @click="showNameModal = true" class="w-full flex items-center gap-4 py-4 border-b border-gray-200 dark:border-white/10 group hover:bg-gray-50 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors text-left cursor-pointer">
-                                <div class="w-12 h-12 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center shrink-0 font-bold text-lg">
-                                    <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                                <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black text-white dark:bg-white dark:text-black font-bold text-lg border border-gray-200 dark:border-white/10">
+                                    @if(!empty($user->avatar_url))
+                                        <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
+                                    @else
+                                        <span x-text="userName ? userName.charAt(0).toUpperCase() : 'U'"></span>
+                                    @endif
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="font-bold text-gray-900 dark:text-white text-[15px]">Personal</p>

@@ -396,6 +396,45 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  // User Profile Avatar in Top Corner
+                  Builder(
+                    builder: (btnCtx) => GestureDetector(
+                      onTap: () => Scaffold.of(btnCtx).openDrawer(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primary, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 19,
+                          backgroundColor: AppColors.primary,
+                          backgroundImage: (auth.avatarUrl != null && auth.avatarUrl!.isNotEmpty)
+                              ? NetworkImage(auth.avatarUrl!)
+                              : null,
+                          child: (auth.avatarUrl == null || auth.avatarUrl!.isEmpty)
+                              ? Text(
+                                  (auth.userName ?? 'U').trim().isNotEmpty
+                                      ? (auth.userName ?? 'U').trim()[0].toUpperCase()
+                                      : 'U',
+                                  style: const TextStyle(
+                                    color: AppColors.backgroundDark,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -664,11 +703,22 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 children: [
                   CircleAvatar(
                     radius: 26,
-                    backgroundColor: AppColors.info,
-                    child: Text(
-                      (auth.userName ?? 'R')[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-                    ),
+                    backgroundColor: AppColors.primary,
+                    backgroundImage: (auth.avatarUrl != null && auth.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(auth.avatarUrl!)
+                        : null,
+                    child: (auth.avatarUrl == null || auth.avatarUrl!.isEmpty)
+                        ? Text(
+                            (auth.userName ?? 'R').trim().isNotEmpty
+                                ? (auth.userName ?? 'R').trim()[0].toUpperCase()
+                                : 'R',
+                            style: const TextStyle(
+                              color: AppColors.backgroundDark,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
