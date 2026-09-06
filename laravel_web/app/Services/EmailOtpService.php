@@ -18,6 +18,7 @@ class EmailOtpService
     {
         $toEmail = trim(strtolower($toEmail));
         $fromEmail = config('mail.from.address') ?: env('MAIL_FROM_ADDRESS', 'support@ridemycars.com');
+        $fromName = config('mail.from.name') ?: env('MAIL_FROM_NAME', 'RideMyCars');
         $timeStr = date('g:i A');
         $subject = "Your RideMyCars Security Code: {$otp} ({$timeStr})";
 
