@@ -2759,22 +2759,23 @@ Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) 
     if ($request->query('key') !== 'rmc2026') {
         return response()->json(['error' => 'Unauthorized'], 403);
     }
-    $email = $request->input('email', 'shachisheh@gmail.com');
-    $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-    $service = app(\App\Services\EmailOtpService::class);
-    $result = $service->sendOtp($email, $otp);
-    $logPath = storage_path('logs/laravel.log');
-    $recentLogs = [];
-    if (file_exists($logPath)) {
-        $lines = file($logPath);
-        $recentLogs = array_slice($lines, -25);
+    try {
+        $email = $request->input('email', 'shachisheh@gmail.com');
+        $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        $service = app(\App\Services\EmailOtpService::class);
+        $result = $service->sendOtp($email, $otp);
+        return response()->json([
+            'email' => $email,
+            'otp' => $otp,
+            'result' => $result,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'exception' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], 200);
     }
-    return response()->json([
-        'email' => $email,
-        'otp' => $otp,
-        'result' => $result,
-        'recent_logs' => $recentLogs,
-    ]);
 });
 
 
