@@ -24,6 +24,8 @@ class EmailOtpService
         $htmlContent = $this->buildHtmlTemplate($otp);
         $textContent = "{$otp} is your RideMyCars verification code. This code is valid for 5 minutes. Do not share this code with anyone. For assistance, visit https://ridemycars.com";
 
+        $dispatched = false;
+
         // 1. Attempt delivery via Laravel Mail (Symfony Mailer)
         try {
             Mail::send([], [], function ($message) use ($toEmail, $fromEmail, $fromName, $subject, $htmlContent, $textContent) {
@@ -32,19 +34,44 @@ class EmailOtpService
                         ->subject($subject)
                         ->html($htmlContent)
                         ->text($textContent);
+
+                $headers = $message->getHeaders();
+                $headers->addTextHeader('Auto-Submitted', 'auto-generated');
+                $headers->addTextHeader('X-Priority', '1');
+                $headers->addTextHeader('Importance', 'High');
+                $headers->addTextHeader('X-Mailer', 'RideMyCars-Mailer/2.0');
             });
 
             Log::info("Email OTP {$otp} successfully dispatched via Laravel Mailer to {$toEmail}");
-            return [
-                'success' => true,
-                'message' => "Verification code sent to {$toEmail}",
-            ];
+            $dispatched = true;
         } catch (\Throwable $e) {
             Log::warning("Laravel Mailer dispatch to {$toEmail} failed: " . $e->getMessage() . ". Attempting Direct Bluehost SMTP Socket fallback...");
         }
 
-        // 2. Resilient Direct SMTP Socket Fallback (Direct to mail.ridemycars.com:465 SSL)
-        return $this->sendDirectSocket($toEmail, $otp, $fromEmail, $fromName, $subject, $htmlContent, $textContent);
+        // 2. Resilient Direct SMTP Socket Fallback if Laravel Mailer failed
+        if (!$dispatched) {
+            $socketResult = $this->sendDirectSocket($toEmail, $otp, $fromEmail, $fromName, $subject, $htmlContent, $textContent);
+            if ($socketResult['success']) {
+                $dispatched = true;
+            } else {
+                Log::error("Direct SMTP Socket failed for {$toEmail}: " . ($socketResult['error'] ?? 'Unknown error'));
+            }
+        }
+
+        // 3. Sync to Roundcube Webmail 'Sent' folder via IMAP
+        $this->appendSentMessage($toEmail, $otp, $fromEmail, $fromName, $subject, $htmlContent, $textContent);
+
+        if ($dispatched) {
+            return [
+                'success' => true,
+                'message' => "Verification code sent to {$toEmail}",
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error' => "Unable to send verification code. Please check your email or contact support.",
+        ];
     }
 
     /**
@@ -135,6 +162,7 @@ class EmailOtpService
             $read();
 
             $boundary = 'rmc_otp_' . md5(uniqid((string) time(), true));
+            $msgId = '<' . md5(uniqid('rmc_', true)) . '.' . time() . '@ridemycars.com>';
 
             $headers = [
                 "From: {$fromName} <{$fromEmail}>",
@@ -142,6 +170,10 @@ class EmailOtpService
                 "To: <{$toEmail}>",
                 "Subject: {$subject}",
                 "Date: " . date('r'),
+                "Message-ID: {$msgId}",
+                "Auto-Submitted: auto-generated",
+                "X-Priority: 1",
+                "Importance: High",
                 "MIME-Version: 1.0",
                 "Content-Type: multipart/alternative; boundary=\"{$boundary}\"",
                 "X-Mailer: RideMyCars-Mailer/2.0",
@@ -183,6 +215,74 @@ class EmailOtpService
                 'success' => false,
                 'error' => "Mail delivery error: " . $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Append Sent OTP Email to Roundcube / cPanel Webmail 'Sent' Folder via IMAP
+     */
+    protected function appendSentMessage(
+        string $toEmail,
+        string $otp,
+        string $fromEmail,
+        string $fromName,
+        string $subject,
+        string $htmlContent,
+        string $textContent
+    ): void {
+        try {
+            $host = config('mail.mailers.smtp.host') ?: env('MAIL_HOST', 'mail.ridemycars.com');
+            $user = config('mail.mailers.smtp.username') ?: env('MAIL_USERNAME', 'support@ridemycars.com');
+            $pass = config('mail.mailers.smtp.password') ?: env('MAIL_PASSWORD', 'Support@#007');
+
+            $fp = @fsockopen('ssl://' . $host, 993, $errno, $errstr, 4);
+            if (!$fp) return;
+
+            fgets($fp, 512);
+            fwrite($fp, "a001 LOGIN \"{$user}\" \"{$pass}\"\r\n");
+            $resp = fgets($fp, 512);
+            if (strpos($resp, 'OK') === false) {
+                fclose($fp);
+                return;
+            }
+
+            $boundary = 'rmc_sent_' . md5(uniqid((string) time(), true));
+            $date = date('r');
+            $msgId = '<' . md5(uniqid('rmc_sent_', true)) . '@ridemycars.com>';
+
+            $headers = [
+                "From: {$fromName} <{$fromEmail}>",
+                "To: <{$toEmail}>",
+                "Subject: {$subject}",
+                "Date: {$date}",
+                "Message-ID: {$msgId}",
+                "MIME-Version: 1.0",
+                "Content-Type: multipart/alternative; boundary=\"{$boundary}\"",
+                "X-Mailer: RideMyCars-Mailer/2.0",
+            ];
+
+            $raw = implode("\r\n", $headers) . "\r\n\r\n";
+            $raw .= "--{$boundary}\r\n";
+            $raw .= "Content-Type: text/plain; charset=utf-8\r\n\r\n";
+            $raw .= $textContent . "\r\n\r\n";
+            $raw .= "--{$boundary}\r\n";
+            $raw .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
+            $raw .= $htmlContent . "\r\n\r\n";
+            $raw .= "--{$boundary}--\r\n";
+
+            $len = strlen($raw);
+            fwrite($fp, "a002 APPEND \"INBOX.Sent\" (\\Seen) {{$len}}\r\n");
+            $appendPrompt = fgets($fp, 512);
+            if (strpos($appendPrompt, '+') !== false) {
+                fwrite($fp, $raw . "\r\n");
+                fgets($fp, 512);
+            }
+            fwrite($fp, "a003 LOGOUT\r\n");
+            fclose($fp);
+
+            Log::info("Email OTP {$otp} successfully appended to IMAP INBOX.Sent folder for {$toEmail}");
+        } catch (\Throwable $e) {
+            Log::warning("IMAP Sent append notice: " . $e->getMessage());
         }
     }
 
