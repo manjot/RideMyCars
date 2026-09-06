@@ -130,7 +130,7 @@ class TwilioSmsService
      */
     public function sendOtp(string $to, string $code): array
     {
-        $message = "{$code} is OTP for your RideMyCars account. OTP is valid for 2 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com";
+        $message = "{$code} is OTP for your RideMyCars account. OTP is valid for 5 minutes. Do not share this OTP with anyone. For any help please visit https://ridemycars.com";
         return $this->sendSms($to, $message);
     }
 

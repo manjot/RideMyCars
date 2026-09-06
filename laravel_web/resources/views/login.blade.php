@@ -465,7 +465,7 @@
                 <div class="flex items-center gap-2 mb-4">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>OTP valid for 2 minutes</span>
+                        <span>OTP valid for 5 minutes</span>
                     </span>
                     <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
                 </div>
@@ -666,7 +666,7 @@
                     otpError: '',
                     otpSuccess: '',
                     isLoading: false,
-                    timer: 120,
+                    timer: 300,
                     timerInterval: null,
                     c1: '', c2: '', c3: '', c4: '',
                     
@@ -715,7 +715,7 @@
                         this.countrySearch = '';
                     },
 
-                    startTimer(seconds = 120) {
+                    startTimer(seconds = 300) {
                         this.timer = seconds;
                         if (this.timerInterval) clearInterval(this.timerInterval);
                         this.timerInterval = setInterval(() => {
@@ -764,12 +764,12 @@
                         })
                         .then(({ status, data }) => {
                             this.isLoading = false;
-                            if (data.success) {
+                            if (data && data.success) {
                                 this.view = 'otp';
                                 this.c1 = this.c2 = this.c3 = this.c4 = '';
-                                this.startTimer(120);
+                                this.startTimer(300);
                                 this.$nextTick(() => { this.$refs.c1?.focus(); });
-                            } else if (data.not_found || !data.user_exists || status === 404) {
+                            } else if (data && (data.not_found || !data.user_exists || status === 404)) {
                                 const targetUrl = data.redirect || ('/signup?phone=' + encodeURIComponent(fullPhone) + '&from=login');
                                 this.registerNotice = {
                                     phone: fullPhone,
@@ -779,7 +779,7 @@
                                     window.location.href = targetUrl;
                                 }, 1800);
                             } else {
-                                this.mobileError = data.error || 'Failed to send SMS code. Please try again.';
+                                this.mobileError = (data && data.error) || 'Failed to send SMS code. Please try again.';
                             }
                         })
                         .catch(err => {
@@ -804,19 +804,19 @@
                             },
                             body: JSON.stringify({ email: this.emailForOtp })
                         })
-                        .then(res => res.json())
+                        .then(res => res.json().catch(() => ({})))
                         .then(data => {
                             this.isLoading = false;
-                            if (data.success || data.debug_otp) {
+                            if (data && (data.success || data.debug_otp)) {
                                 this.view = 'otp';
                                 this.c1 = this.c2 = this.c3 = this.c4 = '';
-                                this.startTimer(120);
+                                this.startTimer(300);
                                 if (data.debug_otp) {
                                     this.otpError = 'Demo mode code: ' + data.debug_otp;
                                 }
                                 this.$nextTick(() => { this.$refs.c1?.focus(); });
                             } else {
-                                this.otpError = data.error || data.message || 'Failed to send email verification code.';
+                                this.otpError = (data && (data.error || data.message)) || 'Failed to send email verification code.';
                             }
                         })
                         .catch(() => {
@@ -842,15 +842,15 @@
                             },
                             body: JSON.stringify(payload)
                         })
-                        .then(res => res.json())
+                        .then(res => res.json().catch(() => ({})))
                         .then(data => {
                             this.isLoading = false;
-                            if (data.success) {
-                                this.startTimer(120);
+                            if (data && data.success) {
+                                this.startTimer(300);
                                 this.otpSuccess = 'A new 4-digit code was sent!';
                                 setTimeout(() => { this.otpSuccess = ''; }, 3500);
                             } else {
-                                this.otpError = data.error || 'Failed to resend code.';
+                                this.otpError = (data && data.error) || 'Failed to resend code.';
                             }
                         })
                         .catch(() => {
@@ -890,17 +890,18 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
+                                'Accept': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
                             body: JSON.stringify(payload)
                         })
-                        .then(res => res.json())
+                        .then(res => res.json().catch(() => ({ success: false, error: 'Server error (Status ' + res.status + ')' })))
                         .then(data => {
                             this.isLoading = false;
-                            if (data.success) {
+                            if (data && data.success) {
                                 window.location.href = data.redirect || '/';
                             } else {
-                                this.otpError = data.error || 'Invalid verification code. Please check and try again.';
+                                this.otpError = (data && (data.error || data.message)) || 'Invalid verification code. Please check and try again.';
                                 this.c1 = this.c2 = this.c3 = this.c4 = '';
                                 this.$nextTick(() => { this.$refs.c1?.focus(); });
                             }

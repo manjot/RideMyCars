@@ -991,7 +991,7 @@
                 <div class="flex items-center gap-2 mb-6">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Valid for 2 minutes</span>
+                        <span>Valid for 5 minutes</span>
                     </span>
                     <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
                 </div>
@@ -1064,7 +1064,7 @@
                 isLoading: false,
                 otpError: '',
                 otpSuccess: '',
-                timer: 120,
+                timer: 300,
                 timerInterval: null,
                 c1: '', c2: '', c3: '', c4: '',
 
@@ -1120,7 +1120,7 @@
                     this.phone = this.selectedCountry.dial + (raw ? ' ' + raw : '');
                 },
 
-                startTimer(seconds = 120) {
+                startTimer(seconds = 300) {
                     this.timer = seconds;
                     if (this.timerInterval) clearInterval(this.timerInterval);
                     this.timerInterval = setInterval(() => {
@@ -1217,16 +1217,16 @@
                                 action: 'register' 
                             })
                         });
-                        const data = await res.json();
+                        const data = await res.json().catch(() => ({ success: false, error: 'Server error (Status ' + res.status + ')' }));
                         this.isLoading = false;
 
-                        if (data.success) {
+                        if (data && data.success) {
                             this.otpModalOpen = true;
                             this.c1 = this.c2 = this.c3 = this.c4 = '';
-                            this.startTimer(120);
+                            this.startTimer(300);
                             this.$nextTick(() => { this.$refs.sc1?.focus({ preventScroll: true }); });
                         } else {
-                            alert(data.error || data.message || 'Failed to send SMS OTP. Please check your phone number.');
+                            alert((data && (data.error || data.message)) || 'Failed to send SMS OTP. Please check your phone number.');
                         }
                     } catch (err) {
                         this.isLoading = false;
@@ -1256,14 +1256,14 @@
                                 action: 'register' 
                             })
                         });
-                        const data = await res.json();
+                        const data = await res.json().catch(() => ({ success: false, error: 'Server error (Status ' + res.status + ')' }));
                         this.isLoading = false;
-                        if (data.success) {
-                            this.startTimer(120);
+                        if (data && data.success) {
+                            this.startTimer(300);
                             this.otpSuccess = 'New 4-digit code sent!';
                             setTimeout(() => { this.otpSuccess = ''; }, 3500);
                         } else {
-                            this.otpError = data.error || 'Failed to resend code.';
+                            this.otpError = (data && (data.error || data.message)) || 'Failed to resend code.';
                         }
                     } catch (e) {
                         this.isLoading = false;
@@ -1292,9 +1292,12 @@
                             },
                             body: formData
                         });
-                        const data = await res.json();
+                        const data = await res.json().catch(() => ({
+                            success: false,
+                            error: 'Server returned an error (Status ' + res.status + '). Please try again.'
+                        }));
 
-                        if (data.success) {
+                        if (data && data.success) {
                             if (data.token) {
                                 try { localStorage.setItem('auth_token', data.token); } catch(e) {}
                             }
@@ -1304,7 +1307,7 @@
                             }, 400);
                         } else {
                             this.isLoading = false;
-                            this.otpError = data.error || data.message || 'Invalid code. Please try again.';
+                            this.otpError = (data && (data.error || data.message)) || 'Invalid code. Please try again.';
                             this.c1 = this.c2 = this.c3 = this.c4 = '';
                             this.$nextTick(() => { this.$refs.sc1?.focus({ preventScroll: true }); });
                         }
