@@ -426,6 +426,7 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         return response()->json([
             'success' => true,
             'message' => "Verification code sent to {$cleanEmail}",
+            'hint' => 'Verification email dispatched. Please check your Inbox and Spam folder.',
             'email' => $cleanEmail,
             'expires_in' => 300, // 5 minutes
         ]);
@@ -2733,6 +2734,9 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
 });
 
 Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) {
+    if ($request->query('key') !== 'rmc2026') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
     $email = $request->input('email', 'shachisheh@gmail.com');
     $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
     $service = app(\App\Services\EmailOtpService::class);

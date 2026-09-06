@@ -470,6 +470,18 @@
                     <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
                 </div>
 
+                <div x-show="!isPhoneAuth" class="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 text-xs">
+                    <div class="flex items-start gap-2">
+                        <span class="text-sm">📬</span>
+                        <div class="leading-relaxed">
+                            <span class="font-bold">Check your Spam or Junk folder:</span>
+                            <span class="text-[11px] text-amber-800 dark:text-amber-300 block mt-0.5">
+                                If you don't see the code in your Primary inbox, please check your <strong>Spam</strong>, <strong>Junk</strong>, or <strong>Promotions</strong> folder.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <button type="button" @click="view = isPhoneAuth ? 'mobile' : 'email_otp'" class="text-xs text-amber-600 dark:text-amber-400 font-bold underline underline-offset-4 mb-6 hover:opacity-80 transition-opacity block">
                     Change phone number or email?
                 </button>

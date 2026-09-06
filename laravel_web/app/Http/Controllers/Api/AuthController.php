@@ -545,6 +545,7 @@ class AuthController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => "Verification code sent to {$cleanEmail}",
+                    'hint' => 'Verification email dispatched. Please check your Inbox and Spam folder.',
                     'email' => $cleanEmail,
                     'expires_in' => 300,
                 ]);
