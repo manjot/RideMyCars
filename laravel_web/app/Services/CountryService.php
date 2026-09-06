@@ -190,18 +190,22 @@ class CountryService
      */
     public static function getAllActivePricings()
     {
-        return Cache::remember(self::ACTIVE_COUNTRIES_CACHE, 3600, function () {
-            try {
-                $list = CountryPricing::where('is_active', true)->orderBy('country_name')->get();
-                if ($list->isNotEmpty()) {
-                    return $list;
+        try {
+            return Cache::remember(self::ACTIVE_COUNTRIES_CACHE, 3600, function () {
+                try {
+                    $list = CountryPricing::where('is_active', true)->orderBy('country_name')->get();
+                    if ($list->isNotEmpty()) {
+                        return $list;
+                    }
+                } catch (\Throwable $e) {
+                    // database might not be migrated yet
                 }
-            } catch (\Exception $e) {
-                // database might not be migrated yet
-            }
 
+                return collect([CountryPricing::fallbackUsdInstance()]);
+            });
+        } catch (\Throwable $e) {
             return collect([CountryPricing::fallbackUsdInstance()]);
-        });
+        }
     }
 
     /**

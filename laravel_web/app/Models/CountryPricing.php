@@ -101,21 +101,31 @@ class CountryPricing extends Model
      */
     public static function defaultPricing(): self
     {
-        return Cache::remember('country_pricing_default', 3600, function () {
-            try {
-                $record = static::where('is_default', true)->where('is_active', true)->first()
-                    ?? static::where('country_code', 'USA')->first()
-                    ?? static::query()->first();
+        try {
+            $pricing = Cache::remember('country_pricing_default', 3600, function () {
+                try {
+                    $record = static::where('is_default', true)->where('is_active', true)->first()
+                        ?? static::where('country_code', 'USA')->first()
+                        ?? static::query()->first();
 
-                if ($record) {
-                    return $record;
+                    if ($record instanceof self) {
+                        return $record;
+                    }
+                } catch (\Throwable $e) {
+                    // database might not be migrated yet or connection error
                 }
-            } catch (\Throwable $e) {
-                // database might not be migrated yet or connection error
-            }
 
-            return static::fallbackUsdInstance();
-        });
+                return static::fallbackUsdInstance();
+            });
+
+            if ($pricing instanceof self) {
+                return $pricing;
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return static::fallbackUsdInstance();
     }
 
     /**
@@ -129,25 +139,35 @@ class CountryPricing extends Model
 
         $code = strtoupper(trim($country));
 
-        return Cache::remember('country_pricing_' . $code, 3600, function () use ($code, $country) {
-            try {
-                $pricing = static::where('is_active', true)
-                    ->where(function ($q) use ($code, $country) {
-                        $q->where('country_code', $code)
-                          ->orWhere('country_name', 'LIKE', $country)
-                          ->orWhere('currency_code', $code);
-                    })
-                    ->first();
+        try {
+            $pricing = Cache::remember('country_pricing_' . $code, 3600, function () use ($code, $country) {
+                try {
+                    $pricing = static::where('is_active', true)
+                        ->where(function ($q) use ($code, $country) {
+                            $q->where('country_code', $code)
+                              ->orWhere('country_name', 'LIKE', $country)
+                              ->orWhere('currency_code', $code);
+                        })
+                        ->first();
 
-                if ($pricing) {
-                    return $pricing;
+                    if ($pricing instanceof self) {
+                        return $pricing;
+                    }
+                } catch (\Throwable $e) {
+                    // fallback
                 }
-            } catch (\Throwable $e) {
-                // fallback
-            }
 
-            return static::defaultPricing();
-        });
+                return static::defaultPricing();
+            });
+
+            if ($pricing instanceof self) {
+                return $pricing;
+            }
+        } catch (\Throwable $e) {
+            // fallback
+        }
+
+        return static::defaultPricing();
     }
 
     /**
