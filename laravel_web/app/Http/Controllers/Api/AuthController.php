@@ -542,23 +542,13 @@ class AuthController extends Controller
                     ], 422);
                 }
 
-                $resData = [
+                return response()->json([
                     'success' => true,
                     'message' => "Verification code sent to {$cleanEmail}",
-                    'hint' => 'Verification email dispatched. Please check your Inbox and Spam folder.',
+                    'hint' => 'Verification code sent. Please check your email inbox.',
                     'email' => $cleanEmail,
                     'expires_in' => 300,
-                ];
-
-                $isPrivileged = config('app.debug')
-                    || $request->has('debug')
-                    || in_array($cleanEmail, ['shachisheh@gmail.com', 'support@ridemycars.com', 'admin@ridemycars.com', 'info@ridemycars.com']);
-
-                if ($isPrivileged) {
-                    $resData['debug_otp'] = $otp;
-                }
-
-                return response()->json($resData);
+                ]);
             }
 
             return response()->json([
@@ -816,9 +806,8 @@ class AuthController extends Controller
                 $cleanEmail = trim(strtolower($email));
                 $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail)
                           ?? \Illuminate\Support\Facades\Cache::get('otp_' . $email);
-                $isMasterCode = in_array($cleanEmail, ['shachisheh@gmail.com', 'support@ridemycars.com', 'admin@ridemycars.com']) && in_array($inputOtp, ['1234', '0000', '1111']);
 
-                if (($cachedOtp && (string) $cachedOtp === $inputOtp) || $isMasterCode) {
+                if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
                     \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
                     \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
 

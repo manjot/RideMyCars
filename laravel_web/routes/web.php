@@ -423,24 +423,13 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
             ], 422);
         }
 
-        $resData = [
+        return response()->json([
             'success' => true,
             'message' => "Verification code sent to {$cleanEmail}",
-            'hint' => 'Verification email dispatched. Please check your Inbox and Spam folder.',
+            'hint' => 'Verification code sent. Please check your email inbox.',
             'email' => $cleanEmail,
             'expires_in' => 300, // 5 minutes
-        ];
-
-        // Include debug_otp for test / privileged email accounts so login is never blocked
-        $isPrivileged = config('app.debug') 
-            || $request->has('debug')
-            || in_array($cleanEmail, ['shachisheh@gmail.com', 'support@ridemycars.com', 'admin@ridemycars.com', 'info@ridemycars.com']);
-
-        if ($isPrivileged) {
-            $resData['debug_otp'] = $otp;
-        }
-
-        return response()->json($resData);
+        ]);
     }
 
     return response()->json([
@@ -669,9 +658,7 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
                       ?? \Illuminate\Support\Facades\Cache::get('otp_' . $email)
                       ?? $sessionOtp;
 
-            $isMasterCode = in_array($cleanEmail, ['shachisheh@gmail.com', 'support@ridemycars.com', 'admin@ridemycars.com']) && in_array($inputOtp, ['1234', '0000', '1111']);
-
-            if (($cachedOtp && (string) $cachedOtp === $inputOtp) || $isMasterCode) {
+            if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
                 \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
                 \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
                 $request->session()->forget(['otp_' . $cleanEmail, 'otp_expires_' . $cleanEmail]);

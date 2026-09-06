@@ -470,30 +470,10 @@
                     <span x-show="timer > 0" class="text-xs font-mono font-bold text-gray-500 dark:text-gray-400" x-text="'(' + formattedTimer + ')'"></span>
                 </div>
 
-                <div x-show="debugCode" class="mb-4 p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border-2 border-amber-500/30 text-amber-900 dark:text-amber-200">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-base">🔑</span>
-                            <div>
-                                <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300">Access Verification Code</div>
-                                <div class="text-xs text-amber-700/80 dark:text-amber-300/80">Active code: <span class="font-mono font-black text-sm tracking-widest text-black dark:text-white bg-amber-200/90 dark:bg-amber-700/80 px-2 py-0.5 rounded ml-1" x-text="debugCode"></span></div>
-                            </div>
-                        </div>
-                        <button type="button" @click="c1 = debugCode[0]; c2 = debugCode[1]; c3 = debugCode[2]; c4 = debugCode[3]; $nextTick(() => verifyOtp())" class="px-3 py-1.5 bg-black hover:bg-gray-800 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-bold text-xs rounded-xl transition-all shadow cursor-pointer">
-                            Autofill & Sign In
-                        </button>
-                    </div>
-                </div>
-
-                <div x-show="!isPhoneAuth" class="mb-4 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 text-xs">
-                    <div class="flex items-start gap-2.5">
-                        <span class="text-lg">📬</span>
-                        <div class="leading-relaxed">
-                            <span class="font-bold text-sm block mb-0.5">Please check your Spam or Junk folder!</span>
-                            <span class="text-[11px] text-amber-800 dark:text-amber-300 block">
-                                Google Gmail frequently filters automated emails from custom domains into the <strong>Spam</strong>, <strong>Junk</strong>, or <strong>Promotions</strong> folder. If you do not see it in Primary inbox within 30 seconds, search <code class="font-mono bg-amber-200/60 dark:bg-amber-900/60 px-1 py-0.5 rounded text-[10px]">in:anywhere RideMyCars</code> in Gmail.
-                            </span>
-                        </div>
+                <div x-show="!isPhoneAuth" class="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span>✉️</span>
+                        <span>A 4-digit verification code has been dispatched to your email.</span>
                     </div>
                 </div>
 
@@ -692,7 +672,6 @@
                     mobileError: '',
                     otpError: '',
                     otpSuccess: '',
-                    debugCode: '',
                     isLoading: false,
                     timer: 300,
                     timerInterval: null,
@@ -835,13 +814,10 @@
                         .then(res => res.json().catch(() => ({})))
                         .then(data => {
                             this.isLoading = false;
-                            if (data && (data.success || data.debug_otp)) {
+                            if (data && data.success) {
                                 this.view = 'otp';
                                 this.c1 = this.c2 = this.c3 = this.c4 = '';
                                 this.startTimer(300);
-                                if (data.debug_otp) {
-                                    this.debugCode = data.debug_otp;
-                                }
                                 this.$nextTick(() => { this.$refs.c1?.focus(); });
                             } else {
                                 this.otpError = (data && (data.error || data.message)) || 'Failed to send email verification code.';
@@ -873,12 +849,9 @@
                         .then(res => res.json().catch(() => ({})))
                         .then(data => {
                             this.isLoading = false;
-                            if (data && (data.success || data.debug_otp)) {
+                            if (data && data.success) {
                                 this.startTimer(300);
-                                if (data.debug_otp) {
-                                    this.debugCode = data.debug_otp;
-                                }
-                                this.otpSuccess = 'A new 4-digit code was dispatched!';
+                                this.otpSuccess = 'A new 4-digit code was sent!';
                                 setTimeout(() => { this.otpSuccess = ''; }, 3500);
                             } else {
                                 this.otpError = (data && data.error) || 'Failed to resend code.';
