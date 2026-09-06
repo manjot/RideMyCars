@@ -37,7 +37,16 @@ class ShareCountryContext
             View::share('currentCountryCode', 'USA');
             View::share('currentCountry', 'United States');
             View::share('currentPricing', $fallback);
-            View::share('allCountries', CountryService::getAll());
+            View::share('allCountries', [
+                'USA' => [
+                    'name' => 'United States',
+                    'code' => 'USA',
+                    'currency' => 'USD',
+                    'symbol' => '$',
+                    'flag_url' => 'https://flagcdn.com/w40/us.png',
+                    'pricing' => $fallback,
+                ]
+            ]);
             View::share('activeCountries', collect([$fallback]));
             View::share('currentCurrencySymbol', '$');
             View::share('currentCurrencyCode', 'USD');

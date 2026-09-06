@@ -131,10 +131,24 @@ class CountryService
         // Check if there is an exact or name match in active pricings
         $activePricings = static::getAllActivePricings();
         foreach ($activePricings as $pricing) {
-            if (strtoupper($pricing->country_code) === $upper ||
-                strtoupper($pricing->country_name) === $upper ||
-                strtoupper($pricing->currency_code) === $upper) {
-                return $pricing->country_code;
+            if (is_object($pricing)) {
+                $pCode = $pricing->country_code ?? '';
+                $pName = $pricing->country_name ?? '';
+                $pCurr = $pricing->currency_code ?? '';
+            } elseif (is_array($pricing)) {
+                $pCode = $pricing['country_code'] ?? $pricing['code'] ?? '';
+                $pName = $pricing['country_name'] ?? $pricing['name'] ?? '';
+                $pCurr = $pricing['currency_code'] ?? $pricing['currency'] ?? '';
+            } else {
+                $pCode = (string) $pricing;
+                $pName = '';
+                $pCurr = '';
+            }
+
+            if (strtoupper($pCode) === $upper ||
+                (!empty($pName) && strtoupper($pName) === $upper) ||
+                (!empty($pCurr) && strtoupper($pCurr) === $upper)) {
+                return strtoupper($pCode);
             }
         }
 
@@ -177,7 +191,7 @@ class CountryService
                         return static::normalizeToCode($c);
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Ignore timeout / network failure
             }
 
@@ -191,11 +205,11 @@ class CountryService
     public static function getAllActivePricings()
     {
         try {
-            return Cache::remember(self::ACTIVE_COUNTRIES_CACHE, 3600, function () {
+            $list = Cache::remember(self::ACTIVE_COUNTRIES_CACHE, 3600, function () {
                 try {
-                    $list = CountryPricing::where('is_active', true)->orderBy('country_name')->get();
-                    if ($list->isNotEmpty()) {
-                        return $list;
+                    $records = CountryPricing::where('is_active', true)->orderBy('country_name')->get();
+                    if ($records->isNotEmpty()) {
+                        return $records;
                     }
                 } catch (\Throwable $e) {
                     // database might not be migrated yet
@@ -203,9 +217,23 @@ class CountryService
 
                 return collect([CountryPricing::fallbackUsdInstance()]);
             });
+
+            if ($list instanceof \Illuminate\Support\Collection) {
+                $filtered = $list->filter(fn ($el) => is_object($el));
+                if ($filtered->isNotEmpty()) {
+                    return $filtered;
+                }
+            } elseif (is_array($list)) {
+                $filtered = array_filter($list, fn ($el) => is_object($el));
+                if (!empty($filtered)) {
+                    return collect($filtered);
+                }
+            }
         } catch (\Throwable $e) {
-            return collect([CountryPricing::fallbackUsdInstance()]);
+            // ignore
         }
+
+        return collect([CountryPricing::fallbackUsdInstance()]);
     }
 
     /**
@@ -213,24 +241,54 @@ class CountryService
      */
     public static function getAll(): array
     {
-        $active = static::getAllActivePricings();
-        $result = [];
+        try {
+            $active = static::getAllActivePricings();
+            $result = [];
 
-        foreach ($active as $item) {
-            $result[$item->country_code] = [
-                'name' => $item->country_name,
-                'code' => $item->country_code,
-                'currency' => $item->currency_code,
-                'symbol' => $item->currency_symbol,
-                'flag_url' => static::getFlagUrl($item->country_code),
-                'phone_prefix' => static::getPhonePrefixForCountry($item->country_code),
-                'payment_methods' => static::getPaymentMethodsForCountry($item->country_code),
-                'pricing' => $item,
-            ];
+            foreach ($active as $item) {
+                if (is_object($item)) {
+                    $code = $item->country_code ?? 'USA';
+                    $name = $item->country_name ?? $code;
+                    $currency = $item->currency_code ?? 'USD';
+                    $symbol = $item->currency_symbol ?? '$';
+                    $pricing = $item;
+                } elseif (is_array($item)) {
+                    $code = $item['country_code'] ?? $item['code'] ?? 'USA';
+                    $name = $item['country_name'] ?? $item['name'] ?? $code;
+                    $currency = $item['currency_code'] ?? $item['currency'] ?? 'USD';
+                    $symbol = $item['currency_symbol'] ?? $item['symbol'] ?? '$';
+                    $pricing = $item['pricing'] ?? CountryPricing::fallbackUsdInstance();
+                } elseif (is_string($item)) {
+                    $code = strtoupper($item);
+                    $name = $code;
+                    $currency = 'USD';
+                    $symbol = '$';
+                    $pricing = CountryPricing::fallbackUsdInstance();
+                } else {
+                    continue;
+                }
+
+                $result[$code] = [
+                    'name' => $name,
+                    'code' => $code,
+                    'currency' => $currency,
+                    'symbol' => $symbol,
+                    'flag_url' => static::getFlagUrl($code),
+                    'phone_prefix' => static::getPhonePrefixForCountry($code),
+                    'payment_methods' => static::getPaymentMethodsForCountry($code),
+                    'pricing' => $pricing,
+                ];
+            }
+
+            if (!empty($result)) {
+                return $result;
+            }
+        } catch (\Throwable $e) {
+            // ignore
         }
 
-        if (empty($result)) {
-            $result['USA'] = [
+        return [
+            'USA' => [
                 'name' => 'United States',
                 'code' => 'USA',
                 'currency' => 'USD',
@@ -238,10 +296,29 @@ class CountryService
                 'flag_url' => static::getFlagUrl('USA'),
                 'phone_prefix' => '+1',
                 'payment_methods' => static::getPaymentMethodsForCountry('USA'),
-            ];
-        }
-
-        return $result;
+                'pricing' => CountryPricing::fallbackUsdInstance(),
+            ],
+            'GHA' => [
+                'name' => 'Ghana',
+                'code' => 'GHA',
+                'currency' => 'GHS',
+                'symbol' => 'GH₵',
+                'flag_url' => static::getFlagUrl('GHA'),
+                'phone_prefix' => '+233',
+                'payment_methods' => static::getPaymentMethodsForCountry('GHA'),
+                'pricing' => CountryPricing::fallbackUsdInstance(),
+            ],
+            'ZAF' => [
+                'name' => 'South Africa',
+                'code' => 'ZAF',
+                'currency' => 'ZAR',
+                'symbol' => 'R',
+                'flag_url' => static::getFlagUrl('ZAF'),
+                'phone_prefix' => '+27',
+                'payment_methods' => static::getPaymentMethodsForCountry('ZAF'),
+                'pricing' => CountryPricing::fallbackUsdInstance(),
+            ],
+        ];
     }
 
     /**
