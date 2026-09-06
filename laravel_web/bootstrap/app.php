@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ride/*',
             'driver/*',
             'api/*',
+            'auth/apple/callback',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

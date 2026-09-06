@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'phone', 'phone_verified_at', 'password', 'role', 'avatar', 'referral_code', 'referred_by', 'referrer_id', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
+#[Fillable(['name', 'email', 'phone', 'phone_verified_at', 'google_id', 'apple_id', 'oauth_provider', 'oauth_avatar', 'password', 'role', 'avatar', 'referral_code', 'referred_by', 'referrer_id', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -57,6 +57,10 @@ class User extends Authenticatable implements FilamentUser
 
         if (empty($path) && !empty($this->profile_photo_path)) {
             $path = $this->profile_photo_path;
+        }
+
+        if (empty($path) && !empty($this->oauth_avatar)) {
+            $path = $this->oauth_avatar;
         }
 
         if (empty($path)) {
