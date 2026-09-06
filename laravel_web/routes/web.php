@@ -2717,10 +2717,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Artisan::call('view:clear');
 
     // Include recent laravel.log lines for debugging
+    $logFiles = glob(storage_path('logs/*.log'));
+    $output['log_files'] = $logFiles;
+    $output['otp_grep'] = shell_exec('grep -h -i "OTP" ' . storage_path('logs/*.log') . ' 2>&1 | tail -n 25');
     $logPath = storage_path('logs/laravel.log');
     if (file_exists($logPath)) {
         $lines = file($logPath);
-        $output['last_log'] = array_slice($lines, -150);
+        $output['last_log'] = array_slice($lines, -15);
     }
     
     return response()->json([
