@@ -797,7 +797,7 @@
     <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('accountManager', () => ({
-            currentTab: 'home',
+            currentTab: new URLSearchParams(window.location.search).get('tab') || 'home',
             toast: '',
             
             userName: '{{ $user->name ?? 'Michael Driver' }}',

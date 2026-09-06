@@ -2467,6 +2467,19 @@ Route::get('/wallet', function () {
     return view('wallet');
 })->middleware('auth');
 
+Route::get('/promotions', function () {
+    $user = auth()->user();
+    return view('promotions', compact('user'));
+});
+
+Route::get('/help', function () {
+    return view('contact');
+});
+
+Route::get('/legal', function () {
+    return view('legal');
+});
+
 // Package Delivery Live Tracker Admin Routes
 Route::get('/admin/live-delivery-tracker/data', [DeliveryTrackerController::class, 'getData']);
 Route::post('/admin/live-delivery-tracker/reassign', [DeliveryTrackerController::class, 'reassignDriver']);
