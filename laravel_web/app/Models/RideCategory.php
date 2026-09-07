@@ -65,13 +65,15 @@ class RideCategory extends Model
     }
 
     /**
-     * Get all active categories with caching.
+     * Get all active categories safely.
      */
     public static function getActiveCategories()
     {
-        return Cache::remember('active_ride_categories', 3600, function () {
+        try {
             return static::active()->ordered()->get();
-        });
+        } catch (\Throwable $e) {
+            return collect();
+        }
     }
 
     /**

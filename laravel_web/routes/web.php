@@ -986,21 +986,11 @@ Route::get('/set-country/{code}', function ($code, \Illuminate\Http\Request $req
 });
 
 Route::get('/ride', function (\Illuminate\Http\Request $request) {
-    try {
-        $vehicles = \App\Models\Vehicle::all();
-        $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
-        $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
-        $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
-        $html = view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'))->render();
-        return response($html);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 8)
-        ], 500);
-    }
+    $vehicles = \App\Models\Vehicle::all();
+    $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
+    $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
+    $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
+    return view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'));
 });
 
 // Dynamic Ride Categories with live pricing API
@@ -2782,6 +2772,8 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Artisan::call('route:clear');
     \Illuminate\Support\Facades\Artisan::call('config:clear');
     \Illuminate\Support\Facades\Artisan::call('view:clear');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    \Illuminate\Support\Facades\Cache::flush();
 
     // Securely update OAuth .env credentials if provided
     $envPath = base_path('.env');
