@@ -991,13 +991,14 @@ Route::get('/ride', function (\Illuminate\Http\Request $request) {
         $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
         $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
         $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
-        return view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'));
+        $html = view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'))->render();
+        return response($html);
     } catch (\Throwable $e) {
         return response()->json([
             'error' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
-            'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 5)
+            'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 8)
         ], 500);
     }
 });
