@@ -34,13 +34,23 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
                 'gray' => Color::Slate,
-                'info' => Color::Sky,
+                'info' => Color::Cyan,
                 'success' => Color::Emerald,
-                'warning' => Color::Amber,
+                'warning' => Color::Orange,
                 'danger' => Color::Rose,
             ])
-            ->font('Inter')
+            ->font('Plus Jakarta Sans')
+            ->darkMode(true)
             ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('18.5rem')
+            ->renderHook(
+                'panels::head.end',
+                fn () => view('filament.custom-admin-theme')
+            )
+            ->renderHook(
+                'panels::topbar.start',
+                fn () => view('filament.topbar-quick-actions')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->resources([
                 \App\Filament\Resources\CategoryResource::class,
@@ -67,6 +77,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                \App\Filament\Widgets\DashboardHeroWidget::class,
                 \App\Filament\Widgets\StatsOverviewWidget::class,
                 \App\Filament\Widgets\RecentRidesWidget::class,
             ])
