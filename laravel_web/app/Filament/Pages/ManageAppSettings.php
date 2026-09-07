@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Services\EmailOtpService;
 use App\Services\SettingService;
 use App\Services\TwilioSmsService;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -520,5 +521,88 @@ class ManageAppSettings extends Page implements HasForms
             ->body('All configurations have been updated in the database, runtime configs synchronized, and cache refreshed.')
             ->success()
             ->send();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('testEmail')
+                ->label('Send Test Email')
+                ->icon('heroicon-o-envelope')
+                ->color('gray')
+                ->modalHeading('Send Test Email via SMTP')
+                ->modalDescription('Verify your configured SMTP credentials by sending a live test message.')
+                ->form([
+                    Forms\Components\TextInput::make('test_email')
+                        ->label('Recipient Email')
+                        ->email()
+                        ->required()
+                        ->placeholder('admin@example.com'),
+                ])
+                ->action(function (array $data): void {
+                    try {
+                        SettingService::syncToConfig();
+                        Mail::raw("This is a live test email sent from the RideMyCars App Settings Hub.\nYour SMTP settings are properly configured.\nTimestamp: " . now()->toDateTimeString(), function ($message) use ($data) {
+                            $message->to($data['test_email'])
+                                    ->subject('RideMyCars - SMTP Test Email');
+                        });
+
+                        Notification::make()
+                            ->title('Test Email Sent Successfully!')
+                            ->body("Dispatched to {$data['test_email']}.")
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('SMTP Test Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
+            Action::make('testSms')
+                ->label('Send Test SMS')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->color('gray')
+                ->modalHeading('Send Test SMS via Twilio')
+                ->modalDescription('Verify your Twilio credentials by sending a live test SMS.')
+                ->form([
+                    Forms\Components\TextInput::make('test_phone')
+                        ->label('Recipient Phone (E.164)')
+                        ->required()
+                        ->placeholder('+1234567890'),
+                ])
+                ->action(function (array $data): void {
+                    try {
+                        SettingService::syncToConfig();
+                        $smsService = app(TwilioSmsService::class);
+                        $result = $smsService->sendSms(
+                            $data['test_phone'],
+                            "RideMyCars SMS Gateway Test: Twilio credentials are functioning! (Sent: " . now()->format('H:i:s') . ")"
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title('Test SMS Sent Successfully!')
+                                ->body("Dispatched to {$data['test_phone']}. SID: " . ($result['message_sid'] ?? 'simulated'))
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('SMS Sending Failed')
+                                ->body($result['error'] ?? 'Unknown error from Twilio gateway.')
+                                ->danger()
+                                ->send();
+                        }
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Twilio Test Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+        ];
     }
 }
