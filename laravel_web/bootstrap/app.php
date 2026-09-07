@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'driver/*',
             'api/*',
             'auth/apple/callback',
+            'auth/google/callback',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

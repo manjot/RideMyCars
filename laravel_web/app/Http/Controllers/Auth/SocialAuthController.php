@@ -53,59 +53,122 @@ class SocialAuthController extends Controller
     {
         if ($request->has('error')) {
             Log::warning('Google OAuth cancelled or error', ['error' => $request->get('error')]);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Google Sign-In was cancelled or failed.'], 400);
+            }
             return redirect('/login')->with('error', 'Google Sign-In was cancelled or failed.');
         }
 
+        $credential = $request->input('credential');
         $code = $request->input('code');
-        if (empty($code)) {
+
+        if (empty($credential) && empty($code)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'No authorization code or credential received from Google.'], 400);
+            }
             return redirect('/login')->with('error', 'No authorization code received from Google.');
         }
 
         $clientId = config('services.google.client_id');
         $clientSecret = config('services.google.client_secret');
-        $redirectUri = config('services.google.redirect', url('/auth/google/callback'));
 
         try {
-            // Exchange authorization code for access token
-            $response = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
-                'client_id' => $clientId,
-                'client_secret' => $clientSecret,
-                'code' => $code,
-                'grant_type' => 'authorization_code',
-                'redirect_uri' => $redirectUri,
-            ]);
+            $googleId = null;
+            $email = null;
+            $name = 'Google User';
+            $avatar = null;
 
-            if ($response->failed()) {
-                Log::error('Google OAuth token exchange failed', ['body' => $response->body()]);
-                return redirect('/login')->with('error', 'Failed to authenticate with Google. Please try again.');
+            // Flow 1: Google Identity Services (GIS) JWT ID-Token
+            if (!empty($credential)) {
+                $verifyResp = Http::timeout(15)->get('https://oauth2.googleapis.com/tokeninfo', [
+                    'id_token' => $credential,
+                ]);
+
+                if ($verifyResp->failed()) {
+                    Log::error('Google ID token verification failed', ['body' => $verifyResp->body()]);
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['status' => 'error', 'message' => 'Failed to verify Google credential.'], 400);
+                    }
+                    return redirect('/login')->with('error', 'Failed to verify Google credential.');
+                }
+
+                $googleUser = $verifyResp->json();
+                $googleId = $googleUser['sub'] ?? null;
+                $email = strtolower(trim($googleUser['email'] ?? ''));
+                $name = $googleUser['name'] ?? ($googleUser['given_name'] ?? 'Google User');
+                $avatar = $googleUser['picture'] ?? null;
             }
+            // Flow 2: Authorization code exchange (supports both popup 'postmessage' and standard redirect URI)
+            else if (!empty($code)) {
+                $redirectUri = $request->input('redirect_uri');
+                if (empty($redirectUri)) {
+                    $redirectUri = ($request->isMethod('post') && $request->has('code'))
+                        ? 'postmessage'
+                        : config('services.google.redirect', url('/auth/google/callback'));
+                }
 
-            $tokenData = $response->json();
-            $accessToken = $tokenData['access_token'] ?? null;
+                $tokenResp = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'code' => $code,
+                    'grant_type' => 'authorization_code',
+                    'redirect_uri' => $redirectUri,
+                ]);
 
-            if (empty($accessToken)) {
-                return redirect('/login')->with('error', 'Invalid token response received from Google.');
+                // Fallback attempt with postmessage if standard redirectUri failed on POST
+                if ($tokenResp->failed() && $redirectUri !== 'postmessage') {
+                    $tokenResp = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
+                        'client_id' => $clientId,
+                        'client_secret' => $clientSecret,
+                        'code' => $code,
+                        'grant_type' => 'authorization_code',
+                        'redirect_uri' => 'postmessage',
+                    ]);
+                }
+
+                if ($tokenResp->failed()) {
+                    Log::error('Google OAuth token exchange failed', ['body' => $tokenResp->body()]);
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['status' => 'error', 'message' => 'Failed to authenticate with Google. Please try again.'], 400);
+                    }
+                    return redirect('/login')->with('error', 'Failed to authenticate with Google. Please try again.');
+                }
+
+                $tokenData = $tokenResp->json();
+                $accessToken = $tokenData['access_token'] ?? null;
+
+                if (empty($accessToken)) {
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['status' => 'error', 'message' => 'Invalid token response received from Google.'], 400);
+                    }
+                    return redirect('/login')->with('error', 'Invalid token response received from Google.');
+                }
+
+                $userResponse = Http::withToken($accessToken)->timeout(15)->get('https://www.googleapis.com/oauth2/v3/userinfo');
+
+                if ($userResponse->failed()) {
+                    Log::error('Google OAuth userinfo fetch failed', ['body' => $userResponse->body()]);
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['status' => 'error', 'message' => 'Unable to retrieve your Google profile.'], 400);
+                    }
+                    return redirect('/login')->with('error', 'Unable to retrieve your Google profile.');
+                }
+
+                $googleUser = $userResponse->json();
+                $googleId = $googleUser['sub'] ?? null;
+                $email = strtolower(trim($googleUser['email'] ?? ''));
+                $name = $googleUser['name'] ?? 'Google User';
+                $avatar = $googleUser['picture'] ?? null;
             }
-
-            // Fetch user profile information
-            $userResponse = Http::withToken($accessToken)->timeout(15)->get('https://www.googleapis.com/oauth2/v3/userinfo');
-
-            if ($userResponse->failed()) {
-                Log::error('Google OAuth userinfo fetch failed', ['body' => $userResponse->body()]);
-                return redirect('/login')->with('error', 'Unable to retrieve your Google profile.');
-            }
-
-            $googleUser = $userResponse->json();
-            $googleId = $googleUser['sub'] ?? null;
-            $email = strtolower(trim($googleUser['email'] ?? ''));
-            $name = $googleUser['name'] ?? 'Google User';
-            $avatar = $googleUser['picture'] ?? null;
 
             if (empty($email)) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['status' => 'error', 'message' => 'No email address was provided by your Google account.'], 400);
+                }
                 return redirect('/login')->with('error', 'No email address was provided by your Google account.');
             }
 
-            $role = session()->pull('oauth_intended_role', 'customer');
+            $role = $request->input('role') ?? session()->pull('oauth_intended_role', 'customer');
             $user = $this->findOrCreateSocialUser([
                 'provider' => 'google',
                 'provider_id' => $googleId,
@@ -120,6 +183,21 @@ class SocialAuthController extends Controller
 
             ActivityLogService::log('oauth_login', "Signed in via Google ({$email})", $user->id);
 
+            $targetUrl = ($user->role === 'driver') ? '/driver/dashboard' : '/';
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'status' => 'success',
+                    'redirect' => $targetUrl,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                    ],
+                ]);
+            }
+
             if ($user->role === 'driver') {
                 return redirect('/driver/dashboard')->with('success', "Welcome back, {$user->name}! Signed in with Google.");
             }
@@ -128,6 +206,9 @@ class SocialAuthController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Google OAuth exception: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'An unexpected error occurred during Google sign in: ' . $e->getMessage()], 500);
+            }
             return redirect('/login')->with('error', 'An unexpected error occurred during Google sign in: ' . $e->getMessage());
         }
     }

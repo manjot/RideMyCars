@@ -9,7 +9,7 @@ use App\Http\Controllers\PackageDeliveryController;
 
 // Social Authentication Routes (Google & Apple)
 Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
-Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::match(['get', 'post'], '/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::get('/auth/apple', [SocialAuthController::class, 'redirectToApple'])->name('auth.apple');
 Route::post('/auth/apple/callback', [SocialAuthController::class, 'handleAppleCallback'])->name('auth.apple.callback');
 
