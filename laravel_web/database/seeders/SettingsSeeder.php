@@ -45,7 +45,7 @@ class SettingsSeeder extends Seeder
             // Payment Gateways
             ['key' => 'payment.stripe_enabled', 'label' => 'Stripe Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_publishable_key', 'label' => 'Stripe Publishable Key', 'value' => env('STRIPE_PUBLISHABLE_KEY', 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA'), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_secret_key', 'label' => 'Stripe Secret Key', 'value' => env('STRIPE_SECRET_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_secret_key', 'label' => 'Stripe Secret Key', 'value' => env('STRIPE_SECRET_KEY', 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_webhook_secret', 'label' => 'Stripe Webhook Secret', 'value' => env('STRIPE_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.paypal_enabled', 'label' => 'PayPal Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.paypal_client_id', 'label' => 'PayPal Client ID', 'value' => env('PAYPAL_CLIENT_ID', ''), 'group' => 'Payment Gateways', 'type' => 'text'],

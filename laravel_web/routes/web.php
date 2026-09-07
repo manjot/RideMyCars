@@ -2741,8 +2741,21 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'footer.copyright')->update([
                 'value' => '© 2026 New Development Finance Group Pty Ltd. All rights reserved.'
             ]);
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_publishable_key'],
+                ['value' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Publishable Key']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_secret_key'],
+                ['value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Secret Key']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_enabled'],
+                ['value' => '1', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Gateway Enabled']
+            );
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;
+            $output['stripe_settings_synced'] = true;
         }
     } catch (\Throwable $e) {
         $output['tokens_table_err'] = $e->getMessage();
@@ -2775,13 +2788,15 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
     \Illuminate\Support\Facades\Cache::flush();
 
-    // Securely update OAuth .env credentials if provided
+    // Securely update OAuth & Stripe .env credentials if provided
     $envPath = base_path('.env');
     if (file_exists($envPath)) {
         $envContent = file_get_contents($envPath);
         $updatedEnv = false;
         
         $keysToUpdate = [
+            'STRIPE_PUBLISHABLE_KEY' => $request->query('stripe_publishable_key', 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA'),
+            'STRIPE_SECRET_KEY' => $request->query('stripe_secret_key', 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i'),
             'GOOGLE_CLIENT_ID' => $request->query('google_client_id'),
             'GOOGLE_CLIENT_SECRET' => $request->query('google_client_secret'),
             'GOOGLE_REDIRECT_URI' => $request->query('google_redirect_uri', 'https://ridemycars.com/auth/google/callback'),

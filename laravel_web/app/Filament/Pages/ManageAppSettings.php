@@ -526,6 +526,49 @@ class ManageAppSettings extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('testStripe')
+                ->label('Test Stripe')
+                ->icon('heroicon-o-credit-card')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Test Live Stripe Connection')
+                ->modalDescription('Verify that your Stripe credentials can authenticate and communicate with the Stripe API.')
+                ->modalSubmitActionLabel('Run Stripe Test')
+                ->action(function (): void {
+                    try {
+                        SettingService::syncToConfig();
+                        $secretKey = config('services.stripe.secret') ?: SettingService::get('payment.stripe_secret_key');
+                        if (empty($secretKey)) {
+                            throw new \Exception('No Stripe Secret Key configured. Please save a valid secret key first.');
+                        }
+
+                        if (!class_exists(\Stripe\Stripe::class)) {
+                            $initFile = base_path('vendor/stripe/stripe-php/init.php');
+                            if (file_exists($initFile)) {
+                                require_once $initFile;
+                            }
+                        }
+
+                        \Stripe\Stripe::setApiKey($secretKey);
+                        $account = \Stripe\Account::retrieve();
+                        $displayName = $account->settings->dashboard->display_name ?? $account->business_profile->name ?? $account->id;
+
+                        Notification::make()
+                            ->title('Stripe Connected Successfully!')
+                            ->body("Account: {$displayName} ({$account->id}) • Currency: " . strtoupper($account->default_currency) . " • Charges: " . ($account->charges_enabled ? 'Active' : 'Disabled'))
+                            ->success()
+                            ->duration(8000)
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Stripe Connection Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->duration(10000)
+                            ->send();
+                    }
+                }),
+
             Action::make('testEmail')
                 ->label('Send Test Email')
                 ->icon('heroicon-o-envelope')
