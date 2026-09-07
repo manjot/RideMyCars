@@ -60,7 +60,8 @@ class AppConfigApiController extends Controller
             'payment_gateways' => [
                 'stripe' => [
                     'enabled' => filter_var(SettingService::get('payment.stripe_enabled', true), FILTER_VALIDATE_BOOLEAN),
-                    'publishable_key' => SettingService::get('payment.stripe_publishable_key', config('services.stripe.key', '')),
+                    'mode' => SettingService::get('payment.stripe_mode', 'test'),
+                    'publishable_key' => SettingService::getActiveStripePublishableKey(),
                 ],
                 'paypal' => [
                     'enabled' => filter_var(SettingService::get('payment.paypal_enabled', true), FILTER_VALIDATE_BOOLEAN),

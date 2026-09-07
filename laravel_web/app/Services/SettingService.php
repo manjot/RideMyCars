@@ -110,15 +110,18 @@ class SettingService
             }
 
             // 1. Payment Gateways (Stripe, PayPal, CashApp, Apple Pay)
-            $stripeKey = static::get('payment.stripe_publishable_key');
+            $stripeMode = static::get('payment.stripe_mode', 'test');
+            $stripeKey = static::getActiveStripePublishableKey();
+            $stripeSecret = static::getActiveStripeSecretKey();
+            $stripeWebhook = static::getActiveStripeWebhookSecret();
+
+            Config::set('services.stripe.mode', $stripeMode);
             if ($stripeKey) {
                 Config::set('services.stripe.key', $stripeKey);
             }
-            $stripeSecret = static::get('payment.stripe_secret_key');
             if ($stripeSecret) {
                 Config::set('services.stripe.secret', $stripeSecret);
             }
-            $stripeWebhook = static::get('payment.stripe_webhook_secret');
             if ($stripeWebhook) {
                 Config::set('services.stripe.webhook_secret', $stripeWebhook);
             }
@@ -271,5 +274,41 @@ class SettingService
         } catch (\Throwable $e) {
             // Silently ignore during migration/console boot if table missing
         }
+    }
+
+    /**
+     * Get active Stripe Publishable Key based on stripe_mode (test vs live).
+     */
+    public static function getActiveStripePublishableKey(): string
+    {
+        $mode = static::get('payment.stripe_mode', 'test');
+        if ($mode === 'live') {
+            return (string) (static::get('payment.stripe_live_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', '')));
+        }
+        return (string) (static::get('payment.stripe_test_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', '')));
+    }
+
+    /**
+     * Get active Stripe Secret Key based on stripe_mode (test vs live).
+     */
+    public static function getActiveStripeSecretKey(): string
+    {
+        $mode = static::get('payment.stripe_mode', 'test');
+        if ($mode === 'live') {
+            return (string) (static::get('payment.stripe_live_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', '')));
+        }
+        return (string) (static::get('payment.stripe_test_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', '')));
+    }
+
+    /**
+     * Get active Stripe Webhook Secret based on stripe_mode (test vs live).
+     */
+    public static function getActiveStripeWebhookSecret(): string
+    {
+        $mode = static::get('payment.stripe_mode', 'test');
+        if ($mode === 'live') {
+            return (string) (static::get('payment.stripe_live_webhook_secret') ?: static::get('payment.stripe_webhook_secret', config('services.stripe.webhook_secret', '')));
+        }
+        return (string) (static::get('payment.stripe_test_webhook_secret') ?: static::get('payment.stripe_webhook_secret', config('services.stripe.webhook_secret', '')));
     }
 }

@@ -2742,16 +2742,32 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 'value' => '© 2026 New Development Finance Group Pty Ltd. All rights reserved.'
             ]);
             \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_enabled'],
+                ['value' => '1', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Gateway Enabled']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_mode'],
+                ['value' => 'test', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Active Stripe Mode']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_test_publishable_key'],
+                ['value' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Test Publishable Key']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_test_secret_key'],
+                ['value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Test Secret Key']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'payment.stripe_test_webhook_secret'],
+                ['value' => '', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Test Webhook Secret']
+            );
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
                 ['key' => 'payment.stripe_publishable_key'],
                 ['value' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Publishable Key']
             );
             \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
                 ['key' => 'payment.stripe_secret_key'],
                 ['value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Secret Key']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_enabled'],
-                ['value' => '1', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Gateway Enabled']
             );
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;

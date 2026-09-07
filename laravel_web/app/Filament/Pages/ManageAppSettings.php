@@ -35,6 +35,13 @@ class ManageAppSettings extends Page implements HasForms
         $this->form->fill([
             // Payment Gateways
             'payment_stripe_enabled' => (bool) ($all['payment.stripe_enabled'] ?? true),
+            'payment_stripe_mode' => $all['payment.stripe_mode'] ?? 'test',
+            'payment_stripe_test_publishable_key' => $all['payment.stripe_test_publishable_key'] ?? ($all['payment.stripe_publishable_key'] ?? 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA'),
+            'payment_stripe_test_secret_key' => $all['payment.stripe_test_secret_key'] ?? ($all['payment.stripe_secret_key'] ?? 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i'),
+            'payment_stripe_test_webhook_secret' => $all['payment.stripe_test_webhook_secret'] ?? ($all['payment.stripe_webhook_secret'] ?? ''),
+            'payment_stripe_live_publishable_key' => $all['payment.stripe_live_publishable_key'] ?? '',
+            'payment_stripe_live_secret_key' => $all['payment.stripe_live_secret_key'] ?? '',
+            'payment_stripe_live_webhook_secret' => $all['payment.stripe_live_webhook_secret'] ?? '',
             'payment_stripe_publishable_key' => $all['payment.stripe_publishable_key'] ?? '',
             'payment_stripe_secret_key' => $all['payment.stripe_secret_key'] ?? '',
             'payment_stripe_webhook_secret' => $all['payment.stripe_webhook_secret'] ?? '',
@@ -114,27 +121,62 @@ class ManageAppSettings extends Page implements HasForms
                             ->icon('heroicon-o-credit-card')
                             ->schema([
                                 Forms\Components\Section::make('Stripe Gateway')
-                                    ->description('Stripe Credit/Debit Card payments, 3D-Secure, and Webhooks.')
+                                    ->description('Manage Credit/Debit Card payments with dedicated Test & Live credentials.')
                                     ->schema([
-                                        Forms\Components\Toggle::make('payment_stripe_enabled')
-                                            ->label('Enable Stripe Payments')
-                                            ->default(true),
-                                        Forms\Components\TextInput::make('payment_stripe_publishable_key')
-                                            ->label('Publishable Key (pk_...)')
-                                            ->placeholder('pk_live_... or pk_test_...')
-                                            ->columnSpanFull(),
-                                        Forms\Components\TextInput::make('payment_stripe_secret_key')
-                                            ->label('Secret Key (sk_...)')
-                                            ->placeholder('sk_live_... or sk_test_...')
-                                            ->password()
-                                            ->revealable()
-                                            ->columnSpanFull(),
-                                        Forms\Components\TextInput::make('payment_stripe_webhook_secret')
-                                            ->label('Webhook Signing Secret (whsec_...)')
-                                            ->placeholder('whsec_...')
-                                            ->password()
-                                            ->revealable()
-                                            ->columnSpanFull(),
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('payment_stripe_enabled')
+                                                ->label('Enable Stripe Payments')
+                                                ->default(true),
+                                            Forms\Components\Select::make('payment_stripe_mode')
+                                                ->label('Active Environment Mode')
+                                                ->options([
+                                                    'test' => '🧪 Test / Sandbox Mode',
+                                                    'live' => '🚀 Live / Production Mode',
+                                                ])
+                                                ->default('test')
+                                                ->helperText('Select which key set to use dynamically for customer transactions.')
+                                                ->required(),
+                                        ]),
+
+                                        Forms\Components\Fieldset::make('🧪 Sandbox / Test Mode Keys')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_stripe_test_publishable_key')
+                                                    ->label('Test Publishable Key (pk_test_...)')
+                                                    ->placeholder('pk_test_...')
+                                                    ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('payment_stripe_test_secret_key')
+                                                    ->label('Test Secret Key (sk_test_...)')
+                                                    ->placeholder('sk_test_...')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('payment_stripe_test_webhook_secret')
+                                                    ->label('Test Webhook Signing Secret (whsec_...)')
+                                                    ->placeholder('whsec_...')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpanFull(),
+                                            ]),
+
+                                        Forms\Components\Fieldset::make('🚀 Live / Production Mode Keys')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_stripe_live_publishable_key')
+                                                    ->label('Live Publishable Key (pk_live_...)')
+                                                    ->placeholder('pk_live_...')
+                                                    ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('payment_stripe_live_secret_key')
+                                                    ->label('Live Secret Key (sk_live_...)')
+                                                    ->placeholder('sk_live_...')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('payment_stripe_live_webhook_secret')
+                                                    ->label('Live Webhook Signing Secret (whsec_...)')
+                                                    ->placeholder('whsec_...')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpanFull(),
+                                            ]),
                                     ]),
 
                                 Forms\Components\Section::make('PayPal Gateway')
@@ -437,11 +479,15 @@ class ManageAppSettings extends Page implements HasForms
         $state = $this->form->getState();
 
         $mapping = [
-            // Payment
+            // Payment Gateways
             'payment_stripe_enabled' => ['key' => 'payment.stripe_enabled', 'group' => 'Payment Gateways'],
-            'payment_stripe_publishable_key' => ['key' => 'payment.stripe_publishable_key', 'group' => 'Payment Gateways'],
-            'payment_stripe_secret_key' => ['key' => 'payment.stripe_secret_key', 'group' => 'Payment Gateways'],
-            'payment_stripe_webhook_secret' => ['key' => 'payment.stripe_webhook_secret', 'group' => 'Payment Gateways'],
+            'payment_stripe_mode' => ['key' => 'payment.stripe_mode', 'group' => 'Payment Gateways'],
+            'payment_stripe_test_publishable_key' => ['key' => 'payment.stripe_test_publishable_key', 'group' => 'Payment Gateways'],
+            'payment_stripe_test_secret_key' => ['key' => 'payment.stripe_test_secret_key', 'group' => 'Payment Gateways'],
+            'payment_stripe_test_webhook_secret' => ['key' => 'payment.stripe_test_webhook_secret', 'group' => 'Payment Gateways'],
+            'payment_stripe_live_publishable_key' => ['key' => 'payment.stripe_live_publishable_key', 'group' => 'Payment Gateways'],
+            'payment_stripe_live_secret_key' => ['key' => 'payment.stripe_live_secret_key', 'group' => 'Payment Gateways'],
+            'payment_stripe_live_webhook_secret' => ['key' => 'payment.stripe_live_webhook_secret', 'group' => 'Payment Gateways'],
             'payment_paypal_enabled' => ['key' => 'payment.paypal_enabled', 'group' => 'Payment Gateways'],
             'payment_paypal_client_id' => ['key' => 'payment.paypal_client_id', 'group' => 'Payment Gateways'],
             'payment_paypal_secret' => ['key' => 'payment.paypal_secret', 'group' => 'Payment Gateways'],
@@ -513,12 +559,24 @@ class ManageAppSettings extends Page implements HasForms
             }
         }
 
+        // Dynamically assign active Stripe keys based on stripe_mode
+        $stripeMode = $state['payment_stripe_mode'] ?? 'test';
+        if ($stripeMode === 'live') {
+            SettingService::set('payment.stripe_publishable_key', $state['payment_stripe_live_publishable_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.stripe_secret_key', $state['payment_stripe_live_secret_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.stripe_webhook_secret', $state['payment_stripe_live_webhook_secret'] ?? '', 'Payment Gateways');
+        } else {
+            SettingService::set('payment.stripe_publishable_key', $state['payment_stripe_test_publishable_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.stripe_secret_key', $state['payment_stripe_test_secret_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.stripe_webhook_secret', $state['payment_stripe_test_webhook_secret'] ?? '', 'Payment Gateways');
+        }
+
         // Re-sync to runtime config
         SettingService::syncToConfig();
 
         Notification::make()
             ->title('Settings Saved Successfully!')
-            ->body('All configurations have been updated in the database, runtime configs synchronized, and cache refreshed.')
+            ->body('All configurations updated in database. Stripe mode is currently set to: ' . strtoupper($stripeMode))
             ->success()
             ->send();
     }
@@ -537,9 +595,10 @@ class ManageAppSettings extends Page implements HasForms
                 ->action(function (): void {
                     try {
                         SettingService::syncToConfig();
-                        $secretKey = config('services.stripe.secret') ?: SettingService::get('payment.stripe_secret_key');
+                        $mode = SettingService::get('payment.stripe_mode', 'test');
+                        $secretKey = SettingService::getActiveStripeSecretKey();
                         if (empty($secretKey)) {
-                            throw new \Exception('No Stripe Secret Key configured. Please save a valid secret key first.');
+                            throw new \Exception("No Stripe Secret Key configured for active " . strtoupper($mode) . " mode. Please enter and save the secret key first.");
                         }
 
                         if (!class_exists(\Stripe\Stripe::class)) {
@@ -552,9 +611,10 @@ class ManageAppSettings extends Page implements HasForms
                         \Stripe\Stripe::setApiKey($secretKey);
                         $account = \Stripe\Account::retrieve();
                         $displayName = $account->settings->dashboard->display_name ?? $account->business_profile->name ?? $account->id;
+                        $modeLabel = $mode === 'live' ? '🚀 LIVE MODE' : '🧪 TEST MODE';
 
                         Notification::make()
-                            ->title('Stripe Connected Successfully!')
+                            ->title("Stripe Connected ({$modeLabel})!")
                             ->body("Account: {$displayName} ({$account->id}) • Currency: " . strtoupper($account->default_currency) . " • Charges: " . ($account->charges_enabled ? 'Active' : 'Disabled'))
                             ->success()
                             ->duration(8000)
