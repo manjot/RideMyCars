@@ -978,9 +978,12 @@ Route::get('/set-country/{code}', function ($code, \Illuminate\Http\Request $req
     return redirect()->back();
 });
 
-Route::get('/ride', function () {
+Route::get('/ride', function (\Illuminate\Http\Request $request) {
     $vehicles = \App\Models\Vehicle::all();
-    return view('ride', compact('vehicles'));
+    $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
+    $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
+    $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
+    return view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'));
 });
 
 // Dynamic Ride Categories with live pricing API

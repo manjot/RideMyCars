@@ -975,23 +975,25 @@
                 currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
                 currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
                 countryPricing: {
-                    base_fare: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }},
-                    per_km: {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }},
-                    per_minute: {{ (float) ($currentPricing->ride_per_minute_rate ?? 0.25) }},
-                    minimum_fare: {{ (float) ($currentPricing->ride_minimum_fare ?? 7.00) }}
+                    base_fare: {{ (float) ($currentPricing?->ride_base_fare ?? 5.00) }},
+                    per_km: {{ (float) ($currentPricing?->ride_per_km_rate ?? 1.50) }},
+                    per_minute: {{ (float) ($currentPricing?->ride_per_minute_rate ?? 0.25) }},
+                    minimum_fare: {{ (float) ($currentPricing?->ride_minimum_fare ?? 7.00) }}
                 },
                 @php
                     $activeRideCategories = \App\Models\RideCategory::getActiveCategories();
-                    $countryMultiplier = (float) ($currentPricing->exchange_rate ?? 1.0);
+                    $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
                     $sym = $currentCurrencySymbol ?? '$';
 
                     if ($activeRideCategories->isEmpty()) {
+                        $baseF = (float) ($currentPricing?->ride_base_fare ?? 5.00);
+                        $perKmF = (float) ($currentPricing?->ride_per_km_rate ?? 1.50);
                         $formattedCats = [
-                            ['id' => 'economy', 'name' => 'Economy', 'icon' => '🚗', 'capacity' => '1–4 seats', 'eta_minutes' => 3, 'multiplier' => 1.0, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)), 2), 'description' => 'Affordable everyday rides'],
-                            ['id' => 'standard', 'name' => 'Comfort', 'icon' => '✨', 'capacity' => '1–4 seats', 'eta_minutes' => 4, 'multiplier' => 1.2, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.2, 2), 'description' => 'Comfortable sedans'],
-                            ['id' => 'suv', 'name' => 'SUV', 'icon' => '🚙', 'capacity' => '1–6 seats', 'eta_minutes' => 6, 'multiplier' => 1.5, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.5, 2), 'description' => 'Spacious SUVs'],
-                            ['id' => 'xl', 'name' => 'XL Van', 'icon' => '🚐', 'capacity' => '1–7 seats', 'eta_minutes' => 7, 'multiplier' => 1.8, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.8, 2), 'description' => 'Large vans for groups'],
-                            ['id' => 'luxury', 'name' => 'Luxury', 'icon' => '👑', 'capacity' => '1–4 seats', 'eta_minutes' => 5, 'multiplier' => 2.2, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 2.2, 2), 'description' => 'Premium luxury vehicles'],
+                            ['id' => 'economy', 'name' => 'Economy', 'icon' => '🚗', 'capacity' => '1–4 seats', 'eta_minutes' => 3, 'multiplier' => 1.0, 'fare_formatted' => $sym . number_format($baseF + (10 * $perKmF), 2), 'description' => 'Affordable everyday rides'],
+                            ['id' => 'standard', 'name' => 'Comfort', 'icon' => '✨', 'capacity' => '1–4 seats', 'eta_minutes' => 4, 'multiplier' => 1.2, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.2, 2), 'description' => 'Comfortable sedans'],
+                            ['id' => 'suv', 'name' => 'SUV', 'icon' => '🚙', 'capacity' => '1–6 seats', 'eta_minutes' => 6, 'multiplier' => 1.5, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.5, 2), 'description' => 'Spacious SUVs'],
+                            ['id' => 'xl', 'name' => 'XL Van', 'icon' => '🚐', 'capacity' => '1–7 seats', 'eta_minutes' => 7, 'multiplier' => 1.8, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.8, 2), 'description' => 'Large vans for groups'],
+                            ['id' => 'luxury', 'name' => 'Luxury', 'icon' => '👑', 'capacity' => '1–4 seats', 'eta_minutes' => 5, 'multiplier' => 2.2, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 2.2, 2), 'description' => 'Premium luxury vehicles'],
                         ];
                     } else {
                         $formattedCats = $activeRideCategories->map(function ($cat, $idx) use ($currentPricing, $sym, $countryMultiplier) {
@@ -1013,11 +1015,11 @@
                 @endphp
                 categories: {!! json_encode($formattedCats) !!},
                 fareBreakdown: { 
-                    base_fare: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }}, 
-                    distance_fare: {{ (float) (10 * ($currentPricing->ride_per_km_rate ?? 1.50)) }}, 
+                    base_fare: {{ (float) ($currentPricing?->ride_base_fare ?? 5.00) }}, 
+                    distance_fare: {{ (float) (10 * ($currentPricing?->ride_per_km_rate ?? 1.50)) }}, 
                     stops_fee: 0.00, 
-                    tax: {{ round(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 0.05, 2) }}, 
-                    grand_total: {{ round(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.05, 2) }} 
+                    tax: {{ round(((float) ($currentPricing?->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing?->ride_per_km_rate ?? 1.50)) * 0.05, 2) }}, 
+                    grand_total: {{ round(((float) ($currentPricing?->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing?->ride_per_km_rate ?? 1.50)) * 1.05, 2) }} 
                 },
                 paymentModal: false,
                 paymentStep: 'select',
