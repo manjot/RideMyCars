@@ -152,65 +152,129 @@
             </div>
         </section>
 
-        <!-- Leadership Team -->
+        <!-- Platform Pillars: The RideMyCars Ecosystem -->
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/40 mb-3">
-                    👥 Executive Leadership
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 font-black text-xs uppercase tracking-wider border border-orange-200 dark:border-orange-800/40 mb-3">
+                    ⚡ Platform Pillars
                 </div>
-                <h2 class="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">The Visionaries Driving the Fleet</h2>
+                <h2 class="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">How RideMyCars Powers Mobility</h2>
                 <p class="text-gray-600 dark:text-gray-300 text-sm sm:text-base mt-3">
-                    Experienced leaders in software engineering, automotive logistics, fintech, and global operations.
+                    A multi-modal transport network uniting riders, vehicle hosts, professional drivers, and businesses under one transparent ecosystem.
                 </p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Alex Rivera -->
-                <div class="bg-white dark:bg-[#141414] rounded-3xl p-6 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-orange-500 transition-all text-center group">
-                    <div class="relative w-36 h-36 mx-auto mb-6 rounded-2xl overflow-hidden shadow-md">
-                        <img src="{{ asset('images/team-alex-rivera.jpg') }}" alt="Alex Rivera" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                <!-- 01: Instant City Rides -->
+                <div class="bg-white dark:bg-[#141414] rounded-3xl p-7 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-orange-500 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            🚗
+                        </div>
+                        <div class="text-[11px] font-black uppercase tracking-wider text-orange-600 dark:text-orange-400 mb-1.5">For Everyday Riders</div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2.5">Instant City Rides</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
+                            On-demand point-to-point transport with upfront price locks, zero predatory surge gouging, and comprehensive 7-point safety screening.
+                        </p>
+                        <ul class="space-y-2.5 text-xs text-gray-600 dark:text-gray-400 mb-6">
+                            <li class="flex items-center gap-2">
+                                <span class="text-orange-500 font-bold">✓</span> Upfront guaranteed fares
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-orange-500 font-bold">✓</span> 24/7 in-app emergency SOS
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-orange-500 font-bold">✓</span> Live shareable GPS tracking
+                            </li>
+                        </ul>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-1">Alex Rivera</h3>
-                    <div class="text-xs font-black uppercase tracking-wider text-orange-600 dark:text-orange-400 mb-3">CEO & Co-founder</div>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-                        14+ years scaling mobility platforms and automotive finance across the Americas. Passionate about driver equity.
-                    </p>
+                    <a href="{{ url('/') }}" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-orange-600 hover:text-white dark:hover:bg-orange-600 text-gray-900 dark:text-white font-bold text-xs transition-all border border-gray-200 dark:border-white/10 group-hover:border-orange-500">
+                        Book a Ride <span>→</span>
+                    </a>
                 </div>
 
-                <!-- Jamie Chen -->
-                <div class="bg-white dark:bg-[#141414] rounded-3xl p-6 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-blue-500 transition-all text-center group">
-                    <div class="relative w-36 h-36 mx-auto mb-6 rounded-2xl overflow-hidden shadow-md">
-                        <img src="{{ asset('images/team-jamie-chen.jpg') }}" alt="Jamie Chen" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                <!-- 02: Car Rental & Fleet Hosts -->
+                <div class="bg-white dark:bg-[#141414] rounded-3xl p-7 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-blue-500 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            🔑
+                        </div>
+                        <div class="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1.5">For Hosts & Travelers</div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2.5">Peer-to-Peer Rentals</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
+                            Vehicle owners turn idle cars into automated revenue streams with insured bookings, flexible self-drive options, and instant check-in.
+                        </p>
+                        <ul class="space-y-2.5 text-xs text-gray-600 dark:text-gray-400 mb-6">
+                            <li class="flex items-center gap-2">
+                                <span class="text-blue-500 font-bold">✓</span> $1,000,000 insurance shield
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-blue-500 font-bold">✓</span> Pre-vetted guest screening
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-blue-500 font-bold">✓</span> Fast automated earnings
+                            </li>
+                        </ul>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-1">Jamie Chen</h3>
-                    <div class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-3">CTO & Co-founder</div>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-                        Former distributed systems architect. Engineered RideMyCars' real-time dispatch and sub-second matching algorithms.
-                    </p>
+                    <a href="{{ url('/rent') }}" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-gray-900 dark:text-white font-bold text-xs transition-all border border-gray-200 dark:border-white/10 group-hover:border-blue-500">
+                        Explore Rentals <span>→</span>
+                    </a>
                 </div>
 
-                <!-- Sam Okafor -->
-                <div class="bg-white dark:bg-[#141414] rounded-3xl p-6 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-emerald-500 transition-all text-center group">
-                    <div class="relative w-36 h-36 mx-auto mb-6 rounded-2xl overflow-hidden shadow-md">
-                        <img src="{{ asset('images/team-sam-okafor.jpg') }}" alt="Sam Okafor" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                <!-- 03: Professional Chauffeurs -->
+                <div class="bg-white dark:bg-[#141414] rounded-3xl p-7 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-emerald-500 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            👔
+                        </div>
+                        <div class="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">For Executive Travel</div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2.5">On-Demand Chauffeurs</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
+                            Hire vetted, professional personal drivers on an hourly or daily basis to pilot your personal vehicle or luxury corporate fleet with discretion.
+                        </p>
+                        <ul class="space-y-2.5 text-xs text-gray-600 dark:text-gray-400 mb-6">
+                            <li class="flex items-center gap-2">
+                                <span class="text-emerald-500 font-bold">✓</span> Elite background-checked drivers
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-emerald-500 font-bold">✓</span> Hourly & multi-day flexibility
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-emerald-500 font-bold">✓</span> Airport & corporate roadshows
+                            </li>
+                        </ul>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-1">Sam Okafor</h3>
-                    <div class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-3">Head of Operations</div>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-                        Oversees regional expansion hubs in North America, South Africa, and Ghana. Champion for safety and host operations.
-                    </p>
+                    <a href="{{ url('/hire-driver') }}" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-gray-900 dark:text-white font-bold text-xs transition-all border border-gray-200 dark:border-white/10 group-hover:border-emerald-500">
+                        Hire a Chauffeur <span>→</span>
+                    </a>
                 </div>
 
-                <!-- Taylor Kim -->
-                <div class="bg-white dark:bg-[#141414] rounded-3xl p-6 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-purple-500 transition-all text-center group">
-                    <div class="relative w-36 h-36 mx-auto mb-6 rounded-2xl overflow-hidden shadow-md">
-                        <img src="{{ asset('images/team-taylor-kim.jpg') }}" alt="Taylor Kim" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                <!-- 04: Urban Parcel Delivery -->
+                <div class="bg-white dark:bg-[#141414] rounded-3xl p-7 border-2 border-gray-200 dark:border-white/10 shadow-lg hover:shadow-2xl hover:border-purple-500 transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            📦
+                        </div>
+                        <div class="text-[11px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1.5">For Fast Commerce</div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2.5">Hyperlocal Deliveries</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
+                            Express door-to-door courier dispatch for legal contracts, e-commerce, and urgent packages with secure OTP handover verification.
+                        </p>
+                        <ul class="space-y-2.5 text-xs text-gray-600 dark:text-gray-400 mb-6">
+                            <li class="flex items-center gap-2">
+                                <span class="text-purple-500 font-bold">✓</span> 4-digit recipient OTP security
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-purple-500 font-bold">✓</span> Real-time live package GPS
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-purple-500 font-bold">✓</span> Direct digital proof-of-delivery
+                            </li>
+                        </ul>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-1">Taylor Kim</h3>
-                    <div class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-3">Head of Product</div>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-                        Human-centered UX designer and mobile product specialist. Leads mobile apps across Rider, Driver, and Host interfaces.
-                    </p>
+                    <a href="{{ url('/delivery') }}" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-600 text-gray-900 dark:text-white font-bold text-xs transition-all border border-gray-200 dark:border-white/10 group-hover:border-purple-500">
+                        Send Package <span>→</span>
+                    </a>
                 </div>
             </div>
         </section>
