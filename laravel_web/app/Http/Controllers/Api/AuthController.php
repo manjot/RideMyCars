@@ -262,21 +262,15 @@ class AuthController extends Controller
             $reqEmail = trim(strtolower($request->email));
             $user = User::where('email', $reqEmail)->first();
 
-            $demoUsers = [
-                'sarah@example.com' => ['name' => 'Sarah Johnson', 'role' => 'driver'],
-                'michael@example.com' => ['name' => 'Michael Chen', 'role' => 'driver'],
-                'michael.driver@ridemycars.com' => ['name' => 'Michael Scott', 'role' => 'driver'],
-                'sipho.driver@ridemycars.com' => ['name' => 'Sipho Ndlovu', 'role' => 'driver'],
-                'sipho@ridemycars.com' => ['name' => 'Sipho Ndlovu', 'role' => 'driver'],
-                'customer@ridemycars.com' => ['name' => 'John Client', 'role' => 'customer'],
-                'client@ridemycars.com' => ['name' => 'John Client', 'role' => 'customer'],
-            ];
+            // Dynamic demo accounts from database settings managed by admin
+            $demoUsers = \App\Services\SettingService::getDemoUsers();
+            $isDemoPassword = \App\Services\SettingService::isDemoPassword((string)$request->password);
 
             $isValidPassword = false;
             if ($user) {
                 $isValidPassword = Hash::check($request->password, $user->password);
-                if (!$isValidPassword && in_array($request->password, ['123456', 'password', 'password123', 'password@123']) && 
-                    (str_ends_with($user->email, '@ridemycars.com') || str_ends_with($user->email, '@example.com') || isset($demoUsers[$user->email]))) {
+                if (!$isValidPassword && $isDemoPassword && 
+                    (str_ends_with($user->email, '@ridemycars.com') || isset($demoUsers[$user->email]))) {
                     $user->password = Hash::make($request->password);
                     if (empty($user->account_status) || $user->account_status === 'pending') {
                         $user->account_status = 'active';
@@ -284,12 +278,12 @@ class AuthController extends Controller
                     $user->save();
                     $isValidPassword = true;
                 }
-            } elseif (isset($demoUsers[$reqEmail]) && in_array($request->password, ['123456', 'password'])) {
+            } elseif (isset($demoUsers[$reqEmail]) && $isDemoPassword) {
                 $meta = $demoUsers[$reqEmail];
                 $user = User::create([
                     'name' => $meta['name'],
                     'email' => $reqEmail,
-                    'password' => Hash::make('123456'),
+                    'password' => Hash::make($request->password),
                     'role' => $meta['role'],
                     'account_status' => 'active',
                     'email_verified_at' => now(),

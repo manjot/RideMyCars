@@ -24,10 +24,7 @@ class StripeService
             }
         }
 
-        $secretKey = config('services.stripe.secret');
-        if (empty($secretKey)) {
-            $secretKey = env('STRIPE_SECRET_KEY', env('STRIPE_SECRET'));
-        }
+        $secretKey = \App\Services\SettingService::getActiveStripeSecretKey() ?: (config('services.stripe.secret') ?: env('STRIPE_SECRET_KEY', env('STRIPE_SECRET', '')));
         \Stripe\Stripe::setApiKey($secretKey);
     }
 
@@ -140,12 +137,14 @@ class StripeService
 
         PaymentTransaction::create($txnData);
 
+        $pubKey = \App\Services\SettingService::getActiveStripePublishableKey() ?: (config('services.stripe.key') ?: env('STRIPE_PUBLISHABLE_KEY', ''));
+
         return [
             'clientSecret' => $intent->client_secret,
             'paymentIntentId' => $intent->id,
-            'publishableKey' => config('services.stripe.key'),
+            'publishableKey' => $pubKey,
             'client_secret' => $intent->client_secret,
-            'publishable_key' => config('services.stripe.key'),
+            'publishable_key' => $pubKey,
             'payment_intent_id' => $intent->id,
             'transaction_ref' => $transactionRef,
             'amount' => $amount,
@@ -321,11 +320,7 @@ class StripeService
      */
     public static function handleWebhook(string $payload, string $sigHeader): array
     {
-        static::initStripe();
-        $webhookSecret = config('services.stripe.webhook_secret');
-        if (empty($webhookSecret)) {
-            $webhookSecret = env('STRIPE_WEBHOOK_SECRET');
-        }
+        $webhookSecret = \App\Services\SettingService::getActiveStripeWebhookSecret() ?: (config('services.stripe.webhook_secret') ?: env('STRIPE_WEBHOOK_SECRET', ''));
 
         try {
             if (!empty($webhookSecret) && !empty($sigHeader)) {

@@ -12,8 +12,8 @@ class PlacesApiController extends Controller
 {
     protected function getApiKey(): string
     {
-        return config('services.google_maps.api_key') 
-            ?: env('GOOGLE_MAPS_API_KEY', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
+        return (string) (\App\Services\SettingService::get('geo.google_maps_api_key') 
+            ?: config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', '')));
     }
 
     /**

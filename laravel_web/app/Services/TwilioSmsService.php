@@ -16,11 +16,11 @@ class TwilioSmsService
 
     public function __construct()
     {
-        $this->accountSid = (string) config('twilio.account_sid', '');
-        $this->authToken = (string) config('twilio.auth_token', '');
-        $this->fromNumber = (string) config('twilio.phone_number', '');
-        $this->messagingServiceSid = (string) config('twilio.messaging_service_sid', '');
-        $this->enabled = (bool) config('twilio.enabled', true);
+        $this->accountSid = (string) (\App\Services\SettingService::get('sms.twilio_account_sid') ?: config('twilio.account_sid', ''));
+        $this->authToken = (string) (\App\Services\SettingService::get('sms.twilio_auth_token') ?: config('twilio.auth_token', ''));
+        $this->fromNumber = (string) (\App\Services\SettingService::get('sms.twilio_phone_number') ?: config('twilio.phone_number', ''));
+        $this->messagingServiceSid = (string) (\App\Services\SettingService::get('sms.twilio_messaging_service_sid') ?: config('twilio.messaging_service_sid', ''));
+        $this->enabled = filter_var(\App\Services\SettingService::get('sms.twilio_enabled', config('twilio.enabled', true)), FILTER_VALIDATE_BOOLEAN);
         $this->timeout = (int) config('twilio.timeout', 15);
     }
 

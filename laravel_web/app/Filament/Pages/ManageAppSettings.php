@@ -36,8 +36,8 @@ class ManageAppSettings extends Page implements HasForms
             // Payment Gateways
             'payment_stripe_enabled' => (bool) ($all['payment.stripe_enabled'] ?? true),
             'payment_stripe_mode' => $all['payment.stripe_mode'] ?? 'test',
-            'payment_stripe_test_publishable_key' => $all['payment.stripe_test_publishable_key'] ?? ($all['payment.stripe_publishable_key'] ?? 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA'),
-            'payment_stripe_test_secret_key' => $all['payment.stripe_test_secret_key'] ?? ($all['payment.stripe_secret_key'] ?? 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i'),
+            'payment_stripe_test_publishable_key' => $all['payment.stripe_test_publishable_key'] ?? ($all['payment.stripe_publishable_key'] ?? ''),
+            'payment_stripe_test_secret_key' => $all['payment.stripe_test_secret_key'] ?? ($all['payment.stripe_secret_key'] ?? ''),
             'payment_stripe_test_webhook_secret' => $all['payment.stripe_test_webhook_secret'] ?? ($all['payment.stripe_webhook_secret'] ?? ''),
             'payment_stripe_live_publishable_key' => $all['payment.stripe_live_publishable_key'] ?? '',
             'payment_stripe_live_secret_key' => $all['payment.stripe_live_secret_key'] ?? '',

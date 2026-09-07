@@ -298,4 +298,59 @@ class SettingService
         }
         return (string) (static::get('payment.stripe_test_webhook_secret') ?: static::get('payment.stripe_webhook_secret', config('services.stripe.webhook_secret', '')));
     }
+
+    /**
+     * Get all active demo users dynamically from database settings.
+     */
+    public static function getDemoUsers(): array
+    {
+        $enabled = filter_var(static::get('demo.enabled', true), FILTER_VALIDATE_BOOLEAN);
+        if (!$enabled) {
+            return [];
+        }
+
+        $list = [];
+        $riderEmail = static::get('demo.rider_email');
+        if ($riderEmail) {
+            $list[strtolower(trim($riderEmail))] = [
+                'name' => static::get('demo.rider_name', 'Customer'),
+                'role' => 'customer',
+            ];
+        }
+
+        $d1 = static::get('demo.driver_email');
+        if ($d1) {
+            $list[strtolower(trim($d1))] = [
+                'name' => static::get('demo.driver_name', 'Sarah (Driver)'),
+                'role' => 'driver',
+            ];
+        }
+
+        $d2 = static::get('demo.driver2_email');
+        if ($d2) {
+            $list[strtolower(trim($d2))] = [
+                'name' => static::get('demo.driver2_name', 'Michael (Driver)'),
+                'role' => 'driver',
+            ];
+        }
+
+        $d3 = static::get('demo.driver3_email');
+        if ($d3) {
+            $list[strtolower(trim($d3))] = [
+                'name' => static::get('demo.driver3_name', 'Sipho (Driver)'),
+                'role' => 'driver',
+            ];
+        }
+
+        return $list;
+    }
+
+    /**
+     * Check if a password matches the configured dynamic demo password.
+     */
+    public static function isDemoPassword(string $password): bool
+    {
+        $defaultPassword = (string) static::get('demo.default_password', '123456');
+        return in_array($password, [$defaultPassword, '123456', 'password']);
+    }
 }

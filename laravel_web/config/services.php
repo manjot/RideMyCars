@@ -64,23 +64,23 @@ return [
     ],
 
     'google_maps' => [
-        'api_key' => env('GOOGLE_MAPS_API_KEY', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0'),
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
     'stripe' => [
-        'key' => env('STRIPE_PUBLISHABLE_KEY', env('STRIPE_KEY', 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA')),
-        'secret' => env('STRIPE_SECRET_KEY', env('STRIPE_SECRET', 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i')),
-        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET', ''),
+        'key' => env('STRIPE_PUBLISHABLE_KEY', env('STRIPE_KEY')),
+        'secret' => env('STRIPE_SECRET_KEY', env('STRIPE_SECRET')),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
     'firebase' => [
-        'api_key' => env('FIREBASE_API_KEY', 'AIzaSyDuMSNuvtLpJQYdP652UYrFtoCwXV95W9g'),
-        'auth_domain' => env('FIREBASE_AUTH_DOMAIN', 'ridemycars.firebaseapp.com'),
-        'project_id' => env('FIREBASE_PROJECT_ID', 'ridemycars'),
-        'storage_bucket' => env('FIREBASE_STORAGE_BUCKET', 'ridemycars.firebasestorage.app'),
-        'messaging_sender_id' => env('FIREBASE_MESSAGING_SENDER_ID', '235015074737'),
-        'app_id' => env('FIREBASE_APP_ID', '1:235015074737:web:e23df51eb2a0b129f30390'),
-        'measurement_id' => env('FIREBASE_MEASUREMENT_ID', ''),
+        'api_key' => env('FIREBASE_API_KEY'),
+        'auth_domain' => env('FIREBASE_AUTH_DOMAIN'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
+        'messaging_sender_id' => env('FIREBASE_MESSAGING_SENDER_ID'),
+        'app_id' => env('FIREBASE_APP_ID'),
+        'measurement_id' => env('FIREBASE_MEASUREMENT_ID'),
     ],
 
     'google' => [

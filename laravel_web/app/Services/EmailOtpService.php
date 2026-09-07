@@ -88,10 +88,10 @@ class EmailOtpService
         string $htmlContent,
         string $textContent
     ): array {
-        $host = config('mail.mailers.smtp.host') ?: env('MAIL_HOST', 'mail.ridemycars.com');
-        $port = (int) (config('mail.mailers.smtp.port') ?: env('MAIL_PORT', 465));
-        $user = config('mail.mailers.smtp.username') ?: env('MAIL_USERNAME', 'support@ridemycars.com');
-        $pass = config('mail.mailers.smtp.password') ?: env('MAIL_PASSWORD', 'Support@#007');
+        $host = \App\Services\SettingService::get('mail.host') ?: (config('mail.mailers.smtp.host') ?: env('MAIL_HOST', 'mail.ridemycars.com'));
+        $port = (int) (\App\Services\SettingService::get('mail.port') ?: (config('mail.mailers.smtp.port') ?: env('MAIL_PORT', 465)));
+        $user = \App\Services\SettingService::get('mail.username') ?: (config('mail.mailers.smtp.username') ?: env('MAIL_USERNAME', 'support@ridemycars.com'));
+        $pass = \App\Services\SettingService::get('mail.password') ?: (config('mail.mailers.smtp.password') ?: env('MAIL_PASSWORD', ''));
 
         try {
             $context = stream_context_create([
@@ -234,9 +234,9 @@ class EmailOtpService
         string $textContent
     ): void {
         try {
-            $host = config('mail.mailers.smtp.host') ?: env('MAIL_HOST', 'mail.ridemycars.com');
-            $user = config('mail.mailers.smtp.username') ?: env('MAIL_USERNAME', 'support@ridemycars.com');
-            $pass = config('mail.mailers.smtp.password') ?: env('MAIL_PASSWORD', 'Support@#007');
+            $host = \App\Services\SettingService::get('mail.host') ?: (config('mail.mailers.smtp.host') ?: env('MAIL_HOST', 'mail.ridemycars.com'));
+            $user = \App\Services\SettingService::get('mail.username') ?: (config('mail.mailers.smtp.username') ?: env('MAIL_USERNAME', 'support@ridemycars.com'));
+            $pass = \App\Services\SettingService::get('mail.password') ?: (config('mail.mailers.smtp.password') ?: env('MAIL_PASSWORD', ''));
 
             $fp = @fsockopen('ssl://' . $host, 993, $errno, $errstr, 4);
             if (!$fp) return;

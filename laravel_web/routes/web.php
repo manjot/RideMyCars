@@ -115,25 +115,11 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
 
     // Direct Laravel authentication attempt
     if (!auth()->attempt(['email' => $email, 'password' => $password])) {
-        // Robust fallback for designated test & demo accounts
-        $demoUsers = [
-            'sarah@example.com' => ['name' => 'Sarah Johnson', 'role' => 'driver'],
-            'michael@example.com' => ['name' => 'Michael Chen', 'role' => 'driver'],
-            'michael.driver@ridemycars.com' => ['name' => 'Michael Scott', 'role' => 'driver'],
-            'sipho.driver@ridemycars.com' => ['name' => 'Sipho Ndlovu', 'role' => 'driver'],
-            'sipho@ridemycars.com' => ['name' => 'Sipho Ndlovu', 'role' => 'driver'],
-            'customer@ridemycars.com' => ['name' => 'John Client', 'role' => 'customer'],
-            'client@ridemycars.com' => ['name' => 'John Client', 'role' => 'customer'],
-            'admin@ridemycars.com' => ['name' => 'Admin User', 'role' => 'admin'],
-            'kwame.driver@ridemycars.com' => ['name' => 'Kwame Mensah', 'role' => 'driver'],
-            'emeka.driver@ridemycars.com' => ['name' => 'Emeka Okafor', 'role' => 'driver'],
-            'david@example.com' => ['name' => 'David Rodriguez', 'role' => 'driver'],
-            'emily@example.com' => ['name' => 'Emily Thompson', 'role' => 'driver'],
-            'james@example.com' => ['name' => 'James Wilson', 'role' => 'driver'],
-        ];
+        // Dynamic demo accounts from database settings managed by admin
+        $demoUsers = \App\Services\SettingService::getDemoUsers();
+        $isDemoPassword = \App\Services\SettingService::isDemoPassword($password);
 
-        // If password is '123456', 'password', or 'Support@#007'
-        if (in_array($password, ['123456', 'password', '12345678', 'Support@#007'])) {
+        if ($isDemoPassword) {
             $user = \App\Models\User::where('email', $email)->orWhereRaw('LOWER(email) = ?', [$email])->first();
             if ($user) {
                 $user->password = \Illuminate\Support\Facades\Hash::make($password);
@@ -147,7 +133,7 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
                 $newUser = \App\Models\User::create([
                     'name' => $meta['name'],
                     'email' => $email,
-                    'password' => \Illuminate\Support\Facades\Hash::make('123456'),
+                    'password' => \Illuminate\Support\Facades\Hash::make($password),
                     'role' => $meta['role'],
                     'account_status' => 'active',
                     'email_verified_at' => now(),
@@ -2741,34 +2727,29 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'footer.copyright')->update([
                 'value' => '© 2026 New Development Finance Group Pty Ltd. All rights reserved.'
             ]);
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_enabled'],
-                ['value' => '1', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Gateway Enabled']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_mode'],
-                ['value' => 'test', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Active Stripe Mode']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_test_publishable_key'],
-                ['value' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Test Publishable Key']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_test_secret_key'],
-                ['value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Test Secret Key']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_test_webhook_secret'],
-                ['value' => '', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Test Webhook Secret']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_publishable_key'],
-                ['value' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Publishable Key']
-            );
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => 'payment.stripe_secret_key'],
-                ['value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Secret Key']
-            );
+            $defaultStripeSettings = [
+                'payment.stripe_enabled' => ['value' => '1', 'label' => 'Stripe Gateway Enabled'],
+                'payment.stripe_mode' => ['value' => 'test', 'label' => 'Active Stripe Mode'],
+                'payment.stripe_test_publishable_key' => ['value' => env('STRIPE_PUBLISHABLE_KEY', ''), 'label' => 'Stripe Test Publishable Key'],
+                'payment.stripe_test_secret_key' => ['value' => env('STRIPE_SECRET_KEY', ''), 'label' => 'Stripe Test Secret Key'],
+                'payment.stripe_test_webhook_secret' => ['value' => '', 'label' => 'Stripe Test Webhook Secret'],
+                'payment.stripe_publishable_key' => ['value' => env('STRIPE_PUBLISHABLE_KEY', ''), 'label' => 'Stripe Publishable Key'],
+                'payment.stripe_secret_key' => ['value' => env('STRIPE_SECRET_KEY', ''), 'label' => 'Stripe Secret Key'],
+            ];
+
+            foreach ($defaultStripeSettings as $sKey => $sVal) {
+                if (!\Illuminate\Support\Facades\DB::table('settings')->where('key', $sKey)->exists()) {
+                    \Illuminate\Support\Facades\DB::table('settings')->insert([
+                        'key' => $sKey,
+                        'value' => $sVal['value'],
+                        'group' => 'Payment Gateways',
+                        'type' => 'text',
+                        'label' => $sVal['label'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
             // Purge PayPal configuration from database
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'like', 'payment.paypal%')->delete();
             \Illuminate\Support\Facades\Cache::flush();
@@ -2800,47 +2781,74 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     } catch (\Throwable $e) {
         $output['seed_err'] = $e->getMessage();
     }
+
+    // Sanitize .env on the server - remove/blank out all static credentials so application runs 100% from DB
+    $envPath = base_path('.env');
+    if (file_exists($envPath)) {
+        $envContent = file_get_contents($envPath);
+        
+        $keysToClean = [
+            'GOOGLE_MAPS_API_KEY',
+            'STRIPE_PUBLISHABLE_KEY',
+            'STRIPE_SECRET_KEY',
+            'STRIPE_WEBHOOK_SECRET',
+            'TWILIO_ACCOUNT_SID',
+            'TWILIO_AUTH_TOKEN',
+            'TWILIO_PHONE_NUMBER',
+            'TWILIO_MESSAGING_SERVICE_SID',
+            'GOOGLE_CLIENT_ID',
+            'GOOGLE_CLIENT_SECRET',
+            'APPLE_CLIENT_ID',
+            'APPLE_CLIENT_SECRET',
+            'MAIL_PASSWORD',
+        ];
+
+        // Before blanking in .env, ensure any existing .env value is migrated to MySQL settings table if DB value is currently empty
+        foreach ($keysToClean as $cleanKey) {
+            if (preg_match("/^{$cleanKey}=(.*)$/m", $envContent, $m)) {
+                $val = trim($m[1], " \t\n\r\0\x0B\"'");
+                if (!empty($val)) {
+                    $settingMap = [
+                        'GOOGLE_MAPS_API_KEY' => ['geo.google_maps_api_key', 'Maps & Geolocation'],
+                        'STRIPE_PUBLISHABLE_KEY' => ['payment.stripe_test_publishable_key', 'Payment Gateways'],
+                        'STRIPE_SECRET_KEY' => ['payment.stripe_test_secret_key', 'Payment Gateways'],
+                        'STRIPE_WEBHOOK_SECRET' => ['payment.stripe_test_webhook_secret', 'Payment Gateways'],
+                        'TWILIO_ACCOUNT_SID' => ['sms.twilio_account_sid', 'SMS Gateway'],
+                        'TWILIO_AUTH_TOKEN' => ['sms.twilio_auth_token', 'SMS Gateway'],
+                        'TWILIO_PHONE_NUMBER' => ['sms.twilio_phone_number', 'SMS Gateway'],
+                        'TWILIO_MESSAGING_SERVICE_SID' => ['sms.twilio_messaging_service_sid', 'SMS Gateway'],
+                        'GOOGLE_CLIENT_ID' => ['oauth.google_client_id', 'Social Logins'],
+                        'GOOGLE_CLIENT_SECRET' => ['oauth.google_client_secret', 'Social Logins'],
+                        'APPLE_CLIENT_ID' => ['oauth.apple_client_id', 'Social Logins'],
+                        'APPLE_CLIENT_SECRET' => ['oauth.apple_client_secret', 'Social Logins'],
+                        'MAIL_PASSWORD' => ['mail.password', 'Mail & SMTP'],
+                    ];
+                    if (isset($settingMap[$cleanKey])) {
+                        [$dbKey, $grp] = $settingMap[$cleanKey];
+                        $curr = \App\Models\Setting::where('key', $dbKey)->value('value');
+                        if (empty($curr)) {
+                            \App\Models\Setting::updateOrCreate(
+                                ['key' => $dbKey],
+                                ['value' => $val, 'group' => $grp, 'label' => ucwords(str_replace(['.', '_'], ' ', $dbKey)), 'type' => 'text']
+                            );
+                        }
+                    }
+                }
+                // Blank out the key in .env so no static keys remain in file
+                $envContent = preg_replace("/^{$cleanKey}=.*$/m", "{$cleanKey}=", $envContent);
+            }
+        }
+
+        file_put_contents($envPath, $envContent);
+        $output['env_sanitized'] = true;
+    }
     
     \Illuminate\Support\Facades\Artisan::call('route:clear');
     \Illuminate\Support\Facades\Artisan::call('config:clear');
     \Illuminate\Support\Facades\Artisan::call('view:clear');
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
     \Illuminate\Support\Facades\Cache::flush();
-
-    // Securely update OAuth & Stripe .env credentials if provided
-    $envPath = base_path('.env');
-    if (file_exists($envPath)) {
-        $envContent = file_get_contents($envPath);
-        $updatedEnv = false;
-        
-        $keysToUpdate = [
-            'STRIPE_PUBLISHABLE_KEY' => $request->query('stripe_publishable_key', 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA'),
-            'STRIPE_SECRET_KEY' => $request->query('stripe_secret_key', 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i'),
-            'GOOGLE_CLIENT_ID' => $request->query('google_client_id'),
-            'GOOGLE_CLIENT_SECRET' => $request->query('google_client_secret'),
-            'GOOGLE_REDIRECT_URI' => $request->query('google_redirect_uri', 'https://ridemycars.com/auth/google/callback'),
-            'APPLE_CLIENT_ID' => $request->query('apple_client_id'),
-            'APPLE_CLIENT_SECRET' => $request->query('apple_client_secret'),
-            'APPLE_REDIRECT_URI' => $request->query('apple_redirect_uri', 'https://ridemycars.com/auth/apple/callback'),
-        ];
-
-        foreach ($keysToUpdate as $k => $v) {
-            if (!empty($v)) {
-                if (preg_match("/^{$k}=.*/m", $envContent)) {
-                    $envContent = preg_replace("/^{$k}=.*/m", "{$k}=\"{$v}\"", $envContent);
-                } else {
-                    $envContent .= "\n{$k}=\"{$v}\"";
-                }
-                $updatedEnv = true;
-            }
-        }
-
-        if ($updatedEnv) {
-            file_put_contents($envPath, $envContent);
-            \Illuminate\Support\Facades\Artisan::call('config:clear');
-            $output['env_updated'] = true;
-        }
-    }
+    \App\Services\SettingService::syncToConfig();
 
     // Include recent laravel.log lines for debugging
     $logFiles = glob(storage_path('logs/*.log'));

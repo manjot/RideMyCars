@@ -45,14 +45,14 @@ class SettingsSeeder extends Seeder
             // Payment Gateways
             ['key' => 'payment.stripe_enabled', 'label' => 'Stripe Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_mode', 'label' => 'Active Stripe Mode (test / live)', 'value' => 'test', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_test_publishable_key', 'label' => 'Stripe Test Publishable Key', 'value' => 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_test_secret_key', 'label' => 'Stripe Test Secret Key', 'value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_test_webhook_secret', 'label' => 'Stripe Test Webhook Secret', 'value' => '', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_live_publishable_key', 'label' => 'Stripe Live Publishable Key', 'value' => '', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_live_secret_key', 'label' => 'Stripe Live Secret Key', 'value' => '', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_live_webhook_secret', 'label' => 'Stripe Live Webhook Secret', 'value' => '', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_publishable_key', 'label' => 'Stripe Publishable Key (Active)', 'value' => env('STRIPE_PUBLISHABLE_KEY', 'pk_test_51U3x2DC7C86Til8eAZJGEFBhLZrMFHIcevu4MkguwQEou96bLAwB55DBluqtKrWy2n2McEmV0u3scO63VsuNSa8K00GGo8dqfA'), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_secret_key', 'label' => 'Stripe Secret Key (Active)', 'value' => env('STRIPE_SECRET_KEY', 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_test_publishable_key', 'label' => 'Stripe Test Publishable Key', 'value' => env('STRIPE_TEST_PUBLISHABLE_KEY', env('STRIPE_PUBLISHABLE_KEY', '')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_test_secret_key', 'label' => 'Stripe Test Secret Key', 'value' => env('STRIPE_TEST_SECRET_KEY', env('STRIPE_SECRET_KEY', '')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_test_webhook_secret', 'label' => 'Stripe Test Webhook Secret', 'value' => env('STRIPE_TEST_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_live_publishable_key', 'label' => 'Stripe Live Publishable Key', 'value' => env('STRIPE_LIVE_PUBLISHABLE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_live_secret_key', 'label' => 'Stripe Live Secret Key', 'value' => env('STRIPE_LIVE_SECRET_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_live_webhook_secret', 'label' => 'Stripe Live Webhook Secret', 'value' => env('STRIPE_LIVE_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_publishable_key', 'label' => 'Stripe Publishable Key (Active)', 'value' => env('STRIPE_PUBLISHABLE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_secret_key', 'label' => 'Stripe Secret Key (Active)', 'value' => env('STRIPE_SECRET_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_webhook_secret', 'label' => 'Stripe Webhook Secret (Active)', 'value' => env('STRIPE_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.apple_pay_enabled', 'label' => 'Apple Pay Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.apple_pay_merchant_id', 'label' => 'Apple Pay Merchant ID', 'value' => env('APPLE_PAY_MERCHANT_ID', 'merchant.com.ridemycars'), 'group' => 'Payment Gateways', 'type' => 'text'],
@@ -77,7 +77,7 @@ class SettingsSeeder extends Seeder
 
             // Social Logins (Google & Apple)
             ['key' => 'oauth.google_enabled', 'label' => 'Google Login Enabled', 'value' => '1', 'group' => 'Social Logins', 'type' => 'text'],
-            ['key' => 'oauth.google_client_id', 'label' => 'Google OAuth Client ID', 'value' => env('GOOGLE_CLIENT_ID', '627565778959-4a65og5qlquf9niskg25kcfdkubprp2d.apps.googleusercontent.com'), 'group' => 'Social Logins', 'type' => 'text'],
+            ['key' => 'oauth.google_client_id', 'label' => 'Google OAuth Client ID', 'value' => env('GOOGLE_CLIENT_ID', ''), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.google_client_secret', 'label' => 'Google OAuth Client Secret', 'value' => env('GOOGLE_CLIENT_SECRET', ''), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.google_redirect_uri', 'label' => 'Google OAuth Redirect URI', 'value' => env('GOOGLE_REDIRECT_URI', 'https://ridemycars.com/auth/google/callback'), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.apple_enabled', 'label' => 'Apple Login Enabled', 'value' => '1', 'group' => 'Social Logins', 'type' => 'text'],
@@ -88,16 +88,16 @@ class SettingsSeeder extends Seeder
             ['key' => 'oauth.apple_redirect_uri', 'label' => 'Apple Redirect URI', 'value' => env('APPLE_REDIRECT_URI', 'https://ridemycars.com/auth/apple/callback'), 'group' => 'Social Logins', 'type' => 'text'],
 
             // Maps & Geolocation
-            ['key' => 'geo.google_maps_api_key', 'label' => 'Google Maps JavaScript & Places API Key', 'value' => env('GOOGLE_MAPS_API_KEY', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0'), 'group' => 'Maps & Geolocation', 'type' => 'text'],
+            ['key' => 'geo.google_maps_api_key', 'label' => 'Google Maps JavaScript & Places API Key', 'value' => env('GOOGLE_MAPS_API_KEY', ''), 'group' => 'Maps & Geolocation', 'type' => 'text'],
             ['key' => 'geo.distance_unit', 'label' => 'Distance Measurement Unit (km / miles)', 'value' => 'km', 'group' => 'Maps & Geolocation', 'type' => 'text'],
 
             // Firebase & Push Notifications
-            ['key' => 'firebase.api_key', 'label' => 'Firebase Web API Key', 'value' => env('FIREBASE_API_KEY', 'AIzaSyDuMSNuvtLpJQYdP652UYrFtoCwXV95W9g'), 'group' => 'Firebase & Push', 'type' => 'text'],
+            ['key' => 'firebase.api_key', 'label' => 'Firebase Web API Key', 'value' => env('FIREBASE_API_KEY', ''), 'group' => 'Firebase & Push', 'type' => 'text'],
             ['key' => 'firebase.auth_domain', 'label' => 'Firebase Auth Domain', 'value' => env('FIREBASE_AUTH_DOMAIN', 'ridemycars.firebaseapp.com'), 'group' => 'Firebase & Push', 'type' => 'text'],
             ['key' => 'firebase.project_id', 'label' => 'Firebase Project ID', 'value' => env('FIREBASE_PROJECT_ID', 'ridemycars'), 'group' => 'Firebase & Push', 'type' => 'text'],
             ['key' => 'firebase.storage_bucket', 'label' => 'Firebase Storage Bucket', 'value' => env('FIREBASE_STORAGE_BUCKET', 'ridemycars.firebasestorage.app'), 'group' => 'Firebase & Push', 'type' => 'text'],
-            ['key' => 'firebase.messaging_sender_id', 'label' => 'Firebase Messaging Sender ID', 'value' => env('FIREBASE_MESSAGING_SENDER_ID', '235015074737'), 'group' => 'Firebase & Push', 'type' => 'text'],
-            ['key' => 'firebase.app_id', 'label' => 'Firebase App ID', 'value' => env('FIREBASE_APP_ID', '1:235015074737:web:e23df51eb2a0b129f30390'), 'group' => 'Firebase & Push', 'type' => 'text'],
+            ['key' => 'firebase.messaging_sender_id', 'label' => 'Firebase Messaging Sender ID', 'value' => env('FIREBASE_MESSAGING_SENDER_ID', ''), 'group' => 'Firebase & Push', 'type' => 'text'],
+            ['key' => 'firebase.app_id', 'label' => 'Firebase App ID', 'value' => env('FIREBASE_APP_ID', ''), 'group' => 'Firebase & Push', 'type' => 'text'],
             ['key' => 'firebase.measurement_id', 'label' => 'Firebase Analytics Measurement ID', 'value' => env('FIREBASE_MEASUREMENT_ID', ''), 'group' => 'Firebase & Push', 'type' => 'text'],
             ['key' => 'firebase.fcm_server_key', 'label' => 'Firebase Cloud Messaging (FCM) Server Key', 'value' => env('FIREBASE_FCM_SERVER_KEY', ''), 'group' => 'Firebase & Push', 'type' => 'text'],
 
@@ -115,7 +115,7 @@ class SettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            \App\Models\Setting::updateOrCreate(['key' => $setting['key']], $setting);
+            \App\Models\Setting::firstOrCreate(['key' => $setting['key']], $setting);
         }
     }
 }

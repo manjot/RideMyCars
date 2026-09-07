@@ -20,8 +20,8 @@ class SocialAuthController extends Controller
      */
     public function redirectToGoogle(Request $request)
     {
-        $clientId = config('services.google.client_id');
-        $redirectUri = config('services.google.redirect', url('/auth/google/callback'));
+        $clientId = \App\Services\SettingService::get('oauth.google_client_id') ?: config('services.google.client_id');
+        $redirectUri = \App\Services\SettingService::get('oauth.google_redirect_uri') ?: config('services.google.redirect', url('/auth/google/callback'));
 
         if (empty($clientId)) {
             return redirect('/login')->with('error', 'Google Sign-In is currently being initialized. Please configure GOOGLE_CLIENT_ID in your settings.');
@@ -69,8 +69,8 @@ class SocialAuthController extends Controller
             return redirect('/login')->with('error', 'No authorization code received from Google.');
         }
 
-        $clientId = config('services.google.client_id');
-        $clientSecret = config('services.google.client_secret');
+        $clientId = \App\Services\SettingService::get('oauth.google_client_id') ?: config('services.google.client_id');
+        $clientSecret = \App\Services\SettingService::get('oauth.google_client_secret') ?: config('services.google.client_secret');
 
         try {
             $googleId = null;
