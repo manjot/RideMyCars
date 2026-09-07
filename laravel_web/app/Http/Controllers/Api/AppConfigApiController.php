@@ -63,11 +63,6 @@ class AppConfigApiController extends Controller
                     'mode' => SettingService::get('payment.stripe_mode', 'test'),
                     'publishable_key' => SettingService::getActiveStripePublishableKey(),
                 ],
-                'paypal' => [
-                    'enabled' => filter_var(SettingService::get('payment.paypal_enabled', true), FILTER_VALIDATE_BOOLEAN),
-                    'client_id' => SettingService::get('payment.paypal_client_id', config('services.paypal.client_id', '')),
-                    'mode' => SettingService::get('payment.paypal_mode', config('services.paypal.mode', 'sandbox')),
-                ],
                 'apple_pay' => [
                     'enabled' => filter_var(SettingService::get('payment.apple_pay_enabled', true), FILTER_VALIDATE_BOOLEAN),
                     'merchant_id' => SettingService::get('payment.apple_pay_merchant_id', config('services.apple_pay.merchant_id', '')),

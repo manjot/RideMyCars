@@ -2769,9 +2769,12 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 ['key' => 'payment.stripe_secret_key'],
                 ['value' => 'sk_test_51U3x2DC7C86Til8e3eB2j2fEsobrRVVfHlSwzMGrLfoeqHVI8U1zGoJCpzyhiQQMIBKyP9eQ7Be6pcTa5UPcQf5o00F59JZR7i', 'group' => 'Payment Gateways', 'type' => 'text', 'label' => 'Stripe Secret Key']
             );
+            // Purge PayPal configuration from database
+            \Illuminate\Support\Facades\DB::table('settings')->where('key', 'like', 'payment.paypal%')->delete();
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;
             $output['stripe_settings_synced'] = true;
+            $output['paypal_removed'] = true;
         }
     } catch (\Throwable $e) {
         $output['tokens_table_err'] = $e->getMessage();

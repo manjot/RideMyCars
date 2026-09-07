@@ -45,10 +45,6 @@ class ManageAppSettings extends Page implements HasForms
             'payment_stripe_publishable_key' => $all['payment.stripe_publishable_key'] ?? '',
             'payment_stripe_secret_key' => $all['payment.stripe_secret_key'] ?? '',
             'payment_stripe_webhook_secret' => $all['payment.stripe_webhook_secret'] ?? '',
-            'payment_paypal_enabled' => (bool) ($all['payment.paypal_enabled'] ?? true),
-            'payment_paypal_client_id' => $all['payment.paypal_client_id'] ?? '',
-            'payment_paypal_secret' => $all['payment.paypal_secret'] ?? '',
-            'payment_paypal_mode' => $all['payment.paypal_mode'] ?? 'sandbox',
             'payment_apple_pay_enabled' => (bool) ($all['payment.apple_pay_enabled'] ?? true),
             'payment_apple_pay_merchant_id' => $all['payment.apple_pay_merchant_id'] ?? 'merchant.com.ridemycars',
             'payment_apple_pay_domain' => $all['payment.apple_pay_domain'] ?? 'ridemycars.com',
@@ -177,31 +173,6 @@ class ManageAppSettings extends Page implements HasForms
                                                     ->revealable()
                                                     ->columnSpanFull(),
                                             ]),
-                                    ]),
-
-                                Forms\Components\Section::make('PayPal Gateway')
-                                    ->description('PayPal Express Checkout and Subscriptions.')
-                                    ->schema([
-                                        Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\Toggle::make('payment_paypal_enabled')
-                                                ->label('Enable PayPal')
-                                                ->default(true),
-                                            Forms\Components\Select::make('payment_paypal_mode')
-                                                ->label('Environment Mode')
-                                                ->options([
-                                                    'sandbox' => 'Sandbox (Test Mode)',
-                                                    'live' => 'Live (Production)',
-                                                ])
-                                                ->default('sandbox'),
-                                        ]),
-                                        Forms\Components\TextInput::make('payment_paypal_client_id')
-                                            ->label('PayPal Client ID')
-                                            ->columnSpanFull(),
-                                        Forms\Components\TextInput::make('payment_paypal_secret')
-                                            ->label('PayPal Secret')
-                                            ->password()
-                                            ->revealable()
-                                            ->columnSpanFull(),
                                     ]),
 
                                 Forms\Components\Section::make('Apple Pay')
@@ -488,10 +459,6 @@ class ManageAppSettings extends Page implements HasForms
             'payment_stripe_live_publishable_key' => ['key' => 'payment.stripe_live_publishable_key', 'group' => 'Payment Gateways'],
             'payment_stripe_live_secret_key' => ['key' => 'payment.stripe_live_secret_key', 'group' => 'Payment Gateways'],
             'payment_stripe_live_webhook_secret' => ['key' => 'payment.stripe_live_webhook_secret', 'group' => 'Payment Gateways'],
-            'payment_paypal_enabled' => ['key' => 'payment.paypal_enabled', 'group' => 'Payment Gateways'],
-            'payment_paypal_client_id' => ['key' => 'payment.paypal_client_id', 'group' => 'Payment Gateways'],
-            'payment_paypal_secret' => ['key' => 'payment.paypal_secret', 'group' => 'Payment Gateways'],
-            'payment_paypal_mode' => ['key' => 'payment.paypal_mode', 'group' => 'Payment Gateways'],
             'payment_apple_pay_enabled' => ['key' => 'payment.apple_pay_enabled', 'group' => 'Payment Gateways'],
             'payment_apple_pay_merchant_id' => ['key' => 'payment.apple_pay_merchant_id', 'group' => 'Payment Gateways'],
             'payment_apple_pay_domain' => ['key' => 'payment.apple_pay_domain', 'group' => 'Payment Gateways'],

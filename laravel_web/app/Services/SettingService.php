@@ -126,19 +126,6 @@ class SettingService
                 Config::set('services.stripe.webhook_secret', $stripeWebhook);
             }
 
-            $paypalId = static::get('payment.paypal_client_id');
-            if ($paypalId) {
-                Config::set('services.paypal.client_id', $paypalId);
-            }
-            $paypalSecret = static::get('payment.paypal_secret');
-            if ($paypalSecret) {
-                Config::set('services.paypal.secret', $paypalSecret);
-            }
-            $paypalMode = static::get('payment.paypal_mode');
-            if ($paypalMode) {
-                Config::set('services.paypal.mode', $paypalMode);
-            }
-
             $applePayMerchant = static::get('payment.apple_pay_merchant_id');
             if ($applePayMerchant) {
                 Config::set('services.apple_pay.merchant_id', $applePayMerchant);

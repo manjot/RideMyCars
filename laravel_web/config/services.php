@@ -51,12 +51,6 @@ return [
         'env' => env('CHECKR_ENV', 'sandbox'),
     ],
 
-    'paypal' => [
-        'client_id' => env('PAYPAL_CLIENT_ID'),
-        'secret' => env('PAYPAL_SECRET'),
-        'mode' => env('PAYPAL_MODE', 'sandbox'),
-    ],
-
     'apple_pay' => [
         'merchant_id' => env('APPLE_PAY_MERCHANT_ID'),
         'domain' => env('APPLE_PAY_DOMAIN'),
