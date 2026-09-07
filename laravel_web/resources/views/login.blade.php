@@ -596,46 +596,61 @@
                     </button>
                 </form>
 
-                <!-- Demo Credentials Quick Fill Box -->
+                @php
+                    $demoEnabled = filter_var(site_setting('demo.enabled', true), FILTER_VALIDATE_BOOLEAN);
+                    $demoPass = site_setting('demo.default_password', '123456');
+                    $demoRiderName = site_setting('demo.rider_name', 'Customer');
+                    $demoRiderEmail = site_setting('demo.rider_email', 'customer@ridemycars.com');
+                    $demoDriver1Name = site_setting('demo.driver_name', 'Sarah');
+                    $demoDriver1Email = site_setting('demo.driver_email', 'sarah@example.com');
+                    $demoDriver2Name = site_setting('demo.driver2_name', 'Michael');
+                    $demoDriver2Email = site_setting('demo.driver2_email', 'michael@example.com');
+                    $demoDriver3Name = site_setting('demo.driver3_name', 'Sipho');
+                    $demoDriver3Email = site_setting('demo.driver3_email', 'sipho.driver@ridemycars.com');
+                @endphp
+
+                @if($demoEnabled)
+                <!-- Dynamic Demo Credentials Quick Fill Box -->
                 <div class="mt-6 p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-400/5 border border-amber-500/20 dark:border-amber-400/20 text-left">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                            Quick Demo Logins (Pass: 123456)
+                            Quick Demo Logins (Pass: {{ $demoPass }})
                         </span>
                         <span class="text-[10px] font-bold text-amber-700/70 dark:text-amber-300/70">Click to autofill</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" @click="fillCredentials('sarah@example.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                        <button type="button" @click="fillCredentials('{{ $demoDriver1Email }}', '{{ $demoPass }}')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
                             <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                                <span>Sarah</span>
+                                <span>{{ $demoDriver1Name }}</span>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Driver</span>
                             </div>
-                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">sarah@example.com</div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">{{ $demoDriver1Email }}</div>
                         </button>
-                        <button type="button" @click="fillCredentials('michael@example.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                        <button type="button" @click="fillCredentials('{{ $demoDriver2Email }}', '{{ $demoPass }}')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
                             <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                                <span>Michael</span>
+                                <span>{{ $demoDriver2Name }}</span>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Driver</span>
                             </div>
-                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">michael@example.com</div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">{{ $demoDriver2Email }}</div>
                         </button>
-                        <button type="button" @click="fillCredentials('sipho.driver@ridemycars.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                        <button type="button" @click="fillCredentials('{{ $demoDriver3Email }}', '{{ $demoPass }}')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
                             <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                                <span>Sipho</span>
+                                <span>{{ $demoDriver3Name }}</span>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Driver</span>
                             </div>
-                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">sipho.driver@...</div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">{{ Str::limit($demoDriver3Email, 15) }}</div>
                         </button>
-                        <button type="button" @click="fillCredentials('customer@ridemycars.com', '123456')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
+                        <button type="button" @click="fillCredentials('{{ $demoRiderEmail }}', '{{ $demoPass }}')" class="p-2 text-left rounded-xl bg-white dark:bg-white/5 border border-gray-200/80 dark:border-white/10 hover:border-black dark:hover:border-white/30 transition-all cursor-pointer shadow-xs">
                             <div class="text-[11px] font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                                <span>Customer</span>
+                                <span>{{ $demoRiderName }}</span>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold">Rider</span>
                             </div>
-                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">customer@...</div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate">{{ Str::limit($demoRiderEmail, 15) }}</div>
                         </button>
                     </div>
                 </div>
+                @endif
 
                 <div class="mt-6 text-center space-y-2">
                     <button type="button" @click="view = 'email_otp'" class="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors block w-full py-1">

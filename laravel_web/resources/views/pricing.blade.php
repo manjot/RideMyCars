@@ -21,13 +21,41 @@
                   driverWeeklyRate: {{ (float) ($currentPricing->driver_weekly_rate ?? 890.00) }},
                   deliveryBaseRate: {{ (float) ($currentPricing->delivery_base_fare ?? 8.00) }},
                   deliveryPerKmRate: {{ (float) ($currentPricing->delivery_per_km_rate ?? 1.00) }},
-                  vehicles: {
-                      economy: { name: 'Economy', icon: '🚗', multiplier: 1.0, base: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }}, perKm: {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}, perMin: {{ (float) ($currentPricing->ride_per_minute_rate ?? 0.25) }}, min: {{ (float) ($currentPricing->ride_minimum_fare ?? 10.00) }}, seats: '4 Seats', luggage: '2 Bags', desc: 'Affordable, reliable everyday city mobility' },
-                      comfort: { name: 'Standard / Comfort', icon: '🚘', multiplier: 1.2, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.2) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.2) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.2) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.2) }}, seats: '4 Seats', luggage: '3 Bags', desc: 'Spacious, newer executive sedans with climate control' },
-                      suv: { name: 'Executive SUV', icon: '🚙', multiplier: 1.4, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.4) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.4) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.4) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.4) }}, seats: '6 Seats', luggage: '5 Bags', desc: 'Luxury high-ride SUVs for comfort, safety & groups' },
-                      xl: { name: 'Van XL', icon: '🚐', multiplier: 1.5, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.5) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.5) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.5) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.5) }}, seats: '7–8 Seats', luggage: '6 Bags', desc: 'Large premium passenger vans for families & delegations' },
-                      luxury: { name: 'VIP Chauffeur', icon: '🏎️', multiplier: 1.8, base: {{ (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.8) }}, perKm: {{ (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.8) }}, perMin: {{ (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.8) }}, min: {{ (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.8) }}, seats: '4 Seats', luggage: '3 Bags', desc: 'Flagship luxury sedans with suited, vetted private drivers' }
-                  },
+                  @php
+                      $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
+                      $countryMultiplier = (float) ($currentPricing->exchange_rate ?? 1.0);
+                      $dynamicVehicles = [];
+
+                      if ($pricingRideCategories->isEmpty()) {
+                          $dynamicVehicles = [
+                              'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility'],
+                              'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control'],
+                              'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups'],
+                              'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations'],
+                              'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers']
+                          ];
+                      } else {
+                          foreach ($pricingRideCategories as $cat) {
+                              $base = (float) ($cat->base_fare * $countryMultiplier);
+                              $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
+                              $perMin = (float) ($cat->per_minute_rate * $countryMultiplier);
+                              $min = (float) ($cat->minimum_fare * $countryMultiplier);
+                              $dynamicVehicles[$cat->slug] = [
+                                  'name' => $cat->name,
+                                  'icon' => $cat->icon ?: '🚗',
+                                  'multiplier' => (float) $cat->multiplier,
+                                  'base' => $base,
+                                  'perKm' => $perKm,
+                                  'perMin' => $perMin,
+                                  'min' => $min,
+                                  'seats' => $cat->capacity ?: '4 Seats',
+                                  'luggage' => '2 Bags',
+                                  'desc' => $cat->description ?: 'Affordable, reliable everyday city mobility'
+                              ];
+                          }
+                      }
+                  @endphp
+                  vehicles: {!! json_encode($dynamicVehicles) !!},
                   get calcDuration() {
                       return Math.max(5, Math.round(this.calcDistance * 1.6 + 4));
                   },

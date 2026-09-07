@@ -331,6 +331,7 @@ class DatabaseSeeder extends Seeder
             RentalInspectionSeeder::class,
             PaymentTransactionSeeder::class,
             CategoryAndBannerSeeder::class,
+            RideCategorySeeder::class,
             ProductSeeder::class,
             DisputeSeeder::class,
             PackageDeliverySeeder::class,

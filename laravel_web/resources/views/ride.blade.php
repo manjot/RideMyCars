@@ -980,13 +980,38 @@
                     per_minute: {{ (float) ($currentPricing->ride_per_minute_rate ?? 0.25) }},
                     minimum_fare: {{ (float) ($currentPricing->ride_minimum_fare ?? 7.00) }}
                 },
-                categories: [
-                    { id: 'economy', name: 'Economy', icon: '🚗', capacity: '1–4 seats', eta_minutes: 3, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + ({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}).toFixed(2), description: 'Affordable everyday rides' },
-                    { id: 'standard', name: 'Standard', icon: '🚘', capacity: '1–4 seats', eta_minutes: 4, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 1.2).toFixed(2), description: 'Comfortable sedans' },
-                    { id: 'suv', name: 'SUV', icon: '🚙', capacity: '1–6 seats', eta_minutes: 6, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 1.5).toFixed(2), description: 'Spacious SUVs' },
-                    { id: 'xl', name: 'XL', icon: '🚐', capacity: '1–6 seats', eta_minutes: 7, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 1.8).toFixed(2), description: 'Large vans for groups' },
-                    { id: 'luxury', name: 'Luxury', icon: '🏎️', capacity: '1–4 seats', eta_minutes: 5, fare_formatted: '{{ $currentCurrencySymbol ?? "$" }}' + (({{ (float) ($currentPricing->ride_base_fare ?? 5.00) }} + 10 * {{ (float) ($currentPricing->ride_per_km_rate ?? 1.50) }}) * 2.2).toFixed(2), description: 'Premium luxury vehicles' },
-                ],
+                @php
+                    $activeRideCategories = \App\Models\RideCategory::getActiveCategories();
+                    $countryMultiplier = (float) ($currentPricing->exchange_rate ?? 1.0);
+                    $sym = $currentCurrencySymbol ?? '$';
+
+                    if ($activeRideCategories->isEmpty()) {
+                        $formattedCats = [
+                            ['id' => 'economy', 'name' => 'Economy', 'icon' => '🚗', 'capacity' => '1–4 seats', 'eta_minutes' => 3, 'multiplier' => 1.0, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)), 2), 'description' => 'Affordable everyday rides'],
+                            ['id' => 'standard', 'name' => 'Comfort', 'icon' => '✨', 'capacity' => '1–4 seats', 'eta_minutes' => 4, 'multiplier' => 1.2, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.2, 2), 'description' => 'Comfortable sedans'],
+                            ['id' => 'suv', 'name' => 'SUV', 'icon' => '🚙', 'capacity' => '1–6 seats', 'eta_minutes' => 6, 'multiplier' => 1.5, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.5, 2), 'description' => 'Spacious SUVs'],
+                            ['id' => 'xl', 'name' => 'XL Van', 'icon' => '🚐', 'capacity' => '1–7 seats', 'eta_minutes' => 7, 'multiplier' => 1.8, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 1.8, 2), 'description' => 'Large vans for groups'],
+                            ['id' => 'luxury', 'name' => 'Luxury', 'icon' => '👑', 'capacity' => '1–4 seats', 'eta_minutes' => 5, 'multiplier' => 2.2, 'fare_formatted' => $sym . number_format(((float) ($currentPricing->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing->ride_per_km_rate ?? 1.50)) * 2.2, 2), 'description' => 'Premium luxury vehicles'],
+                        ];
+                    } else {
+                        $formattedCats = $activeRideCategories->map(function ($cat, $idx) use ($currentPricing, $sym, $countryMultiplier) {
+                            $base = (float) ($cat->base_fare * $countryMultiplier);
+                            $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
+                            $totalEst = round(($base + (10 * $perKm)) * (float) $cat->multiplier, 2);
+                            return [
+                                'id' => $cat->slug,
+                                'name' => $cat->name,
+                                'icon' => $cat->icon ?: '🚗',
+                                'capacity' => $cat->capacity ?: '1–4 seats',
+                                'eta_minutes' => 3 + ($idx * 2),
+                                'multiplier' => (float) $cat->multiplier,
+                                'fare_formatted' => $sym . number_format($totalEst, 2),
+                                'description' => $cat->description ?: 'Ride in comfort',
+                            ];
+                        })->values()->toArray();
+                    }
+                @endphp
+                categories: {!! json_encode($formattedCats) !!},
                 fareBreakdown: { 
                     base_fare: {{ (float) ($currentPricing->ride_base_fare ?? 5.00) }}, 
                     distance_fare: {{ (float) (10 * ($currentPricing->ride_per_km_rate ?? 1.50)) }}, 
@@ -1651,9 +1676,8 @@
                             grand_total: grandTotal
                         };
 
-                        const baseMults = { economy: 1.0, standard: 1.2, suv: 1.5, xl: 1.8, luxury: 2.2 };
                         this.categories.forEach(cat => {
-                            const mult = baseMults[cat.id] || 1.0;
+                            const mult = (typeof cat.multiplier !== 'undefined' && cat.multiplier !== null) ? parseFloat(cat.multiplier) : 1.0;
                             const fare = (grandTotal * mult).toFixed(2);
                             cat.fare_formatted = this.currencySymbol + fare;
                         });

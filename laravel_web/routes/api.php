@@ -12,6 +12,11 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\StripePaymentController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\PlacesApiController;
+use App\Http\Controllers\Api\AppConfigApiController;
+
+// Public App Settings & Dynamic Ride Categories
+Route::get('/app-settings', [AppConfigApiController::class, 'getPublicSettings']);
+Route::get('/ride-categories', [AppConfigApiController::class, 'getRideCategories']);
 
 // Places Autocomplete, Geocoding & Reverse Geocoding
 Route::get('/places/autocomplete', [PlacesApiController::class, 'autocomplete']);

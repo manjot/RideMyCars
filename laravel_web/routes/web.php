@@ -2752,6 +2752,9 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     try {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
         $output['seed'] = \Illuminate\Support\Facades\Artisan::output();
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
+        $output['ride_categories_seeded'] = true;
     } catch (\Throwable $e) {
         $output['seed_err'] = $e->getMessage();
     }

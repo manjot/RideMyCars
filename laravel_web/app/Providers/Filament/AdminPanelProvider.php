@@ -57,11 +57,13 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\RentalInspectionResource::class,
                 \App\Filament\Resources\ActivityLogResource::class,
                 \App\Filament\Resources\SettingResource::class,
+                \App\Filament\Resources\RideCategoryResource::class,
                 \App\Filament\Resources\UserResource::class,
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                \App\Filament\Pages\ManageAppSettings::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
