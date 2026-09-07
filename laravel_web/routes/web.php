@@ -986,11 +986,20 @@ Route::get('/set-country/{code}', function ($code, \Illuminate\Http\Request $req
 });
 
 Route::get('/ride', function (\Illuminate\Http\Request $request) {
-    $vehicles = \App\Models\Vehicle::all();
-    $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
-    $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
-    $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
-    return view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'));
+    try {
+        $vehicles = \App\Models\Vehicle::all();
+        $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
+        $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
+        $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
+        return view('ride', compact('vehicles', 'currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode'));
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 5)
+        ], 500);
+    }
 });
 
 // Dynamic Ride Categories with live pricing API
