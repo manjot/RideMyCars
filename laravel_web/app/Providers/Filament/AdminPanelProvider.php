@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->font('Plus Jakarta Sans')
             ->darkMode(true)
             ->sidebarCollapsibleOnDesktop()
-            ->sidebarWidth('18.5rem')
+            ->sidebarWidth('19.5rem')
             ->renderHook(
                 'panels::head.end',
                 fn () => view('filament.custom-admin-theme')

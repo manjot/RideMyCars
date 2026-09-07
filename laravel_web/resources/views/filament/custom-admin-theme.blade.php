@@ -105,6 +105,25 @@
         color: #fbbf24 !important;
     }
 
+    .fi-sidebar-item-label {
+        font-weight: 600 !important;
+        letter-spacing: -0.01em !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    .fi-sidebar-item-icon {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        color: #94a3b8 !important;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease !important;
+    }
+
+    .fi-sidebar-item-button:hover .fi-sidebar-item-icon {
+        transform: scale(1.14) !important;
+        color: #f59e0b !important;
+    }
+
     /* Active Item - Sunset Gradient Glow Pill */
     .fi-sidebar-item-active .fi-sidebar-item-button,
     .fi-sidebar-item-button[aria-current="page"] {
