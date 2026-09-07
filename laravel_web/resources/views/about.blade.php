@@ -30,7 +30,7 @@
                             </span>
                             <h3 class="text-xl sm:text-3xl font-black mb-1.5">World-Class Transportation at Your Fingertips</h3>
                             <p class="text-xs sm:text-sm text-gray-200 font-medium leading-relaxed">
-                                Seamlessly connecting thousands of everyday commuters, high-growth enterprises, and verified drivers across three continents.
+                                Seamlessly connecting thousands of everyday commuters, high-growth enterprises, and verified drivers across major metropolitan hubs.
                             </p>
                         </div>
                     </div>
@@ -301,8 +301,8 @@
                 </div>
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#141414] border-2 border-gray-200 dark:border-white/10 shadow-md">
                     <span class="text-3xl font-black text-emerald-500 block mb-2">2024</span>
-                    <h4 class="font-bold text-base text-gray-900 dark:text-white mb-2">Tri-Continental Hubs</h4>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed">Formally incorporated regional entities in Bowie MD (USA), Sandton (South Africa), and Accra (Ghana).</p>
+                    <h4 class="font-bold text-base text-gray-900 dark:text-white mb-2">Fleet & Tech Scaling</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed">Scaled real-time GPS telemetry, peer-to-peer car rental protection, and expanded verified driver networks.</p>
                 </div>
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#141414] border-2 border-gray-200 dark:border-white/10 shadow-md">
                     <span class="text-3xl font-black text-purple-500 block mb-2">2025</span>
@@ -312,85 +312,118 @@
             </div>
         </section>
 
-        <!-- Global Presence & Regional Hubs Section -->
+        <!-- Platform Guarantees: Safety, Trust & Transparency -->
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
             <div class="text-center mb-14">
                 <span class="px-4 py-1.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 font-black text-xs uppercase tracking-wider border border-orange-200 dark:border-orange-800/40 inline-block mb-3">
-                    New Development Finance Group
+                    🛡️ Safety & Trust Guarantees
                 </span>
-                <h2 class="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Global Presence & Regional Hubs</h2>
+                <h2 class="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Built on Uncompromising Safety & Trust</h2>
                 <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mt-2 font-medium max-w-xl mx-auto">
-                    Serving corporate clients, everyday riders, and verified driver partners across primary international centers.
+                    Every journey on RideMyCars is protected by multi-point safety standards, transparent economics, and dedicated 24/7 human support.
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- USA -->
-                <div class="bg-gradient-to-b from-blue-50/70 via-white to-white dark:from-blue-950/20 dark:via-[#141414] dark:to-[#141414] rounded-3xl p-8 border-2 border-blue-200 dark:border-blue-500/20 shadow-xl hover:border-blue-500 transition-all flex flex-col justify-between">
+                <!-- 01: Driver & Vehicle Vetting -->
+                <div class="bg-gradient-to-b from-blue-50/70 via-white to-white dark:from-blue-950/20 dark:via-[#141414] dark:to-[#141414] rounded-3xl p-8 border-2 border-blue-200 dark:border-blue-500/20 shadow-xl hover:border-blue-500 transition-all flex flex-col justify-between group">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 flex items-center gap-1.5">
-                                <img src="https://flagcdn.com/w40/us.png" alt="USA Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> USA
+                                🛡️ Verified Drivers
                             </span>
-                            <span class="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">Americas HQ</span>
+                            <span class="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">Zero Compromise</span>
                         </div>
-                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-1">United States</h3>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 font-bold">New Development Finance Group LLC</p>
-                        <div class="p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs text-gray-800 dark:text-gray-200 space-y-1.5 font-medium shadow-sm">
-                            <p class="font-extrabold text-sm text-gray-900 dark:text-white">4301 Saddle River Drive</p>
-                            <p>Bowie, MD 20720</p>
-                            <p class="text-gray-500 font-bold">United States of America</p>
+                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-2">Rigorous Multi-Point Screening</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 font-medium leading-relaxed">
+                            Every driver partner undergoes comprehensive criminal history checks, motor vehicle record validation, and annual vehicle roadworthiness inspections before their first passenger pickup.
+                        </p>
+                        <div class="p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs text-gray-800 dark:text-gray-200 space-y-2.5 font-medium shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Criminal & Driving History Background Checks</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Annual 21-Point Vehicle Safety Inspection</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Real-Time Facial & Identity Re-Verification</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-6 pt-4 border-t border-blue-100 dark:border-white/10 flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 font-extrabold">
-                        <span>Direct Concierge Line</span>
-                        <span>+1 (800) RIDE-USA</span>
+                        <span>Quality Standard</span>
+                        <span class="font-black">100% Vetted Drivers</span>
                     </div>
                 </div>
 
-                <!-- RSA -->
-                <div class="bg-gradient-to-b from-emerald-50/70 via-white to-white dark:from-emerald-950/20 dark:via-[#141414] dark:to-[#141414] rounded-3xl p-8 border-2 border-emerald-200 dark:border-emerald-500/20 shadow-xl hover:border-emerald-500 transition-all flex flex-col justify-between">
+                <!-- 02: Real-Time Guardian Shield -->
+                <div class="bg-gradient-to-b from-emerald-50/70 via-white to-white dark:from-emerald-950/20 dark:via-[#141414] dark:to-[#141414] rounded-3xl p-8 border-2 border-emerald-200 dark:border-emerald-500/20 shadow-xl hover:border-emerald-500 transition-all flex flex-col justify-between group">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1.5">
-                                <img src="https://flagcdn.com/w40/za.png" alt="South Africa Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> RSA
+                                📍 Live Guardian
                             </span>
-                            <span class="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Southern Africa</span>
+                            <span class="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">In-Ride Shield</span>
                         </div>
-                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-1">South Africa</h3>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 font-bold">New Development Finance Group (Pty) Ltd</p>
-                        <div class="p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs text-gray-800 dark:text-gray-200 space-y-1.5 font-medium shadow-sm">
-                            <p class="font-extrabold text-sm text-gray-900 dark:text-white">11 Corona Road, Sandhurst</p>
-                            <p>Sandton, Gauteng 2196</p>
-                            <p class="text-gray-500 font-bold">Republic of South Africa</p>
+                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-2">Real-Time GPS & Emergency SOS</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 font-medium leading-relaxed">
+                            Every trip is actively monitored by our intelligent telemetry system. Share your live journey with friends and family, or summon rapid emergency assistance at the tap of a button.
+                        </p>
+                        <div class="p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs text-gray-800 dark:text-gray-200 space-y-2.5 font-medium shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Live Sharable GPS Route & ETA Tracking</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Instant One-Tap In-App Emergency SOS</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Route Deviation & Unexpected Stop Alerts</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-6 pt-4 border-t border-emerald-100 dark:border-white/10 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-extrabold">
-                        <span>Regional Operations</span>
-                        <span>+27 11 900 4500</span>
+                        <span>Emergency Assistance</span>
+                        <span class="font-black">24/7 Rapid Dispatch</span>
                     </div>
                 </div>
 
-                <!-- Ghana -->
-                <div class="bg-gradient-to-b from-amber-50/70 via-white to-white dark:from-amber-950/20 dark:via-[#141414] dark:to-[#141414] rounded-3xl p-8 border-2 border-amber-200 dark:border-amber-500/20 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-between">
+                <!-- 03: Transparent Economics & Insurance -->
+                <div class="bg-gradient-to-b from-amber-50/70 via-white to-white dark:from-amber-950/20 dark:via-[#141414] dark:to-[#141414] rounded-3xl p-8 border-2 border-amber-200 dark:border-amber-500/20 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-between group">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1.5">
-                                <img src="https://flagcdn.com/w40/gh.png" alt="Ghana Flag" class="w-4 h-3 object-cover rounded-sm shadow-sm"> GHA
+                                💎 Total Transparency
                             </span>
-                            <span class="text-[11px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">West Africa</span>
+                            <span class="text-[11px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">Fair Platform</span>
                         </div>
-                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-1">Ghana</h3>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 font-bold">New Development Finance Group Ghana Ltd</p>
-                        <div class="p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs text-gray-800 dark:text-gray-200 space-y-1.5 font-medium shadow-sm">
-                            <p class="font-extrabold text-sm text-gray-900 dark:text-white">No 1 Airport Square, 8th Floor</p>
-                            <p>Airport City, Accra</p>
-                            <p class="text-gray-500 font-bold">Republic of Ghana</p>
+                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-2">Guaranteed Fares & $1M Cover</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 font-medium leading-relaxed">
+                            No predatory surge multipliers or sudden hidden fees. What you see is locked upfront, while our peer-to-peer vehicle rentals and chauffeur bookings are protected by comprehensive liability insurance.
+                        </p>
+                        <div class="p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs text-gray-800 dark:text-gray-200 space-y-2.5 font-medium shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Upfront Price Lock with Zero Surprise Fees</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Drivers Retain 90% of Every Fare Earned</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                <span class="text-gray-700 dark:text-gray-300">Up to $1,000,000 Host & Fleet Insurance</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-6 pt-4 border-t border-amber-100 dark:border-white/10 flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 font-extrabold">
-                        <span>West Africa Dispatch</span>
-                        <span>+233 30 200 8900</span>
+                        <span>Driver Payout</span>
+                        <span class="font-black">90% Earnings to Drivers</span>
                     </div>
                 </div>
             </div>
