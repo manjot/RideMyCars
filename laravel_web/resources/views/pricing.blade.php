@@ -15,24 +15,24 @@
                   activeFaq: null,
                   currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
                   currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
-                  rentalMultiplier: {{ (float) ($currentPricing->rental_price_multiplier ?? 1.0) }},
-                  driverHourlyRate: {{ (float) ($currentPricing->driver_hourly_rate ?? 25.00) }},
-                  driverDailyRate: {{ (float) ($currentPricing->driver_daily_rate ?? 160.00) }},
-                  driverWeeklyRate: {{ (float) ($currentPricing->driver_weekly_rate ?? 890.00) }},
-                  deliveryBaseRate: {{ (float) ($currentPricing->delivery_base_fare ?? 8.00) }},
-                  deliveryPerKmRate: {{ (float) ($currentPricing->delivery_per_km_rate ?? 1.00) }},
+                  rentalMultiplier: {{ (float) ($currentPricing?->rental_price_multiplier ?? 1.0) }},
+                  driverHourlyRate: {{ (float) ($currentPricing?->driver_hourly_rate ?? 25.00) }},
+                  driverDailyRate: {{ (float) ($currentPricing?->driver_daily_rate ?? 160.00) }},
+                  driverWeeklyRate: {{ (float) ($currentPricing?->driver_weekly_rate ?? 890.00) }},
+                  deliveryBaseRate: {{ (float) ($currentPricing?->delivery_base_fare ?? 8.00) }},
+                  deliveryPerKmRate: {{ (float) ($currentPricing?->delivery_per_km_rate ?? 1.00) }},
                   @php
                       $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
-                      $countryMultiplier = (float) ($currentPricing->exchange_rate ?? 1.0);
+                      $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
                       $dynamicVehicles = [];
 
                       if ($pricingRideCategories->isEmpty()) {
                           $dynamicVehicles = [
-                              'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility'],
-                              'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control'],
-                              'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups'],
-                              'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations'],
-                              'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers']
+                              'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing?->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing?->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing?->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing?->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility'],
+                              'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control'],
+                              'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups'],
+                              'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations'],
+                              'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers']
                           ];
                       } else {
                           foreach ($pricingRideCategories as $cat) {
@@ -371,10 +371,10 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toyota Yaris, Honda Fit, Hyundai Accent</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_base_fare ?? 5.00, 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_per_km_rate ?? 1.50, 2) }} / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_per_minute_rate ?? 0.25, 2) }} / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->ride_minimum_fare ?? 10.00, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_base_fare ?? 5.00, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_per_km_rate ?? 1.50, 2) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_per_minute_rate ?? 0.25, 2) }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_minimum_fare ?? 10.00, 2) }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Up to 4 passengers & 2 bags</li>
@@ -683,7 +683,7 @@
                             <span class="text-xs font-black uppercase text-gray-400">1. Short Errands</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Hourly Chauffeur</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->driver_hourly_rate ?? 25.00, 0) }}</span>
+                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->driver_hourly_rate ?? 25.00, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ hour</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -702,7 +702,7 @@
                             <span class="text-xs font-black uppercase text-amber-500">2. Business Meetings</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Half Day (4–8h)</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-amber-500">{{ $currentCurrencySymbol }}{{ number_format(($currentPricing->driver_hourly_rate ?? 25.00) * 4 * 0.95, 0) }}</span>
+                                <span class="text-3xl font-black text-amber-500">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->driver_hourly_rate ?? 25.00) * 4 * 0.95, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ 4h block</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -721,7 +721,7 @@
                             <span class="text-xs font-black uppercase text-brand-600 dark:text-brand-400">3. Full Day Freedom</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Full Day (8–12h)</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-brand-600 dark:text-brand-400">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->driver_daily_rate ?? 160.00, 0) }}</span>
+                                <span class="text-3xl font-black text-brand-600 dark:text-brand-400">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->driver_daily_rate ?? 160.00, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ full day</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -740,7 +740,7 @@
                             <span class="text-xs font-black uppercase text-purple-500">4. Family & Corporate</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Weekly Dedicated</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->driver_weekly_rate ?? 890.00, 0) }}</span>
+                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->driver_weekly_rate ?? 890.00, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ 7 days</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -786,8 +786,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Documents, keys, pharmacy, lightweight goods (≤ 5 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->delivery_base_fare ?? 8.00, 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol }}{{ number_format($currentPricing->delivery_per_km_rate ?? 1.00, 2) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->delivery_base_fare ?? 8.00, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->delivery_per_km_rate ?? 1.00, 2) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Typical Speed:</span><span class="font-bold text-emerald-600">~30–45 mins</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Live GPS tracking link generated automatically for sender & recipient.</p>

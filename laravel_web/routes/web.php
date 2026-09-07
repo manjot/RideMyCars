@@ -934,7 +934,14 @@ Route::post('/rental-inspection/upload', [DriverBookingController::class, 'store
 // Vehicle Rentals & Rides
 Route::get('/terms', function () { return view('terms'); });
 Route::get('/privacy', function () { return view('privacy'); });
-Route::get('/pricing', function () { return view('pricing'); });
+Route::get('/pricing', function (\Illuminate\Http\Request $request) {
+    $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
+    $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
+    $currentCurrencyCode = $currentPricing->currency_code ?? 'USD';
+    $currentCountry = \App\Services\CountryService::getCurrentCountry($request);
+    $currentCountryCode = \App\Services\CountryService::getCurrentCountryCode($request);
+    return view('pricing', compact('currentPricing', 'currentCurrencySymbol', 'currentCurrencyCode', 'currentCountry', 'currentCountryCode'));
+});
 Route::get('/about', function () { return view('about'); });
 Route::redirect('/company', '/about');
 Route::get('/safety', function () { return view('safety'); });
