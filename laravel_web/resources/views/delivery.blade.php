@@ -1,7 +1,7 @@
 <x-layout theme="theme-delivery">
     <x-slot:title>Package Delivery — RideMyCars Express Parcel Dispatch</x-slot>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="packageDeliveryBooking()">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="packageDeliveryBooking">
 
         <!-- Category Banner Component -->
         <x-category-banner category="Delivery" />
@@ -99,30 +99,7 @@
                             </button>
                         </div>
                         <div class="relative">
-                            <input type="text" id="pickup_location_input" name="pickup_location" 
-                                   x-model="pickupLocation" 
-                                   @input.debounce.300ms="onPickupInput()"
-                                   @focus="if(pickupSuggestions.length) showPickupSuggestions = true"
-                                   @click.outside="showPickupSuggestions = false"
-                                   required placeholder="Enter street address, building, or landmark..." 
-                                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30">
-                            
-                            <!-- Pickup Suggestions Dropdown -->
-                            <div x-show="showPickupSuggestions && pickupSuggestions.length > 0"
-                                 x-transition.opacity
-                                 class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-60 overflow-y-auto">
-                                <template x-for="(item, idx) in pickupSuggestions" :key="idx">
-                                    <button type="button" 
-                                            @click="selectPickupSuggestion(item)"
-                                            class="w-full px-4 py-3 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2.5 transition-colors cursor-pointer">
-                                        <span class="text-amber-500 shrink-0 mt-0.5 text-sm">📍</span>
-                                        <div class="min-w-0">
-                                            <span class="font-extrabold block truncate" x-text="item.main_text || item.description"></span>
-                                            <span class="text-[11px] text-gray-400 font-normal block truncate" x-text="item.secondary_text || ''"></span>
-                                        </div>
-                                    </button>
-                                </template>
-                            </div>
+                            <input type="text" id="pickup_location_input" name="pickup_location" x-model="pickupLocation" required placeholder="Enter street address, building, or landmark..." class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
                         </div>
                     </div>
 
@@ -130,30 +107,7 @@
                     <div class="space-y-2">
                         <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Drop-off / Destination Address *</label>
                         <div class="relative">
-                            <input type="text" id="dropoff_location_input" name="dropoff_location" 
-                                   x-model="dropoffLocation" 
-                                   @input.debounce.300ms="onDropoffInput()"
-                                   @focus="if(dropoffSuggestions.length) showDropoffSuggestions = true"
-                                   @click.outside="showDropoffSuggestions = false"
-                                   required placeholder="Enter recipient delivery address..." 
-                                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30">
-                            
-                            <!-- Dropoff Suggestions Dropdown -->
-                            <div x-show="showDropoffSuggestions && dropoffSuggestions.length > 0"
-                                 x-transition.opacity
-                                 class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-60 overflow-y-auto">
-                                <template x-for="(item, idx) in dropoffSuggestions" :key="idx">
-                                    <button type="button" 
-                                            @click="selectDropoffSuggestion(item)"
-                                            class="w-full px-4 py-3 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2.5 transition-colors cursor-pointer">
-                                        <span class="text-rose-500 shrink-0 mt-0.5 text-sm">🏁</span>
-                                        <div class="min-w-0">
-                                            <span class="font-extrabold block truncate" x-text="item.main_text || item.description"></span>
-                                            <span class="text-[11px] text-gray-400 font-normal block truncate" x-text="item.secondary_text || ''"></span>
-                                        </div>
-                                    </button>
-                                </template>
-                            </div>
+                            <input type="text" id="dropoff_location_input" name="dropoff_location" x-model="dropoffLocation" required placeholder="Enter recipient delivery address..." class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
                         </div>
                     </div>
 
@@ -621,17 +575,10 @@
 
             function initMap() {
                 const mapEl = document.getElementById('map');
-                if (!mapEl) return;
-                if (typeof L === 'undefined') {
-                    setTimeout(initMap, 150);
-                    return;
-                }
+                if (!mapEl || typeof L === 'undefined') return;
 
                 try {
                     mapInstance = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 13);
-                    window.deliveryMapInstance = mapInstance;
-                    window.setDeliveryPickup = setPickup;
-                    window.setDeliveryDropoff = setDropoff;
 
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,
@@ -867,9 +814,8 @@
         });
     </script>
     <script>
-        function registerPackageDeliveryBookingAlpine() {
-            if (typeof Alpine !== 'undefined' && Alpine.data) {
-                Alpine.data('packageDeliveryBooking', () => ({
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('packageDeliveryBooking', () => ({
                 currentStep: 1,
                 pickupLocation: @json($pickup ?? ''),
                 dropoffLocation: @json($dropoff ?? ''),
@@ -877,105 +823,6 @@
                 pickupLng: null,
                 dropoffLat: null,
                 dropoffLng: null,
-
-                pickupSuggestions: [],
-                showPickupSuggestions: false,
-                dropoffSuggestions: [],
-                showDropoffSuggestions: false,
-
-                async onPickupInput() {
-                    this.pickupLat = null;
-                    this.pickupLng = null;
-                    if (!this.pickupLocation || this.pickupLocation.trim().length < 2) {
-                        this.pickupSuggestions = [];
-                        this.showPickupSuggestions = false;
-                        return;
-                    }
-                    try {
-                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.pickupLocation.trim())}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            this.pickupSuggestions = data.predictions || [];
-                            this.showPickupSuggestions = this.pickupSuggestions.length > 0;
-                        }
-                    } catch (e) {}
-                },
-
-                async selectPickupSuggestion(item) {
-                    this.pickupLocation = item.main_text || item.description;
-                    this.showPickupSuggestions = false;
-
-                    if (item.lat && item.lng) {
-                        this.pickupLat = parseFloat(item.lat);
-                        this.pickupLng = parseFloat(item.lng);
-                        if (window.setDeliveryPickup) window.setDeliveryPickup(this.pickupLat, this.pickupLng, false);
-                        this.updatePrice();
-                        return;
-                    }
-
-                    if (item.place_id) {
-                        try {
-                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data.success && data.place) {
-                                    this.pickupLat = parseFloat(data.place.lat);
-                                    this.pickupLng = parseFloat(data.place.lng);
-                                    this.pickupLocation = data.place.formatted_address || data.place.name || this.pickupLocation;
-                                    if (window.setDeliveryPickup) window.setDeliveryPickup(this.pickupLat, this.pickupLng, false);
-                                    this.updatePrice();
-                                }
-                            }
-                        } catch (e) {}
-                    }
-                },
-
-                async onDropoffInput() {
-                    this.dropoffLat = null;
-                    this.dropoffLng = null;
-                    if (!this.dropoffLocation || this.dropoffLocation.trim().length < 2) {
-                        this.dropoffSuggestions = [];
-                        this.showDropoffSuggestions = false;
-                        return;
-                    }
-                    try {
-                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.dropoffLocation.trim())}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            this.dropoffSuggestions = data.predictions || [];
-                            this.showDropoffSuggestions = this.dropoffSuggestions.length > 0;
-                        }
-                    } catch (e) {}
-                },
-
-                async selectDropoffSuggestion(item) {
-                    this.dropoffLocation = item.main_text || item.description;
-                    this.showDropoffSuggestions = false;
-
-                    if (item.lat && item.lng) {
-                        this.dropoffLat = parseFloat(item.lat);
-                        this.dropoffLng = parseFloat(item.lng);
-                        if (window.setDeliveryDropoff) window.setDeliveryDropoff(this.dropoffLat, this.dropoffLng, false);
-                        this.updatePrice();
-                        return;
-                    }
-
-                    if (item.place_id) {
-                        try {
-                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data.success && data.place) {
-                                    this.dropoffLat = parseFloat(data.place.lat);
-                                    this.dropoffLng = parseFloat(data.place.lng);
-                                    this.dropoffLocation = data.place.formatted_address || data.place.name || this.dropoffLocation;
-                                    if (window.setDeliveryDropoff) window.setDeliveryDropoff(this.dropoffLat, this.dropoffLng, false);
-                                    this.updatePrice();
-                                }
-                            }
-                        } catch (e) {}
-                    }
-                },
 
                 deliveryType: 'Hyperlocal',
                 scheduleMode: 'now',
@@ -1029,12 +876,6 @@
                     this.$watch('packageWeight', () => this.updatePrice());
                     this.$watch('pickupLat', () => this.updatePrice());
                     this.$watch('dropoffLat', () => this.updatePrice());
-
-                    this.$watch('currentStep', (step) => {
-                        if (step === 1 && window.deliveryMapInstance) {
-                            setTimeout(() => window.deliveryMapInstance.invalidateSize(), 150);
-                        }
-                    });
 
                     window.addEventListener('delivery-location-changed', (e) => {
                         if (e.detail.type === 'pickup') {
@@ -1158,13 +999,7 @@
                     }
                 }
             }));
-            }
-        }
-        document.addEventListener('alpine:init', registerPackageDeliveryBookingAlpine);
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            registerPackageDeliveryBookingAlpine();
-        }
-        window.packageDeliveryBooking = registerPackageDeliveryBookingAlpine;
+        });
     </script>
     <x-stripe-modal serviceType="package_delivery" />
 </x-layout>

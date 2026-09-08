@@ -1351,17 +1351,6 @@
             };
         }
 
-        function registerSignupAppAlpine() {
-            if (typeof Alpine !== 'undefined' && Alpine.data) {
-                Alpine.data('signupApp', signupApp);
-            }
-        }
-        document.addEventListener('alpine:init', registerSignupAppAlpine);
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            registerSignupAppAlpine();
-        }
-        window.signupApp = signupApp;
-
         // Google Identity Services (Popup Authentication)
         function triggerGoogleAuth(role = 'customer') {
             const btn = document.getElementById('google-signup-btn');

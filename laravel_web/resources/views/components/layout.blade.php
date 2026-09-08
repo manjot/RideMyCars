@@ -1830,9 +1830,8 @@
 
     @auth
     <script>
-        function registerNotificationCenterAlpine() {
-            if (typeof Alpine !== 'undefined' && Alpine.data) {
-                Alpine.data('notificationCenter', () => ({
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('notificationCenter', () => ({
                 open: false,
                 notifications: [],
                 unreadCount: 0,
@@ -2006,12 +2005,7 @@
                     } catch (e) {}
                 }
             }));
-            }
-        }
-        document.addEventListener('alpine:init', registerNotificationCenterAlpine);
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            registerNotificationCenterAlpine();
-        }
+        });
     </script>
     @endauth
 
@@ -2273,9 +2267,8 @@
         </div>
     </div>
     <script>
-    function registerOngoingRideAlpine() {
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            Alpine.data('ongoingRide', () => ({
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('ongoingRide', () => ({
             ride: null,
             expanded: false,
             dismissed: false,
@@ -2406,14 +2399,10 @@
                 } catch(e) { 
                     alert('Network error while cancelling ride'); 
                 }
+                this.cancelling = false;
             }
         }));
-        }
-    }
-    document.addEventListener('alpine:init', registerOngoingRideAlpine);
-    if (typeof Alpine !== 'undefined' && Alpine.data) {
-        registerOngoingRideAlpine();
-    }
+    });
     </script>
     @endif
 

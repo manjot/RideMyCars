@@ -297,18 +297,5 @@
             }
         }
     }
-
-    function registerVerificationPageAlpine() {
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            Alpine.data('verificationPage', (serviceType, serviceId, initialVerificationStatus, initialPaymentStatus) => 
-                verificationPage(serviceType, serviceId, initialVerificationStatus, initialPaymentStatus)
-            );
-        }
-    }
-    document.addEventListener('alpine:init', registerVerificationPageAlpine);
-    if (typeof Alpine !== 'undefined' && Alpine.data) {
-        registerVerificationPageAlpine();
-    }
-    window.verificationPage = verificationPage;
     </script>
 </x-layout>

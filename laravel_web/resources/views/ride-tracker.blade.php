@@ -529,17 +529,6 @@
                 }
             };
         }
-
-        function registerRideTrackerAppAlpine() {
-            if (typeof Alpine !== 'undefined' && Alpine.data) {
-                Alpine.data('rideTrackerApp', (rideId, initialStatus) => rideTrackerApp(rideId, initialStatus));
-            }
-        }
-        document.addEventListener('alpine:init', registerRideTrackerAppAlpine);
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            registerRideTrackerAppAlpine();
-        }
-        window.rideTrackerApp = rideTrackerApp;
     </script>
     @endif
 </x-layout>

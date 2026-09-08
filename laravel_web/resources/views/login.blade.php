@@ -666,10 +666,12 @@
     </main>
 
     <script>
-        function loginApp() {
-            return {
-                view: '{{ $errors->any() || old("email") ? "email" : "mobile" }}',
-                loginEmail: '{{ old("email", "") }}',
+        function initLoginApp() {
+            if (window.Alpine && !window.__loginAppRegistered) {
+                window.__loginAppRegistered = true;
+                Alpine.data('loginApp', () => ({
+                    view: '{{ $errors->any() || old("email") ? "email" : "mobile" }}',
+                    loginEmail: '{{ old("email", "") }}',
                     loginPassword: '',
                     fillCredentials(email, pwd = '123456') {
                         this.view = 'email';
@@ -925,19 +927,15 @@
                             this.otpError = 'Network error during verification. Please try again.';
                         });
                     }
-            };
-        }
-
-        function registerLoginAppAlpine() {
-            if (typeof Alpine !== 'undefined' && Alpine.data) {
-                Alpine.data('loginApp', loginApp);
+                }));
             }
         }
-        document.addEventListener('alpine:init', registerLoginAppAlpine);
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            registerLoginAppAlpine();
+
+        if (window.Alpine) {
+            initLoginApp();
+        } else {
+            document.addEventListener('alpine:init', initLoginApp);
         }
-        window.loginApp = loginApp;
 
         // Google Identity Services (Popup Authentication)
         function triggerGoogleAuth(role = 'customer') {

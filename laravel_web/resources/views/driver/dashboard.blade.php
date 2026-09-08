@@ -189,15 +189,6 @@
                             }
                         }
                     }
-                    window.driverVerificationRequests = driverVerificationRequests;
-                    if (typeof Alpine !== 'undefined' && Alpine.data) {
-                        Alpine.data('driverVerificationRequests', driverVerificationRequests);
-                    }
-                    document.addEventListener('alpine:init', () => {
-                        if (typeof Alpine !== 'undefined' && Alpine.data) {
-                            Alpine.data('driverVerificationRequests', driverVerificationRequests);
-                        }
-                    });
                     </script>
 
                     <!-- Incoming Ride Requests -->
@@ -890,9 +881,8 @@
     </div>
 
     <script>
-        function registerDriverDashboardAlpine() {
-            if (typeof Alpine !== 'undefined' && Alpine.data) {
-                Alpine.data('driverPolling', () => ({
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('driverPolling', () => ({
                 requests: [],
                 responding: false,
                 pollingInterval: null,
@@ -1036,15 +1026,8 @@
                     }
                 }
             }));
-            }
-        }
-        document.addEventListener('alpine:init', registerDriverDashboardAlpine);
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            registerDriverDashboardAlpine();
-        }
 
-        // Background Driver GPS Location Pinger
-        document.addEventListener('DOMContentLoaded', () => {
+            // Background Driver GPS Location Pinger
             if (navigator.geolocation) {
                 const sendGpsPing = (pos) => {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;

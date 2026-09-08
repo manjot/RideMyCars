@@ -468,9 +468,8 @@
     </main>
 
     <script>
-    function registerWalletManagerAlpine() {
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            Alpine.data('walletManager', () => ({
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('walletManager', () => ({
             balance: 0.00,
             giftCash: 0.00,
             toast: '',
@@ -590,11 +589,6 @@
                 setTimeout(() => { this.toast = ''; }, 4500);
             }
         }));
-        }
-    }
-    document.addEventListener('alpine:init', registerWalletManagerAlpine);
-    if (typeof Alpine !== 'undefined' && Alpine.data) {
-        registerWalletManagerAlpine();
-    }
+    });
     </script>
 </x-layout>

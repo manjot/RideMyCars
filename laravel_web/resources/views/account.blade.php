@@ -795,9 +795,8 @@
     </main>
 
     <script>
-    function registerAccountManagerAlpine() {
-        if (typeof Alpine !== 'undefined' && Alpine.data) {
-            Alpine.data('accountManager', () => ({
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('accountManager', () => ({
             currentTab: new URLSearchParams(window.location.search).get('tab') || 'home',
             toast: '',
             
@@ -916,11 +915,6 @@
                 setTimeout(() => { this.toast = ''; }, 4500);
             }
         }));
-        }
-    }
-    document.addEventListener('alpine:init', registerAccountManagerAlpine);
-    if (typeof Alpine !== 'undefined' && Alpine.data) {
-        registerAccountManagerAlpine();
-    }
+    });
     </script>
 </x-layout>
