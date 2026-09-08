@@ -962,8 +962,9 @@
     </main>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('rideBooking', () => ({
+        function registerRideBookingAlpine() {
+            if (typeof Alpine !== 'undefined' && Alpine.data) {
+                Alpine.data('rideBooking', () => ({
                 bookingStep: 'find_trip', // 'find_trip', 'choose_ride', 'confirm_ride', 'finding_driver', 'driver_assigned', 'completed'
                 vehicle_type: 'Economy',
                 schedule_type: 'now',
@@ -1712,7 +1713,6 @@
                         };
 
                         this.selectedFare = activeCat?.fare_formatted || (this.currencySymbol + finalTotal.toFixed(2));
-                    }
                 },
 
                 calculateDistanceKm(lat1, lon1, lat2, lon2) {
@@ -2046,7 +2046,12 @@
                     this.bookingStep = 'find_trip';
                 }
             }));
-        });
+            }
+        }
+        document.addEventListener('alpine:init', registerRideBookingAlpine);
+        if (typeof Alpine !== 'undefined' && Alpine.data) {
+            registerRideBookingAlpine();
+        }
 
         document.addEventListener("DOMContentLoaded", function() {
             const mapEl = document.getElementById('map');
