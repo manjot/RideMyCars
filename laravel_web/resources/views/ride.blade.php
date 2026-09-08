@@ -1036,6 +1036,7 @@
                 selectedCard: null,
                 selectedFare: '$28.50',
                 isSavingCard: false,
+                isLoggedIn: {{ auth()->check() ? 'true' : 'false' }},
                 savedLocations: { home: null, office: null },
                 showSavedLocationModal: false,
                 editingLabel: 'home',
@@ -1699,6 +1700,10 @@
                 },
 
                 async fetchSavedCards() {
+                    if (!this.isLoggedIn) {
+                        this.savedCards = [];
+                        return;
+                    }
                     try {
                         const res = await fetch('/api/payment-methods');
                         if (res.ok) {

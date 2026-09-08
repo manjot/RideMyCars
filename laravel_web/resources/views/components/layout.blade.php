@@ -168,6 +168,15 @@
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Tailwind CSS Fallback CDN -->
+    <script>
+        (function() {
+            var _w = console.warn;
+            console.warn = function() {
+                if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) return;
+                _w.apply(console, arguments);
+            };
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {

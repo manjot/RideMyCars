@@ -17,7 +17,12 @@ class PaymentMethodController extends Controller
     {
         $user = Auth::user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json([
+                'success' => true,
+                'payment_methods' => [],
+                'default_id' => null,
+                'authenticated' => false,
+            ], 200);
         }
 
         $methods = PaymentMethod::where('user_id', $user->id)
