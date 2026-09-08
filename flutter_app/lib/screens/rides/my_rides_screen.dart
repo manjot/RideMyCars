@@ -164,7 +164,6 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
         final fare = double.tryParse((r['fare'] ?? r['total_amount'] ?? '0').toString()) ?? 0.0;
         final driverName = r['driver'] is Map ? (r['driver']['name'] ?? 'Assigned Driver') : (r['driver_name'] ?? 'Assigned Driver');
         final vehicleType = (r['vehicle_type'] ?? r['car_make_model'] ?? 'Standard').toString();
-        final currencySymbol = (r['currency_symbol'] ?? (r['currency'] == 'GHS' || r['driver_country'] == 'GHA' ? 'GH₵' : '\$')).toString();
         final date = r['created_at'] != null
             ? r['created_at'].toString().split('T').first
             : 'Recent';
@@ -218,7 +217,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '$currencySymbol${fare.toStringAsFixed(2)}',
+                          '\$${fare.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: AppColors.textLight,
                             fontWeight: FontWeight.w900,

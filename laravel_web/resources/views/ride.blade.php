@@ -482,17 +482,6 @@
                             </div>
                         </div>
 
-                        <!-- Surge & Traffic Cap Transparency Banner -->
-                        <div x-show="surgeInfo && surgeInfo.is_active" class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-1">
-                            <div class="flex items-center justify-between font-bold text-amber-800 dark:text-amber-300">
-                                <span class="flex items-center gap-1.5">⚡ <span x-text="surgeInfo.label"></span></span>
-                                <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 shadow-xs">
-                                    Traffic Capped
-                                </span>
-                            </div>
-                            <p class="text-[10px] text-gray-500 dark:text-gray-400">Transparent time-fenced rates. Guaranteed never to exceed 1.8x multiplier.</p>
-                        </div>
-
                         <!-- Vehicle Categories -->
                         <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                             <template x-for="cat in categories" :key="cat.id">
@@ -989,31 +978,28 @@
                     base_fare: {{ (float) ($currentPricing?->ride_base_fare ?? 5.00) }},
                     per_km: {{ (float) ($currentPricing?->ride_per_km_rate ?? 1.50) }},
                     per_minute: {{ (float) ($currentPricing?->ride_per_minute_rate ?? 0.25) }},
-                    minimum_fare: {{ (float) ($currentPricing?->ride_minimum_fare ?? 10.00) }}
+                    minimum_fare: {{ (float) ($currentPricing?->ride_minimum_fare ?? 7.00) }}
                 },
                 @php
                     $activeRideCategories = \App\Models\RideCategory::getActiveCategories();
-                    $countryCode = $currentPricing?->country_code ?? 'USA';
                     $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
                     $sym = $currentCurrencySymbol ?? '$';
-                    $surgeData = \App\Services\PricingService::getSurgeInfo($countryCode);
 
                     if ($activeRideCategories->isEmpty()) {
+                        $baseF = (float) ($currentPricing?->ride_base_fare ?? 5.00);
+                        $perKmF = (float) ($currentPricing?->ride_per_km_rate ?? 1.50);
                         $formattedCats = [
-                            ['id' => 'economy', 'name' => 'Economy', 'icon' => '🚗', 'capacity' => '1–4 seats', 'eta_minutes' => 3, 'multiplier' => 1.0, 'base_fare' => 4.50, 'per_km_rate' => 1.10, 'minimum_fare' => 8.50, 'fare_formatted' => $sym . '15.50', 'description' => 'Small hatchbacks (Kia Picanto, Hyundai i10)'],
-                            ['id' => 'comfort', 'name' => 'Standard / Comfort', 'icon' => '🚘', 'capacity' => '1–4 seats', 'eta_minutes' => 4, 'multiplier' => 1.2, 'base_fare' => 7.00, 'per_km_rate' => 1.80, 'minimum_fare' => 23.50, 'fare_formatted' => $sym . '25.00', 'description' => 'Clean sedans with high-functioning A/C (Toyota Corolla)'],
-                            ['id' => 'suv', 'name' => 'Luxury SUV', 'icon' => '🚙', 'capacity' => '1–6 seats', 'eta_minutes' => 6, 'multiplier' => 1.5, 'base_fare' => 12.00, 'per_km_rate' => 3.00, 'minimum_fare' => 35.20, 'fare_formatted' => $sym . '42.00', 'description' => 'Premium SUVs for business travelers (Toyota Prado)'],
-                            ['id' => 'xl', 'name' => 'Van XL', 'icon' => '🚐', 'capacity' => '1–8 seats', 'eta_minutes' => 7, 'multiplier' => 1.8, 'base_fare' => 15.00, 'per_km_rate' => 4.50, 'minimum_fare' => 50.20, 'fare_formatted' => $sym . '60.00', 'description' => 'Multi-passenger vehicles for airport runs (Hyundai H1)'],
-                            ['id' => 'luxury', 'name' => 'VIP Chauffeurs', 'icon' => '👑', 'capacity' => '1–4 seats', 'eta_minutes' => 5, 'multiplier' => 2.2, 'base_fare' => 30.00, 'per_km_rate' => 6.50, 'minimum_fare' => 109.50, 'fare_formatted' => $sym . '109.50', 'description' => 'High-end luxury executive sedans (Mercedes-Benz E-Class)'],
-                            ['id' => 'group-bus', 'name' => 'Group Bus (7–14)', 'icon' => '🚌', 'capacity' => '7–14 seats', 'eta_minutes' => 9, 'multiplier' => 2.8, 'base_fare' => 45.00, 'per_km_rate' => 8.00, 'minimum_fare' => 150.90, 'fare_formatted' => $sym . '150.90', 'description' => 'Microbuses for event transport or corporate teams (Toyota HiAce)'],
+                            ['id' => 'economy', 'name' => 'Economy', 'icon' => '🚗', 'capacity' => '1–4 seats', 'eta_minutes' => 3, 'multiplier' => 1.0, 'fare_formatted' => $sym . number_format($baseF + (10 * $perKmF), 2), 'description' => 'Affordable everyday rides'],
+                            ['id' => 'standard', 'name' => 'Comfort', 'icon' => '✨', 'capacity' => '1–4 seats', 'eta_minutes' => 4, 'multiplier' => 1.2, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.2, 2), 'description' => 'Comfortable sedans'],
+                            ['id' => 'suv', 'name' => 'SUV', 'icon' => '🚙', 'capacity' => '1–6 seats', 'eta_minutes' => 6, 'multiplier' => 1.5, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.5, 2), 'description' => 'Spacious SUVs'],
+                            ['id' => 'xl', 'name' => 'XL Van', 'icon' => '🚐', 'capacity' => '1–7 seats', 'eta_minutes' => 7, 'multiplier' => 1.8, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.8, 2), 'description' => 'Large vans for groups'],
+                            ['id' => 'luxury', 'name' => 'Luxury', 'icon' => '👑', 'capacity' => '1–4 seats', 'eta_minutes' => 5, 'multiplier' => 2.2, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 2.2, 2), 'description' => 'Premium luxury vehicles'],
                         ];
                     } else {
-                        $formattedCats = $activeRideCategories->map(function ($cat, $idx) use ($currentPricing, $sym, $countryCode, $countryMultiplier, $surgeData) {
-                            $rates = $cat->getRatesForCountry($countryCode, $countryMultiplier);
-                            $base = (float) $rates['base_fare'];
-                            $perKm = (float) $rates['per_km_rate'];
-                            $minFare = (float) $rates['minimum_fare'];
-                            $totalEst = max($minFare, round(($base + (10 * $perKm)) * (float) $surgeData['multiplier'], 2));
+                        $formattedCats = $activeRideCategories->map(function ($cat, $idx) use ($currentPricing, $sym, $countryMultiplier) {
+                            $base = (float) ($cat->base_fare * $countryMultiplier);
+                            $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
+                            $totalEst = round(($base + (10 * $perKm)) * (float) $cat->multiplier, 2);
                             return [
                                 'id' => $cat->slug,
                                 'name' => $cat->name,
@@ -1021,9 +1007,6 @@
                                 'capacity' => $cat->capacity ?: '1–4 seats',
                                 'eta_minutes' => 3 + ($idx * 2),
                                 'multiplier' => (float) $cat->multiplier,
-                                'base_fare' => $base,
-                                'per_km_rate' => $perKm,
-                                'minimum_fare' => $minFare,
                                 'fare_formatted' => $sym . number_format($totalEst, 2),
                                 'description' => $cat->description ?: 'Ride in comfort',
                             ];
@@ -1031,13 +1014,12 @@
                     }
                 @endphp
                 categories: {!! json_encode($formattedCats) !!},
-                surgeInfo: {!! json_encode($surgeData) !!},
                 fareBreakdown: { 
-                    base_fare: {{ (float) ($currentPricing?->ride_base_fare ?? 4.50) }}, 
-                    distance_fare: {{ (float) (10 * ($currentPricing?->ride_per_km_rate ?? 1.10)) }}, 
+                    base_fare: {{ (float) ($currentPricing?->ride_base_fare ?? 5.00) }}, 
+                    distance_fare: {{ (float) (10 * ($currentPricing?->ride_per_km_rate ?? 1.50)) }}, 
                     stops_fee: 0.00, 
-                    tax: {{ round(((float) ($currentPricing?->ride_base_fare ?? 4.50) + 10 * (float) ($currentPricing?->ride_per_km_rate ?? 1.10)) * 0.05, 2) }}, 
-                    grand_total: {{ round(((float) ($currentPricing?->ride_base_fare ?? 4.50) + 10 * (float) ($currentPricing?->ride_per_km_rate ?? 1.10)) * 1.05, 2) }} 
+                    tax: {{ round(((float) ($currentPricing?->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing?->ride_per_km_rate ?? 1.50)) * 0.05, 2) }}, 
+                    grand_total: {{ round(((float) ($currentPricing?->ride_base_fare ?? 5.00) + 10 * (float) ($currentPricing?->ride_per_km_rate ?? 1.50)) * 1.05, 2) }} 
                 },
                 paymentModal: false,
                 paymentStep: 'select',
@@ -1679,39 +1661,29 @@
                         totalDist += this.calculateDistanceKm(waypoints[i].lat, waypoints[i].lng, waypoints[i+1].lat, waypoints[i+1].lng);
                     }
 
+                    if (totalDist > 0) {
                         this.estimatedDistanceKm = totalDist;
                         this.estimatedDurationMin = Math.round((totalDist / 30) * 60) + (this.stops.length * 5);
                         
-                        const surgeMult = (this.surgeInfo && this.surgeInfo.multiplier) ? parseFloat(this.surgeInfo.multiplier) : 1.0;
-
-                        // Update each category live using its exact base and per-km rates
-                        this.categories.forEach(cat => {
-                            const cBase = cat.base_fare || (this.countryPricing.base_fare || 4.50);
-                            const cPerKm = cat.per_km_rate || (this.countryPricing.per_km || 1.10);
-                            const cMin = cat.minimum_fare || (this.countryPricing.minimum_fare || 8.50);
-                            const cStops = this.stops.length * (cBase * 0.5);
-                            const unadjusted = (cBase + (totalDist * cPerKm) + cStops) * surgeMult;
-                            const catTotal = Math.max(cMin, unadjusted);
-                            cat.fare_formatted = this.currencySymbol + catTotal.toFixed(2);
-                        });
-
-                        // Active category breakdown
-                        const activeCat = this.categories.find(c => c.name === this.vehicle_type) || this.categories[0];
-                        const activeBase = activeCat ? (activeCat.base_fare || this.countryPricing.base_fare || 4.50) : (this.countryPricing.base_fare || 4.50);
-                        const activePerKm = activeCat ? (activeCat.per_km_rate || this.countryPricing.per_km || 1.10) : (this.countryPricing.per_km || 1.10);
-                        const activeMin = activeCat ? (activeCat.minimum_fare || this.countryPricing.minimum_fare || 8.50) : (this.countryPricing.minimum_fare || 8.50);
-                        const activeStops = this.stops.length * (activeBase * 0.5);
-                        const finalTotal = Math.max(activeMin, (activeBase + (totalDist * activePerKm) + activeStops) * surgeMult);
+                        const baseFare = this.countryPricing.base_fare || 5.00;
+                        const distFare = totalDist * (this.countryPricing.per_km || 1.50);
+                        const stopsFee = this.stops.length * (baseFare * 0.5);
+                        const grandTotal = Math.max(this.countryPricing.minimum_fare || 7.00, baseFare + distFare + stopsFee);
 
                         this.fareBreakdown = {
-                            base_fare: activeBase * surgeMult,
-                            distance_fare: totalDist * activePerKm * surgeMult,
-                            stops_fee: activeStops,
-                            tax: finalTotal * 0.05,
-                            grand_total: finalTotal
+                            base_fare: baseFare,
+                            distance_fare: distFare,
+                            stops_fee: stopsFee,
+                            tax: grandTotal * 0.05,
+                            grand_total: grandTotal
                         };
 
-                        this.selectedFare = activeCat?.fare_formatted || (this.currencySymbol + finalTotal.toFixed(2));
+                        this.categories.forEach(cat => {
+                            const mult = (typeof cat.multiplier !== 'undefined' && cat.multiplier !== null) ? parseFloat(cat.multiplier) : 1.0;
+                            const fare = (grandTotal * mult).toFixed(2);
+                            cat.fare_formatted = this.currencySymbol + fare;
+                        });
+                        this.selectedFare = this.categories.find(c => c.name === this.vehicle_type)?.fare_formatted || (this.currencySymbol + grandTotal.toFixed(2));
                     }
                 },
 

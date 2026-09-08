@@ -786,11 +786,6 @@ class DriverApiController extends Controller
         $user = $request->user();
         $completedRides = \App\Models\Ride::where('driver_id', $user->id)->where('status', 'completed');
 
-        $driverCountry = $user->driverProfile?->country ?? $user->country ?? 'GHA';
-        $countryPricing = \App\Models\CountryPricing::forCountry($driverCountry);
-        $currency = $countryPricing->currency_code ?? 'GHS';
-        $currencySymbol = $countryPricing->currency_symbol ?? 'GH₵';
-
         $today = (clone $completedRides)->whereDate('created_at', today())->sum('fare');
         $week = (clone $completedRides)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('fare');
         $month = (clone $completedRides)->whereMonth('created_at', now()->month)->sum('fare');
@@ -801,8 +796,6 @@ class DriverApiController extends Controller
             'week' => floatval($week),
             'month' => floatval($month),
             'total_trips' => $completedRides->count(),
-            'currency' => $currency,
-            'currency_symbol' => $currencySymbol,
         ]);
     }
 }

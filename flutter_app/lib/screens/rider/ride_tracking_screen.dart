@@ -93,7 +93,6 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
     final status = currentRide['status'] ?? 'pending';
     final fare = currentRide['fare'] != null ? double.tryParse(currentRide['fare'].toString()) ?? 0.0 : 0.0;
-    final currencySymbol = (currentRide['currency_symbol'] ?? (currentRide['currency'] == 'GHS' || currentRide['driver_country'] == 'GHA' ? 'GH₵' : '\$')).toString();
     final driver = currentRide['driver'];
     final pickup = currentRide['pickup_location'] ?? 'Pickup';
     final dropoff = currentRide['dropoff_location'] ?? 'Destination';
@@ -272,7 +271,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                 ),
                               const SizedBox(width: 8),
                               Text(
-                                '$currencySymbol${fare.toStringAsFixed(2)}',
+                                '\$${fare.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   color: AppColors.success,
                                   fontWeight: FontWeight.w900,

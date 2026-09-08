@@ -90,7 +90,6 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   Widget build(BuildContext context) {
     final status = _ride['status'] ?? 'accepted';
     final fare = _ride['fare'] != null ? double.tryParse(_ride['fare'].toString()) ?? 0.0 : 0.0;
-    final currencySymbol = (_ride['currency_symbol'] ?? (_ride['currency'] == 'GHS' || _ride['driver_country'] == 'GHA' ? 'GH₵' : '\$')).toString();
     final customerName = (_ride['customer_name'] ?? _ride['rider']?['name'] ?? _ride['rider_name'] ?? _ride['passenger_name'] ?? 'Customer').toString();
     final customerPhone = _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'];
     final pocName = _ride['poc_name'];
@@ -247,7 +246,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                             ),
                           const SizedBox(width: 8),
                           Text(
-                            '$currencySymbol${fare.toStringAsFixed(2)}',
+                            '\$${fare.toStringAsFixed(2)}',
                             style: const TextStyle(
                               color: AppColors.success,
                               fontWeight: FontWeight.w900,

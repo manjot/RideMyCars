@@ -149,7 +149,6 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
         final status = (t['status'] ?? 'completed').toString();
         final riderName = t['rider'] is Map ? (t['rider']['name'] ?? 'Passenger') : (t['passenger_name'] ?? 'Passenger');
         final vehicleType = (t['vehicle_type'] ?? t['car_make_model'] ?? 'Standard').toString();
-        final currencySymbol = (t['currency_symbol'] ?? (t['currency'] == 'GHS' || t['driver_country'] == 'GHA' ? 'GH₵' : '\$')).toString();
         final date = t['created_at'] != null ? t['created_at'].toString().split('T').first : 'Recent';
 
         return Container(
@@ -197,7 +196,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '+$currencySymbol${fare.toStringAsFixed(2)}',
+                          '+\$${fare.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: AppColors.success,
                             fontWeight: FontWeight.w900,
