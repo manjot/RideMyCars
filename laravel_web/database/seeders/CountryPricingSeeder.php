@@ -87,30 +87,30 @@ class CountryPricingSeeder extends Seeder
                 'exchange_rate' => 15.5000,
                 'is_default' => false,
                 'is_active' => true,
-                // Ride
-                'ride_base_fare' => 75.00,
-                'ride_per_km_rate' => 22.50,
-                'ride_per_minute_rate' => 3.75,
-                'ride_minimum_fare' => 150.00,
-                'ride_additional_stop_fee' => 50.00,
-                // Delivery
-                'delivery_base_fare' => 225.00,
-                'delivery_per_km_rate' => 22.50,
-                'delivery_instant_addon' => 150.00,
-                'delivery_express_addon' => 120.00,
-                'delivery_same_day_addon' => 60.00,
-                'delivery_scheduled_addon' => 30.00,
-                'delivery_per_kg_rate' => 11.25,
-                // Driver
-                'driver_hourly_rate' => 380.00,
-                'driver_daily_rate' => 2600.00,
-                'driver_weekly_rate' => 15500.00,
-                // Rental
+                // Ride (GH₵)
+                'ride_base_fare' => 4.50,
+                'ride_per_km_rate' => 1.10,
+                'ride_per_minute_rate' => 0.20,
+                'ride_minimum_fare' => 10.00,
+                'ride_additional_stop_fee' => 3.00,
+                // Delivery (GH₵)
+                'delivery_base_fare' => 15.00,
+                'delivery_per_km_rate' => 1.20,
+                'delivery_instant_addon' => 8.00,
+                'delivery_express_addon' => 6.00,
+                'delivery_same_day_addon' => 3.00,
+                'delivery_scheduled_addon' => 2.00,
+                'delivery_per_kg_rate' => 0.60,
+                // Driver (GH₵)
+                'driver_hourly_rate' => 35.00,
+                'driver_daily_rate' => 240.00,
+                'driver_weekly_rate' => 1350.00,
+                // Rental (GH₵)
                 'rental_price_multiplier' => 15.5000,
-                'rental_protection_daily_rate' => 185.00,
-                'rental_additional_driver_rate' => 150.00,
-                'rental_child_seat_rate' => 120.00,
-                'rental_gps_rate' => 75.00,
+                'rental_protection_daily_rate' => 35.00,
+                'rental_additional_driver_rate' => 25.00,
+                'rental_child_seat_rate' => 20.00,
+                'rental_gps_rate' => 15.00,
             ],
             [
                 'country_code' => 'ZAF',

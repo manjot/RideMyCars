@@ -105,6 +105,25 @@ class Ride extends Model
         'remaining_balance' => 'float',
     ];
 
+    protected $appends = [
+        'currency',
+        'currency_symbol',
+    ];
+
+    public function getCurrencyAttribute(): string
+    {
+        $country = $this->driver_country ?? 'GHA';
+        $pricing = CountryPricing::forCountry($country);
+        return $pricing->currency_code ?? 'GHS';
+    }
+
+    public function getCurrencySymbolAttribute(): string
+    {
+        $country = $this->driver_country ?? 'GHA';
+        $pricing = CountryPricing::forCountry($country);
+        return $pricing->currency_symbol ?? 'GH₵';
+    }
+
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class, 'vehicle_id');

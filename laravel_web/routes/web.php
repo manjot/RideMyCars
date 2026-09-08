@@ -986,55 +986,80 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
     $stopsCount = intval($request->input('stops_count', 0));
     $country = $request->input('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
 
-    $categories = [
-        [
-            'id' => 'economy',
-            'name' => 'Economy',
-            'icon' => '🚗',
-            'capacity' => '1–4 passengers',
-            'eta_minutes' => 3,
-            'multiplier' => 1.0,
-            'description' => 'Affordable, everyday rides',
-        ],
-        [
-            'id' => 'standard',
-            'name' => 'Standard',
-            'icon' => '🚘',
-            'capacity' => '1–4 passengers',
-            'eta_minutes' => 4,
-            'multiplier' => 1.2,
-            'description' => 'Comfortable sedans with extra legroom',
-        ],
-        [
-            'id' => 'suv',
-            'name' => 'SUV',
-            'icon' => '🚙',
-            'capacity' => '1–6 passengers',
-            'eta_minutes' => 6,
-            'multiplier' => 1.5,
-            'description' => 'Spacious SUVs for groups and extra luggage',
-        ],
-        [
-            'id' => 'xl',
-            'name' => 'XL',
-            'icon' => '🚐',
-            'capacity' => '1–6 passengers',
-            'eta_minutes' => 7,
-            'multiplier' => 1.8,
-            'description' => 'Extra large vans for families and events',
-        ],
-        [
-            'id' => 'luxury',
-            'name' => 'Luxury',
-            'icon' => '🏎️',
-            'capacity' => '1–4 passengers',
-            'eta_minutes' => 5,
-            'multiplier' => 2.2,
-            'description' => 'Top-tier luxury vehicles with professional drivers',
-        ],
-    ];
+    $dbCats = \App\Models\RideCategory::getActiveCategories();
+    if ($dbCats->isNotEmpty()) {
+        $categories = $dbCats->map(function ($c, $idx) {
+            return [
+                'id' => $c->slug,
+                'name' => $c->name,
+                'icon' => $c->icon ?: '🚗',
+                'capacity' => $c->capacity ?: '1–4 passengers',
+                'eta_minutes' => 3 + ($idx * 2),
+                'multiplier' => (float) $c->multiplier,
+                'description' => $c->description ?: 'Comfortable transport',
+            ];
+        })->toArray();
+    } else {
+        $categories = [
+            [
+                'id' => 'economy',
+                'name' => 'Economy',
+                'icon' => '🚗',
+                'capacity' => '1–4 passengers',
+                'eta_minutes' => 3,
+                'multiplier' => 1.0,
+                'description' => 'Small hatchbacks (Kia Picanto, Hyundai i10). Affordable everyday mobility.',
+            ],
+            [
+                'id' => 'comfort',
+                'name' => 'Standard / Comfort',
+                'icon' => '🚘',
+                'capacity' => '1–4 passengers',
+                'eta_minutes' => 4,
+                'multiplier' => 1.2,
+                'description' => 'Clean sedans with high-functioning A/C (Toyota Corolla).',
+            ],
+            [
+                'id' => 'suv',
+                'name' => 'Luxury SUV',
+                'icon' => '🚙',
+                'capacity' => '1–6 passengers',
+                'eta_minutes' => 6,
+                'multiplier' => 1.5,
+                'description' => 'Premium SUVs for business travelers (Toyota Prado, Ford Explorer).',
+            ],
+            [
+                'id' => 'xl',
+                'name' => 'Van XL',
+                'icon' => '🚐',
+                'capacity' => '1–8 passengers',
+                'eta_minutes' => 7,
+                'multiplier' => 1.8,
+                'description' => 'Multi-passenger vehicles for airport runs or large families (Hyundai H1).',
+            ],
+            [
+                'id' => 'luxury',
+                'name' => 'VIP Chauffeurs',
+                'icon' => '👑',
+                'capacity' => '1–4 passengers',
+                'eta_minutes' => 5,
+                'multiplier' => 2.2,
+                'description' => 'High-end luxury executive sedans (Mercedes-Benz E-Class, BMW 5 Series).',
+            ],
+            [
+                'id' => 'group-bus',
+                'name' => 'Group Bus (7–14)',
+                'icon' => '🚌',
+                'capacity' => '7–14 passengers',
+                'eta_minutes' => 9,
+                'multiplier' => 2.8,
+                'description' => 'Microbuses for event transport or corporate teams (Toyota HiAce).',
+            ],
+        ];
+    }
 
     $countryPricing = \App\Models\CountryPricing::forCountry($country);
+    $surge = \App\Services\PricingService::getSurgeInfo($country);
 
     foreach ($categories as &$cat) {
         $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount, $country);
@@ -1051,6 +1076,7 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
         'distance_km' => $dist,
         'duration_minutes' => $dur,
         'stops_count' => $stopsCount,
+        'surge' => $surge,
         'categories' => $categories,
     ]);
 });

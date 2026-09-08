@@ -13,6 +13,7 @@ class DriverEarningsScreen extends StatelessWidget {
     final week = (driver.earnings['week'] as num?)?.toDouble() ?? 0.0;
     final month = (driver.earnings['month'] as num?)?.toDouble() ?? 0.0;
     final totalTrips = driver.earnings['total_trips'] ?? 0;
+    final currencySymbol = (driver.earnings['currency_symbol'] ?? (driver.earnings['currency'] == 'GHS' ? 'GH₵' : '\$')).toString();
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -64,7 +65,7 @@ class DriverEarningsScreen extends StatelessWidget {
                     const Text('AVAILABLE PAYOUT BALANCE', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                     const SizedBox(height: 10),
                     Text(
-                      '\$${month.toStringAsFixed(2)}',
+                      '$currencySymbol${month.toStringAsFixed(2)}',
                       style: const TextStyle(color: AppColors.success, fontSize: 36, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 18),
@@ -93,15 +94,15 @@ class DriverEarningsScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildPeriodTile('TODAY', '\$${today.toStringAsFixed(2)}', AppColors.success)),
+                  Expanded(child: _buildPeriodTile('TODAY', '$currencySymbol${today.toStringAsFixed(2)}', AppColors.success)),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildPeriodTile('THIS WEEK', '\$${week.toStringAsFixed(2)}', AppColors.info)),
+                  Expanded(child: _buildPeriodTile('THIS WEEK', '$currencySymbol${week.toStringAsFixed(2)}', AppColors.info)),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildPeriodTile('THIS MONTH', '\$${month.toStringAsFixed(2)}', AppColors.purple)),
+                  Expanded(child: _buildPeriodTile('THIS MONTH', '$currencySymbol${month.toStringAsFixed(2)}', AppColors.purple)),
                   const SizedBox(width: 12),
                   Expanded(child: _buildPeriodTile('TOTAL TRIPS', '$totalTrips', AppColors.primary)),
                 ],

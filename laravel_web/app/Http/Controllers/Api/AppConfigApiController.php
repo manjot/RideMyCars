@@ -117,15 +117,24 @@ class AppConfigApiController extends Controller
     {
         $categories = RideCategory::getActiveCategories();
         $currentPricing = CountryService::getCurrentPricing($request);
+        $countryCode = $currentPricing->country_code ?? 'USA';
         $countryMultiplier = (float) ($currentPricing->exchange_rate ?? 1.0);
         $currencySymbol = $currentPricing->currency_symbol ?? '$';
         $currencyCode = $currentPricing->currency_code ?? 'USD';
 
-        $data = $categories->map(function ($cat) use ($countryMultiplier, $currencySymbol, $currencyCode) {
-            $baseFare = round($cat->base_fare * $countryMultiplier, 2);
-            $perKm = round($cat->per_km_rate * $countryMultiplier, 2);
-            $perMin = round($cat->per_minute_rate * $countryMultiplier, 2);
-            $minFare = round($cat->minimum_fare * $countryMultiplier, 2);
+        $surge = \App\Services\PricingService::getSurgeInfo($countryCode);
+
+        $data = $categories->map(function ($cat) use ($countryCode, $countryMultiplier, $currencySymbol, $currencyCode, $surge) {
+            $rates = $cat->getRatesForCountry($countryCode, $countryMultiplier);
+            $baseFare = $rates['base_fare'];
+            $perKm = $rates['per_km_rate'];
+            $perMin = $rates['per_minute_rate'];
+            $minFare = $rates['minimum_fare'];
+            $multiplier = $rates['multiplier'];
+
+            // 10km preview calculation with surge
+            $estNoSurge = max($minFare, $baseFare + (10 * $perKm) + (15 * $perMin));
+            $estWithSurge = round($estNoSurge * $surge['multiplier'], 2);
 
             return [
                 'id' => $cat->id,
@@ -137,17 +146,18 @@ class AppConfigApiController extends Controller
                 'per_km_rate' => $perKm,
                 'per_minute_rate' => $perMin,
                 'minimum_fare' => $minFare,
-                'multiplier' => $cat->multiplier,
+                'multiplier' => $multiplier,
                 'description' => $cat->description,
                 'sort_order' => $cat->sort_order,
                 'currency_symbol' => $currencySymbol,
                 'currency_code' => $currencyCode,
-                'fare_preview' => $currencySymbol . number_format($baseFare + (10 * $perKm), 2),
+                'fare_preview' => $currencySymbol . number_format($estWithSurge, 2),
             ];
         });
 
         return response()->json([
             'status' => 'success',
+            'surge' => $surge,
             'data' => $data,
         ]);
     }

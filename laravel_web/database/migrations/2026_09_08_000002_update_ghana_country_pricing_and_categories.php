@@ -1,21 +1,87 @@
 <?php
 
-namespace Database\Seeders;
-
+use App\Models\CountryPricing;
 use App\Models\RideCategory;
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-class RideCategorySeeder extends Seeder
+return new class extends Migration
 {
     /**
-     * Run the database seeds.
+     * Run the migrations.
      */
-    public function run(): void
+    public function up(): void
     {
+        // 1. Ensure country_fares JSON column exists on ride_categories
+        if (Schema::hasTable('ride_categories')) {
+            Schema::table('ride_categories', function (Blueprint $table) {
+                if (!Schema::hasColumn('ride_categories', 'country_fares')) {
+                    $table->json('country_fares')->nullable()->after('multiplier');
+                }
+            });
+        }
+
+        // 2. Update or Insert the official Ghana (GHA) CountryPricing based on Ghana Cost Matrix
+        $ghanaData = [
+            'country_code' => 'GHA',
+            'country_name' => 'Ghana',
+            'currency_code' => 'GHS',
+            'currency_symbol' => 'GH₵',
+            'exchange_rate' => 15.5000,
+            'is_default' => false,
+            'is_active' => true,
+            // Ride Fares (GH₵)
+            // Economy base rate: GH₵ 4.50, per-km: GH₵ 1.10, min: GH₵ 10.00 (default unclassified urban trip threshold)
+            'ride_base_fare' => 4.50,
+            'ride_per_km_rate' => 1.10,
+            'ride_per_minute_rate' => 0.20,
+            'ride_minimum_fare' => 10.00,
+            'ride_additional_stop_fee' => 3.00,
+            // Delivery Fares (GH₵)
+            'delivery_base_fare' => 15.00,
+            'delivery_per_km_rate' => 1.20,
+            'delivery_instant_addon' => 8.00,
+            'delivery_express_addon' => 6.00,
+            'delivery_same_day_addon' => 3.00,
+            'delivery_scheduled_addon' => 2.00,
+            'delivery_per_kg_rate' => 0.60,
+            // Driver Hire (GH₵)
+            'driver_hourly_rate' => 35.00,
+            'driver_daily_rate' => 240.00,
+            'driver_weekly_rate' => 1350.00,
+            // Rental Extras (GH₵)
+            'rental_price_multiplier' => 15.5000,
+            'rental_protection_daily_rate' => 35.00,
+            'rental_additional_driver_rate' => 25.00,
+            'rental_child_seat_rate' => 20.00,
+            'rental_gps_rate' => 15.00,
+            'updated_at' => now(),
+            'created_at' => now(),
+        ];
+
+        try {
+            if (class_exists(CountryPricing::class)) {
+                CountryPricing::updateOrCreate(
+                    ['country_code' => 'GHA'],
+                    $ghanaData
+                );
+            } else {
+                DB::table('country_pricings')->updateOrInsert(
+                    ['country_code' => 'GHA'],
+                    $ghanaData
+                );
+            }
+        } catch (\Throwable $e) {
+            // DB connection or migration order fallback
+        }
+
+        // 3. Seed / Update the 6 Ride Categories with the official Ghana Multi-Tier Matrix
         $categories = [
             [
-                'name' => 'Economy',
                 'slug' => 'economy',
+                'name' => 'Economy',
                 'icon' => '🚗',
                 'capacity' => '1–4 seats',
                 'base_fare' => 5.00,
@@ -36,8 +102,8 @@ class RideCategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Standard / Comfort',
                 'slug' => 'comfort',
+                'name' => 'Standard / Comfort',
                 'icon' => '🚘',
                 'capacity' => '1–4 seats',
                 'base_fare' => 7.00,
@@ -58,8 +124,8 @@ class RideCategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Luxury SUV',
                 'slug' => 'suv',
+                'name' => 'Luxury SUV',
                 'icon' => '🚙',
                 'capacity' => '1–6 seats',
                 'base_fare' => 10.00,
@@ -80,8 +146,8 @@ class RideCategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Van XL',
                 'slug' => 'xl',
+                'name' => 'Van XL',
                 'icon' => '🚐',
                 'capacity' => '1–8 seats',
                 'base_fare' => 12.00,
@@ -102,8 +168,8 @@ class RideCategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'VIP Chauffeurs',
                 'slug' => 'luxury',
+                'name' => 'VIP Chauffeurs',
                 'icon' => '👑',
                 'capacity' => '1–4 seats',
                 'base_fare' => 18.00,
@@ -124,8 +190,8 @@ class RideCategorySeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Group Bus (7–14)',
                 'slug' => 'group-bus',
+                'name' => 'Group Bus (7–14)',
                 'icon' => '🚌',
                 'capacity' => '7–14 seats',
                 'base_fare' => 25.00,
@@ -145,32 +211,34 @@ class RideCategorySeeder extends Seeder
                 'sort_order' => 6,
                 'is_active' => true,
             ],
-            [
-                'name' => 'Motorbike',
-                'slug' => 'motorbike',
-                'icon' => '🏍️',
-                'capacity' => '1 seat',
-                'base_fare' => 3.00,
-                'per_km_rate' => 0.95,
-                'per_minute_rate' => 0.15,
-                'minimum_fare' => 5.00,
-                'multiplier' => 0.80,
-                'description' => 'Fast solo transit to zip through urban peak traffic.',
-                'country_fares' => [
-                    'GHA' => [
-                        'base_fare' => 3.50,
-                        'per_km_rate' => 0.85,
-                        'minimum_fare' => 6.00,
-                        'per_minute_rate' => 0.15,
-                    ],
-                ],
-                'sort_order' => 7,
-                'is_active' => true,
-            ],
         ];
 
-        foreach ($categories as $cat) {
-            RideCategory::updateOrCreate(['slug' => $cat['slug']], $cat);
+        try {
+            if (Schema::hasTable('ride_categories')) {
+                foreach ($categories as $cat) {
+                    $payload = $cat;
+                    if (isset($payload['country_fares'])) {
+                        $payload['country_fares'] = json_encode($payload['country_fares']);
+                    }
+                    $payload['updated_at'] = now();
+                    $payload['created_at'] = now();
+
+                    DB::table('ride_categories')->updateOrInsert(
+                        ['slug' => $cat['slug']],
+                        $payload
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            // Safe fallback
         }
     }
-}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Keep data intact on rollback
+    }
+};

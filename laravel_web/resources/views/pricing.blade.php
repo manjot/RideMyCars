@@ -24,30 +24,30 @@
                   @php
                       $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
                       $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
+                      $countryCode = $currentPricing?->country_code ?? 'USA';
+                      $surgeInfo = \App\Services\PricingService::getSurgeInfo($countryCode);
                       $dynamicVehicles = [];
 
                       if ($pricingRideCategories->isEmpty()) {
                           $dynamicVehicles = [
-                              'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing?->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing?->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing?->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing?->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility'],
-                              'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control'],
-                              'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups'],
-                              'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations'],
-                              'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers']
+                              'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => 4.50, 'perKm' => 1.10, 'perMin' => 0.20, 'min' => 8.50, 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Small hatchbacks (e.g., Kia Picanto, Hyundai i10). Affordable, reliable everyday city mobility'],
+                              'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => 7.00, 'perKm' => 1.80, 'perMin' => 0.30, 'min' => 23.50, 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Clean sedans with high-functioning A/C (e.g., Toyota Corolla)'],
+                              'suv' => ['name' => 'Luxury SUV', 'icon' => '🚙', 'multiplier' => 1.5, 'base' => 12.00, 'perKm' => 3.00, 'perMin' => 0.45, 'min' => 35.20, 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Premium SUVs for business travelers (e.g., Toyota Prado, Ford Explorer)'],
+                              'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.8, 'base' => 15.00, 'perKm' => 4.50, 'perMin' => 0.60, 'min' => 50.20, 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Multi-passenger vehicles for airport runs or large families (e.g., Hyundai H1)'],
+                              'luxury' => ['name' => 'VIP Chauffeurs', 'icon' => '👑', 'multiplier' => 2.2, 'base' => 30.00, 'perKm' => 6.50, 'perMin' => 1.00, 'min' => 109.50, 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'High-end luxury executive sedans (e.g., Mercedes-Benz E-Class, BMW 5 Series)'],
+                              'group-bus' => ['name' => 'Group Bus (7–14)', 'icon' => '🚌', 'multiplier' => 2.8, 'base' => 45.00, 'perKm' => 8.00, 'perMin' => 1.50, 'min' => 150.90, 'seats' => '7–14 Seats', 'luggage' => '8 Bags', 'desc' => 'Microbuses for event transport or corporate teams (e.g., Toyota HiAce)'],
                           ];
                       } else {
                           foreach ($pricingRideCategories as $cat) {
-                              $base = (float) ($cat->base_fare * $countryMultiplier);
-                              $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
-                              $perMin = (float) ($cat->per_minute_rate * $countryMultiplier);
-                              $min = (float) ($cat->minimum_fare * $countryMultiplier);
+                              $rates = $cat->getRatesForCountry($countryCode, $countryMultiplier);
                               $dynamicVehicles[$cat->slug] = [
                                   'name' => $cat->name,
                                   'icon' => $cat->icon ?: '🚗',
                                   'multiplier' => (float) $cat->multiplier,
-                                  'base' => $base,
-                                  'perKm' => $perKm,
-                                  'perMin' => $perMin,
-                                  'min' => $min,
+                                  'base' => $rates['base_fare'],
+                                  'perKm' => $rates['per_km_rate'],
+                                  'perMin' => $rates['per_minute_rate'],
+                                  'min' => $rates['minimum_fare'],
                                   'seats' => $cat->capacity ?: '4 Seats',
                                   'luggage' => '2 Bags',
                                   'desc' => $cat->description ?: 'Affordable, reliable everyday city mobility'
@@ -56,22 +56,24 @@
                       }
                   @endphp
                   vehicles: {!! json_encode($dynamicVehicles) !!},
+                  surgeInfo: {!! json_encode($surgeInfo) !!},
                   get calcDuration() {
                       return Math.max(5, Math.round(this.calcDistance * 1.6 + 4));
                   },
                   get calcFare() {
-                      const v = this.vehicles[this.calcVehicle] || this.vehicles.economy;
+                      const v = this.vehicles[this.calcVehicle] || this.vehicles.economy || Object.values(this.vehicles)[0];
                       const distFare = this.calcDistance * v.perKm;
                       const durFare = this.calcDuration * v.perMin;
                       const stopsFee = this.calcStops * (v.base * 0.7);
-                      const subtotal = v.base + distFare + durFare + stopsFee;
+                      const surgeMult = this.surgeInfo ? this.surgeInfo.multiplier : 1.0;
+                      const subtotal = (v.base + distFare + durFare + stopsFee) * surgeMult;
                       const finalFare = Math.max(v.min, subtotal);
                       const tax = finalFare * 0.05;
                       const total = finalFare + tax;
                       return {
-                          base: v.base.toFixed(2),
-                          distFare: distFare.toFixed(2),
-                          durFare: durFare.toFixed(2),
+                          base: (v.base * surgeMult).toFixed(2),
+                          distFare: (distFare * surgeMult).toFixed(2),
+                          durFare: (durFare * surgeMult).toFixed(2),
                           stopsFee: stopsFee.toFixed(2),
                           subtotal: subtotal.toFixed(2),
                           tax: tax.toFixed(2),
@@ -357,6 +359,28 @@
                     </a>
                 </div>
 
+                @php
+                    $resolvedFleet = [];
+                    $rawFleetCats = \App\Models\RideCategory::getActiveCategories();
+                    $sym = $currentCurrencySymbol ?? '$';
+                    $cCode = $currentPricing?->country_code ?? 'USA';
+                    $mult = (float) ($currentPricing?->exchange_rate ?? 1.0);
+
+                    foreach ($rawFleetCats as $rc) {
+                        $rates = $rc->getRatesForCountry($cCode, $mult);
+                        $resolvedFleet[$rc->slug] = [
+                            'name' => $rc->name,
+                            'icon' => $rc->icon ?: '🚗',
+                            'capacity' => $rc->capacity ?: '1–4 seats',
+                            'base' => $sym . number_format($rates['base_fare'], 2),
+                            'per_km' => $sym . number_format($rates['per_km_rate'], 2),
+                            'per_min' => $sym . number_format($rates['per_minute_rate'], 2),
+                            'min' => $sym . number_format($rates['minimum_fare'], 2),
+                            'desc' => $rc->description,
+                        ];
+                    }
+                @endphp
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     
                     <!-- 1. Economy -->
@@ -368,13 +392,13 @@
                             </div>
                             <div>
                                 <h3 class="text-xl font-black text-gray-900 dark:text-white">Economy</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toyota Yaris, Honda Fit, Hyundai Accent</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Small hatchbacks (e.g., Kia Picanto, Hyundai i10)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_base_fare ?? 5.00, 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_per_km_rate ?? 1.50, 2) }} / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_per_minute_rate ?? 0.25, 2) }} / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->ride_minimum_fare ?? 10.00, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['economy']['base'] ?? ($sym . '4.50') }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['economy']['per_km'] ?? ($sym . '1.10') }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['economy']['per_min'] ?? ($sym . '0.20') }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $resolvedFleet['economy']['min'] ?? ($sym . '8.50') }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Up to 4 passengers & 2 bags</li>
@@ -399,26 +423,26 @@
                             </div>
                             <div>
                                 <h3 class="text-xl font-black text-gray-900 dark:text-white">Standard / Comfort</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toyota Camry, Honda Accord, Hyundai Sonata</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Clean sedans with high-functioning A/C (e.g., Toyota Corolla)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$6.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">$1.80 / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">$0.30 / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">$12.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['comfort']['base'] ?? ($sym . '7.00') }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['comfort']['per_km'] ?? ($sym . '1.80') }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['comfort']['per_min'] ?? ($sym . '0.30') }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $resolvedFleet['comfort']['min'] ?? ($sym . '23.50') }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Extra legroom & newer model vehicles</li>
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Top-rated drivers (4.85★ or higher)</li>
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Temperature & quiet ride preference</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Extra legroom & newer model sedans</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Top-rated drivers with climate control</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Punctual business transit</li>
                             </ul>
                         </div>
-                        <a href="/ride?type=Standard" class="mt-6 block w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all text-center">
+                        <a href="/ride?type=Standard%20%2F%20Comfort" class="mt-6 block w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all text-center">
                             Book Comfort →
                         </a>
                     </div>
 
-                    <!-- 3. Executive SUV -->
+                    <!-- 3. Luxury SUV -->
                     <div class="bg-white dark:bg-[#111622] rounded-3xl p-7 border border-gray-200 dark:border-white/10 shadow-xs hover:shadow-xl hover:border-brand-500/40 transition-all flex flex-col justify-between group">
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
@@ -426,22 +450,22 @@
                                 <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">Luxury SUV</span>
                             </div>
                             <div>
-                                <h3 class="text-xl font-black text-gray-900 dark:text-white">Executive SUV</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toyota Prado, Lexus RX, Ford Explorer</p>
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white">Luxury SUV</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Premium SUVs for business travelers (Toyota Prado, Ford Explorer)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$7.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">$2.10 / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">$0.35 / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">$15.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['suv']['base'] ?? ($sym . '12.00') }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['suv']['per_km'] ?? ($sym . '3.00') }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['suv']['per_min'] ?? ($sym . '0.45') }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $resolvedFleet['suv']['min'] ?? ($sym . '35.20') }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Up to 6 passengers with spacious luggage trunk</li>
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Elevated safety & commanding road view</li>
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Ideal for airport trips & executive travel</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Ideal for airport trips & VIP delegations</li>
                             </ul>
                         </div>
-                        <a href="/ride?type=SUV" class="mt-6 block w-full py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-extrabold text-xs rounded-xl transition-all text-center">
+                        <a href="/ride?type=Luxury%20SUV" class="mt-6 block w-full py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-extrabold text-xs rounded-xl transition-all text-center">
                             Book SUV →
                         </a>
                     </div>
@@ -455,78 +479,127 @@
                             </div>
                             <div>
                                 <h3 class="text-xl font-black text-gray-900 dark:text-white">Van XL</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toyota HiAce, Mercedes V-Class, Hyundai Staria</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Multi-passenger vehicles for airport runs or large families (Hyundai H1)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$7.50</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">$2.25 / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">$0.38 / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">$18.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['xl']['base'] ?? ($sym . '15.00') }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['xl']['per_km'] ?? ($sym . '4.50') }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['xl']['per_min'] ?? ($sym . '0.60') }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $resolvedFleet['xl']['min'] ?? ($sym . '50.20') }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Up to 8 passengers & 6 heavy suitcases</li>
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Perfect for corporate retreats & airport groups</li>
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Split fare feature available in rider app</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Perfect for family airport shuttles & teams</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Generous headroom and high comfort</li>
                             </ul>
                         </div>
-                        <a href="/ride?type=XL" class="mt-6 block w-full py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-extrabold text-xs rounded-xl transition-all text-center">
+                        <a href="/ride?type=Van%20XL" class="mt-6 block w-full py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-extrabold text-xs rounded-xl transition-all text-center">
                             Book Van XL →
                         </a>
                     </div>
 
-                    <!-- 5. VIP Chauffeur / Luxury -->
+                    <!-- 5. VIP Chauffeurs -->
                     <div class="bg-white dark:bg-[#111622] rounded-3xl p-7 border border-amber-500/40 hover:border-amber-400 shadow-md relative flex flex-col justify-between group">
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
-                                <span class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🏎️</span>
+                                <span class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">👑</span>
                                 <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">First Class</span>
                             </div>
                             <div>
-                                <h3 class="text-xl font-black text-gray-900 dark:text-white">VIP Luxury Chauffeur</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Mercedes S-Class, BMW 7 Series, Audi A8</p>
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white">VIP Chauffeurs</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">High-end luxury executive sedans (Mercedes-Benz E-Class, BMW 5 Series)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$9.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">$2.70 / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">$0.45 / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-amber-500">$25.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['luxury']['base'] ?? ($sym . '30.00') }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['luxury']['per_km'] ?? ($sym . '6.50') }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['luxury']['per_min'] ?? ($sym . '1.00') }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-amber-500">{{ $resolvedFleet['luxury']['min'] ?? ($sym . '109.50') }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
-                                <li class="flex items-center gap-2"><span class="text-amber-500 font-bold">✓</span> Suited, NDA-bound professional chauffeur</li>
-                                <li class="flex items-center gap-2"><span class="text-amber-500 font-bold">✓</span> Bottled water, phone chargers & Wi-Fi</li>
-                                <li class="flex items-center gap-2"><span class="text-amber-500 font-bold">✓</span> Priority flight tracking & meet-and-greet</li>
+                                <li class="flex items-center gap-2"><span class="text-amber-500 font-bold">✓</span> Suited, certified executive private driver</li>
+                                <li class="flex items-center gap-2"><span class="text-amber-500 font-bold">✓</span> Flagship European luxury interiors</li>
+                                <li class="flex items-center gap-2"><span class="text-amber-500 font-bold">✓</span> Priority executive pickup guarantee</li>
                             </ul>
                         </div>
-                        <a href="/ride?type=Luxury" class="mt-6 block w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all text-center">
-                            Book VIP Chauffeur →
+                        <a href="/ride?type=VIP%20Chauffeurs" class="mt-6 block w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all text-center">
+                            Book VIP Chauffeurs →
                         </a>
                     </div>
 
-                    <!-- 6. Custom Multi-City & Corporate -->
+                    <!-- 6. Group Bus (7–14) -->
                     <div class="bg-white dark:bg-[#111622] rounded-3xl p-7 border-2 border-indigo-500/30 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group">
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
-                                <span class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🏢</span>
-                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50">Enterprise</span>
+                                <span class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🚌</span>
+                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50">Delegations</span>
                             </div>
                             <div>
-                                <h3 class="text-xl font-black text-gray-900 dark:text-white">Corporate & Event Fleets</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Dedicated business transportation & conferences</p>
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white">Group Bus (7–14)</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Microbuses for event transport or corporate teams (Toyota HiAce)</p>
                             </div>
-                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                                Need multiple vehicles, intercity transfers, or monthly billing for your executive team? We provide customized enterprise rates with consolidated invoicing.
-                            </p>
-                            <div class="pt-2 space-y-2 text-xs text-gray-600 dark:text-gray-300">
-                                <p class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Consolidated monthly corporate invoices</p>
-                                <p class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Dedicated VIP account manager</p>
-                                <p class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Custom SLA response guarantees</p>
+                            <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['group-bus']['base'] ?? ($sym . '45.00') }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['group-bus']['per_km'] ?? ($sym . '8.00') }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $resolvedFleet['group-bus']['per_min'] ?? ($sym . '1.50') }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-indigo-600 dark:text-indigo-400">{{ $resolvedFleet['group-bus']['min'] ?? ($sym . '150.90') }}</span></div>
                             </div>
+                            <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                                <li class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Up to 14 passengers with ample luggage area</li>
+                                <li class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Event shuttles, weddings, conferences</li>
+                                <li class="flex items-center gap-2"><span class="text-indigo-600 font-bold">✓</span> Flat rate transparency with zero surprise spikes</li>
+                            </ul>
                         </div>
-                        <a href="/contact" class="mt-6 block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all text-center">
-                            Inquire for Business →
+                        <a href="/ride?type=Group%20Bus%20(7%E2%80%9314)" class="mt-6 block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all text-center">
+                            Book Group Bus →
                         </a>
                     </div>
 
+                </div>
+
+                <!-- GHANA PEAK-HOUR & SURGE ADJUSTMENT STRATEGY SHOWCASE -->
+                <div class="mt-12 p-8 bg-gradient-to-br from-amber-500/10 via-brand-500/5 to-transparent rounded-3xl border border-amber-500/30">
+                    <div class="max-w-3xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold text-xs uppercase tracking-wider mb-3">
+                            <span>🛡️</span>
+                            <span>The "No-Surge" Transparency Moat</span>
+                        </div>
+                        <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                            Structured Surge Framework & The 1.8x "Traffic Cap"
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed font-medium">
+                            Instead of unpredictable, opaque surge spikes that 3x or 4x your fare during sudden downpours or heavy rush hours, RideMyCars operates on a structured, transparent Surge Framework with a guaranteed traffic cap.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                        <div class="p-5 bg-white dark:bg-[#111622] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xs">
+                            <div class="text-2xl mb-2">🌅</div>
+                            <h4 class="text-sm font-black text-gray-900 dark:text-white">Morning Rush</h4>
+                            <p class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 mt-0.5">06:30 – 09:30</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Capped strictly at <strong>1.3x to 1.5x</strong> multiplier for predictable morning commutes.</p>
+                        </div>
+
+                        <div class="p-5 bg-white dark:bg-[#111622] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xs">
+                            <div class="text-2xl mb-2">🌆</div>
+                            <h4 class="text-sm font-black text-gray-900 dark:text-white">Evening Rush</h4>
+                            <p class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 mt-0.5">16:30 – 20:00</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Capped at <strong>1.4x to 1.6x</strong> multiplier to keep evening transit fair and affordable.</p>
+                        </div>
+
+                        <div class="p-5 bg-white dark:bg-[#111622] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xs">
+                            <div class="text-2xl mb-2">🌙</div>
+                            <h4 class="text-sm font-black text-gray-900 dark:text-white">Late Night & Weekend</h4>
+                            <p class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">22:00 – 04:00</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Maintains a flat <strong>1.25x</strong> premium tier rather than wild unpredictable fluctuation.</p>
+                        </div>
+
+                        <div class="p-5 bg-amber-500 text-slate-950 rounded-2xl border border-amber-400 shadow-md">
+                            <div class="text-2xl mb-2">🔒</div>
+                            <h4 class="text-sm font-black">The "Traffic Cap"</h4>
+                            <p class="text-xs font-mono font-black mt-0.5">Hard 1.8x Ceiling</p>
+                            <p class="text-xs font-semibold mt-2 leading-relaxed">Even during torrential rains or blackouts, our surge will <strong>never exceed 1.8x</strong>. Zero surge gouging guaranteed.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 

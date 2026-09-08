@@ -4,89 +4,72 @@ namespace App\Services;
 
 use App\Models\CountryPricing;
 use App\Models\DriverProfile;
+use App\Models\RideCategory;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 
 class PricingService
 {
     /**
-     * Calculate price breakdown based on duration, driver rates, and country.
+     * Calculate transparent Surge Multiplier based on the structured Surge Framework.
+     * 1. Morning Rush (06:30 – 09:30): 1.3x to 1.5x cap (default 1.35x)
+     * 2. Evening Rush (16:30 – 20:00): 1.4x to 1.6x cap (default 1.45x)
+     * 3. Late Night / Weekend (22:00 – 04:00): 1.25x flat premium tier
+     * 4. Traffic Cap: Never exceeds 1.8x multiplier
      */
-    public static function calculate(
-        DriverProfile $driver,
-        string $durationType = 'hourly',
-        int $durationCount = 1,
-        ?string $country = null
-    ): array {
-        $pricing = CountryPricing::forCountry($country);
-        $countryCode = $pricing->country_code;
-        $currency = $pricing->currency_code;
-        $symbol = $pricing->currency_symbol;
+    public static function getSurgeInfo(?string $country = null, ?\DateTimeInterface $dateTime = null, ?float $customMultiplier = null): array
+    {
+        $countryCode = $country ? strtoupper(trim($country)) : 'USA';
+        $tz = in_array($countryCode, ['GH', 'GHA', 'GHANA']) ? 'Africa/Accra' : config('app.timezone', 'UTC');
 
-        // Base rates from country pricing or driver profile
-        // If driver has custom rates in their profile matching the driver's country, respect them;
-        // otherwise default to country pricing standard driver rates.
-        $hourlyRate = (float) ($driver->hourly_rate > 0 ? $driver->hourly_rate : ($pricing->driver_hourly_rate ?: 25.00));
-        
-        // If driver country differs from selected country, convert by exchange rate if needed
-        if ($driver->country && strtoupper($driver->country) !== strtoupper($countryCode)) {
-            $driverCountryPricing = CountryPricing::forCountry($driver->country);
-            $baseUsdRate = $driverCountryPricing->exchange_rate > 0 
-                ? ($hourlyRate / $driverCountryPricing->exchange_rate) 
-                : $hourlyRate;
-            $hourlyRate = round($baseUsdRate * ($pricing->exchange_rate ?: 1.0), 2);
+        $now = $dateTime ? Carbon::parse($dateTime)->setTimezone($tz) : Carbon::now($tz);
+        $timeStr = $now->format('H:i');
+        $isWeekend = $now->isWeekend();
+
+        $multiplier = 1.00;
+        $label = 'Standard Rate (Zero Surge)';
+        $isActive = false;
+
+        // Morning Rush (06:30 – 09:30): Cap surge at 1.3x to 1.5x
+        if ($timeStr >= '06:30' && $timeStr <= '09:30') {
+            $multiplier = 1.35;
+            $label = 'Morning Rush Cap (1.35x)';
+            $isActive = true;
+        }
+        // Evening Rush (16:30 – 20:00): Cap surge at 1.4x to 1.6x
+        elseif ($timeStr >= '16:30' && $timeStr <= '20:00') {
+            $multiplier = 1.45;
+            $label = 'Evening Rush Cap (1.45x)';
+            $isActive = true;
+        }
+        // Late Night / Weekend (22:00 – 04:00): Maintain a flat premium tier
+        elseif (($timeStr >= '22:00' || $timeStr <= '04:00') || $isWeekend) {
+            $multiplier = 1.25;
+            $label = $isWeekend ? 'Weekend Flat Tier (1.25x)' : 'Late Night Flat Tier (1.25x)';
+            $isActive = true;
         }
 
-        $dailyRate = (float) ($driver->daily_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
-            ? $driver->daily_rate 
-            : ($pricing->driver_daily_rate ?: ($hourlyRate * 8 * 0.85)));
-
-        $weeklyRate = (float) ($driver->weekly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
-            ? $driver->weekly_rate 
-            : ($pricing->driver_weekly_rate ?: ($dailyRate * 7 * 0.85)));
-
-        $subtotal = 0.0;
-        $appliedRateText = '';
-
-        if ($durationType === 'weekly') {
-            $subtotal = $weeklyRate * max(1, $durationCount);
-            $appliedRateText = "{$durationCount} Week(s) @ {$symbol}" . number_format($weeklyRate, 2) . "/week";
-        } elseif ($durationType === 'daily') {
-            $subtotal = $dailyRate * max(1, $durationCount);
-            $appliedRateText = "{$durationCount} Day(s) @ {$symbol}" . number_format($dailyRate, 2) . "/day";
-        } else {
-            $hours = max(1, $durationCount);
-
-            if ($hours >= 8) {
-                $days = ceil($hours / 8);
-                $subtotal = $dailyRate * $days;
-                $appliedRateText = "Full Day Rate (Minimum charge for 8+ hrs) @ {$symbol}" . number_format($dailyRate, 2);
-            } elseif ($hours > 4) {
-                $effectiveHourlyRate = $hourlyRate * 0.95;
-                $subtotal = $effectiveHourlyRate * $hours;
-                $appliedRateText = "{$hours} Hours (Tiered 4-8 hr rate) @ {$symbol}" . number_format($effectiveHourlyRate, 2) . "/hr";
-            } else {
-                $subtotal = $hourlyRate * $hours;
-                $appliedRateText = "{$hours} Hours @ {$symbol}" . number_format($hourlyRate, 2) . "/hr";
-            }
+        // Custom multiplier override if explicitly provided
+        $trafficCapApplied = false;
+        if ($customMultiplier !== null && $customMultiplier > 0) {
+            $multiplier = $customMultiplier;
+            $isActive = $multiplier > 1.0;
+            $label = $multiplier > 1.0 ? 'Peak Dynamic Adjustment (' . number_format($multiplier, 2) . 'x)' : 'Standard Rate';
         }
 
-        $serviceFee = round($subtotal * 0.05, 2); // 5% service fee
-        $tax = round($subtotal * 0.05, 2);        // 5% tax
-        $totalPrice = round($subtotal + $serviceFee + $tax, 2);
+        // Hard guarantee: "The Traffic Cap" - even during rains or disruptions, surge never exceeds 1.8x
+        if ($multiplier > 1.80) {
+            $multiplier = 1.80;
+            $trafficCapApplied = true;
+            $label = 'Traffic Capped Rate (1.80x Max Guaranteed)';
+        }
 
         return [
-            'hourly_rate' => $hourlyRate,
-            'daily_rate' => $dailyRate,
-            'weekly_rate' => $weeklyRate,
-            'duration_type' => $durationType,
-            'duration_count' => $durationCount,
-            'applied_rate_text' => $appliedRateText,
-            'subtotal' => $subtotal,
-            'service_fee' => $serviceFee,
-            'tax' => $tax,
-            'total_price' => $totalPrice,
-            'currency' => $currency,
-            'currency_symbol' => $symbol,
+            'multiplier' => round($multiplier, 2),
+            'label' => $label,
+            'is_active' => $isActive,
+            'traffic_cap_applied' => $trafficCapApplied,
+            'local_time' => $now->format('H:i'),
         ];
     }
 
@@ -112,49 +95,166 @@ class PricingService
         int $durationMinutes,
         ?string $vehicleType = null,
         int $stopsCount = 0,
-        ?string $country = null
+        ?string $country = null,
+        ?float $overrideSurge = null
     ): array {
         $pricing = CountryPricing::forCountry($country);
+        $countryCode = strtoupper($pricing->country_code ?? 'USA');
+        $isGhana = in_array($countryCode, ['GHA', 'GH', 'GHANA']);
 
-        $baseFare = (float) ($pricing->ride_base_fare ?: 5.00);
-        $perKmRate = (float) ($pricing->ride_per_km_rate ?: 1.50);
-        $perMinuteRate = (float) ($pricing->ride_per_minute_rate ?: 0.25);
-        $minFare = (float) ($pricing->ride_minimum_fare ?: 10.00);
+        $defaultBaseFare = (float) ($pricing->ride_base_fare ?: 5.00);
+        $defaultPerKmRate = (float) ($pricing->ride_per_km_rate ?: 1.50);
+        $defaultPerMinuteRate = (float) ($pricing->ride_per_minute_rate ?: 0.25);
+        $defaultMinFare = (float) ($pricing->ride_minimum_fare ?: 10.00);
         $additionalStopFee = (float) ($pricing->ride_additional_stop_fee ?: 3.50);
 
-        $multiplier = 1.0;
+        // Ghana Multi-Tier Matrix Fallback Presets
+        $ghanaCategoryMatrix = [
+            'economy' => [
+                'name' => 'Economy',
+                'base_fare' => 4.50,
+                'per_km_rate' => 1.10,
+                'minimum_fare' => 8.50,
+                'per_minute_rate' => 0.20,
+            ],
+            'comfort' => [
+                'name' => 'Standard / Comfort',
+                'base_fare' => 7.00,
+                'per_km_rate' => 1.80,
+                'minimum_fare' => 23.50,
+                'per_minute_rate' => 0.30,
+            ],
+            'suv' => [
+                'name' => 'Luxury SUV',
+                'base_fare' => 12.00,
+                'per_km_rate' => 3.00,
+                'minimum_fare' => 35.20,
+                'per_minute_rate' => 0.45,
+            ],
+            'xl' => [
+                'name' => 'Van XL',
+                'base_fare' => 15.00,
+                'per_km_rate' => 4.50,
+                'minimum_fare' => 50.20,
+                'per_minute_rate' => 0.60,
+            ],
+            'luxury' => [
+                'name' => 'VIP Chauffeurs',
+                'base_fare' => 30.00,
+                'per_km_rate' => 6.50,
+                'minimum_fare' => 109.50,
+                'per_minute_rate' => 1.00,
+            ],
+            'group-bus' => [
+                'name' => 'Group Bus (7–14)',
+                'base_fare' => 45.00,
+                'per_km_rate' => 8.00,
+                'minimum_fare' => 150.90,
+                'per_minute_rate' => 1.50,
+            ],
+            'motorbike' => [
+                'name' => 'Motorbike',
+                'base_fare' => 3.50,
+                'per_km_rate' => 0.85,
+                'minimum_fare' => 6.00,
+                'per_minute_rate' => 0.15,
+            ],
+        ];
+
+        // Resolve vehicle tier category key
+        $categoryKey = null;
         if ($vehicleType) {
-            $lower = strtolower($vehicleType);
-            if (str_contains($lower, 'suv') || str_contains($lower, 'luxury') || str_contains($lower, 'executive')) {
-                $multiplier = 1.4;
-            } elseif (str_contains($lower, 'premium') || str_contains($lower, 'comfort') || str_contains($lower, 'standard')) {
-                $multiplier = 1.2;
+            $lower = strtolower(trim($vehicleType));
+            if (str_contains($lower, 'bus')) {
+                $categoryKey = 'group-bus';
+            } elseif (str_contains($lower, 'vip') || str_contains($lower, 'chauffeur') || str_contains($lower, 'luxury')) {
+                $categoryKey = 'luxury';
             } elseif (str_contains($lower, 'van') || str_contains($lower, 'xl')) {
-                $multiplier = 1.5;
+                $categoryKey = 'xl';
+            } elseif (str_contains($lower, 'suv') || str_contains($lower, 'prado')) {
+                $categoryKey = 'suv';
+            } elseif (str_contains($lower, 'comfort') || str_contains($lower, 'standard')) {
+                $categoryKey = 'comfort';
             } elseif (str_contains($lower, 'bike') || str_contains($lower, 'moto')) {
-                $multiplier = 0.6;
+                $categoryKey = 'motorbike';
+            } elseif (str_contains($lower, 'economy')) {
+                $categoryKey = 'economy';
             }
         }
 
-        $distanceFare = round(($distanceKm * $perKmRate) * $multiplier, 2);
-        $durationFare = round(($durationMinutes * $perMinuteRate) * $multiplier, 2);
-        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
-        $scaledBaseFare = round($baseFare * $multiplier, 2);
+        // Check if database category model exists
+        $dbCategory = null;
+        if ($categoryKey) {
+            try {
+                $dbCategory = RideCategory::where('slug', $categoryKey)
+                    ->orWhere('slug', 'LIKE', "%$categoryKey%")
+                    ->first();
+            } catch (\Throwable $e) {}
+        }
 
-        $subtotal = round($scaledBaseFare + $distanceFare + $durationFare + $stopsFee, 2);
+        if ($isGhana && $categoryKey && isset($ghanaCategoryMatrix[$categoryKey])) {
+            $catRates = $dbCategory 
+                ? $dbCategory->getRatesForCountry('GHA', 1.0)
+                : $ghanaCategoryMatrix[$categoryKey];
+
+            $tierName = $catRates['name'] ?? ($dbCategory?->name ?? $ghanaCategoryMatrix[$categoryKey]['name']);
+            $baseFare = (float) $catRates['base_fare'];
+            $perKmRate = (float) $catRates['per_km_rate'];
+            $perMinuteRate = (float) ($catRates['per_minute_rate'] ?? 0.20);
+            $minFare = (float) $catRates['minimum_fare'];
+        } elseif ($dbCategory) {
+            $catRates = $dbCategory->getRatesForCountry($countryCode, (float) ($pricing->exchange_rate ?: 1.0));
+            $tierName = $dbCategory->name;
+            $baseFare = (float) $catRates['base_fare'];
+            $perKmRate = (float) $catRates['per_km_rate'];
+            $perMinuteRate = (float) ($catRates['per_minute_rate'] ?? 0.25);
+            $minFare = (float) $catRates['minimum_fare'];
+        } else {
+            // Standalone threshold fallback for custom or unclassified short urban trips
+            // In Ghana: "The standalone GH₵ 10.00 rate serves as an excellent default platform threshold"
+            $tierName = $vehicleType ?: 'Standard Urban Mobility';
+            $baseFare = $defaultBaseFare;
+            $perKmRate = $defaultPerKmRate;
+            $perMinuteRate = $defaultPerMinuteRate;
+            $minFare = $defaultMinFare;
+        }
+
+        // Calculate transparent surge
+        $surge = static::getSurgeInfo($countryCode, null, $overrideSurge);
+        $surgeMultiplier = $surge['multiplier'];
+
+        $rawBaseFare = $baseFare;
+        $rawDistFare = round($distanceKm * $perKmRate, 2);
+        $rawDurFare = round($durationMinutes * $perMinuteRate, 2);
+        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
+
+        // Apply surge multiplier to distance and duration
+        $surgeBaseFare = round($rawBaseFare * $surgeMultiplier, 2);
+        $surgeDistanceFare = round($rawDistFare * $surgeMultiplier, 2);
+        $surgeDurationFare = round($rawDurFare * $surgeMultiplier, 2);
+
+        $subtotal = round($surgeBaseFare + $surgeDistanceFare + $surgeDurationFare + $stopsFee, 2);
         $finalFare = round(max($minFare, $subtotal), 2);
         $serviceTax = round($finalFare * 0.05, 2);
         $grandTotal = round($finalFare + $serviceTax, 2);
 
+        $baseWithoutSurge = round(max($minFare, $rawBaseFare + $rawDistFare + $rawDurFare + $stopsFee), 2);
+        $surgeExtra = round(max(0, $finalFare - $baseWithoutSurge), 2);
+
         return [
-            'base_fare' => $scaledBaseFare,
+            'vehicle_tier' => $tierName,
+            'base_fare' => $surgeBaseFare,
+            'standard_base_fare' => $rawBaseFare,
+            'per_km_rate' => $perKmRate,
+            'per_minute_rate' => $perMinuteRate,
             'distance_km' => round($distanceKm, 2),
-            'distance_fare' => $distanceFare,
+            'distance_fare' => $surgeDistanceFare,
             'duration_minutes' => $durationMinutes,
-            'duration_fare' => $durationFare,
+            'duration_fare' => $surgeDurationFare,
             'stops_count' => max(0, $stopsCount),
             'stop_fee_per_item' => $additionalStopFee,
             'stops_fee' => $stopsFee,
+            'minimum_fare' => $minFare,
             'subtotal' => $subtotal,
             'tax' => $serviceTax,
             'total_fare' => $finalFare,
@@ -163,6 +263,13 @@ class PricingService
             'currency_symbol' => $pricing->currency_symbol,
             'country_code' => $pricing->country_code,
             'country_name' => $pricing->country_name,
+            'surge' => [
+                'multiplier' => $surgeMultiplier,
+                'label' => $surge['label'],
+                'is_active' => $surge['is_active'],
+                'traffic_cap_applied' => $surge['traffic_cap_applied'],
+                'surge_extra_amount' => $surgeExtra,
+            ],
         ];
     }
 

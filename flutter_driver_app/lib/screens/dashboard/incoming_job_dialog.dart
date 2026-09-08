@@ -76,6 +76,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
 
     final rawFare = request['fare'] ?? request['total_price'] ?? ride?['fare'] ?? ride?['total_amount'] ?? booking?['total_price'] ?? 0.0;
     final fare = double.tryParse(rawFare.toString()) ?? 0.0;
+    final currencySymbol = (request['currency_symbol'] ?? ride?['currency_symbol'] ?? booking?['currency_symbol'] ?? (request['currency'] == 'GHS' || ride?['currency'] == 'GHS' || request['country'] == 'GHA' ? 'GH₵' : '\$')).toString();
 
     final type = request['type']?.toString();
     final isChauffeur = type == 'driver_booking' || (request['ride_id'] == null && (request['driver_booking_id'] != null || booking != null));
@@ -341,7 +342,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${fare.toStringAsFixed(2)}',
+                    '$currencySymbol${fare.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.success,
                       fontSize: 32,

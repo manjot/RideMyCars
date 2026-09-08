@@ -356,6 +356,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               ],
 
               // Earnings Overview
+              final earningsSymbol = (driver.earnings['currency_symbol'] ?? (driver.earnings['currency'] == 'GHS' ? 'GH₵' : '\$')).toString();
               const Text(
                 'Earnings Summary',
                 style: TextStyle(
@@ -368,11 +369,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildEarningTile('TODAY', '\$${(driver.earnings['today'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.success),
+                    child: _buildEarningTile('TODAY', '$earningsSymbol${(driver.earnings['today'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.success),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildEarningTile('THIS WEEK', '\$${(driver.earnings['week'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.info),
+                    child: _buildEarningTile('THIS WEEK', '$earningsSymbol${(driver.earnings['week'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.info),
                   ),
                 ],
               ),
@@ -380,7 +381,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildEarningTile('THIS MONTH', '\$${(driver.earnings['month'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.purple),
+                    child: _buildEarningTile('THIS MONTH', '$earningsSymbol${(driver.earnings['month'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.purple),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -547,6 +548,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   Widget _buildActiveRideCard(BuildContext context, Map<String, dynamic> ride, DriverProvider driver) {
     final fare = ride['fare'] != null ? double.tryParse(ride['fare'].toString()) ?? 0.0 : 0.0;
+    final currencySymbol = (ride['currency_symbol'] ?? (ride['currency'] == 'GHS' || ride['driver_country'] == 'GHA' ? 'GH₵' : '\$')).toString();
     final rawStatus = (ride['status'] ?? 'accepted').toString();
     final status = rawStatus.replaceAll('_', ' ').toUpperCase();
     final riderName = (ride['rider_name'] ?? ride['rider']?['name'] ?? ride['passenger_name'] ?? 'Passenger').toString();
@@ -602,7 +604,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ],
                 ),
                 Text(
-                  '\$${fare.toStringAsFixed(2)}',
+                  '$currencySymbol${fare.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontWeight: FontWeight.w900,
@@ -803,6 +805,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final customer = item['customer_name'] ?? 'Customer';
     final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
     final currency = item['currency'] ?? 'USD';
+    final currencySymbol = (item['currency_symbol'] ?? (currency == 'GHS' || item['country'] == 'GHA' ? 'GH₵' : '\$')).toString();
     final pickup = item['pickup'] ?? 'N/A';
     final dropoff = item['dropoff'] ?? 'N/A';
     final schedule = item['schedule'] ?? 'Immediate';
@@ -880,7 +883,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${amount.toStringAsFixed(2)} $currency',
+                      '$currencySymbol${amount.toStringAsFixed(2)} $currency',
                       style: const TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.w900,
@@ -1072,6 +1075,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   Widget _buildAvailableJobCard(BuildContext context, Map<String, dynamic> job, DriverProvider driver) {
     final fare = (job['fare'] ?? job['total_price'] ?? 0.0) as num;
+    final currencySymbol = (job['currency_symbol'] ?? (job['currency'] == 'GHS' || job['country'] == 'GHA' ? 'GH₵' : '\$')).toString();
     final pickup = job['pickup_location'] ?? 'Pickup location';
     final dropoff = job['dropoff_location'] ?? 'Destination';
     final customerName = (job['customer_name'] ?? job['rider_name'] ?? job['client_name'] ?? 'Customer').toString();
@@ -1152,7 +1156,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ),
                 ),
                 Text(
-                  '\$${fare.toStringAsFixed(2)}',
+                  '$currencySymbol${fare.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontSize: 22,
@@ -1355,7 +1359,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     ),
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
                     label: Text(
-                      'Accept & Earn \$${fare.toStringAsFixed(2)}',
+                      'Accept & Earn $currencySymbol${fare.toStringAsFixed(2)}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
