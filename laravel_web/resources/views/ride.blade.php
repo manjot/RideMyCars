@@ -287,48 +287,57 @@
 
                         <!-- Location Inputs Section -->
                         <div class="space-y-3 relative">
-                            <!-- Pickup Location Input -->
-                            <div class="relative">
-                                <div class="absolute left-3.5 top-3.5 text-emerald-500 font-black text-sm">●</div>
-                                <input type="text" id="pickup_location" name="pickup_location" x-model="pickup" required
-                                       @input.debounce.250ms="onPickupInput()"
-                                       @focus="if(pickupSuggestions.length > 0) showPickupSuggestions = true"
-                                       @keydown.enter.prevent="autoSelectOrGeocodePickup()"
-                                       @blur="setTimeout(() => autoSelectOrGeocodePickup(), 300)"
-                                       placeholder="Search pickup location (address, hotel, airport...)" 
-                                       class="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all">
-                                
-                                <button type="button" 
-                                        id="use_my_location_btn" 
-                                        @click="useCurrentLocation()" 
-                                        :disabled="isDetectingLocation"
-                                        :title="isDetectingLocation ? 'Detecting high-accuracy GPS...' : 'Use exact current location'" 
-                                        class="absolute right-3 top-3 p-1 text-gray-400 hover:text-emerald-500 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50">
-                                    <span x-show="!isDetectingLocation" class="text-sm">📍</span>
-                                    <svg x-show="isDetectingLocation" class="animate-spin h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                    </svg>
-                                </button>
+                            <!-- Vertical Route Connector Spine (Uber/Google Maps style) -->
+                            <div class="absolute left-6 -translate-x-1/2 top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-300 dark:border-white/20 pointer-events-none z-0"></div>
 
-                                <!-- Pickup Suggestions Dropdown -->
-                                <div x-show="showPickupSuggestions && pickupSuggestions.length > 0" 
-                                     @click.away="showPickupSuggestions = false"
-                                     style="display: none;"
-                                     class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
-                                    <template x-for="item in pickupSuggestions" :key="item.place_id || item.description">
-                                        <button type="button" @click="selectPickupSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
-                                            <span class="text-emerald-500 text-xs shrink-0 mt-0.5">●</span>
-                                            <div class="min-w-0 flex-1">
-                                                <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
-                                                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
-                                            </div>
-                                        </button>
-                                    </template>
+                            <!-- Pickup Location Input -->
+                            <div class="space-y-1.5 relative z-10">
+                                <div class="relative">
+                                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center pointer-events-none z-10">
+                                        <span class="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20 shadow-xs flex items-center justify-center">
+                                            <span class="w-1 h-1 rounded-full bg-white"></span>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="pickup_location" name="pickup_location" x-model="pickup" required
+                                           @input.debounce.250ms="onPickupInput()"
+                                           @focus="if(pickupSuggestions.length > 0) showPickupSuggestions = true"
+                                           @keydown.enter.prevent="autoSelectOrGeocodePickup()"
+                                           @blur="setTimeout(() => autoSelectOrGeocodePickup(), 300)"
+                                           placeholder="Search pickup location (address, hotel, airport...)" 
+                                           class="w-full pl-11 pr-10 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all">
+                                    
+                                    <button type="button" 
+                                            id="use_my_location_btn" 
+                                            @click="useCurrentLocation()" 
+                                            :disabled="isDetectingLocation"
+                                            :title="isDetectingLocation ? 'Detecting high-accuracy GPS...' : 'Use exact current location'" 
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-emerald-500 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 z-10">
+                                        <span x-show="!isDetectingLocation" class="text-sm">📍</span>
+                                        <svg x-show="isDetectingLocation" class="animate-spin h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                        </svg>
+                                    </button>
+
+                                    <!-- Pickup Suggestions Dropdown -->
+                                    <div x-show="showPickupSuggestions && pickupSuggestions.length > 0" 
+                                         @click.away="showPickupSuggestions = false"
+                                         style="display: none;"
+                                         class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                        <template x-for="item in pickupSuggestions" :key="item.place_id || item.description">
+                                            <button type="button" @click="selectPickupSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-500/20"></span>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
+                                                    <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
+                                                </div>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
 
                                 <!-- Real-Time Accuracy / Mode Badge -->
-                                <div x-show="locationAccuracyText" x-cloak class="mt-1 flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-bold px-1">
+                                <div x-show="locationAccuracyText" x-cloak class="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-bold pl-11 pr-1">
                                     <div class="flex items-center gap-1">
                                         <span>🎯</span>
                                         <span x-text="locationAccuracyText"></span>
@@ -339,14 +348,18 @@
 
                             <!-- Dynamic Intermediate Stops (Positioned strictly between Pickup and Destination) -->
                             <template x-for="(stop, index) in stops" :key="stop.id">
-                                <div class="relative space-y-1">
+                                <div class="relative space-y-1 z-10">
                                     <div class="relative flex items-center gap-2">
-                                        <div class="absolute left-3.5 top-3.5 text-amber-500 font-bold text-xs">📍</div>
+                                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center pointer-events-none z-10">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20 shadow-xs flex items-center justify-center">
+                                                <span class="w-0.5 h-0.5 rounded-full bg-white"></span>
+                                            </span>
+                                        </div>
                                         <input type="text" x-model="stop.location" 
                                                @input.debounce.250ms="searchStopLocation(stop)"
                                                @focus="if(stop.suggestions && stop.suggestions.length > 0) stop.showSuggestions = true"
                                                :placeholder="'Search Stop ' + (index + 1) + ' location (hotel, airport, landmark...)'"
-                                               class="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                                               class="w-full pl-11 pr-10 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                                                :class="stop.isSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30' : ''">
                                         <button type="button" @click="removeStop(index)" class="p-2.5 text-rose-500 hover:text-rose-700 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-gray-200 dark:border-white/10 rounded-2xl font-bold text-xs transition-colors shrink-0" title="Remove stop">✕</button>
                                     </div>
@@ -357,8 +370,8 @@
                                          style="display: none;"
                                          class="absolute left-0 right-12 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                         <template x-for="item in stop.suggestions" :key="item.place_id || item.description">
-                                            <button type="button" @click="selectStopSuggestion(stop, item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
-                                                <span class="text-amber-500 text-xs shrink-0 mt-0.5">📍</span>
+                                            <button type="button" @click="selectStopSuggestion(stop, item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 ring-2 ring-amber-500/20"></span>
                                                 <div class="min-w-0 flex-1">
                                                     <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
                                                     <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
@@ -370,15 +383,19 @@
                             </template>
 
                             <!-- Destination Input ("Where to?") -->
-                            <div class="relative">
-                                <div class="absolute left-3.5 top-3.5 text-black dark:text-white font-black text-sm">□</div>
+                            <div class="relative z-10">
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center pointer-events-none z-10">
+                                    <span class="w-3 h-3 rounded-xs bg-gray-900 dark:bg-white ring-4 ring-gray-900/15 dark:ring-white/20 shadow-xs flex items-center justify-center">
+                                        <span class="w-1 h-1 rounded-xs bg-white dark:bg-black"></span>
+                                    </span>
+                                </div>
                                 <input type="text" id="dropoff_location" name="dropoff_location" x-model="dropoff" required
                                        @input.debounce.250ms="onDropoffInput()"
                                        @focus="if(dropoffSuggestions.length > 0) showDropoffSuggestions = true"
                                        @keydown.enter.prevent="autoSelectOrGeocodeDropoff()"
                                        @blur="setTimeout(() => autoSelectOrGeocodeDropoff(), 300)"
                                        placeholder="Where to? (Search destination)" 
-                                       class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all">
+                                       class="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all">
 
                                 <!-- Dropoff Suggestions Dropdown -->
                                 <div x-show="showDropoffSuggestions && dropoffSuggestions.length > 0" 
@@ -386,8 +403,8 @@
                                      style="display: none;"
                                      class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                     <template x-for="item in dropoffSuggestions" :key="item.place_id || item.description">
-                                        <button type="button" @click="selectDropoffSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-start gap-2.5 cursor-pointer">
-                                            <span class="text-black dark:text-white text-xs shrink-0 mt-0.5">□</span>
+                                        <button type="button" @click="selectDropoffSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
+                                            <span class="w-2.5 h-2.5 rounded-xs bg-gray-900 dark:bg-white shrink-0 ring-2 ring-gray-900/10 dark:ring-white/20"></span>
                                             <div class="min-w-0 flex-1">
                                                 <span class="font-extrabold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
                                                 <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.secondary_text || item.description"></span>
@@ -541,17 +558,34 @@
                         </div>
 
                         <!-- Summary Details -->
-                        <div class="bg-gray-50 dark:bg-[#1a1a1a] p-5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-4">
+                        <div class="bg-gray-50 dark:bg-[#1a1a1a] p-5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-4 relative">
+                            <!-- Vertical connector line between pickup and dropoff in summary -->
+                            <div class="absolute left-[29px] top-8 bottom-16 w-0.5 border-l-2 border-dashed border-gray-300 dark:border-white/20 pointer-events-none"></div>
+
                             <!-- Pickup -->
-                            <div>
-                                <span class="text-[10px] font-black uppercase text-gray-400 tracking-wider">Pickup</span>
-                                <p class="text-xs font-black text-gray-900 dark:text-white" x-text="pickup"></p>
+                            <div class="relative flex items-start gap-3 z-10">
+                                <div class="w-5 h-5 flex items-center justify-center shrink-0 mt-0.5 bg-gray-50 dark:bg-[#1a1a1a]">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20 shadow-xs flex items-center justify-center">
+                                        <span class="w-1 h-1 rounded-full bg-white"></span>
+                                    </span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <span class="text-[10px] font-black uppercase text-gray-400 tracking-wider">Pickup</span>
+                                    <p class="text-xs font-black text-gray-900 dark:text-white" x-text="pickup"></p>
+                                </div>
                             </div>
                             
                             <!-- Destination -->
-                            <div>
-                                <span class="text-[10px] font-black uppercase text-gray-400 tracking-wider">Destination</span>
-                                <p class="text-xs font-black text-gray-900 dark:text-white" x-text="dropoff"></p>
+                            <div class="relative flex items-start gap-3 z-10">
+                                <div class="w-5 h-5 flex items-center justify-center shrink-0 mt-0.5 bg-gray-50 dark:bg-[#1a1a1a]">
+                                    <span class="w-3 h-3 rounded-xs bg-gray-900 dark:bg-white ring-4 ring-gray-900/15 dark:ring-white/20 shadow-xs flex items-center justify-center">
+                                        <span class="w-1 h-1 rounded-xs bg-white dark:bg-black"></span>
+                                    </span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <span class="text-[10px] font-black uppercase text-gray-400 tracking-wider">Destination</span>
+                                    <p class="text-xs font-black text-gray-900 dark:text-white" x-text="dropoff"></p>
+                                </div>
                             </div>
 
                             <!-- Selected Vehicle & Fare -->
