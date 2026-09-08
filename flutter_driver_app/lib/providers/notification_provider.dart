@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../core/api/api_client.dart';
 import '../core/constants/api_constants.dart';
+import '../core/services/sound_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
-  final AudioPlayer _audioPlayer = AudioPlayer();
 
   List<Map<String, dynamic>> _notifications = [];
   int _unreadCount = 0;
@@ -55,9 +54,7 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   void _playChime() {
-    try {
-      _audioPlayer.play(AssetSource('audio/notification.mp3')).catchError((_) {});
-    } catch (_) {}
+    SoundService.instance.playNotificationChime();
   }
 
   Future<void> markAsRead([int? id]) async {
@@ -98,7 +95,6 @@ class NotificationProvider extends ChangeNotifier {
   @override
   void dispose() {
     stopPolling();
-    _audioPlayer.dispose();
     super.dispose();
   }
 }

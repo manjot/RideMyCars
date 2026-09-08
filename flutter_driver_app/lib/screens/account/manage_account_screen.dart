@@ -299,7 +299,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                               border: Border.all(color: AppColors.primary, width: 2.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  color: AppColors.primary.withOpacity(0.2),
                                   blurRadius: 16,
                                   offset: const Offset(0, 4),
                                 ),
@@ -356,7 +356,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
+                        color: AppColors.primary.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -435,7 +435,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Column(
         children: [
@@ -453,7 +453,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Row(
         children: [
@@ -480,7 +480,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Row(
         children: [

@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.4),
+                      color: AppColors.primary.withOpacity(0.4),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -136,7 +136,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Text(
               'Driver Partner Console & Dispatch',
               style: TextStyle(
-                color: AppColors.textMuted.withValues(alpha: 0.8),
+                color: AppColors.textMuted.withOpacity(0.8),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),

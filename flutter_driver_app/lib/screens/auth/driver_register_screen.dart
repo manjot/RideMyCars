@@ -151,9 +151,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: AppColors.primary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
                         ),
                         child: Text(
                           countdown > 0 ? timerStr : 'Expired',
@@ -393,7 +393,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.surfaceDark,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
                     ),
                     child: Row(
                       children: [
@@ -412,10 +412,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.03),
+                              color: Colors.white.withOpacity(0.03),
                               border: Border(
                                 right: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.1),
+                                  color: Colors.white.withOpacity(0.1),
                                   width: 1,
                                 ),
                               ),

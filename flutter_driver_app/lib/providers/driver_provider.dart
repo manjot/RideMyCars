@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../core/api/api_client.dart';
 import '../core/constants/api_constants.dart';
+import '../core/services/sound_service.dart';
 
 class DriverProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
-  final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _isOnline = false;
   bool _isLoading = false;
@@ -118,6 +117,7 @@ class DriverProvider extends ChangeNotifier {
     _pollingTimer?.cancel();
     _locationTimer?.cancel();
     _pendingRequests.clear();
+    SoundService.instance.stopRingtone();
     notifyListeners();
   }
 
@@ -130,10 +130,8 @@ class DriverProvider extends ChangeNotifier {
 
       if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
         final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 5),
-          ),
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
         );
         _currentLat = position.latitude;
         _currentLng = position.longitude;
@@ -158,8 +156,16 @@ class DriverProvider extends ChangeNotifier {
         if (res.statusCode == 200) {
           final List newReqs = (res.data is Map ? (res.data['requests'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
           final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
-          if (mapped.isNotEmpty && mapped.length > _pendingRequests.length) {
-            _playNotificationSound();
+          
+          if (mapped.isNotEmpty) {
+            // Loud and long ringtone starts ringing continuously until driver responds
+            final firstOrder = mapped.first;
+            final orderType = firstOrder['type']?.toString() ?? 'ride';
+            final orderId = firstOrder['ride_id'] ?? firstOrder['assignment_id'] ?? firstOrder['delivery_id'] ?? firstOrder['id'];
+            SoundService.instance.startIncomingOrderRingtone(orderType: orderType, orderId: orderId);
+          } else if (_pendingRequests.isNotEmpty && mapped.isEmpty) {
+            // Requests cleared / expired / answered elsewhere
+            SoundService.instance.stopRingtone();
           }
           _pendingRequests = mapped;
         }
@@ -175,7 +181,13 @@ class DriverProvider extends ChangeNotifier {
           final mapped = items.map((e) => Map<String, dynamic>.from(e)).toList();
 
           if (mapped.isNotEmpty && mapped.length > _pendingVerifications.length) {
-            _playNotificationSound();
+            final firstVerif = mapped.first;
+            SoundService.instance.startIncomingOrderRingtone(
+              orderType: firstVerif['type']?.toString() ?? 'verification',
+              orderId: firstVerif['id'],
+            );
+          } else if (_pendingVerifications.isNotEmpty && mapped.isEmpty && _pendingRequests.isEmpty) {
+            SoundService.instance.stopRingtone();
           }
           _pendingVerifications = mapped;
         }
@@ -200,10 +212,8 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  void _playNotificationSound() {
-    try {
-      _audioPlayer.play(AssetSource('audio/notification.mp3')).catchError((_) {});
-    } catch (_) {}
+  void playNotificationChime() {
+    SoundService.instance.playNotificationChime();
   }
 
   Future<bool> verifyBooking({
@@ -212,6 +222,9 @@ class DriverProvider extends ChangeNotifier {
     required String action,
     String? rejectionReason,
   }) async {
+    // Driver responded to booking/delivery verification -> stop sound
+    await SoundService.instance.stopRingtone();
+
     try {
       final res = await _dio.post(ApiConstants.driverVerifyBooking, data: {
         'service_type': serviceType,
@@ -234,6 +247,9 @@ class DriverProvider extends ChangeNotifier {
   }
 
   Future<bool> respondToRequest(int? assignmentId, String action, {int? rideId}) async {
+    // Driver responded (Accept or Reject) -> Immediately silence the incoming order ringtone!
+    await SoundService.instance.stopRingtone();
+
     try {
       final res = await _dio.post(ApiConstants.driverRespond, data: {
         if (assignmentId != null) 'assignment_id': assignmentId,
@@ -306,7 +322,7 @@ class DriverProvider extends ChangeNotifier {
   @override
   void dispose() {
     _stopDispatchLoop();
-    _audioPlayer.dispose();
+    SoundService.instance.stopRingtone();
     super.dispose();
   }
 }

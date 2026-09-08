@@ -601,6 +601,52 @@ class DriverApiController extends Controller
             ];
         }
 
+        // 3. Also populate unassigned pending package deliveries in the system
+        $processedDeliveryIds = [];
+        foreach ($assignments as $a) {
+            if ($a->package_delivery_id) {
+                $processedDeliveryIds[] = $a->package_delivery_id;
+            }
+        }
+
+        $openPendingDeliveries = \App\Models\PackageDelivery::with('customer')
+            ->whereIn('delivery_status', ['pending', 'created', 'searching'])
+            ->whereNull('courier_id')
+            ->whereNotIn('id', $processedDeliveryIds)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        foreach ($openPendingDeliveries as $pd) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['package_delivery_id' => $pd->id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+
+            $custName = $pd->customer?->name ?? $pd->sender_name ?? 'Sender';
+            $custPhone = $pd->customer?->phone ?? $pd->sender_phone;
+            $pocName = $pd->recipient_name;
+            $pocPhone = $pd->recipient_phone;
+
+            $requests[] = [
+                'assignment_id' => $assignment->id,
+                'type' => 'package_delivery',
+                'delivery_id' => $pd->id,
+                'package_delivery_id' => $pd->id,
+                'pickup_location' => $pd->pickup_location,
+                'dropoff_location' => $pd->dropoff_location,
+                'total_price' => floatval($pd->total_price),
+                'fare' => floatval($pd->total_price),
+                'customer_name' => $custName,
+                'customer_phone' => $custPhone,
+                'poc_name' => $pocName,
+                'poc_phone' => $pocPhone,
+                'rider_name' => $pocName ?: $custName,
+                'rider_phone' => $pocPhone ?: $custPhone,
+                'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),
+            ];
+        }
+
         return response()->json(['success' => true, 'requests' => $requests]);
     }
 
@@ -612,6 +658,7 @@ class DriverApiController extends Controller
         $request->validate([
             'assignment_id' => 'nullable|integer',
             'ride_id' => 'nullable|integer',
+            'delivery_id' => 'nullable|integer',
             'action' => 'required|in:accept,reject',
         ]);
 
@@ -625,6 +672,13 @@ class DriverApiController extends Controller
         if (!$assignment && $request->ride_id) {
             $assignment = \App\Models\RideAssignment::firstOrCreate(
                 ['ride_id' => $request->ride_id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+        }
+
+        if (!$assignment && $request->delivery_id) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['package_delivery_id' => $request->delivery_id, 'driver_id' => $user->id],
                 ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
             );
         }
@@ -660,6 +714,27 @@ class DriverApiController extends Controller
                     'success' => true,
                     'message' => 'Ride accepted successfully.',
                     'ride' => $ride->fresh(['rider', 'stops']),
+                ]);
+            } elseif ($assignment->packageDelivery) {
+                $delivery = $assignment->packageDelivery;
+                $delivery->update([
+                    'courier_id' => $user->id,
+                    'delivery_status' => 'courier_assigned',
+                ]);
+
+                // Expire competing assignments
+                \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)
+                    ->where('id', '!=', $assignment->id)
+                    ->update(['status' => 'expired']);
+
+                if ($user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => false]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Package delivery accepted successfully.',
+                    'delivery' => $delivery->fresh(['customer']),
                 ]);
             }
         } else {

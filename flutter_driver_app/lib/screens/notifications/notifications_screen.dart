@@ -108,14 +108,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      color: isRead ? Colors.transparent : AppColors.surfaceDark.withValues(alpha: 0.4),
+                      color: isRead ? Colors.transparent : AppColors.surfaceDark.withOpacity(0.4),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: _getColorForType(type).withValues(alpha: 0.18),
+                              color: _getColorForType(type).withOpacity(0.18),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(_getIconForType(type), color: _getColorForType(type), size: 22),
@@ -152,7 +152,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 Text(
                                   message,
                                   style: TextStyle(
-                                    color: isRead ? AppColors.textMuted : AppColors.textLight.withValues(alpha: 0.9),
+                                    color: isRead ? AppColors.textMuted : AppColors.textLight.withOpacity(0.9),
                                     fontSize: 13,
                                     height: 1.35,
                                   ),

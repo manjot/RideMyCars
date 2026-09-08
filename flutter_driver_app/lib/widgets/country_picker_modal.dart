@@ -86,7 +86,7 @@ void showCountryPickerModal({
                   child: ListView.separated(
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => Divider(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: Colors.white.withOpacity(0.05),
                       height: 1,
                     ),
                     itemBuilder: (context, idx) {
@@ -113,8 +113,8 @@ void showCountryPickerModal({
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.primary.withValues(alpha: 0.2)
-                                    : Colors.white.withValues(alpha: 0.08),
+                                    ? AppColors.primary.withOpacity(0.2)
+                                    : Colors.white.withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(

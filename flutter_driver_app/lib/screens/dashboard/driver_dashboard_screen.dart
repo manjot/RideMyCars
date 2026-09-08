@@ -328,7 +328,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: AppColors.primary.withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.radar_rounded, color: AppColors.primary, size: 22),
@@ -480,7 +480,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: driver.isOnline ? AppColors.success.withValues(alpha: 0.2) : Colors.black26,
+              color: driver.isOnline ? AppColors.success.withOpacity(0.2) : Colors.black26,
               blurRadius: 20,
               offset: const Offset(0, 6),
             ),
@@ -520,8 +520,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       )
                     : Switch(
                         value: driver.isOnline,
-                        activeThumbColor: AppColors.success,
-                        activeTrackColor: AppColors.success.withValues(alpha: 0.3),
+                        activeColor: AppColors.success,
+                        activeTrackColor: AppColors.success.withOpacity(0.3),
                         inactiveThumbColor: AppColors.textMuted,
                         inactiveTrackColor: Colors.white10,
                         onChanged: (val) => driver.toggleOnline(),
@@ -531,10 +531,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             const SizedBox(height: 12),
             Text(
               driver.isOnline
-                  ? 'Your GPS is transmitting live. Nearby rider requests will ring with an alert sound.'
-                  : 'Turn your status online to start receiving ride and chauffeur hiring requests.',
+                  ? 'Your GPS is transmitting live. Nearby ride & delivery orders will ring with a loud ringtone.'
+                  : 'Turn your status online to start receiving ride and delivery orders.',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white.withOpacity(0.8),
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -572,7 +572,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.15),
+                        color: AppColors.success.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -820,10 +820,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.1),
+            color: Colors.amber.withOpacity(0.1),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -846,7 +846,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: typeColor.withValues(alpha: 0.2),
+                          color: typeColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: typeColor, width: 1),
                         ),
@@ -1027,7 +1027,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.danger,
-                      side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+                      side: BorderSide(color: AppColors.danger.withOpacity(0.5)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -1081,16 +1081,31 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final bool hasPoc = pocName != null && pocName.toString().isNotEmpty && pocName.toString() != customerName;
     final vehicleType = job['vehicle_type'] ?? 'Standard';
     final isDriverBooking = job['type'] == 'driver_booking';
+    final isDelivery = job['type'] == 'package_delivery' || job['package_delivery_id'] != null;
+
+    Color badgeColor = AppColors.primary;
+    IconData badgeIcon = Icons.local_taxi_rounded;
+    String badgeLabel = '$vehicleType RIDE';
+
+    if (isDriverBooking) {
+      badgeColor = AppColors.purple;
+      badgeIcon = Icons.airline_seat_recline_extra_rounded;
+      badgeLabel = 'DRIVER HIRING';
+    } else if (isDelivery) {
+      badgeColor = AppColors.info;
+      badgeIcon = Icons.local_shipping_rounded;
+      badgeLabel = 'PACKAGE DELIVERY';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
+        border: Border.all(color: badgeColor.withOpacity(0.4), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.12),
+            color: badgeColor.withOpacity(0.12),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -1108,12 +1123,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: isDriverBooking
-                        ? AppColors.purple.withValues(alpha: 0.2)
-                        : AppColors.primary.withValues(alpha: 0.2),
+                    color: badgeColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isDriverBooking ? AppColors.purple : AppColors.primary,
+                      color: badgeColor,
                       width: 1,
                     ),
                   ),
@@ -1121,15 +1134,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isDriverBooking ? Icons.badge_rounded : Icons.local_taxi_rounded,
+                        badgeIcon,
                         size: 14,
-                        color: isDriverBooking ? AppColors.purple : AppColors.primary,
+                        color: badgeColor,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isDriverBooking ? 'DRIVER HIRING' : '$vehicleType RIDE',
+                        badgeLabel,
                         style: TextStyle(
-                          color: isDriverBooking ? AppColors.purple : AppColors.primary,
+                          color: badgeColor,
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
@@ -1154,7 +1167,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.backgroundDark.withValues(alpha: 0.6),
+                color: AppColors.backgroundDark.withOpacity(0.6),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white10),
               ),
@@ -1208,9 +1221,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.08),
+                  color: Colors.amber.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
+                  border: Border.all(color: Colors.amber.withOpacity(0.25)),
                 ),
                 child: Row(
                   children: [
@@ -1381,7 +1394,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1590,7 +1603,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         decoration: BoxDecoration(
           color: AppColors.backgroundDark,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
         ),
         child: Column(
           children: [

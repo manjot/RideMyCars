@@ -237,7 +237,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
+                            color: AppColors.primary.withOpacity(0.35),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -336,7 +336,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                         color: AppColors.surfaceDark,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: _otpSent ? Colors.white12 : AppColors.primary.withValues(alpha: 0.3),
+                          color: _otpSent ? Colors.white12 : AppColors.primary.withOpacity(0.3),
                           width: 1.5,
                         ),
                       ),
@@ -359,10 +359,10 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.03),
+                                color: Colors.white.withOpacity(0.03),
                                 border: Border(
                                   right: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.1),
+                                    color: Colors.white.withOpacity(0.1),
                                     width: 1,
                                   ),
                                 ),
@@ -433,7 +433,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.surfaceDark,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,

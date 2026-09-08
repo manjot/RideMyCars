@@ -172,7 +172,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     blurRadius: 30,
                     offset: const Offset(0, -10),
                   ),
@@ -261,9 +261,9 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
+                            color: Colors.amber.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                            border: Border.all(color: Colors.amber.withOpacity(0.3)),
                           ),
                           child: Row(
                             children: [
