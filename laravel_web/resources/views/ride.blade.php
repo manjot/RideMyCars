@@ -487,7 +487,7 @@
                                             class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer"
                                             :class="savedLocations.home ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white'">
                                         <span>🏠</span>
-                                        <span x-text="savedLocations.home ? 'Home' : '+ Home'"></span>
+                                        <span x-text="savedLocations.home ? 'Home' : '+ Home'">+ Home</span>
                                     </button>
                                     <button type="button" 
                                             @click="openSavedLocationModal('home')" 
@@ -505,7 +505,7 @@
                                             class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer"
                                             :class="savedLocations.office ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white'">
                                         <span>🏢</span>
-                                        <span x-text="savedLocations.office ? 'Office' : '+ Office'"></span>
+                                        <span x-text="savedLocations.office ? 'Office' : '+ Office'">Office</span>
                                     </button>
                                     <button type="button" 
                                             @click="openSavedLocationModal('office')" 
