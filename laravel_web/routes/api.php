@@ -60,6 +60,13 @@ Route::get('/categories/{id}', [CategoryApiController::class, 'show']);
 Route::get('/products', [ProductApiController::class, 'index']);
 Route::get('/products/{id}', [ProductApiController::class, 'show']);
 
+// Public Rental Vehicles Listing, Details & Booking
+Route::get('/rent/search', [\App\Http\Controllers\VehicleRentalController::class, 'searchApi']);
+Route::get('/vehicles', [\App\Http\Controllers\VehicleRentalController::class, 'searchApi']);
+Route::get('/rent/{vehicle}', [\App\Http\Controllers\VehicleRentalController::class, 'detailApi']);
+Route::post('/rent/{vehicle}/book', [\App\Http\Controllers\VehicleRentalController::class, 'bookRentalApi']);
+Route::post('/rent/book', [\App\Http\Controllers\VehicleRentalController::class, 'bookRentalApi']);
+
 // Public driver listing & country info
 Route::get('/drivers', [DriverApiController::class, 'drivers']);
 Route::get('/drivers/{id}', [DriverApiController::class, 'driverDetail']);
@@ -80,6 +87,15 @@ Route::get('/country-pricing', function (Request $request) {
     ]);
 });
 Route::post('/drivers/calculate-price', [DriverApiController::class, 'calculatePrice']);
+Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
+Route::post('/hire-driver/book', [DriverApiController::class, 'bookDriver']);
+
+// Public Package Delivery API Routes
+Route::post('/delivery/calculate-price', [\App\Http\Controllers\PackageDeliveryController::class, 'calculatePrice']);
+Route::post('/delivery/book', [\App\Http\Controllers\PackageDeliveryController::class, 'storeBooking']);
+Route::get('/delivery/{id}/status', [\App\Http\Controllers\PackageDeliveryController::class, 'statusApi']);
+Route::post('/delivery/{id}/verify-otp', [\App\Http\Controllers\PackageDeliveryController::class, 'verifyOtp']);
+Route::post('/delivery/{id}/update-status', [\App\Http\Controllers\PackageDeliveryController::class, 'updateDeliveryStatus']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {

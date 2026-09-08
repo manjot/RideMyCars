@@ -21,7 +21,13 @@ class ApiConstants {
   static String rideStatus(int id) => '/rides/$id/status';
   static String rideCancel(int id) => '/rides/$id/cancel';
 
+  // Rentals & Vehicles
+  static const String rentalVehicles = '/rent/search';
+  static const String vehicles = '/vehicles';
+
   // Driver
+  static const String drivers = '/drivers';
+  static String driverDetail(int id) => '/drivers/$id';
   static const String driverLocation = '/driver/location';
   static const String driverToggleAvailability = '/driver/toggle-availability';
   static const String driverRequests = '/driver/requests';
@@ -32,4 +38,9 @@ class ApiConstants {
   // Notifications
   static const String notifications = '/notifications';
   static const String notificationsMarkRead = '/notifications/mark-read';
+
+  // Delivery
+  static const String deliveryCalculate = '/delivery/calculate-price';
+  static const String deliveryBook = '/delivery/book';
+  static String deliveryStatus(int id) => '/delivery/$id/status';
 }

@@ -6,3 +6,8 @@ laravel_web/.env
 .vscode/
 .idea/
 *.zip
+*.apk
+apks/
+apk_builds/
+screencap_*.png
+

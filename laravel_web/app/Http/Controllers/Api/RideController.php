@@ -32,7 +32,7 @@ class RideController extends Controller
             $driverUserIds = array_unique(array_merge($driverUserIds, $matchingIds));
         }
 
-        $rides = Ride::with(['driver.driverProfile', 'rider'])
+        $rides = Ride::with(['driver.driverProfile', 'rider', 'vehicle'])
             ->where(function ($q) use ($user, $driverUserIds) {
                 $q->where('rider_id', $user->id)
                   ->orWhereIn('driver_id', $driverUserIds)
@@ -51,18 +51,71 @@ class RideController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Also fetch package deliveries for this user/driver
+        $deliveries = \App\Models\PackageDelivery::with(['customer', 'courier'])
+            ->where(function ($q) use ($user, $driverUserIds) {
+                $q->where('customer_id', $user->id)
+                  ->orWhereIn('courier_id', $driverUserIds);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         $items = [];
 
         foreach ($rides as $r) {
+            $rawVehicleType = (string)($r->vehicle_type ?? 'Standard');
+            $isRental = $r->ride_type === 'rental' || $r->vehicle_id !== null || str_starts_with($rawVehicleType, 'RENTAL_');
+            $isChauffeur = str_starts_with($rawVehicleType, 'CHAUFFEUR_');
+            $isDelivery = str_starts_with($rawVehicleType, 'DELIVERY_');
+
+            $cleanVehicleType = $rawVehicleType;
+            $type = 'ride';
+
+            if ($isRental) {
+                $type = 'rental';
+                if ($r->vehicle) {
+                    $cleanVehicleType = $r->vehicle->year . ' ' . $r->vehicle->make . ' ' . $r->vehicle->model;
+                } else {
+                    $cleanVehicleType = preg_replace('/^RENTAL_\d+_/', '', $rawVehicleType);
+                }
+            } elseif ($isChauffeur) {
+                $type = 'chauffeur';
+                $cleanVehicleType = preg_replace('/^CHAUFFEUR_\d+_/', '', $rawVehicleType);
+            } elseif ($isDelivery) {
+                $type = 'delivery';
+                $cleanVehicleType = preg_replace('/^DELIVERY_/', '', $rawVehicleType);
+            }
+
             $items[] = [
                 'id' => $r->id,
-                'type' => 'ride',
-                'booking_code' => 'RIDE-' . $r->id,
+                'type' => $type,
+                'booking_code' => $isRental 
+                    ? ($r->digital_receipt_code ?: ('RNT-' . $r->id)) 
+                    : ($isDelivery ? ('DEL-' . $r->id) : ('RIDE-' . $r->id)),
                 'status' => $r->status,
                 'fare' => (float)($r->total_amount ?? $r->fare ?? 0),
+                'paid_amount' => (float)($r->paid_amount ?? 0),
+                'remaining_balance' => (float)($r->remaining_balance ?? 0),
+                'payment_status' => $r->payment_status ?? ($r->status === 'completed' ? 'paid' : 'pending'),
                 'pickup_location' => $r->pickup_location,
                 'dropoff_location' => $r->dropoff_location,
-                'vehicle_type' => $r->vehicle_type ?? 'Standard',
+                'vehicle_type' => $cleanVehicleType,
+                'raw_vehicle_type' => $rawVehicleType,
+                'pickup_date' => $r->pickup_date ? $r->pickup_date->format('Y-m-d') : null,
+                'pickup_time' => $r->pickup_time,
+                'return_date' => $r->return_date ? $r->return_date->format('Y-m-d') : null,
+                'return_time' => $r->return_time,
+                'protection_option' => $r->protection_option,
+                'fuel_policy' => $r->fuel_policy,
+                'vehicle' => $r->vehicle ? [
+                    'id' => $r->vehicle->id,
+                    'make' => $r->vehicle->make,
+                    'model' => $r->vehicle->model,
+                    'year' => $r->vehicle->year,
+                    'category' => $r->vehicle->category,
+                    'image_url' => $r->vehicle->image_url,
+                    'daily_rate' => (float)$r->vehicle->daily_rate,
+                ] : null,
                 'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
                 'driver' => $r->driver ? [
                     'id' => $r->driver->id,
@@ -79,15 +132,16 @@ class RideController extends Controller
         }
 
         foreach ($driverBookings as $db) {
+            $cleanName = $db->driver ? $db->driver->name : ($db->car_make_model ?? 'Executive Chauffeur');
             $items[] = [
                 'id' => $db->id,
-                'type' => 'driver_booking',
+                'type' => 'chauffeur',
                 'booking_code' => $db->booking_code ?? ('BK-' . $db->id),
                 'status' => $db->booking_status ?? ($db->verification_status === 'driver_verified' ? 'completed' : 'pending'),
                 'fare' => (float)($db->total_price ?? 0),
                 'pickup_location' => $db->pickup_location,
                 'dropoff_location' => $db->dropoff_location ?? 'As Directed',
-                'vehicle_type' => $db->car_make_model ?? 'Executive Chauffeur',
+                'vehicle_type' => 'Chauffeur: ' . $cleanName,
                 'created_at' => $db->created_at ? $db->created_at->toIso8601String() : null,
                 'driver' => $db->driver ? [
                     'id' => $db->driver->id,
@@ -100,6 +154,36 @@ class RideController extends Controller
                     'email' => $db->client->email,
                 ] : null,
                 'passenger_name' => $db->client->name ?? 'Client',
+            ];
+        }
+
+        foreach ($deliveries as $del) {
+            $items[] = [
+                'id' => $del->id,
+                'type' => 'delivery',
+                'booking_code' => $del->delivery_code ?: ('DEL-' . $del->id),
+                'status' => $del->delivery_status ?: 'pending',
+                'fare' => (float)($del->total_price ?? 0),
+                'pickup_location' => $del->pickup_location,
+                'dropoff_location' => $del->dropoff_location,
+                'vehicle_type' => ($del->package_category ?: 'Parcel') . ' (' . ($del->delivery_type ?: 'Standard') . ')',
+                'delivery_otp' => $del->delivery_otp,
+                'sender_name' => $del->sender_name,
+                'recipient_name' => $del->recipient_name,
+                'package_size' => $del->package_size,
+                'package_weight_kg' => $del->package_weight_kg,
+                'created_at' => $del->created_at ? $del->created_at->toIso8601String() : null,
+                'courier' => $del->courier ? [
+                    'id' => $del->courier->id,
+                    'name' => $del->courier->name,
+                    'email' => $del->courier->email,
+                ] : null,
+                'rider' => $del->customer ? [
+                    'id' => $del->customer->id,
+                    'name' => $del->customer->name,
+                    'email' => $del->customer->email,
+                ] : null,
+                'passenger_name' => $del->sender_name ?: ($del->customer->name ?? 'Sender'),
             ];
         }
 

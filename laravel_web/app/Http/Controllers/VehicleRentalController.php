@@ -414,4 +414,186 @@ class VehicleRentalController extends Controller
 
         return back()->with('success', "Rental booking modified successfully! Updated total: \${$newTotal}, New remaining balance: \${$newBalance}.");
     }
+
+    /**
+     * API: Get single vehicle rental details & dynamic pricing.
+     */
+    public function detailApi(Request $request, Vehicle $vehicle)
+    {
+        $country = $request->query('driver_country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($country);
+        $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
+
+        $vehicleData = $vehicle->toArray();
+        $vehicleData['daily_rate'] = round((float) $vehicle->daily_rate * $mult, 2);
+        $vehicleData['security_deposit_amount'] = round((float) ($vehicle->security_deposit_amount ?: 200.00) * $mult, 2);
+        $vehicleData['currency_symbol'] = $pricing->currency_symbol;
+        $vehicleData['currency'] = $pricing->currency_code;
+        $vehicleData['image_url'] = $vehicle->image_src;
+        $vehicleData['owner_name'] = $vehicle->owner->name ?? 'RideMyCars Fleet Partner';
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'vehicle' => $vehicleData,
+                'pricing' => [
+                    'currency_symbol' => $pricing->currency_symbol,
+                    'currency_code' => $pricing->currency_code,
+                    'rental_protection_daily_rate' => round((float) ($pricing->rental_protection_daily_rate ?: 12.00) * $mult, 2),
+                    'rental_additional_driver_rate' => round((float) ($pricing->rental_additional_driver_rate ?: 10.00) * $mult, 2),
+                    'rental_child_seat_rate' => round((float) ($pricing->rental_child_seat_rate ?: 8.00) * $mult, 2),
+                    'rental_gps_rate' => round((float) ($pricing->rental_gps_rate ?: 5.00) * $mult, 2),
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * API: Store vehicle rental reservation.
+     */
+    public function bookRentalApi(Request $request, Vehicle $vehicle)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'pickup_time' => 'nullable|string',
+            'return_time' => 'nullable|string',
+            'pickup_location' => 'required|string|max:255',
+            'dropoff_location' => 'nullable|string|max:255',
+            'different_dropoff' => 'nullable|boolean',
+            'driver_license' => 'nullable|string|max:255',
+            'customer_age' => 'nullable|integer|min:18|max:120',
+            'driver_country' => 'nullable|string|max:100',
+            'driver_email' => 'nullable|email|max:255',
+            'driver_phone' => 'nullable|string|max:50',
+            'protection_option' => 'nullable|string|in:basic,full_cover',
+            'selected_extras' => 'nullable|array',
+            'payment_option' => 'nullable|string|in:part,full',
+            'payment_method' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $pickupTime = $request->pickup_time ?? '10:00';
+        $returnTime = $request->return_time ?? $pickupTime;
+
+        try {
+            $sC = Carbon::parse("{$request->start_date} {$pickupTime}");
+            $eC = Carbon::parse("{$request->end_date} {$returnTime}");
+            $days = max(1, (int) ceil($sC->diffInHours($eC) / 24));
+        } catch (\Exception $e) {
+            $days = 1;
+        }
+
+        $user = $request->user();
+        $riderId = $user ? $user->id : (Auth::id() ?? User::first()->id ?? 1);
+
+        $driverCountry = $request->driver_country ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($driverCountry);
+        $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
+        $dailyRate = round((float) $vehicle->daily_rate * $mult, 2);
+        $baseTotal = round($days * $dailyRate, 2);
+
+        $protectionDaily = round((float) ($pricing->rental_protection_daily_rate ?: 12.00) * $mult, 2);
+        $protectionOption = $request->protection_option ?? 'basic';
+        $protectionFee = ($protectionOption === 'full_cover') ? round($days * $protectionDaily, 2) : 0.00;
+
+        $extraDriverDaily = round((float) ($pricing->rental_additional_driver_rate ?: 10.00) * $mult, 2);
+        $childSeatDaily = round((float) ($pricing->rental_child_seat_rate ?: 8.00) * $mult, 2);
+        $gpsDaily = round((float) ($pricing->rental_gps_rate ?: 5.00) * $mult, 2);
+
+        $extras = $request->input('selected_extras', []);
+        $extrasFee = 0.00;
+        if (in_array('additional_driver', $extras)) $extrasFee += round($days * $extraDriverDaily, 2);
+        if (in_array('child_seat', $extras)) $extrasFee += round($days * $childSeatDaily, 2);
+        if (in_array('gps', $extras)) $extrasFee += round($days * $gpsDaily, 2);
+
+        $totalAmount = round($baseTotal + $protectionFee + $extrasFee, 2);
+        $paymentOption = $request->payment_option ?? 'part';
+
+        if ($paymentOption === 'full') {
+            $paidAmount = $totalAmount;
+            $remainingBalance = 0.00;
+            $paymentStatus = 'paid';
+        } else {
+            $paidAmount = round($totalAmount * 0.20, 2);
+            $remainingBalance = round($totalAmount - $paidAmount, 2);
+            $paymentStatus = 'partially_paid';
+        }
+
+        $rentalCode = 'RENT-' . strtoupper(Str::random(8));
+        $dropoffLoc = $request->boolean('different_dropoff') && $request->dropoff_location
+            ? $request->dropoff_location
+            : $request->pickup_location;
+
+        $ride = Ride::create([
+            'rider_id' => $riderId,
+            'vehicle_id' => $vehicle->id,
+            'pickup_location' => $request->pickup_location,
+            'dropoff_location' => $dropoffLoc,
+            'different_dropoff' => $request->boolean('different_dropoff'),
+            'vehicle_type' => "Car Rental ({$vehicle->make} {$vehicle->model})",
+            'payment_method' => $request->payment_method ?? 'Credit Card',
+            'notes' => "Rental: {$vehicle->make} {$vehicle->model}. Dates: {$request->start_date} {$pickupTime} to {$request->end_date} {$returnTime} ({$days} days). License: " . ($request->driver_license ?? 'N/A') . ". Protection: " . strtoupper($protectionOption) . ". Fuel: {$vehicle->fuel_policy}.",
+            'digital_receipt_code' => $rentalCode,
+            'status' => 'confirmed',
+            'fare' => $totalAmount,
+            'pickup_date' => $request->start_date,
+            'pickup_time' => $pickupTime,
+            'return_date' => $request->end_date,
+            'return_time' => $returnTime,
+            'total_amount' => $totalAmount,
+            'paid_amount' => $paidAmount,
+            'remaining_balance' => $remainingBalance,
+            'payment_status' => $paymentStatus,
+            'insurance_accepted' => true,
+            'fuel_policy' => $vehicle->fuel_policy ?? 'Full-to-Full',
+            'customer_age' => (int) ($request->customer_age ?? 25),
+            'driver_country' => $driverCountry,
+            'driver_email' => $request->driver_email ?? ($user->email ?? null),
+            'driver_phone' => $request->driver_phone ?? ($user->phone ?? null),
+            'protection_option' => $protectionOption,
+            'protection_fee' => $protectionFee,
+            'selected_extras' => !empty($extras) ? json_encode($extras) : null,
+            'extras_fee' => $extrasFee,
+        ]);
+
+        ActivityLogService::log('rental_created', "API: Created vehicle rental booking #{$ride->id} for {$vehicle->make} {$vehicle->model} (Receipt: {$rentalCode})", $riderId);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Vehicle rental reserved successfully! Voucher Code: {$rentalCode}",
+            'booking' => [
+                'id' => $ride->id,
+                'rental_code' => $rentalCode,
+                'vehicle_name' => "{$vehicle->year} {$vehicle->make} {$vehicle->model}",
+                'vehicle_image' => $vehicle->image_src,
+                'days' => $days,
+                'daily_rate' => $dailyRate,
+                'base_total' => $baseTotal,
+                'protection_option' => $protectionOption,
+                'protection_fee' => $protectionFee,
+                'selected_extras' => $extras,
+                'extras_fee' => $extrasFee,
+                'total_amount' => $totalAmount,
+                'paid_amount' => $paidAmount,
+                'remaining_balance' => $remainingBalance,
+                'payment_status' => $paymentStatus,
+                'status' => 'confirmed',
+                'start_date' => $request->start_date,
+                'pickup_time' => $pickupTime,
+                'end_date' => $request->end_date,
+                'return_time' => $returnTime,
+                'pickup_location' => $request->pickup_location,
+                'dropoff_location' => $dropoffLoc,
+                'currency_symbol' => $pricing->currency_symbol,
+            ],
+        ]);
+    }
 }
