@@ -1,84 +1,47 @@
 <x-layout>
     <x-slot:title>Pricing & Transparent Rates — RideMyCars Executive Mobility</x-slot>
 
+    @php
+        $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
+        $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
+        $dynamicVehicles = [];
+
+        if ($pricingRideCategories->isEmpty()) {
+            $dynamicVehicles = [
+                'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing?->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing?->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing?->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing?->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility'],
+                'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control'],
+                'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups'],
+                'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations'],
+                'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers']
+            ];
+        } else {
+            foreach ($pricingRideCategories as $cat) {
+                $base = (float) ($cat->base_fare * $countryMultiplier);
+                $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
+                $perMin = (float) ($cat->per_minute_rate * $countryMultiplier);
+                $min = (float) ($cat->minimum_fare * $countryMultiplier);
+                $dynamicVehicles[$cat->slug] = [
+                    'name' => $cat->name,
+                    'icon' => $cat->icon ?: '🚗',
+                    'multiplier' => (float) $cat->multiplier,
+                    'base' => $base,
+                    'perKm' => $perKm,
+                    'perMin' => $perMin,
+                    'min' => $min,
+                    'seats' => $cat->capacity ?: '4 Seats',
+                    'luggage' => '2 Bags',
+                    'desc' => $cat->description ?: 'Affordable, reliable everyday city mobility'
+                ];
+            }
+        }
+    @endphp
+
     <!-- Ambient Glow Effects -->
     <div class="relative overflow-hidden bg-gray-50/50 dark:bg-[#0b0f17] text-gray-900 dark:text-white transition-colors">
         <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[450px] bg-gradient-to-tr from-amber-500/15 via-brand-500/10 to-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
         <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 space-y-16"
-              x-data="{
-                  activeTab: 'all', // 'all', 'rides', 'rentals', 'drivers', 'delivery', 'membership'
-                  calcDistance: 12,
-                  calcStops: 0,
-                  calcVehicle: 'economy',
-                  rentalPeriod: 'daily', // 'daily', 'weekly', 'monthly'
-                  activeFaq: null,
-                  currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
-                  currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
-                  rentalMultiplier: {{ (float) ($currentPricing?->rental_price_multiplier ?? 1.0) }},
-                  driverHourlyRate: {{ (float) ($currentPricing?->driver_hourly_rate ?? 25.00) }},
-                  driverDailyRate: {{ (float) ($currentPricing?->driver_daily_rate ?? 160.00) }},
-                  driverWeeklyRate: {{ (float) ($currentPricing?->driver_weekly_rate ?? 890.00) }},
-                  deliveryBaseRate: {{ (float) ($currentPricing?->delivery_base_fare ?? 8.00) }},
-                  deliveryPerKmRate: {{ (float) ($currentPricing?->delivery_per_km_rate ?? 1.00) }},
-                  @php
-                      $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
-                      $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
-                      $dynamicVehicles = [];
-
-                      if ($pricingRideCategories->isEmpty()) {
-                          $dynamicVehicles = [
-                              'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing?->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing?->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing?->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing?->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility'],
-                              'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control'],
-                              'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups'],
-                              'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations'],
-                              'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers']
-                          ];
-                      } else {
-                          foreach ($pricingRideCategories as $cat) {
-                              $base = (float) ($cat->base_fare * $countryMultiplier);
-                              $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
-                              $perMin = (float) ($cat->per_minute_rate * $countryMultiplier);
-                              $min = (float) ($cat->minimum_fare * $countryMultiplier);
-                              $dynamicVehicles[$cat->slug] = [
-                                  'name' => $cat->name,
-                                  'icon' => $cat->icon ?: '🚗',
-                                  'multiplier' => (float) $cat->multiplier,
-                                  'base' => $base,
-                                  'perKm' => $perKm,
-                                  'perMin' => $perMin,
-                                  'min' => $min,
-                                  'seats' => $cat->capacity ?: '4 Seats',
-                                  'luggage' => '2 Bags',
-                                  'desc' => $cat->description ?: 'Affordable, reliable everyday city mobility'
-                              ];
-                          }
-                      }
-                  @endphp
-                  vehicles: {!! json_encode($dynamicVehicles) !!},
-                  get calcDuration() {
-                      return Math.max(5, Math.round(this.calcDistance * 1.6 + 4));
-                  },
-                  get calcFare() {
-                      const v = this.vehicles[this.calcVehicle] || this.vehicles.economy;
-                      const distFare = this.calcDistance * v.perKm;
-                      const durFare = this.calcDuration * v.perMin;
-                      const stopsFee = this.calcStops * (v.base * 0.7);
-                      const subtotal = v.base + distFare + durFare + stopsFee;
-                      const finalFare = Math.max(v.min, subtotal);
-                      const tax = finalFare * 0.05;
-                      const total = finalFare + tax;
-                      return {
-                          base: v.base.toFixed(2),
-                          distFare: distFare.toFixed(2),
-                          durFare: durFare.toFixed(2),
-                          stopsFee: stopsFee.toFixed(2),
-                          subtotal: subtotal.toFixed(2),
-                          tax: tax.toFixed(2),
-                          total: total.toFixed(2)
-                      };
-                  }
-              }">
+              x-data="pricingApp()">
 
             <!-- HERO HEADER -->
             <div class="text-center max-w-3xl mx-auto pt-6 sm:pt-10">
@@ -231,7 +194,7 @@
                                                     class="p-3 rounded-2xl border text-left transition-all cursor-pointer">
                                                 <div class="flex items-center justify-between">
                                                     <span class="text-xl" x-text="veh.icon"></span>
-                                                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400" x-text="'$' + veh.perKm.toFixed(2) + '/km'"></span>
+                                                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400" x-text="currencySymbol + (veh.perKm || 0).toFixed(2) + '/km'"></span>
                                                 </div>
                                                 <p class="font-extrabold text-xs mt-1.5 truncate" x-text="veh.name"></p>
                                                 <p class="text-[10px] text-gray-500 truncate" x-text="veh.seats"></p>
@@ -279,10 +242,10 @@
                             <div class="lg:col-span-5 bg-gray-50 dark:bg-[#0b0f17] p-6 rounded-3xl border border-gray-200 dark:border-white/10 space-y-5">
                                 <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-white/10">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-2xl" x-text="vehicles[calcVehicle].icon"></span>
+                                        <span class="text-2xl" x-text="currentVehicle.icon"></span>
                                         <div>
-                                            <h4 class="text-sm font-black text-gray-900 dark:text-white" x-text="vehicles[calcVehicle].name"></h4>
-                                            <p class="text-[10px] text-gray-500" x-text="vehicles[calcVehicle].seats + ' • ' + calcDuration + ' mins est.'"></p>
+                                            <h4 class="text-sm font-black text-gray-900 dark:text-white" x-text="currentVehicle.name"></h4>
+                                            <p class="text-[10px] text-gray-500" x-text="currentVehicle.seats + ' • ' + calcDuration + ' mins est.'"></p>
                                         </div>
                                     </div>
                                     <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Upfront Fare</span>
@@ -295,11 +258,11 @@
                                         <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.base"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>Distance (<span x-text="calcDistance"></span> km @ <span x-text="currencySymbol"></span><span x-text="vehicles[calcVehicle].perKm.toFixed(2)"></span>/km)</span>
+                                        <span>Distance (<span x-text="calcDistance"></span> km @ <span x-text="currencySymbol"></span><span x-text="(currentVehicle.perKm || 0).toFixed(2)"></span>/km)</span>
                                         <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.distFare"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>Duration (~<span x-text="calcDuration"></span> min @ <span x-text="currencySymbol"></span><span x-text="vehicles[calcVehicle].perMin.toFixed(2)"></span>/min)</span>
+                                        <span>Duration (~<span x-text="calcDuration"></span> min @ <span x-text="currencySymbol"></span><span x-text="(currentVehicle.perMin || 0).toFixed(2)"></span>/min)</span>
                                         <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.durFare"></span>
                                     </div>
                                     <div x-show="calcStops > 0" class="flex justify-between text-gray-600 dark:text-gray-400">
@@ -325,9 +288,9 @@
                                 </div>
 
                                 <!-- Direct CTA -->
-                                <a :href="'/ride?type=' + encodeURIComponent(vehicles[calcVehicle].name)" 
+                                <a :href="'/ride?type=' + encodeURIComponent(currentVehicle.name)" 
                                    class="block w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-2xl shadow-lg shadow-brand-500/25 transition-all text-center cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
-                                    Book <span x-text="vehicles[calcVehicle].name"></span> Now →
+                                    Book <span x-text="currentVehicle.name"></span> Now →
                                 </a>
                             </div>
 
@@ -610,7 +573,7 @@
                             <div>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-black text-brand-600 dark:text-brand-400"
-                                          x-text="rentalPeriod === 'daily' ? '$65' : (rentalPeriod === 'weekly' ? '$386' : '$1,365')"></span>
+                                          x-text="rentalPeriod === 'daily' ? (currencySymbol + Math.round(65 * rentalMultiplier)) : (rentalPeriod === 'weekly' ? (currencySymbol + Math.round(386 * rentalMultiplier)) : (currencySymbol + Math.round(1365 * rentalMultiplier)))"></span>
                                     <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))"></span>
                                 </div>
                                 <p class="text-[11px] text-emerald-600 font-bold mt-1">✓ Full zero-deductible insurance</p>
@@ -637,7 +600,7 @@
                             <div>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-black text-gray-900 dark:text-white"
-                                          x-text="rentalPeriod === 'daily' ? '$120' : (rentalPeriod === 'weekly' ? '$714' : '$2,520')"></span>
+                                          x-text="rentalPeriod === 'daily' ? (currencySymbol + Math.round(120 * rentalMultiplier)) : (rentalPeriod === 'weekly' ? (currencySymbol + Math.round(714 * rentalMultiplier)) : (currencySymbol + Math.round(2520 * rentalMultiplier)))"></span>
                                     <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))"></span>
                                 </div>
                                 <p class="text-[11px] text-emerald-600 font-bold mt-1">✓ White-glove concierge delivery</p>
@@ -1081,4 +1044,63 @@
 
         </main>
     </div>
+
+    <script>
+        function pricingApp() {
+            return {
+                activeTab: 'all',
+                calcDistance: 12,
+                calcStops: 0,
+                calcVehicle: 'economy',
+                rentalPeriod: 'daily',
+                activeFaq: null,
+                currencySymbol: @json($currentCurrencySymbol ?? "$"),
+                currencyCode: @json($currentCurrencyCode ?? "USD"),
+                rentalMultiplier: {{ (float) ($currentPricing?->rental_price_multiplier ?? 1.0) }},
+                driverHourlyRate: {{ (float) ($currentPricing?->driver_hourly_rate ?? 25.00) }},
+                driverDailyRate: {{ (float) ($currentPricing?->driver_daily_rate ?? 160.00) }},
+                driverWeeklyRate: {{ (float) ($currentPricing?->driver_weekly_rate ?? 890.00) }},
+                deliveryBaseRate: {{ (float) ($currentPricing?->delivery_base_fare ?? 8.00) }},
+                deliveryPerKmRate: {{ (float) ($currentPricing?->delivery_per_km_rate ?? 1.00) }},
+                vehicles: @json($dynamicVehicles),
+                get calcDuration() {
+                    return Math.max(5, Math.round(this.calcDistance * 1.6 + 4));
+                },
+                get currentVehicle() {
+                    return (this.vehicles && this.vehicles[this.calcVehicle]) || 
+                           (this.vehicles && this.vehicles.economy) || 
+                           (this.vehicles && Object.values(this.vehicles)[0]) || 
+                           { name: 'Economy', icon: '🚗', perKm: 1.5, perMin: 0.25, base: 5, min: 10, seats: '4 Seats' };
+                },
+                get calcFare() {
+                    const v = this.currentVehicle;
+                    const distFare = this.calcDistance * (v.perKm || 0);
+                    const durFare = this.calcDuration * (v.perMin || 0);
+                    const stopsFee = this.calcStops * ((v.base || 0) * 0.7);
+                    const subtotal = (v.base || 0) + distFare + durFare + stopsFee;
+                    const finalFare = Math.max(v.min || 0, subtotal);
+                    const tax = finalFare * 0.05;
+                    const total = finalFare + tax;
+                    return {
+                        base: (v.base || 0).toFixed(2),
+                        distFare: distFare.toFixed(2),
+                        durFare: durFare.toFixed(2),
+                        stopsFee: stopsFee.toFixed(2),
+                        subtotal: subtotal.toFixed(2),
+                        tax: tax.toFixed(2),
+                        total: total.toFixed(2)
+                    };
+                }
+            };
+        }
+        window.pricingApp = pricingApp;
+        document.addEventListener('alpine:init', () => {
+            if (typeof Alpine !== 'undefined' && Alpine.data) {
+                Alpine.data('pricingApp', pricingApp);
+            }
+        });
+        if (typeof Alpine !== 'undefined' && Alpine.data) {
+            Alpine.data('pricingApp', pricingApp);
+        }
+    </script>
 </x-layout>
