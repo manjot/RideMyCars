@@ -315,4 +315,17 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
         }
     }
 }
+
+function registerStripeModalAlpine() {
+    if (typeof Alpine !== 'undefined' && Alpine.data) {
+        Alpine.data('stripePaymentHandler', (defaultType, defaultId, defaultAmount, defaultCurrency) => 
+            stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurrency)
+        );
+    }
+}
+document.addEventListener('alpine:init', registerStripeModalAlpine);
+if (typeof Alpine !== 'undefined' && Alpine.data) {
+    registerStripeModalAlpine();
+}
+window.stripePaymentHandler = stripePaymentHandler;
 </script>

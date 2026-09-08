@@ -4,6 +4,55 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10"
           x-data="{
               search: '{{ request('search', '') }}',
+              pickupLocation: @json($pickupLocation ?? ''),
+              dropoffLocation: @json($dropoffLocation ?? ''),
+              pickupSuggestions: [],
+              showPickupSuggestions: false,
+              dropoffSuggestions: [],
+              showDropoffSuggestions: false,
+
+              async searchPickupLocation() {
+                  if (!this.pickupLocation || this.pickupLocation.trim().length < 2) {
+                      this.pickupSuggestions = [];
+                      this.showPickupSuggestions = false;
+                      return;
+                  }
+                  try {
+                      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.pickupLocation.trim())}`);
+                      if (res.ok) {
+                          const data = await res.json();
+                          this.pickupSuggestions = data.predictions || [];
+                          this.showPickupSuggestions = this.pickupSuggestions.length > 0;
+                      }
+                  } catch (e) {}
+              },
+
+              selectPickupSuggestion(item) {
+                  this.pickupLocation = item.main_text || item.description || item.display_name;
+                  this.showPickupSuggestions = false;
+              },
+
+              async searchDropoffLocation() {
+                  if (!this.dropoffLocation || this.dropoffLocation.trim().length < 2) {
+                      this.dropoffSuggestions = [];
+                      this.showDropoffSuggestions = false;
+                      return;
+                  }
+                  try {
+                      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.dropoffLocation.trim())}`);
+                      if (res.ok) {
+                          const data = await res.json();
+                          this.dropoffSuggestions = data.predictions || [];
+                          this.showDropoffSuggestions = this.dropoffSuggestions.length > 0;
+                      }
+                  } catch (e) {}
+              },
+
+              selectDropoffSuggestion(item) {
+                  this.dropoffLocation = item.main_text || item.description || item.display_name;
+                  this.showDropoffSuggestions = false;
+              },
+
               selectedCategory: '{{ request('category', 'All') }}',
               selectedTransmission: '{{ request('transmission', 'All') }}',
               selectedFuel: '{{ request('fuel_type', 'All') }}',
@@ -110,13 +159,57 @@
                                 📍 Use My Location
                             </button>
                         </div>
-                        <input type="text" id="pickup_location_main" name="pickup_location" value="{{ $pickupLocation }}" required placeholder="City, Airport, or Address..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20">
+                        <input type="text" id="pickup_location_main" name="pickup_location" 
+                               x-model="pickupLocation" 
+                               @input.debounce.300ms="searchPickupLocation()"
+                               @focus="if(pickupSuggestions.length) showPickupSuggestions = true"
+                               @click.outside="showPickupSuggestions = false"
+                               required placeholder="City, Airport, or Address..." 
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20">
+
+                        <!-- Suggestions dropdown -->
+                        <div x-show="showPickupSuggestions && pickupSuggestions.length > 0"
+                             x-cloak
+                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto">
+                            <template x-for="item in pickupSuggestions" :key="item.id || item.place_id || item.description">
+                                <div @click="selectPickupSuggestion(item)"
+                                     class="px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-white/5 last:border-b-0">
+                                    <span class="text-gray-400 text-sm">📍</span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description || item.display_name"></div>
+                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-show="item.secondary_text" x-text="item.secondary_text"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <!-- Dropoff Location (Conditional) -->
                     <div x-show="differentDropoff" class="relative">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Drop-off Location *</label>
-                        <input type="text" id="dropoff_location_main" name="dropoff_location" value="{{ $dropoffLocation }}" placeholder="Return city or location..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                        <input type="text" id="dropoff_location_main" name="dropoff_location" 
+                               x-model="dropoffLocation" 
+                               @input.debounce.300ms="searchDropoffLocation()"
+                               @focus="if(dropoffSuggestions.length) showDropoffSuggestions = true"
+                               @click.outside="showDropoffSuggestions = false"
+                               placeholder="Return city or location..." 
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+
+                        <!-- Suggestions dropdown -->
+                        <div x-show="showDropoffSuggestions && dropoffSuggestions.length > 0"
+                             x-cloak
+                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto">
+                            <template x-for="item in dropoffSuggestions" :key="item.id || item.place_id || item.description">
+                                <div @click="selectDropoffSuggestion(item)"
+                                     class="px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-white/5 last:border-b-0">
+                                    <span class="text-gray-400 text-sm">📍</span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description || item.display_name"></div>
+                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-show="item.secondary_text" x-text="item.secondary_text"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <!-- Pickup Date & Time -->
@@ -415,6 +508,7 @@
                                     const data = await res.json();
                                     if (data && data.place) {
                                         pInput.value = data.place.formatted_address || data.place.name;
+                                        pInput.dispatchEvent(new Event('input', { bubbles: true }));
                                     }
                                 }
                             } catch (e) {}

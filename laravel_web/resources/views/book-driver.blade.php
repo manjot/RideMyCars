@@ -51,7 +51,7 @@
         }
     </style>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="bookDriverBooking">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="bookDriverBooking()">
 
         <!-- Category Banner Component -->
         <x-category-banner category="Hire a Driver" />
@@ -121,11 +121,41 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Pick-up Location *</label>
-                            <button type="button" id="use_my_location_btn_rmc" class="text-brand-500 hover:text-brand-600 text-xs font-bold flex items-center gap-1 transition-colors">
+                            <button type="button" id="use_my_location_btn_rmc" class="text-brand-500 hover:text-brand-600 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer">
                                 📍 Use My Location
                             </button>
                         </div>
-                        <input type="text" id="pickup_location_rmc" name="pickup_location" required placeholder="Enter pickup address, city, or airport..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                        <div class="relative">
+                            <input type="text" id="pickup_location_rmc" name="pickup_location" 
+                                   x-model="pickupLocation"
+                                   @input.debounce.300ms="searchPickupLocation()"
+                                   @focus="if(pickupSuggestions.length) showPickupSuggestions = true"
+                                   @click.outside="showPickupSuggestions = false"
+                                   required placeholder="Enter pickup address, city, or airport..." 
+                                   class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30">
+                            
+                            <!-- Pickup Suggestions Dropdown -->
+                            <div x-show="showPickupSuggestions && pickupSuggestions.length > 0"
+                                 x-transition.opacity
+                                 class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-60 overflow-y-auto">
+                                <template x-for="(item, idx) in pickupSuggestions" :key="idx">
+                                    <button type="button" 
+                                            @click="selectPickupSuggestion(item)"
+                                            class="w-full px-3.5 py-2.5 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2 transition-colors cursor-pointer">
+                                        <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
+                                        <div class="min-w-0">
+                                            <span class="font-bold block truncate" x-text="item.main_text || item.description || item.display_name"></span>
+                                            <span class="text-[10px] text-gray-400 font-normal block truncate" x-text="item.secondary_text || 'Map Location'"></span>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Map Preview for Chauffeur Pickup & Route -->
+                        <div class="mt-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl h-52 overflow-hidden relative">
+                            <div id="driver_map" class="w-full h-full"></div>
+                        </div>
                     </div>
 
                     <!-- Additional Stops -->
@@ -484,10 +514,14 @@
     @if($hasValidKey)
         <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
     @endif
+    <!-- Leaflet Maps Integration -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('bookDriverBooking', () => ({
+        function registerBookDriverBookingAlpine() {
+            if (typeof Alpine !== 'undefined' && Alpine.data) {
+                Alpine.data('bookDriverBooking', () => ({
                 serviceType: 'Hire Driver',
                 scheduleMode: 'now',
                 startDate: '{{ date("Y-m-d") }}',
@@ -505,6 +539,65 @@
                 regNumber: 'REG-8899',
                 preferredGender: 'any',
                 preferredLanguage: 'English',
+                pickupLocation: '',
+                pickupLat: null,
+                pickupLng: null,
+                pickupSuggestions: [],
+                showPickupSuggestions: false,
+
+                async searchPickupLocation() {
+                    this.pickupLat = null;
+                    this.pickupLng = null;
+                    if (!this.pickupLocation || this.pickupLocation.trim().length < 2) {
+                        this.pickupSuggestions = [];
+                        this.showPickupSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.pickupLocation.trim())}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.pickupSuggestions = data.predictions || [];
+                            this.showPickupSuggestions = this.pickupSuggestions.length > 0;
+                        }
+                    } catch (e) {
+                        console.warn('Pickup search error:', e);
+                    }
+                },
+
+                async selectPickupSuggestion(item) {
+                    this.pickupLocation = item.main_text || item.description || item.display_name;
+                    this.showPickupSuggestions = false;
+
+                    const pLatInput = document.getElementById('pickup_lat_input');
+                    const pLngInput = document.getElementById('pickup_lng_input');
+
+                    if (item.lat && item.lng) {
+                        this.pickupLat = parseFloat(item.lat);
+                        this.pickupLng = parseFloat(item.lng);
+                        if (pLatInput) pLatInput.value = this.pickupLat;
+                        if (pLngInput) pLngInput.value = this.pickupLng;
+                        if (window.updateDriverMap) window.updateDriverMap(this.pickupLat, this.pickupLng);
+                        return;
+                    }
+
+                    if (item.place_id) {
+                        try {
+                            const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.success && data.place) {
+                                    this.pickupLat = parseFloat(data.place.lat);
+                                    this.pickupLng = parseFloat(data.place.lng);
+                                    this.pickupLocation = data.place.formatted_address || data.place.name || this.pickupLocation;
+                                    if (pLatInput) pLatInput.value = this.pickupLat;
+                                    if (pLngInput) pLngInput.value = this.pickupLng;
+                                    if (window.updateDriverMap) window.updateDriverMap(this.pickupLat, this.pickupLng);
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                },
                 stops: [],
                 validationErrorMessage: null,
                 savedLocations: { home: null, office: null },
@@ -813,7 +906,13 @@
                     }
                 }
             }));
-        });
+            }
+        }
+        document.addEventListener('alpine:init', registerBookDriverBookingAlpine);
+        if (typeof Alpine !== 'undefined' && Alpine.data) {
+            registerBookDriverBookingAlpine();
+        }
+        window.bookDriverBooking = registerBookDriverBookingAlpine;
         function initModalAutocomplete(el) {
             if (window.google && google.maps && google.maps.places) {
                 try {
@@ -865,12 +964,98 @@
             }
         }
 
+        // Leaflet Driver Map helper
+        let driverMap = null;
+        let driverPickupMarker = null;
+
+        const countryCoords = {
+            'IND': [28.6139, 77.2090],
+            'USA': [40.7128, -74.0060],
+            'GHA': [5.6037, -0.1870],
+            'NGA': [6.5244, 3.3792],
+            'ZAF': [-26.2041, 28.0473],
+            'GBR': [51.5074, -0.1278],
+            'CAN': [43.6532, -79.3832],
+            'ARE': [25.2048, 55.2708],
+            'KEN': [-1.2921, 36.8219],
+            'AUS': [-33.8688, 151.2093]
+        };
+
+        function initDriverMap() {
+            const mapEl = document.getElementById('driver_map');
+            if (!mapEl) return;
+            if (typeof L === 'undefined') {
+                setTimeout(initDriverMap, 150);
+                return;
+            }
+            const activeCountry = @json($selectedCountry ?? ($currentCountryCode ?? 'USA'));
+            const initialCenter = countryCoords[activeCountry] || countryCoords['USA'];
+
+            try {
+                driverMap = L.map('driver_map', { zoomControl: true }).setView(initialCenter, 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(driverMap);
+
+                driverMap.on('click', function(e) {
+                    const { lat, lng } = e.latlng;
+                    window.updateDriverMap(lat, lng, true);
+                });
+                setTimeout(() => driverMap.invalidateSize(), 300);
+            } catch (e) {}
+        }
+
+        window.updateDriverMap = function(lat, lng, reverseGeocode = false) {
+            if (!driverMap && typeof L !== 'undefined') initDriverMap();
+            if (!driverMap) return;
+
+            const pLatInput = document.getElementById('pickup_lat_input');
+            const pLngInput = document.getElementById('pickup_lng_input');
+            const pInput = document.getElementById("pickup_location_rmc");
+
+            if (pLatInput) { pLatInput.value = lat; pLatInput.dispatchEvent(new Event('input')); }
+            if (pLngInput) { pLngInput.value = lng; pLngInput.dispatchEvent(new Event('input')); }
+
+            const pinIcon = L.divIcon({
+                className: 'driver-pickup-pin',
+                html: `<div style="background: #eab308; color: black; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid white;">👨‍✈️</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            if (driverPickupMarker) {
+                driverPickupMarker.setLatLng([lat, lng]);
+            } else {
+                driverPickupMarker = L.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(driverMap);
+                driverPickupMarker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    window.updateDriverMap(pos.lat, pos.lng, true);
+                });
+            }
+            driverMap.setView([lat, lng], 15);
+
+            if (reverseGeocode && pInput) {
+                fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.place) {
+                            const addr = data.place.formatted_address || data.place.name;
+                            pInput.value = addr;
+                            pInput.dispatchEvent(new Event('input'));
+                        }
+                    }).catch(() => {});
+            }
+        };
+
         document.addEventListener("DOMContentLoaded", function () {
             const pInput = document.getElementById("pickup_location_rmc");
             const dInput = document.getElementById("dropoff_location_rmc");
             const locBtn = document.getElementById("use_my_location_btn_rmc");
             const pLatInput = document.getElementById("pickup_lat_input");
             const pLngInput = document.getElementById("pickup_lng_input");
+
+            initDriverMap();
 
             @if($hasValidKey)
                 if (window.google && google.maps && google.maps.places) {
@@ -880,8 +1065,11 @@
                             acP.addListener('place_changed', () => {
                                 const place = acP.getPlace();
                                 if (place.geometry && place.geometry.location) {
-                                    if (pLatInput) pLatInput.value = place.geometry.location.lat();
-                                    if (pLngInput) pLngInput.value = place.geometry.location.lng();
+                                    const lat = place.geometry.location.lat();
+                                    const lng = place.geometry.location.lng();
+                                    if (pLatInput) pLatInput.value = lat;
+                                    if (pLngInput) pLngInput.value = lng;
+                                    window.updateDriverMap(lat, lng, false);
                                 }
                             });
                         }
@@ -901,18 +1089,12 @@
 
                     navigator.geolocation.getCurrentPosition(
                         async (pos) => {
-                            if (pLatInput) pLatInput.value = pos.coords.latitude;
-                            if (pLngInput) pLngInput.value = pos.coords.longitude;
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+                            if (pLatInput) pLatInput.value = lat;
+                            if (pLngInput) pLngInput.value = lng;
+                            window.updateDriverMap(lat, lng, true);
 
-                            try {
-                                const res = await fetch(`/api/places/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
-                                if (res.ok) {
-                                    const data = await res.json();
-                                    if (data && data.place) {
-                                        pInput.value = data.place.formatted_address || data.place.name;
-                                    }
-                                }
-                            } catch (e) {}
                             locBtn.disabled = false;
                             locBtn.innerText = "📍 Use My Location";
                         },
