@@ -346,6 +346,14 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 130,
+                      height: 75,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Image.asset('assets/logo.png', fit: BoxFit.contain),
+                    ),
+                  ),
                   const Text(
                     'Driver Partner Registration',
                     style: TextStyle(

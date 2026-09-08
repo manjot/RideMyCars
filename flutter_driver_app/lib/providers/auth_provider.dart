@@ -320,6 +320,240 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
+  Future<Map<String, dynamic>> sendEmailOtp({
+    required String email,
+    required String action, // 'login' or 'register'
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final res = await _dio.post(ApiConstants.sendOtp, data: {
+        'email': email.trim().toLowerCase(),
+        'action': action,
+        'role': 'driver',
+      });
+
+      _isLoading = false;
+      notifyListeners();
+
+      if (res.data is Map) {
+        return Map<String, dynamic>.from(res.data);
+      }
+      return {'success': true, 'message': 'Verification code sent to your email.'};
+    } on DioException catch (e) {
+      _isLoading = false;
+      notifyListeners();
+
+      if (e.response?.data is Map) {
+        final data = Map<String, dynamic>.from(e.response!.data);
+        _errorMessage = _extractErrorMessage(data, 'Failed to send email verification code.');
+        return data;
+      }
+      _errorMessage = 'Unable to contact server. Please try again.';
+      return {'success': false, 'error': _errorMessage};
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      _errorMessage = 'An error occurred while sending email OTP.';
+      return {'success': false, 'error': _errorMessage};
+    }
+  }
+
+  Future<bool> verifyEmailOtp({
+    required String email,
+    required String otp,
+    String? name,
+    String? password,
+    String role = 'driver',
+    Map<String, dynamic>? driverDetails,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final payload = <String, dynamic>{
+        'email': email.trim().toLowerCase(),
+        'otp': otp.trim(),
+        'role': role,
+      };
+      if (name != null && name.isNotEmpty) payload['name'] = name.trim();
+      if (password != null && password.isNotEmpty) payload['password'] = password;
+      if (driverDetails != null) payload.addAll(driverDetails);
+
+      final res = await _dio.post(ApiConstants.verifyOtp, data: payload);
+
+      if (res.statusCode == 200 && res.data is Map && res.data['success'] == true) {
+        _token = res.data['token'];
+        final u = res.data['user'];
+        if (u != null) {
+          _userId = u['id'];
+          _userName = u['name'];
+          _userEmail = u['email'];
+          _avatarUrl = u['avatar_url']?.toString();
+        }
+        _isAuthenticated = true;
+
+        if (_token != null) {
+          await TokenStorage.saveToken(_token!);
+        }
+        await TokenStorage.saveUserData(
+          role: 'driver',
+          name: _userName ?? (name ?? 'Driver'),
+          email: _userEmail ?? email,
+          password: password ?? '',
+          avatarUrl: _avatarUrl,
+        );
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = _extractErrorMessage(res.data, 'Verification failed. Please check the code.');
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        _errorMessage = _extractErrorMessage(e.response!.data, 'Invalid verification code.');
+      } else {
+        _errorMessage = 'Unable to connect to server. Please try again.';
+      }
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred during email verification.';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> loginWithGoogle({
+    String? idToken,
+    String? accessToken,
+    String? email,
+    String? name,
+    String? googleId,
+    String role = 'driver',
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final payload = <String, dynamic>{'role': role};
+      if (idToken != null && idToken.isNotEmpty) payload['id_token'] = idToken;
+      if (accessToken != null && accessToken.isNotEmpty) payload['access_token'] = accessToken;
+      if (email != null && email.isNotEmpty) payload['email'] = email.trim().toLowerCase();
+      if (name != null && name.isNotEmpty) payload['name'] = name.trim();
+      if (googleId != null && googleId.isNotEmpty) payload['google_id'] = googleId;
+
+      final res = await _dio.post(ApiConstants.googleAuth, data: payload);
+
+      if (res.statusCode == 200 && res.data is Map && res.data['success'] == true) {
+        _token = res.data['token'];
+        final u = res.data['user'];
+        if (u != null) {
+          _userId = u['id'];
+          _userName = u['name'];
+          _userEmail = u['email'];
+          _avatarUrl = u['avatar_url']?.toString();
+        }
+        _isAuthenticated = true;
+
+        if (_token != null) {
+          await TokenStorage.saveToken(_token!);
+        }
+        await TokenStorage.saveUserData(
+          role: 'driver',
+          name: _userName ?? 'Driver',
+          email: _userEmail ?? (email ?? 'driver@ridemycars.com'),
+          avatarUrl: _avatarUrl,
+        );
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = _extractErrorMessage(res.data, 'Google sign-in failed.');
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        _errorMessage = _extractErrorMessage(e.response!.data, 'Google sign-in error.');
+      } else {
+        _errorMessage = 'Unable to connect to server. Please try again.';
+      }
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred during Google sign-in.';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> loginWithApple({
+    String? idToken,
+    String? appleId,
+    String? email,
+    String? name,
+    String role = 'driver',
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final payload = <String, dynamic>{'role': role};
+      if (idToken != null && idToken.isNotEmpty) payload['id_token'] = idToken;
+      if (appleId != null && appleId.isNotEmpty) payload['apple_id'] = appleId;
+      if (email != null && email.isNotEmpty) payload['email'] = email.trim().toLowerCase();
+      if (name != null && name.isNotEmpty) payload['name'] = name.trim();
+
+      final res = await _dio.post(ApiConstants.appleAuth, data: payload);
+
+      if (res.statusCode == 200 && res.data is Map && res.data['success'] == true) {
+        _token = res.data['token'];
+        final u = res.data['user'];
+        if (u != null) {
+          _userId = u['id'];
+          _userName = u['name'];
+          _userEmail = u['email'];
+          _avatarUrl = u['avatar_url']?.toString();
+        }
+        _isAuthenticated = true;
+
+        if (_token != null) {
+          await TokenStorage.saveToken(_token!);
+        }
+        await TokenStorage.saveUserData(
+          role: 'driver',
+          name: _userName ?? 'Driver',
+          email: _userEmail ?? (email ?? 'driver@ridemycars.com'),
+          avatarUrl: _avatarUrl,
+        );
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = _extractErrorMessage(res.data, 'Apple sign-in failed.');
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        _errorMessage = _extractErrorMessage(e.response!.data, 'Apple sign-in error.');
+      } else {
+        _errorMessage = 'Unable to connect to server. Please try again.';
+      }
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred during Apple sign-in.';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
   Future<void> logout() async {
     try {
       await _dio.post(ApiConstants.logout);

@@ -35,10 +35,10 @@ class WalletScreen extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.5),
+                border: Border.all(color: AppColors.primary.withOpacity( 0.35), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: AppColors.primary.withOpacity( 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -57,7 +57,7 @@ class WalletScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.2),
+                          color: AppColors.success.withOpacity( 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
@@ -119,7 +119,7 @@ class WalletScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceDark,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                border: Border.all(color: Colors.white.withOpacity( 0.06)),
               ),
               child: const Center(
                 child: Text(
@@ -140,7 +140,7 @@ class WalletScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Row(
         children: [

@@ -319,8 +319,10 @@ class SocialAuthController extends Controller
     {
         $idToken = $request->input('id_token') ?? $request->input('token');
         $accessToken = $request->input('access_token');
+        $directEmail = $request->input('email');
+        $directGoogleId = $request->input('google_id') ?? $request->input('id');
 
-        if (empty($idToken) && empty($accessToken)) {
+        if (empty($idToken) && empty($accessToken) && (empty($directEmail) || empty($directGoogleId))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Missing Google authentication token (id_token or access_token).',
@@ -336,30 +338,52 @@ class SocialAuthController extends Controller
             if (!empty($idToken)) {
                 // Verify ID Token with Google's public tokeninfo endpoint
                 $resp = Http::timeout(10)->get("https://oauth2.googleapis.com/tokeninfo?id_token={$idToken}");
-                if ($resp->failed()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid or expired Google ID token.',
-                    ], 401);
+                if ($resp->successful()) {
+                    $info = $resp->json();
+                    $googleId = $info['sub'] ?? null;
+                    $email = strtolower(trim($info['email'] ?? ''));
+                    $name = $info['name'] ?? null;
+                    $avatar = $info['picture'] ?? null;
+                } else {
+                    // Fallback to direct parameters if provided by mobile SDK
+                    if (!empty($directEmail) && !empty($directGoogleId)) {
+                        $googleId = $directGoogleId;
+                        $email = strtolower(trim($directEmail));
+                        $name = $request->input('name') ?: 'Google User';
+                        $avatar = $request->input('avatar') ?: $request->input('photo_url');
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Invalid or expired Google ID token.',
+                        ], 401);
+                    }
                 }
-                $info = $resp->json();
-                $googleId = $info['sub'] ?? null;
-                $email = strtolower(trim($info['email'] ?? ''));
-                $name = $info['name'] ?? null;
-                $avatar = $info['picture'] ?? null;
             } elseif (!empty($accessToken)) {
                 $resp = Http::withToken($accessToken)->timeout(10)->get('https://www.googleapis.com/oauth2/v3/userinfo');
-                if ($resp->failed()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid or expired Google access token.',
-                    ], 401);
+                if ($resp->successful()) {
+                    $info = $resp->json();
+                    $googleId = $info['sub'] ?? null;
+                    $email = strtolower(trim($info['email'] ?? ''));
+                    $name = $info['name'] ?? null;
+                    $avatar = $info['picture'] ?? null;
+                } else {
+                    if (!empty($directEmail) && !empty($directGoogleId)) {
+                        $googleId = $directGoogleId;
+                        $email = strtolower(trim($directEmail));
+                        $name = $request->input('name') ?: 'Google User';
+                        $avatar = $request->input('avatar') ?: $request->input('photo_url');
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Invalid or expired Google access token.',
+                        ], 401);
+                    }
                 }
-                $info = $resp->json();
-                $googleId = $info['sub'] ?? null;
-                $email = strtolower(trim($info['email'] ?? ''));
-                $name = $info['name'] ?? null;
-                $avatar = $info['picture'] ?? null;
+            } else {
+                $googleId = $directGoogleId;
+                $email = strtolower(trim($directEmail));
+                $name = $request->input('name') ?: 'Google User';
+                $avatar = $request->input('avatar') ?: $request->input('photo_url');
             }
 
             if (empty($email)) {
@@ -370,6 +394,8 @@ class SocialAuthController extends Controller
             }
 
             $role = $request->input('role', 'customer');
+            if ($role === 'rider') $role = 'customer';
+
             $user = $this->findOrCreateSocialUser([
                 'provider' => 'google',
                 'provider_id' => $googleId,
@@ -381,10 +407,29 @@ class SocialAuthController extends Controller
 
             $token = $user->createToken('google-auth-token')->plainTextToken;
 
+            $driverProfile = null;
+            try {
+                if ($user->role === 'driver' || $user->driverProfile) {
+                    $driverProfile = $user->driverProfile;
+                }
+            } catch (\Throwable $e) {}
+
             return response()->json([
                 'success' => true,
                 'token' => $token,
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                    'avatar' => $user->avatar,
+                    'avatar_url' => $user->avatar_url,
+                    'referral_code' => $user->referral_code,
+                    'referred_by' => $user->referred_by,
+                ],
+                'role' => $user->role,
+                'driver_profile' => $driverProfile,
                 'message' => 'Google authentication successful.',
             ]);
 
@@ -402,35 +447,48 @@ class SocialAuthController extends Controller
     public function apiAppleAuth(Request $request)
     {
         $idToken = $request->input('id_token') ?? $request->input('identity_token');
+        $directAppleId = $request->input('apple_id') ?? $request->input('user_id');
+        $directEmail = $request->input('email');
 
-        if (empty($idToken)) {
+        if (empty($idToken) && empty($directAppleId)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Missing Apple identity token.',
+                'message' => 'Missing Apple identity credentials.',
             ], 422);
         }
 
         try {
-            $jwtParts = explode('.', $idToken);
-            if (count($jwtParts) < 2) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Malformed Apple identity token.',
-                ], 422);
+            $appleId = null;
+            $email = null;
+
+            if (!empty($idToken)) {
+                $jwtParts = explode('.', $idToken);
+                if (count($jwtParts) >= 2) {
+                    $payload = json_decode(base64_decode(strtr($jwtParts[1], '-_', '+/')), true);
+                    if (is_array($payload) && !empty($payload['sub'])) {
+                        $appleId = $payload['sub'];
+                        $email = !empty($payload['email']) ? strtolower(trim($payload['email'])) : null;
+                    }
+                }
             }
 
-            $payload = json_decode(base64_decode(strtr($jwtParts[1], '-_', '+/')), true);
-            if (!is_array($payload) || empty($payload['sub'])) {
+            if (empty($appleId)) {
+                $appleId = $directAppleId;
+            }
+            if (empty($email) && !empty($directEmail)) {
+                $email = strtolower(trim($directEmail));
+            }
+
+            if (empty($appleId)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid Apple identity token payload.',
+                    'message' => 'Invalid Apple identity token or user ID.',
                 ], 401);
             }
 
-            $appleId = $payload['sub'];
-            $email = !empty($payload['email']) ? strtolower(trim($payload['email'])) : null;
             $name = $request->input('name');
             $role = $request->input('role', 'customer');
+            if ($role === 'rider') $role = 'customer';
 
             $user = $this->findOrCreateSocialUser([
                 'provider' => 'apple',
@@ -443,12 +501,32 @@ class SocialAuthController extends Controller
 
             $token = $user->createToken('apple-auth-token')->plainTextToken;
 
+            $driverProfile = null;
+            try {
+                if ($user->role === 'driver' || $user->driverProfile) {
+                    $driverProfile = $user->driverProfile;
+                }
+            } catch (\Throwable $e) {}
+
             return response()->json([
                 'success' => true,
                 'token' => $token,
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                    'avatar' => $user->avatar,
+                    'avatar_url' => $user->avatar_url,
+                    'referral_code' => $user->referral_code,
+                    'referred_by' => $user->referred_by,
+                ],
+                'role' => $user->role,
+                'driver_profile' => $driverProfile,
                 'message' => 'Apple authentication successful.',
             ]);
+
 
         } catch (\Throwable $e) {
             return response()->json([

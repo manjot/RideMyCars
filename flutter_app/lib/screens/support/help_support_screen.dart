@@ -33,14 +33,14 @@ class HelpSupportScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.primary.withOpacity( 0.3)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: AppColors.primary.withOpacity( 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.support_agent_rounded, color: AppColors.primary, size: 28),
@@ -85,7 +85,7 @@ class HelpSupportScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: ExpansionTile(
         title: Text(title, style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600, fontSize: 14)),

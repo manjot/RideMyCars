@@ -336,7 +336,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
+                              color: Colors.black.withOpacity( 0.3),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -362,7 +362,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
+                            color: Colors.black.withOpacity( 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -407,7 +407,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           border: Border.all(color: AppColors.primary, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
+                              color: Colors.black.withOpacity( 0.3),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -452,7 +452,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: Colors.black.withOpacity( 0.5),
                       blurRadius: 28,
                       offset: const Offset(0, -8),
                     ),
@@ -537,7 +537,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.backgroundDark,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                              border: Border.all(color: AppColors.primary.withOpacity( 0.3)),
                             ),
                             child: _isSearchingPlaces
                                 ? const Padding(
@@ -652,7 +652,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.15) : AppColors.backgroundDark,
+            color: isSelected ? AppColors.primary.withOpacity( 0.15) : AppColors.backgroundDark,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected ? AppColors.primary : Colors.transparent,
@@ -792,7 +792,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.backgroundDark,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  border: Border.all(color: Colors.white.withOpacity( 0.06)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -886,7 +886,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         decoration: BoxDecoration(
           color: AppColors.backgroundDark,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          border: Border.all(color: Colors.white.withOpacity( 0.06)),
         ),
         child: Column(
           children: [

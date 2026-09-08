@@ -125,7 +125,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
+                        color: AppColors.primary.withOpacity( 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -157,12 +157,12 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: AppColors.primary.withOpacity( 0.3),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
+                          color: Colors.black.withOpacity( 0.25),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -176,10 +176,10 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.2),
+                                color: AppColors.primary.withOpacity( 0.2),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color: AppColors.primary.withOpacity( 0.4),
                                 ),
                               ),
                               child: const Row(
@@ -222,10 +222,10 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.4),
+                            color: Colors.black.withOpacity( 0.4),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.4),
+                              color: AppColors.primary.withOpacity( 0.4),
                             ),
                           ),
                           child: Row(
@@ -357,7 +357,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Row(
         children: [
@@ -384,14 +384,14 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.info.withValues(alpha: 0.15),
+              color: AppColors.info.withOpacity( 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: AppColors.info, size: 20),
@@ -418,7 +418,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Row(
         children: [

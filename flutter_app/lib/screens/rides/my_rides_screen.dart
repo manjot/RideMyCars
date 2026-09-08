@@ -173,7 +173,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
           decoration: BoxDecoration(
             color: AppColors.surfaceDark,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: Colors.white.withOpacity( 0.08)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -188,7 +188,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.15),
+                            color: AppColors.primary.withOpacity( 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(Icons.local_taxi_rounded, color: AppColors.primary, size: 20),
@@ -228,7 +228,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                           margin: const EdgeInsets.only(top: 4),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(status).withValues(alpha: 0.15),
+                            color: _getStatusColor(status).withOpacity( 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

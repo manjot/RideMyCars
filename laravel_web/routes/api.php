@@ -32,6 +32,10 @@ Route::post('/auth/phone/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/auth/phone/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/auth/social/google', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiGoogleAuth']);
 Route::post('/auth/social/apple', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiAppleAuth']);
+Route::post('/auth/google', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiGoogleAuth']);
+Route::post('/auth/apple', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiAppleAuth']);
+Route::post('/auth/email/send-otp', [AuthController::class, 'sendOtp']);
+Route::post('/auth/email/verify-otp', [AuthController::class, 'verifyOtp']);
 
 use App\Http\Controllers\StripeVerificationController;
 

@@ -173,7 +173,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.55),
+                    color: Colors.black.withOpacity( 0.55),
                     blurRadius: 30,
                     offset: const Offset(0, -10),
                   ),
@@ -192,9 +192,9 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
+                          color: AppColors.primary.withOpacity( 0.12),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          border: Border.all(color: AppColors.primary.withOpacity( 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -290,9 +290,9 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
+                            color: Colors.amber.withOpacity( 0.1),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                            border: Border.all(color: Colors.amber.withOpacity( 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -322,7 +322,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                 IconButton(
                                   onPressed: () => _callDriver((currentRide['poc_phone'] ?? currentRide['passenger_phone']).toString()),
                                   style: IconButton.styleFrom(
-                                    backgroundColor: Colors.amber.withValues(alpha: 0.2),
+                                    backgroundColor: Colors.amber.withOpacity( 0.2),
                                     foregroundColor: Colors.amber,
                                   ),
                                   icon: const Icon(Icons.phone_rounded, size: 18),

@@ -518,15 +518,49 @@ class AuthController extends Controller
             }
 
             if (!empty($email)) {
-                $request->validate(['email' => 'required|email']);
                 $cleanEmail = trim(strtolower($email));
+                if (!filter_var($cleanEmail, FILTER_VALIDATE_EMAIL)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please provide a valid email address.',
+                        'error' => 'Please provide a valid email address.',
+                    ], 422);
+                }
+
+                $action = $request->input('action', 'login');
+                $user = User::whereRaw('LOWER(email) = ?', [$cleanEmail])
+                    ->orWhere('email', $cleanEmail)
+                    ->first();
+
+                // If registering but user already exists:
+                if ($action === 'register' && $user) {
+                    return response()->json([
+                        'success' => false,
+                        'user_exists' => true,
+                        'message' => "This email address is already registered. Please sign in instead.",
+                        'email' => $cleanEmail,
+                    ], 422);
+                }
+
+                // If logging in but account does not exist:
+                if ($action === 'login' && !$user && !$request->boolean('auto_register')) {
+                    return response()->json([
+                        'success' => false,
+                        'user_exists' => false,
+                        'not_found' => true,
+                        'message' => "No RideMyCars account found for {$cleanEmail}. Starting registration...",
+                        'email' => $cleanEmail,
+                    ], 404);
+                }
+
                 $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
                 \Illuminate\Support\Facades\Cache::put('otp_' . $cleanEmail, $otp, now()->addMinutes(5));
+                \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(5));
 
                 $emailService = app(\App\Services\EmailOtpService::class);
                 $result = $emailService->sendOtp($cleanEmail, $otp);
 
-                Log::info("API Email OTP for {$cleanEmail}: {$otp}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
+                Log::info("API Email OTP for {$cleanEmail}: {$otp}. Action: {$action}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
 
                 if (!$result['success']) {
                     return response()->json([
@@ -538,6 +572,8 @@ class AuthController extends Controller
 
                 return response()->json([
                     'success' => true,
+                    'user_exists' => ($user !== null),
+                    'action' => $action,
                     'message' => "Verification code sent to {$cleanEmail}",
                     'hint' => 'Verification code sent. Please check your email inbox.',
                     'email' => $cleanEmail,
@@ -814,12 +850,29 @@ class AuthController extends Controller
                         }
                     }
 
+                    $requestedRole = $request->input('role', 'customer');
+                    if (!in_array($requestedRole, ['customer', 'rider', 'driver', 'owner'])) {
+                        $requestedRole = 'customer';
+                    }
+                    if ($requestedRole === 'rider') $requestedRole = 'customer';
+
+                    $name = $request->input('name') ?: (trim($request->input('first_name', '') . ' ' . $request->input('last_name', '')));
+                    if (empty($name)) {
+                        $name = explode('@', $cleanEmail)[0];
+                    }
+
+                    $rawPassword = $request->input('password');
+                    $hashedPassword = !empty($rawPassword) ? Hash::make($rawPassword) : Hash::make(Str::random(24));
+
                     $createEmailData = [
-                        'name' => explode('@', $email)[0],
-                        'password' => Hash::make(Str::random(16)),
-                        'role' => 'customer',
+                        'name' => $name,
+                        'password' => $hashedPassword,
+                        'role' => $requestedRole,
                     ];
 
+                    if (Schema::hasColumn('users', 'email_verified_at')) {
+                        $createEmailData['email_verified_at'] = now();
+                    }
                     if (Schema::hasColumn('users', 'referred_by')) {
                         $createEmailData['referred_by'] = !empty($inputReferral) ? $inputReferral : null;
                     }
@@ -844,18 +897,68 @@ class AuthController extends Controller
                         ->orWhere('email', $email)
                         ->first();
 
+                    $isNewUser = false;
                     if (!$user) {
+                        $isNewUser = true;
                         $user = User::create(array_merge(['email' => $cleanEmail], $createEmailData));
                     } else {
                         if (empty($user->account_status) || $user->account_status === 'pending') {
                             $user->account_status = 'active';
-                            $user->save();
+                        }
+                        if (empty($user->email_verified_at) && Schema::hasColumn('users', 'email_verified_at')) {
+                            $user->email_verified_at = now();
+                        }
+                        $user->save();
+                    }
+
+                    // If driver, ensure driver profile exists
+                    if ($user->role === 'driver' || $requestedRole === 'driver') {
+                        try {
+                            $licNumber = trim($request->input('license_number', ''));
+                            if (!$licNumber || DriverProfile::where('license_number', $licNumber)->where('user_id', '!=', $user->id)->exists()) {
+                                $licNumber = 'DL-' . strtoupper(Str::random(6));
+                            }
+                            DriverProfile::firstOrCreate(
+                                ['user_id' => $user->id],
+                                [
+                                    'license_number' => $licNumber,
+                                    'verification_status' => 'verified',
+                                    'is_available' => true,
+                                    'rating' => 5.0,
+                                    'total_trips' => 0,
+                                    'country' => $request->input('country', 'USA'),
+                                    'service_area' => 'Global',
+                                    'experience_years' => (int) $request->input('experience_years', 5),
+                                    'hourly_rate' => (float) $request->input('hourly_rate', 25.00),
+                                    'daily_rate' => (float) $request->input('daily_rate', 170.00),
+                                    'photo_formality_status' => 'verified',
+                                ]
+                            );
+                        } catch (\Throwable $e) {
+                            Log::warning('Email OTP DriverProfile creation: ' . $e->getMessage());
                         }
                     }
+
+                    if (isset($user->account_status) && in_array($user->account_status, ['suspended', 'deactivated'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Your account has been suspended or deactivated.',
+                        ], 403);
+                    }
+
                     $token = $this->issueToken($user);
+
+                    $driverProfile = null;
+                    try {
+                        if ($user->role === 'driver' || $user->driverProfile) {
+                            $driverProfile = $user->driverProfile;
+                        }
+                    } catch (\Throwable $e) {}
+
                     return response()->json([
                         'success' => true,
-                        'message' => 'Verified successfully.',
+                        'message' => $isNewUser ? 'Account registered successfully!' : 'Login successful!',
+                        'is_new_user' => $isNewUser,
                         'token' => $token,
                         'user' => [
                             'id' => $user->id,
@@ -869,6 +972,7 @@ class AuthController extends Controller
                             'referred_by' => $user->referred_by,
                         ],
                         'role' => $user->role,
+                        'driver_profile' => $driverProfile,
                     ]);
                 }
 

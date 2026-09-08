@@ -60,10 +60,10 @@ class FloatingRideWidget extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+                border: Border.all(color: AppColors.primary.withOpacity( 0.5), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.55),
+                    color: Colors.black.withOpacity( 0.55),
                     blurRadius: 25,
                     offset: const Offset(0, 10),
                   ),
@@ -85,7 +85,7 @@ class FloatingRideWidget extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.4),
+                              color: AppColors.primary.withOpacity( 0.4),
                               blurRadius: 10,
                             ),
                           ],
@@ -149,7 +149,7 @@ class FloatingRideWidget extends StatelessWidget {
                   IconButton(
                     onPressed: _launchMaps,
                     style: IconButton.styleFrom(
-                      backgroundColor: AppColors.success.withValues(alpha: 0.25),
+                      backgroundColor: AppColors.success.withOpacity( 0.25),
                       foregroundColor: AppColors.success,
                     ),
                     icon: const Icon(Icons.navigation_rounded, size: 20),
