@@ -2775,9 +2775,44 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     try {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
         $output['seed'] = \Illuminate\Support\Facades\Artisan::output();
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'VehicleSeeder', '--force' => true]);
+        $output['vehicle_seed'] = \Illuminate\Support\Facades\Artisan::output();
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
         $output['ride_categories_seeded'] = true;
+
+        // Directly update all vehicle records with relevant high-definition landscape images & categories
+        $vehicleImagesMap = [
+            'TSL-9901' => ['image_url' => 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sedan'],
+            'BMW-4001' => ['image_url' => 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Coupe'],
+            'RNG-7007' => ['image_url' => 'https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'MBZ-5800' => ['image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sedan'],
+            'POR-9110' => ['image_url' => 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Convertible'],
+            'AUD-8800' => ['image_url' => 'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'TOY-2024' => ['image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80', 'category' => 'Sedan', 'type' => 'Midsize'],
+            'HND-5500' => ['image_url' => 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?auto=format&fit=crop&w=1200&q=80', 'category' => 'Compact', 'type' => 'Compact'],
+            'FRD-5000' => ['image_url' => 'https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Convertible'],
+            'CAD-9900' => ['image_url' => 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'HYU-7700' => ['image_url' => 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'VAN-8800' => ['image_url' => 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80', 'category' => 'Van', 'type' => 'Van'],
+            'TOY-4400' => ['image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'VET-3300' => ['image_url' => 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sports'],
+            'GTI-2000' => ['image_url' => 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1200&q=80', 'category' => 'Compact', 'type' => 'Hatchback'],
+            'ECO-1000' => ['image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80', 'category' => 'Economy', 'type' => 'Economy'],
+            'LMN-9101' => ['image_url' => 'https://images.unsplash.com/photo-1520050206274-a1ae44613e6d?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'SUV-4444' => ['image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'ABC-1234' => ['image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80', 'category' => 'Sedan', 'type' => 'Midsize'],
+            'LUX-1111' => ['image_url' => 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sedan'],
+            'XYZ-5678' => ['image_url' => 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80', 'category' => 'Compact', 'type' => 'Compact'],
+            'ECO-3333' => ['image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80', 'category' => 'Economy', 'type' => 'Economy'],
+            'VAN-2222' => ['image_url' => 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80', 'category' => 'Van', 'type' => 'Van'],
+            'GS-4527-26' => ['image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Executive Sedan'],
+        ];
+
+        foreach ($vehicleImagesMap as $plate => $fields) {
+            \Illuminate\Support\Facades\DB::table('vehicles')->where('license_plate', $plate)->update($fields);
+        }
+        $output['vehicles_synced'] = count($vehicleImagesMap);
     } catch (\Throwable $e) {
         $output['seed_err'] = $e->getMessage();
     }

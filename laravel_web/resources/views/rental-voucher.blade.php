@@ -52,8 +52,8 @@
             <!-- Vehicle Summary Banner -->
             <div class="p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
                 <div class="flex items-center gap-5">
-                    <div class="w-24 h-16 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden p-2 flex items-center justify-center shrink-0">
-                        <img src="{{ $ride->vehicle ? $ride->vehicle->image_src : '/images/hero-rent.png' }}" alt="Vehicle" class="w-full h-full object-contain">
+                    <div class="w-24 h-20 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shrink-0 shadow-sm relative">
+                        <img src="{{ $ride->vehicle ? $ride->vehicle->image_src : '/images/hero-rent.png' }}" alt="Vehicle" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <span class="text-xs text-amber-300 font-extrabold uppercase tracking-wider block mb-1">Confirmed Vehicle</span>

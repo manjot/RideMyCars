@@ -13,22 +13,22 @@ class RentalInspectionSeeder extends Seeder
     {
         $vehicle1 = Vehicle::firstOrCreate(
             ['license_plate' => 'ABC-1234'],
-            ['make' => 'Toyota', 'model' => 'Camry', 'year' => '2023', 'type' => 'Midsize', 'daily_rate' => 45.00, 'is_available' => true]
+            ['make' => 'Toyota', 'model' => 'Camry', 'year' => '2023', 'category' => 'Sedan', 'type' => 'Midsize', 'daily_rate' => 45.00, 'is_available' => true, 'image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80']
         );
 
         $vehicle2 = Vehicle::firstOrCreate(
             ['license_plate' => 'XYZ-5678'],
-            ['make' => 'Honda', 'model' => 'Civic', 'year' => '2022', 'type' => 'Compact', 'daily_rate' => 35.00, 'is_available' => true]
+            ['make' => 'Honda', 'model' => 'Civic', 'year' => '2022', 'category' => 'Compact', 'type' => 'Compact', 'daily_rate' => 35.00, 'is_available' => true, 'image_url' => 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80']
         );
 
         $vehicle3 = Vehicle::firstOrCreate(
             ['license_plate' => 'LMN-9101'],
-            ['make' => 'Ford', 'model' => 'Explorer', 'year' => '2024', 'type' => 'SUV', 'daily_rate' => 75.00, 'is_available' => true]
+            ['make' => 'Ford', 'model' => 'Explorer', 'year' => '2024', 'category' => 'SUV', 'type' => 'SUV', 'daily_rate' => 75.00, 'is_available' => true, 'image_url' => 'https://images.unsplash.com/photo-1520050206274-a1ae44613e6d?auto=format&fit=crop&w=1200&q=80']
         );
 
         $vehicle4 = Vehicle::firstOrCreate(
             ['license_plate' => 'LUX-1111'],
-            ['make' => 'Mercedes-Benz', 'model' => 'E-Class', 'year' => '2023', 'type' => 'Luxury', 'daily_rate' => 120.00, 'is_available' => true]
+            ['make' => 'Mercedes-Benz', 'model' => 'E-Class', 'year' => '2023', 'category' => 'Luxury', 'type' => 'Sedan', 'daily_rate' => 120.00, 'is_available' => true, 'image_url' => 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80']
         );
 
         $booking1 = DriverBooking::firstOrCreate(

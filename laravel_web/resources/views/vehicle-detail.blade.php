@@ -121,8 +121,14 @@
                     <!-- Main Showcase Card -->
                     <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-sm overflow-hidden">
                         <div class="flex flex-col md:flex-row items-center gap-6 mb-6">
-                            <div class="w-full md:w-1/2 aspect-video bg-gray-50 dark:bg-[#181818] rounded-2xl overflow-hidden p-4 flex items-center justify-center border border-gray-100 dark:border-white/5">
-                                <img src="{{ $vehicle->image_src }}" alt="{{ $vehicle->make }} {{ $vehicle->model }}" class="w-full h-full object-contain" onError="this.onerror=null;this.src='/images/hero-rent.png';">
+                            <div class="w-full md:w-1/2 h-64 sm:h-72 rounded-2xl overflow-hidden relative border border-gray-200 dark:border-white/10 bg-slate-900 shadow-md">
+                                <img src="{{ $vehicle->image_src }}" alt="{{ $vehicle->make }} {{ $vehicle->model }}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onError="this.onerror=null;this.src='https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1000&q=80';">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10 pointer-events-none"></div>
+                                <div class="absolute bottom-3 left-3 z-10">
+                                    <span class="px-3 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white text-xs font-black border border-white/20 shadow-sm">
+                                        {{ $vehicle->year }} {{ $vehicle->make }}
+                                    </span>
+                                </div>
                             </div>
                             <div class="w-full md:w-1/2 space-y-3">
                                 <span class="px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-extrabold text-xs uppercase tracking-wider border border-brand-200 dark:border-brand-800/30" x-text="'Category: ' + (vehicle.type || vehicle.category || 'Sedan')"></span>

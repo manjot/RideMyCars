@@ -300,18 +300,40 @@
                     
                     <!-- Top Category & Supplier Badge -->
                     <div class="flex items-center justify-between mb-3">
-                        <span class="px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-[11px] font-extrabold rounded-lg uppercase tracking-wider border border-brand-200 dark:border-brand-800/30" x-text="vehicle.type || vehicle.category || 'Sedan'"></span>
-                        <span class="text-[11px] text-gray-400 font-semibold" x-text="vehicle.owner ? 'Owner: ' + vehicle.owner.name : 'Verified Fleet'"></span>
+                        <span class="px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-amber-800 dark:text-brand-300 text-[11px] font-extrabold rounded-lg uppercase tracking-wider border border-brand-200 dark:border-brand-800/30" x-text="vehicle.category || vehicle.type || 'Sedan'"></span>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                            <span x-text="vehicle.owner ? vehicle.owner.name : 'Verified Fleet'"></span>
+                        </span>
                     </div>
 
-                    <!-- Vehicle Image -->
-                    <div class="w-full h-44 bg-gray-50 dark:bg-[#181818] rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center p-3 border border-gray-100 dark:border-white/5">
-                        <img :src="vehicle.image_src || '/images/hero-rent.png'" class="w-full h-full object-contain transition-transform group-hover:scale-105" :alt="vehicle.make + ' ' + vehicle.model" onerror="this.onerror=null;this.src='/images/hero-rent.png';">
+                    <!-- Framed Full Height & Width Vehicle Showcase -->
+                    <div class="w-full h-52 sm:h-56 rounded-2xl mb-4 overflow-hidden relative border border-gray-200/90 dark:border-white/10 bg-slate-900 shadow-sm group-hover:shadow-lg transition-all duration-300">
+                        <img :src="vehicle.image_src || '/images/hero-rent.png'" 
+                             class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" 
+                             :alt="vehicle.make + ' ' + vehicle.model" 
+                             loading="lazy"
+                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1000&q=80';">
+                        
+                        <!-- Ambient Depth Gradient Overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none"></div>
+
+                        <!-- Year & Model Badge Overlay inside frame (bottom-left) -->
+                        <div class="absolute bottom-2.5 left-3 z-10">
+                            <span class="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white text-[11px] font-black border border-white/20 shadow-sm" x-text="vehicle.year + ' Model'"></span>
+                        </div>
+
+                        <!-- Transmission Badge inside frame (top-right) -->
+                        <div class="absolute top-2.5 right-2.5 z-10">
+                            <span class="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-amber-300 text-[10px] font-extrabold uppercase tracking-wider border border-white/20 shadow-sm flex items-center gap-1">
+                                <span x-text="vehicle.transmission === 'manual' ? 'Manual' : 'Automatic'"></span>
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Make & Model Title -->
                     <div class="mb-4">
-                        <h3 class="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight" x-text="`${vehicle.year} ${vehicle.make} ${vehicle.model}`"></h3>
+                        <h3 class="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" x-text="`${vehicle.year} ${vehicle.make} ${vehicle.model}`"></h3>
                         <span class="text-xs text-gray-400 font-medium">Or Similar Category Vehicle</span>
                     </div>
 
@@ -362,7 +384,7 @@
                         </div>
 
                         <a :href="`/rent/${vehicle.id}?start_date={{ $startDate }}&pickup_time={{ $pickupTime }}&return_date={{ $returnDate }}&return_time={{ $returnTime }}&pickup_location=${encodeURIComponent('{{ $pickupLocation }}')}&dropoff_location=${encodeURIComponent('{{ $dropoffLocation }}')}&driver_age={{ $driverAge }}&driver_country={{ $driverCountry }}`"
-                           class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-xl transition-all shadow-md text-xs text-center block uppercase tracking-wider">
+                           class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-xl transition-all shadow-md text-xs text-center block uppercase tracking-wider">
                             View Deal & Customize
                         </a>
                     </div>

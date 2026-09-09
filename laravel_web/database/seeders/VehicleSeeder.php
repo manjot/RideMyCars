@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Vehicle;
 use App\Models\Ride;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class VehicleSeeder extends Seeder
 {
@@ -16,6 +17,7 @@ class VehicleSeeder extends Seeder
             ->update(['status' => 'completed']);
 
         $vehicles = [
+            // 1. Tesla Model S Plaid
             [
                 'make' => 'Tesla',
                 'model' => 'Model S Plaid',
@@ -33,9 +35,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 500.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 2. BMW M4 Competition
             [
                 'make' => 'BMW',
                 'model' => 'M4 Competition',
@@ -53,9 +56,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 500.00,
                 'daily_mileage_limit' => 250,
-                'image_url' => 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 3. Land Rover Range Rover Sport (Landscape format)
             [
                 'make' => 'Land Rover',
                 'model' => 'Range Rover Sport',
@@ -73,9 +77,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 400.00,
                 'daily_mileage_limit' => 250,
-                'image_url' => 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 4. Mercedes-Benz S-Class S580
             [
                 'make' => 'Mercedes-Benz',
                 'model' => 'S-Class S580',
@@ -93,9 +98,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 600.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 5. Porsche 911 Carrera Cabriolet
             [
                 'make' => 'Porsche',
                 'model' => '911 Carrera Cabriolet',
@@ -113,9 +119,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 21,
                 'security_deposit_amount' => 800.00,
                 'daily_mileage_limit' => 200,
-                'image_url' => 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 6. Audi Q8 e-tron (Landscape format)
             [
                 'make' => 'Audi',
                 'model' => 'Q8 e-tron',
@@ -133,9 +140,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 350.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 7. Toyota Camry Hybrid XSE
             [
                 'make' => 'Toyota',
                 'model' => 'Camry Hybrid XSE',
@@ -153,9 +161,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 200.00,
                 'daily_mileage_limit' => 400,
-                'image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 8. Honda Civic Touring
             [
                 'make' => 'Honda',
                 'model' => 'Civic Touring',
@@ -173,9 +182,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 150.00,
                 'daily_mileage_limit' => 350,
-                'image_url' => 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 9. Ford Mustang GT V8
             [
                 'make' => 'Ford',
                 'model' => 'Mustang GT V8',
@@ -193,9 +203,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 21,
                 'security_deposit_amount' => 350.00,
                 'daily_mileage_limit' => 250,
-                'image_url' => 'https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 10. Cadillac Escalade ESV
             [
                 'make' => 'Cadillac',
                 'model' => 'Escalade ESV',
@@ -213,9 +224,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 21,
                 'security_deposit_amount' => 500.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 11. Hyundai Tucson Hybrid
             [
                 'make' => 'Hyundai',
                 'model' => 'Tucson Hybrid',
@@ -233,9 +245,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 200.00,
                 'daily_mileage_limit' => 350,
-                'image_url' => 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 12. Mercedes-Benz Sprinter Luxury Van
             [
                 'make' => 'Mercedes-Benz',
                 'model' => 'Sprinter Luxury Van',
@@ -253,9 +266,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 21,
                 'security_deposit_amount' => 400.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 13. Toyota RAV4 Hybrid AWD
             [
                 'make' => 'Toyota',
                 'model' => 'RAV4 Hybrid AWD',
@@ -273,9 +287,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 200.00,
                 'daily_mileage_limit' => 350,
-                'image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 14. Chevrolet Corvette Stingray
             [
                 'make' => 'Chevrolet',
                 'model' => 'Corvette Stingray',
@@ -293,9 +308,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 25,
                 'security_deposit_amount' => 700.00,
                 'daily_mileage_limit' => 200,
-                'image_url' => 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 15. Volkswagen Golf GTI (Actual Golf GTI hot hatch)
             [
                 'make' => 'Volkswagen',
                 'model' => 'Golf GTI',
@@ -313,9 +329,10 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 150.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1471440671318-55bdbb772f93?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
+            // 16. Nissan Versa Note (Compact Hatchback)
             [
                 'make' => 'Nissan',
                 'model' => 'Versa Note',
@@ -333,13 +350,192 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 100.00,
                 'daily_mileage_limit' => 400,
-                'image_url' => 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+
+            // Legacy records: guarantee crisp photos, correct categories & specifications
+            // 17. Ford Explorer (LMN-9101)
+            [
+                'make' => 'Ford',
+                'model' => 'Explorer',
+                'year' => '2024',
+                'license_plate' => 'LMN-9101',
+                'category' => 'SUV',
+                'type' => 'SUV',
+                'daily_rate' => 75.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'petrol',
+                'seats' => 7,
+                'luggage' => 4,
+                'doors' => 5,
+                'min_driver_age' => 21,
+                'security_deposit_amount' => 300.00,
+                'daily_mileage_limit' => 350,
+                'image_url' => 'https://images.unsplash.com/photo-1520050206274-a1ae44613e6d?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 18. Toyota RAV4 (SUV-4444)
+            [
+                'make' => 'Toyota',
+                'model' => 'RAV4',
+                'year' => '2024',
+                'license_plate' => 'SUV-4444',
+                'category' => 'SUV',
+                'type' => 'SUV',
+                'daily_rate' => 65.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'hybrid',
+                'seats' => 5,
+                'luggage' => 3,
+                'doors' => 5,
+                'min_driver_age' => 18,
+                'security_deposit_amount' => 200.00,
+                'daily_mileage_limit' => 350,
+                'image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 19. Toyota Camry (ABC-1234)
+            [
+                'make' => 'Toyota',
+                'model' => 'Camry',
+                'year' => '2023',
+                'license_plate' => 'ABC-1234',
+                'category' => 'Sedan',
+                'type' => 'Midsize',
+                'daily_rate' => 45.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'petrol',
+                'seats' => 5,
+                'luggage' => 3,
+                'doors' => 4,
+                'min_driver_age' => 18,
+                'security_deposit_amount' => 150.00,
+                'daily_mileage_limit' => 350,
+                'image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 20. Mercedes-Benz E-Class (LUX-1111)
+            [
+                'make' => 'Mercedes-Benz',
+                'model' => 'E-Class',
+                'year' => '2023',
+                'license_plate' => 'LUX-1111',
+                'category' => 'Luxury',
+                'type' => 'Sedan',
+                'daily_rate' => 120.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'hybrid',
+                'seats' => 5,
+                'luggage' => 3,
+                'doors' => 4,
+                'min_driver_age' => 21,
+                'security_deposit_amount' => 400.00,
+                'daily_mileage_limit' => 300,
+                'image_url' => 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 21. Honda Civic (XYZ-5678)
+            [
+                'make' => 'Honda',
+                'model' => 'Civic',
+                'year' => '2022',
+                'license_plate' => 'XYZ-5678',
+                'category' => 'Compact',
+                'type' => 'Compact',
+                'daily_rate' => 35.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'petrol',
+                'seats' => 5,
+                'luggage' => 2,
+                'doors' => 4,
+                'min_driver_age' => 18,
+                'security_deposit_amount' => 150.00,
+                'daily_mileage_limit' => 350,
+                'image_url' => 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 22. Nissan Versa (ECO-3333)
+            [
+                'make' => 'Nissan',
+                'model' => 'Versa',
+                'year' => '2022',
+                'license_plate' => 'ECO-3333',
+                'category' => 'Economy',
+                'type' => 'Economy',
+                'daily_rate' => 25.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'petrol',
+                'seats' => 5,
+                'luggage' => 2,
+                'doors' => 4,
+                'min_driver_age' => 18,
+                'security_deposit_amount' => 100.00,
+                'daily_mileage_limit' => 400,
+                'image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 23. Chevrolet Express (VAN-2222)
+            [
+                'make' => 'Chevrolet',
+                'model' => 'Express',
+                'year' => '2021',
+                'license_plate' => 'VAN-2222',
+                'category' => 'Van',
+                'type' => 'Van',
+                'daily_rate' => 90.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'petrol',
+                'seats' => 12,
+                'luggage' => 6,
+                'doors' => 4,
+                'min_driver_age' => 21,
+                'security_deposit_amount' => 350.00,
+                'daily_mileage_limit' => 300,
+                'image_url' => 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80',
+                'approval_status' => 'approved',
+            ],
+            // 24. Mercedes-Benz CLA 250 (GS-4527-26)
+            [
+                'make' => 'Mercedes-Benz',
+                'model' => 'CLA 250',
+                'year' => '2017',
+                'license_plate' => 'GS-4527-26',
+                'category' => 'Luxury',
+                'type' => 'Executive Sedan',
+                'daily_rate' => 90.00,
+                'is_available' => true,
+                'transmission' => 'automatic',
+                'fuel_type' => 'petrol',
+                'seats' => 5,
+                'luggage' => 2,
+                'doors' => 4,
+                'min_driver_age' => 21,
+                'security_deposit_amount' => 350.00,
+                'daily_mileage_limit' => 300,
+                'image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
         ];
 
         foreach ($vehicles as $vehicle) {
             Vehicle::updateOrCreate(['license_plate' => $vehicle['license_plate']], $vehicle);
+
+            // Also ensure DB record is directly updated with image_url and category
+            DB::table('vehicles')
+                ->where('license_plate', $vehicle['license_plate'])
+                ->update([
+                    'image_url' => $vehicle['image_url'],
+                    'category' => $vehicle['category'],
+                    'type' => $vehicle['type'],
+                ]);
         }
     }
 }
