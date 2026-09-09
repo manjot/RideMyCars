@@ -58,6 +58,65 @@
                       return res.sort((a, b) => b.daily_rate - a.daily_rate);
                   }
                   return res.sort((a, b) => (b.year || 2024) - (a.year || 2024));
+              },
+
+              currentPage: 1,
+              perPage: 9,
+
+              init() {
+                  this.$watch('selectedCategory', () => { this.currentPage = 1; });
+                  this.$watch('selectedTransmission', () => { this.currentPage = 1; });
+                  this.$watch('selectedFuel', () => { this.currentPage = 1; });
+                  this.$watch('selectedSeats', () => { this.currentPage = 1; });
+                  this.$watch('selectedFuelPolicy', () => { this.currentPage = 1; });
+                  this.$watch('search', () => { this.currentPage = 1; });
+                  this.$watch('sortOption', () => { this.currentPage = 1; });
+                  this.$watch('perPage', () => { this.currentPage = 1; });
+              },
+
+              get totalPages() {
+                  return Math.max(1, Math.ceil(this.filteredVehicles.length / this.perPage));
+              },
+
+              get paginatedVehicles() {
+                  const start = (this.currentPage - 1) * this.perPage;
+                  return this.filteredVehicles.slice(start, start + parseInt(this.perPage));
+              },
+
+              get paginationStart() {
+                  if (this.filteredVehicles.length === 0) return 0;
+                  return (this.currentPage - 1) * this.perPage + 1;
+              },
+
+              get paginationEnd() {
+                  return Math.min(this.currentPage * this.perPage, this.filteredVehicles.length);
+              },
+
+              get pageNumbers() {
+                  const total = this.totalPages;
+                  const current = this.currentPage;
+                  if (total <= 7) {
+                      return Array.from({ length: total }, (_, i) => i + 1);
+                  }
+                  const pages = [];
+                  pages.push(1);
+                  if (current > 3) pages.push('...');
+                  const start = Math.max(2, current - 1);
+                  const end = Math.min(total - 1, current + 1);
+                  for (let i = start; i <= end; i++) pages.push(i);
+                  if (current < total - 2) pages.push('...');
+                  pages.push(total);
+                  return pages;
+              },
+
+              setPage(p) {
+                  if (p >= 1 && p <= this.totalPages) {
+                      this.currentPage = p;
+                      const grid = document.getElementById('vehicle-results-container');
+                      if (grid) {
+                          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                  }
               }
           }">
 
@@ -283,115 +342,178 @@
         </div>
 
         <!-- Vehicle Results Grid (RideMyCars Card Comparison) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <template x-if="filteredVehicles.length === 0">
-                <div class="col-span-full text-center py-16 bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400">
-                        🚗
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">No vehicles available</h3>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">Try adjusting your pickup dates, locations, or filter criteria.</p>
-                </div>
-            </template>
-
-            <template x-for="vehicle in filteredVehicles" :key="vehicle.id">
-                <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-sm hover:shadow-xl transition-all flex flex-col group relative">
-                    
-                    <!-- Top Category & Supplier Badge -->
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-amber-800 dark:text-brand-300 text-[11px] font-extrabold rounded-lg uppercase tracking-wider border border-brand-200 dark:border-brand-800/30" x-text="vehicle.category || vehicle.type || 'Sedan'"></span>
-                        <span class="text-[11px] text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                            <span x-text="vehicle.owner ? vehicle.owner.name : 'Verified Fleet'"></span>
-                        </span>
-                    </div>
-
-                    <!-- Framed Full Height & Width Vehicle Showcase -->
-                    <div class="w-full h-52 sm:h-56 rounded-2xl mb-4 overflow-hidden relative border border-gray-200/90 dark:border-white/10 bg-slate-900 shadow-sm group-hover:shadow-lg transition-all duration-300">
-                        <img :src="vehicle.image_src || '/images/hero-rent.png'" 
-                             class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" 
-                             :alt="vehicle.make + ' ' + vehicle.model" 
-                             loading="lazy"
-                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1000&q=80';">
-                        
-                        <!-- Ambient Depth Gradient Overlay -->
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none"></div>
-
-                        <!-- Year & Model Badge Overlay inside frame (bottom-left) -->
-                        <div class="absolute bottom-2.5 left-3 z-10">
-                            <span class="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white text-[11px] font-black border border-white/20 shadow-sm" x-text="vehicle.year + ' Model'"></span>
+        <div id="vehicle-results-container" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <template x-if="filteredVehicles.length === 0">
+                    <div class="col-span-full text-center py-16 bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                            🚗
                         </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">No vehicles available</h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm">Try adjusting your pickup dates, locations, or filter criteria.</p>
+                    </div>
+                </template>
 
-                        <!-- Transmission Badge inside frame (top-right) -->
-                        <div class="absolute top-2.5 right-2.5 z-10">
-                            <span class="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-amber-300 text-[10px] font-extrabold uppercase tracking-wider border border-white/20 shadow-sm flex items-center gap-1">
-                                <span x-text="vehicle.transmission === 'manual' ? 'Manual' : 'Automatic'"></span>
+                <template x-for="vehicle in paginatedVehicles" :key="vehicle.id">
+                    <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-sm hover:shadow-xl transition-all flex flex-col group relative">
+                        
+                        <!-- Top Category & Supplier Badge -->
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-amber-800 dark:text-brand-300 text-[11px] font-extrabold rounded-lg uppercase tracking-wider border border-brand-200 dark:border-brand-800/30" x-text="vehicle.category || vehicle.type || 'Sedan'"></span>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                                <span x-text="vehicle.owner ? vehicle.owner.name : 'Verified Fleet'"></span>
                             </span>
                         </div>
-                    </div>
 
-                    <!-- Make & Model Title -->
-                    <div class="mb-4">
-                        <h3 class="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" x-text="`${vehicle.year} ${vehicle.make} ${vehicle.model}`"></h3>
-                        <span class="text-xs text-gray-400 font-medium">Or Similar Category Vehicle</span>
-                    </div>
+                        <!-- Framed Full Height & Width Vehicle Showcase -->
+                        <div class="w-full h-52 sm:h-56 rounded-2xl mb-4 overflow-hidden relative border border-gray-200/90 dark:border-white/10 bg-slate-900 shadow-sm group-hover:shadow-lg transition-all duration-300">
+                            <img :src="vehicle.image_src || '/images/hero-rent.png'" 
+                                 class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" 
+                                 :alt="vehicle.make + ' ' + vehicle.model" 
+                                 loading="lazy"
+                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1000&q=80';">
+                            
+                            <!-- Ambient Depth Gradient Overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none"></div>
 
-                    <!-- Specs Icons Bar -->
-                    <div class="grid grid-cols-4 gap-2 py-3 px-3 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-[11px] text-gray-600 dark:text-gray-300 mb-4 border border-gray-100 dark:border-white/5 font-semibold text-center">
-                        <div title="Transmission">⚙️ <span x-text="vehicle.transmission === 'manual' ? 'Manual' : 'Auto'"></span></div>
-                        <div title="Fuel Type">⛽ <span x-text="vehicle.fuel_type || 'Petrol'"></span></div>
-                        <div title="Passengers">👤 <span x-text="(vehicle.seats || 5) + ' Seats'"></span></div>
-                        <div title="Luggage">🧳 <span x-text="(vehicle.luggage || 2) + ' Bags'"></span></div>
-                    </div>
+                            <!-- Year & Model Badge Overlay inside frame (bottom-left) -->
+                            <div class="absolute bottom-2.5 left-3 z-10">
+                                <span class="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white text-[11px] font-black border border-white/20 shadow-sm" x-text="vehicle.year + ' Model'"></span>
+                            </div>
 
-                    <!-- Inclusions Badges -->
-                    <div class="space-y-1.5 mb-6 text-xs font-semibold text-gray-600 dark:text-gray-400">
-                        <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                            ✓ <span x-text="vehicle.fuel_policy || 'Full-to-Full Tank'"></span>
+                            <!-- Transmission Badge inside frame (top-right) -->
+                            <div class="absolute top-2.5 right-2.5 z-10">
+                                <span class="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-amber-300 text-[10px] font-extrabold uppercase tracking-wider border border-white/20 shadow-sm flex items-center gap-1">
+                                    <span x-text="vehicle.transmission === 'manual' ? 'Manual' : 'Automatic'"></span>
+                                </span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                            ✓ <span x-text="vehicle.mileage_policy || 'Unlimited Mileage'"></span>
+
+                        <!-- Make & Model Title -->
+                        <div class="mb-4">
+                            <h3 class="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" x-text="`${vehicle.year} ${vehicle.make} ${vehicle.model}`"></h3>
+                            <span class="text-xs text-gray-400 font-medium">Or Similar Category Vehicle</span>
                         </div>
-                        <div class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                            🛡️ <span x-text="(vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}') + (vehicle.security_deposit_amount || 200)"></span> Refundable Deposit
+
+                        <!-- Specs Icons Bar -->
+                        <div class="grid grid-cols-4 gap-2 py-3 px-3 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl text-[11px] text-gray-600 dark:text-gray-300 mb-4 border border-gray-100 dark:border-white/5 font-semibold text-center">
+                            <div title="Transmission">⚙️ <span x-text="vehicle.transmission === 'manual' ? 'Manual' : 'Auto'"></span></div>
+                            <div title="Fuel Type">⛽ <span x-text="vehicle.fuel_type || 'Petrol'"></span></div>
+                            <div title="Passengers">👤 <span x-text="(vehicle.seats || 5) + ' Seats'"></span></div>
+                            <div title="Luggage">🧳 <span x-text="(vehicle.luggage || 2) + ' Bags'"></span></div>
                         </div>
+
+                        <!-- Inclusions Badges -->
+                        <div class="space-y-1.5 mb-6 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                            <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                                ✓ <span x-text="vehicle.fuel_policy || 'Full-to-Full Tank'"></span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                                ✓ <span x-text="vehicle.mileage_policy || 'Unlimited Mileage'"></span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                                🛡️ <span x-text="(vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}') + (vehicle.security_deposit_amount || 200)"></span> Refundable Deposit
+                            </div>
+                        </div>
+
+                        <!-- Price & Part Payment Summary Card -->
+                        <div class="mt-auto pt-4 border-t border-gray-100 dark:border-white/10">
+                            <div class="flex items-baseline justify-between mb-1">
+                                <span class="text-xs font-bold text-gray-400">Rate / Day</span>
+                                <div>
+                                    <span class="text-2xl font-black text-gray-900 dark:text-white" x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${parseFloat(vehicle.daily_rate).toFixed(2)}`"></span>
+                                    <span class="text-xs text-gray-400">/day</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-50/50 dark:bg-brand-950/20 p-2.5 rounded-xl border border-brand-200 dark:border-brand-800/30 mb-4 space-y-1 text-xs">
+                                <div class="flex justify-between font-bold text-brand-700 dark:text-brand-300">
+                                    <span>Total (<span x-text="vehicle.rental_days || 1"></span> Days):</span>
+                                    <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.total_rental_price || vehicle.daily_rate).toFixed(2)}`"></span>
+                                </div>
+                                <div class="flex justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    <span>20% Online Deposit:</span>
+                                    <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.deposit_amount || (vehicle.daily_rate * 0.20)).toFixed(2)}`"></span>
+                                </div>
+                                <div class="flex justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                                    <span>80% Balance at Pickup:</span>
+                                    <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.pickup_balance || (vehicle.daily_rate * 0.80)).toFixed(2)}`"></span>
+                                </div>
+                            </div>
+
+                            <a :href="`/rent/${vehicle.id}?start_date={{ $startDate }}&pickup_time={{ $pickupTime }}&return_date={{ $returnDate }}&return_time={{ $returnTime }}&pickup_location=${encodeURIComponent('{{ $pickupLocation }}')}&dropoff_location=${encodeURIComponent('{{ $dropoffLocation }}')}&driver_age={{ $driverAge }}&driver_country={{ $driverCountry }}`"
+                               class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-xl transition-all shadow-md text-xs text-center block uppercase tracking-wider">
+                                View Deal & Customize
+                            </a>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+
+            <!-- Responsive Pagination Toolbar -->
+            <template x-if="filteredVehicles.length > 0">
+                <div class="bg-white dark:bg-[#111] rounded-2xl border border-gray-200 dark:border-white/10 p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+                    <!-- Left: Showing items count -->
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold text-center md:text-left">
+                        Showing <span class="font-bold text-gray-900 dark:text-white" x-text="paginationStart"></span> to <span class="font-bold text-gray-900 dark:text-white" x-text="paginationEnd"></span> of <span class="font-bold text-gray-900 dark:text-white" x-text="filteredVehicles.length"></span> vehicles
                     </div>
 
-                    <!-- Price & Part Payment Summary Card -->
-                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-white/10">
-                        <div class="flex items-baseline justify-between mb-1">
-                            <span class="text-xs font-bold text-gray-400">Rate / Day</span>
+                    <!-- Center: Page Navigation buttons -->
+                    <div class="flex items-center gap-1.5" x-show="totalPages > 1">
+                        <!-- Prev -->
+                        <button type="button" 
+                                @click="setPage(currentPage - 1)" 
+                                :disabled="currentPage === 1"
+                                :class="currentPage === 1 ? 'opacity-40 cursor-not-allowed text-gray-400 border-gray-200 dark:border-white/5' : 'text-gray-700 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-95'"
+                                class="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1">
+                            <span>←</span>
+                            <span class="hidden sm:inline">Prev</span>
+                        </button>
+
+                        <!-- Page Numbers -->
+                        <template x-for="(p, idx) in pageNumbers" :key="idx">
                             <div>
-                                <span class="text-2xl font-black text-gray-900 dark:text-white" x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${parseFloat(vehicle.daily_rate).toFixed(2)}`"></span>
-                                <span class="text-xs text-gray-400">/day</span>
+                                <template x-if="p === '...'">
+                                    <span class="px-2 py-2 text-xs font-bold text-gray-400">...</span>
+                                </template>
+                                <template x-if="p !== '...'">
+                                    <button type="button"
+                                            @click="setPage(p)"
+                                            :class="currentPage === p ? 'bg-brand-500 text-slate-950 font-black shadow-md border-brand-500 scale-105' : 'bg-transparent text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5'"
+                                            class="w-9 h-9 rounded-xl text-xs font-bold border flex items-center justify-center transition-all"
+                                            x-text="p">
+                                    </button>
+                                </template>
                             </div>
-                        </div>
+                        </template>
 
-                        <div class="bg-brand-50/50 dark:bg-brand-950/20 p-2.5 rounded-xl border border-brand-200 dark:border-brand-800/30 mb-4 space-y-1 text-xs">
-                            <div class="flex justify-between font-bold text-brand-700 dark:text-brand-300">
-                                <span>Total (<span x-text="vehicle.rental_days || 1"></span> Days):</span>
-                                <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.total_rental_price || vehicle.daily_rate).toFixed(2)}`"></span>
-                            </div>
-                            <div class="flex justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                                <span>20% Online Deposit:</span>
-                                <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.deposit_amount || (vehicle.daily_rate * 0.20)).toFixed(2)}`"></span>
-                            </div>
-                            <div class="flex justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
-                                <span>80% Balance at Pickup:</span>
-                                <span x-text="`${vehicle.currency_symbol || '{{ $currentCurrencySymbol ?? "$" }}'}${(vehicle.pickup_balance || (vehicle.daily_rate * 0.80)).toFixed(2)}`"></span>
-                            </div>
-                        </div>
-
-                        <a :href="`/rent/${vehicle.id}?start_date={{ $startDate }}&pickup_time={{ $pickupTime }}&return_date={{ $returnDate }}&return_time={{ $returnTime }}&pickup_location=${encodeURIComponent('{{ $pickupLocation }}')}&dropoff_location=${encodeURIComponent('{{ $dropoffLocation }}')}&driver_age={{ $driverAge }}&driver_country={{ $driverCountry }}`"
-                           class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-xl transition-all shadow-md text-xs text-center block uppercase tracking-wider">
-                            View Deal & Customize
-                        </a>
+                        <!-- Next -->
+                        <button type="button" 
+                                @click="setPage(currentPage + 1)" 
+                                :disabled="currentPage === totalPages"
+                                :class="currentPage === totalPages ? 'opacity-40 cursor-not-allowed text-gray-400 border-gray-200 dark:border-white/5' : 'text-gray-700 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-95'"
+                                class="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1">
+                            <span class="hidden sm:inline">Next</span>
+                            <span>→</span>
+                        </button>
                     </div>
 
+                    <!-- Right: Per Page Selector -->
+                    <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                        <span>Vehicles per page:</span>
+                        <select x-model.number="perPage" class="px-2.5 py-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white cursor-pointer focus:ring-1 focus:ring-brand-500">
+                            <option :value="6">6</option>
+                            <option :value="9">9</option>
+                            <option :value="12">12</option>
+                            <option :value="18">18</option>
+                            <option :value="24">24</option>
+                        </select>
+                    </div>
                 </div>
             </template>
-            
         </div>
     </main>
 

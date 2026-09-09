@@ -12,7 +12,7 @@ class DisputeController extends Controller
         $user = auth()->user();
         $disputes = Dispute::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('disputes-list', compact('disputes'));
     }

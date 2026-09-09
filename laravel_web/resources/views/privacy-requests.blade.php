@@ -117,6 +117,11 @@
                                 </div>
                             @endforeach
                         </div>
+                        @if(method_exists($requests, 'hasPages') && $requests->hasPages())
+                            <div class="pt-3 border-t border-gray-100 dark:border-white/10">
+                                {{ $requests->links() }}
+                            </div>
+                        @endif
                     </div>
                 @endif
 

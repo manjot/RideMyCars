@@ -10,8 +10,8 @@ class PrivacyRequestController extends Controller
     public function index()
     {
         $requests = auth()->check()
-            ? PrivacyRequest::where('user_id', auth()->id())->latest()->get()
-            : collect();
+            ? PrivacyRequest::where('user_id', auth()->id())->latest()->paginate(5)
+            : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 5);
 
         return view('privacy-requests', compact('requests'));
     }

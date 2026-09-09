@@ -95,8 +95,62 @@
                 image: '{{ asset('images/blog-city-expansion.jpg') }}',
                 excerpt: 'Announcing our 2025 expansion roadmap connecting major commercial centers across North America, Southern Africa, and West Africa.',
                 content: `We are thrilled to formally announce the rollout of RideMyCars across 20 additional metropolitan markets throughout 2025.\n\n### Unifying International Ground Travel\nOur expansion anchors key financial and cultural hubs, allowing international business travelers and diasporic communities to use one familiar app whether arriving in Washington DC, Johannesburg, Accra, or London.\n\n### Local Partnerships & Electric Fleets\nAs part of this expansion, RideMyCars is partnering with regional automotive dealers and solar charging networks to introduce zero-emission EV vehicle classes and localized Mobile Money integration.`
+            },
+            {
+                id: 7,
+                title: 'The Rise of Electric Fleets: Lowering Carbon and Cost in Urban Mobility',
+                slug: 'the-rise-of-electric-fleets',
+                category: 'guides',
+                categoryLabel: 'Fleet Tech',
+                badgeColor: 'emerald',
+                date: 'January 08, 2025',
+                readTime: '6 min read',
+                author: 'Jamie Chen',
+                authorRole: 'CTO & Co-founder',
+                image: '{{ asset('images/hero-ride.png') }}',
+                excerpt: 'How our transition to hybrid and EV rental fleets is cutting operational fuel expenses by 42% for long-distance commuters.',
+                content: `Electric vehicle adoption in shared mobility is moving faster than ever. By incentivizing hosts with EV charging credits and preferred rental listings, RideMyCars is helping riders lower their carbon footprint without sacrificing speed or range.`
+            },
+            {
+                id: 8,
+                title: 'How Vehicle Hosts Earn 35% Above Traditional Car Depreciation',
+                slug: 'how-vehicle-hosts-maximize-roi',
+                category: 'business',
+                categoryLabel: 'Host Success',
+                badgeColor: 'purple',
+                date: 'December 28, 2024',
+                readTime: '8 min read',
+                author: 'Taylor Kim',
+                authorRole: 'Head of Product',
+                image: '{{ asset('images/hero-rent.png') }}',
+                excerpt: 'Strategies for vehicle owners to safely list cars, optimize availability calendars, and generate consistent monthly cashflow.',
+                content: `Turning a depreciating asset into a revenue generator is simple with RideMyCars. With our automated 20% deposit hold, comprehensive damage liability, and driver identity verification, host confidence is at an all-time high.`
+            },
+            {
+                id: 9,
+                title: 'Airport Transfers Demystified: Navigating Curbside Pickups & Meet-and-Greet',
+                slug: 'airport-transfers-demystified',
+                category: 'safety',
+                categoryLabel: 'Travel Tips',
+                badgeColor: 'blue',
+                date: 'December 14, 2024',
+                readTime: '4 min read',
+                author: 'Sam Okafor',
+                authorRole: 'Head of Operations',
+                image: '{{ asset('images/hero-delivery.png') }}',
+                excerpt: 'Everything you need to know about pre-booking flight-tracked airport rides, buffer times, and luggage handling protocols.',
+                content: `Flight delays shouldn't mean missing your ride. With RideMyCars Airport Connect, drivers track inbound flight numbers automatically, adjusting pickup schedules in real-time so your car is waiting as soon as you exit baggage claim.`
             }
         ],
+        currentPage: 1,
+        perPage: 6,
+
+        init() {
+            this.$watch('activeCategory', () => { this.currentPage = 1; });
+            this.$watch('searchQuery', () => { this.currentPage = 1; });
+            this.$watch('perPage', () => { this.currentPage = 1; });
+        },
+
         get filteredArticles() {
             return this.articles.filter(a => {
                 const matchesCategory = (this.activeCategory === 'all' || a.category === this.activeCategory);
@@ -105,6 +159,51 @@
                     a.excerpt.toLowerCase().includes(this.searchQuery.toLowerCase()));
                 return matchesCategory && matchesSearch;
             });
+        },
+
+        get totalPages() {
+            return Math.max(1, Math.ceil(this.filteredArticles.length / this.perPage));
+        },
+
+        get paginatedArticles() {
+            const start = (this.currentPage - 1) * this.perPage;
+            return this.filteredArticles.slice(start, start + parseInt(this.perPage));
+        },
+
+        get paginationStart() {
+            if (this.filteredArticles.length === 0) return 0;
+            return (this.currentPage - 1) * this.perPage + 1;
+        },
+
+        get paginationEnd() {
+            return Math.min(this.currentPage * this.perPage, this.filteredArticles.length);
+        },
+
+        get pageNumbers() {
+            const total = this.totalPages;
+            const current = this.currentPage;
+            if (total <= 7) {
+                return Array.from({ length: total }, (_, i) => i + 1);
+            }
+            const pages = [];
+            pages.push(1);
+            if (current > 3) pages.push('...');
+            const start = Math.max(2, current - 1);
+            const end = Math.min(total - 1, current + 1);
+            for (let i = start; i <= end; i++) pages.push(i);
+            if (current < total - 2) pages.push('...');
+            pages.push(total);
+            return pages;
+        },
+
+        setPage(p) {
+            if (p >= 1 && p <= this.totalPages) {
+                this.currentPage = p;
+                const el = document.getElementById('articles-grid-container');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         }
     }">
 
@@ -190,9 +289,9 @@
         </section>
 
         <!-- Articles Grid -->
-        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28">
+        <section id="articles-grid-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28 space-y-10">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <template x-for="article in filteredArticles" :key="article.id">
+                <template x-for="article in paginatedArticles" :key="article.id">
                     <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-gray-200 dark:border-white/10 shadow-md hover:shadow-2xl hover:border-orange-500 transition-all overflow-hidden flex flex-col group cursor-pointer" @click="activeArticle = article">
                         <!-- Card Image -->
                         <div class="h-56 overflow-hidden relative">
@@ -227,6 +326,67 @@
                     </div>
                 </template>
             </div>
+
+            <!-- Responsive Pagination Toolbar -->
+            <template x-if="filteredArticles.length > 0">
+                <div class="bg-white dark:bg-[#141414] rounded-2xl border border-gray-200 dark:border-white/10 p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+                    <!-- Left: Showing items count -->
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold text-center md:text-left">
+                        Showing <span class="font-bold text-gray-900 dark:text-white" x-text="paginationStart"></span> to <span class="font-bold text-gray-900 dark:text-white" x-text="paginationEnd"></span> of <span class="font-bold text-gray-900 dark:text-white" x-text="filteredArticles.length"></span> articles
+                    </div>
+
+                    <!-- Center: Page Navigation buttons -->
+                    <div class="flex items-center gap-1.5" x-show="totalPages > 1">
+                        <!-- Prev -->
+                        <button type="button" 
+                                @click="setPage(currentPage - 1)" 
+                                :disabled="currentPage === 1"
+                                :class="currentPage === 1 ? 'opacity-40 cursor-not-allowed text-gray-400 border-gray-200 dark:border-white/5' : 'text-gray-700 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-95'"
+                                class="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1">
+                            <span>←</span>
+                            <span class="hidden sm:inline">Prev</span>
+                        </button>
+
+                        <!-- Page Numbers -->
+                        <template x-for="(p, idx) in pageNumbers" :key="idx">
+                            <div>
+                                <template x-if="p === '...'">
+                                    <span class="px-2 py-2 text-xs font-bold text-gray-400">...</span>
+                                </template>
+                                <template x-if="p !== '...'">
+                                    <button type="button"
+                                            @click="setPage(p)"
+                                            :class="currentPage === p ? 'bg-orange-500 text-white font-black shadow-md border-orange-500 scale-105' : 'bg-transparent text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5'"
+                                            class="w-9 h-9 rounded-xl text-xs font-bold border flex items-center justify-center transition-all"
+                                            x-text="p">
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Next -->
+                        <button type="button" 
+                                @click="setPage(currentPage + 1)" 
+                                :disabled="currentPage === totalPages"
+                                :class="currentPage === totalPages ? 'opacity-40 cursor-not-allowed text-gray-400 border-gray-200 dark:border-white/5' : 'text-gray-700 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-95'"
+                                class="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1">
+                            <span class="hidden sm:inline">Next</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+
+                    <!-- Right: Per Page Selector -->
+                    <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                        <span>Articles per page:</span>
+                        <select x-model.number="perPage" class="px-2.5 py-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white cursor-pointer focus:ring-1 focus:ring-orange-500">
+                            <option :value="3">3</option>
+                            <option :value="6">6</option>
+                            <option :value="9">9</option>
+                            <option :value="12">12</option>
+                        </select>
+                    </div>
+                </div>
+            </template>
 
             <!-- No search results fallback -->
             <div x-show="filteredArticles.length === 0" class="text-center py-20 bg-gray-50 dark:bg-[#161616] rounded-3xl border border-gray-200 dark:border-white/10">

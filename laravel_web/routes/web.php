@@ -2472,12 +2472,15 @@ Route::post('/payment/cashapp/webhook', function (\Illuminate\Http\Request $requ
 
 Route::get('/activity', function () {
     $user = auth()->user();
-    $rides = \App\Models\Ride::where('rider_id', $user->id)
+    $upcomingRides = \App\Models\Ride::where('rider_id', $user->id)
+        ->whereIn('status', ['pending', 'accepted', 'in_progress'])
         ->orderBy('created_at', 'desc')
         ->get();
         
-    $upcomingRides = $rides->whereIn('status', ['pending', 'accepted', 'in_progress']);
-    $pastRides = $rides->whereNotIn('status', ['pending', 'accepted', 'in_progress']);
+    $pastRides = \App\Models\Ride::where('rider_id', $user->id)
+        ->whereNotIn('status', ['pending', 'accepted', 'in_progress'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(6);
     
     return view('activity', compact('upcomingRides', 'pastRides'));
 })->middleware('auth');

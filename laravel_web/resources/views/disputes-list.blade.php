@@ -69,6 +69,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if($disputes->hasPages())
+                    <div class="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
+                        {{ $disputes->links() }}
+                    </div>
+                @endif
             @else
                 <div class="text-center py-12 text-gray-400 space-y-3">
                     <span class="text-4xl block">⚖️</span>

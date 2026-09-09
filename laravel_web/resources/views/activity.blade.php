@@ -175,11 +175,11 @@
 
                 </div>
                 
-                <div class="mt-8 flex justify-end">
-                    <button class="bg-[#f0f0f0] hover:bg-[#e4e4e4] dark:bg-[#333] dark:hover:bg-[#444] text-black dark:text-white font-bold text-[15px] py-2.5 px-5 rounded-full transition-colors">
-                        More
-                    </button>
-                </div>
+                @if($pastRides->hasPages())
+                    <div class="mt-8 pt-4 border-t border-gray-100 dark:border-white/10">
+                        {{ $pastRides->links() }}
+                    </div>
+                @endif
             </div>
 
         </main>
