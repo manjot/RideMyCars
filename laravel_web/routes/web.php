@@ -199,6 +199,12 @@ Route::get('/privacy-policy', function () {
 Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index'])->name('privacy-requests.index');
 Route::post('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'store'])->name('privacy-requests.store');
 
+// Account Deletion & Data Purge (Google Play & Apple App Store Compliant)
+Route::get('/delete-account', [\App\Http\Controllers\AccountDeletionController::class, 'show'])->name('account.delete');
+Route::post('/delete-account', [\App\Http\Controllers\AccountDeletionController::class, 'process'])->name('account.delete.process');
+Route::get('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'show']);
+Route::post('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'process']);
+
 Route::get('/refund-cancellation-policy', function () {
     return view('refund');
 });

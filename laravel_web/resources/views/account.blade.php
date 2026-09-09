@@ -470,6 +470,17 @@
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"><path d="m9 18 6-6-6-6"/></svg>
                         </button>
+
+                        <a href="/delete-account" class="w-full text-left py-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center group cursor-pointer text-rose-600 dark:text-rose-400">
+                            <div>
+                                <div class="font-bold mb-1 flex items-center gap-2">
+                                    <span>Delete account</span>
+                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-500/20">Permanent</span>
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Permanently purge your account, profiles, and associated data.</div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-rose-400 group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                        </a>
                     </div>
 
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mt-10 mb-4">Third-party apps with account access</h2>

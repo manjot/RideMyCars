@@ -1643,6 +1643,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/delete-account" class="text-rose-400 hover:text-rose-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5" title="Request permanent account and personal data deletion">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Delete Account</span>
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 border border-rose-500/30">Data Purge</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="/disputes" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">Disputes & Claims (72h)</span>
                             </a>
