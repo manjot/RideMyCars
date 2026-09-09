@@ -106,7 +106,7 @@
                     <div class="relative">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Pick-up Location *</label>
-                            <button type="button" id="use_my_location_rent_main" class="text-brand-500 hover:text-brand-600 text-[11px] font-bold flex items-center gap-0.5">
+                            <button type="button" id="use_my_location_rent_main" class="text-amber-700 dark:text-brand-400 hover:text-amber-800 text-[11px] font-bold flex items-center gap-0.5">
                                 📍 Use My Location
                             </button>
                         </div>

@@ -71,7 +71,7 @@
                 </div>
                 
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-5">
-                    Clear Pricing. <span class="bg-gradient-to-r from-amber-500 via-brand-500 to-amber-600 bg-clip-text text-transparent">Zero Surge Surprises.</span>
+                    Clear Pricing. <span class="text-amber-600 dark:text-amber-400 font-black">Zero Surge Surprises.</span>
                 </h1>
                 
                 <p class="text-base sm:text-lg text-gray-600 dark:text-gray-300 leading-relaxed font-medium max-w-2xl mx-auto">

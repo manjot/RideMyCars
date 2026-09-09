@@ -150,6 +150,16 @@
         .bg-yellow-400.text-white {
             color: #020617 !important;
         }
+        /* Ensure any text-brand-500 has high contrast in light mode */
+        html:not(.dark) .text-brand-500 {
+            color: #b45309;
+        }
+        /* Prevent blurry or washed-out transparent background-clipped text in light mode */
+        html:not(.dark) .bg-clip-text.text-transparent {
+            -webkit-text-fill-color: initial;
+            color: #d97706 !important;
+            background: none !important;
+        }
         /* Tailwind v3 to v4 Gradient Compatibility */
         .bg-gradient-to-r {
             background-image: linear-gradient(to right, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
@@ -245,19 +255,19 @@
                 <div class="hidden lg:flex items-center gap-1 xl:gap-2">
                     @auth
                         @if(auth()->user()->role === 'driver')
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('driver/dashboard*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/driver/dashboard">Dashboard</a>
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('ride*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/ride">Ride</a>
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('wallet*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/wallet">Earnings</a>
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('driver/dashboard*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/driver/dashboard">Dashboard</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('ride*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/ride">Ride</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('wallet*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/wallet">Earnings</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                         @else
                             <!-- Home -->
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
                             
                             <!-- Services Dropdown with Rich Icons -->
                             <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
                                 <button @click="open = !open" 
-                                        class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('ride*') || request()->is('rent*') || request()->is('hire-driver*') || request()->is('driver-booking*') || request()->is('delivery*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                        class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('ride*') || request()->is('rent*') || request()->is('hire-driver*') || request()->is('driver-booking*') || request()->is('delivery*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                     <span>Services</span>
                                     <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="m6 9 6 6 6-6"/>
@@ -382,11 +392,11 @@
                             </div>
 
                             <!-- Memberships -->
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('membership*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('membership*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
                             
                             <!-- Apps Dropdown -->
                             <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                                <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
                                     <span>Apps</span> 
                                     <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -426,7 +436,7 @@
 
                             <!-- Company Dropdown -->
                             <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                                <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                     <span>Company</span> 
                                     <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                 </button>
@@ -467,16 +477,16 @@
                             </div>
 
                             <!-- Pricing -->
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
+                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                         @endif
                     @else
                         <!-- Guest Navigation: Home, Services Dropdown, Memberships, Apps, Company, Pricing -->
-                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
                         
                         <!-- Services Dropdown with Rich Icons -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
                             <button @click="open = !open" 
-                                    class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('ride*') || request()->is('rent*') || request()->is('hire-driver*') || request()->is('driver-booking*') || request()->is('delivery*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                    class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('ride*') || request()->is('rent*') || request()->is('hire-driver*') || request()->is('driver-booking*') || request()->is('delivery*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <span>Services</span>
                                 <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="m6 9 6 6 6-6"/>
@@ -601,11 +611,11 @@
                         </div>
 
                         <!-- Memberships -->
-                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('membership*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
+                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('membership*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
                         
                         <!-- Apps Dropdown -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
                                 <span>Apps</span> 
                                 <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -645,7 +655,7 @@
 
                         <!-- Company Dropdown -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <span>Company</span> 
                                 <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
@@ -686,7 +696,7 @@
                         </div>
 
                         <!-- Pricing -->
-                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-brand-500 dark:text-brand-400 bg-brand-500/10 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
+                        <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                     @endauth
                 </div>
                 
@@ -1119,7 +1129,7 @@
                         </svg>
                         Region & Currency
                     </span>
-                    <span class="text-xs font-bold text-brand-500">{{ $currentCountryCode ?? 'USA' }} ({{ $currentCurrencySymbol ?? '$' }})</span>
+                    <span class="text-xs font-bold text-amber-700 dark:text-brand-400">{{ $currentCountryCode ?? 'USA' }} ({{ $currentCurrencySymbol ?? '$' }})</span>
                 </div>
 
                 @if($isUnsupportedRegion ?? false)
@@ -1164,7 +1174,7 @@
             <div class="space-y-1.5 pt-1">
                 <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3.5 flex items-center justify-between">
                     <span>Services</span>
-                    <a href="/pricing" class="text-[10px] text-brand-500 lowercase tracking-normal font-bold">rates & pricing →</a>
+                    <a href="/pricing" class="text-[10px] text-amber-700 dark:text-brand-400 lowercase tracking-normal font-bold">rates & pricing →</a>
                 </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -1329,7 +1339,7 @@
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{{ auth()->user()->role ?? 'Member' }}</div>
                             </div>
                         </div>
-                        <a href="/account" class="text-xs font-bold text-brand-500 hover:underline shrink-0">Profile →</a>
+                        <a href="/account" class="text-xs font-bold text-amber-700 dark:text-brand-400 hover:underline shrink-0">Profile →</a>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <a href="/my-rides" class="py-2.5 text-center text-xs font-bold rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">My Rides</a>

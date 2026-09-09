@@ -90,7 +90,7 @@
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
                         <p><strong>1.1 Financial Scope:</strong> New Development Finance Group LLC/PTY LTD ("Ride My Cars") operates a multi-modal mobility platform. This Refund and Cancellation Policy establishes the legal and financial terms governing booking cancellations, grace windows, deposit refunds, late cancellation penalties, and financial settlement across all verticals.</p>
-                        <p><strong>1.2 Harmonization:</strong> This Policy operates in strict harmony with our <a href="/terms-and-conditions" class="text-brand-500 font-bold hover:underline">Terms & Conditions</a> and <a href="/privacy-policy" class="text-brand-500 font-bold hover:underline">Privacy Policy</a>.</p>
+                        <p><strong>1.2 Harmonization:</strong> This Policy operates in strict harmony with our <a href="/terms-and-conditions" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Terms & Conditions</a> and <a href="/privacy-policy" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Privacy Policy</a>.</p>
                     </div>
                 </section>
 
@@ -177,7 +177,7 @@
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
                         <p><strong>4.1 Authorization Holds:</strong> Temporary security deposit holds authorized during vehicle rentals are automatically released upon vehicle return following pre-and-post inspection clearance.</p>
-                        <p><strong>4.2 Deductions & Terms Cross-Link:</strong> If verifiable damage, fuel deficits, or late return penalties are incurred, deductions are charged against the security hold as stipulated in <a href="/terms-and-conditions" class="text-brand-500 font-bold hover:underline">Article XI of the Ride My Cars Terms and Conditions</a>.</p>
+                        <p><strong>4.2 Deductions & Terms Cross-Link:</strong> If verifiable damage, fuel deficits, or late return penalties are incurred, deductions are charged against the security hold as stipulated in <a href="/terms-and-conditions" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Article XI of the Ride My Cars Terms and Conditions</a>.</p>
                     </div>
                 </section>
 

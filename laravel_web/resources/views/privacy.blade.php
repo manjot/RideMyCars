@@ -171,7 +171,7 @@
                             <li><strong>Right to Restrict Processing:</strong> Restrict specific data processing functions.</li>
                             <li><strong>Marketing Opt-Out:</strong> Opt-out of promotional communications at any time.</li>
                         </ul>
-                        <p>Submit privacy requests via our <a href="/privacy-requests" class="text-brand-500 font-bold hover:underline">Privacy Data Rights Portal</a>.</p>
+                        <p>Submit privacy requests via our <a href="/privacy-requests" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Privacy Data Rights Portal</a>.</p>
                     </div>
                 </section>
 
@@ -204,9 +204,9 @@
                                 <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
                             </div>
                             <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
-                                <p><strong>Contact Telephone:</strong> <a href="tel:+18552033177" class="text-brand-500 font-bold hover:underline">+1 855 203 3177</a></p>
-                                <p><strong>Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-brand-500 hover:underline">privacy@ridemycars.com</a></p>
-                                <p><strong>Privacy Portal:</strong> <a href="/privacy-requests" class="text-brand-500 hover:underline">https://ridemycars.com/privacy-requests</a></p>
+                                <p><strong>Contact Telephone:</strong> <a href="tel:+18552033177" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">+1 855 203 3177</a></p>
+                                <p><strong>Direct Email:</strong> <a href="mailto:privacy@ridemycars.com" class="text-amber-700 dark:text-amber-400 hover:underline">privacy@ridemycars.com</a></p>
+                                <p><strong>Privacy Portal:</strong> <a href="/privacy-requests" class="text-amber-700 dark:text-amber-400 hover:underline">https://ridemycars.com/privacy-requests</a></p>
                             </div>
                         </div>
                     </div>

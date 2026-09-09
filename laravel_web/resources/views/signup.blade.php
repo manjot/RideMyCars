@@ -975,7 +975,7 @@
                         <label class="flex items-start gap-3 cursor-pointer select-none">
                             <input type="checkbox" name="terms" value="1" required class="w-4 h-4 mt-0.5 rounded text-brand-500 border-gray-300 focus:ring-brand-500">
                             <span class="text-xs text-gray-600 dark:text-gray-300 leading-normal">
-                                I explicitly agree to the <a href="/terms-and-conditions" target="_blank" class="text-brand-500 dark:text-brand-400 font-bold hover:underline">Ride My Cars Terms & Conditions</a> and <a href="/privacy" target="_blank" class="text-brand-500 dark:text-brand-400 font-bold hover:underline">Privacy Policy</a>.
+                                I explicitly agree to the <a href="/terms-and-conditions" target="_blank" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Ride My Cars Terms & Conditions</a> and <a href="/privacy" target="_blank" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Privacy Policy</a>.
                             </span>
                         </label>
                         @error('terms')
@@ -1059,7 +1059,7 @@
                     <button type="button" 
                             x-show="timer === 0" 
                             @click="resendOtp()" 
-                            class="text-xs font-bold text-brand-500 hover:underline cursor-pointer"
+                            class="text-xs font-bold text-amber-700 dark:text-brand-400 hover:underline cursor-pointer"
                             style="display: none;">
                         Didn't receive code? Resend SMS OTP
                     </button>

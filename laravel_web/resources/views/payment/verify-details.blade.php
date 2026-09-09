@@ -193,7 +193,7 @@
                     </div>
                     <div class="text-right">
                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Service Type</span>
-                        <div class="text-sm font-extrabold text-brand-500 capitalize">{{ str_replace('_', ' ', $serviceType) }}</div>
+                        <div class="text-sm font-extrabold text-amber-700 dark:text-brand-400 font-black capitalize">{{ str_replace('_', ' ', $serviceType) }}</div>
                     </div>
                 </div>
 

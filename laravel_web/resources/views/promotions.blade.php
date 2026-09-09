@@ -57,7 +57,7 @@
                     <span>🏷️</span> Limited-Time Deals & Travel Discounts
                 </div>
                 <h1 class="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight leading-tight">
-                    Ride More, Save More with <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-300">RideMyCars</span>
+                    Ride More, Save More with <span class="text-amber-600 dark:text-amber-400 font-black">RideMyCars</span>
                 </h1>
                 <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
                     Enjoy exclusive coupon codes, referral credits, airport special vouchers, and discount perks on every ride, car rental, chauffeur hire, and parcel delivery.

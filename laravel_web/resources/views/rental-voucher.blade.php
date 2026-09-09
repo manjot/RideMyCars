@@ -37,7 +37,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-gray-100 dark:border-white/10">
                 <div>
                     <div class="flex items-center gap-2 text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1">
-                        <span class="text-brand-500">Ride</span>MyCars
+                        <span class="text-brand-600 dark:text-brand-400">Ride</span>MyCars
                         <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 font-extrabold uppercase tracking-wider border border-brand-200 dark:border-brand-800/30">Rental Voucher</span>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Official Car Rental Booking Confirmation & Pickup Pass</p>
@@ -45,7 +45,7 @@
 
                 <div class="text-left sm:text-right bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-white/5 w-full sm:w-auto">
                     <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Voucher Reference</span>
-                    <span class="font-mono text-xl font-black text-brand-500 tracking-wider">#{{ $ride->digital_receipt_code }}</span>
+                    <span class="font-mono text-xl font-black text-amber-600 dark:text-brand-400 tracking-wider">#{{ $ride->digital_receipt_code }}</span>
                 </div>
             </div>
 

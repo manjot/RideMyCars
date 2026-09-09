@@ -31,7 +31,7 @@
                         <div>
                             <div class="flex items-center gap-2">
                                 <h3 class="font-extrabold text-xl text-gray-900 dark:text-white">
-                                    Active Membership: <span class="capitalize text-brand-500">{{ auth()->user()->membership_type }} Tier</span>
+                                    Active Membership: <span class="capitalize text-brand-700 dark:text-brand-400 font-bold">{{ auth()->user()->membership_type }} Tier</span>
                                 </h3>
                                 <span class="bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase">
                                     {{ auth()->user()->membership_status }}
@@ -57,7 +57,7 @@
         @endauth
 
         <div class="text-center max-w-3xl mx-auto mb-16">
-            <div class="inline-block px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-500 font-bold text-xs tracking-widest uppercase mb-4">
+            <div class="inline-block px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-amber-800 dark:text-brand-400 font-bold text-xs tracking-widest uppercase mb-4">
                 Exclusive Access
             </div>
             <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">

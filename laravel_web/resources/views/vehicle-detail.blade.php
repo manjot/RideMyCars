@@ -381,7 +381,7 @@
                     <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-xl sticky top-24 space-y-6">
                         
                         <div>
-                            <span class="text-xs font-extrabold text-brand-500 uppercase tracking-widest block mb-1">Rental Summary</span>
+                            <span class="text-xs font-extrabold text-amber-700 dark:text-brand-400 uppercase tracking-widest block mb-1">Rental Summary</span>
                             <h2 class="text-2xl font-black text-gray-900 dark:text-white">{{ $vehicle->make }} {{ $vehicle->model }}</h2>
                             <p class="text-xs text-gray-400 mt-1" x-text="`${daysCount} Day(s) Rental Duration`"></p>
                         </div>
@@ -403,7 +403,7 @@
 
                             <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-black">
                                 <span class="text-gray-900 dark:text-white">Estimated Total:</span>
-                                <span class="text-xl text-brand-500" x-text="`${currencySymbol}${totalAmount}`"></span>
+                                <span class="text-xl text-amber-600 dark:text-brand-400 font-black" x-text="`${currencySymbol}${totalAmount}`"></span>
                             </div>
                         </div>
 

@@ -172,8 +172,8 @@
                         <span>Article VI — Data Privacy and Protection</span>
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
-                        <p><strong>6.1 Data Processing:</strong> Personal data is processed in accordance with our <a href="/privacy-policy" class="text-brand-500 font-bold hover:underline">Privacy Policy</a> and statutory data protection frameworks (CCPA, POPIA, Ghana Act 843).</p>
-                        <p><strong>6.2 Data Rights Portal:</strong> Users may manage consent or submit statutory personal data export/deletion requests via the <a href="/privacy-requests" class="text-brand-500 font-bold hover:underline">Privacy Data Rights Portal</a>.</p>
+                        <p><strong>6.1 Data Processing:</strong> Personal data is processed in accordance with our <a href="/privacy-policy" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Privacy Policy</a> and statutory data protection frameworks (CCPA, POPIA, Ghana Act 843).</p>
+                        <p><strong>6.2 Data Rights Portal:</strong> Users may manage consent or submit statutory personal data export/deletion requests via the <a href="/privacy-requests" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Privacy Data Rights Portal</a>.</p>
                     </div>
                 </section>
 
@@ -231,7 +231,7 @@
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
                         <p><strong>11.1 Digital Pre-Inspection:</strong> Renters and hosts must complete digital inspection photos, odometer readings, and fuel logs before handover.</p>
-                        <p><strong>11.2 Security Deposit Holds:</strong> Pre-authorized security deposit holds cover potential damages, fuel shortages, or late return penalties in accordance with our <a href="/refund-cancellation-policy" class="text-brand-500 font-bold hover:underline">Refund & Cancellation Policy</a>.</p>
+                        <p><strong>11.2 Security Deposit Holds:</strong> Pre-authorized security deposit holds cover potential damages, fuel shortages, or late return penalties in accordance with our <a href="/refund-cancellation-policy" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Refund & Cancellation Policy</a>.</p>
                     </div>
                 </section>
 
@@ -242,7 +242,7 @@
                         <span>Article XII — Multi-Service Dispute Resolution Process</span>
                     </h2>
                     <div class="space-y-3 text-xs sm:text-sm">
-                        <p><strong>12.1 72-Hour Dispute Rule:</strong> All dispute claims, fee challenges, or damage reports MUST be submitted within <strong>72 hours of service completion or cancellation</strong> via the <a href="/disputes/create" class="text-brand-500 font-bold hover:underline">Dispute Portal</a> or sent to <a href="mailto:disputes@ridemycars.com" class="text-brand-500 font-bold hover:underline">disputes@ridemycars.com</a>.</p>
+                        <p><strong>12.1 72-Hour Dispute Rule:</strong> All dispute claims, fee challenges, or damage reports MUST be submitted within <strong>72 hours of service completion or cancellation</strong> via the <a href="/disputes/create" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Dispute Portal</a> or sent to <a href="mailto:disputes@ridemycars.com" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">disputes@ridemycars.com</a>.</p>
                         <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl space-y-2 font-mono text-xs mt-3">
                             <p><strong>Parent Corporate Entity:</strong> New Development Finance Group</p>
                             <p><strong>Department:</strong> Legal, Risk & Compliance Department</p>
@@ -252,8 +252,8 @@
                                 <p><strong>🇬🇭 Ghana Hub:</strong> No 1 Airport Square, 8th Floor, Airport City, Accra, Ghana</p>
                             </div>
                             <div class="border-t border-gray-200 dark:border-white/10 pt-2 space-y-1">
-                                <p><strong>Contact Telephone:</strong> <a href="tel:+18552033177" class="text-brand-500 font-bold hover:underline">+1 855 203 3177</a></p>
-                                <p><strong>Disputes Email:</strong> <a href="mailto:disputes@ridemycars.com" class="text-brand-500 hover:underline">disputes@ridemycars.com</a></p>
+                                <p><strong>Contact Telephone:</strong> <a href="tel:+18552033177" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">+1 855 203 3177</a></p>
+                                <p><strong>Disputes Email:</strong> <a href="mailto:disputes@ridemycars.com" class="text-amber-700 dark:text-amber-400 hover:underline">disputes@ridemycars.com</a></p>
                             </div>
                         </div>
                     </div>
