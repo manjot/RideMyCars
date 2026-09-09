@@ -196,6 +196,9 @@ Route::get('/privacy-policy', function () {
     return view('privacy');
 });
 
+Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index'])->name('privacy-requests.index');
+Route::post('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'store'])->name('privacy-requests.store');
+
 Route::get('/refund-cancellation-policy', function () {
     return view('refund');
 });
@@ -2718,6 +2721,27 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['tokens_table'] = 'Created';
         } else {
             $output['tokens_table'] = 'Exists';
+        }
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('privacy_requests')) {
+            \Illuminate\Support\Facades\Schema::create('privacy_requests', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->string('request_code')->unique();
+                $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+                $table->string('name');
+                $table->string('email');
+                $table->string('phone')->nullable();
+                $table->string('request_type')->default('access');
+                $table->text('details')->nullable();
+                $table->string('identity_proof_url')->nullable();
+                $table->string('status')->default('submitted');
+                $table->text('admin_notes')->nullable();
+                $table->timestamp('completed_at')->nullable();
+                $table->timestamps();
+            });
+            $output['privacy_requests_table'] = 'Created';
+        } else {
+            $output['privacy_requests_table'] = 'Exists';
         }
 
         $output['oauth_columns'] = [
