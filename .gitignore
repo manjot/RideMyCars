@@ -7,7 +7,9 @@ laravel_web/.env
 .idea/
 *.zip
 *.apk
+*.aab
 apks/
 apk_builds/
+release_builds/
 screencap_*.png
 
