@@ -511,7 +511,7 @@ class DriverApiController extends Controller
             ->get();
 
         foreach ($assignments as $a) {
-            if ($a->ride && $a->ride->status === 'pending') {
+            if ($a->ride && $a->ride->status === 'pending' && in_array(strtolower($a->ride->payment_status ?? ''), ['hold', 'authorized', 'paid'], true)) {
                 $processedRideIds[] = $a->ride->id;
 
                 $customerName = $a->ride->rider?->name ?? 'Customer';
@@ -589,10 +589,11 @@ class DriverApiController extends Controller
             }
         }
 
-        // 2. Also populate all available pending unassigned rides in the system
+        // 2. Also populate all available pending unassigned rides in the system that have valid payment holds/authorization
         $openPendingRides = \App\Models\Ride::with('rider')
             ->where('status', 'pending')
             ->whereNull('driver_id')
+            ->whereIn('payment_status', ['hold', 'authorized', 'paid'])
             ->whereNotIn('id', $processedRideIds)
             ->latest()
             ->take(15)

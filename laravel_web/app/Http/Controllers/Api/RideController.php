@@ -217,6 +217,7 @@ class RideController extends Controller
             'duration_minutes' => 'nullable|integer',
             'stops' => 'nullable|array',
             'notes' => 'nullable|string',
+            'country' => 'nullable|string|max:50',
         ]);
 
         $user = $request->user();
@@ -226,7 +227,8 @@ class RideController extends Controller
         $stopsInput = $request->input('stops', []);
         $stopsCount = is_array($stopsInput) ? count($stopsInput) : 0;
 
-        $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount);
+        $country = $request->input('country') ?? CountryService::getCurrentCountryCode($request);
+        $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
         $amount = $breakdown['total_fare'];
 
         $digitalReceipt = 'REC-' . strtoupper(Str::random(8));
@@ -244,12 +246,13 @@ class RideController extends Controller
             'fare' => $amount,
             'total_amount' => $amount,
             'vehicle_type' => $vehicleType,
-            'payment_method' => $request->input('payment_method', 'cash'),
+            'payment_method' => $request->input('payment_method', 'stripe'),
             'passenger_name' => $user->name,
             'passenger_phone' => $user->phone ?? 'N/A',
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
+            'payment_status' => 'pending',
         ]);
 
         // Save stops if provided
@@ -268,19 +271,41 @@ class RideController extends Controller
             }
         }
 
-        // Trigger driver matching
-        RideAssignmentService::assignNextDriver($ride);
+        // Initialize payment authorization hold
+        $rawMethod = strtolower($request->input('payment_method', 'stripe'));
+        $paymentData = [];
 
-        // Notify Rider
-        try {
-            NotificationService::notifyRideRequested($ride);
-        } catch (\Throwable $e) {}
+        if (in_array($rawMethod, ['momo', 'mobile_money', 'momo_pay', 'mtn_momo'], true)) {
+            $momoPhone = $request->input('momo_phone', $user->phone ?? '0240000000');
+            $momoNet = $request->input('momo_network', 'MTN');
+            $momoRes = \App\Services\MomoPaymentService::requestToPay($ride, $momoPhone, $momoNet);
+            $paymentData = [
+                'requires_payment_hold' => true,
+                'payment_method' => 'momo',
+                'transaction_ref' => $momoRes['transaction_ref'] ?? null,
+                'message' => $momoRes['message'] ?? 'Please confirm USSD prompt on your phone.',
+            ];
+        } else {
+            // Stripe or Apple Pay pre-authorization hold
+            $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, $user->id);
+            $paymentData = [
+                'requires_payment_hold' => true,
+                'payment_method' => str_contains($rawMethod, 'apple') ? 'apple_pay' : 'stripe',
+                'stripe_client_secret' => $intentData['client_secret'] ?? null,
+                'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
+                'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
+            ];
+        }
 
-        return response()->json([
+        return response()->json(array_merge([
             'success' => true,
-            'message' => 'Ride requested successfully. Searching for nearby drivers...',
+            'message' => 'Ride booking created. Please complete payment hold to search for drivers.',
             'ride' => $ride->fresh(['stops']),
-        ], 201);
+            'country_code' => $breakdown['country_code'] ?? 'USA',
+            'currency' => $breakdown['currency'] ?? 'USD',
+            'currency_symbol' => $breakdown['currency_symbol'] ?? '$',
+            'breakdown' => $breakdown,
+        ], $paymentData), 201);
     }
 
     /**
@@ -306,13 +331,43 @@ class RideController extends Controller
             ]);
         }
 
+        $isDriverAccepted = !empty($ride->driver_id) && in_array($ride->status, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'], true);
         $driverProfile = $ride->driver?->driverProfile;
+
+        $driverData = null;
+        if ($isDriverAccepted && $ride->driver) {
+            $rawPhone = $ride->driver->phone ?: '';
+            $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '233' . substr($cleanPhone, 1);
+            } elseif (!str_starts_with($cleanPhone, '233') && strlen($cleanPhone) === 9) {
+                $cleanPhone = '233' . $cleanPhone;
+            }
+            $whatsappUrl = !empty($cleanPhone) ? "https://wa.me/{$cleanPhone}" : null;
+
+            $driverData = [
+                'id' => $ride->driver->id,
+                'name' => $ride->driver->name,
+                'phone' => $ride->driver->phone,
+                'email' => $ride->driver->email,
+                'whatsapp' => $cleanPhone,
+                'whatsapp_url' => $whatsappUrl,
+                'photo_url' => $driverProfile?->photo_url,
+                'rating' => $driverProfile ? floatval($driverProfile->rating) : 4.9,
+                'total_trips' => $driverProfile ? $driverProfile->total_completed_trips : 40,
+                'vehicle' => $driverProfile ? trim($driverProfile->vehicle_make . ' ' . $driverProfile->vehicle_model) : ($ride->vehicle_type ?? 'Executive Sedan'),
+                'plate' => $driverProfile?->license_number ?? 'REG-8899',
+                'current_lat' => $ride->current_lat ? floatval($ride->current_lat) : ($driverProfile?->current_lat ? floatval($driverProfile->current_lat) : null),
+                'current_lng' => $ride->current_lng ? floatval($ride->current_lng) : ($driverProfile?->current_lng ? floatval($driverProfile->current_lng) : null),
+            ];
+        }
 
         return response()->json([
             'success' => true,
             'ride' => [
                 'id' => $ride->id,
                 'status' => $ride->status,
+                'payment_status' => $ride->payment_status,
                 'pickup_location' => $ride->pickup_location,
                 'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
                 'pickup_lng' => $ride->pickup_lng ? floatval($ride->pickup_lng) : null,
@@ -321,22 +376,11 @@ class RideController extends Controller
                 'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
                 'fare' => floatval($ride->fare ?: $ride->total_amount),
                 'vehicle_type' => $ride->vehicle_type ?? 'Standard',
-                'payment_method' => $ride->payment_method ?? 'cash',
+                'payment_method' => $ride->payment_method ?? 'stripe',
                 'distance_km' => $ride->distance_km ? floatval($ride->distance_km) : null,
                 'duration_minutes' => $ride->duration_minutes,
                 'created_at' => $ride->created_at->toIso8601String(),
-                'driver' => $ride->driver ? [
-                    'id' => $ride->driver->id,
-                    'name' => $ride->driver->name,
-                    'phone' => $ride->driver->phone,
-                    'photo_url' => $driverProfile?->photo_url,
-                    'rating' => $driverProfile ? floatval($driverProfile->rating) : 4.9,
-                    'total_trips' => $driverProfile ? $driverProfile->total_completed_trips : 40,
-                    'vehicle' => $driverProfile ? trim($driverProfile->vehicle_make . ' ' . $driverProfile->vehicle_model) : ($ride->vehicle_type ?? 'Executive Sedan'),
-                    'plate' => $driverProfile?->license_number ?? 'REG-8899',
-                    'current_lat' => $ride->current_lat ? floatval($ride->current_lat) : ($driverProfile?->current_lat ? floatval($driverProfile->current_lat) : null),
-                    'current_lng' => $ride->current_lng ? floatval($ride->current_lng) : ($driverProfile?->current_lng ? floatval($driverProfile->current_lng) : null),
-                ] : null,
+                'driver' => $driverData,
                 'rider' => [
                     'id' => $ride->rider?->id,
                     'name' => $ride->rider?->name ?? $ride->passenger_name ?? 'Rider',
@@ -353,17 +397,78 @@ class RideController extends Controller
     }
 
     /**
-     * Show single ride details
+     * Show single ride details with IDOR protection
      */
     public function show(Request $request, $id): JsonResponse
     {
+        $user = $request->user();
         $ride = Ride::with(['driver.driverProfile', 'rider', 'stops'])->find($id);
 
         if (!$ride) {
             return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
         }
 
+        // Fix IDOR: only allow rider, assigned driver, or admin
+        if ($user && $user->id !== $ride->rider_id && $user->id !== $ride->driver_id && ($user->role ?? null) !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized to view this ride details'], 403);
+        }
+
+        // Gate driver contacts unless confirmed/accepted
+        if (!in_array($ride->status, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'], true)) {
+            $ride->setRelation('driver', null);
+        }
+
         return response()->json(['success' => true, 'ride' => $ride]);
+    }
+
+    /**
+     * Verify payment hold / confirmation for API rides and start driver search
+     */
+    public function confirmPayment(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        $ride = Ride::find($id);
+
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        if ($user && $user->id !== $ride->rider_id && ($user->role ?? null) !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $paymentIntentId = $request->input('payment_intent_id') ?: $ride->hold_payment_intent_id;
+        $transactionRef = $request->input('transaction_ref') ?: $ride->hold_authorization_code;
+
+        if ($paymentIntentId) {
+            $result = \App\Services\StripeService::confirmPayment($paymentIntentId);
+            if (!empty($result['success'])) {
+                $ride->refresh();
+                return response()->json([
+                    'success' => true,
+                    'status' => $ride->payment_status,
+                    'message' => 'Payment hold verified. Driver search is now active.',
+                    'ride' => $ride->fresh(['stops', 'driver.driverProfile']),
+                ]);
+            }
+            return response()->json(['success' => false, 'error' => $result['error'] ?? 'Card authorization failed.'], 400);
+        }
+
+        if ($transactionRef) {
+            $result = \App\Services\MomoPaymentService::confirmPayment($transactionRef);
+            if (!empty($result['success'])) {
+                $ride->refresh();
+                return response()->json([
+                    'success' => true,
+                    'status' => $ride->payment_status,
+                    'message' => 'Mobile Money payment confirmed. Driver search is now active.',
+                    'ride' => $ride->fresh(['stops', 'driver.driverProfile']),
+                ]);
+            }
+            return response()->json(['success' => false, 'error' => $result['message'] ?? 'MoMo confirmation failed.'], 400);
+        }
+
+        return response()->json(['success' => false, 'error' => 'Missing payment identifier.'], 422);
     }
 
     /**
@@ -402,6 +507,7 @@ class RideController extends Controller
         if ($newStatus === 'in_progress') $updates['started_at'] = now();
         if ($newStatus === 'completed') {
             $updates['completed_at'] = now();
+            \App\Services\StripeService::captureRideHold($ride);
             $updates['payment_status'] = 'paid';
 
             if ($user->driverProfile) {
@@ -410,6 +516,11 @@ class RideController extends Controller
                     $user->driverProfile->increment('total_trips');
                 }
             }
+        }
+        if ($newStatus === 'cancelled') {
+            $updates['cancelled_at'] = now();
+            \App\Services\StripeService::releaseRideHold($ride);
+            $updates['payment_status'] = 'released';
         }
 
         $ride->update($updates);

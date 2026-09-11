@@ -121,6 +121,43 @@ class AppConfigApiController extends Controller
         $currencySymbol = $currentPricing->currency_symbol ?? '$';
         $currencyCode = $currentPricing->currency_code ?? 'USD';
 
+        if (($currentPricing->country_code ?? 'USA') === 'GHA') {
+            $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
+            $data = collect($ghanaMatrix)->values()->map(function ($tier, $idx) use ($currencySymbol, $currencyCode) {
+                $baseFare = (float) $tier['base_fare'];
+                $perKm = (float) $tier['per_km_rate'];
+                $perMin = (float) ($tier['per_minute_rate'] ?? 0.30);
+                $minFare = (float) $tier['minimum_fare'];
+                $est10km = max($minFare, round($baseFare + (10 * $perKm), 2));
+                return [
+                    'id' => $idx + 1,
+                    'slug' => $tier['slug'],
+                    'name' => $tier['name'],
+                    'icon' => $tier['icon'],
+                    'capacity' => $tier['capacity'],
+                    'base_fare' => $baseFare,
+                    'per_km_rate' => $perKm,
+                    'per_minute_rate' => $perMin,
+                    'minimum_fare' => $minFare,
+                    'multiplier' => (float) $tier['multiplier'],
+                    'description' => $tier['description'],
+                    'target' => $tier['target'],
+                    'sort_order' => $idx + 1,
+                    'currency_symbol' => $currencySymbol,
+                    'currency_code' => $currencyCode,
+                    'fare_preview' => $currencySymbol . number_format($est10km, 2),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'country_code' => 'GHA',
+                'currency_symbol' => $currencySymbol,
+                'currency_code' => $currencyCode,
+                'categories' => $data,
+            ]);
+        }
+
         $data = $categories->map(function ($cat) use ($countryMultiplier, $currencySymbol, $currencyCode) {
             $baseFare = round($cat->base_fare * $countryMultiplier, 2);
             $perKm = round($cat->per_km_rate * $countryMultiplier, 2);

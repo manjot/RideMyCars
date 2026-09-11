@@ -80,10 +80,16 @@ class Ride extends Model
         'refund_status',
         'refund_reference',
         'refunded_at',
+        'driver_search_started_at',
+        'payment_held_at',
+        'hold_payment_intent_id',
+        'hold_authorization_code',
         'accepted_at',
     ];
 
     protected $casts = [
+        'driver_search_started_at' => 'datetime',
+        'payment_held_at' => 'datetime',
         'arrived_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',

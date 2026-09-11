@@ -1,6 +1,18 @@
 <x-layout title="Payment Details & Driver Verification — RideMyCars">
-    <div x-data="verificationPage('{{ $serviceType }}', {{ $serviceId }}, '{{ $verificationStatus }}', '{{ $paymentStatus }}')"
-         x-init="initPolling()"
+    <div x-data="verificationPage({
+            serviceType: '{{ $serviceType }}',
+            serviceId: {{ $serviceId }},
+            initialVerificationStatus: '{{ $verificationStatus }}',
+            initialPaymentStatus: '{{ $paymentStatus }}',
+            initialBookingStatus: '{{ $bookingStatus ?? 'pending' }}',
+            initialIsPaymentConfirmed: {{ $isPaymentConfirmed ? 'true' : 'false' }},
+            initialIsDriverConfirmed: {{ $isDriverConfirmed ? 'true' : 'false' }},
+            totalAmount: {{ $totalAmount }},
+            currency: '{{ $currency }}',
+            driverData: {{ json_encode($driver) }},
+            bookingCode: '{{ $bookingCode }}'
+         })"
+         x-init="initPage()"
          class="min-h-screen bg-gray-50 dark:bg-[#09090b] py-12 px-4 sm:px-6 lg:px-8">
 
         <div class="max-w-3xl mx-auto space-y-8">
@@ -8,13 +20,13 @@
             <!-- Page Header & Title -->
             <div class="text-center space-y-2">
                 <span class="px-3.5 py-1.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 font-extrabold text-xs uppercase tracking-widest border border-brand-500/20">
-                    Stripe Checkout Verification
+                    Escrow Protected Checkout
                 </span>
                 <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                    Payment Details & Driver Verification
+                    Payment Hold & Driver Confirmation
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Review your booking information. Your assigned driver must verify details before payment processing.
+                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+                    Select your payment method (Stripe, Apple Pay, or MoMo Pay). Driver contacts unlock upon payment authorization & confirmation.
                 </p>
             </div>
 
@@ -22,83 +34,290 @@
             <div class="bg-white dark:bg-[#111] p-5 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
                 <div class="grid grid-cols-4 gap-2 text-center text-xs font-extrabold">
                     
-                    <!-- Step 1: Submit Details -->
-                    <div class="p-2.5 rounded-2xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 flex flex-col items-center gap-1">
-                        <span class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-black">✓</span>
+                    <!-- Step 1: Details -->
+                    <div class="p-2.5 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex flex-col items-center gap-1">
+                        <span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black">✓</span>
                         <span>1. Details</span>
                     </div>
 
-                    <!-- Step 2: Driver Verification -->
+                    <!-- Step 2: Payment Hold -->
                     <div :class="{
-                            'bg-amber-500 text-white shadow-md animate-pulse': currentVerificationStatus === 'pending_verification',
-                            'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300': currentVerificationStatus === 'driver_verified',
-                            'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300': currentVerificationStatus === 'rejected',
-                            'bg-gray-100 dark:bg-white/5 text-gray-400': currentVerificationStatus === 'unverified'
+                            'bg-brand-500 text-slate-950 shadow-md font-black ring-2 ring-brand-400': !isPaymentConfirmed,
+                            'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300': isPaymentConfirmed
                         }"
                         class="p-2.5 rounded-2xl flex flex-col items-center gap-1 transition-all">
-                        <span class="w-6 h-6 rounded-full bg-current text-white flex items-center justify-center text-xs font-black"
-                              x-text="currentVerificationStatus === 'driver_verified' ? '✓' : (currentVerificationStatus === 'rejected' ? '✗' : '2')"></span>
-                        <span>2. Driver Verification</span>
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                              :class="isPaymentConfirmed ? 'bg-emerald-500 text-white' : 'bg-slate-950 text-white'"
+                              x-text="isPaymentConfirmed ? '✓' : '2'"></span>
+                        <span>2. Payment Hold</span>
                     </div>
 
-                    <!-- Step 3: Secure Payment -->
+                    <!-- Step 3: Driver Search & Confirm -->
                     <div :class="{
-                            'bg-brand-500 text-slate-950 shadow-md font-black': currentVerificationStatus === 'driver_verified' && currentPaymentStatus !== 'paid',
-                            'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300': currentPaymentStatus === 'paid',
-                            'bg-gray-100 dark:bg-white/5 text-gray-400': currentVerificationStatus !== 'driver_verified' && currentPaymentStatus !== 'paid'
+                            'bg-amber-500 text-white shadow-md animate-pulse': isPaymentConfirmed && !isDriverConfirmed,
+                            'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300': isDriverConfirmed,
+                            'bg-gray-100 dark:bg-white/5 text-gray-400': !isPaymentConfirmed
                         }"
                         class="p-2.5 rounded-2xl flex flex-col items-center gap-1 transition-all">
-                        <span class="w-6 h-6 rounded-full bg-current text-white flex items-center justify-center text-xs font-black"
-                              x-text="currentPaymentStatus === 'paid' ? '✓' : '3'"></span>
-                        <span>3. Payment</span>
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                              :class="isDriverConfirmed ? 'bg-emerald-500 text-white' : (isPaymentConfirmed ? 'bg-amber-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-500')"
+                              x-text="isDriverConfirmed ? '✓' : '3'"></span>
+                        <span>3. Driver Match</span>
                     </div>
 
-                    <!-- Step 4: Confirmation -->
+                    <!-- Step 4: Dispatched & Confirmed -->
                     <div :class="{
-                            'bg-green-500 text-white shadow-md': currentPaymentStatus === 'paid',
-                            'bg-gray-100 dark:bg-white/5 text-gray-400': currentPaymentStatus !== 'paid'
+                            'bg-emerald-500 text-white shadow-md font-black': isPaymentConfirmed && isDriverConfirmed,
+                            'bg-gray-100 dark:bg-white/5 text-gray-400': !isDriverConfirmed
                         }"
                         class="p-2.5 rounded-2xl flex flex-col items-center gap-1 transition-all">
-                        <span class="w-6 h-6 rounded-full bg-current text-white flex items-center justify-center text-xs font-black">4</span>
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                              :class="isPaymentConfirmed && isDriverConfirmed ? 'bg-white text-emerald-600' : 'bg-gray-300 dark:bg-gray-700 text-gray-500'">4</span>
                         <span>4. Confirmed</span>
                     </div>
 
                 </div>
             </div>
 
-            <!-- Dynamic Status Alert Box -->
-            
-            <!-- State 1: PENDING VERIFICATION -->
-            <div x-show="currentVerificationStatus === 'pending_verification'" x-transition
-                 class="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700/50 rounded-3xl p-6 shadow-sm text-amber-900 dark:text-amber-200 space-y-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black animate-spin shrink-0">
-                        🔄
+            <!-- DYNAMIC STATUS PANELS -->
+
+            <!-- STATE A: PAYMENT PENDING (Choose Stripe, Apple Pay, or MoMo Pay) -->
+            <div x-show="!isPaymentConfirmed" x-transition class="space-y-6">
+                <div class="bg-white dark:bg-[#111] border-2 border-brand-400/50 dark:border-brand-500/30 rounded-3xl p-6 md:p-8 shadow-lg space-y-6">
+                    
+                    <div class="flex items-start justify-between">
+                        <div class="space-y-1">
+                            <span class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-extrabold uppercase tracking-wide inline-flex items-center gap-1.5">
+                                <span>🔒</span> Payment Pre-Authorization Required
+                            </span>
+                            <h2 class="text-xl md:text-2xl font-black text-gray-900 dark:text-white pt-1">
+                                Secure Payment Escrow Hold
+                            </h2>
+                            <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                                Select your preferred payment method. Funds are held safely in escrow and only captured once service is rendered. Driver contact channels unlock immediately after confirmation.
+                            </p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Fare</span>
+                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">${{ number_format($totalAmount, 2) }} {{ $currency }}</span>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-extrabold text-base">Pending Driver Verification</h3>
-                        <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                            Your details have been submitted successfully. Please wait for the assigned driver to verify your booking.
-                        </p>
+
+                    <!-- Payment Method Selectors -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            Choose Payment Method
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            
+                            <!-- Method 1: Stripe Card -->
+                            <button type="button" @click="paymentMethod = 'stripe'"
+                                    :class="paymentMethod === 'stripe' ? 'border-brand-500 bg-brand-500/10 ring-2 ring-brand-500 text-gray-900 dark:text-white' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
+                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl">💳</span>
+                                    <span x-show="paymentMethod === 'stripe'" class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                </div>
+                                <div>
+                                    <div class="font-extrabold text-sm text-gray-900 dark:text-white">Stripe Card</div>
+                                    <div class="text-[11px] text-gray-500">Visa, Mastercard, Amex</div>
+                                </div>
+                            </button>
+
+                            <!-- Method 2: Apple Pay -->
+                            <button type="button" @click="paymentMethod = 'apple_pay'"
+                                    :class="paymentMethod === 'apple_pay' ? 'border-black dark:border-white bg-gray-100 dark:bg-white/10 ring-2 ring-black dark:ring-white text-gray-900 dark:text-white' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
+                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl">🍎</span>
+                                    <span x-show="paymentMethod === 'apple_pay'" class="w-2.5 h-2.5 rounded-full bg-black dark:bg-white"></span>
+                                </div>
+                                <div>
+                                    <div class="font-extrabold text-sm text-gray-900 dark:text-white">Apple Pay</div>
+                                    <div class="text-[11px] text-gray-500">1-Touch Apple Wallet</div>
+                                </div>
+                            </button>
+
+                            <!-- Method 3: MoMo Pay (Mobile Money) -->
+                            <button type="button" @click="paymentMethod = 'momo'"
+                                    :class="paymentMethod === 'momo' ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500 text-gray-900 dark:text-white' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
+                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl">📱</span>
+                                    <span x-show="paymentMethod === 'momo'" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                </div>
+                                <div>
+                                    <div class="font-extrabold text-sm text-gray-900 dark:text-white">MoMo Pay</div>
+                                    <div class="text-[11px] text-gray-500">MTN • Telecel • AirtelTigo</div>
+                                </div>
+                            </button>
+
+                        </div>
                     </div>
-                </div>
-                <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-900/40 p-2.5 rounded-xl flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                    <span>Live Driver Sync Active (Checking for driver response...)</span>
+
+                    <!-- MoMo Pay Details Section (Revealed when MoMo Pay selected) -->
+                    <div x-show="paymentMethod === 'momo'" x-transition class="p-5 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider">Select Mobile Money Network</span>
+                            <span class="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 px-2.5 py-1 rounded-full">Ghana MoMo Direct</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" @click="momoNetwork = 'MTN'"
+                                    :class="momoNetwork === 'MTN' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
+                                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition text-center">
+                                🟡 MTN MoMo
+                            </button>
+                            <button type="button" @click="momoNetwork = 'Telecel'"
+                                    :class="momoNetwork === 'Telecel' ? 'bg-red-500 text-white font-black shadow' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
+                                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition text-center">
+                                🔴 Telecel (Vodafone)
+                            </button>
+                            <button type="button" @click="momoNetwork = 'AT'"
+                                    :class="momoNetwork === 'AT' ? 'bg-blue-600 text-white font-black shadow' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
+                                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition text-center">
+                                🔵 AirtelTigo Money
+                            </button>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                Mobile Money Subscriber Phone Number <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex">
+                                <span class="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-gray-300 dark:border-white/15 bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-bold text-xs">
+                                    🇬🇭 +233
+                                </span>
+                                <input type="tel" x-model="momoPhone" placeholder="024 123 4567"
+                                       class="flex-1 px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-white/15 rounded-r-xl text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            </div>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                                A prompt will be triggered on your mobile handset to approve the ${{ number_format($totalAmount, 2) }} {{ $currency }} escrow authorization hold.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Apple Pay Details Section (Revealed when Apple Pay selected) -->
+                    <div x-show="paymentMethod === 'apple_pay'" x-transition class="p-4 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl flex items-center gap-3">
+                        <span class="text-2xl">🍎</span>
+                        <div class="text-xs">
+                            <span class="font-black text-gray-900 dark:text-white block">Biometric Apple Pay Ready</span>
+                            <span class="text-gray-500 dark:text-gray-400">Authenticate with Touch ID or Face ID on your Apple device to authorize escrow hold.</span>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Trigger Button -->
+                    <div class="pt-2">
+                        <!-- Case 1: Stripe Card -->
+                        <template x-if="paymentMethod === 'stripe'">
+                            <button type="button" @click="triggerStripePayment()"
+                                    class="w-full py-4 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
+                                <span>💳 Authorize ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe Card</span>
+                                <span>→</span>
+                            </button>
+                        </template>
+
+                        <!-- Case 2: Apple Pay -->
+                        <template x-if="paymentMethod === 'apple_pay'">
+                            <button type="button" @click="submitPaymentHold('apple_pay')"
+                                    :disabled="isProcessing"
+                                    class="w-full py-4 px-6 bg-black text-white hover:bg-gray-900 font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                <span x-show="!isProcessing">🍎 Pay with Apple Pay (${{ number_format($totalAmount, 2) }} {{ $currency }})</span>
+                                <span x-show="isProcessing" class="flex items-center gap-2">
+                                    <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Authorizing Apple Pay Escrow Hold...
+                                </span>
+                            </button>
+                        </template>
+
+                        <!-- Case 3: MoMo Pay -->
+                        <template x-if="paymentMethod === 'momo'">
+                            <button type="button" @click="submitPaymentHold('momo')"
+                                    :disabled="isProcessing || !momoPhone"
+                                    class="w-full py-4 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                <span x-show="!isProcessing">📱 Authorize MoMo Hold (${{ number_format($totalAmount, 2) }} {{ $currency }})</span>
+                                <span x-show="isProcessing" class="flex items-center gap-2">
+                                    <svg class="animate-spin h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Waiting for MoMo Handset Approval...
+                                </span>
+                            </button>
+                        </template>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- State 0: PAYMENT ALREADY COMPLETED -->
-            <template x-if="currentPaymentStatus === 'paid'">
+            <!-- STATE B: PAYMENT HELD & ACTIVELY SEARCHING FOR DRIVER -->
+            <div x-show="isPaymentConfirmed && !isDriverConfirmed" x-transition class="space-y-6">
+                
+                <div class="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-400 dark:border-amber-600/60 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-6 relative overflow-hidden">
+                    
+                    <!-- Pulsing Radar Animation Background -->
+                    <div class="relative w-28 h-28 mx-auto flex items-center justify-center">
+                        <div class="absolute inset-0 rounded-full bg-amber-400/20 animate-ping"></div>
+                        <div class="absolute inset-2 rounded-full bg-amber-500/30 animate-pulse"></div>
+                        <div class="relative w-16 h-16 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-3xl font-black shadow-lg">
+                            🚘
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 max-w-md mx-auto">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            ✓ Escrow Payment Held (${{ number_format($totalAmount, 2) }} {{ $currency }})
+                        </span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                            Searching for Available Driver...
+                        </h3>
+                        <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300">
+                            We are broadcasting your pickup request to vetted chauffeurs near <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
+                            Your payment is held safely in escrow and driver contact details will appear the moment a driver confirms.
+                        </p>
+                    </div>
+
+                    <!-- Live Dispatch Steps Pulse -->
+                    <div class="max-w-lg mx-auto bg-white/70 dark:bg-[#161616]/70 backdrop-blur rounded-2xl p-4 border border-amber-200/60 dark:border-white/10 grid grid-cols-3 gap-2 text-center text-[11px] font-bold">
+                        <div class="p-2 rounded-xl bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
+                            ✓ Payment Held
+                        </div>
+                        <div class="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 flex items-center justify-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                            Radar Dispatch
+                        </div>
+                        <div class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-400">
+                            Awaiting Accept
+                        </div>
+                    </div>
+
+                    <!-- Instant Confirm Simulation Button for Testing/Demo -->
+                    <div class="pt-2 flex justify-center">
+                        <button type="button" @click="confirmDriverAssignment()"
+                                :disabled="isSimulatingMatch"
+                                class="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                            <span x-show="!isSimulatingMatch">⚡ Connect & Confirm Nearest Driver Now</span>
+                            <span x-show="isSimulatingMatch" class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Matching Chauffeur...
+                            </span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- STATE C: DRIVER CONFIRMED & DISPATCHED (All Contacts Unlocked) -->
+            <div x-show="isPaymentConfirmed && isDriverConfirmed" x-transition class="space-y-4">
+                
                 <div class="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-400 dark:border-emerald-700/50 rounded-3xl p-6 shadow-sm text-emerald-900 dark:text-emerald-200 space-y-4">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
                             ✓
                         </div>
                         <div>
-                            <h3 class="font-black text-lg">✓ Payment Already Completed</h3>
+                            <h3 class="font-black text-lg">🎉 Driver Confirmed & Assigned!</h3>
                             <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                                This booking has been fully paid. Transaction Reference: <strong class="font-mono">{{ $transactionRef ?? 'N/A' }}</strong>
+                                Your assigned chauffeur has confirmed your booking. Payment is secured and all direct contact channels (Phone Call, WhatsApp, Email) are now live.
                             </p>
                         </div>
                     </div>
@@ -106,81 +325,23 @@
                     <div class="bg-white/80 dark:bg-black/40 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800/30 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Status</span>
-                            <span class="font-black text-emerald-600 dark:text-emerald-400 uppercase">✓ Paid</span>
+                            <span class="font-black text-emerald-600 dark:text-emerald-400 uppercase">✓ Escrow Held / Paid</span>
                         </div>
                         <div>
-                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Amount Paid</span>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Amount</span>
                             <span class="font-black text-gray-900 dark:text-white">${{ number_format($totalAmount, 2) }} {{ $currency }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Method</span>
-                            <span class="font-extrabold text-gray-900 dark:text-white">{{ $paidMethod ?? 'Stripe Secure Card' }}</span>
+                            <span class="font-extrabold text-gray-900 dark:text-white uppercase" x-text="paymentMethod || '{{ $paidMethod ?? 'Stripe Secure Card' }}'"></span>
                         </div>
                         <div>
-                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Date</span>
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $paidAt ?? date('M d, Y') }}</span>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Driver Status</span>
+                            <span class="font-black text-emerald-600 dark:text-emerald-400">✓ Confirmed</span>
                         </div>
                     </div>
-
-                    <div class="pt-2 flex flex-col sm:flex-row gap-3">
-                        <a href="/my-rides" class="px-6 py-3 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-extrabold text-xs rounded-xl shadow-md transition-all text-center">
-                            View My Bookings →
-                        </a>
-                        <button type="button" onclick="window.print()" class="px-5 py-3 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 font-bold text-xs rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition text-center">
-                            📄 Download Receipt
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- State 2: DRIVER VERIFIED (APPROVED) OR DIRECT PAYMENT -->
-            <template x-if="currentPaymentStatus !== 'paid'">
-                <div class="bg-green-50 dark:bg-green-950/30 border-2 border-green-400 dark:border-green-700/50 rounded-3xl p-6 shadow-sm text-green-900 dark:text-green-200 space-y-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-green-500 text-white flex items-center justify-center font-black text-xl shrink-0">
-                            ✓
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-base">🎉 Booking Ready for Checkout!</h3>
-                            <p class="text-xs text-green-700 dark:text-green-300 mt-0.5">
-                                Your booking request is confirmed. You may now proceed with secure Stripe PCI-DSS Payment.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="pt-2">
-                        <button type="button" @click="triggerStripePayment()"
-                                class="w-full py-4 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
-                            <span>💳 Pay ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
-                            <span>→</span>
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- State 3: REJECTED -->
-            <div x-show="currentVerificationStatus === 'rejected'" x-transition
-                 class="bg-red-50 dark:bg-red-950/30 border-2 border-red-300 dark:border-red-700/50 rounded-3xl p-6 shadow-sm text-red-900 dark:text-red-200 space-y-3">
-                <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-red-500 text-white flex items-center justify-center font-black text-xl shrink-0 mt-0.5">
-                        ⚠️
-                    </div>
-                    <div class="space-y-1">
-                        <h3 class="font-extrabold text-base">Verification Rejected by Driver</h3>
-                        <p class="text-xs text-red-700 dark:text-red-300">
-                            <strong>Reason:</strong> <span x-text="rejectionReason || '{{ $rejectionReason ?? 'Driver declined requested pickup schedule or details.' }}'"></span>
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 pt-1">
-                            Your payment has NOT been processed. You may modify your details and submit for re-verification.
-                        </p>
-                    </div>
                 </div>
 
-                <div class="pt-2 flex justify-end">
-                    <button type="button" onclick="window.history.back()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-md">
-                        🔄 Modify Details & Resubmit
-                    </button>
-                </div>
             </div>
 
             <!-- Booking Overview Card -->
@@ -220,26 +381,94 @@
                     </div>
                 </div>
 
-                <!-- Assigned Driver Card -->
-                @if(!empty($driver))
-                    <div class="p-5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl flex items-center justify-between shadow-sm">
+                <!-- ASSIGNED DRIVER CARD: LOCKED VS UNLOCKED -->
+                <div class="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5 shadow-sm">
+                    
+                    <!-- Driver Profile Header -->
+                    <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        
                         <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center font-bold text-lg border-2 border-brand-300 shadow-sm">
-                                👨‍✈️
+                            <div class="relative">
+                                <img :src="driver.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(driver.name || 'Driver') + '&background=0F172A&color=FFFFFF&size=256&bold=true'" 
+                                     alt="Driver Photo" 
+                                     class="w-14 h-14 rounded-full object-cover border-2 border-brand-400 shadow-sm">
+                                <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white dark:border-[#111]"
+                                      :class="(isPaymentConfirmed && isDriverConfirmed) ? 'bg-emerald-500' : 'bg-gray-400'"></span>
                             </div>
                             <div>
-                                <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Driver</span>
-                                <h4 class="font-extrabold text-base text-gray-900 dark:text-white">{{ $driver['name'] }}</h4>
-                                <p class="text-xs text-gray-600 dark:text-gray-300">{{ $driver['vehicle'] ?? 'Executive Vehicle' }} • ⭐ {{ $driver['rating'] ?? 4.9 }}</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Driver</span>
+                                    <span x-show="isPaymentConfirmed && isDriverConfirmed" class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px]">
+                                        ✓ Confirmed
+                                    </span>
+                                    <span x-show="!isPaymentConfirmed" class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold text-[10px]">
+                                        🔒 Locked
+                                    </span>
+                                </div>
+                                <h4 class="font-extrabold text-base text-gray-900 dark:text-white" x-text="driver.name || 'Michael Scott'"></h4>
+                                <p class="text-xs text-gray-600 dark:text-gray-300">
+                                    <span x-text="driver.vehicle || 'Toyota Camry'"></span> • ⭐ <span x-text="driver.rating || '4.95'"></span>
+                                </p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <a href="tel:{{ $driver['phone'] }}" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition">
-                                📞 Call Driver
-                            </a>
+
+                        <!-- Action State: UNLOCKED vs LOCKED -->
+                        <div class="shrink-0">
+                            <!-- UNLOCKED (Payment Confirmed AND Driver Confirmed): Show Call, WhatsApp, Email -->
+                            <div x-show="isPaymentConfirmed && isDriverConfirmed" class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                                
+                                <!-- 1. Call Button -->
+                                <a :href="'tel:' + (driver.phone || '+233245550192')" 
+                                   class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
+                                    <span>📞</span> Call Driver
+                                </a>
+
+                                <!-- 2. WhatsApp Button -->
+                                <a :href="'https://wa.me/' + (driver.whatsapp || '233245550192') + '?text=' + encodeURIComponent('Hello ' + (driver.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + bookingCode + '.')"
+                                   target="_blank"
+                                   class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
+                                    <span>💬</span> WhatsApp
+                                </a>
+
+                                <!-- 3. Email Button -->
+                                <a :href="'mailto:' + (driver.email || 'driver@ridemycars.com') + '?subject=' + encodeURIComponent('RideMyCars Booking #' + bookingCode)"
+                                   class="px-3.5 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
+                                    <span>✉️</span> Email
+                                </a>
+
+                            </div>
+
+                            <!-- LOCKED (Payment Pending or Driver Not Confirmed): Display Locked State -->
+                            <div x-show="!isPaymentConfirmed || !isDriverConfirmed" class="text-right">
+                                <span class="px-4 py-2.5 bg-gray-200 dark:bg-white/10 text-gray-400 dark:text-gray-500 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-not-allowed select-none">
+                                    <span>🔒</span> Contact Locked
+                                </span>
+                            </div>
                         </div>
+
                     </div>
-                @endif
+
+                    <!-- Security Alert Banner when Locked -->
+                    <div x-show="!isPaymentConfirmed || !isDriverConfirmed" class="px-5 py-3 bg-amber-500/10 border-t border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                        <span class="text-base shrink-0">🔒</span>
+                        <span>
+                            <strong>Security Protection:</strong> Direct phone call, WhatsApp chat, and driver email are restricted until payment authorization is confirmed and the driver accepts the dispatch.
+                        </span>
+                    </div>
+
+                    <!-- Unlocked Contact Bar Details -->
+                    <div x-show="isPaymentConfirmed && isDriverConfirmed" class="px-5 py-3 bg-emerald-500/10 border-t border-emerald-500/20 text-xs text-emerald-900 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-4 text-[11px]">
+                            <span>📞 Phone: <strong class="font-mono text-gray-900 dark:text-white" x-text="driver.phone || '+233 24 555 0192'"></strong></span>
+                            <span>💬 WhatsApp: <strong class="font-mono text-emerald-600 dark:text-emerald-400" x-text="driver.phone || '+233 24 555 0192'"></strong></span>
+                            <span>✉️ Email: <strong class="text-gray-900 dark:text-white" x-text="driver.email || 'michael.driver@ridemycars.com'"></strong></span>
+                        </div>
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                            ✓ Direct Driver Communication Open
+                        </span>
+                    </div>
+
+                </div>
 
             </div>
 
@@ -250,19 +479,43 @@
     <x-stripe-modal :serviceType="$serviceType" :serviceId="$serviceId" :amount="$totalAmount" :currency="$currency" />
 
     <script>
-    function verificationPage(serviceType, serviceId, initialVerificationStatus, initialPaymentStatus) {
+    function verificationPage(config) {
         return {
-            serviceType: serviceType,
-            serviceId: serviceId,
-            currentVerificationStatus: initialVerificationStatus,
-            currentPaymentStatus: initialPaymentStatus,
-            rejectionReason: '',
+            serviceType: config.serviceType,
+            serviceId: config.serviceId,
+            currentVerificationStatus: config.initialVerificationStatus,
+            currentPaymentStatus: config.initialPaymentStatus,
+            bookingStatus: config.initialBookingStatus,
+            isPaymentConfirmed: config.initialIsPaymentConfirmed,
+            isDriverConfirmed: config.initialIsDriverConfirmed,
+            totalAmount: config.totalAmount,
+            currency: config.currency,
+            driver: config.driverData || {
+                name: 'Michael Scott',
+                phone: '+233 24 555 0192',
+                email: 'michael.driver@ridemycars.com',
+                whatsapp: '233245550192',
+                rating: 4.95,
+                vehicle: 'Toyota Camry'
+            },
+            bookingCode: config.bookingCode,
+            paymentMethod: 'stripe', // 'stripe', 'apple_pay', 'momo'
+            momoNetwork: 'MTN',
+            momoPhone: '',
+            isProcessing: false,
+            isSimulatingMatch: false,
             pollingInterval: null,
 
-            initPolling() {
-                if (this.currentVerificationStatus === 'pending_verification') {
-                    this.pollingInterval = setInterval(() => this.checkStatus(), 3000);
+            initPage() {
+                // If payment is held and driver not yet confirmed, poll for driver acceptance
+                if (this.isPaymentConfirmed && !this.isDriverConfirmed) {
+                    this.startPolling();
                 }
+            },
+
+            startPolling() {
+                if (this.pollingInterval) clearInterval(this.pollingInterval);
+                this.pollingInterval = setInterval(() => this.checkStatus(), 2500);
             },
 
             async checkStatus() {
@@ -273,9 +526,15 @@
                         if (data.success) {
                             this.currentVerificationStatus = data.verification_status;
                             this.currentPaymentStatus = data.payment_status;
-                            this.rejectionReason = data.rejection_reason || '';
+                            this.bookingStatus = data.booking_status;
+                            this.isPaymentConfirmed = data.is_payment_confirmed;
+                            this.isDriverConfirmed = data.is_driver_confirmed;
 
-                            if (this.currentVerificationStatus !== 'pending_verification' && this.pollingInterval) {
+                            if (data.driver) {
+                                this.driver = Object.assign({}, this.driver, data.driver);
+                            }
+
+                            if (this.isDriverConfirmed && this.pollingInterval) {
                                 clearInterval(this.pollingInterval);
                             }
                         }
@@ -290,10 +549,79 @@
                     detail: {
                         serviceType: this.serviceType,
                         serviceId: this.serviceId,
-                        amount: {{ $totalAmount }},
-                        currency: '{{ $currency }}'
+                        amount: this.totalAmount,
+                        currency: this.currency
                     }
                 }));
+            },
+
+            async submitPaymentHold(method) {
+                this.isProcessing = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    const res = await fetch('/api/payment/authorize-hold', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            service_type: this.serviceType,
+                            service_id: this.serviceId,
+                            payment_method: method,
+                            momo_phone: this.momoPhone,
+                            momo_network: this.momoNetwork
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (data.success) {
+                        this.isPaymentConfirmed = true;
+                        this.currentPaymentStatus = 'hold';
+                        this.startPolling();
+                    } else {
+                        alert(data.message || 'Payment hold authorization failed. Please try again.');
+                    }
+                } catch (e) {
+                    console.error("Payment hold error:", e);
+                    alert("Network error processing payment hold.");
+                } finally {
+                    this.isProcessing = false;
+                }
+            },
+
+            async confirmDriverAssignment() {
+                this.isSimulatingMatch = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    const res = await fetch('/api/payment/confirm-driver', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            service_type: this.serviceType,
+                            service_id: this.serviceId
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (data.success) {
+                        this.isDriverConfirmed = true;
+                        this.currentVerificationStatus = 'driver_verified';
+                        this.bookingStatus = 'accepted';
+                        if (data.driver) {
+                            this.driver = Object.assign({}, this.driver, data.driver);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Driver match error:", e);
+                } finally {
+                    this.isSimulatingMatch = false;
+                }
             }
         }
     }

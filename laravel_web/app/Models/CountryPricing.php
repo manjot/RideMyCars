@@ -234,4 +234,156 @@ class CountryPricing extends Model
 
         return $instance;
     }
+
+    /**
+     * Category tiers for this country (e.g. Ghana multi-tier vehicle pricing).
+     */
+    public function rideCategoryPricings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CountryRideCategoryPricing::class, 'country_code', 'country_code');
+    }
+
+    /**
+     * Strategic Cost Matrix for Ghana (Accra Market Disruption Architecture).
+     * Primary Source of Truth: Database (country_ride_category_pricings).
+     * Fallback: Ghana-specific hardcoded architectural values.
+     */
+    public static function getGhanaPricingMatrix(): array
+    {
+        try {
+            $dbTiers = CountryRideCategoryPricing::forCountry('GHA');
+            if ($dbTiers->isNotEmpty()) {
+                $matrix = [];
+                foreach ($dbTiers as $tier) {
+                    $item = [
+                        'id' => $tier->id,
+                        'name' => $tier->category_name,
+                        'slug' => $tier->category_key,
+                        'category_key' => $tier->category_key,
+                        'icon' => $tier->icon ?: '🚗',
+                        'minimum_fare' => (float) $tier->minimum_fare,
+                        'base_fare' => (float) $tier->base_fare,
+                        'per_km_rate' => (float) $tier->per_km_rate,
+                        'per_minute_rate' => (float) ($tier->per_minute_rate ?: 0.30),
+                        'multiplier' => (float) ($tier->multiplier ?: 1.0),
+                        'capacity' => $tier->capacity ?: '1–4 seats',
+                        'luggage' => match ($tier->category_key) {
+                            'economy' => '2 Bags',
+                            'standard' => '3 Bags',
+                            'luxury' => '5 Bags',
+                            'van_xl' => '6 Bags',
+                            'vip_chauffeur' => '3 Bags',
+                            'group_bus' => '10 Bags',
+                            default => '2 Bags',
+                        },
+                        'target' => $tier->target_vehicle ?: $tier->category_name,
+                        'description' => $tier->description ?: '',
+                    ];
+
+                    // Map canonical primary key (exactly 6 tiers)
+                    $matrix[$tier->category_key] = $item;
+                }
+
+                if (!empty($matrix)) {
+                    return $matrix;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Safe fallback if database is unavailable
+        }
+
+        // Safe fallback matching exact required Ghana pricing architecture (6 canonical tiers)
+        return [
+            'economy' => [
+                'name' => 'Economy',
+                'slug' => 'economy',
+                'category_key' => 'economy',
+                'icon' => '🚗',
+                'minimum_fare' => 8.50,
+                'base_fare' => 4.50,
+                'per_km_rate' => 1.10,
+                'per_minute_rate' => 0.20,
+                'multiplier' => 1.0,
+                'capacity' => '1–4 seats',
+                'luggage' => '2 Bags',
+                'target' => 'Small hatchbacks (e.g., Kia Picanto, Hyundai i10)',
+                'description' => 'Small hatchbacks for affordable, high-efficiency daily commuting in Accra',
+            ],
+            'standard' => [
+                'name' => 'Standard / Comfort',
+                'slug' => 'standard',
+                'category_key' => 'standard',
+                'icon' => '🚘',
+                'minimum_fare' => 23.50,
+                'base_fare' => 7.00,
+                'per_km_rate' => 1.80,
+                'per_minute_rate' => 0.30,
+                'multiplier' => 1.0,
+                'capacity' => '1–4 seats',
+                'luggage' => '3 Bags',
+                'target' => 'Clean sedans with high-functioning A/C (e.g., Toyota Corolla)',
+                'description' => 'Clean climate-controlled sedans with top-rated vetted drivers',
+            ],
+            'luxury' => [
+                'name' => 'Luxury SUV',
+                'slug' => 'luxury',
+                'category_key' => 'luxury',
+                'icon' => '🚙',
+                'minimum_fare' => 35.20,
+                'base_fare' => 12.00,
+                'per_km_rate' => 3.00,
+                'per_minute_rate' => 0.50,
+                'multiplier' => 1.0,
+                'capacity' => '1–6 seats',
+                'luggage' => '5 Bags',
+                'target' => 'Premium SUVs for business travelers (e.g., Toyota Prado, Ford Explorer)',
+                'description' => 'High-ride premium SUVs tailored for business travelers and airport runs',
+            ],
+            'van_xl' => [
+                'name' => 'Van XL',
+                'slug' => 'van_xl',
+                'category_key' => 'van_xl',
+                'icon' => '🚐',
+                'minimum_fare' => 50.20,
+                'base_fare' => 15.00,
+                'per_km_rate' => 4.50,
+                'per_minute_rate' => 0.75,
+                'multiplier' => 1.0,
+                'capacity' => '1–7 seats',
+                'luggage' => '6 Bags',
+                'target' => 'Multi-passenger vehicles for airport runs or large families (e.g., Hyundai H1)',
+                'description' => 'High-capacity vans for large groups, delegations & heavy luggage',
+            ],
+            'vip_chauffeur' => [
+                'name' => 'VIP Chauffeurs',
+                'slug' => 'vip_chauffeur',
+                'category_key' => 'vip_chauffeur',
+                'icon' => '👑',
+                'minimum_fare' => 109.50,
+                'base_fare' => 30.00,
+                'per_km_rate' => 6.50,
+                'per_minute_rate' => 1.00,
+                'multiplier' => 1.0,
+                'capacity' => '1–4 seats',
+                'luggage' => '3 Bags',
+                'target' => 'High-end luxury executive sedans (e.g., Mercedes-Benz E-Class, BMW 5 Series)',
+                'description' => 'Executive flagship luxury sedans with professional suited chauffeurs',
+            ],
+            'group_bus' => [
+                'name' => 'Group Bus (7–14)',
+                'slug' => 'group_bus',
+                'category_key' => 'group_bus',
+                'icon' => '🚌',
+                'minimum_fare' => 150.90,
+                'base_fare' => 45.00,
+                'per_km_rate' => 8.00,
+                'per_minute_rate' => 1.50,
+                'multiplier' => 1.0,
+                'capacity' => '7–14 seats',
+                'luggage' => '10 Bags',
+                'target' => 'Microbuses for event transport or corporate teams (e.g., Toyota HiAce)',
+                'description' => 'Microbuses for event transportation, family gatherings & corporate teams',
+            ],
+        ];
+    }
 }

@@ -995,55 +995,77 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
     $stopsCount = intval($request->input('stops_count', 0));
     $country = $request->input('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
 
-    $categories = [
-        [
-            'id' => 'economy',
-            'name' => 'Economy',
-            'icon' => '🚗',
-            'capacity' => '1–4 passengers',
-            'eta_minutes' => 3,
-            'multiplier' => 1.0,
-            'description' => 'Affordable, everyday rides',
-        ],
-        [
-            'id' => 'standard',
-            'name' => 'Standard',
-            'icon' => '🚘',
-            'capacity' => '1–4 passengers',
-            'eta_minutes' => 4,
-            'multiplier' => 1.2,
-            'description' => 'Comfortable sedans with extra legroom',
-        ],
-        [
-            'id' => 'suv',
-            'name' => 'SUV',
-            'icon' => '🚙',
-            'capacity' => '1–6 passengers',
-            'eta_minutes' => 6,
-            'multiplier' => 1.5,
-            'description' => 'Spacious SUVs for groups and extra luggage',
-        ],
-        [
-            'id' => 'xl',
-            'name' => 'XL',
-            'icon' => '🚐',
-            'capacity' => '1–6 passengers',
-            'eta_minutes' => 7,
-            'multiplier' => 1.8,
-            'description' => 'Extra large vans for families and events',
-        ],
-        [
-            'id' => 'luxury',
-            'name' => 'Luxury',
-            'icon' => '🏎️',
-            'capacity' => '1–4 passengers',
-            'eta_minutes' => 5,
-            'multiplier' => 2.2,
-            'description' => 'Top-tier luxury vehicles with professional drivers',
-        ],
-    ];
-
     $countryPricing = \App\Models\CountryPricing::forCountry($country);
+
+    if (strtoupper($countryPricing->country_code ?? 'USA') === 'GHA') {
+        $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
+        $categories = [];
+        $idx = 0;
+        foreach ($ghanaMatrix as $tier) {
+            $categories[] = [
+                'id' => $tier['slug'] ?? $tier['category_key'],
+                'name' => $tier['name'],
+                'icon' => $tier['icon'] ?? '🚗',
+                'capacity' => $tier['capacity'] ?? '1–4 passengers',
+                'eta_minutes' => 3 + ($idx++ * 2),
+                'multiplier' => (float) ($tier['multiplier'] ?? 1.0),
+                'base_fare' => (float) $tier['base_fare'],
+                'per_km_rate' => (float) $tier['per_km_rate'],
+                'minimum_fare' => (float) $tier['minimum_fare'],
+                'per_minute_rate' => (float) ($tier['per_minute_rate'] ?? 0.30),
+                'description' => $tier['description'] ?? '',
+                'target' => $tier['target'] ?? '',
+            ];
+        }
+    } else {
+        $categories = [
+            [
+                'id' => 'economy',
+                'name' => 'Economy',
+                'icon' => '🚗',
+                'capacity' => '1–4 passengers',
+                'eta_minutes' => 3,
+                'multiplier' => 1.0,
+                'description' => 'Affordable, everyday rides',
+            ],
+            [
+                'id' => 'standard',
+                'name' => 'Standard',
+                'icon' => '🚘',
+                'capacity' => '1–4 passengers',
+                'eta_minutes' => 4,
+                'multiplier' => 1.2,
+                'description' => 'Comfortable sedans with extra legroom',
+            ],
+            [
+                'id' => 'suv',
+                'name' => 'SUV',
+                'icon' => '🚙',
+                'capacity' => '1–6 passengers',
+                'eta_minutes' => 6,
+                'multiplier' => 1.5,
+                'description' => 'Spacious SUVs for groups and extra luggage',
+            ],
+            [
+                'id' => 'xl',
+                'name' => 'XL',
+                'icon' => '🚐',
+                'capacity' => '1–6 passengers',
+                'eta_minutes' => 7,
+                'multiplier' => 1.8,
+                'description' => 'Extra large vans for families and events',
+            ],
+            [
+                'id' => 'luxury',
+                'name' => 'Luxury',
+                'icon' => '🏎️',
+                'capacity' => '1–4 passengers',
+                'eta_minutes' => 5,
+                'multiplier' => 2.2,
+                'description' => 'Top-tier luxury vehicles with professional drivers',
+            ],
+        ];
+    }
 
     foreach ($categories as &$cat) {
         $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount, $country);
@@ -1195,17 +1217,21 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             // Activity log is non-critical, don't fail the booking
         }
 
-        // Trigger the initial round-robin assignment
-        \App\Services\RideAssignmentService::assignNextDriver($ride);
-
-        try {
-            \App\Services\NotificationService::notifyRideRequested($ride);
-        } catch (\Throwable $e) {}
-
+        // 1. PAYMENT GATE: Drivers are NOT dispatched upon initial booking request.
+        // Payment must be authorized/held via Stripe, Apple Pay, or MoMo Pay FIRST.
         $method = strtolower($paymentMethod);
-        if (in_array($method, ['stripe', 'card', 'credit card', 'credit_card'])) {
+        $allowedMethods = ['stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'];
+
+        if (!in_array($method, $allowedMethods, true)) {
+            return response()->json([
+                'error' => 'Unsupported payment method. Please select Stripe Card, Apple Pay, or Mobile Money.'
+            ], 422);
+        }
+
+        // Handle Stripe Card and Apple Pay
+        if (in_array($method, ['stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay'], true)) {
             try {
-                // If user checked 'save_card', save tokenized payment method metadata for 1-click checkout
+                // If user checked 'save_card', save tokenized card reference
                 if ($request->boolean('save_card') && $request->input('card_number') && auth()->check()) {
                     try {
                         $cleanNum = preg_replace('/\s+/', '', $request->input('card_number'));
@@ -1237,75 +1263,123 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                             'is_default' => $isFirst,
                             'status' => 'active',
                         ]);
-                    } catch (\Throwable $e) {
-                        // Saved card logic failure is non-blocking
-                    }
+                    } catch (\Throwable $e) {}
                 }
 
                 $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, auth()->id());
+                $isApplePay = in_array($method, ['apple_pay', 'apple pay', 'applepay'], true);
+
                 $ride->update([
-                    'payment_status' => 'paid',
-                    'payment_method' => 'stripe'
+                    'payment_status' => 'pending',
+                    'payment_method' => $isApplePay ? 'apple_pay' : 'stripe',
+                    'hold_payment_intent_id' => $intentData['payment_intent_id'] ?? null,
                 ]);
 
                 session(['active_guest_ride_id' => $ride->id]);
 
                 return response()->json([
                     'success' => true,
+                    'requires_payment_hold' => true,
                     'ride_id' => $ride->id,
-                    'tracking_url' => "/ride/track/{$ride->id}",
-                    'polling_url' => "/api/ride/{$ride->id}/status",
+                    'payment_method' => $isApplePay ? 'apple_pay' : 'stripe',
                     'stripe_client_secret' => $intentData['client_secret'] ?? null,
                     'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
+                    'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
+                    'tracking_url' => "/ride/track/{$ride->id}",
+                    'polling_url' => "/api/ride/{$ride->id}/status",
                 ]);
             } catch (\Exception $e) {
-                $ride->update(['payment_status' => 'paid', 'payment_method' => 'stripe']);
-                session(['active_guest_ride_id' => $ride->id]);
-                return response()->json([
-                    'success' => true,
-                    'ride_id' => $ride->id,
-                    'tracking_url' => "/ride/track/{$ride->id}",
-                    'polling_url' => "/api/ride/{$ride->id}/status"
-                ]);
+                return response()->json(['error' => $e->getMessage()], 400);
             }
         }
 
-        // If payment method is Cash, record a PaymentTransaction for tracking and admin visibility
-        try {
-            \App\Models\PaymentTransaction::create([
-                'transaction_ref' => 'TXN-CASH-' . strtoupper(\Illuminate\Support\Str::random(10)),
-                'user_id' => $riderId,
-                'ride_id' => $ride->id,
-                'country' => 'USA',
-                'currency' => 'USD',
-                'amount' => $amount,
-                'payment_method' => 'cash',
-                'provider' => 'Cash_Payment',
-                'status' => 'pending_cash',
-                'service_vertical' => 'RIDE_HAILING',
-                'gateway_response' => [
-                    'method' => 'cash',
-                    'notes' => 'Pay driver upon destination arrival',
-                    'created_at' => now()->toIso8601String(),
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("Cash PaymentTransaction creation warning: " . $e->getMessage());
+        // Handle Mobile Money (MoMo Pay)
+        if (in_array($method, ['momo', 'mobile_money', 'momo_pay', 'mtn_momo'], true)) {
+            try {
+                $momoPhone = $request->input('momo_phone') ?: ($request->input('passenger_phone') ?: ($request->input('phone_number') ?: '0240000000'));
+                $momoNetwork = $request->input('momo_network', 'MTN');
+
+                $momoResult = \App\Services\MomoPaymentService::requestToPay($ride, $momoPhone, $momoNetwork);
+
+                session(['active_guest_ride_id' => $ride->id]);
+
+                return response()->json([
+                    'success' => true,
+                    'requires_payment_hold' => true,
+                    'ride_id' => $ride->id,
+                    'payment_method' => 'momo',
+                    'transaction_ref' => $momoResult['transaction_ref'] ?? null,
+                    'message' => $momoResult['message'] ?? 'Please confirm USSD prompt on your phone.',
+                    'tracking_url' => "/ride/track/{$ride->id}",
+                    'polling_url' => "/api/ride/{$ride->id}/status",
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => $e->getMessage()], 400);
+            }
         }
 
-        session(['active_guest_ride_id' => $ride->id]);
-
-        return response()->json([
-            'success' => true,
-            'ride_id' => $ride->id,
-            'tracking_url' => "/ride/track/{$ride->id}",
-            'polling_url' => "/api/ride/{$ride->id}/status"
-        ]);
+        return response()->json(['error' => 'Payment initialization failed.'], 400);
     } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json(['error' => implode(' ', \Illuminate\Support\Arr::flatten($e->errors()))], 422);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
+});
+
+// Confirm payment pre-authorization hold and trigger driver proximity search
+Route::post('/ride/confirm-hold', function (\Illuminate\Http\Request $request) {
+    $rideId = $request->input('ride_id');
+    $ride = \App\Models\Ride::find($rideId);
+    if (!$ride) {
+        return response()->json(['error' => 'Ride not found.'], 404);
+    }
+
+    $paymentIntentId = $request->input('payment_intent_id') ?: $ride->hold_payment_intent_id;
+    $transactionRef = $request->input('transaction_ref') ?: $ride->hold_authorization_code;
+
+    // Verify Stripe / Apple Pay hold
+    if ($paymentIntentId) {
+        $result = \App\Services\StripeService::confirmPayment($paymentIntentId);
+        if (!empty($result['success'])) {
+            $ride->refresh();
+            try {
+                \App\Services\NotificationService::notifyRideRequested($ride);
+            } catch (\Throwable $e) {}
+
+            return response()->json([
+                'success' => true,
+                'status' => $ride->payment_status,
+                'message' => 'Payment hold verified. Driver search is now active.',
+                'ride_id' => $ride->id,
+                'tracking_url' => "/ride/track/{$ride->id}",
+                'polling_url' => "/api/ride/{$ride->id}/status",
+            ]);
+        }
+        return response()->json(['error' => $result['error'] ?? 'Card authorization failed.'], 400);
+    }
+
+    // Verify MoMo payment
+    if ($transactionRef) {
+        $result = \App\Services\MomoPaymentService::confirmPayment($transactionRef);
+        if (!empty($result['success'])) {
+            $ride->refresh();
+            try {
+                \App\Services\NotificationService::notifyRideRequested($ride);
+            } catch (\Throwable $e) {}
+
+            return response()->json([
+                'success' => true,
+                'status' => $ride->payment_status,
+                'message' => 'Mobile Money payment confirmed. Driver search is now active.',
+                'ride_id' => $ride->id,
+                'tracking_url' => "/ride/track/{$ride->id}",
+                'polling_url' => "/api/ride/{$ride->id}/status",
+            ]);
+        }
+        return response()->json(['error' => $result['message'] ?? 'MoMo confirmation failed.'], 400);
+    }
+
+    return response()->json(['error' => 'Missing payment identifier.'], 422);
 });
 
 // Driver POST Location ping endpoint
@@ -1359,16 +1433,54 @@ Route::post('/api/driver/location', function (\Illuminate\Http\Request $request)
 })->middleware('auth');
 
 // Polling endpoint for Rider to check ride lifecycle status
-Route::get('/api/ride/{id}/status', function ($id) {
+Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request, $id) {
     $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'riderReview', 'stops'])->find($id);
     if (!$ride) return response()->json(['error' => 'Not found'], 404);
 
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+    $sessionRideId = session('active_guest_ride_id');
+    $receiptCode = $request->header('X-Receipt-Code') ?: $request->query('receipt_code');
+
+    $isAuthorized = ($user && ($user->id === $ride->rider_id || $user->id === $ride->driver_id || ($user->role ?? null) === 'admin'))
+        || ($sessionRideId && (int)$sessionRideId === (int)$ride->id)
+        || ($receiptCode && $receiptCode === $ride->digital_receipt_code);
+
+    // Auto-capture Stripe hold if ride reached completion
+    if ($ride->status === 'completed' && $ride->payment_status === 'authorized') {
+        \App\Services\StripeService::captureRideHold($ride);
+        $ride->refresh();
+    }
+
+    // GATED CONTACT RELEASE: Driver contact, email, and WhatsApp ONLY appear if driver accepted
+    $isDriverAccepted = !empty($ride->driver_id) && in_array($ride->status, ['accepted', 'arrived', 'in_progress', 'completed'], true);
+
     $driverData = null;
-    if ($ride->driver) {
+    $driverName = null;
+    $driverPhone = null;
+    $driverEmail = null;
+    $driverWhatsapp = null;
+
+    if ($isDriverAccepted && $ride->driver) {
         $dp = $ride->driver->driverProfile;
+        $driverName = $ride->driver->name;
+        $driverPhone = $ride->driver->phone;
+        $driverEmail = $ride->driver->email;
+
+        $rawPhone = $driverPhone ?: '';
+        $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
+        if (str_starts_with($cleanPhone, '0')) {
+            $cleanPhone = '233' . substr($cleanPhone, 1);
+        } elseif (!str_starts_with($cleanPhone, '233') && strlen($cleanPhone) === 9) {
+            $cleanPhone = '233' . $cleanPhone;
+        }
+        $driverWhatsapp = !empty($cleanPhone) ? "https://wa.me/{$cleanPhone}" : null;
+
         $driverData = [
-            'name' => $ride->driver->name,
-            'phone' => $ride->driver->phone,
+            'name' => $driverName,
+            'phone' => $driverPhone,
+            'email' => $driverEmail,
+            'whatsapp' => $driverWhatsapp,
+            'whatsapp_url' => $driverWhatsapp,
             'photo_url' => $dp?->photo_url,
             'rating' => $dp ? floatval($dp->rating) : 5.0,
             'total_trips' => $dp ? intval($dp->total_trips) : 0,
@@ -1385,8 +1497,15 @@ Route::get('/api/ride/{id}/status', function ($id) {
     $dur = intval($ride->duration_minutes ?: 15);
     $fareBreakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $ride->vehicle_type, $stopsCount, $ride->country ?? null);
 
+    $custPhone = $ride->rider?->phone;
+    $passPhone = $ride->passenger_phone ?? $custPhone;
+    if (!$isAuthorized && $passPhone) {
+        $passPhone = substr($passPhone, 0, 3) . '****' . substr($passPhone, -2);
+    }
+
     $response = [
         'status' => $ride->status,
+        'payment_status' => $ride->payment_status,
         'fare' => ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : $fareBreakdown['total_fare'],
         'fare_breakdown' => $fareBreakdown,
         'pickup' => $ride->pickup_location,
@@ -1398,20 +1517,22 @@ Route::get('/api/ride/{id}/status', function ($id) {
         'stops' => $ride->stops->map(fn($s) => ['order' => $s->stop_order, 'location' => $s->location, 'lat' => $s->lat ? floatval($s->lat) : null, 'lng' => $s->lng ? floatval($s->lng) : null]),
         'stops_count' => $stopsCount,
         'customer_name' => $ride->rider?->name ?? 'Customer',
-        'customer_phone' => $ride->rider?->phone,
+        'customer_phone' => $isAuthorized ? $custPhone : null,
         'poc_name' => $ride->passenger_name,
-        'poc_phone' => $ride->passenger_phone,
+        'poc_phone' => $passPhone,
         'rider_name' => $ride->passenger_name ?: ($ride->rider?->name ?? 'Customer'),
-        'rider_phone' => $ride->passenger_phone ?: $ride->rider?->phone,
+        'rider_phone' => $passPhone,
         'is_for_someone_else' => (bool)$ride->is_for_someone_else,
-        'passenger_phone' => $ride->passenger_phone ?? $ride->rider?->phone,
-        'payment_method' => $ride->payment_method ?? 'cash',
+        'passenger_phone' => $passPhone,
+        'payment_method' => $ride->payment_method ?? 'stripe',
         'vehicle_type' => $ride->vehicle_type ?? 'Sedan',
         'pickup_date' => $ride->pickup_date,
         'pickup_time' => $ride->pickup_time,
         'cancellation_reason' => $ride->cancellation_reason,
-        'driver_name' => $ride->driver?->name,
-        'driver_phone' => $ride->driver?->phone,
+        'driver_name' => $driverName,
+        'driver_phone' => $driverPhone,
+        'driver_email' => $driverEmail,
+        'driver_whatsapp' => $driverWhatsapp,
         'driver' => $driverData,
         'arrived_at' => $ride->arrived_at?->toIso8601String(),
         'started_at' => $ride->started_at?->toIso8601String(),
@@ -1419,11 +1540,11 @@ Route::get('/api/ride/{id}/status', function ($id) {
         'has_review' => $ride->riderReview !== null,
     ];
 
-    // If still pending, check for expired assignments
-    if ($ride->status === 'pending') {
+    // If still pending and payment has been held/confirmed, check for expired assignments
+    if ($ride->status === 'pending' && in_array(strtolower($ride->payment_status ?? ''), ['hold', 'authorized', 'paid'], true)) {
         $activeAssignment = \App\Models\RideAssignment::where('ride_id', $ride->id)->where('status', 'pending')->first();
         if (!$activeAssignment) {
-            // Re-trigger proximity assignment
+            // Re-trigger proximity assignment (payment gate is respected)
             \App\Services\RideAssignmentService::assignNextDriver($ride);
         }
     }
@@ -1890,6 +2011,7 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
 
         $pendingRides = \App\Models\Ride::where('status', 'pending')
             ->whereNull('driver_id')
+            ->whereIn('payment_status', ['hold', 'authorized', 'paid'])
             ->take(5)
             ->get();
 
@@ -1977,6 +2099,13 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
         ->where('expires_at', '>', now())
         ->with(['ride.rider', 'driverBooking.client', 'packageDelivery'])
         ->get()
+        ->filter(function ($a) {
+            if ($a->ride) {
+                return in_array(strtolower($a->ride->payment_status ?? ''), ['hold', 'authorized', 'paid'], true);
+            }
+            return true;
+        })
+        ->values()
         ->map(function ($a) {
             $ride = $a->ride;
             $db = $a->driverBooking;

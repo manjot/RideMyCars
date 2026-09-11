@@ -599,12 +599,12 @@
                         <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
                             <button type="button" @click="paymentModal = true; paymentStep = 'select';" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-[#222] rounded-2xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
                                 <div class="flex items-center gap-3">
-                                    <span class="text-2xl" x-text="paymentMethod === 'cash' ? '💵' : '💳'"></span>
+                                    <span class="text-2xl" x-text="paymentMethod === 'apple_pay' ? '🍏' : (paymentMethod === 'momo' ? '📱' : '💳')"></span>
                                     <div class="text-left">
                                         <div class="text-xs font-black text-gray-900 dark:text-white" 
-                                             x-text="paymentMethod === 'cash' ? 'Cash on Arrival' : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Visa •••• 4242')"></div>
+                                             x-text="paymentMethod === 'apple_pay' ? 'Apple Pay (Hold)' : (paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe Card •••• 4242'))"></div>
                                         <div class="text-[10px] font-bold text-gray-500 dark:text-gray-400" 
-                                             x-text="paymentMethod === 'cash' ? 'Pay directly to driver' : (selectedCard ? ('Exp ' + selectedCard.expiry_formatted) : 'Stripe Secured')"></div>
+                                             x-text="paymentMethod === 'apple_pay' ? 'Pre-authorization hold secured' : (paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'phone')) : 'Pre-authorization hold secured')"></div>
                                     </div>
                                 </div>
                                 <span class="text-gray-400 font-bold text-xs">></span>
@@ -684,8 +684,15 @@
                         </div>
 
                         <!-- Final CTA Button: Confirm Ride -->
-                        <button type="submit" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg rounded-2xl shadow-xl transition-all active:scale-[0.99]">
-                            Confirm Ride →
+                        <button type="submit" :disabled="isAuthorizingPayment" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black text-lg rounded-2xl shadow-xl transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer">
+                            <span x-show="!isAuthorizingPayment">Confirm & Authorize Ride →</span>
+                            <span x-show="isAuthorizingPayment" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span>Authorizing Payment Hold...</span>
+                            </span>
                         </button>
                     </div>
 
@@ -822,10 +829,17 @@
                             </div>
                         </template>
 
-                        <!-- Action Buttons -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <button type="button" @click="showContactModal = true" class="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all">📞 Call Driver</button>
-                            <button type="button" @click="showContactModal = true" class="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition-all">💬 Message</button>
+                        <!-- Action Buttons: Direct Call, WhatsApp & Email (Unlocked upon driver acceptance) -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <a :href="'tel:' + driverPhone" class="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1">
+                                <span>📞 Call</span>
+                            </a>
+                            <a :href="driverWhatsapp || ('https://wa.me/' + (driverPhone ? driverPhone.replace(/[^0-9]/g, '') : ''))" target="_blank" rel="noopener noreferrer" class="py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1">
+                                <span>💬 WhatsApp</span>
+                            </a>
+                            <a :href="'mailto:' + (driverEmail || 'driver@ridemycars.com')" class="py-3 bg-gray-900 dark:bg-white text-white dark:text-black font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1">
+                                <span>✉️ Email</span>
+                            </a>
                         </div>
 
                         <button type="button" @click="cancelRide()" class="w-full py-3 text-rose-600 font-extrabold text-xs hover:underline">Cancel Ride</button>
@@ -891,20 +905,52 @@
                 </div>
                 <div class="p-5 overflow-y-auto flex-1 space-y-4">
                     <div x-show="paymentStep === 'select'" class="space-y-4">
-                        <!-- Option 1: Cash on Arrival -->
-                        <div @click="paymentMethod = 'cash'; selectedCard = null;" 
-                             :class="paymentMethod === 'cash' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                        <!-- Option 1: Credit / Debit Card (Stripe Hold) -->
+                        <div @click="paymentMethod = 'stripe'; paymentModal = false;" 
+                             :class="paymentMethod === 'stripe' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                              class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 font-bold text-xl flex items-center justify-center">
-                                    💵
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-bold text-xl flex items-center justify-center">
+                                    💳
                                 </div>
                                 <div>
-                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Cash on Arrival</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Pay the driver directly at your destination</p>
+                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Credit / Debit Card</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Pre-authorization hold secured by Stripe</p>
                                 </div>
                             </div>
-                            <span x-show="paymentMethod === 'cash'" class="text-emerald-500 font-extrabold text-sm">✓</span>
+                            <span x-show="paymentMethod === 'stripe'" class="text-emerald-500 font-extrabold text-sm">✓</span>
+                        </div>
+
+                        <!-- Option 2: Apple Pay -->
+                        <div @click="paymentMethod = 'apple_pay'; selectedCard = null; paymentModal = false;" 
+                             :class="paymentMethod === 'apple_pay' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                             class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-black text-white dark:bg-white dark:text-black font-bold text-xl flex items-center justify-center">
+                                    🍏
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Apple Pay</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Fast biometric authorization hold via Apple Wallet</p>
+                                </div>
+                            </div>
+                            <span x-show="paymentMethod === 'apple_pay'" class="text-emerald-500 font-extrabold text-sm">✓</span>
+                        </div>
+
+                        <!-- Option 3: Mobile Money (MoMo Pay) -->
+                        <div @click="paymentMethod = 'momo'; paymentStep = 'momo_form';" 
+                             :class="paymentMethod === 'momo' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                             class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 font-bold text-xl flex items-center justify-center">
+                                    📱
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Mobile Money (MoMo Pay)</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">MTN MoMo, Telecel Cash, AirtelTigo Money</p>
+                                </div>
+                            </div>
+                            <span class="text-gray-400 font-bold text-xs">></span>
                         </div>
 
                         <!-- Option 2: Credit / Debit Cards Header & List -->
@@ -972,6 +1018,36 @@
                     <div x-show="paymentStep === 'card_form'" class="space-y-4">
                         <x-stripe-card-input modelName="paymentMethod" value="stripe" />
                     </div>
+
+                    <div x-show="paymentStep === 'momo_form'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Select Mobile Network</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" @click="momoNetwork = 'MTN'" 
+                                        :class="momoNetwork === 'MTN' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 ring-1 ring-amber-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
+                                        class="py-2.5 px-2 rounded-xl border text-xs font-black text-center transition-all cursor-pointer">
+                                    MTN MoMo
+                                </button>
+                                <button type="button" @click="momoNetwork = 'Telecel'" 
+                                        :class="momoNetwork === 'Telecel' ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 ring-1 ring-rose-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
+                                        class="py-2.5 px-2 rounded-xl border text-xs font-black text-center transition-all cursor-pointer">
+                                    Telecel
+                                </button>
+                                <button type="button" @click="momoNetwork = 'AT'" 
+                                        :class="momoNetwork === 'AT' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 ring-1 ring-blue-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
+                                        class="py-2.5 px-2 rounded-xl border text-xs font-black text-center transition-all cursor-pointer">
+                                    AirtelTigo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Mobile Money Phone Number</label>
+                            <input type="tel" x-model="momoPhone" placeholder="024 XXX XXXX"
+                                   class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">
+                            <p class="text-[11px] text-gray-400 mt-1">A payment authorization prompt will be sent to this phone upon booking.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="p-4 bg-gray-50 dark:bg-[#111] border-t border-gray-100 dark:border-white/10 shrink-0">
                     <template x-if="paymentStep === 'card_form'">
@@ -982,7 +1058,15 @@
                         </button>
                     </template>
 
-                    <template x-if="paymentStep !== 'card_form'">
+                    <template x-if="paymentStep === 'momo_form'">
+                        <button type="button" 
+                                @click="paymentMethod = 'momo'; paymentStep = 'select'; paymentModal = false;" 
+                                class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                            <span>Use Mobile Money</span>
+                        </button>
+                    </template>
+
+                    <template x-if="paymentStep === 'select'">
                         <button type="button" 
                                 @click="paymentModal = false; paymentStep = 'select';" 
                                 class="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-black text-base rounded-2xl shadow-xl hover:opacity-90 transition-all active:scale-[0.99] cursor-pointer">
@@ -1079,6 +1163,7 @@
                 estimatedDurationMin: 15,
                 currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
                 currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
+                surgeMultiplier: {{ (float) ($currentPricing?->country_code === 'GHA' ? (\App\Services\PricingService::getGhanaSurgeInfo()['multiplier'] ?? 1.0) : 1.0) }},
                 countryPricing: {
                     base_fare: {{ (float) ($currentPricing?->ride_base_fare ?? 5.00) }},
                     per_km: {{ (float) ($currentPricing?->ride_per_km_rate ?? 1.50) }},
@@ -1090,7 +1175,33 @@
                     $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
                     $sym = $currentCurrencySymbol ?? '$';
 
-                    if ($activeRideCategories->isEmpty()) {
+                    if (($currentPricing?->country_code ?? 'USA') === 'GHA') {
+                        $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
+                        $ghanaSurge = (float) (\App\Services\PricingService::getGhanaSurgeInfo()['multiplier'] ?? 1.0);
+                        $formattedCats = collect($ghanaMatrix)->values()->map(function ($tier, $idx) use ($sym, $ghanaSurge) {
+                            $base = (float) $tier['base_fare'];
+                            $perKm = (float) $tier['per_km_rate'];
+                            $perMin = (float) ($tier['per_minute_rate'] ?? 0.30);
+                            $min = (float) $tier['minimum_fare'];
+                            $subtotal = $base + (10 * $perKm) + (15 * $perMin);
+                            $totalEst = max($min, round($subtotal * $ghanaSurge, 2));
+                            return [
+                                'id' => $tier['slug'] ?? $tier['category_key'],
+                                'name' => $tier['name'],
+                                'icon' => $tier['icon'],
+                                'capacity' => $tier['capacity'],
+                                'eta_minutes' => 3 + ($idx * 2),
+                                'multiplier' => (float) ($tier['multiplier'] ?? 1.0),
+                                'base_fare' => $base,
+                                'per_km_rate' => $perKm,
+                                'minimum_fare' => $min,
+                                'per_minute_rate' => $perMin,
+                                'fare' => $totalEst,
+                                'fare_formatted' => $sym . number_format($totalEst, 2),
+                                'description' => $tier['description'],
+                            ];
+                        })->toArray();
+                    } elseif ($activeRideCategories->isEmpty()) {
                         $baseF = (float) ($currentPricing?->ride_base_fare ?? 5.00);
                         $perKmF = (float) ($currentPricing?->ride_per_km_rate ?? 1.50);
                         $formattedCats = [
@@ -1154,6 +1265,11 @@
                 driverPlate: '',
                 driverModel: '',
                 driverPhone: '',
+                driverEmail: '',
+                driverWhatsapp: '',
+                momoPhone: '{{ auth()->user()->phone ?? "" }}',
+                momoNetwork: 'MTN',
+                isAuthorizingPayment: false,
                 userLat: null,
                 userLng: null,
                 userAccuracy: null,
@@ -1228,6 +1344,8 @@
                                     this.driverPlate = data.driver.vehicle_plate || '';
                                     this.driverModel = data.driver.vehicle_model || 'Executive Sedan';
                                     this.driverPhone = data.driver.phone || '';
+                                    this.driverEmail = data.driver.email || '';
+                                    this.driverWhatsapp = data.driver.whatsapp || '';
                                     this.bookingStep = 'driver_assigned';
                                 } else {
                                     this.bookingStep = (data.status === 'pending') ? 'finding_driver' : 'driver_assigned';
@@ -1252,6 +1370,8 @@
                                     this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || 'REG-8899';
                                     this.driverModel = (sData.driver && sData.driver.vehicle_model) || 'Executive Sedan';
                                     this.driverPhone = (sData.driver && sData.driver.phone) || '';
+                                    this.driverEmail = (sData.driver && sData.driver.email) || sData.driver_email || '';
+                                    this.driverWhatsapp = (sData.driver && sData.driver.whatsapp) || sData.driver_whatsapp || '';
                                     this.bookingStep = 'driver_assigned';
                                 } else if (sData.status === 'completed') {
                                     clearInterval(this.pollTimer);
@@ -1771,25 +1891,51 @@
                         this.estimatedDistanceKm = totalDist;
                         this.estimatedDurationMin = Math.round((totalDist / 30) * 60) + (this.stops.length * 5);
                         
-                        const baseFare = this.countryPricing.base_fare || 5.00;
-                        const distFare = totalDist * (this.countryPricing.per_km || 1.50);
-                        const stopsFee = this.stops.length * (baseFare * 0.5);
-                        const grandTotal = Math.max(this.countryPricing.minimum_fare || 7.00, baseFare + distFare + stopsFee);
-
-                        this.fareBreakdown = {
-                            base_fare: baseFare,
-                            distance_fare: distFare,
-                            stops_fee: stopsFee,
-                            tax: grandTotal * 0.05,
-                            grand_total: grandTotal
-                        };
+                        const surgeMult = (this.surgeMultiplier && this.surgeMultiplier > 0) ? parseFloat(this.surgeMultiplier) : 1.0;
 
                         this.categories.forEach(cat => {
-                            const mult = (typeof cat.multiplier !== 'undefined' && cat.multiplier !== null) ? parseFloat(cat.multiplier) : 1.0;
-                            const fare = (grandTotal * mult).toFixed(2);
-                            cat.fare_formatted = this.currencySymbol + fare;
+                            const baseFare = (typeof cat.base_fare !== 'undefined' && cat.base_fare !== null) 
+                                ? parseFloat(cat.base_fare) 
+                                : (this.countryPricing.base_fare || 5.00);
+                            const perKm = (typeof cat.per_km_rate !== 'undefined' && cat.per_km_rate !== null) 
+                                ? parseFloat(cat.per_km_rate) 
+                                : (this.countryPricing.per_km || 1.50);
+                            const perMin = (typeof cat.per_minute_rate !== 'undefined' && cat.per_minute_rate !== null) 
+                                ? parseFloat(cat.per_minute_rate) 
+                                : (this.countryPricing.per_minute || 0.25);
+                            const minFare = (typeof cat.minimum_fare !== 'undefined' && cat.minimum_fare !== null) 
+                                ? parseFloat(cat.minimum_fare) 
+                                : (this.countryPricing.minimum_fare || 7.00);
+                            const mult = (typeof cat.multiplier !== 'undefined' && cat.multiplier !== null) 
+                                ? parseFloat(cat.multiplier) 
+                                : 1.0;
+
+                            const distFare = totalDist * perKm;
+                            const durFare = this.estimatedDurationMin * perMin;
+                            const stopsFee = this.stops.length * (baseFare * 0.5);
+                            const standardSub = (baseFare + distFare + durFare + stopsFee) * mult;
+                            const surgedSub = standardSub * surgeMult;
+                            const finalFare = Math.max(minFare, surgedSub);
+
+                            cat.fare_formatted = this.currencySymbol + finalFare.toFixed(2);
+                            cat.fare = finalFare;
                         });
-                        this.selectedFare = this.categories.find(c => c.name === this.vehicle_type)?.fare_formatted || (this.currencySymbol + grandTotal.toFixed(2));
+
+                        const selectedCat = this.categories.find(c => c.name === this.vehicle_type) || this.categories[0];
+                        const defaultBase = selectedCat ? (parseFloat(selectedCat.base_fare) || 5.0) : (this.countryPricing.base_fare || 5.0);
+                        const defaultDistFare = totalDist * (selectedCat ? (parseFloat(selectedCat.per_km_rate) || 1.5) : (this.countryPricing.per_km || 1.5));
+                        const defaultStopsFee = this.stops.length * (defaultBase * 0.5);
+                        const currentFinalFare = selectedCat ? (selectedCat.fare || parseFloat(selectedCat.fare_formatted.replace(/[^0-9.]/g, ''))) : 20.0;
+
+                        this.fareBreakdown = {
+                            base_fare: defaultBase,
+                            distance_fare: defaultDistFare,
+                            stops_fee: defaultStopsFee,
+                            tax: currentFinalFare * 0.05,
+                            grand_total: currentFinalFare
+                        };
+
+                        this.selectedFare = selectedCat ? selectedCat.fare_formatted : (this.currencySymbol + currentFinalFare.toFixed(2));
                     }
                 },
 
@@ -2063,7 +2209,7 @@
                     }
                 },
                 async submitBooking() {
-                    this.bookingStep = 'finding_driver';
+                    this.isAuthorizingPayment = true;
                     try {
                         const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                         const res = await fetch('/ride/book', {
@@ -2092,7 +2238,9 @@
                                 pickup_date: this.schedule_type === 'later' ? this.scheduledDate : null,
                                 pickup_time: this.schedule_type === 'later' ? this.scheduledTime : null,
                                 country: '{{ $currentCountryCode ?? "USA" }}',
-                                amount: parseFloat(String(this.selectedFare).replace(/[^0-9.]/g, '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50)
+                                amount: parseFloat(String(this.selectedFare).replace(/[^0-9.]/g, '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50),
+                                momo_phone: this.momoPhone,
+                                momo_network: this.momoNetwork
                             })
                         });
 
@@ -2101,18 +2249,52 @@
                         if (!res.ok) {
                             alert(data.error || 'Could not place ride request. Please check your details.');
                             this.bookingStep = 'confirm_ride';
+                            this.isAuthorizingPayment = false;
                             return;
                         }
 
-                        // Start polling for real driver acceptance
-                        if (data.ride_id) {
+                        if (data.requires_payment_hold) {
                             this.currentRideId = data.ride_id;
                             localStorage.setItem('rmc_active_ride_id', data.ride_id);
+
+                            // Confirm payment hold to unlock driver matching
+                            const confirmRes = await fetch('/ride/confirm-hold', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    ride_id: data.ride_id,
+                                    payment_intent_id: data.payment_intent_id,
+                                    transaction_ref: data.transaction_ref
+                                })
+                            });
+
+                            const confirmData = await confirmRes.json();
+                            if (!confirmRes.ok || !confirmData.success) {
+                                alert(confirmData.error || 'Payment hold authorization failed. Please check your payment details.');
+                                this.bookingStep = 'confirm_ride';
+                                this.isAuthorizingPayment = false;
+                                return;
+                            }
+
+                            // Payment hold authorized! Transition to searching for driver
+                            this.bookingStep = 'finding_driver';
+                            this.isAuthorizingPayment = false;
+                            this.startRideStatusPolling(data.ride_id);
+                        } else if (data.ride_id) {
+                            this.currentRideId = data.ride_id;
+                            localStorage.setItem('rmc_active_ride_id', data.ride_id);
+                            this.bookingStep = 'finding_driver';
+                            this.isAuthorizingPayment = false;
                             this.startRideStatusPolling(data.ride_id);
                         }
                     } catch (e) {
                         alert('Network error while booking ride. Please try again.');
                         this.bookingStep = 'confirm_ride';
+                        this.isAuthorizingPayment = false;
                     }
                 },
                 cancelRide() {

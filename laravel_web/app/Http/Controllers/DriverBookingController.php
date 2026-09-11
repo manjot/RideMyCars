@@ -27,10 +27,20 @@ class DriverBookingController extends Controller
         $availability = $request->query('availability');
         $search = $request->query('search');
 
-        $query = DriverProfile::with(['user', 'reviews']);
+        $query = DriverProfile::with(['user', 'reviews'])
+            ->whereNotNull('hourly_rate')
+            ->where('hourly_rate', '>', 0);
 
         if ($country && $country !== 'All') {
-            $query->where('country', $country);
+            $code = \App\Services\CountryService::normalizeToCode($country) ?: $country;
+            $countryAliases = [
+                'GHA' => ['GHA', 'Ghana', 'GH'],
+                'USA' => ['USA', 'United States', 'US'],
+                'NGA' => ['NGA', 'Nigeria', 'NG'],
+                'ZAF' => ['ZAF', 'South Africa', 'ZA'],
+            ];
+            $matches = $countryAliases[$code] ?? [$country, $code];
+            $query->whereIn('country', $matches);
         }
 
         if ($availability === 'available') {
@@ -43,8 +53,12 @@ class DriverBookingController extends Controller
         }
 
         if ($search) {
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($uq) use ($search) {
+                    $uq->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('bio', 'like', "%{$search}%")
+                ->orWhere('service_area', 'like', "%{$search}%");
             });
         }
 

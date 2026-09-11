@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CountryPricingResource\Pages;
+use App\Filament\Resources\CountryPricingResource\RelationManagers;
 use App\Models\CountryPricing;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -296,7 +297,7 @@ class CountryPricingResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\CountryRideCategoryPricingsRelationManager::class,
         ];
     }
 

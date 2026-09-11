@@ -23,12 +23,41 @@
               get filteredDrivers() {
                   return this.drivers.filter(d => {
                       const searchStr = this.search.toLowerCase();
-                      const matchesSearch = !this.search || (d.user && d.user.name && d.user.name.toLowerCase().includes(searchStr)) || (d.bio && d.bio.toLowerCase().includes(searchStr));
-                      const matchesCountry = this.selectedCountry === 'All' || !d.country || d.country === this.selectedCountry || !this.drivers.some(item => item.country === this.selectedCountry);
+                      const matchesSearch = !this.search 
+                          || (d.user && d.user.name && d.user.name.toLowerCase().includes(searchStr)) 
+                          || (d.bio && d.bio.toLowerCase().includes(searchStr))
+                          || (d.service_area && d.service_area.toLowerCase().includes(searchStr));
+
+                      const driverCountry = (d.country || '').toUpperCase();
+                      const sel = (this.selectedCountry || 'All').toUpperCase();
+
+                      const matchesCountry = sel === 'ALL' 
+                          || driverCountry === sel
+                          || (sel === 'GHA' && (driverCountry === 'GHANA' || driverCountry === 'GH'))
+                          || (sel === 'USA' && (driverCountry === 'UNITED STATES' || driverCountry === 'US'))
+                          || (sel === 'NGA' && (driverCountry === 'NIGERIA' || driverCountry === 'NG'))
+                          || (sel === 'ZAF' && (driverCountry === 'SOUTH AFRICA' || driverCountry === 'ZA'));
+
                       const matchesAvail = !this.availability || (this.availability === 'available' ? d.is_available : true);
                       const matchesRating = !this.minRating || (parseFloat(d.rating) >= parseFloat(this.minRating));
                       return matchesSearch && matchesCountry && matchesAvail && matchesRating;
                   });
+              },
+
+              formatRate(driver, type) {
+                  const symbolMap = {
+                      'GHA': 'GH₵', 'GHANA': 'GH₵',
+                      'USA': '$', 'UNITED STATES': '$',
+                      'NGA': '₦', 'NIGERIA': '₦',
+                      'ZAF': 'R', 'SOUTH AFRICA': 'R',
+                  };
+                  const dc = (driver.country || '').toUpperCase();
+                  const sym = symbolMap[dc] || this.currencySymbol || '$';
+                  if (type === 'hourly') {
+                      return sym + parseFloat(driver.hourly_rate || 25).toFixed(2) + '/hr';
+                  }
+                  const daily = driver.daily_rate || (driver.hourly_rate * 8 * 0.85);
+                  return sym + parseFloat(daily).toFixed(2) + '/day';
               },
 
               get totalPages() {
@@ -105,6 +134,16 @@
                 <input x-model="search" type="text" placeholder="Search driver by name..." class="w-full pl-12 pr-4 py-3 bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-0">
             </div>
 
+            <!-- Country / Region Select -->
+            <div class="w-full lg:w-56 border-r border-gray-200 dark:border-white/10 pr-4">
+                <select x-model="selectedCountry" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
+                    <option value="All" class="dark:bg-[#111] dark:text-white">🌍 Worldwide (All)</option>
+                    @foreach($countries as $cCode => $cConfig)
+                        <option value="{{ $cCode }}" class="dark:bg-[#111] dark:text-white">{{ $cConfig['name'] ?? $cCode }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <!-- Availability Select -->
             <div class="w-full lg:w-48 border-r border-gray-200 dark:border-white/10 pr-4">
                 <select x-model="availability" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
@@ -177,6 +216,9 @@
                             <div class="flex flex-wrap gap-2 pt-2">
                                 <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-medium" x-text="`${driver.experience_years || 2}+ Yrs Experience`"></span>
                                 <span class="px-2.5 py-1 bg-gray-100 dark:bg-white/5 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-medium" x-text="driver.country"></span>
+                                <template x-if="driver.service_area">
+                                    <span class="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 rounded-lg text-xs font-semibold flex items-center gap-1" x-text="'📍 ' + driver.service_area"></span>
+                                </template>
                             </div>
                         </div>
 
@@ -184,11 +226,11 @@
                         <div class="bg-gray-50 dark:bg-[#1a1a1a] rounded-xl p-3 mb-6 flex justify-between items-center text-xs">
                             <div>
                                 <span class="text-gray-400 block">Hourly</span>
-                                <span class="font-bold text-gray-900 dark:text-white text-sm" x-text="currencySymbol + (driver.hourly_rate || '25.00') + '/hr'"></span>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm" x-text="formatRate(driver, 'hourly')"></span>
                             </div>
                             <div class="text-right">
                                 <span class="text-gray-400 block">Daily</span>
-                                <span class="font-bold text-gray-900 dark:text-white text-sm" x-text="currencySymbol + (driver.daily_rate || (driver.hourly_rate * 8 * 0.85).toFixed(2)) + '/day'"></span>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm" x-text="formatRate(driver, 'daily')"></span>
                             </div>
                         </div>
 

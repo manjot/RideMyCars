@@ -114,7 +114,6 @@
                             <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium cursor-pointer appearance-none">
                                 <option value="stripe">💳 Stripe</option>
                                 <option value="momo">📱 Momo Pay</option>
-                                <option value="cash">💵 Cash</option>
                                 <option value="applepay">🍏 Apple Pay</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">

@@ -46,8 +46,10 @@ Route::post('/stripe/confirm-payment', [StripePaymentController::class, 'confirm
 Route::get('/stripe/payment-status/{identifier}', [StripePaymentController::class, 'getPaymentStatus']);
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
-// Stripe Driver Verification Flow
+// Stripe Driver Verification & Multi-Payment Flow
 Route::post('/payment/submit-verification', [StripeVerificationController::class, 'submitForVerification']);
+Route::post('/payment/authorize-hold', [StripeVerificationController::class, 'authorizePaymentHold']);
+Route::post('/payment/confirm-driver', [StripeVerificationController::class, 'confirmDriverAssignment']);
 Route::post('/driver/verify-booking', [StripeVerificationController::class, 'driverRespond']);
 Route::get('/payment/verification-status/{serviceType}/{serviceId}', [StripeVerificationController::class, 'getVerificationStatus']);
 Route::get('/driver/pending-verifications', [StripeVerificationController::class, 'getPendingVerifications']);
@@ -109,6 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rides Lifecycle
     Route::get('/rides/active', [RideController::class, 'active']);
     Route::post('/rides/{id}/status', [RideController::class, 'updateStatus']);
+    Route::post('/rides/{id}/confirm-payment', [RideController::class, 'confirmPayment']);
     Route::post('/rides/{id}/cancel', [RideController::class, 'cancel']);
     Route::apiResource('rides', RideController::class);
     Route::apiResource('vehicles', VehicleController::class);

@@ -99,8 +99,7 @@ class StripeService
         $transactionRef = 'TXN-STRIPE-' . strtoupper(Str::random(10));
         $amountInCents = (int) round($amount * 100);
 
-        // Create Payment Intent in Stripe
-        $intent = \Stripe\PaymentIntent::create([
+        $intentParams = [
             'amount' => $amountInCents,
             'currency' => $currency,
             'payment_method_types' => ['card'],
@@ -112,7 +111,23 @@ class StripeService
                 'user_id' => $user->id ?? 0,
                 'transaction_ref' => $transactionRef,
             ],
-        ]);
+        ];
+
+        // For on-demand rides, require manual pre-authorization hold so funds are held before driver dispatch
+        if (in_array($serviceType, ['ride', 'rental'])) {
+            $intentParams['capture_method'] = 'manual';
+        }
+
+        // Create Payment Intent in Stripe
+        $intent = \Stripe\PaymentIntent::create($intentParams);
+
+        if ($model instanceof Ride) {
+            $model->update([
+                'hold_payment_intent_id' => $intent->id,
+                'payment_method' => 'stripe',
+                'payment_status' => 'pending',
+            ]);
+        }
 
         // Save transaction in DB
         $txnData = [
@@ -132,6 +147,7 @@ class StripeService
                 'created_at' => now()->toIso8601String(),
                 'intent_id' => $intent->id,
                 'status' => $intent->status,
+                'capture_method' => $intent->capture_method ?? 'automatic',
             ],
         ];
 
@@ -192,7 +208,18 @@ class StripeService
             throw new \RuntimeException("Payment transaction record not found for intent {$paymentIntentId}.");
         }
 
-        if ($intent->status === 'succeeded') {
+        if ($intent->status === 'requires_capture') {
+            static::markTransactionAsAuthorized($transaction, $intent);
+            return [
+                'success' => true,
+                'status' => 'authorized',
+                'hold' => true,
+                'transaction_ref' => $transaction->transaction_ref,
+                'amount' => $transaction->amount,
+                'currency' => $transaction->currency,
+                'message' => 'Payment authorization hold placed successfully. Dispatching nearby drivers...',
+            ];
+        } elseif ($intent->status === 'succeeded') {
             static::markTransactionAsPaid($transaction, $intent);
             return [
                 'success' => true,
@@ -226,6 +253,58 @@ class StripeService
     }
 
     /**
+     * Mark transaction and related ride model as authorized/held and trigger driver dispatch.
+     */
+    public static function markTransactionAsAuthorized(PaymentTransaction $transaction, $intent = null): void
+    {
+        if (in_array($transaction->status, ['authorized', 'paid'])) {
+            return;
+        }
+
+        $now = now();
+        $chargeId = $intent->latest_charge ?? null;
+
+        $transaction->update([
+            'status' => 'authorized',
+            'stripe_charge_id' => $chargeId,
+            'failure_code' => null,
+            'failure_message' => null,
+            'gateway_response' => array_merge($transaction->gateway_response ?? [], [
+                'authorized_at' => $now->toIso8601String(),
+                'intent_status' => 'requires_capture',
+                'charge_id' => $chargeId,
+            ]),
+        ]);
+
+        if ($transaction->ride_id) {
+            $ride = Ride::find($transaction->ride_id);
+            if ($ride) {
+                $ride->update([
+                    'payment_status' => 'authorized',
+                    'payment_held_at' => $now,
+                    'hold_payment_intent_id' => $intent->id ?? $transaction->stripe_payment_intent_id,
+                    'payment_method' => 'stripe',
+                ]);
+
+                // Payment is now verified and held in escrow -> trigger driver proximity dispatch!
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            }
+        }
+
+        ActivityLogService::log(
+            'payment_hold_placed',
+            "Stripe authorization hold of {$transaction->currency} {$transaction->amount} placed for TXN #{$transaction->transaction_ref}",
+            $transaction->user_id,
+            [
+                'transaction_ref' => $transaction->transaction_ref,
+                'stripe_payment_intent_id' => $transaction->stripe_payment_intent_id,
+                'amount' => $transaction->amount,
+                'currency' => $transaction->currency,
+            ]
+        );
+    }
+
+    /**
      * Mark transaction and related booking model as paid idempotently.
      */
     public static function markTransactionAsPaid(PaymentTransaction $transaction, $intent = null): void
@@ -254,7 +333,16 @@ class StripeService
         if ($transaction->ride_id) {
             $ride = Ride::find($transaction->ride_id);
             if ($ride) {
-                $ride->update(['payment_status' => 'paid', 'payment_method' => 'stripe']);
+                $ride->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'stripe',
+                    'payment_held_at' => $ride->payment_held_at ?: $now,
+                ]);
+
+                // If ride is still pending and has not been assigned a driver yet, trigger matching
+                if ($ride->status === 'pending' && is_null($ride->driver_id)) {
+                    \App\Services\RideAssignmentService::assignNextDriver($ride);
+                }
             }
         } elseif ($transaction->driver_booking_id) {
             $booking = DriverBooking::find($transaction->driver_booking_id);
@@ -340,6 +428,14 @@ class StripeService
         Log::info("Stripe Webhook received: {$type}", ['id' => $event->id]);
 
         switch ($type) {
+            case 'payment_intent.amount_capturable_updated':
+                $intentId = $object->id;
+                $transaction = PaymentTransaction::where('stripe_payment_intent_id', $intentId)->first();
+                if ($transaction && $transaction->status !== 'paid') {
+                    static::markTransactionAsAuthorized($transaction, $object);
+                }
+                break;
+
             case 'payment_intent.succeeded':
                 $intentId = $object->id;
                 $transaction = PaymentTransaction::where('stripe_payment_intent_id', $intentId)->first();
@@ -372,6 +468,9 @@ class StripeService
                 $transaction = PaymentTransaction::where('stripe_payment_intent_id', $intentId)->first();
                 if ($transaction && $transaction->status !== 'paid') {
                     $transaction->update(['status' => 'cancelled']);
+                    if ($transaction->ride_id) {
+                        Ride::where('id', $transaction->ride_id)->update(['payment_status' => 'released']);
+                    }
                 }
                 break;
 
@@ -393,6 +492,80 @@ class StripeService
         }
 
         return ['status' => 'success', 'event' => $type];
+    }
+
+    /**
+     * Capture pre-authorization hold when ride is completed.
+     */
+    public static function captureRideHold(Ride $ride): array
+    {
+        static::initStripe();
+        $intentId = $ride->hold_payment_intent_id;
+        if (!$intentId) {
+            $txn = PaymentTransaction::where('ride_id', $ride->id)->whereNotNull('stripe_payment_intent_id')->latest()->first();
+            $intentId = $txn?->stripe_payment_intent_id;
+        }
+
+        if (!$intentId) {
+            $ride->update(['payment_status' => 'paid']);
+            return ['success' => true, 'status' => 'already_paid_or_no_hold'];
+        }
+
+        try {
+            $intent = \Stripe\PaymentIntent::retrieve($intentId);
+            if ($intent->status === 'requires_capture') {
+                $captured = $intent->capture();
+                $txn = PaymentTransaction::where('stripe_payment_intent_id', $intentId)->first();
+                if ($txn) {
+                    static::markTransactionAsPaid($txn, $captured);
+                } else {
+                    $ride->update(['payment_status' => 'paid']);
+                }
+                return ['success' => true, 'status' => 'captured'];
+            } elseif ($intent->status === 'succeeded') {
+                $ride->update(['payment_status' => 'paid']);
+                return ['success' => true, 'status' => 'already_captured'];
+            }
+            return ['success' => false, 'status' => $intent->status];
+        } catch (\Throwable $e) {
+            Log::error("Stripe captureRideHold error for ride #{$ride->id}: " . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Release/cancel pre-authorization hold when ride is cancelled or no driver found.
+     */
+    public static function releaseRideHold(Ride $ride, string $reason = 'cancelled'): array
+    {
+        static::initStripe();
+        $intentId = $ride->hold_payment_intent_id;
+        if (!$intentId) {
+            $txn = PaymentTransaction::where('ride_id', $ride->id)->whereNotNull('stripe_payment_intent_id')->latest()->first();
+            $intentId = $txn?->stripe_payment_intent_id;
+        }
+
+        if (!$intentId) {
+            $ride->update(['payment_status' => 'released']);
+            return ['success' => true, 'message' => 'No active Stripe hold found to cancel'];
+        }
+
+        try {
+            $intent = \Stripe\PaymentIntent::retrieve($intentId);
+            if (in_array($intent->status, ['requires_capture', 'requires_payment_method', 'requires_confirmation', 'requires_action'])) {
+                $intent->cancel(['cancellation_reason' => 'abandoned']);
+            }
+            $ride->update(['payment_status' => 'released']);
+            $txn = PaymentTransaction::where('stripe_payment_intent_id', $intentId)->first();
+            if ($txn && $txn->status !== 'paid') {
+                $txn->update(['status' => 'cancelled']);
+            }
+            return ['success' => true, 'status' => 'released'];
+        } catch (\Throwable $e) {
+            Log::warning("Stripe releaseRideHold warning for ride #{$ride->id}: " . $e->getMessage());
+            $ride->update(['payment_status' => 'released']);
+            return ['success' => true, 'warning' => $e->getMessage()];
+        }
     }
 
     /**

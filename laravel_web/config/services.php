@@ -95,4 +95,14 @@ return [
         'redirect' => env('APPLE_REDIRECT_URI', 'https://ridemycars.com/auth/apple/callback'),
     ],
 
+    'momo' => [
+        'api_user' => env('MOMO_API_USER'),
+        'api_key' => env('MOMO_API_KEY'),
+        'subscription_key' => env('MOMO_SUBSCRIPTION_KEY'),
+        'target_environment' => env('MOMO_TARGET_ENV', 'sandbox'),
+        'currency' => env('MOMO_CURRENCY', 'GHS'),
+        'callback_url' => env('MOMO_CALLBACK_URL', 'https://ridemycars.com/api/payment/momo/callback'),
+    ],
+
 ];
+

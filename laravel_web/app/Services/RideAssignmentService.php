@@ -36,6 +36,33 @@ class RideAssignmentService
      */
     public static function assignNextDriver(Ride $ride)
     {
+        // 0. PAYMENT GATE: Drivers cannot be searched or dispatched unless payment is confirmed, authorized, or on hold
+        $allowedPaymentStatuses = ['hold', 'authorized', 'paid'];
+        $currentPaymentStatus = strtolower((string) ($ride->payment_status ?? ''));
+        if (!in_array($currentPaymentStatus, $allowedPaymentStatuses, true)) {
+            \Illuminate\Support\Facades\Log::warning("RideAssignmentService: Driver matching blocked for ride #{$ride->id}. Payment status '{$currentPaymentStatus}' is not authorized/held/paid.");
+            return null;
+        }
+
+        // Must still be an unassigned pending ride
+        if ($ride->status !== 'pending' || !is_null($ride->driver_id)) {
+            return null;
+        }
+
+        // Deduplication: If an active unexpired assignment is already running for this ride, reuse it
+        $existingPendingAssignment = RideAssignment::where('ride_id', $ride->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->first();
+        if ($existingPendingAssignment) {
+            return $existingPendingAssignment;
+        }
+
+        // Record timestamp when driver search actually started
+        if (is_null($ride->driver_search_started_at)) {
+            $ride->update(['driver_search_started_at' => now()]);
+        }
+
         // 1. Exclude drivers who explicitly rejected or currently have an active unexpired offer
         $excludedDriverIds = RideAssignment::where('ride_id', $ride->id)
             ->where(function ($q) {
