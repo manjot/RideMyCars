@@ -326,7 +326,7 @@
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> {{ $v['seats'] }} & {{ $v['luggage'] ?? 'Luggage room' }}</li>
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Upfront price lock & zero surge trap</li>
-                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Cash, Card or Mobile Money</li>
+                                <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Stripe Card or MoMo Pay</li>
                             </ul>
                         </div>
                         <a href="/ride?type={{ urlencode($v['name']) }}" class="mt-6 block w-full py-3 {{ $vKey === 'comfort' ? 'bg-brand-500 hover:bg-brand-600 text-slate-950 font-black' : ($vKey === 'luxury' ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black' : 'bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-extrabold') }} text-xs rounded-xl shadow-md transition-all text-center">
@@ -808,10 +808,10 @@
                             </tr>
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
                                 <td class="py-3.5 px-5 font-bold text-gray-900 dark:text-white">Payment Options</td>
-                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Card, Momo, Cash</td>
-                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Credit Card, Momo</td>
-                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Card, Momo, Cash</td>
-                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Card, Momo, Cash</td>
+                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Stripe Card, MoMo Pay</td>
+                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Stripe Card, MoMo Pay</td>
+                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Stripe Card, MoMo Pay</td>
+                                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300">Stripe Card, MoMo Pay</td>
                             </tr>
                         </tbody>
                     </table>

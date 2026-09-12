@@ -2165,7 +2165,7 @@
                         </div>
                         <div class="text-right">
                             <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Payment</p>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-bold uppercase text-gray-800 dark:text-gray-200" x-text="ride ? ride.payment_method : 'Cash'"></span>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-bold uppercase text-gray-800 dark:text-gray-200" x-text="ride ? ride.payment_method : 'Stripe / MoMo'"></span>
                         </div>
                     </div>
                     

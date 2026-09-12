@@ -104,43 +104,26 @@
                     </ul>
                 </div>
 
-                <form action="/membership/subscribe" method="POST" x-data="{ paymentMethod: 'stripe' }" class="space-y-4">
+                <form action="/membership/subscribe" method="POST" x-data="{ paymentMethod: 'stripe', momoPhone: '', momoNetwork: 'MTN' }" class="space-y-4">
                     @csrf
                     <input type="hidden" name="membership_type" value="club">
 
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Select Payment Method</label>
-                        <div class="relative">
-                            <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3 pr-10 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium cursor-pointer appearance-none">
-                                <option value="stripe">💳 Stripe</option>
-                                <option value="momo">📱 Momo Pay</option>
-                                <option value="applepay">🍏 Apple Pay</option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <!-- Card Fillup Information for Stripe -->
-                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
-                    </div>
+                    <x-payment-method-selector modelName="paymentMethod" phoneModel="momoPhone" networkModel="momoNetwork" />
 
                     @auth
                         @if(auth()->user()->membership_type === 'club')
                             <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
-                                Active Member — Renew $250/mo
+                                <span>Active Member — Renew $250/mo</span>
                             </button>
                         @else
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base">
-                                Subscribe for $250/mo
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
+                                <span x-text="paymentMethod === 'momo' ? 'Subscribe with MoMo Pay ($250/mo)' : 'Subscribe with Stripe ($250/mo)'"></span>
                             </button>
                         @endif
                     @else
-                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base">
-                            Subscribe for $250/mo
+                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
+                            <span x-text="paymentMethod === 'momo' ? 'Subscribe with MoMo Pay ($250/mo)' : 'Subscribe with Stripe ($250/mo)'"></span>
                         </button>
                     @endauth
                 </form>

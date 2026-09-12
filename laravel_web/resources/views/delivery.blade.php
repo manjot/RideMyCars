@@ -362,18 +362,8 @@
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select payment method for parcel dispatch.</p>
                     </div>
 
-                    <div class="space-y-3 text-xs">
-                        <label class="block font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Payment Method *</label>
-                        <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white cursor-pointer">
-                            <option value="stripe">💳 Stripe (Credit / Debit Card)</option>
-                            <option value="momo">📱 Momo Pay</option>
-                            <option value="cash">💵 Cash on Pickup / Delivery</option>
-                            <option value="applepay">🍏 Apple Pay</option>
-                        </select>
-
-                        <!-- Card Fillup Information for Stripe -->
-                        <x-stripe-card-input modelName="paymentMethod" value="stripe" />
-                    </div>
+                    <!-- Payment Method Selector (Stripe & MoMo Pay) -->
+                    <x-payment-method-selector modelName="paymentMethod" phoneModel="momoPhone" networkModel="momoNetwork" />
 
                     <div class="flex justify-between pt-2">
                         <button type="button" @click="currentStep = 4" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
@@ -847,6 +837,8 @@
                 specialHandling: ['signature_required'],
 
                 paymentMethod: 'stripe',
+                momoPhone: @json(auth()->user()->phone ?? ''),
+                momoNetwork: 'MTN',
 
                 priceBreakdown: {
                     subtotal: 0,

@@ -655,19 +655,10 @@ class CountryService
      */
     public static function getPaymentMethodsForCountry(string $code): array
     {
-        $methods = [
-            ['id' => 'stripe', 'name' => 'Credit / Debit Card', 'icon' => 'stripe', 'type' => 'gateway'],
-            ['id' => 'cash', 'name' => 'Cash', 'icon' => 'cash', 'type' => 'offline'],
-            ['id' => 'applepay', 'name' => 'Apple Pay', 'icon' => 'apple', 'type' => 'gateway'],
+        return [
+            ['id' => 'stripe', 'name' => 'Credit / Debit Card (Stripe)', 'icon' => 'stripe', 'type' => 'gateway'],
+            ['id' => 'momo', 'name' => 'MoMo Pay (Mobile Money)', 'icon' => 'momo', 'type' => 'gateway'],
         ];
-
-        if (in_array(strtoupper($code), ['GHA', 'NGA', 'ZAF', 'KEN'])) {
-            array_splice($methods, 1, 0, [
-                ['id' => 'momo', 'name' => 'Mobile Money (Momo)', 'icon' => 'momo', 'type' => 'gateway'],
-            ]);
-        }
-
-        return $methods;
     }
 
     /**

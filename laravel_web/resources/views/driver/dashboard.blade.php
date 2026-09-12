@@ -214,7 +214,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="'$' + parseFloat(req.fare || req.total_price || 35.00).toFixed(2)"></p>
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.payment_method || 'Cash'"></span>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.payment_method || 'Stripe / MoMo'"></span>
                                             </div>
                                         </div>
 
@@ -303,7 +303,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride.fare && parseFloat(ride.fare) > 0 ? '$' + parseFloat(ride.fare).toFixed(2) : '$35.00'"></p>
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Cash'"></span>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Stripe / MoMo'"></span>
                                             </div>
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-4">
@@ -449,7 +449,7 @@
                                                 <div class="text-right shrink-0">
                                                     <p class="font-black text-lg text-green-600 dark:text-green-400">${{ number_format($tripFare, 2) }}</p>
                                                     <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-gray-400">
-                                                        {{ ucfirst($trip->payment_method ?? 'Cash') }}
+                                                        {{ ucfirst($trip->payment_method ?? 'Stripe') }}
                                                     </span>
                                                 </div>
                                             </div>
@@ -534,7 +534,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400">${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
-                                                <span class="text-xs text-gray-400 block font-bold uppercase">{{ $pr->payment_method ?? 'Cash' }}</span>
+                                                <span class="text-xs text-gray-400 block font-bold uppercase">{{ $pr->payment_method ?? 'Stripe' }}</span>
                                                 @if($custPhone)
                                                     <a href="tel:{{ $custPhone }}" class="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
                                                         📞 Call Rider

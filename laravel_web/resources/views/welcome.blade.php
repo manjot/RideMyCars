@@ -360,7 +360,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                         </div>
                         <h4 class="text-lg font-black text-gray-950 dark:text-white mb-1.5">Book & Pay</h4>
-                        <p class="text-gray-600 dark:text-gray-300 text-xs font-medium leading-relaxed">Instant confirmation with Stripe card, digital wallet, or cash. Receive verified PDF receipts & invoices.</p>
+                        <p class="text-gray-600 dark:text-gray-300 text-xs font-medium leading-relaxed">Instant confirmation with Stripe card or MoMo Pay. Receive verified PDF receipts & invoices.</p>
                     </div>
 
                     <!-- Step 3 -->

@@ -84,8 +84,8 @@
                                 <template x-if="pm.type === 'upi'">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h6v6H3z"/><path d="M15 3h6v6h-6z"/><path d="M3 15h6v6H3z"/><path d="M21 21v-6h-6"/><path d="M15 15v6h6"/><path d="M9 9h6v6H9z"/></svg>
                                 </template>
-                                <template x-if="pm.type === 'cash'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm-8 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm6.5-6H17V8.5c0-.28.22-.5.5-.5h1c.28 0 .5.22.5.5V10zM5.5 10H7v1.5c0 .28-.22.5-.5.5h-1c-.28 0-.5-.22-.5-.5V10z"/></svg>
+                                <template x-if="pm.type === 'momo'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1H7C5.34 1 4 2.34 4 4v16c0 1.66 1.34 3 3 3h10c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-5 20c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm6.5-4H5.5V4h13v13z"/></svg>
                                 </template>
                                 <template x-if="pm.type === 'card'">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
@@ -127,7 +127,7 @@
                         </div>
                         <div>
                             <div class="font-bold text-[15px] text-black dark:text-white">Personal</div>
-                            <div class="text-[13px] text-gray-500 font-medium">Default • Cash</div>
+                            <div class="text-[13px] text-gray-500 font-medium">Default • Stripe / MoMo Pay</div>
                         </div>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-black dark:text-white"><path d="m9 18 6-6-6-6"/></svg>
@@ -444,7 +444,7 @@
                     <div class="space-y-4 text-sm">
                         <div class="p-3.5 bg-gray-50 dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10">
                             <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Default Payment Method</p>
-                            <p class="font-bold text-gray-900 dark:text-white mt-0.5" x-text="selectedProfile === 'personal' ? 'Cash' : 'Corporate Account Card (•••• 9012)'"></p>
+                            <p class="font-bold text-gray-900 dark:text-white mt-0.5" x-text="selectedProfile === 'personal' ? 'Stripe Card / MoMo' : 'Corporate Account Card (•••• 9012)'"></p>
                         </div>
                         <div class="p-3.5 bg-gray-50 dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10">
                             <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Weekly / Monthly Travel Receipts Email</p>
@@ -502,8 +502,8 @@
             },
             
             paymentMethods: [
-                { type: 'upi', name: 'UPI Scan and Pay', details: 'Scanned at checkout', preferred: false },
-                { type: 'cash', name: 'Cash', details: 'Paid directly to driver', preferred: true }
+                { type: 'card', name: 'Stripe Card', details: 'Visa / Mastercard (Tokenized)', preferred: true },
+                { type: 'momo', name: 'MoMo Pay', details: 'MTN / Telecel / AirtelTigo Direct', preferred: false }
             ],
             
             pmForm: {

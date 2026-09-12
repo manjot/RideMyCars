@@ -377,29 +377,8 @@
                         </div>
                     </div>
 
-                    <!-- Payment Method -->
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Payment Method *</label>
-                        <select name="payment_method" x-model="paymentMethod" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white cursor-pointer">
-                            <option value="stripe">💳 Stripe (Credit Card)</option>
-                            <option value="momo">📱 Momo Pay</option>
-                            <option value="cash">💵 Cash</option>
-                            <option value="applepay">🍏 Apple Pay</option>
-                        </select>
-                    </div>
-
-                    <!-- Stripe PCI Security Notice (Encrypted Checkout) -->
-                    <div x-show="paymentMethod === 'stripe' || paymentMethod === 'card' || paymentMethod === 'credit_card'" x-transition.opacity style="display: none;" class="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 space-y-2 text-xs">
-                        <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-extrabold">
-                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                            <span>Stripe PCI-DSS Level 1 Secure Checkout</span>
-                        </div>
-                        <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">
-                            Card information will be collected securely via encrypted Stripe Elements on the payment authorization step.
-                        </p>
-                    </div>
+                    <!-- Payment Method Selector (Stripe & MoMo Pay) -->
+                    <x-payment-method-selector modelName="paymentMethod" phoneModel="momoPhone" networkModel="momoNetwork" />
 
                     <!-- Primary Request CTA -->
                     <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-brand-500/25 cursor-pointer uppercase tracking-wider">
@@ -497,6 +476,8 @@
                 country: '{{ $selectedCountry ?? ($currentCountryCode ?? "USA") }}',
                 driverProfileId: '{{ $driverProfile->id ?? "" }}',
                 paymentMethod: 'stripe',
+                momoPhone: '{{ auth()->user()->phone ?? "" }}',
+                momoNetwork: 'MTN',
                 vehicleSource: 'personal',
                 carType: 'Sedan',
                 transmission: 'automatic',
