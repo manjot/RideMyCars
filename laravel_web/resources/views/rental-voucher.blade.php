@@ -141,6 +141,58 @@
                         <span class="font-bold text-gray-900 dark:text-white">{{ $ride->driver_country ?? 'USA' }}</span>
                     </div>
                 </div>
+
+                <!-- Chauffeur / Vehicle Handover Agent Details (If Assigned) -->
+                @php
+                    $isRentalPaid = in_array(strtolower($ride->payment_status ?? ''), ['paid', 'partially_paid', 'hold', 'authorized']);
+                @endphp
+                @if($ride->driver || $ride->driver_id)
+                    <div class="col-span-1 md:col-span-2 p-5 rounded-2xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 space-y-3">
+                        <div class="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-2">
+                            <h3 class="font-extrabold text-gray-900 dark:text-white text-sm">Assigned Chauffeur & Handover Agent</h3>
+                            @if($isRentalPaid)
+                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px]">
+                                    ✓ Confirmed
+                                </span>
+                            @else
+                                <span class="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold text-[10px]">
+                                    🔒 Locked Until Payment
+                                </span>
+                            @endif
+                        </div>
+
+                        @if($isRentalPaid && $ride->driver)
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-brand-500 text-slate-950 font-black flex items-center justify-center text-sm">
+                                        👨‍✈️
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $ride->driver->name }}</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Verified Fleet Chauffeur • ⭐ 4.9</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    @if($ride->driver->phone)
+                                        <a href="tel:{{ $ride->driver->phone }}" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-lg text-xs font-black transition">
+                                            📞 Call Chauffeur
+                                        </a>
+                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $ride->driver->phone) }}" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black transition">
+                                            💬 WhatsApp
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800/30 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3">
+                                <span>🔒 Assigned chauffeur & handover contact details will appear once rental payment is authorized.</span>
+                                <a href="/payment/verify-details/rental/{{ $ride->id }}" class="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black font-black rounded-lg text-xs shrink-0">
+                                    Pay Now →
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <!-- Financial Itemized Summary -->

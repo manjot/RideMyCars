@@ -331,8 +331,14 @@
                     </template>
 
                     <template x-if="!driver">
-                        <div class="text-center py-6 text-gray-400 text-xs italic">
-                            Driver details will be displayed here as soon as accepted.
+                        <div class="text-center py-6 text-gray-400 text-xs italic space-y-2">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-bold not-italic">
+                                <span>🔒</span>
+                                <span x-text="['paid', 'hold', 'authorized'].includes((ride.payment_status || '').toLowerCase()) ? '🛰️ Matching Nearest Driver...' : 'Escrow Payment Required'"></span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Driver contact & vehicle details will appear here once driver accepts.
+                            </p>
                         </div>
                     </template>
                 </div>
@@ -459,9 +465,11 @@
                             if (data.customer_name) this.ride.customer_name = data.customer_name;
                             if (data.customer_phone) this.ride.customer_phone = data.customer_phone;
                             if (data.poc_name) this.ride.poc_name = data.poc_name;
-                            if (data.poc_phone) this.ride.poc_phone = data.poc_phone;
+                            if (data.payment_status) this.ride.payment_status = data.payment_status;
                             if (data.driver) {
                                 this.driver = data.driver;
+                            } else {
+                                this.driver = null;
                             }
                             if (data.status === 'completed' || data.status === 'cancelled') {
                                 localStorage.removeItem('rmc_active_ride_id');

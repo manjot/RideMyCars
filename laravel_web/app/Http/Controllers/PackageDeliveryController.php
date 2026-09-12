@@ -234,8 +234,13 @@ class PackageDeliveryController extends Controller
             return response()->json(['error' => 'Delivery not found'], 404);
         }
 
+        $paymentStatus = strtolower($delivery->payment_status ?? 'pending');
+        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized']);
+        $deliveryStatus = strtolower($delivery->delivery_status ?? 'pending');
+        $isCourierConfirmed = !empty($delivery->courier_id) && in_array($deliveryStatus, ['accepted', 'assigned', 'in_transit', 'arrived_at_pickup', 'picked_up', 'arrived_at_destination', 'delivered']);
+
         $courierData = null;
-        if ($delivery->courier) {
+        if ($isPaymentConfirmed && $isCourierConfirmed && $delivery->courier) {
             $cp = $delivery->courierProfile ?? $delivery->courier->driverProfile;
             $courierData = [
                 'name' => $delivery->courier->name,

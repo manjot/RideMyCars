@@ -381,93 +381,110 @@
                     </div>
                 </div>
 
-                <!-- ASSIGNED DRIVER CARD: LOCKED VS UNLOCKED -->
-                <div class="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5 shadow-sm">
-                    
+                <!-- ASSIGNED DRIVER CARD: LOCKED VS SEARCHING VS UNLOCKED -->
+                <!-- Case 1: PAYMENT NOT CONFIRMED -> HIDE ALL DRIVER DETAILS & SHOW PRIVACY SHIELD -->
+                <div x-show="!isPaymentConfirmed" class="border border-amber-300/80 dark:border-amber-600/30 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50/60 via-white to-amber-50/30 dark:from-amber-950/20 dark:via-[#141414] dark:to-black shadow-sm p-6 space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                            🛡️
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Driver Details Protected</span>
+                                <span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] uppercase tracking-wider">
+                                    🔒 Escrow Payment Required
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                                Chauffeur identity, vehicle information, photo, and direct contact details are strictly hidden for privacy. They will unlock automatically after you authorize your payment (Stripe, Apple Pay, or MoMo Pay) and a verified driver confirms your booking.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+                        <span class="flex items-center gap-2 font-bold">
+                            <span>💳</span> Select Stripe, Apple Pay, or MoMo Pay above to authorize escrow hold
+                        </span>
+                        <span class="text-[11px] font-black uppercase text-amber-700 dark:text-amber-400">Step 2 of 4</span>
+                    </div>
+                </div>
+
+                <!-- Case 2: PAYMENT CONFIRMED BUT DRIVER STILL SEARCHING -> SEARCHING RADAR CARD -->
+                <div x-show="isPaymentConfirmed && !isDriverConfirmed" class="border border-amber-300/80 dark:border-amber-600/30 rounded-2xl overflow-hidden bg-gray-50 dark:bg-white/5 shadow-sm p-6 text-center space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-black">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                        Radar Broadcast Active • Searching for Nearest Driver
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                        Payment is safely held in escrow. Driver contact, photo, and vehicle information will appear right here the moment a vetted driver confirms your pickup request.
+                    </p>
+                </div>
+
+                <!-- Case 3: PAYMENT CONFIRMED AND DRIVER CONFIRMED -> UNLOCKED FULL DRIVER CARD -->
+                <div x-show="isPaymentConfirmed && isDriverConfirmed && driver" class="border border-emerald-300 dark:border-emerald-700/50 rounded-2xl overflow-hidden bg-white dark:bg-[#161616] shadow-md">
                     <!-- Driver Profile Header -->
                     <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        
                         <div class="flex items-center space-x-4">
                             <div class="relative">
-                                <img :src="driver.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(driver.name || 'Driver') + '&background=0F172A&color=FFFFFF&size=256&bold=true'" 
+                                <img :src="driver?.photo_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(driver?.name || 'Driver') + '&background=0F172A&color=FFFFFF&size=256&bold=true')" 
                                      alt="Driver Photo" 
-                                     class="w-14 h-14 rounded-full object-cover border-2 border-brand-400 shadow-sm">
-                                <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white dark:border-[#111]"
-                                      :class="(isPaymentConfirmed && isDriverConfirmed) ? 'bg-emerald-500' : 'bg-gray-400'"></span>
+                                     class="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
+                                <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white dark:border-[#111] bg-emerald-500"></span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned Driver</span>
-                                    <span x-show="isPaymentConfirmed && isDriverConfirmed" class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px]">
-                                        ✓ Confirmed
-                                    </span>
-                                    <span x-show="!isPaymentConfirmed" class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold text-[10px]">
-                                        🔒 Locked
+                                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px]">
+                                        ✓ Confirmed & Dispatched
                                     </span>
                                 </div>
-                                <h4 class="font-extrabold text-base text-gray-900 dark:text-white" x-text="driver.name || 'Michael Scott'"></h4>
+                                <h4 class="font-extrabold text-base text-gray-900 dark:text-white" x-text="driver?.name"></h4>
                                 <p class="text-xs text-gray-600 dark:text-gray-300">
-                                    <span x-text="driver.vehicle || 'Toyota Camry'"></span> • ⭐ <span x-text="driver.rating || '4.95'"></span>
+                                    <span x-text="driver?.vehicle || 'Executive Vehicle'"></span> • ⭐ <span x-text="driver?.rating || '4.95'"></span>
                                 </p>
                             </div>
                         </div>
 
-                        <!-- Action State: UNLOCKED vs LOCKED -->
-                        <div class="shrink-0">
-                            <!-- UNLOCKED (Payment Confirmed AND Driver Confirmed): Show Call, WhatsApp, Email -->
-                            <div x-show="isPaymentConfirmed && isDriverConfirmed" class="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                                
-                                <!-- 1. Call Button -->
-                                <a :href="'tel:' + (driver.phone || '+233245550192')" 
+                        <!-- Action State: UNLOCKED (Call, WhatsApp, Email) -->
+                        <div class="shrink-0 flex flex-wrap sm:flex-nowrap items-center gap-2">
+                            <!-- 1. Call Button -->
+                            <template x-if="driver?.phone">
+                                <a :href="'tel:' + driver.phone" 
                                    class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
                                     <span>📞</span> Call Driver
                                 </a>
+                            </template>
 
-                                <!-- 2. WhatsApp Button -->
-                                <a :href="'https://wa.me/' + (driver.whatsapp || '233245550192') + '?text=' + encodeURIComponent('Hello ' + (driver.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + bookingCode + '.')"
+                            <!-- 2. WhatsApp Button -->
+                            <template x-if="driver?.whatsapp">
+                                <a :href="'https://wa.me/' + driver.whatsapp + '?text=' + encodeURIComponent('Hello ' + (driver?.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + bookingCode + '.')"
                                    target="_blank"
                                    class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
                                     <span>💬</span> WhatsApp
                                 </a>
+                            </template>
 
-                                <!-- 3. Email Button -->
-                                <a :href="'mailto:' + (driver.email || 'driver@ridemycars.com') + '?subject=' + encodeURIComponent('RideMyCars Booking #' + bookingCode)"
+                            <!-- 3. Email Button -->
+                            <template x-if="driver?.email">
+                                <a :href="'mailto:' + driver.email + '?subject=' + encodeURIComponent('RideMyCars Booking #' + bookingCode)"
                                    class="px-3.5 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
                                     <span>✉️</span> Email
                                 </a>
-
-                            </div>
-
-                            <!-- LOCKED (Payment Pending or Driver Not Confirmed): Display Locked State -->
-                            <div x-show="!isPaymentConfirmed || !isDriverConfirmed" class="text-right">
-                                <span class="px-4 py-2.5 bg-gray-200 dark:bg-white/10 text-gray-400 dark:text-gray-500 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-not-allowed select-none">
-                                    <span>🔒</span> Contact Locked
-                                </span>
-                            </div>
+                            </template>
                         </div>
-
-                    </div>
-
-                    <!-- Security Alert Banner when Locked -->
-                    <div x-show="!isPaymentConfirmed || !isDriverConfirmed" class="px-5 py-3 bg-amber-500/10 border-t border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
-                        <span class="text-base shrink-0">🔒</span>
-                        <span>
-                            <strong>Security Protection:</strong> Direct phone call, WhatsApp chat, and driver email are restricted until payment authorization is confirmed and the driver accepts the dispatch.
-                        </span>
                     </div>
 
                     <!-- Unlocked Contact Bar Details -->
-                    <div x-show="isPaymentConfirmed && isDriverConfirmed" class="px-5 py-3 bg-emerald-500/10 border-t border-emerald-500/20 text-xs text-emerald-900 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-2">
+                    <div class="px-5 py-3 bg-emerald-500/10 border-t border-emerald-500/20 text-xs text-emerald-900 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center gap-4 text-[11px]">
-                            <span>📞 Phone: <strong class="font-mono text-gray-900 dark:text-white" x-text="driver.phone || '+233 24 555 0192'"></strong></span>
-                            <span>💬 WhatsApp: <strong class="font-mono text-emerald-600 dark:text-emerald-400" x-text="driver.phone || '+233 24 555 0192'"></strong></span>
-                            <span>✉️ Email: <strong class="text-gray-900 dark:text-white" x-text="driver.email || 'michael.driver@ridemycars.com'"></strong></span>
+                            <span>📞 Phone: <strong class="font-mono text-gray-900 dark:text-white" x-text="driver?.phone"></strong></span>
+                            <span>💬 WhatsApp: <strong class="font-mono text-emerald-600 dark:text-emerald-400" x-text="driver?.phone"></strong></span>
+                            <span>✉️ Email: <strong class="text-gray-900 dark:text-white" x-text="driver?.email"></strong></span>
                         </div>
                         <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                             ✓ Direct Driver Communication Open
                         </span>
                     </div>
-
                 </div>
 
             </div>
@@ -490,14 +507,7 @@
             isDriverConfirmed: config.initialIsDriverConfirmed,
             totalAmount: config.totalAmount,
             currency: config.currency,
-            driver: config.driverData || {
-                name: 'Michael Scott',
-                phone: '+233 24 555 0192',
-                email: 'michael.driver@ridemycars.com',
-                whatsapp: '233245550192',
-                rating: 4.95,
-                vehicle: 'Toyota Camry'
-            },
+            driver: (config.initialIsPaymentConfirmed && config.initialIsDriverConfirmed) ? config.driverData : null,
             bookingCode: config.bookingCode,
             paymentMethod: 'stripe', // 'stripe', 'apple_pay', 'momo'
             momoNetwork: 'MTN',
@@ -530,8 +540,10 @@
                             this.isPaymentConfirmed = data.is_payment_confirmed;
                             this.isDriverConfirmed = data.is_driver_confirmed;
 
-                            if (data.driver) {
-                                this.driver = Object.assign({}, this.driver, data.driver);
+                            if (this.isPaymentConfirmed && this.isDriverConfirmed && data.driver) {
+                                this.driver = Object.assign({}, this.driver || {}, data.driver);
+                            } else if (!this.isPaymentConfirmed || !this.isDriverConfirmed) {
+                                this.driver = null;
                             }
 
                             if (this.isDriverConfirmed && this.pollingInterval) {

@@ -1451,8 +1451,9 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         $ride->refresh();
     }
 
-    // GATED CONTACT RELEASE: Driver contact, email, and WhatsApp ONLY appear if driver accepted
-    $isDriverAccepted = !empty($ride->driver_id) && in_array($ride->status, ['accepted', 'arrived', 'in_progress', 'completed'], true);
+    // GATED CONTACT RELEASE: Driver contact, email, and WhatsApp ONLY appear if payment is confirmed AND driver accepted
+    $isPaymentConfirmed = in_array(strtolower($ride->payment_status ?? ''), ['paid', 'hold', 'authorized']);
+    $isDriverAccepted = !empty($ride->driver_id) && in_array($ride->status, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'], true);
 
     $driverData = null;
     $driverName = null;
@@ -1460,7 +1461,7 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
     $driverEmail = null;
     $driverWhatsapp = null;
 
-    if ($isDriverAccepted && $ride->driver) {
+    if ($isPaymentConfirmed && $isDriverAccepted && $ride->driver) {
         $dp = $ride->driver->driverProfile;
         $driverName = $ride->driver->name;
         $driverPhone = $ride->driver->phone;
@@ -1745,18 +1746,40 @@ Route::post('/api/notifications/clear', function (\Illuminate\Http\Request $requ
     return response()->json(['success' => true]);
 });
 
-// My Rides page
+// My Rides & Bookings page (Rides, Car Rentals, Hire a Driver, Deliveries)
 Route::get('/my-rides', function () {
     $user = auth()->user();
+    
+    // 1. Rides & Car Rentals
     $rides = \App\Models\Ride::where(function ($q) use ($user) {
             $q->where('rider_id', $user->id)
               ->orWhere('driver_id', $user->id);
         })
-        ->with(['driver', 'rider', 'riderReview', 'driverReview'])
+        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview'])
         ->orderBy('created_at', 'desc')
-        ->paginate(20);
+        ->paginate(15);
 
-    return view('my-rides', compact('user', 'rides'));
+    // 2. Hire a Driver (Chauffeur Bookings)
+    $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($user) {
+            $q->where('client_id', $user->id)
+              ->orWhere('driver_id', $user->id);
+        })
+        ->with(['driver', 'driverProfile', 'client'])
+        ->orderBy('created_at', 'desc')
+        ->take(15)
+        ->get();
+
+    // 3. Package Deliveries
+    $packageDeliveries = \App\Models\PackageDelivery::where(function ($q) use ($user) {
+            $q->where('customer_id', $user->id)
+              ->orWhere('courier_id', $user->id);
+        })
+        ->with(['courier', 'courierProfile', 'customer'])
+        ->orderBy('created_at', 'desc')
+        ->take(15)
+        ->get();
+
+    return view('my-rides', compact('user', 'rides', 'driverBookings', 'packageDeliveries'));
 })->middleware('auth');
 
 // Dedicated Live Ride Tracker Page (For Guests and Logged-In Customers)
@@ -1779,7 +1802,10 @@ Route::get('/ride/track/{id?}', function ($id = null) {
     $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
 
     $driverData = null;
-    if ($ride && $ride->driver) {
+    $isPaymentConfirmed = in_array(strtolower($ride?->payment_status ?? ''), ['paid', 'hold', 'authorized']);
+    $isDriverConfirmed = !empty($ride?->driver_id) && in_array(strtolower($ride?->status ?? ''), ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']);
+
+    if ($ride && $ride->driver && $isPaymentConfirmed && $isDriverConfirmed) {
         $dp = $ride->driver->driverProfile;
         $driverData = [
             'name' => $ride->driver->name,
@@ -2293,15 +2319,22 @@ Route::get('/api/driver-booking/{id}/status', function ($id) {
     $booking = \App\Models\DriverBooking::with(['driver', 'driverProfile', 'review'])->find($id);
     if (!$booking) return response()->json(['error' => 'Not found'], 404);
 
+    $paymentStatus = strtolower($booking->payment_status ?? 'pending');
+    $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized']);
+    $bookingStatus = strtolower($booking->booking_status ?? 'pending');
+    $isDriverConfirmed = !empty($booking->driver_id) && in_array($bookingStatus, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']);
+
     $driverData = null;
-    if ($booking->driver) {
+    if ($isPaymentConfirmed && $isDriverConfirmed && $booking->driver) {
         $dp = $booking->driverProfile ?? $booking->driver->driverProfile;
         $driverData = [
             'name' => $booking->driver->name,
+            'phone' => $booking->driver->phone,
+            'email' => $booking->driver->email,
             'photo_url' => $dp?->photo_url,
             'rating' => $dp ? floatval($dp->rating) : 5.0,
             'total_trips' => $dp ? intval($dp->total_trips) : 0,
-            'vehicle_model' => $dp ? ($dp->vehicle_make . ' ' . $dp->vehicle_model) : ($booking->car_make_model ?? 'Vehicle'),
+            'vehicle_model' => $dp ? ($dp->vehicle_make . ' ' . $dp->vehicle_model) : ($booking->car_make_model ?? 'Executive Vehicle'),
             'vehicle_plate' => $booking->registration_number ?? $dp?->vehicle_plate ?? 'REG-8899',
             'current_lat' => $dp ? floatval($dp->current_lat) : null,
             'current_lng' => $dp ? floatval($dp->current_lng) : null,
@@ -2311,6 +2344,9 @@ Route::get('/api/driver-booking/{id}/status', function ($id) {
 
     return response()->json([
         'status' => $booking->booking_status,
+        'payment_status' => $booking->payment_status,
+        'is_payment_confirmed' => $isPaymentConfirmed,
+        'is_driver_confirmed' => $isDriverConfirmed,
         'fare' => floatval($booking->total_price),
         'pickup' => $booking->pickup_location,
         'pickup_lat' => $booking->pickup_lat ? floatval($booking->pickup_lat) : null,

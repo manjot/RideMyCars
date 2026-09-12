@@ -4,6 +4,8 @@
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10"
           x-data="{
               bookingStatus: '{{ $booking->booking_status }}',
+              paymentStatus: '{{ strtolower($booking->payment_status ?? 'pending') }}',
+              isPaymentConfirmed: {{ in_array(strtolower($booking->payment_status ?? ''), ['paid', 'hold', 'authorized']) ? 'true' : 'false' }},
               driverData: null,
               async pollStatus() {
                   try {
@@ -13,14 +15,20 @@
                           if (data.status) {
                               this.bookingStatus = data.status;
                           }
+                          if (data.payment_status) {
+                              this.paymentStatus = data.payment_status;
+                              this.isPaymentConfirmed = ['paid', 'hold', 'authorized'].includes(data.payment_status.toLowerCase());
+                          }
                           if (data.driver) {
                               this.driverData = data.driver;
+                          } else {
+                              this.driverData = null;
                           }
                       }
                   } catch (e) {}
               }
           }"
-          x-init="pollStatus(); setInterval(() => pollStatus(), 4000);">
+          x-init="pollStatus(); setInterval(() => pollStatus(), 3500);">
         
         <!-- Header -->
         <div class="text-center mb-8">
@@ -127,21 +135,79 @@
             <!-- Right Side: Assigned Driver Card & Booking Summary -->
             <div class="lg:col-span-1 space-y-6">
                 
-                <!-- Driver Profile Card (When Assigned) -->
-                <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-sm space-y-4">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Assigned Chauffeur</span>
+                <!-- State 1: PAYMENT NOT CONFIRMED -> HIDE ALL DRIVER DETAILS & SHOW PRIVACY SHIELD -->
+                <div x-show="!isPaymentConfirmed" class="bg-white dark:bg-[#111] rounded-3xl border border-amber-300 dark:border-amber-600/40 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Assigned Chauffeur</span>
+                        <span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] uppercase">
+                            🔒 Payment Required
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                        Driver identity and direct communication channels unlock immediately once your escrow payment is pre-authorized.
+                    </p>
+                    <a href="/payment/verify-details/driver_booking/{{ $booking->id }}" 
+                       class="w-full py-3 px-4 bg-black dark:bg-white text-white dark:text-black font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 hover:opacity-90 transition">
+                        <span>💳 Authorize ${{ number_format($booking->total_price, 2) }} {{ $booking->currency }} →</span>
+                    </a>
+                </div>
+
+                <!-- State 2: PAYMENT CONFIRMED BUT DRIVER NOT ACCEPTED YET -->
+                <div x-show="isPaymentConfirmed && !driverData" class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 p-6 shadow-sm space-y-3 text-center">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-black">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                        Broadcasting to Nearby Drivers...
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Payment safely held in escrow. Driver contact & vehicle details will appear immediately once a driver confirms.
+                    </p>
+                </div>
+
+                <!-- State 3: PAYMENT CONFIRMED AND DRIVER CONFIRMED -->
+                <div x-show="isPaymentConfirmed && driverData" class="bg-white dark:bg-[#111] rounded-3xl border border-emerald-300 dark:border-emerald-700/50 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Assigned Chauffeur</span>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px]">
+                            ✓ Confirmed
+                        </span>
+                    </div>
                     
                     <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] overflow-hidden border-2 border-brand-500 shrink-0">
-                            <img :src="driverData ? driverData.photo_url : '{{ $booking->driverProfile->photo_url ?? '' }}'" class="w-full h-full object-cover" onError="this.onerror=null;this.src='/images/hero-rent.png';">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] overflow-hidden border-2 border-emerald-500 shrink-0">
+                            <img :src="driverData?.photo_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(driverData?.name || 'Driver') + '&background=0F172A&color=FFFFFF&size=256&bold=true')" class="w-full h-full object-cover">
                         </div>
                         <div>
-                            <h3 class="font-extrabold text-base text-gray-900 dark:text-white" x-text="driverData ? driverData.name : '{{ $booking->driver->name ?? 'Matching Driver...' }}'"></h3>
+                            <h3 class="font-extrabold text-base text-gray-900 dark:text-white" x-text="driverData?.name"></h3>
                             <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5 font-semibold">
-                                <span class="text-amber-500 font-bold">★ <span x-text="driverData ? driverData.rating : '{{ $booking->driverProfile->rating ?? 4.9 }}'"></span></span>
+                                <span class="text-amber-500 font-bold">★ <span x-text="driverData?.rating || 4.95"></span></span>
                                 <span>• Verified Driver</span>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl text-xs space-y-1 border border-gray-100 dark:border-white/5">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Vehicle:</span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="driverData?.vehicle_model || '{{ $booking->car_make_model ?? 'Executive Vehicle' }}'"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">License Plate:</span>
+                            <span class="font-mono font-bold text-amber-600 dark:text-amber-400" x-text="driverData?.vehicle_plate || 'REG-8899'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Direct Contact Buttons -->
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <template x-if="driverData?.phone">
+                            <a :href="'tel:' + driverData.phone" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1">
+                                <span>📞 Call</span>
+                            </a>
+                        </template>
+                        <template x-if="driverData?.phone">
+                            <a :href="'https://wa.me/' + (driverData.phone ? driverData.phone.replace(/[^0-9]/g, '') : '')" target="_blank" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1">
+                                <span>💬 WhatsApp</span>
+                            </a>
+                        </template>
                     </div>
 
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 grid grid-cols-2 gap-2 text-xs font-semibold">

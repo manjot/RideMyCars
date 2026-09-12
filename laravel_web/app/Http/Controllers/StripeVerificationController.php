@@ -176,29 +176,30 @@ class StripeVerificationController extends Controller
         $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
 
         $driverData = null;
-        $driverId = $booking->driver_id ?? $booking->courier_id ?? null;
-        if ($driverId) {
-            $driverUser = User::find($driverId);
-            if ($driverUser) {
-                $phone = $driverUser->phone ?? '+233 24 555 0192';
-                $email = $driverUser->email ?? 'michael.driver@ridemycars.com';
-                $cleanedWa = preg_replace('/[^0-9]/', '', $phone);
-                if (!str_starts_with($cleanedWa, '233') && strlen($cleanedWa) <= 10) {
-                    $cleanedWa = '233' . ltrim($cleanedWa, '0');
-                }
+        if ($isPaymentConfirmed && $isDriverConfirmed) {
+            $driverId = $booking->driver_id ?? $booking->courier_id ?? null;
+            if ($driverId) {
+                $driverUser = User::find($driverId);
+                if ($driverUser) {
+                    $phone = $driverUser->phone ?? '+233 24 555 0192';
+                    $email = $driverUser->email ?? 'michael.driver@ridemycars.com';
+                    $cleanedWa = preg_replace('/[^0-9]/', '', $phone);
+                    if (!str_starts_with($cleanedWa, '233') && strlen($cleanedWa) <= 10) {
+                        $cleanedWa = '233' . ltrim($cleanedWa, '0');
+                    }
 
-                $driverData = [
-                    'name' => $driverUser->name,
-                    'rating' => 4.95,
-                    'vehicle' => $booking->car_make_model ?? 'Executive Vehicle',
-                    'photo_url' => 'https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true',
-                    // Sensitive contacts are unlocked ONLY if payment is held/confirmed AND driver is confirmed
-                    'phone' => ($isPaymentConfirmed && $isDriverConfirmed) ? $phone : null,
-                    'email' => ($isPaymentConfirmed && $isDriverConfirmed) ? $email : null,
-                    'whatsapp' => ($isPaymentConfirmed && $isDriverConfirmed) ? $cleanedWa : null,
-                    'masked_phone' => substr($phone, 0, 4) . ' ••• ••• ••' . substr($phone, -2),
-                    'masked_email' => substr($email, 0, 2) . '••••••@' . (explode('@', $email)[1] ?? 'ridemycars.com'),
-                ];
+                    $driverData = [
+                        'name' => $driverUser->name,
+                        'rating' => 4.95,
+                        'vehicle' => $booking->car_make_model ?? 'Executive Vehicle',
+                        'photo_url' => 'https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true',
+                        'phone' => $phone,
+                        'email' => $email,
+                        'whatsapp' => $cleanedWa,
+                        'masked_phone' => substr($phone, 0, 4) . ' ••• ••• ••' . substr($phone, -2),
+                        'masked_email' => substr($email, 0, 2) . '••••••@' . (explode('@', $email)[1] ?? 'ridemycars.com'),
+                    ];
+                }
             }
         }
 
@@ -536,7 +537,7 @@ class StripeVerificationController extends Controller
             $driverUser = User::find($booking->driver_id ?? $booking->courier_id);
         }
 
-        if ($driverUser || $booking->driver_id) {
+        if ($isPaymentConfirmed && $isDriverConfirmed && ($driverUser || $booking->driver_id)) {
             $rawPhone = $driverUser->phone ?? '+233 24 555 0192';
             $rawEmail = $driverUser->email ?? 'michael.driver@ridemycars.com';
             $cleanedWa = preg_replace('/[^0-9]/', '', $rawPhone);
