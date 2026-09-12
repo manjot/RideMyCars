@@ -599,12 +599,17 @@
                         <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
                             <button type="button" @click="paymentModal = true; paymentStep = 'select';" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-[#222] rounded-2xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
                                 <div class="flex items-center gap-3">
-                                    <span class="text-2xl" x-text="paymentMethod === 'apple_pay' ? '🍏' : (paymentMethod === 'momo' ? '📱' : '💳')"></span>
+                                    <template x-if="paymentMethod === 'momo'">
+                                        <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-8 h-8 rounded-xl object-contain shrink-0">
+                                    </template>
+                                    <template x-if="paymentMethod !== 'momo'">
+                                        <img src="/images/stripe-icon.svg" alt="Stripe" class="w-8 h-8 rounded-xl object-contain shrink-0">
+                                    </template>
                                     <div class="text-left">
                                         <div class="text-xs font-black text-gray-900 dark:text-white" 
-                                             x-text="paymentMethod === 'apple_pay' ? 'Apple Pay (Hold)' : (paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe Card •••• 4242'))"></div>
+                                             x-text="paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe (Cards & Apple Pay)')"></div>
                                         <div class="text-[10px] font-bold text-gray-500 dark:text-gray-400" 
-                                             x-text="paymentMethod === 'apple_pay' ? 'Pre-authorization hold secured' : (paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'phone')) : 'Pre-authorization hold secured')"></div>
+                                             x-text="paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'mobile')) : 'Pre-authorization hold secured by Stripe'"></div>
                                     </div>
                                 </div>
                                 <span class="text-gray-400 font-bold text-xs">></span>
@@ -905,48 +910,34 @@
                 </div>
                 <div class="p-5 overflow-y-auto flex-1 space-y-4">
                     <div x-show="paymentStep === 'select'" class="space-y-4">
-                        <!-- Option 1: Credit / Debit Card (Stripe Hold) -->
+                        <!-- Option 1: Stripe (Cards & Apple Pay via Stripe) -->
                         <div @click="paymentMethod = 'stripe'; paymentModal = false;" 
-                             :class="paymentMethod === 'stripe' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                             :class="paymentMethod === 'stripe' ? 'border-[#635BFF] dark:border-[#635BFF] ring-2 ring-[#635BFF] bg-[#635BFF]/5 dark:bg-[#635BFF]/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                              class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-bold text-xl flex items-center justify-center">
-                                    💳
-                                </div>
+                                <img src="/images/stripe-icon.svg" alt="Stripe" class="w-11 h-11 rounded-xl shadow-xs shrink-0 object-contain">
                                 <div>
-                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Credit / Debit Card</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Pre-authorization hold secured by Stripe</p>
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-black text-sm text-gray-900 dark:text-white">Stripe</h4>
+                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">Cards & Apple Pay</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Visa, Mastercard, Amex, Apple Pay (Secured by Stripe)</p>
                                 </div>
                             </div>
                             <span x-show="paymentMethod === 'stripe'" class="text-emerald-500 font-extrabold text-sm">✓</span>
                         </div>
 
-                        <!-- Option 2: Apple Pay -->
-                        <div @click="paymentMethod = 'apple_pay'; selectedCard = null; paymentModal = false;" 
-                             :class="paymentMethod === 'apple_pay' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
-                             class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-black text-white dark:bg-white dark:text-black font-bold text-xl flex items-center justify-center">
-                                    🍏
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Apple Pay</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Fast biometric authorization hold via Apple Wallet</p>
-                                </div>
-                            </div>
-                            <span x-show="paymentMethod === 'apple_pay'" class="text-emerald-500 font-extrabold text-sm">✓</span>
-                        </div>
-
-                        <!-- Option 3: Mobile Money (MoMo Pay) -->
+                        <!-- Option 2: MoMo Pay (Mobile Money) -->
                         <div @click="paymentMethod = 'momo'; paymentStep = 'momo_form';" 
-                             :class="paymentMethod === 'momo' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                             :class="paymentMethod === 'momo' ? 'border-amber-500 dark:border-amber-500 ring-2 ring-amber-500 bg-amber-500/5 dark:bg-amber-500/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                              class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 font-bold text-xl flex items-center justify-center">
-                                    📱
-                                </div>
+                                <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-11 h-11 rounded-xl shadow-xs shrink-0 object-contain">
                                 <div>
-                                    <h4 class="font-black text-sm text-gray-900 dark:text-white">Mobile Money (MoMo Pay)</h4>
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-black text-sm text-gray-900 dark:text-white">MoMo Pay</h4>
+                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">Mobile Money</span>
+                                    </div>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">MTN MoMo, Telecel Cash, AirtelTigo Money</p>
                                 </div>
                             </div>
@@ -965,7 +956,7 @@
                                      :class="paymentMethod === 'stripe' && selectedCard && selectedCard.id === card.id ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                                      class="p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-2xl">💳</span>
+                                        <img src="/images/stripe-icon.svg" alt="Card" class="w-8 h-8 rounded-lg object-contain shrink-0">
                                         <div>
                                             <div class="font-black text-sm text-gray-900 dark:text-white flex items-center gap-2">
                                                 <span x-text="card.brand_name + ' •••• ' + card.card_last4"></span>
@@ -995,7 +986,7 @@
                                      :class="paymentMethod === 'stripe' ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-[#222]' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                                      class="p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xl">💳</span>
+                                        <img src="/images/stripe-icon.svg" alt="Visa Card" class="w-8 h-8 rounded-lg object-contain shrink-0">
                                         <div>
                                             <div class="font-black text-sm text-gray-900 dark:text-white">Visa •••• 4242</div>
                                             <div class="text-xs text-gray-500">Expires 08/29</div>

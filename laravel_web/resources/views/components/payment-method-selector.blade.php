@@ -29,26 +29,20 @@
             
             <div class="flex items-center justify-between w-full">
                 <!-- Stripe Brand Logo / Badge -->
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 rounded-xl bg-[#635BFF]/10 dark:bg-[#635BFF]/20 flex items-center justify-center text-[#635BFF] shrink-0 border border-[#635BFF]/20 shadow-inner">
-                        <!-- Stripe Iconic S SVG -->
-                        <svg class="w-6 h-6" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="40" height="40" rx="8" fill="#635BFF"/>
-                            <path d="M19.8 16.5C19.8 15.6 20.6 15 21.9 15C23.6 15 25.8 15.6 27.5 16.5V11.8C25.6 11 23.6 10.7 21.6 10.7C16.7 10.7 13.4 13.3 13.4 17.5C13.4 23.9 22.3 22.9 22.3 26.1C22.3 27.2 21.3 27.8 19.8 27.8C17.9 27.8 15.3 27 13.4 25.9V30.7C15.6 31.7 17.8 32.2 20.1 32.2C25.2 32.2 28.7 29.7 28.7 25.3C28.7 18.5 19.8 19.7 19.8 16.5Z" fill="white"/>
-                        </svg>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <img src="/images/stripe-icon.svg" alt="Stripe" class="w-11 h-11 rounded-xl shadow-xs shrink-0 object-contain">
                     <div>
                         <div class="font-black text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
                             <span>Stripe</span>
-                            <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">Cards</span>
+                            <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">Cards & Apple Pay</span>
                         </div>
-                        <div class="text-[11px] text-gray-500 dark:text-gray-400">Credit / Debit Card</div>
+                        <div class="text-[11px] text-gray-500 dark:text-gray-400">Credit / Debit Card, Apple Pay</div>
                     </div>
                 </div>
 
                 <!-- Active Checkmark Indicator -->
                 <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-all"
-                     :class="{{ $modelName }} === 'stripe' ? 'border-brand-500 bg-brand-500 text-white' : 'border-gray-300 dark:border-white/20 bg-transparent'">
+                     :class="{{ $modelName }} === 'stripe' ? 'border-[#635BFF] bg-[#635BFF] text-white' : 'border-gray-300 dark:border-white/20 bg-transparent'">
                     <svg x-show="{{ $modelName }} === 'stripe'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
@@ -74,20 +68,14 @@
             
             <div class="flex items-center justify-between w-full">
                 <!-- MoMo Pay Brand Logo / Badge -->
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center shrink-0 border border-amber-500/30 shadow-inner">
-                        <!-- MoMo Iconic Phone/Card SVG -->
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17 1H7C5.34 1 4 2.34 4 4v16c0 1.66 1.34 3 3 3h10c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-5 20c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm6.5-4H5.5V4h13v13z"/>
-                            <circle cx="12" cy="10" r="2.5" fill="#111"/>
-                        </svg>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-11 h-11 rounded-xl shadow-xs shrink-0 object-contain">
                     <div>
                         <div class="font-black text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
                             <span>MoMo Pay</span>
                             <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">Mobile Money</span>
                         </div>
-                        <div class="text-[11px] text-gray-500 dark:text-gray-400">Instant Mobile Prompt</div>
+                        <div class="text-[11px] text-gray-500 dark:text-gray-400">Instant USSD Prompt</div>
                     </div>
                 </div>
 

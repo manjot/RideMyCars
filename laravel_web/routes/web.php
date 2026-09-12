@@ -1174,7 +1174,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
 
         if (!in_array($method, $allowedMethods, true)) {
             return response()->json([
-                'error' => 'Unsupported payment method. Please select Stripe Card, Apple Pay, or Mobile Money.'
+                'error' => 'Unsupported payment method. Please select Stripe or MoMo Pay.'
             ], 422);
         }
 

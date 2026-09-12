@@ -26,7 +26,7 @@
                     Payment Hold & Driver Confirmation
                 </h1>
                 <p class="text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-                    Select your payment method (Stripe, Apple Pay, or MoMo Pay). Driver contacts unlock upon payment authorization & confirmation.
+                    Select your payment method (Stripe or MoMo Pay). Driver contacts unlock upon payment authorization & confirmation.
                 </p>
             </div>
 
@@ -81,7 +81,7 @@
 
             <!-- DYNAMIC STATUS PANELS -->
 
-            <!-- STATE A: PAYMENT PENDING (Choose Stripe, Apple Pay, or MoMo Pay) -->
+            <!-- STATE A: PAYMENT PENDING (Choose Stripe or MoMo Pay) -->
             <div x-show="!isPaymentConfirmed" x-transition class="space-y-6">
                 <div class="bg-white dark:bg-[#111] border-2 border-brand-400/50 dark:border-brand-500/30 rounded-3xl p-6 md:p-8 shadow-lg space-y-6">
                     
@@ -108,42 +108,28 @@
                         <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                             Choose Payment Method
                         </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                             
-                            <!-- Method 1: Stripe Card -->
+                            <!-- Method 1: Stripe (Cards & Apple Pay via Stripe) -->
                             <button type="button" @click="paymentMethod = 'stripe'"
-                                    :class="paymentMethod === 'stripe' ? 'border-brand-500 bg-brand-500/10 ring-2 ring-brand-500 text-gray-900 dark:text-white' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
-                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3">
+                                    :class="paymentMethod === 'stripe' ? 'border-[#635BFF] bg-[#635BFF]/10 ring-2 ring-[#635BFF] text-gray-900 dark:text-white shadow-md' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
+                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3 cursor-pointer">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xl">💳</span>
-                                    <span x-show="paymentMethod === 'stripe'" class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                    <img src="/images/stripe-icon.svg" alt="Stripe" class="w-10 h-10 rounded-xl shadow-xs shrink-0 object-contain">
+                                    <span x-show="paymentMethod === 'stripe'" class="w-2.5 h-2.5 rounded-full bg-[#635BFF]"></span>
                                 </div>
                                 <div>
-                                    <div class="font-extrabold text-sm text-gray-900 dark:text-white">Stripe Card</div>
-                                    <div class="text-[11px] text-gray-500">Visa, Mastercard, Amex</div>
+                                    <div class="font-extrabold text-sm text-gray-900 dark:text-white">Stripe Checkout</div>
+                                    <div class="text-[11px] text-gray-500">Cards, Apple Pay & Google Pay</div>
                                 </div>
                             </button>
 
-                            <!-- Method 2: Apple Pay -->
-                            <button type="button" @click="paymentMethod = 'apple_pay'"
-                                    :class="paymentMethod === 'apple_pay' ? 'border-black dark:border-white bg-gray-100 dark:bg-white/10 ring-2 ring-black dark:ring-white text-gray-900 dark:text-white' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
-                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xl">🍎</span>
-                                    <span x-show="paymentMethod === 'apple_pay'" class="w-2.5 h-2.5 rounded-full bg-black dark:bg-white"></span>
-                                </div>
-                                <div>
-                                    <div class="font-extrabold text-sm text-gray-900 dark:text-white">Apple Pay</div>
-                                    <div class="text-[11px] text-gray-500">1-Touch Apple Wallet</div>
-                                </div>
-                            </button>
-
-                            <!-- Method 3: MoMo Pay (Mobile Money) -->
+                            <!-- Method 2: MoMo Pay (Mobile Money) -->
                             <button type="button" @click="paymentMethod = 'momo'"
-                                    :class="paymentMethod === 'momo' ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500 text-gray-900 dark:text-white' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
-                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3">
+                                    :class="paymentMethod === 'momo' ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500 text-gray-900 dark:text-white shadow-md' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-600 dark:text-gray-400'"
+                                    class="p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between space-y-3 cursor-pointer">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xl">📱</span>
+                                    <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-10 h-10 rounded-xl shadow-xs shrink-0 object-contain">
                                     <span x-show="paymentMethod === 'momo'" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                                 </div>
                                 <div>
@@ -197,36 +183,14 @@
                         </div>
                     </div>
 
-                    <!-- Apple Pay Details Section (Revealed when Apple Pay selected) -->
-                    <div x-show="paymentMethod === 'apple_pay'" x-transition class="p-4 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl flex items-center gap-3">
-                        <span class="text-2xl">🍎</span>
-                        <div class="text-xs">
-                            <span class="font-black text-gray-900 dark:text-white block">Biometric Apple Pay Ready</span>
-                            <span class="text-gray-500 dark:text-gray-400">Authenticate with Touch ID or Face ID on your Apple device to authorize escrow hold.</span>
-                        </div>
-                    </div>
-
                     <!-- Checkout Trigger Button -->
                     <div class="pt-2">
-                        <!-- Case 1: Stripe Card -->
+                        <!-- Case 1: Stripe Checkout (Cards, Apple Pay & Google Pay) -->
                         <template x-if="paymentMethod === 'stripe'">
                             <button type="button" @click="triggerStripePayment()"
-                                    class="w-full py-4 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
-                                <span>💳 Authorize ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe Card</span>
+                                    class="w-full py-4 px-6 bg-[#635BFF] hover:bg-[#5349e0] text-white font-black text-base rounded-2xl shadow-xl shadow-[#635BFF]/25 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                <span>🔒 Pay ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
                                 <span>→</span>
-                            </button>
-                        </template>
-
-                        <!-- Case 2: Apple Pay -->
-                        <template x-if="paymentMethod === 'apple_pay'">
-                            <button type="button" @click="submitPaymentHold('apple_pay')"
-                                    :disabled="isProcessing"
-                                    class="w-full py-4 px-6 bg-black text-white hover:bg-gray-900 font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                                <span x-show="!isProcessing">🍎 Pay with Apple Pay (${{ number_format($totalAmount, 2) }} {{ $currency }})</span>
-                                <span x-show="isProcessing" class="flex items-center gap-2">
-                                    <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Authorizing Apple Pay Escrow Hold...
-                                </span>
                             </button>
                         </template>
 
@@ -396,14 +360,14 @@
                                 </span>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                                Chauffeur identity, vehicle information, photo, and direct contact details are strictly hidden for privacy. They will unlock automatically after you authorize your payment (Stripe, Apple Pay, or MoMo Pay) and a verified driver confirms your booking.
+                                Chauffeur identity, vehicle information, photo, and direct contact details are strictly hidden for privacy. They will unlock automatically after you authorize your payment (Stripe or MoMo Pay) and a verified driver confirms your booking.
                             </p>
                         </div>
                     </div>
 
                     <div class="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
                         <span class="flex items-center gap-2 font-bold">
-                            <span>💳</span> Select Stripe, Apple Pay, or MoMo Pay above to authorize escrow hold
+                            <span>💳</span> Select Stripe or MoMo Pay above to authorize escrow hold
                         </span>
                         <span class="text-[11px] font-black uppercase text-amber-700 dark:text-amber-400">Step 2 of 4</span>
                     </div>
@@ -509,7 +473,7 @@
             currency: config.currency,
             driver: (config.initialIsPaymentConfirmed && config.initialIsDriverConfirmed) ? config.driverData : null,
             bookingCode: config.bookingCode,
-            paymentMethod: 'stripe', // 'stripe', 'apple_pay', 'momo'
+            paymentMethod: 'stripe', // 'stripe', 'momo'
             momoNetwork: 'MTN',
             momoPhone: '',
             isProcessing: false,

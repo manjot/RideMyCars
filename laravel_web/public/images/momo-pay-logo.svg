@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 44" fill="none">
+    <!-- Yellow Background pill -->
+    <rect width="140" height="44" rx="8" fill="#FFCC00"/>
+    
+    <!-- MoMo Emblem (Navy Circle with Yellow/Cyan detail) -->
+    <g transform="translate(10, 6)">
+        <circle cx="16" cy="16" r="16" fill="#002B49"/>
+        <!-- Inner ring arc -->
+        <circle cx="16" cy="16" r="13" stroke="#FFCC00" stroke-width="2" fill="none" opacity="0.4"/>
+        <!-- Stylized M -->
+        <path d="M10 22V11l4.5 7 4.5-7v11h-2.5v-6.5l-2 3.2h-0.2l-2-3.2V22H10z" fill="#FFCC00"/>
+    </g>
+
+    <!-- Wordmark "MoMo" in Navy Bold -->
+    <text x="48" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="900" fill="#002B49" letter-spacing="-0.5">MoMo</text>
+    
+    <!-- "PAY" badge in dark pill -->
+    <rect x="96" y="11" width="34" height="20" rx="4" fill="#002B49"/>
+    <text x="113" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="900" fill="#FFCC00" text-anchor="middle" letter-spacing="0.5">PAY</text>
+</svg>
