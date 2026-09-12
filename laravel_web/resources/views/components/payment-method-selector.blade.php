@@ -23,38 +23,38 @@
         <button type="button" 
                 @click="{{ $modelName }} = 'stripe'"
                 :class="{{ $modelName }} === 'stripe' 
-                    ? 'border-brand-500 bg-gradient-to-br from-brand-50/70 to-brand-100/40 dark:from-brand-950/40 dark:to-brand-900/20 ring-2 ring-brand-500 text-gray-900 dark:text-white shadow-lg shadow-brand-500/10' 
-                    : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300 hover:shadow-sm'"
-                class="p-4 rounded-2xl border text-left transition-all duration-200 relative flex flex-col justify-between space-y-3 cursor-pointer group">
+                    ? 'border-[#635BFF] bg-gradient-to-b from-[#635BFF]/[0.08] via-white to-transparent dark:from-[#635BFF]/20 dark:via-[#141416] dark:to-transparent ring-2 ring-[#635BFF] text-gray-900 dark:text-white shadow-md shadow-[#635BFF]/10' 
+                    : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300 hover:shadow-xs'"
+                class="p-4 rounded-2xl border text-left transition-all duration-200 relative flex flex-col justify-between gap-3.5 cursor-pointer group">
             
+            <!-- Top Row: Logo and Checkmark Indicator -->
             <div class="flex items-center justify-between w-full">
-                <!-- Stripe Brand Logo / Badge -->
-                <div class="flex items-center space-x-3">
-                    <img src="/images/stripe-icon.svg" alt="Stripe" class="w-11 h-11 rounded-xl shadow-xs shrink-0 object-contain">
-                    <div>
-                        <div class="font-black text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                            <span>Stripe</span>
-                            <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">Cards & Apple Pay</span>
-                        </div>
-                        <div class="text-[11px] text-gray-500 dark:text-gray-400">Credit / Debit Card, Apple Pay</div>
-                    </div>
+                <div class="w-11 h-11 rounded-2xl bg-white dark:bg-[#1f1f23] p-1.5 border border-gray-100 dark:border-white/10 shadow-xs flex items-center justify-center shrink-0">
+                    <img src="/images/stripe-icon.svg" alt="Stripe" class="w-full h-full object-contain">
                 </div>
-
-                <!-- Active Checkmark Indicator -->
-                <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-all"
-                     :class="{{ $modelName }} === 'stripe' ? 'border-[#635BFF] bg-[#635BFF] text-white' : 'border-gray-300 dark:border-white/20 bg-transparent'">
+                <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-all shrink-0"
+                     :class="{{ $modelName }} === 'stripe' ? 'border-[#635BFF] bg-[#635BFF] text-white shadow-xs' : 'border-gray-300 dark:border-white/20 bg-transparent'">
                     <svg x-show="{{ $modelName }} === 'stripe'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
             </div>
 
+            <!-- Middle Row: Title, Category Badge & Subtitle -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between gap-1.5">
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white leading-tight">Stripe</h4>
+                    <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/25 dark:text-[#a29bfe] whitespace-nowrap shrink-0">Cards & Apple Pay</span>
+                </div>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-tight">Credit / Debit Card, Apple Pay</p>
+            </div>
+
             <!-- Card Badges Row -->
-            <div class="flex items-center gap-1 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-1 border-t border-gray-100 dark:border-white/5">
-                <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">VISA</span>
-                <span class="px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200/50">Mastercard</span>
-                <span class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50">AMEX</span>
-                <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300">Apple Pay</span>
+            <div class="flex items-center gap-1.5 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
+                <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">VISA</span>
+                <span class="px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200/50">Mastercard</span>
+                <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50">AMEX</span>
+                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-white/10">Apple Pay</span>
             </div>
         </button>
 
@@ -62,61 +62,63 @@
         <button type="button" 
                 @click="{{ $modelName }} = 'momo'"
                 :class="{{ $modelName }} === 'momo' 
-                    ? 'border-amber-500 bg-gradient-to-br from-amber-50/70 to-amber-100/40 dark:from-amber-950/40 dark:to-amber-900/20 ring-2 ring-amber-500 text-gray-900 dark:text-white shadow-lg shadow-amber-500/10' 
-                    : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300 hover:shadow-sm'"
-                class="p-4 rounded-2xl border text-left transition-all duration-200 relative flex flex-col justify-between space-y-3 cursor-pointer group">
+                    ? 'border-amber-500 bg-gradient-to-b from-amber-500/[0.08] via-white to-transparent dark:from-amber-500/20 dark:via-[#141416] dark:to-transparent ring-2 ring-amber-500 text-gray-900 dark:text-white shadow-md shadow-amber-500/10' 
+                    : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300 hover:shadow-xs'"
+                class="p-4 rounded-2xl border text-left transition-all duration-200 relative flex flex-col justify-between gap-3.5 cursor-pointer group">
             
+            <!-- Top Row: Logo and Checkmark Indicator -->
             <div class="flex items-center justify-between w-full">
-                <!-- MoMo Pay Brand Logo / Badge -->
-                <div class="flex items-center space-x-3">
-                    <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-11 h-11 rounded-xl shadow-xs shrink-0 object-contain">
-                    <div>
-                        <div class="font-black text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                            <span>MoMo Pay</span>
-                            <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">Mobile Money</span>
-                        </div>
-                        <div class="text-[11px] text-gray-500 dark:text-gray-400">Instant USSD Prompt</div>
-                    </div>
+                <div class="w-11 h-11 rounded-2xl bg-amber-400 p-1 border border-amber-300/60 shadow-xs flex items-center justify-center shrink-0">
+                    <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-full h-full object-contain">
                 </div>
-
-                <!-- Active Checkmark Indicator -->
-                <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-all"
-                     :class="{{ $modelName }} === 'momo' ? 'border-amber-500 bg-amber-500 text-slate-950' : 'border-gray-300 dark:border-white/20 bg-transparent'">
+                <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-all shrink-0"
+                     :class="{{ $modelName }} === 'momo' ? 'border-amber-500 bg-amber-500 text-slate-950 shadow-xs' : 'border-gray-300 dark:border-white/20 bg-transparent'">
                     <svg x-show="{{ $modelName }} === 'momo'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
             </div>
 
+            <!-- Middle Row: Title, Category Badge & Subtitle -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between gap-1.5">
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white leading-tight">MoMo Pay</h4>
+                    <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 whitespace-nowrap shrink-0">Mobile Money</span>
+                </div>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-tight">Instant USSD Handset Prompt</p>
+            </div>
+
             <!-- MoMo Network Badges Row -->
-            <div class="flex items-center gap-1 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-1 border-t border-gray-100 dark:border-white/5">
-                <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300/40">MTN MoMo</span>
-                <span class="px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/50">Telecel</span>
-                <span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">AirtelTigo</span>
+            <div class="flex items-center gap-1.5 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
+                <span class="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300/40">MTN MoMo</span>
+                <span class="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/50">Telecel</span>
+                <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">AirtelTigo</span>
             </div>
         </button>
 
     </div>
 
+    @if($showSecurityBadge)
     <!-- STRIPE SECURITY NOTICE (Clean, no direct raw card inputs) -->
     <div x-show="{{ $modelName }} === 'stripe'" 
          x-transition.opacity 
-         class="p-4 bg-gradient-to-r from-brand-50/50 to-white dark:from-brand-950/30 dark:to-[#121214] rounded-2xl border border-brand-200/80 dark:border-brand-800/30 flex items-start gap-3 text-xs">
+         class="p-4 bg-gradient-to-r from-brand-50/50 to-white dark:from-brand-950/30 dark:to-[#121214] rounded-2xl border border-brand-200/80 dark:border-brand-800/30 flex items-start gap-3 text-xs shadow-xs">
         <div class="p-2 rounded-xl bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/20 shrink-0 mt-0.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
         </div>
-        <div>
-            <div class="font-extrabold text-gray-900 dark:text-white flex items-center gap-1.5">
-                <span>Stripe PCI-DSS Level 1 Secure Authorization</span>
-                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">256-Bit SSL</span>
+        <div class="min-w-0 flex-1">
+            <div class="font-extrabold text-gray-900 dark:text-white flex items-center justify-between gap-2 flex-wrap">
+                <span class="text-xs font-black">Stripe PCI-DSS Level 1 Secure Authorization</span>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shrink-0">🔒 256-Bit SSL</span>
             </div>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                 Your payment will be securely pre-authorized via Stripe. Card details are tokenized with bank-grade encryption without exposed form fields.
             </p>
         </div>
     </div>
+    @endif
 
     @if($showMomoDetails)
     <!-- MOMO PAY PHONE & NETWORK DETAILS (Revealed when MoMo is chosen) -->

@@ -112,17 +112,17 @@
 
                     @auth
                         @if(auth()->user()->membership_type === 'club')
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                                 <span>Active Member — Renew $250/mo</span>
                             </button>
                         @else
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
                                 <span x-text="paymentMethod === 'momo' ? 'Subscribe with MoMo Pay ($250/mo)' : 'Subscribe with Stripe ($250/mo)'"></span>
                             </button>
                         @endif
                     @else
-                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
+                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
                             <span x-text="paymentMethod === 'momo' ? 'Subscribe with MoMo Pay ($250/mo)' : 'Subscribe with Stripe ($250/mo)'"></span>
                         </button>
                     @endauth
@@ -167,17 +167,17 @@
                     <input type="text" name="company_name" required value="{{ auth()->user()->corporate_company_name ?? '' }}" placeholder="Company / Organization Name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm">
                     @auth
                         @if(auth()->user()->membership_type === 'corporate')
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
-                                Request Updated Corporate Plan
+                                <span>Request Updated Corporate Plan</span>
                             </button>
                         @else
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base">
+                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
                                 Request Corporate Account
                             </button>
                         @endif
                     @else
-                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base">
+                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
                             Request Corporate Account
                         </button>
                     @endauth
