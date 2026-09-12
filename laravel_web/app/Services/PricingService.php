@@ -169,123 +169,78 @@ class PricingService
     ): array {
         $pricing = CountryPricing::forCountry($country);
         $countryCode = strtoupper($pricing->country_code ?? 'USA');
-        $currencyCode = strtoupper($pricing->currency_code ?? 'USD');
+        $matrix = CountryPricing::getPricingMatrixForCountry($countryCode);
 
-        // Check if Ghana Market Disruption Cost Matrix applies
-        if ($countryCode === 'GHA' || $currencyCode === 'GHS' || strtoupper(trim($country ?? '')) === 'GHA' || strtoupper(trim($country ?? '')) === 'GHANA') {
-            $ghanaMatrix = CountryPricing::getGhanaPricingMatrix();
-            $lower = strtolower($vehicleType ?? 'standard');
+        $lower = strtolower(trim($vehicleType ?? 'economy'));
 
-            $tierKey = 'standard';
-            if (isset($ghanaMatrix[$lower])) {
-                $tierKey = $lower;
-            } elseif (str_contains($lower, 'econ') || str_contains($lower, 'hatch') || str_contains($lower, 'picanto') || str_contains($lower, 'i10')) {
-                $tierKey = 'economy';
-            } elseif (str_contains($lower, 'bus') || str_contains($lower, 'group') || str_contains($lower, 'hiace') || str_contains($lower, 'microbus')) {
-                $tierKey = 'group_bus';
-            } elseif (str_contains($lower, 'chauffeur') || str_contains($lower, 'vip') || str_contains($lower, 'mercedes') || str_contains($lower, 'bmw')) {
-                $tierKey = 'vip_chauffeur';
-            } elseif (str_contains($lower, 'van') || str_contains($lower, 'xl') || str_contains($lower, 'h1')) {
-                $tierKey = 'van_xl';
-            } elseif (str_contains($lower, 'suv') || str_contains($lower, 'prado') || str_contains($lower, 'explorer') || str_contains($lower, 'luxury')) {
-                $tierKey = 'luxury';
-            } elseif (str_contains($lower, 'standard') || str_contains($lower, 'comfort') || str_contains($lower, 'corolla') || str_contains($lower, 'sedan')) {
-                $tierKey = 'standard';
-            }
-
-            // Look up from matrix using primary or alias key
-            $tier = $ghanaMatrix[$tierKey] 
-                ?? $ghanaMatrix['standard'] 
-                ?? $ghanaMatrix['comfort'] 
-                ?? reset($ghanaMatrix);
-
-            $baseFare = (float) $tier['base_fare'];
-            $perKmRate = (float) $tier['per_km_rate'];
-            $perMinuteRate = (float) ($tier['per_minute_rate'] ?? 0.30);
-            $minFare = (float) $tier['minimum_fare'];
-            $additionalStopFee = (float) ($pricing->ride_additional_stop_fee ?: 3.50);
-
-            // Surge Strategy for Ghana (with strict 1.8x Traffic Cap)
-            $surgeInfo = static::getGhanaSurgeInfo();
-            $surgeMultiplier = (float) $surgeInfo['multiplier'];
-
-            $distanceFare = round($distanceKm * $perKmRate, 2);
-            $durationFare = round($durationMinutes * $perMinuteRate, 2);
-            $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
-
-            $standardSubtotal = round($baseFare + $distanceFare + $durationFare + $stopsFee, 2);
-            $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 2);
-            $finalFare = round(max($minFare, $surgedSubtotal), 2);
-            $serviceTax = round($finalFare * 0.05, 2);
-            $grandTotal = round($finalFare + $serviceTax, 2);
-
-            return [
-                'tier_key' => $tierKey,
-                'tier_name' => $tier['name'],
-                'base_fare' => $baseFare,
-                'distance_km' => round($distanceKm, 2),
-                'distance_fare' => $distanceFare,
-                'duration_minutes' => $durationMinutes,
-                'duration_fare' => $durationFare,
-                'stops_count' => max(0, $stopsCount),
-                'stop_fee_per_item' => $additionalStopFee,
-                'stops_fee' => $stopsFee,
-                'subtotal' => $standardSubtotal,
-                'surge_multiplier' => $surgeMultiplier,
-                'surge_info' => $surgeInfo,
-                'traffic_cap' => 1.80,
-                'tax' => $serviceTax,
-                'total_fare' => $finalFare,
-                'grand_total' => $grandTotal,
-                'currency' => $pricing->currency_code,
-                'currency_symbol' => $pricing->currency_symbol,
-                'country_code' => 'GHA',
-                'country_name' => 'Ghana',
-                'target_vehicle' => $tier['target'],
-            ];
-        }
-
-        $baseFare = (float) ($pricing->ride_base_fare ?: 5.00);
-        $perKmRate = (float) ($pricing->ride_per_km_rate ?: 1.50);
-        $perMinuteRate = (float) ($pricing->ride_per_minute_rate ?: 0.25);
-        $minFare = (float) ($pricing->ride_minimum_fare ?: 10.00);
-        $additionalStopFee = (float) ($pricing->ride_additional_stop_fee ?: 3.50);
-
-        $multiplier = 1.0;
-        if ($vehicleType) {
-            $customTier = \App\Models\CountryRideCategoryPricing::findByKeyOrAlias($countryCode, $vehicleType);
-            if ($customTier) {
-                $baseFare = (float) $customTier->base_fare;
-                $perKmRate = (float) $customTier->per_km_rate;
-                $perMinuteRate = (float) ($customTier->per_minute_rate ?: $perMinuteRate);
-                $minFare = (float) $customTier->minimum_fare;
-                $multiplier = (float) ($customTier->multiplier ?: 1.0);
-            } else {
-                $lower = strtolower($vehicleType);
-                if (str_contains($lower, 'suv') || str_contains($lower, 'luxury') || str_contains($lower, 'executive')) {
-                    $multiplier = 1.4;
-                } elseif (str_contains($lower, 'premium') || str_contains($lower, 'comfort') || str_contains($lower, 'standard')) {
-                    $multiplier = 1.2;
-                } elseif (str_contains($lower, 'van') || str_contains($lower, 'xl')) {
-                    $multiplier = 1.5;
-                } elseif (str_contains($lower, 'bike') || str_contains($lower, 'moto')) {
-                    $multiplier = 0.6;
+        // Match tier from country matrix
+        $tier = null;
+        if (isset($matrix[$lower])) {
+            $tier = $matrix[$lower];
+        } else {
+            foreach ($matrix as $key => $mTier) {
+                if (strtolower($mTier['name'] ?? '') === $lower || strtolower($mTier['slug'] ?? '') === $lower) {
+                    $tier = $mTier;
+                    break;
                 }
             }
         }
 
-        $distanceFare = round(($distanceKm * $perKmRate) * $multiplier, 2);
-        $durationFare = round(($durationMinutes * $perMinuteRate) * $multiplier, 2);
-        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
-        $scaledBaseFare = round($baseFare * $multiplier, 2);
+        // Alias matching if not exact match
+        if (!$tier) {
+            if (str_contains($lower, 'econ') || str_contains($lower, 'hatch') || str_contains($lower, 'picanto') || str_contains($lower, 'i10')) {
+                $tier = $matrix['economy'] ?? null;
+            } elseif (str_contains($lower, 'bus') || str_contains($lower, 'group') || str_contains($lower, 'hiace') || str_contains($lower, 'microbus')) {
+                $tier = $matrix['group_bus'] ?? $matrix['van_xl'] ?? null;
+            } elseif (str_contains($lower, 'chauffeur') || str_contains($lower, 'vip') || str_contains($lower, 'mercedes') || str_contains($lower, 'bmw')) {
+                $tier = $matrix['vip_chauffeur'] ?? null;
+            } elseif (str_contains($lower, 'van') || str_contains($lower, 'xl') || str_contains($lower, 'h1')) {
+                $tier = $matrix['van_xl'] ?? null;
+            } elseif (str_contains($lower, 'suv') || str_contains($lower, 'prado') || str_contains($lower, 'explorer') || str_contains($lower, 'luxury')) {
+                $tier = $matrix['suv'] ?? $matrix['luxury'] ?? null;
+            } elseif (str_contains($lower, 'comfort') || str_contains($lower, 'standard') || str_contains($lower, 'corolla') || str_contains($lower, 'sedan')) {
+                $tier = $matrix['comfort'] ?? $matrix['standard'] ?? null;
+            }
+        }
 
-        $subtotal = round($scaledBaseFare + $distanceFare + $durationFare + $stopsFee, 2);
-        $finalFare = round(max($minFare, $subtotal), 2);
+        if (!$tier) {
+            $tier = reset($matrix);
+        }
+
+        $baseFare = (float) ($tier['base_fare'] ?? $tier['base'] ?? $pricing->ride_base_fare ?: 5.00);
+        $perKmRate = (float) ($tier['per_km_rate'] ?? $tier['perKm'] ?? $pricing->ride_per_km_rate ?: 1.50);
+        $perMinuteRate = (float) ($tier['per_minute_rate'] ?? $tier['perMin'] ?? $pricing->ride_per_minute_rate ?: 0.25);
+        $minFare = (float) ($tier['minimum_fare'] ?? $tier['min'] ?? $pricing->ride_minimum_fare ?: 10.00);
+        $tierMultiplier = (float) ($tier['multiplier'] ?? 1.00);
+        $additionalStopFee = (float) ($pricing->ride_additional_stop_fee ?: 3.50);
+
+        // Surge info: Ghana Predictable Surge Framework, or 1.0 for others
+        $isGhana = ($countryCode === 'GHA' || strtoupper(trim($pricing->currency_code ?? '')) === 'GHS');
+        $surgeInfo = $isGhana ? static::getGhanaSurgeInfo() : [
+            'multiplier' => 1.0,
+            'tier' => 'Standard',
+            'is_surge' => false,
+            'traffic_cap' => 1.80,
+            'description' => 'Standard dynamic pricing',
+            'time' => date('H:i'),
+            'timezone' => 'UTC',
+        ];
+        $surgeMultiplier = (float) ($surgeInfo['multiplier'] ?? 1.0);
+
+        $distanceFare = round($distanceKm * $perKmRate, 2);
+        $durationFare = round($durationMinutes * $perMinuteRate, 2);
+        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
+
+        $standardSubtotal = round(($baseFare + $distanceFare + $durationFare + $stopsFee) * $tierMultiplier, 2);
+        $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 2);
+        $finalFare = round(max($minFare, $surgedSubtotal), 2);
         $serviceTax = round($finalFare * 0.05, 2);
         $grandTotal = round($finalFare + $serviceTax, 2);
 
         return [
-            'base_fare' => $scaledBaseFare,
+            'tier_key' => $tier['category_key'] ?? $tier['slug'] ?? 'economy',
+            'tier_name' => $tier['name'] ?? 'Economy',
+            'base_fare' => $baseFare,
             'distance_km' => round($distanceKm, 2),
             'distance_fare' => $distanceFare,
             'duration_minutes' => $durationMinutes,
@@ -293,7 +248,10 @@ class PricingService
             'stops_count' => max(0, $stopsCount),
             'stop_fee_per_item' => $additionalStopFee,
             'stops_fee' => $stopsFee,
-            'subtotal' => $subtotal,
+            'subtotal' => $standardSubtotal,
+            'surge_multiplier' => $surgeMultiplier,
+            'surge_info' => $surgeInfo,
+            'traffic_cap' => 1.80,
             'tax' => $serviceTax,
             'total_fare' => $finalFare,
             'grand_total' => $grandTotal,
@@ -301,6 +259,7 @@ class PricingService
             'currency_symbol' => $pricing->currency_symbol,
             'country_code' => $pricing->country_code,
             'country_name' => $pricing->country_name,
+            'target_vehicle' => $tier['target'] ?? ($tier['name'] ?? 'Economy'),
         ];
     }
 

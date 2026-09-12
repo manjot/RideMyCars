@@ -278,6 +278,12 @@ class CountryPricing extends Model
                             'group_bus' => '10 Bags',
                             default => '2 Bags',
                         },
+                        'base' => (float) $tier->base_fare,
+                        'perKm' => (float) $tier->per_km_rate,
+                        'perMin' => (float) ($tier->per_minute_rate ?: 0.30),
+                        'min' => (float) $tier->minimum_fare,
+                        'seats' => $tier->capacity ?: '1–4 seats',
+                        'desc' => $tier->description ?: '',
                         'target' => $tier->target_vehicle ?: $tier->category_name,
                         'description' => $tier->description ?: '',
                     ];
@@ -306,6 +312,12 @@ class CountryPricing extends Model
                 'per_km_rate' => 1.10,
                 'per_minute_rate' => 0.20,
                 'multiplier' => 1.0,
+                'base' => 4.50,
+                'perKm' => 1.10,
+                'perMin' => 0.20,
+                'min' => 8.50,
+                'seats' => '1–4 seats',
+                'desc' => 'Small hatchbacks for affordable, high-efficiency daily commuting in Accra',
                 'capacity' => '1–4 seats',
                 'luggage' => '2 Bags',
                 'target' => 'Small hatchbacks (e.g., Kia Picanto, Hyundai i10)',
@@ -321,6 +333,12 @@ class CountryPricing extends Model
                 'per_km_rate' => 1.80,
                 'per_minute_rate' => 0.30,
                 'multiplier' => 1.0,
+                'base' => 7.00,
+                'perKm' => 1.80,
+                'perMin' => 0.30,
+                'min' => 23.50,
+                'seats' => '1–4 seats',
+                'desc' => 'Clean climate-controlled sedans with top-rated vetted drivers',
                 'capacity' => '1–4 seats',
                 'luggage' => '3 Bags',
                 'target' => 'Clean sedans with high-functioning A/C (e.g., Toyota Corolla)',
@@ -336,6 +354,12 @@ class CountryPricing extends Model
                 'per_km_rate' => 3.00,
                 'per_minute_rate' => 0.50,
                 'multiplier' => 1.0,
+                'base' => 12.00,
+                'perKm' => 3.00,
+                'perMin' => 0.50,
+                'min' => 35.20,
+                'seats' => '1–6 seats',
+                'desc' => 'High-ride premium SUVs tailored for business travelers and airport runs',
                 'capacity' => '1–6 seats',
                 'luggage' => '5 Bags',
                 'target' => 'Premium SUVs for business travelers (e.g., Toyota Prado, Ford Explorer)',
@@ -351,6 +375,12 @@ class CountryPricing extends Model
                 'per_km_rate' => 4.50,
                 'per_minute_rate' => 0.75,
                 'multiplier' => 1.0,
+                'base' => 15.00,
+                'perKm' => 4.50,
+                'perMin' => 0.75,
+                'min' => 50.20,
+                'seats' => '1–7 seats',
+                'desc' => 'High-capacity vans for large groups, delegations & heavy luggage',
                 'capacity' => '1–7 seats',
                 'luggage' => '6 Bags',
                 'target' => 'Multi-passenger vehicles for airport runs or large families (e.g., Hyundai H1)',
@@ -366,6 +396,12 @@ class CountryPricing extends Model
                 'per_km_rate' => 6.50,
                 'per_minute_rate' => 1.00,
                 'multiplier' => 1.0,
+                'base' => 30.00,
+                'perKm' => 6.50,
+                'perMin' => 1.00,
+                'min' => 109.50,
+                'seats' => '1–4 seats',
+                'desc' => 'Executive flagship luxury sedans with professional suited chauffeurs',
                 'capacity' => '1–4 seats',
                 'luggage' => '3 Bags',
                 'target' => 'High-end luxury executive sedans (e.g., Mercedes-Benz E-Class, BMW 5 Series)',
@@ -381,11 +417,188 @@ class CountryPricing extends Model
                 'per_km_rate' => 8.00,
                 'per_minute_rate' => 1.50,
                 'multiplier' => 1.0,
+                'base' => 45.00,
+                'perKm' => 8.00,
+                'perMin' => 1.50,
+                'min' => 150.90,
+                'seats' => '7–14 seats',
+                'desc' => 'Microbuses for event transportation, family gatherings & corporate teams',
                 'capacity' => '7–14 seats',
                 'luggage' => '10 Bags',
                 'target' => 'Microbuses for event transport or corporate teams (e.g., Toyota HiAce)',
                 'description' => 'Microbuses for event transportation, family gatherings & corporate teams',
             ],
         ];
+    }
+
+    /**
+     * Unified, robust Pricing Matrix for ANY country in the database.
+     * Single Source of Truth for frontend (/ride, /pricing), API, and backend calculations.
+     * 1. If Ghana, loads official PDF matrix.
+     * 2. If custom tiers exist in `country_ride_category_pricings` for the country, uses them.
+     * 3. Otherwise, dynamically calculates the standard 5 categories directly from the country's
+     *    native base_fare, per_km_rate, per_minute_rate, and minimum_fare in `country_pricings`.
+     */
+    public static function getPricingMatrixForCountry(?string $countryCode): array
+    {
+        try {
+            CountryRideCategoryPricing::ensureTableExists();
+            $countryPricing = static::forCountry($countryCode);
+            $code = strtoupper(trim($countryPricing->country_code ?? 'USA'));
+
+            // 1. Ghana specific PDF matrix
+            if ($code === 'GHA' || strtoupper(trim($countryPricing->currency_code ?? '')) === 'GHS') {
+                return static::getGhanaPricingMatrix();
+            }
+
+            // 2. Custom category rows in database for this specific country
+            $dbTiers = CountryRideCategoryPricing::forCountry($code);
+            if ($dbTiers->isNotEmpty()) {
+                $matrix = [];
+                foreach ($dbTiers as $tier) {
+                    $item = [
+                        'id' => $tier->id,
+                        'name' => $tier->category_name,
+                        'slug' => $tier->category_key,
+                        'category_key' => $tier->category_key,
+                        'icon' => $tier->icon ?: '🚗',
+                        'minimum_fare' => (float) $tier->minimum_fare,
+                        'base_fare' => (float) $tier->base_fare,
+                        'per_km_rate' => (float) $tier->per_km_rate,
+                        'per_minute_rate' => (float) ($tier->per_minute_rate ?: 0.30),
+                        'multiplier' => (float) ($tier->multiplier ?: 1.0),
+                        'capacity' => $tier->capacity ?: '1–4 seats',
+                        'luggage' => match ($tier->category_key) {
+                            'economy' => '2 Bags',
+                            'comfort', 'standard' => '3 Bags',
+                            'suv', 'luxury' => '5 Bags',
+                            'van_xl', 'xl' => '6 Bags',
+                            'vip_chauffeur' => '3 Bags',
+                            'group_bus' => '10 Bags',
+                            default => '3 Bags',
+                        },
+                        'target' => $tier->target_vehicle ?: $tier->category_name,
+                        'description' => $tier->description ?: '',
+                        'base' => (float) $tier->base_fare,
+                        'perKm' => (float) $tier->per_km_rate,
+                        'perMin' => (float) ($tier->per_minute_rate ?: 0.30),
+                        'min' => (float) $tier->minimum_fare,
+                        'seats' => $tier->capacity ?: '1–4 seats',
+                        'desc' => $tier->description ?: '',
+                    ];
+                    $matrix[$tier->category_key] = $item;
+                }
+                return $matrix;
+            }
+
+            // 3. Dynamic Native Tiers calculated from country_pricings base and km rates
+            $baseF = (float) ($countryPricing->ride_base_fare ?: 5.00);
+            $perKmF = (float) ($countryPricing->ride_per_km_rate ?: 1.50);
+            $perMinF = (float) ($countryPricing->ride_per_minute_rate ?: 0.25);
+            $minF = (float) ($countryPricing->ride_minimum_fare ?: 10.00);
+
+            $tierDefinitions = [
+                'economy' => [
+                    'name' => 'Economy',
+                    'slug' => 'economy',
+                    'icon' => '🚗',
+                    'capacity' => '1–4 seats',
+                    'base_mult' => 1.00,
+                    'km_mult' => 1.00,
+                    'minute_mult' => 1.00,
+                    'min_mult' => 1.00,
+                    'luggage' => '2 Bags',
+                    'description' => 'Affordable everyday rides',
+                    'target' => 'Everyday city economy vehicles',
+                ],
+                'comfort' => [
+                    'name' => 'Comfort',
+                    'slug' => 'comfort',
+                    'icon' => '✨',
+                    'capacity' => '1–4 seats',
+                    'base_mult' => 1.20,
+                    'km_mult' => 1.20,
+                    'minute_mult' => 1.20,
+                    'min_mult' => 1.20,
+                    'luggage' => '3 Bags',
+                    'description' => 'Newer cars with extra legroom & quiet rides',
+                    'target' => 'Clean executive sedans with climate control',
+                ],
+                'suv' => [
+                    'name' => 'SUV',
+                    'slug' => 'suv',
+                    'icon' => '🚙',
+                    'capacity' => '1–6 seats',
+                    'base_mult' => 1.40,
+                    'km_mult' => 1.40,
+                    'minute_mult' => 1.40,
+                    'min_mult' => 1.40,
+                    'luggage' => '5 Bags',
+                    'description' => 'Spacious rides for up to 6 people',
+                    'target' => 'Premium high-ride SUVs',
+                ],
+                'van_xl' => [
+                    'name' => 'XL Van',
+                    'slug' => 'van_xl',
+                    'icon' => '🚐',
+                    'capacity' => '1–7 seats',
+                    'base_mult' => 1.60,
+                    'km_mult' => 1.60,
+                    'minute_mult' => 1.60,
+                    'min_mult' => 1.60,
+                    'luggage' => '6 Bags',
+                    'description' => 'Large vans for groups and extra luggage',
+                    'target' => 'High-capacity passenger vans',
+                ],
+                'vip_chauffeur' => [
+                    'name' => 'VIP Chauffeurs',
+                    'slug' => 'vip_chauffeur',
+                    'icon' => '👑',
+                    'capacity' => '1–4 seats',
+                    'base_mult' => 2.00,
+                    'km_mult' => 2.00,
+                    'minute_mult' => 2.00,
+                    'min_mult' => 2.00,
+                    'luggage' => '3 Bags',
+                    'description' => 'Top-tier luxury with executive suited chauffeur',
+                    'target' => 'Flagship luxury sedans',
+                ],
+            ];
+
+            $matrix = [];
+            foreach ($tierDefinitions as $slug => $cfg) {
+                $tierBase = round($baseF * $cfg['base_mult'], 2);
+                $tierPerKm = round($perKmF * $cfg['km_mult'], 2);
+                $tierPerMin = round($perMinF * $cfg['minute_mult'], 2);
+                $tierMin = round($minF * $cfg['min_mult'], 2);
+
+                $matrix[$slug] = [
+                    'id' => $slug,
+                    'name' => $cfg['name'],
+                    'slug' => $cfg['slug'],
+                    'category_key' => $slug,
+                    'icon' => $cfg['icon'],
+                    'capacity' => $cfg['capacity'],
+                    'base_fare' => $tierBase,
+                    'per_km_rate' => $tierPerKm,
+                    'per_minute_rate' => $tierPerMin,
+                    'minimum_fare' => $tierMin,
+                    'multiplier' => 1.0,
+                    'luggage' => $cfg['luggage'],
+                    'target' => $cfg['target'],
+                    'description' => $cfg['description'],
+                    'base' => $tierBase,
+                    'perKm' => $tierPerKm,
+                    'perMin' => $tierPerMin,
+                    'min' => $tierMin,
+                    'seats' => $cfg['capacity'],
+                    'desc' => $cfg['description'],
+                ];
+            }
+
+            return $matrix;
+        } catch (\Throwable $e) {
+            return static::getGhanaPricingMatrix();
+        }
     }
 }

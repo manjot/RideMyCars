@@ -2,60 +2,9 @@
     <x-slot:title>Pricing & Transparent Rates — RideMyCars Executive Mobility</x-slot>
 
     @php
-        $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
-        $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
         $currentCountryCode = $currentPricing?->country_code ?? 'USA';
-        $isGhana = strtoupper(trim($currentCountryCode)) === 'GHA' 
-            || strtoupper(trim($currentPricing?->currency_code ?? '')) === 'GHS' 
-            || ($currentPricing?->currency_symbol ?? '') === 'GH₵';
-        $dynamicVehicles = [];
-
-        if ($isGhana) {
-            $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
-            foreach ($ghanaMatrix as $key => $tier) {
-                $dynamicVehicles[$key] = [
-                    'name' => $tier['name'],
-                    'icon' => $tier['icon'],
-                    'multiplier' => (float) $tier['multiplier'],
-                    'base' => (float) $tier['base_fare'],
-                    'perKm' => (float) $tier['per_km_rate'],
-                    'perMin' => (float) ($tier['per_minute_rate'] ?? 0.30),
-                    'min' => (float) $tier['minimum_fare'],
-                    'seats' => $tier['capacity'],
-                    'luggage' => $tier['luggage'],
-                    'desc' => $tier['description'],
-                    'target' => $tier['target'],
-                ];
-            }
-        } elseif ($pricingRideCategories->isEmpty()) {
-            $dynamicVehicles = [
-                'economy' => ['name' => 'Economy', 'icon' => '🚗', 'multiplier' => 1.0, 'base' => (float) ($currentPricing?->ride_base_fare ?? 5.00), 'perKm' => (float) ($currentPricing?->ride_per_km_rate ?? 1.50), 'perMin' => (float) ($currentPricing?->ride_per_minute_rate ?? 0.25), 'min' => (float) ($currentPricing?->ride_minimum_fare ?? 10.00), 'seats' => '4 Seats', 'luggage' => '2 Bags', 'desc' => 'Affordable, reliable everyday city mobility', 'target' => 'Small economy vehicles'],
-                'comfort' => ['name' => 'Standard / Comfort', 'icon' => '🚘', 'multiplier' => 1.2, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.2), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.2), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.2), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.2), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Spacious, newer executive sedans with climate control', 'target' => 'Clean executive sedans'],
-                'suv' => ['name' => 'Executive SUV', 'icon' => '🚙', 'multiplier' => 1.4, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.4), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.4), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.4), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.4), 'seats' => '6 Seats', 'luggage' => '5 Bags', 'desc' => 'Luxury high-ride SUVs for comfort, safety & groups', 'target' => 'Premium high-ride SUVs'],
-                'xl' => ['name' => 'Van XL', 'icon' => '🚐', 'multiplier' => 1.5, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.5), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.5), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.5), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.5), 'seats' => '7–8 Seats', 'luggage' => '6 Bags', 'desc' => 'Large premium passenger vans for families & delegations', 'target' => 'Multi-passenger passenger vans'],
-                'luxury' => ['name' => 'VIP Chauffeur', 'icon' => '🏎️', 'multiplier' => 1.8, 'base' => (float) (($currentPricing?->ride_base_fare ?? 5.00) * 1.8), 'perKm' => (float) (($currentPricing?->ride_per_km_rate ?? 1.50) * 1.8), 'perMin' => (float) (($currentPricing?->ride_per_minute_rate ?? 0.25) * 1.8), 'min' => (float) (($currentPricing?->ride_minimum_fare ?? 10.00) * 1.8), 'seats' => '4 Seats', 'luggage' => '3 Bags', 'desc' => 'Flagship luxury sedans with suited, vetted private drivers', 'target' => 'Luxury first-class sedans']
-            ];
-        } else {
-            foreach ($pricingRideCategories as $cat) {
-                $base = (float) ($cat->base_fare * $countryMultiplier);
-                $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
-                $perMin = (float) ($cat->per_minute_rate * $countryMultiplier);
-                $min = (float) ($cat->minimum_fare * $countryMultiplier);
-                $dynamicVehicles[$cat->slug] = [
-                    'name' => $cat->name,
-                    'icon' => $cat->icon ?: '🚗',
-                    'multiplier' => (float) $cat->multiplier,
-                    'base' => $base,
-                    'perKm' => $perKm,
-                    'perMin' => $perMin,
-                    'min' => $min,
-                    'seats' => $cat->capacity ?: '4 Seats',
-                    'luggage' => '2 Bags',
-                    'desc' => $cat->description ?: 'Affordable, reliable everyday city mobility',
-                    'target' => $cat->description ?: 'Standard fleet vehicle',
-                ];
-            }
-        }
+        // Single Source of Truth: load native country pricing matrix directly from DB
+        $dynamicVehicles = \App\Models\CountryPricing::getPricingMatrixForCountry($currentCountryCode);
     @endphp
 
     <!-- Ambient Glow Effects -->

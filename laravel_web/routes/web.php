@@ -997,79 +997,23 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
 
     $countryPricing = \App\Models\CountryPricing::forCountry($country);
 
-    $isGhana = strtoupper($countryPricing->country_code ?? 'USA') === 'GHA'
-        || strtoupper($countryPricing->currency_code ?? '') === 'GHS'
-        || ($countryPricing->currency_symbol ?? '') === 'GH₵'
-        || strtoupper(trim($country ?? '')) === 'GHA'
-        || strtoupper(trim($country ?? '')) === 'GHANA';
-
-    if ($isGhana) {
-        $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
-        $categories = [];
-        $idx = 0;
-        foreach ($ghanaMatrix as $tier) {
-            $categories[] = [
-                'id' => $tier['slug'] ?? $tier['category_key'],
-                'name' => $tier['name'],
-                'icon' => $tier['icon'] ?? '🚗',
-                'capacity' => $tier['capacity'] ?? '1–4 passengers',
-                'eta_minutes' => 3 + ($idx++ * 2),
-                'multiplier' => (float) ($tier['multiplier'] ?? 1.0),
-                'base_fare' => (float) $tier['base_fare'],
-                'per_km_rate' => (float) $tier['per_km_rate'],
-                'minimum_fare' => (float) $tier['minimum_fare'],
-                'per_minute_rate' => (float) ($tier['per_minute_rate'] ?? 0.30),
-                'description' => $tier['description'] ?? '',
-                'target' => $tier['target'] ?? '',
-            ];
-        }
-    } else {
-        $categories = [
-            [
-                'id' => 'economy',
-                'name' => 'Economy',
-                'icon' => '🚗',
-                'capacity' => '1–4 passengers',
-                'eta_minutes' => 3,
-                'multiplier' => 1.0,
-                'description' => 'Affordable, everyday rides',
-            ],
-            [
-                'id' => 'standard',
-                'name' => 'Standard',
-                'icon' => '🚘',
-                'capacity' => '1–4 passengers',
-                'eta_minutes' => 4,
-                'multiplier' => 1.2,
-                'description' => 'Comfortable sedans with extra legroom',
-            ],
-            [
-                'id' => 'suv',
-                'name' => 'SUV',
-                'icon' => '🚙',
-                'capacity' => '1–6 passengers',
-                'eta_minutes' => 6,
-                'multiplier' => 1.5,
-                'description' => 'Spacious SUVs for groups and extra luggage',
-            ],
-            [
-                'id' => 'xl',
-                'name' => 'XL',
-                'icon' => '🚐',
-                'capacity' => '1–6 passengers',
-                'eta_minutes' => 7,
-                'multiplier' => 1.8,
-                'description' => 'Extra large vans for families and events',
-            ],
-            [
-                'id' => 'luxury',
-                'name' => 'Luxury',
-                'icon' => '🏎️',
-                'capacity' => '1–4 passengers',
-                'eta_minutes' => 5,
-                'multiplier' => 2.2,
-                'description' => 'Top-tier luxury vehicles with professional drivers',
-            ],
+    $matrix = \App\Models\CountryPricing::getPricingMatrixForCountry($countryPricing->country_code);
+    $categories = [];
+    $idx = 0;
+    foreach ($matrix as $tier) {
+        $categories[] = [
+            'id' => $tier['slug'] ?? $tier['category_key'] ?? ('tier_' . $idx),
+            'name' => $tier['name'],
+            'icon' => $tier['icon'] ?? '🚗',
+            'capacity' => $tier['capacity'] ?? '1–4 passengers',
+            'eta_minutes' => 3 + ($idx++ * 2),
+            'multiplier' => (float) ($tier['multiplier'] ?? 1.0),
+            'base_fare' => (float) $tier['base_fare'],
+            'per_km_rate' => (float) $tier['per_km_rate'],
+            'minimum_fare' => (float) $tier['minimum_fare'],
+            'per_minute_rate' => (float) ($tier['per_minute_rate'] ?? 0.25),
+            'description' => $tier['description'] ?? '',
+            'target' => $tier['target'] ?? '',
         ];
     }
 

@@ -1164,114 +1164,50 @@
                 currencySymbol: '{{ $currentCurrencySymbol ?? "$" }}',
                 currencyCode: '{{ $currentCurrencyCode ?? "USD" }}',
                 @php
-                    $activeRideCategories = \App\Models\RideCategory::getActiveCategories();
-                    $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
                     $sym = $currentCurrencySymbol ?? '$';
-
-                    $isGhana = strtoupper(trim($currentPricing?->country_code ?? '')) === 'GHA'
+                    $countryCode = $currentPricing?->country_code ?? 'USA';
+                    $isGhana = strtoupper(trim($countryCode)) === 'GHA'
                         || strtoupper(trim($currentCurrencyCode ?? '')) === 'GHS'
                         || ($currentCurrencySymbol ?? '') === 'GH₵'
                         || request('country') === 'GHA'
                         || request('country') === 'Ghana';
 
-                    \App\Models\CountryRideCategoryPricing::ensureTableExists();
+                    $ghanaSurge = (float) ($isGhana ? (\App\Services\PricingService::getGhanaSurgeInfo()['multiplier'] ?? 1.0) : 1.0);
 
-                    if ($isGhana) {
-                        $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
-                        $ghanaSurge = (float) (\App\Services\PricingService::getGhanaSurgeInfo()['multiplier'] ?? 1.0);
-                        $formattedCats = collect($ghanaMatrix)->values()->map(function ($tier, $idx) use ($sym, $ghanaSurge) {
-                            $base = (float) $tier['base_fare'];
-                            $perKm = (float) $tier['per_km_rate'];
-                            $perMin = (float) ($tier['per_minute_rate'] ?? 0.30);
-                            $min = (float) $tier['minimum_fare'];
-                            $subtotal = $base + (10 * $perKm) + (15 * $perMin);
-                            $totalEst = max($min, round($subtotal * $ghanaSurge, 2));
-                            return [
-                                'id' => $tier['slug'] ?? $tier['category_key'],
-                                'name' => $tier['name'],
-                                'icon' => $tier['icon'],
-                                'capacity' => $tier['capacity'],
-                                'eta_minutes' => 3 + ($idx * 2),
-                                'multiplier' => (float) ($tier['multiplier'] ?? 1.0),
-                                'base_fare' => $base,
-                                'per_km_rate' => $perKm,
-                                'minimum_fare' => $min,
-                                'per_minute_rate' => $perMin,
-                                'fare' => $totalEst,
-                                'fare_formatted' => $sym . number_format($totalEst, 2),
-                                'description' => $tier['description'],
-                                'target' => $tier['target'] ?? '',
-                            ];
-                        })->toArray();
-                    } else {
-                        // Check if custom country tiers exist in country_ride_category_pricings
-                        $dbTiers = \App\Models\CountryRideCategoryPricing::forCountry($currentPricing?->country_code);
-                        if ($dbTiers->isNotEmpty()) {
-                            $formattedCats = $dbTiers->map(function ($tier, $idx) use ($sym) {
-                                $base = (float) $tier->base_fare;
-                                $perKm = (float) $tier->per_km_rate;
-                                $perMin = (float) ($tier->per_minute_rate ?: 0.30);
-                                $min = (float) $tier->minimum_fare;
-                                $subtotal = $base + (10 * $perKm) + (15 * $perMin);
-                                $totalEst = max($min, round($subtotal * (float) ($tier->multiplier ?: 1.0), 2));
-                                return [
-                                    'id' => $tier->category_key,
-                                    'name' => $tier->category_name,
-                                    'icon' => $tier->icon ?: '🚗',
-                                    'capacity' => $tier->capacity ?: '1–4 seats',
-                                    'eta_minutes' => 3 + ($idx * 2),
-                                    'multiplier' => (float) ($tier->multiplier ?: 1.0),
-                                    'base_fare' => $base,
-                                    'per_km_rate' => $perKm,
-                                    'minimum_fare' => $min,
-                                    'per_minute_rate' => $perMin,
-                                    'fare' => $totalEst,
-                                    'fare_formatted' => $sym . number_format($totalEst, 2),
-                                    'description' => $tier->description ?: '',
-                                    'target' => $tier->target_vehicle ?: '',
-                                ];
-                            })->values()->toArray();
-                        } elseif ($activeRideCategories->isNotEmpty()) {
-                            $formattedCats = $activeRideCategories->map(function ($cat, $idx) use ($sym, $countryMultiplier) {
-                                $base = (float) ($cat->base_fare * $countryMultiplier);
-                                $perKm = (float) ($cat->per_km_rate * $countryMultiplier);
-                                $perMin = (float) ($cat->per_minute_rate * $countryMultiplier);
-                                $min = (float) ($cat->minimum_fare * $countryMultiplier);
-                                $totalEst = round(($base + (10 * $perKm) + (15 * $perMin)) * (float) $cat->multiplier, 2);
-                                return [
-                                    'id' => $cat->slug,
-                                    'name' => $cat->name,
-                                    'icon' => $cat->icon ?: '🚗',
-                                    'capacity' => $cat->capacity ?: '1–4 seats',
-                                    'eta_minutes' => 3 + ($idx * 2),
-                                    'multiplier' => (float) $cat->multiplier,
-                                    'base_fare' => $base,
-                                    'per_km_rate' => $perKm,
-                                    'minimum_fare' => $min,
-                                    'per_minute_rate' => $perMin,
-                                    'fare' => $totalEst,
-                                    'fare_formatted' => $sym . number_format($totalEst, 2),
-                                    'description' => $cat->description ?: 'Ride in comfort',
-                                ];
-                            })->values()->toArray();
-                        } else {
-                            $baseF = (float) ($currentPricing?->ride_base_fare ?? 5.00);
-                            $perKmF = (float) ($currentPricing?->ride_per_km_rate ?? 1.50);
-                            $formattedCats = [
-                                ['id' => 'economy', 'name' => 'Economy', 'icon' => '🚗', 'capacity' => '1–4 seats', 'eta_minutes' => 3, 'multiplier' => 1.0, 'base_fare' => $baseF, 'per_km_rate' => $perKmF, 'minimum_fare' => 8.50, 'per_minute_rate' => 0.20, 'fare_formatted' => $sym . number_format($baseF + (10 * $perKmF), 2), 'description' => 'Affordable everyday rides'],
-                                ['id' => 'standard', 'name' => 'Standard / Comfort', 'icon' => '🚘', 'capacity' => '1–4 seats', 'eta_minutes' => 4, 'multiplier' => 1.0, 'base_fare' => $baseF * 1.4, 'per_km_rate' => $perKmF * 1.2, 'minimum_fare' => 12.00, 'per_minute_rate' => 0.25, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.2, 2), 'description' => 'Comfortable sedans'],
-                                ['id' => 'luxury', 'name' => 'Luxury SUV', 'icon' => '🚙', 'capacity' => '1–6 seats', 'eta_minutes' => 6, 'multiplier' => 1.0, 'base_fare' => $baseF * 2.0, 'per_km_rate' => $perKmF * 1.6, 'minimum_fare' => 20.00, 'per_minute_rate' => 0.35, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.5, 2), 'description' => 'Spacious SUVs'],
-                                ['id' => 'van_xl', 'name' => 'Van XL', 'icon' => '🚐', 'capacity' => '1–7 seats', 'eta_minutes' => 7, 'multiplier' => 1.0, 'base_fare' => $baseF * 2.5, 'per_km_rate' => $perKmF * 2.0, 'minimum_fare' => 25.00, 'per_minute_rate' => 0.45, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 1.8, 2), 'description' => 'Large vans for groups'],
-                                ['id' => 'vip_chauffeur', 'name' => 'VIP Chauffeurs', 'icon' => '👑', 'capacity' => '1–4 seats', 'eta_minutes' => 5, 'multiplier' => 1.0, 'base_fare' => $baseF * 3.5, 'per_km_rate' => $perKmF * 2.5, 'minimum_fare' => 35.00, 'per_minute_rate' => 0.60, 'fare_formatted' => $sym . number_format(($baseF + (10 * $perKmF)) * 2.2, 2), 'description' => 'Premium luxury vehicles'],
-                            ];
-                        }
-                    }
+                    // Unified country pricing matrix directly from DB (Ghana PDF matrix, custom country tiers, or native country_pricings base and km rates)
+                    $pricingMatrix = \App\Models\CountryPricing::getPricingMatrixForCountry($countryCode);
+
+                    $formattedCats = collect($pricingMatrix)->values()->map(function ($tier, $idx) use ($sym, $ghanaSurge, $isGhana) {
+                        $base = (float) $tier['base_fare'];
+                        $perKm = (float) $tier['per_km_rate'];
+                        $perMin = (float) ($tier['per_minute_rate'] ?? 0.25);
+                        $min = (float) $tier['minimum_fare'];
+                        $mult = (float) ($tier['multiplier'] ?? 1.0);
+                        $subtotal = ($base + (10 * $perKm) + (15 * $perMin)) * $mult;
+                        $totalEst = max($min, round($subtotal * ($isGhana ? $ghanaSurge : 1.0), 2));
+                        return [
+                            'id' => $tier['slug'] ?? $tier['category_key'] ?? ('tier_' . $idx),
+                            'name' => $tier['name'],
+                            'icon' => $tier['icon'] ?? '🚗',
+                            'capacity' => $tier['capacity'] ?? '1–4 seats',
+                            'eta_minutes' => 3 + ($idx * 2),
+                            'multiplier' => $mult,
+                            'base_fare' => $base,
+                            'per_km_rate' => $perKm,
+                            'minimum_fare' => $min,
+                            'per_minute_rate' => $perMin,
+                            'fare' => $totalEst,
+                            'fare_formatted' => $sym . number_format($totalEst, 2),
+                            'description' => $tier['description'] ?? '',
+                            'target' => $tier['target'] ?? '',
+                        ];
+                    })->toArray();
 
                     $firstCat = !empty($formattedCats) ? $formattedCats[0] : null;
-                    $initialBase = (float) ($firstCat['base_fare'] ?? ($currentPricing?->ride_base_fare ?? 4.50));
-                    $initialPerKm = (float) ($firstCat['per_km_rate'] ?? ($currentPricing?->ride_per_km_rate ?? 1.10));
-                    $initialPerMin = (float) ($firstCat['per_minute_rate'] ?? ($currentPricing?->ride_per_minute_rate ?? 0.20));
-                    $initialMinFare = (float) ($firstCat['minimum_fare'] ?? ($currentPricing?->ride_minimum_fare ?? 8.50));
+                    $initialBase = (float) ($firstCat['base_fare'] ?? ($currentPricing?->ride_base_fare ?? 5.00));
+                    $initialPerKm = (float) ($firstCat['per_km_rate'] ?? ($currentPricing?->ride_per_km_rate ?? 1.50));
+                    $initialPerMin = (float) ($firstCat['per_minute_rate'] ?? ($currentPricing?->ride_per_minute_rate ?? 0.25));
+                    $initialMinFare = (float) ($firstCat['minimum_fare'] ?? ($currentPricing?->ride_minimum_fare ?? 10.00));
                     $initialDistFare = round(10.0 * $initialPerKm, 2);
                     $initialDurFare = round(15.0 * $initialPerMin, 2);
                     $initialSub = $initialBase + $initialDistFare + $initialDurFare;
