@@ -45,5 +45,26 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>RideMyCars needs access to your location to find nearby drivers, track your ride in real-time, and calculate accurate pickup points and routes.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>RideMyCars needs background location access during active trips to provide live driver arrival and trip progress updates.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>RideMyCars uses your location to keep active rides and deliveries updated in real time.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>RideMyCars requires camera access to take profile photos and scan identity verification documents.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>RideMyCars requires photo library access to upload profile pictures and receipt documents.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>https</string>
+		<string>http</string>
+		<string>comgooglemaps</string>
+		<string>waze</string>
+	</array>
 </dict>
 </plist>
