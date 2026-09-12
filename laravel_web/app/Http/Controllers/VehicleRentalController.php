@@ -439,10 +439,10 @@ class VehicleRentalController extends Controller
                 'pricing' => [
                     'currency_symbol' => $pricing->currency_symbol,
                     'currency_code' => $pricing->currency_code,
-                    'rental_protection_daily_rate' => round((float) ($pricing->rental_protection_daily_rate ?: 12.00) * $mult, 2),
-                    'rental_additional_driver_rate' => round((float) ($pricing->rental_additional_driver_rate ?: 10.00) * $mult, 2),
-                    'rental_child_seat_rate' => round((float) ($pricing->rental_child_seat_rate ?: 8.00) * $mult, 2),
-                    'rental_gps_rate' => round((float) ($pricing->rental_gps_rate ?: 5.00) * $mult, 2),
+                    'rental_protection_daily_rate' => (float) ($pricing->rental_protection_daily_rate ?: 12.00),
+                    'rental_additional_driver_rate' => (float) ($pricing->rental_additional_driver_rate ?: 10.00),
+                    'rental_child_seat_rate' => (float) ($pricing->rental_child_seat_rate ?: 8.00),
+                    'rental_gps_rate' => (float) ($pricing->rental_gps_rate ?: 5.00),
                 ],
             ],
         ]);
@@ -500,13 +500,13 @@ class VehicleRentalController extends Controller
         $dailyRate = round((float) $vehicle->daily_rate * $mult, 2);
         $baseTotal = round($days * $dailyRate, 2);
 
-        $protectionDaily = round((float) ($pricing->rental_protection_daily_rate ?: 12.00) * $mult, 2);
+        $protectionDaily = (float) ($pricing->rental_protection_daily_rate ?: 12.00);
         $protectionOption = $request->protection_option ?? 'basic';
         $protectionFee = ($protectionOption === 'full_cover') ? round($days * $protectionDaily, 2) : 0.00;
 
-        $extraDriverDaily = round((float) ($pricing->rental_additional_driver_rate ?: 10.00) * $mult, 2);
-        $childSeatDaily = round((float) ($pricing->rental_child_seat_rate ?: 8.00) * $mult, 2);
-        $gpsDaily = round((float) ($pricing->rental_gps_rate ?: 5.00) * $mult, 2);
+        $extraDriverDaily = (float) ($pricing->rental_additional_driver_rate ?: 10.00);
+        $childSeatDaily = (float) ($pricing->rental_child_seat_rate ?: 8.00);
+        $gpsDaily = (float) ($pricing->rental_gps_rate ?: 5.00);
 
         $extras = $request->input('selected_extras', []);
         $extrasFee = 0.00;

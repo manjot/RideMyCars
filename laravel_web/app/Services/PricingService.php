@@ -24,23 +24,16 @@ class PricingService
 
         // Base rates from country pricing or driver profile
         // If driver has custom rates in their profile matching the driver's country, respect them;
-        // otherwise default to country pricing standard driver rates.
-        $hourlyRate = (float) ($driver->hourly_rate > 0 ? $driver->hourly_rate : ($pricing->driver_hourly_rate ?: 25.00));
-        
-        // If driver country differs from selected country, convert by exchange rate if needed
-        if ($driver->country && strtoupper($driver->country) !== strtoupper($countryCode)) {
-            $driverCountryPricing = CountryPricing::forCountry($driver->country);
-            $baseUsdRate = $driverCountryPricing->exchange_rate > 0 
-                ? ($hourlyRate / $driverCountryPricing->exchange_rate) 
-                : $hourlyRate;
-            $hourlyRate = round($baseUsdRate * ($pricing->exchange_rate ?: 1.0), 2);
-        }
+        // otherwise default directly to the country pricing standard driver rates without exchange rate loops.
+        $hourlyRate = (float) ($driver && $driver->hourly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
+            ? $driver->hourly_rate 
+            : ($pricing->driver_hourly_rate ?: 25.00));
 
-        $dailyRate = (float) ($driver->daily_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
+        $dailyRate = (float) ($driver && $driver->daily_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
             ? $driver->daily_rate 
             : ($pricing->driver_daily_rate ?: ($hourlyRate * 8 * 0.85)));
 
-        $weeklyRate = (float) ($driver->weekly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
+        $weeklyRate = (float) ($driver && $driver->weekly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
             ? $driver->weekly_rate 
             : ($pricing->driver_weekly_rate ?: ($dailyRate * 7 * 0.85)));
 

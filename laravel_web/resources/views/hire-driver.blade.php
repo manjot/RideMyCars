@@ -36,7 +36,12 @@
                           || (sel === 'GHA' && (driverCountry === 'GHANA' || driverCountry === 'GH'))
                           || (sel === 'USA' && (driverCountry === 'UNITED STATES' || driverCountry === 'US'))
                           || (sel === 'NGA' && (driverCountry === 'NIGERIA' || driverCountry === 'NG'))
-                          || (sel === 'ZAF' && (driverCountry === 'SOUTH AFRICA' || driverCountry === 'ZA'));
+                          || (sel === 'ZAF' && (driverCountry === 'SOUTH AFRICA' || driverCountry === 'ZA'))
+                          || (sel === 'IND' && (driverCountry === 'INDIA' || driverCountry === 'IN'))
+                          || (sel === 'GBR' && (driverCountry === 'UNITED KINGDOM' || driverCountry === 'UK' || driverCountry === 'GB'))
+                          || (sel === 'EUR' && (driverCountry === 'EUROPE' || driverCountry === 'EU' || driverCountry === 'GERMANY' || driverCountry === 'FRANCE'))
+                          || (sel === 'ARE' && (driverCountry === 'UNITED ARAB EMIRATES' || driverCountry === 'UAE' || driverCountry === 'AE'))
+                          || (sel === 'KEN' && (driverCountry === 'KENYA' || driverCountry === 'KE'));
 
                       const matchesAvail = !this.availability || (this.availability === 'available' ? d.is_available : true);
                       const matchesRating = !this.minRating || (parseFloat(d.rating) >= parseFloat(this.minRating));
@@ -50,6 +55,11 @@
                       'USA': '$', 'UNITED STATES': '$',
                       'NGA': '₦', 'NIGERIA': '₦',
                       'ZAF': 'R', 'SOUTH AFRICA': 'R',
+                      'IND': '₹', 'INDIA': '₹',
+                      'GBR': '£', 'UNITED KINGDOM': '£', 'UK': '£',
+                      'EUR': '€', 'EUROPE': '€',
+                      'ARE': 'AED', 'UNITED ARAB EMIRATES': 'AED', 'UAE': 'AED',
+                      'KEN': 'KSh', 'KENYA': 'KSh',
                   };
                   const dc = (driver.country || '').toUpperCase();
                   const sym = symbolMap[dc] || this.currencySymbol || '$';

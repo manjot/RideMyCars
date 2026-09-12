@@ -38,6 +38,11 @@ class DriverBookingController extends Controller
                 'USA' => ['USA', 'United States', 'US'],
                 'NGA' => ['NGA', 'Nigeria', 'NG'],
                 'ZAF' => ['ZAF', 'South Africa', 'ZA'],
+                'IND' => ['IND', 'India', 'IN'],
+                'GBR' => ['GBR', 'United Kingdom', 'UK', 'GB'],
+                'EUR' => ['EUR', 'Europe', 'EU', 'Germany', 'France'],
+                'ARE' => ['ARE', 'United Arab Emirates', 'UAE', 'AE'],
+                'KEN' => ['KEN', 'Kenya', 'KE'],
             ];
             $matches = $countryAliases[$code] ?? [$country, $code];
             $query->whereIn('country', $matches);

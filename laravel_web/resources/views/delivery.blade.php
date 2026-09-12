@@ -906,7 +906,8 @@
                                 dropoff_lng: this.dropoffLng,
                                 delivery_type: this.deliveryType,
                                 package_size: this.packageSize,
-                                package_weight_kg: this.packageWeight
+                                package_weight_kg: this.packageWeight,
+                                country: '{{ $currentCountryCode ?? "USA" }}'
                             })
                         });
                         if (res.ok) {

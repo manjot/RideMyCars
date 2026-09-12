@@ -1536,7 +1536,8 @@ Route::post('/api/ride/{id}/update-status', function (\Illuminate\Http\Request $
             $distanceKm = \App\Services\RideAssignmentService::haversineDistance($ride->pickup_lat, $ride->pickup_lng, $ride->dropoff_lat, $ride->dropoff_lng);
         }
 
-        $finalFare = \App\Services\PricingService::calculateTripFare($distanceKm, $durationMin, $ride->vehicle_type);
+        $stopsCount = is_array($ride->additional_stops) ? count($ride->additional_stops) : 0;
+        $finalFare = \App\Services\PricingService::calculateTripFare($distanceKm, $durationMin, $ride->vehicle_type, $stopsCount, $ride->country ?? null);
 
         $updates['fare'] = $finalFare;
         $updates['total_amount'] = $finalFare;
