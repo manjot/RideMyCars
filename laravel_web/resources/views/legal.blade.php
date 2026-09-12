@@ -28,7 +28,7 @@
             </a>
             <a href="/driver-compliance" class="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-2xl text-center hover:border-amber-500 transition-all group">
                 <span class="text-xl block mb-1">⚡</span>
-                <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Onboarding Standards</span>
+                <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Driver Onboarding</span>
             </a>
         </div>
 

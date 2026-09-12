@@ -1659,9 +1659,8 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/driver-compliance" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5" title="Overcoming Compliance & Onboarding Friction: Document Concierge, Real-Time Push & Segmented Incentives">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Onboarding Compliance</span>
-                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">Standards</span>
+                            <a href="/driver-compliance" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Onboarding</span>
                             </a>
                         </li>
                         <li>
