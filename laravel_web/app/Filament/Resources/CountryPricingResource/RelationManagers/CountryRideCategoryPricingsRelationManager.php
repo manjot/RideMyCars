@@ -124,22 +124,6 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
                     ->label('Active'),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('syncGhanaPdfMatrix')
-                    ->label('⚡ Sync Ghana PDF Cost Matrix')
-                    ->icon('heroicon-o-bolt')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Sync Ghana PDF Cost Matrix')
-                    ->modalDescription('This will upsert the 6 official vehicle tiers (Economy, Standard/Comfort, Luxury SUV, Van XL, VIP Chauffeurs, Group Bus) with exact rates from the official PDF matrix.')
-                    ->visible(fn () => strtoupper($this->getOwnerRecord()?->country_code ?? $this->ownerRecord?->country_code ?? '') === 'GHA')
-                    ->action(function () {
-                        CountryRideCategoryPricing::syncGhanaPdfTiers(true);
-                        \Filament\Notifications\Notification::make()
-                            ->title('Ghana PDF Cost Matrix Synced')
-                            ->body('All 6 vehicle pricing tiers updated from official PDF.')
-                            ->success()
-                            ->send();
-                    }),
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['country_code'] = $this->getOwnerRecord()?->country_code ?? $this->ownerRecord?->country_code ?? 'GHA';

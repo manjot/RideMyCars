@@ -344,6 +344,13 @@ class DatabaseSeeder extends Seeder
             $seeders[] = \Database\Seeders\CountryPricingSeeder::class;
         }
 
+        if (file_exists(__DIR__ . '/CountryRideCategoryPricingSeeder.php')) {
+            require_once __DIR__ . '/CountryRideCategoryPricingSeeder.php';
+            $seeders[] = CountryRideCategoryPricingSeeder::class;
+        } elseif (class_exists(\Database\Seeders\CountryRideCategoryPricingSeeder::class)) {
+            $seeders[] = \Database\Seeders\CountryRideCategoryPricingSeeder::class;
+        }
+
         $this->call($seeders);
     }
 }

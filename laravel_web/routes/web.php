@@ -2743,23 +2743,6 @@ Route::get('/admin/run-system-migrations', function () {
     }
 });
 
-Route::get('/admin/sync-ghana-pricing', function () {
-    try {
-        \App\Models\CountryRideCategoryPricing::syncGhanaPdfTiers(true);
-        $tiers = \App\Models\CountryRideCategoryPricing::where('country_code', 'GHA')->orderBy('sort_order')->get();
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Official Ghana PDF Cost Matrix synchronized successfully.',
-            'tiers_count' => $tiers->count(),
-            'tiers' => $tiers,
-        ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-        ], 500);
-    }
-});
 
 // Contact & Inquiry Submission Route
 Route::post('/contact/send', function (\Illuminate\Http\Request $request) {
