@@ -196,6 +196,18 @@ Route::get('/privacy-policy', function () {
     return view('privacy');
 });
 
+Route::get('/driver-compliance', function () {
+    return view('driver-compliance');
+});
+
+Route::get('/compliance', function () {
+    return view('driver-compliance');
+});
+
+Route::get('/onboarding-compliance', function () {
+    return view('driver-compliance');
+});
+
 Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index'])->name('privacy-requests.index');
 Route::post('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'store'])->name('privacy-requests.store');
 
@@ -2861,7 +2873,8 @@ Route::get('/download/app', function () {
 $pages = [
     'safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 
     'refund', 'cookie', 'pricing', 'list-vehicle', 'legal', 'terms', 'privacy', 
-    'terms-of-service', 'privacy-policy', 'services', 'about', 'cookies'
+    'terms-of-service', 'privacy-policy', 'services', 'about', 'cookies',
+    'driver-compliance', 'compliance', 'onboarding-compliance'
 ];
 foreach ($pages as $page) {
     Route::get('/' . $page, function () use ($page) {

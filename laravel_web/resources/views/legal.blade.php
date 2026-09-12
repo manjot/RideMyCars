@@ -9,7 +9,7 @@
         </div>
 
         <!-- Quick Navigation Bar -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-12">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-12">
             <a href="/terms" class="p-4 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-2xl text-center hover:border-black dark:hover:border-white transition-all group">
                 <span class="text-xl block mb-1">📜</span>
                 <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Terms of Service</span>
@@ -25,6 +25,10 @@
             <a href="/refund" class="p-4 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-2xl text-center hover:border-black dark:hover:border-white transition-all group">
                 <span class="text-xl block mb-1">💳</span>
                 <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Refund Policy</span>
+            </a>
+            <a href="/driver-compliance" class="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-2xl text-center hover:border-amber-500 transition-all group">
+                <span class="text-xl block mb-1">⚡</span>
+                <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Onboarding Standards</span>
             </a>
         </div>
 
