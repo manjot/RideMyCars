@@ -90,8 +90,8 @@ class ExpressPayController extends Controller
      */
     public function handleRedirect(Request $request)
     {
-        $orderId = $request->query('order-id') ?: $request->query('order_id');
-        $token = $request->query('token');
+        $orderId = $request->input('order-id') ?: ($request->input('order_id') ?: ($request->query('order-id') ?: $request->query('order_id')));
+        $token = $request->input('token') ?: $request->query('token');
 
         if (empty($token)) {
             return redirect('/')->with('error', 'Invalid ExpressPay payment response (missing token).');

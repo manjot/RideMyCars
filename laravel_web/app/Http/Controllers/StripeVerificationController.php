@@ -287,6 +287,11 @@ class StripeVerificationController extends Controller
                     'message' => 'ExpressPay Ghana checkout ready. Redirecting...',
                 ]);
             }
+
+            return response()->json([
+                'success' => false,
+                'message' => $epRes['message'] ?? 'ExpressPay Ghana initialization failed. Please check your phone number and try again.',
+            ], 400);
         }
 
         // Create or update PaymentTransaction record
@@ -608,6 +613,18 @@ class StripeVerificationController extends Controller
             $transaction = PaymentTransaction::where($foreignKey, $serviceId)->latest()->first();
         }
 
+        $custPhone = null;
+        if ($serviceType === 'ride' || $serviceType === 'rental') {
+            $custPhone = $booking->phone_number ?? ($booking->passenger_phone ?? ($booking->driver_phone ?? null));
+        } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
+            $custPhone = $booking->client?->phone ?? ($booking->phone_number ?? null);
+        } else {
+            $custPhone = $booking->sender_phone ?? ($booking->recipient_phone ?? null);
+        }
+        if (!$custPhone && Auth::check()) {
+            $custPhone = Auth::user()->phone;
+        }
+
         return [
             'serviceType' => $serviceType,
             'serviceId' => $serviceId,
@@ -629,6 +646,7 @@ class StripeVerificationController extends Controller
             'transactionRef' => $transaction->transaction_ref ?? ('TXN-HOLD-' . strtoupper(substr(md5((string)$serviceId), 0, 8))),
             'paidAt' => $transaction?->paid_at ? $transaction->paid_at->format('M d, Y • h:i A') : ($booking->updated_at ? $booking->updated_at->format('M d, Y • h:i A') : date('M d, Y • h:i A')),
             'paidMethod' => $transaction->payment_method ?? $booking->payment_method ?? 'stripe',
+            'customerPhone' => $custPhone ?? '',
         ];
     }
 }

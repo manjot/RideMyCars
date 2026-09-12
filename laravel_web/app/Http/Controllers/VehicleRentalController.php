@@ -253,9 +253,12 @@ class VehicleRentalController extends Controller
         ActivityLogService::log('rental_created', "Created vehicle rental booking #{$ride->id} for {$vehicle->make} {$vehicle->model} (Receipt: {$rentalCode})", $riderId);
 
         $method = strtolower($request->payment_method ?? '');
-        if (in_array($method, ['stripe', 'credit card', 'card', 'credit_card'])) {
+        $isMomo = in_array($method, ['momo', 'mobile_money', 'momo_pay', 'mtn_momo'], true);
+        $isStripe = in_array($method, ['stripe', 'credit card', 'card', 'credit_card'], true);
+
+        if ($isStripe || $isMomo) {
             // Save tokenized card metadata if checked and user is logged in
-            if ($request->boolean('save_card') && $request->input('card_number') && Auth::check()) {
+            if ($isStripe && $request->boolean('save_card') && $request->input('card_number') && Auth::check()) {
                 try {
                     $cleanNum = preg_replace('/\s+/', '', $request->input('card_number'));
                     $last4 = substr($cleanNum, -4) ?: '4242';
@@ -291,18 +294,25 @@ class VehicleRentalController extends Controller
                 }
             }
 
-            // Record PaymentTransaction in database as PENDING until Stripe authorization completes
+            // Record PaymentTransaction in database as PENDING until gateway authorization completes
             $transactionRef = 'TXN-RENT-' . strtoupper(Str::random(10));
             $stripeIntentId = null;
             $stripeClientSecret = null;
 
-            try {
-                $intentData = \App\Services\StripeService::createPaymentIntent('rental', $ride->id, $riderId);
-                $stripeIntentId = $intentData['payment_intent_id'] ?? null;
-                $stripeClientSecret = $intentData['client_secret'] ?? null;
-            } catch (\Throwable $e) {
-                Log::warning("Stripe PaymentIntent creation warning for rental: " . $e->getMessage());
+            if ($isStripe) {
+                try {
+                    $intentData = \App\Services\StripeService::createPaymentIntent('rental', $ride->id, $riderId);
+                    $stripeIntentId = $intentData['payment_intent_id'] ?? null;
+                    $stripeClientSecret = $intentData['client_secret'] ?? null;
+                } catch (\Throwable $e) {
+                    Log::warning("Stripe PaymentIntent creation warning for rental: " . $e->getMessage());
+                }
             }
+
+            $payMethod = $isMomo ? 'momo' : 'stripe';
+            $provider = $isMomo ? 'ExpressPay_Ghana_Gateway' : 'Stripe_USA';
+            $momoPhone = $request->input('momo_phone') ?: ($request->input('driver_phone') ?: null);
+            $momoNetwork = $request->input('momo_network', 'MTN');
 
             try {
                 \App\Models\PaymentTransaction::create([
@@ -313,15 +323,18 @@ class VehicleRentalController extends Controller
                     'ride_id' => $ride->id,
                     'vehicle_id' => $vehicle->id,
                     'country' => $request->driver_country ?? 'USA',
-                    'currency' => 'USD',
+                    'currency' => $isMomo ? 'GHS' : 'USD',
                     'amount' => $paidAmount,
                     'gross_amount' => $totalAmount,
-                    'payment_method' => 'stripe',
-                    'provider' => 'Stripe_USA',
+                    'payment_method' => $payMethod,
+                    'provider' => $provider,
                     'status' => 'pending',
                     'service_vertical' => 'VEHICLE_RENTAL',
                     'gateway_response' => [
                         'status' => 'pending',
+                        'method' => $payMethod,
+                        'momo_phone' => $momoPhone,
+                        'momo_network' => $momoNetwork,
                         'created_at' => now()->toIso8601String(),
                     ],
                 ]);
@@ -331,11 +344,11 @@ class VehicleRentalController extends Controller
 
             $ride->update([
                 'payment_status' => 'pending',
-                'payment_method' => 'stripe',
+                'payment_method' => $payMethod,
             ]);
 
             return redirect()->route('payment.verify-details', ['serviceType' => 'rental', 'serviceId' => $ride->id])
-                ->with('info', "Rental booking created! Please complete secure Stripe card payment.");
+                ->with('info', "Rental booking created! Please authorize secure payment hold.");
         }
 
         return redirect()->route('rent.voucher', $ride->id)->with('success', "Vehicle rental created! Voucher Code: {$rentalCode}. Balance at Pickup: \${$remainingBalance}.");

@@ -239,8 +239,8 @@ Route::get('/payment/verify-details/{serviceType}/{serviceId}', [\App\Http\Contr
 
 // ExpressPay Ghana Routes (Submit, Redirect Callback, IPN Webhook, Status)
 Route::post('/payment/expresspay/initiate', [\App\Http\Controllers\ExpressPayController::class, 'initiate'])->name('payment.expresspay.initiate');
-Route::get('/payment/expresspay/callback', [\App\Http\Controllers\ExpressPayController::class, 'handleRedirect'])->name('payment.expresspay.callback');
-Route::get('/payment/expresspay/redirect', [\App\Http\Controllers\ExpressPayController::class, 'handleRedirect'])->name('payment.expresspay.redirect');
+Route::match(['get', 'post'], '/payment/expresspay/callback', [\App\Http\Controllers\ExpressPayController::class, 'handleRedirect'])->name('payment.expresspay.callback');
+Route::match(['get', 'post'], '/payment/expresspay/redirect', [\App\Http\Controllers\ExpressPayController::class, 'handleRedirect'])->name('payment.expresspay.redirect');
 Route::post('/api/payment/expresspay/ipn', [\App\Http\Controllers\ExpressPayController::class, 'handleIpn'])->name('payment.expresspay.ipn');
 Route::get('/api/payment/expresspay/status/{token}', [\App\Http\Controllers\ExpressPayController::class, 'checkStatus'])->name('payment.expresspay.status');
 
@@ -1242,6 +1242,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'stripe_client_secret' => $intentData['client_secret'] ?? null,
                     'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
                     'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
+                    'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
                     'tracking_url' => "/ride/track/{$ride->id}",
                     'polling_url' => "/api/ride/{$ride->id}/status",
                 ]);
@@ -1266,7 +1267,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'ride_id' => $ride->id,
                     'payment_method' => 'momo',
                     'checkout_url' => $momoResult['checkout_url'] ?? null,
-                    'redirect_url' => $momoResult['checkout_url'] ?? null,
+                    'redirect_url' => $momoResult['checkout_url'] ?? ("/payment/verify-details/ride/{$ride->id}"),
                     'transaction_ref' => $momoResult['transaction_ref'] ?? null,
                     'message' => $momoResult['message'] ?? 'Please confirm USSD prompt on your phone.',
                     'tracking_url' => "/ride/track/{$ride->id}",
@@ -1314,7 +1315,23 @@ Route::post('/ride/confirm-hold', function (\Illuminate\Http\Request $request) {
                 'polling_url' => "/api/ride/{$ride->id}/status",
             ]);
         }
-        return response()->json(['error' => $result['error'] ?? 'Card authorization failed.'], 400);
+
+        // If card authorization requires customer checkout / card entry:
+        if (!empty($result['requires_checkout'])) {
+            return response()->json([
+                'success' => false,
+                'requires_checkout' => true,
+                'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+                'ride_id' => $ride->id,
+                'error' => $result['error'] ?? 'Please complete card authorization.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+            'error' => $result['error'] ?? 'Card authorization failed.'
+        ], 400);
     }
 
     // Verify MoMo payment

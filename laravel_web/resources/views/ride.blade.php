@@ -2286,7 +2286,26 @@
                             });
 
                             const confirmData = await confirmRes.json();
+
+                            // Payment hold authorized! Transition immediately to finding driver
+                            if (confirmRes.ok && confirmData.success) {
+                                this.bookingStep = 'finding_driver';
+                                this.isAuthorizingPayment = false;
+                                this.startRideStatusPolling(data.ride_id);
+                                return;
+                            }
+
+                            // If customer card entry, 3D secure, or verification is needed:
+                            if (confirmData.requires_checkout || confirmData.redirect_url || data.redirect_url) {
+                                window.location.href = confirmData.redirect_url || data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
+                                return;
+                            }
+
                             if (!confirmRes.ok || !confirmData.success) {
+                                if (data.ride_id) {
+                                    window.location.href = '/payment/verify-details/ride/' + data.ride_id;
+                                    return;
+                                }
                                 alert(confirmData.error || 'Payment hold authorization failed. Please check your payment details.');
                                 this.bookingStep = 'confirm_ride';
                                 this.isAuthorizingPayment = false;

@@ -254,7 +254,7 @@ class DriverBookingController extends Controller
         );
 
         $method = strtolower($validated['payment_method'] ?? '');
-        if (in_array($method, ['stripe', 'card', 'credit_card', 'credit card'])) {
+        if (in_array($method, ['stripe', 'card', 'credit_card', 'credit card', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'])) {
             $redirectUrl = route('payment.verify-details', ['serviceType' => 'driver_booking', 'serviceId' => $booking->id]);
             if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
                 return response()->json([

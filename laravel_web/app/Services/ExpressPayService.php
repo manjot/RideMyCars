@@ -21,7 +21,9 @@ class ExpressPayService
     {
         $clean = preg_replace('/[^0-9]/', '', $phone);
 
-        if (str_starts_with($clean, '233') && strlen($clean) === 12) {
+        if (str_starts_with($clean, '2330')) {
+            return substr($clean, 3);
+        } elseif (str_starts_with($clean, '233') && strlen($clean) === 12) {
             return '0' . substr($clean, 3);
         } elseif (strlen($clean) === 9) {
             return '0' . $clean;
@@ -251,6 +253,16 @@ class ExpressPayService
                     'payment_method' => 'expresspay',
                     'booking_status' => ($booking->booking_status === 'accepted') ? 'accepted' : 'pending',
                 ]);
+
+                try {
+                    if ($booking->driver_id) {
+                        NotificationService::notifyDriverHiringAssigned($booking, $booking->driver_id);
+                    } else {
+                        \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning("Driver booking assignment error: " . $e->getMessage());
+                }
             }
         } elseif (in_array($serviceType, ['package_delivery', 'delivery']) && $transaction->package_delivery_id) {
             $delivery = PackageDelivery::find($transaction->package_delivery_id);
@@ -259,6 +271,12 @@ class ExpressPayService
                     'payment_status' => 'paid',
                     'payment_method' => 'expresspay',
                 ]);
+
+                try {
+                    \App\Services\PackageDeliveryAssignmentService::assignNextCourier($delivery);
+                } catch (\Throwable $e) {
+                    Log::warning("Package courier assignment error: " . $e->getMessage());
+                }
             }
         }
 

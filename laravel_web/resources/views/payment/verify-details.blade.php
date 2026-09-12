@@ -10,7 +10,9 @@
             totalAmount: {{ $totalAmount }},
             currency: '{{ $currency }}',
             driverData: {{ json_encode($driver) }},
-            bookingCode: '{{ $bookingCode }}'
+            bookingCode: '{{ $bookingCode }}',
+            initialPaymentMethod: '{{ $paidMethod ?? "stripe" }}',
+            customerPhone: '{{ $customerPhone ?? "" }}'
          })"
          x-init="initPage()"
          class="min-h-screen bg-gray-50 dark:bg-[#09090b] py-12 px-4 sm:px-6 lg:px-8">
@@ -473,9 +475,9 @@
             currency: config.currency,
             driver: (config.initialIsPaymentConfirmed && config.initialIsDriverConfirmed) ? config.driverData : null,
             bookingCode: config.bookingCode,
-            paymentMethod: 'stripe', // 'stripe', 'momo'
+            paymentMethod: (config.initialPaymentMethod === 'momo' || config.initialPaymentMethod === 'mobile_money') ? 'momo' : 'stripe',
             momoNetwork: 'MTN',
-            momoPhone: '',
+            momoPhone: config.customerPhone || '',
             isProcessing: false,
             isSimulatingMatch: false,
             pollingInterval: null,

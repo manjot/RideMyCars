@@ -199,7 +199,10 @@ class PackageDeliveryController extends Controller
             ['delivery_id' => $delivery->id, 'total_price' => $delivery->total_price]
         );
 
-        $redirectUrl = route('package-delivery.tracker', $delivery->id);
+        $method = strtolower($validated['payment_method'] ?? '');
+        $redirectUrl = in_array($method, ['stripe', 'card', 'credit_card', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'])
+            ? route('payment.verify-details', ['serviceType' => 'package_delivery', 'serviceId' => $delivery->id])
+            : route('package-delivery.tracker', $delivery->id);
 
         if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
             return response()->json([

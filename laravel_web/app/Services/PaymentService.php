@@ -118,6 +118,7 @@ class PaymentService
                 return 'PayFast_SouthAfrica';
             case 'USA':
             default:
+                if (in_array($method, ['momo', 'expresspay', 'gh_card'])) return 'ExpressPay_Ghana_Gateway';
                 if ($method === 'cashapp') return 'CashApp_Pay';
                 if ($method === 'applepay') return 'ApplePay_SDK';
                 if ($method === 'googlepay') return 'GooglePay_SDK';

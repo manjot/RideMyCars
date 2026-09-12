@@ -178,6 +178,13 @@ class MomoPaymentService
                     'transaction_ref' => $transactionRef,
                     'message' => 'Payment authorization pending on customer phone. Please approve USSD prompt.',
                 ];
+            } else {
+                return [
+                    'success' => false,
+                    'status' => 'failed',
+                    'transaction_ref' => $transactionRef,
+                    'message' => $epStatus['result_text'] ?? 'ExpressPay payment was not approved.',
+                ];
             }
         }
 

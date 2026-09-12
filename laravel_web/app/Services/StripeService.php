@@ -208,6 +208,20 @@ class StripeService
             throw new \RuntimeException("Payment transaction record not found for intent {$paymentIntentId}.");
         }
 
+        // In test / sandbox mode, automatically attach test payment method 'pm_card_visa' to authorize hold
+        $stripeKey = config('services.stripe.secret') ?: (\Stripe\Stripe::getApiKey() ?: '');
+        $isTestMode = str_starts_with($stripeKey, 'sk_test_')
+            || config('services.stripe.mode') === 'test'
+            || (function_exists('app') && app()->environment('local', 'testing'));
+
+        if ($intent->status === 'requires_payment_method' && $isTestMode) {
+            try {
+                $intent = $intent->confirm(['payment_method' => 'pm_card_visa']);
+            } catch (\Throwable $e) {
+                Log::warning("Stripe test intent auto-authorization notice: " . $e->getMessage());
+            }
+        }
+
         if ($intent->status === 'requires_capture') {
             static::markTransactionAsAuthorized($transaction, $intent);
             return [
@@ -236,9 +250,19 @@ class StripeService
                 'transaction_ref' => $transaction->transaction_ref,
                 'message' => 'Your payment is being processed. Please wait for confirmation.',
             ];
+        } elseif (in_array($intent->status, ['requires_payment_method', 'requires_confirmation', 'requires_action'], true)) {
+            // Unconfirmed intent awaiting card entry from customer.
+            // Do NOT mark transaction as failed and do NOT report a false "card declined" error!
+            return [
+                'success' => false,
+                'status' => $intent->status,
+                'requires_checkout' => true,
+                'client_secret' => $intent->client_secret,
+                'error' => 'Payment authorization required. Please complete card details to authorize ride.',
+            ];
         } else {
             $lastError = $intent->last_payment_error;
-            $code = $lastError->code ?? 'card_declined';
+            $code = $lastError->code ?? ($intent->status === 'canceled' ? 'card_declined' : 'payment_failed');
             $msg = static::mapStripeDeclineMessage($code, $lastError->message ?? null);
 
             static::markTransactionAsFailed($transaction, $code, $msg, $intent);
@@ -577,12 +601,14 @@ class StripeService
             case 'ride':
             case 'rental':
                 $ride = Ride::findOrFail($serviceId);
+                $country = request()->input('country') ?? ($ride->driver_country ?? 'USA');
+                $currency = CountryService::getCurrencyCode($country) ?: 'USD';
                 return [
                     'model' => $ride,
                     'amount' => $ride->fare ?? $ride->total_price ?? 50.00,
-                    'currency' => 'USD',
+                    'currency' => $currency,
                     'title' => 'Ride/Rental Booking',
-                    'country' => 'USA',
+                    'country' => $country,
                     'foreign_key' => 'ride_id',
                 ];
 
