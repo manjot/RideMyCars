@@ -101,7 +101,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Fare</span>
-                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">${{ number_format($totalAmount, 2) }} {{ $currency }}</span>
+                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</span>
                         </div>
                     </div>
 
@@ -180,7 +180,7 @@
                                        class="flex-1 px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-white/15 rounded-r-xl text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
                             </div>
                             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                                A prompt will be triggered on your mobile handset to approve the ${{ number_format($totalAmount, 2) }} {{ $currency }} escrow authorization hold.
+                                A prompt will be triggered on your mobile handset to approve the {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} escrow authorization hold.
                             </p>
                         </div>
                     </div>
@@ -191,7 +191,7 @@
                         <template x-if="paymentMethod === 'stripe'">
                             <button type="button" @click="triggerStripePayment()"
                                     class="w-full py-4 px-6 bg-[#635BFF] hover:bg-[#5349e0] text-white font-black text-base rounded-2xl shadow-xl shadow-[#635BFF]/25 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                                <span>🔒 Pay ${{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
+                                <span>🔒 Pay {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
                                 <span>→</span>
                             </button>
                         </template>
@@ -201,7 +201,7 @@
                             <button type="button" @click="submitPaymentHold('momo')"
                                     :disabled="isProcessing || !momoPhone"
                                     class="w-full py-4 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                                <span x-show="!isProcessing">📱 Authorize MoMo Hold (${{ number_format($totalAmount, 2) }} {{ $currency }})</span>
+                                <span x-show="!isProcessing">📱 Authorize MoMo Hold ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})</span>
                                 <span x-show="isProcessing" class="flex items-center gap-2">
                                     <svg class="animate-spin h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                     Waiting for MoMo Handset Approval...
@@ -230,7 +230,7 @@
                     <div class="space-y-2 max-w-md mx-auto">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            ✓ Escrow Payment Held (${{ number_format($totalAmount, 2) }} {{ $currency }})
+                            ✓ Escrow Payment Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})
                         </span>
                         <h3 class="text-2xl font-black text-gray-900 dark:text-white">
                             Searching for Available Driver...
@@ -295,7 +295,7 @@
                         </div>
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Amount</span>
-                            <span class="font-black text-gray-900 dark:text-white">${{ number_format($totalAmount, 2) }} {{ $currency }}</span>
+                            <span class="font-black text-gray-900 dark:text-white">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Method</span>
@@ -343,7 +343,7 @@
 
                     <div class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl space-y-1 border border-gray-100 dark:border-white/5">
                         <span class="font-extrabold text-gray-400 uppercase tracking-wider block">💵 Total Approved Fare</span>
-                        <p class="font-black text-emerald-600 dark:text-emerald-400 text-lg">${{ number_format($totalAmount, 2) }} {{ $currency }}</p>
+                        <p class="font-black text-emerald-600 dark:text-emerald-400 text-lg">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</p>
                     </div>
                 </div>
 

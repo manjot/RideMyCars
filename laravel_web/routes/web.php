@@ -1296,10 +1296,11 @@ Route::post('/ride/confirm-hold', function (\Illuminate\Http\Request $request) {
 
     $paymentIntentId = $request->input('payment_intent_id') ?: $ride->hold_payment_intent_id;
     $transactionRef = $request->input('transaction_ref') ?: $ride->hold_authorization_code;
+    $paymentMethodId = $request->input('payment_method_id');
 
     // Verify Stripe / Apple Pay hold
     if ($paymentIntentId) {
-        $result = \App\Services\StripeService::confirmPayment($paymentIntentId);
+        $result = \App\Services\StripeService::confirmPayment($paymentIntentId, $paymentMethodId);
         if (!empty($result['success'])) {
             $ride->refresh();
             try {
@@ -1329,9 +1330,11 @@ Route::post('/ride/confirm-hold', function (\Illuminate\Http\Request $request) {
 
         return response()->json([
             'success' => false,
+            'requires_checkout' => true,
             'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
-            'error' => $result['error'] ?? 'Card authorization failed.'
-        ], 400);
+            'ride_id' => $ride->id,
+            'error' => $result['error'] ?? 'Card authorization pending. Please complete checkout.'
+        ]);
     }
 
     // Verify MoMo payment

@@ -196,7 +196,7 @@ class StripeService
     /**
      * Confirm a Stripe Payment Intent server-side.
      */
-    public static function confirmPayment(string $paymentIntentId): array
+    public static function confirmPayment(string $paymentIntentId, ?string $paymentMethodId = null): array
     {
         static::initStripe();
 
@@ -206,6 +206,15 @@ class StripeService
 
         if (!$transaction) {
             throw new \RuntimeException("Payment transaction record not found for intent {$paymentIntentId}.");
+        }
+
+        // If a specific payment method was supplied (e.g. customer's saved card)
+        if ($intent->status === 'requires_payment_method' && $paymentMethodId) {
+            try {
+                $intent = $intent->confirm(['payment_method' => $paymentMethodId]);
+            } catch (\Throwable $e) {
+                Log::warning("Stripe intent confirmation with saved card notice: " . $e->getMessage());
+            }
         }
 
         // In test / sandbox mode, automatically attach test payment method 'pm_card_visa' to authorize hold

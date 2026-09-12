@@ -2270,49 +2270,55 @@
                             this.currentRideId = data.ride_id;
                             localStorage.setItem('rmc_active_ride_id', data.ride_id);
 
+                            // If customer selected Stripe without a pre-saved card, redirect immediately to the escrow checkout page
+                            const savedCardId = this.selectedCard?.provider_payment_method_id || this.selectedCard?.id;
+                            if (this.paymentMethod === 'stripe' && !savedCardId) {
+                                window.location.href = data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
+                                return;
+                            }
+
                             // Confirm payment hold to unlock driver matching
-                            const confirmRes = await fetch('/ride/confirm-hold', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken
-                                },
-                                body: JSON.stringify({
-                                    ride_id: data.ride_id,
-                                    payment_intent_id: data.payment_intent_id,
-                                    transaction_ref: data.transaction_ref
-                                })
-                            });
+                            try {
+                                const confirmRes = await fetch('/ride/confirm-hold', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        ride_id: data.ride_id,
+                                        payment_intent_id: data.payment_intent_id,
+                                        transaction_ref: data.transaction_ref,
+                                        payment_method_id: savedCardId || null
+                                    })
+                                });
 
-                            const confirmData = await confirmRes.json();
+                                const confirmData = await confirmRes.json();
 
-                            // Payment hold authorized! Transition immediately to finding driver
-                            if (confirmRes.ok && confirmData.success) {
-                                this.bookingStep = 'finding_driver';
-                                this.isAuthorizingPayment = false;
-                                this.startRideStatusPolling(data.ride_id);
-                                return;
-                            }
-
-                            // If customer card entry, 3D secure, or verification is needed:
-                            if (confirmData.requires_checkout || confirmData.redirect_url || data.redirect_url) {
-                                window.location.href = confirmData.redirect_url || data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
-                                return;
-                            }
-
-                            if (!confirmRes.ok || !confirmData.success) {
-                                if (data.ride_id) {
-                                    window.location.href = '/payment/verify-details/ride/' + data.ride_id;
+                                // Payment hold authorized! Transition immediately to finding driver
+                                if (confirmRes.ok && confirmData.success) {
+                                    this.bookingStep = 'finding_driver';
+                                    this.isAuthorizingPayment = false;
+                                    this.startRideStatusPolling(data.ride_id);
                                     return;
                                 }
-                                alert(confirmData.error || 'Payment hold authorization failed. Please check your payment details.');
-                                this.bookingStep = 'confirm_ride';
-                                this.isAuthorizingPayment = false;
+
+                                // If customer card entry, 3D secure, or verification is needed:
+                                if (confirmData.requires_checkout || confirmData.redirect_url || data.redirect_url) {
+                                    window.location.href = confirmData.redirect_url || data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
+                                    return;
+                                }
+                            } catch (err) {
+                                console.warn('Payment hold verification notice:', err);
+                            }
+
+                            // Seamless fallback: direct to escrow checkout page
+                            if (data.ride_id) {
+                                window.location.href = data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
                                 return;
                             }
 
-                            // Payment hold authorized! Transition to searching for driver
                             this.bookingStep = 'finding_driver';
                             this.isAuthorizingPayment = false;
                             this.startRideStatusPolling(data.ride_id);
