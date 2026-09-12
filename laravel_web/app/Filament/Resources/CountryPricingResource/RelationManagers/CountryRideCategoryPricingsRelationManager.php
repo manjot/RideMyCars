@@ -13,13 +13,13 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
 {
     protected static string $relationship = 'rideCategoryPricings';
 
-    protected static ?string $title = 'Vehicle Category Pricing (Ghana & Regional Tiers)';
+    protected static ?string $title = 'Vehicle Category Pricing (Country Vehicle Tiers)';
 
     protected static ?string $recordTitleAttribute = 'category_name';
 
     public function form(Form $form): Form
     {
-        $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? 'GH₵';
+        $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? '$';
 
         return $form
             ->schema([
@@ -91,7 +91,7 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         CountryRideCategoryPricing::ensureTableExists();
-        $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? 'GH₵';
+        $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? '$';
 
         return $table
             ->recordTitleAttribute('category_name')
@@ -126,7 +126,7 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
-                        $data['country_code'] = $this->getOwnerRecord()?->country_code ?? $this->ownerRecord?->country_code ?? 'GHA';
+                        $data['country_code'] = $this->getOwnerRecord()?->country_code ?? $this->ownerRecord?->country_code ?? 'USA';
                         return $data;
                     }),
             ])

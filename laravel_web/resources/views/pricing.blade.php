@@ -698,8 +698,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Electronics, retail purchases, fragile boxes (≤ 25 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$15.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">$1.50 / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_base_fare ?? 15.00) * 1.25, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_per_km_rate ?? 1.50) * 1.25, 2) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Cargo Space:</span><span class="font-bold text-amber-500">Full Trunk & Backseat</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Climate-controlled transport with digital photo proof of delivery at dropoff.</p>
@@ -718,8 +718,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Furniture, commercial supplies, wholesale pallets (≤ 250 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">$35.00</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">$2.20 / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_base_fare ?? 15.00) * 2.2, 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_per_km_rate ?? 1.50) * 1.8, 2) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Loading Help:</span><span class="font-bold text-blue-500">Driver Assistance Included</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Heavy payload dispatch with scheduled multi-point routes available.</p>

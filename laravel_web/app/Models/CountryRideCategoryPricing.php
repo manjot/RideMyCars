@@ -304,6 +304,13 @@ class CountryRideCategoryPricing extends Model
                         'ride_per_minute_rate' => 0.30,
                         'ride_minimum_fare' => 10.00, // Standalone platform threshold from PDF note
                         'ride_additional_stop_fee' => 3.50,
+                        'delivery_base_fare' => 18.00,
+                        'delivery_per_km_rate' => 2.00,
+                        'delivery_instant_addon' => 10.00,
+                        'delivery_express_addon' => 8.00,
+                        'delivery_same_day_addon' => 4.00,
+                        'delivery_scheduled_addon' => 2.00,
+                        'delivery_per_kg_rate' => 1.00,
                         'updated_at' => $now,
                     ]
                 );

@@ -150,5 +150,39 @@ class CountryRideCategoryPricingSeeder extends Seeder
             ->where('country_code', 'GHA')
             ->whereNotIn('category_key', ['economy', 'standard', 'luxury', 'van_xl', 'vip_chauffeur', 'group_bus'])
             ->delete();
+
+        // Ensure parent CountryPricing for Ghana has both ride and delivery fares in native GH₵
+        if (Schema::hasTable('country_pricings')) {
+            DB::table('country_pricings')->updateOrInsert(
+                ['country_code' => 'GHA'],
+                [
+                    'country_name' => 'Ghana',
+                    'currency_code' => 'GHS',
+                    'currency_symbol' => 'GH₵',
+                    'exchange_rate' => 15.5000,
+                    'is_active' => true,
+                    'ride_base_fare' => 7.00,
+                    'ride_per_km_rate' => 1.80,
+                    'ride_per_minute_rate' => 0.30,
+                    'ride_minimum_fare' => 10.00,
+                    'ride_additional_stop_fee' => 3.50,
+                    'delivery_base_fare' => 18.00,
+                    'delivery_per_km_rate' => 2.00,
+                    'delivery_instant_addon' => 10.00,
+                    'delivery_express_addon' => 8.00,
+                    'delivery_same_day_addon' => 4.00,
+                    'delivery_scheduled_addon' => 2.00,
+                    'delivery_per_kg_rate' => 1.00,
+                    'driver_hourly_rate' => 35.00,
+                    'driver_daily_rate' => 240.00,
+                    'driver_weekly_rate' => 1400.00,
+                    'rental_protection_daily_rate' => 25.00,
+                    'rental_additional_driver_rate' => 20.00,
+                    'rental_child_seat_rate' => 15.00,
+                    'rental_gps_rate' => 10.00,
+                    'updated_at' => $now,
+                ]
+            );
+        }
     }
 }

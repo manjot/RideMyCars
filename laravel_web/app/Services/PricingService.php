@@ -253,15 +253,24 @@ class PricingService
 
         $multiplier = 1.0;
         if ($vehicleType) {
-            $lower = strtolower($vehicleType);
-            if (str_contains($lower, 'suv') || str_contains($lower, 'luxury') || str_contains($lower, 'executive')) {
-                $multiplier = 1.4;
-            } elseif (str_contains($lower, 'premium') || str_contains($lower, 'comfort') || str_contains($lower, 'standard')) {
-                $multiplier = 1.2;
-            } elseif (str_contains($lower, 'van') || str_contains($lower, 'xl')) {
-                $multiplier = 1.5;
-            } elseif (str_contains($lower, 'bike') || str_contains($lower, 'moto')) {
-                $multiplier = 0.6;
+            $customTier = \App\Models\CountryRideCategoryPricing::findByKeyOrAlias($countryCode, $vehicleType);
+            if ($customTier) {
+                $baseFare = (float) $customTier->base_fare;
+                $perKmRate = (float) $customTier->per_km_rate;
+                $perMinuteRate = (float) ($customTier->per_minute_rate ?: $perMinuteRate);
+                $minFare = (float) $customTier->minimum_fare;
+                $multiplier = (float) ($customTier->multiplier ?: 1.0);
+            } else {
+                $lower = strtolower($vehicleType);
+                if (str_contains($lower, 'suv') || str_contains($lower, 'luxury') || str_contains($lower, 'executive')) {
+                    $multiplier = 1.4;
+                } elseif (str_contains($lower, 'premium') || str_contains($lower, 'comfort') || str_contains($lower, 'standard')) {
+                    $multiplier = 1.2;
+                } elseif (str_contains($lower, 'van') || str_contains($lower, 'xl')) {
+                    $multiplier = 1.5;
+                } elseif (str_contains($lower, 'bike') || str_contains($lower, 'moto')) {
+                    $multiplier = 0.6;
+                }
             }
         }
 

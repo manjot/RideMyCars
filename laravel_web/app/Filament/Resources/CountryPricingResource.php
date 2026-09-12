@@ -79,16 +79,18 @@ class CountryPricingResource extends Resource
                             ->icon('heroicon-o-map-pin')
                             ->schema([
                                 Forms\Components\Section::make('Ride Hailing Fare Parameters')
-                                    ->description('Base rates used when riders book instant city trips in this country.')
+                                    ->description('Base rates used when riders book instant city trips in this country. Configurable anytime for each country.')
                                     ->schema([
                                         Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('ride_base_fare')
                                                 ->label('Base Starting Fare')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(5.00),
                                             Forms\Components\TextInput::make('ride_per_km_rate')
                                                 ->label('Per Kilometer (KM) Rate')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(1.50),
@@ -96,16 +98,19 @@ class CountryPricingResource extends Resource
                                         Forms\Components\Grid::make(3)->schema([
                                             Forms\Components\TextInput::make('ride_per_minute_rate')
                                                 ->label('Per Minute Rate')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(0.25),
                                             Forms\Components\TextInput::make('ride_minimum_fare')
                                                 ->label('Minimum Ride Fare')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(10.00),
                                             Forms\Components\TextInput::make('ride_additional_stop_fee')
                                                 ->label('Additional Multi-Stop Fee')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(3.50),
@@ -118,21 +123,24 @@ class CountryPricingResource extends Resource
                             ->icon('heroicon-o-cube')
                             ->schema([
                                 Forms\Components\Section::make('Courier & Dispatch Rates')
-                                    ->description('Pricing for door-to-door parcel delivery and express speed tiers.')
+                                    ->description('Pricing for door-to-door parcel delivery and express speed tiers. Configurable anytime for each country.')
                                     ->schema([
                                         Forms\Components\Grid::make(3)->schema([
                                             Forms\Components\TextInput::make('delivery_base_fare')
                                                 ->label('Base Delivery Fare')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(15.00),
                                             Forms\Components\TextInput::make('delivery_per_km_rate')
                                                 ->label('Per KM Distance Rate')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(1.50),
                                             Forms\Components\TextInput::make('delivery_per_kg_rate')
                                                 ->label('Per KG Extra Weight Surcharge')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(0.75),
@@ -140,11 +148,13 @@ class CountryPricingResource extends Resource
                                         Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('delivery_instant_addon')
                                                 ->label('Instant Dispatch Surcharge (~30m)')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(10.00),
                                             Forms\Components\TextInput::make('delivery_express_addon')
                                                 ->label('Express Priority Surcharge (< 2h)')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(8.00),
@@ -152,11 +162,13 @@ class CountryPricingResource extends Resource
                                         Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('delivery_same_day_addon')
                                                 ->label('Same Day Delivery Surcharge')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(4.00),
                                             Forms\Components\TextInput::make('delivery_scheduled_addon')
                                                 ->label('Scheduled Window Surcharge')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(2.00),
@@ -169,21 +181,24 @@ class CountryPricingResource extends Resource
                             ->icon('heroicon-o-user')
                             ->schema([
                                 Forms\Components\Section::make('Chauffeur Standard Base Rates')
-                                    ->description('Baseline rates for hiring professional private chauffeurs.')
+                                    ->description('Baseline rates for hiring professional private chauffeurs. Configurable anytime for each country.')
                                     ->schema([
                                         Forms\Components\Grid::make(3)->schema([
                                             Forms\Components\TextInput::make('driver_hourly_rate')
                                                 ->label('Standard Hourly Rate')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(25.00),
                                             Forms\Components\TextInput::make('driver_daily_rate')
                                                 ->label('Full Day Rate (8 Hours)')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(170.00),
                                             Forms\Components\TextInput::make('driver_weekly_rate')
                                                 ->label('Weekly Rate (7 Days)')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(1000.00),
@@ -196,7 +211,7 @@ class CountryPricingResource extends Resource
                             ->icon('heroicon-o-key')
                             ->schema([
                                 Forms\Components\Section::make('Self-Drive Fleet & Extras Rates')
-                                    ->description('Controls vehicle catalog rate conversion and optional protection/extras.')
+                                    ->description('Controls vehicle catalog rate conversion and optional protection/extras. Configurable anytime for each country.')
                                     ->schema([
                                         Forms\Components\TextInput::make('rental_price_multiplier')
                                             ->label('Vehicle Daily Rate Multiplier')
@@ -207,11 +222,13 @@ class CountryPricingResource extends Resource
                                         Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('rental_protection_daily_rate')
                                                 ->label('Full Cover Protection / Day')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(12.00),
                                             Forms\Components\TextInput::make('rental_additional_driver_rate')
                                                 ->label('Additional Driver / Day')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(10.00),
@@ -219,11 +236,13 @@ class CountryPricingResource extends Resource
                                         Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('rental_child_seat_rate')
                                                 ->label('Child Safety Seat / Day')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(8.00),
                                             Forms\Components\TextInput::make('rental_gps_rate')
                                                 ->label('GPS Navigation / Day')
+                                                ->prefix(fn ($record) => $record?->currency_symbol ?? '$')
                                                 ->numeric()
                                                 ->required()
                                                 ->default(5.00),
