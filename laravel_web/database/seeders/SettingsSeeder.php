@@ -58,6 +58,17 @@ class SettingsSeeder extends Seeder
             ['key' => 'payment.apple_pay_merchant_id', 'label' => 'Apple Pay Merchant ID', 'value' => env('APPLE_PAY_MERCHANT_ID', 'merchant.com.ridemycars'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.apple_pay_domain', 'label' => 'Apple Pay Verified Domain', 'value' => env('APPLE_PAY_DOMAIN', 'ridemycars.com'), 'group' => 'Payment Gateways', 'type' => 'text'],
 
+            // ExpressPay Ghana Gateway
+            ['key' => 'payment.expresspay_enabled', 'label' => 'ExpressPay Ghana Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_mode', 'label' => 'Active ExpressPay Mode (sandbox / live)', 'value' => env('EXPRESSPAY_MODE', 'sandbox'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_sandbox_merchant_id', 'label' => 'ExpressPay Sandbox Merchant ID', 'value' => env('EXPRESSPAY_SANDBOX_MERCHANT_ID', '562786243097'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_sandbox_api_key', 'label' => 'ExpressPay Sandbox API Key', 'value' => env('EXPRESSPAY_SANDBOX_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_live_merchant_id', 'label' => 'ExpressPay Live Merchant ID', 'value' => env('EXPRESSPAY_LIVE_MERCHANT_ID', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_live_api_key', 'label' => 'ExpressPay Live API Key', 'value' => env('EXPRESSPAY_LIVE_API_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_merchant_id', 'label' => 'ExpressPay Merchant ID (Active)', 'value' => env('EXPRESSPAY_MERCHANT_ID', '562786243097'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_api_key', 'label' => 'ExpressPay API Key (Active)', 'value' => env('EXPRESSPAY_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_currency', 'label' => 'ExpressPay Default Currency', 'value' => env('EXPRESSPAY_CURRENCY', 'GHS'), 'group' => 'Payment Gateways', 'type' => 'text'],
+
             // SMS Gateway (Twilio)
             ['key' => 'sms.twilio_enabled', 'label' => 'Twilio SMS Gateway Enabled', 'value' => '1', 'group' => 'SMS Gateway', 'type' => 'text'],
             ['key' => 'sms.twilio_account_sid', 'label' => 'Twilio Account SID', 'value' => env('TWILIO_ACCOUNT_SID', ''), 'group' => 'SMS Gateway', 'type' => 'text'],

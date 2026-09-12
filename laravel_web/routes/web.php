@@ -237,6 +237,13 @@ Route::post('/contact', function (\Illuminate\Http\Request $request) {
 
 Route::get('/payment/verify-details/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'showDetails'])->name('payment.verify-details');
 
+// ExpressPay Ghana Routes (Submit, Redirect Callback, IPN Webhook, Status)
+Route::post('/payment/expresspay/initiate', [\App\Http\Controllers\ExpressPayController::class, 'initiate'])->name('payment.expresspay.initiate');
+Route::get('/payment/expresspay/callback', [\App\Http\Controllers\ExpressPayController::class, 'handleRedirect'])->name('payment.expresspay.callback');
+Route::get('/payment/expresspay/redirect', [\App\Http\Controllers\ExpressPayController::class, 'handleRedirect'])->name('payment.expresspay.redirect');
+Route::post('/api/payment/expresspay/ipn', [\App\Http\Controllers\ExpressPayController::class, 'handleIpn'])->name('payment.expresspay.ipn');
+Route::get('/api/payment/expresspay/status/{token}', [\App\Http\Controllers\ExpressPayController::class, 'checkStatus'])->name('payment.expresspay.status');
+
 // User Saved Locations API (Home / Office)
 Route::get('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'index']);
 Route::post('/api/user/saved-locations', [\App\Http\Controllers\SavedLocationController::class, 'store']);
@@ -1258,6 +1265,8 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'requires_payment_hold' => true,
                     'ride_id' => $ride->id,
                     'payment_method' => 'momo',
+                    'checkout_url' => $momoResult['checkout_url'] ?? null,
+                    'redirect_url' => $momoResult['checkout_url'] ?? null,
                     'transaction_ref' => $momoResult['transaction_ref'] ?? null,
                     'message' => $momoResult['message'] ?? 'Please confirm USSD prompt on your phone.',
                     'tracking_url' => "/ride/track/{$ride->id}",

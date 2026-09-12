@@ -104,5 +104,17 @@ return [
         'callback_url' => env('MOMO_CALLBACK_URL', 'https://ridemycars.com/api/payment/momo/callback'),
     ],
 
+    'expresspay' => [
+        'enabled' => env('EXPRESSPAY_ENABLED', true),
+        'mode' => env('EXPRESSPAY_MODE', 'sandbox'),
+        'merchant_id' => env('EXPRESSPAY_MERCHANT_ID', '562786243097'),
+        'api_key' => env('EXPRESSPAY_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'),
+        'sandbox_merchant_id' => env('EXPRESSPAY_SANDBOX_MERCHANT_ID', '562786243097'),
+        'sandbox_api_key' => env('EXPRESSPAY_SANDBOX_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'),
+        'live_merchant_id' => env('EXPRESSPAY_LIVE_MERCHANT_ID', ''),
+        'live_api_key' => env('EXPRESSPAY_LIVE_API_KEY', ''),
+        'currency' => env('EXPRESSPAY_CURRENCY', 'GHS'),
+    ],
+
 ];
 

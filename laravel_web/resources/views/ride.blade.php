@@ -2261,6 +2261,11 @@
                             return;
                         }
 
+                        if (data.checkout_url) {
+                            window.location.href = data.checkout_url;
+                            return;
+                        }
+
                         if (data.requires_payment_hold) {
                             this.currentRideId = data.ride_id;
                             localStorage.setItem('rmc_active_ride_id', data.ride_id);

@@ -252,6 +252,43 @@ class StripeVerificationController extends Controller
         $currency = $booking->currency ?? 'USD';
         $userId = $booking->client_id ?? $booking->customer_id ?? $booking->rider_id ?? Auth::id() ?? 1;
 
+        // Route to ExpressPay Ghana Gateway if MoMo selected and ExpressPay enabled
+        if ($paymentMethod === 'momo' && \App\Services\SettingService::isExpressPayEnabled()) {
+            $user = Auth::user() ?? (auth('sanctum')->check() ? auth('sanctum')->user() : null);
+            $custName = $user?->name ?? 'Customer';
+            $custEmail = $user?->email ?? 'customer@ridemycars.com';
+            $custPhone = $momoPhone ?: ($user?->phone ?? '0244444444');
+
+            $epRes = \App\Services\ExpressPayService::createPayment([
+                'service_type' => $serviceType,
+                'service_id' => $serviceId,
+                'amount' => $amount,
+                'currency' => 'GHS',
+                'customer_name' => $custName,
+                'customer_email' => $custEmail,
+                'customer_phone' => $custPhone,
+                'user_id' => $userId,
+                'order_desc' => "RideMyCars " . ucwords(str_replace('_', ' ', $serviceType)) . " #{$serviceId}",
+                'redirect_url' => url("/payment/expresspay/callback"),
+                'post_url' => url("/api/payment/expresspay/ipn"),
+            ]);
+
+            if (!empty($epRes['success'])) {
+                return response()->json([
+                    'success' => true,
+                    'payment_status' => 'pending',
+                    'payment_method' => 'momo',
+                    'token' => $epRes['token'],
+                    'order_id' => $epRes['order_id'],
+                    'checkout_url' => $epRes['checkout_url'],
+                    'redirect_url' => $epRes['checkout_url'],
+                    'requires_redirect' => true,
+                    'is_payment_confirmed' => false,
+                    'message' => 'ExpressPay Ghana checkout ready. Redirecting...',
+                ]);
+            }
+        }
+
         // Create or update PaymentTransaction record
         $foreignKey = match ($serviceType) {
             'ride', 'rental' => 'ride_id',

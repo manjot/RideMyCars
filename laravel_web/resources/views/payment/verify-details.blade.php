@@ -553,6 +553,10 @@
 
                     const data = await res.json();
                     if (data.success) {
+                        if (data.checkout_url) {
+                            window.location.href = data.checkout_url;
+                            return;
+                        }
                         this.isPaymentConfirmed = true;
                         this.currentPaymentStatus = 'hold';
                         this.startPolling();

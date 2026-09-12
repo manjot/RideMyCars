@@ -66,6 +66,34 @@ class MomoPaymentService
             'hold_authorization_code' => $transactionRef,
         ]);
 
+        // Prioritize ExpressPay Ghana Gateway if enabled
+        if (SettingService::isExpressPayEnabled()) {
+            $epRes = ExpressPayService::createPayment([
+                'service_type' => 'ride',
+                'service_id' => $ride->id,
+                'amount' => $amount,
+                'currency' => $currency,
+                'customer_name' => $ride->passenger_name ?: ($ride->rider?->name ?: 'Customer'),
+                'customer_email' => $ride->passenger_email ?: ($ride->rider?->email ?: 'customer@ridemycars.com'),
+                'customer_phone' => $phone,
+                'user_id' => $ride->rider_id ?: (auth()->id() ?: 1),
+                'order_desc' => "RideMyCars Ride #{$ride->id}",
+            ]);
+
+            if (!empty($epRes['success'])) {
+                return [
+                    'success' => true,
+                    'transaction_ref' => $epRes['token'],
+                    'token' => $epRes['token'],
+                    'order_id' => $epRes['order_id'],
+                    'checkout_url' => $epRes['checkout_url'],
+                    'redirect_url' => $epRes['checkout_url'],
+                    'status' => 'pending_checkout',
+                    'message' => 'ExpressPay Ghana checkout session initiated.',
+                ];
+            }
+        }
+
         $apiUser = config('services.momo.api_user');
         $apiKey = config('services.momo.api_key');
         $subscriptionKey = config('services.momo.subscription_key');
@@ -121,10 +149,36 @@ class MomoPaymentService
      */
     public static function confirmPayment(string $transactionRef): array
     {
-        $transaction = PaymentTransaction::where('transaction_ref', $transactionRef)->first();
+        $transaction = PaymentTransaction::where('transaction_ref', $transactionRef)
+            ->orWhere('gateway_response->token', $transactionRef)
+            ->orWhere('gateway_response->order_id', $transactionRef)
+            ->first();
 
         if (!$transaction) {
             return ['success' => false, 'message' => 'Transaction not found.'];
+        }
+
+        $epToken = $transaction->gateway_response['token'] ?? (strlen($transactionRef) > 25 ? $transactionRef : null);
+        if ($epToken) {
+            $epStatus = ExpressPayService::queryPayment($epToken);
+            $resultCode = (int) ($epStatus['result'] ?? 0);
+            if ($resultCode === 1) {
+                ExpressPayService::fulfillPayment($transaction, $epStatus);
+                return [
+                    'success' => true,
+                    'status' => 'paid',
+                    'transaction_ref' => $transactionRef,
+                    'ride_id' => $transaction->ride_id,
+                    'message' => 'ExpressPay Ghana payment confirmed. Dispatching nearby drivers...',
+                ];
+            } elseif ($resultCode === 4) {
+                return [
+                    'success' => false,
+                    'status' => 'pending',
+                    'transaction_ref' => $transactionRef,
+                    'message' => 'Payment authorization pending on customer phone. Please approve USSD prompt.',
+                ];
+            }
         }
 
         $ride = Ride::find($transaction->ride_id);

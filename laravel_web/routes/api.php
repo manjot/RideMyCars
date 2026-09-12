@@ -46,6 +46,11 @@ Route::post('/stripe/confirm-payment', [StripePaymentController::class, 'confirm
 Route::get('/stripe/payment-status/{identifier}', [StripePaymentController::class, 'getPaymentStatus']);
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
+// ExpressPay Ghana Gateway & Webhooks
+Route::post('/expresspay/initiate', [\App\Http\Controllers\ExpressPayController::class, 'initiate']);
+Route::post('/payment/expresspay/ipn', [\App\Http\Controllers\ExpressPayController::class, 'handleIpn']);
+Route::get('/payment/expresspay/status/{token}', [\App\Http\Controllers\ExpressPayController::class, 'checkStatus']);
+
 // Stripe Driver Verification & Multi-Payment Flow
 Route::post('/payment/submit-verification', [StripeVerificationController::class, 'submitForVerification']);
 Route::post('/payment/authorize-hold', [StripeVerificationController::class, 'authorizePaymentHold']);

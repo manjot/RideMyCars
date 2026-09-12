@@ -108,7 +108,10 @@ class PaymentService
 
         switch ($country) {
             case 'Ghana':
-                return ($method === 'momo') ? 'MTN_MoMo_Gateway' : 'Paystack_Ghana';
+                if (in_array($method, ['expresspay', 'momo', 'gh_card'])) {
+                    return 'ExpressPay_Ghana_Gateway';
+                }
+                return ($method === 'momo') ? 'ExpressPay_Ghana_Gateway' : 'Paystack_Ghana';
             case 'Nigeria':
                 return 'Paystack_Nigeria';
             case 'South Africa':

@@ -49,6 +49,17 @@ class ManageAppSettings extends Page implements HasForms
             'payment_apple_pay_merchant_id' => $all['payment.apple_pay_merchant_id'] ?? 'merchant.com.ridemycars',
             'payment_apple_pay_domain' => $all['payment.apple_pay_domain'] ?? 'ridemycars.com',
 
+            // ExpressPay Ghana Gateway
+            'payment_expresspay_enabled' => (bool) ($all['payment.expresspay_enabled'] ?? true),
+            'payment_expresspay_mode' => $all['payment.expresspay_mode'] ?? 'sandbox',
+            'payment_expresspay_sandbox_merchant_id' => $all['payment.expresspay_sandbox_merchant_id'] ?? ($all['payment.expresspay_merchant_id'] ?? '562786243097'),
+            'payment_expresspay_sandbox_api_key' => $all['payment.expresspay_sandbox_api_key'] ?? ($all['payment.expresspay_api_key'] ?? 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'),
+            'payment_expresspay_live_merchant_id' => $all['payment.expresspay_live_merchant_id'] ?? '',
+            'payment_expresspay_live_api_key' => $all['payment.expresspay_live_api_key'] ?? '',
+            'payment_expresspay_merchant_id' => $all['payment.expresspay_merchant_id'] ?? '562786243097',
+            'payment_expresspay_api_key' => $all['payment.expresspay_api_key'] ?? 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm',
+            'payment_expresspay_currency' => $all['payment.expresspay_currency'] ?? 'GHS',
+
             // SMS Gateway
             'sms_twilio_enabled' => (bool) ($all['sms.twilio_enabled'] ?? true),
             'sms_twilio_account_sid' => $all['sms.twilio_account_sid'] ?? '',
@@ -188,6 +199,63 @@ class ManageAppSettings extends Page implements HasForms
                                             Forms\Components\TextInput::make('payment_apple_pay_domain')
                                                 ->label('Verified Domain Name')
                                                 ->placeholder('ridemycars.com'),
+                                        ]),
+                                    ]),
+
+                                Forms\Components\Section::make('ExpressPay Ghana Gateway (Mobile Money & Cards)')
+                                    ->description('Manage ExpressPay Ghana merchant credentials for MTN MoMo, Telecel Cash, AirtelTigo Money, and GH Cards.')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('payment_expresspay_enabled')
+                                                ->label('Enable ExpressPay Ghana')
+                                                ->default(true),
+                                            Forms\Components\Select::make('payment_expresspay_mode')
+                                                ->label('Active Environment Mode')
+                                                ->options([
+                                                    'sandbox' => '🧪 Sandbox / Test Mode',
+                                                    'live' => '🚀 Live / Production Mode',
+                                                ])
+                                                ->default('sandbox')
+                                                ->helperText('Select which key set to use dynamically for customer transactions.')
+                                                ->required(),
+                                        ]),
+
+                                        Forms\Components\Fieldset::make('🧪 Sandbox / Test Mode Keys')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_expresspay_sandbox_merchant_id')
+                                                    ->label('Sandbox Merchant ID')
+                                                    ->placeholder('562786243097')
+                                                    ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('payment_expresspay_sandbox_api_key')
+                                                    ->label('Sandbox API Key')
+                                                    ->placeholder('DInEOn...')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpanFull(),
+                                            ]),
+
+                                        Forms\Components\Fieldset::make('🚀 Live / Production Mode Keys')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_expresspay_live_merchant_id')
+                                                    ->label('Live Merchant ID')
+                                                    ->placeholder('Your production merchant ID')
+                                                    ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('payment_expresspay_live_api_key')
+                                                    ->label('Live API Key')
+                                                    ->placeholder('Your production API key')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpanFull(),
+                                            ]),
+
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\TextInput::make('payment_expresspay_currency')
+                                                ->label('Settlement Currency')
+                                                ->default('GHS')
+                                                ->disabled(),
+                                            Forms\Components\Placeholder::make('endpoints_info')
+                                                ->label('Gateway Endpoints')
+                                                ->content('Sandbox: sandbox.expresspaygh.com • Live: expresspaygh.com'),
                                         ]),
                                     ]),
                             ]),
@@ -463,6 +531,15 @@ class ManageAppSettings extends Page implements HasForms
             'payment_apple_pay_merchant_id' => ['key' => 'payment.apple_pay_merchant_id', 'group' => 'Payment Gateways'],
             'payment_apple_pay_domain' => ['key' => 'payment.apple_pay_domain', 'group' => 'Payment Gateways'],
 
+            // ExpressPay Gateway
+            'payment_expresspay_enabled' => ['key' => 'payment.expresspay_enabled', 'group' => 'Payment Gateways'],
+            'payment_expresspay_mode' => ['key' => 'payment.expresspay_mode', 'group' => 'Payment Gateways'],
+            'payment_expresspay_sandbox_merchant_id' => ['key' => 'payment.expresspay_sandbox_merchant_id', 'group' => 'Payment Gateways'],
+            'payment_expresspay_sandbox_api_key' => ['key' => 'payment.expresspay_sandbox_api_key', 'group' => 'Payment Gateways'],
+            'payment_expresspay_live_merchant_id' => ['key' => 'payment.expresspay_live_merchant_id', 'group' => 'Payment Gateways'],
+            'payment_expresspay_live_api_key' => ['key' => 'payment.expresspay_live_api_key', 'group' => 'Payment Gateways'],
+            'payment_expresspay_currency' => ['key' => 'payment.expresspay_currency', 'group' => 'Payment Gateways'],
+
             // SMS
             'sms_twilio_enabled' => ['key' => 'sms.twilio_enabled', 'group' => 'SMS Gateway'],
             'sms_twilio_account_sid' => ['key' => 'sms.twilio_account_sid', 'group' => 'SMS Gateway'],
@@ -538,12 +615,22 @@ class ManageAppSettings extends Page implements HasForms
             SettingService::set('payment.stripe_webhook_secret', $state['payment_stripe_test_webhook_secret'] ?? '', 'Payment Gateways');
         }
 
+        // Dynamically assign active ExpressPay keys based on expresspay_mode
+        $expresspayMode = $state['payment_expresspay_mode'] ?? 'sandbox';
+        if ($expresspayMode === 'live') {
+            SettingService::set('payment.expresspay_merchant_id', $state['payment_expresspay_live_merchant_id'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.expresspay_api_key', $state['payment_expresspay_live_api_key'] ?? '', 'Payment Gateways');
+        } else {
+            SettingService::set('payment.expresspay_merchant_id', $state['payment_expresspay_sandbox_merchant_id'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.expresspay_api_key', $state['payment_expresspay_sandbox_api_key'] ?? '', 'Payment Gateways');
+        }
+
         // Re-sync to runtime config
         SettingService::syncToConfig();
 
         Notification::make()
             ->title('Settings Saved Successfully!')
-            ->body('All configurations updated in database. Stripe mode is currently set to: ' . strtoupper($stripeMode))
+            ->body('All configurations updated in database. Stripe mode: ' . strtoupper($stripeMode) . ' • ExpressPay mode: ' . strtoupper($expresspayMode))
             ->success()
             ->send();
     }
@@ -589,6 +676,67 @@ class ManageAppSettings extends Page implements HasForms
                     } catch (\Throwable $e) {
                         Notification::make()
                             ->title('Stripe Connection Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->duration(10000)
+                            ->send();
+                    }
+                }),
+
+            Action::make('testExpressPay')
+                ->label('Test ExpressPay')
+                ->icon('heroicon-o-check-badge')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Test ExpressPay Ghana Gateway')
+                ->modalDescription('Verify that your ExpressPay Ghana credentials can authenticate and communicate with the ExpressPay API.')
+                ->modalSubmitActionLabel('Run ExpressPay Test')
+                ->action(function (): void {
+                    try {
+                        SettingService::syncToConfig();
+                        $mode = SettingService::getActiveExpressPayMode();
+                        $merchantId = SettingService::getActiveExpressPayMerchantId();
+                        $apiKey = SettingService::getActiveExpressPayApiKey();
+
+                        if (empty($merchantId) || empty($apiKey)) {
+                            throw new \Exception("No ExpressPay Merchant ID or API Key configured for active " . strtoupper($mode) . " mode. Please enter and save credentials first.");
+                        }
+
+                        $url = SettingService::getExpressPaySubmitUrl();
+                        $testOrderId = 'PING-' . time();
+
+                        $response = \Illuminate\Support\Facades\Http::asForm()->timeout(15)->post($url, [
+                            'merchant-id' => $merchantId,
+                            'api-key' => $apiKey,
+                            'firstname' => 'Test',
+                            'lastname' => 'Admin',
+                            'email' => 'admin-test@ridemycars.com',
+                            'phonenumber' => '0244444444',
+                            'currency' => 'GHS',
+                            'amount' => '1.00',
+                            'order-id' => $testOrderId,
+                            'redirect-url' => url('/payment/expresspay/callback'),
+                            'post-url' => url('/api/payment/expresspay/ipn'),
+                        ]);
+
+                        $data = $response->json();
+                        $modeLabel = ($mode === 'live') ? '🚀 LIVE MODE' : '🧪 SANDBOX MODE';
+
+                        if (($data['status'] ?? 0) === 1) {
+                            $merchantName = $data['merchant-name'] ?? ($data['merchantservice-name'] ?? 'Ride my Cars');
+                            Notification::make()
+                                ->title("ExpressPay Ghana Connected ({$modeLabel})!")
+                                ->body("Merchant: {$merchantName} ({$merchantId}) • Status: Operational • Settlement Currency: GHS")
+                                ->success()
+                                ->duration(8000)
+                                ->send();
+                        } else {
+                            $msg = $data['message'] ?? 'Authentication failed with ExpressPay API.';
+                            throw new \Exception("ExpressPay Error [Status: " . ($data['status'] ?? 'Unknown') . "]: {$msg}");
+                        }
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('ExpressPay Connection Failed')
                             ->body($e->getMessage())
                             ->danger()
                             ->duration(10000)

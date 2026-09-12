@@ -135,6 +135,25 @@ class SettingService
                 Config::set('services.apple_pay.domain', $applePayDomain);
             }
 
+            // ExpressPay Ghana Gateway (MoMo & Card)
+            $expresspayEnabled = static::get('payment.expresspay_enabled', true);
+            $expresspayMode = static::getActiveExpressPayMode();
+            $expresspayMerchantId = static::getActiveExpressPayMerchantId();
+            $expresspayApiKey = static::getActiveExpressPayApiKey();
+            $expresspayCurrency = static::get('payment.expresspay_currency', 'GHS');
+
+            Config::set('services.expresspay.enabled', filter_var($expresspayEnabled, FILTER_VALIDATE_BOOLEAN));
+            Config::set('services.expresspay.mode', $expresspayMode);
+            if ($expresspayMerchantId) {
+                Config::set('services.expresspay.merchant_id', $expresspayMerchantId);
+            }
+            if ($expresspayApiKey) {
+                Config::set('services.expresspay.api_key', $expresspayApiKey);
+            }
+            if ($expresspayCurrency) {
+                Config::set('services.expresspay.currency', $expresspayCurrency);
+            }
+
             // 2. SMS Gateway (Twilio)
             $twilioSid = static::get('sms.twilio_account_sid');
             if ($twilioSid) {
@@ -297,6 +316,81 @@ class SettingService
             return (string) (static::get('payment.stripe_live_webhook_secret') ?: static::get('payment.stripe_webhook_secret', config('services.stripe.webhook_secret', '')));
         }
         return (string) (static::get('payment.stripe_test_webhook_secret') ?: static::get('payment.stripe_webhook_secret', config('services.stripe.webhook_secret', '')));
+    }
+
+    /**
+     * Get active ExpressPay mode ('sandbox' or 'live').
+     */
+    public static function getActiveExpressPayMode(): string
+    {
+        return (string) static::get('payment.expresspay_mode', config('services.expresspay.mode', 'sandbox'));
+    }
+
+    /**
+     * Check if ExpressPay Ghana gateway is enabled.
+     */
+    public static function isExpressPayEnabled(): bool
+    {
+        $enabled = static::get('payment.expresspay_enabled', config('services.expresspay.enabled', true));
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Get active ExpressPay Merchant ID based on expresspay_mode (sandbox vs live).
+     */
+    public static function getActiveExpressPayMerchantId(): string
+    {
+        $mode = static::getActiveExpressPayMode();
+        if ($mode === 'live') {
+            return (string) (static::get('payment.expresspay_live_merchant_id') ?: static::get('payment.expresspay_merchant_id', config('services.expresspay.live_merchant_id', config('services.expresspay.merchant_id', ''))));
+        }
+        return (string) (static::get('payment.expresspay_sandbox_merchant_id') ?: static::get('payment.expresspay_merchant_id', config('services.expresspay.sandbox_merchant_id', config('services.expresspay.merchant_id', '562786243097'))));
+    }
+
+    /**
+     * Get active ExpressPay API Key based on expresspay_mode (sandbox vs live).
+     */
+    public static function getActiveExpressPayApiKey(): string
+    {
+        $mode = static::getActiveExpressPayMode();
+        if ($mode === 'live') {
+            return (string) (static::get('payment.expresspay_live_api_key') ?: static::get('payment.expresspay_api_key', config('services.expresspay.live_api_key', config('services.expresspay.api_key', ''))));
+        }
+        return (string) (static::get('payment.expresspay_sandbox_api_key') ?: static::get('payment.expresspay_api_key', config('services.expresspay.sandbox_api_key', config('services.expresspay.api_key', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'))));
+    }
+
+    /**
+     * Get active ExpressPay Submit API endpoint URL.
+     */
+    public static function getExpressPaySubmitUrl(): string
+    {
+        $mode = static::getActiveExpressPayMode();
+        return ($mode === 'live')
+            ? 'https://expresspaygh.com/api/submit.php'
+            : 'https://sandbox.expresspaygh.com/api/submit.php';
+    }
+
+    /**
+     * Get active ExpressPay Checkout URL.
+     */
+    public static function getExpressPayCheckoutUrl(string $token): string
+    {
+        $mode = static::getActiveExpressPayMode();
+        $base = ($mode === 'live')
+            ? 'https://expresspaygh.com/api/checkout.php'
+            : 'https://sandbox.expresspaygh.com/api/checkout.php';
+        return $base . '?token=' . urlencode($token);
+    }
+
+    /**
+     * Get active ExpressPay Query API endpoint URL.
+     */
+    public static function getExpressPayQueryUrl(): string
+    {
+        $mode = static::getActiveExpressPayMode();
+        return ($mode === 'live')
+            ? 'https://expresspaygh.com/api/query.php'
+            : 'https://sandbox.expresspaygh.com/api/query.php';
     }
 
     /**
