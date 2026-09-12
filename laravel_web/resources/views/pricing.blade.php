@@ -5,9 +5,12 @@
         $pricingRideCategories = \App\Models\RideCategory::getActiveCategories();
         $countryMultiplier = (float) ($currentPricing?->exchange_rate ?? 1.0);
         $currentCountryCode = $currentPricing?->country_code ?? 'USA';
+        $isGhana = strtoupper(trim($currentCountryCode)) === 'GHA' 
+            || strtoupper(trim($currentPricing?->currency_code ?? '')) === 'GHS' 
+            || ($currentPricing?->currency_symbol ?? '') === 'GH₵';
         $dynamicVehicles = [];
 
-        if ($currentCountryCode === 'GHA') {
+        if ($isGhana) {
             $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
             foreach ($ghanaMatrix as $key => $tier) {
                 $dynamicVehicles[$key] = [

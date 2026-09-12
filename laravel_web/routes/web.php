@@ -997,7 +997,13 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
 
     $countryPricing = \App\Models\CountryPricing::forCountry($country);
 
-    if (strtoupper($countryPricing->country_code ?? 'USA') === 'GHA') {
+    $isGhana = strtoupper($countryPricing->country_code ?? 'USA') === 'GHA'
+        || strtoupper($countryPricing->currency_code ?? '') === 'GHS'
+        || ($countryPricing->currency_symbol ?? '') === 'GH₵'
+        || strtoupper(trim($country ?? '')) === 'GHA'
+        || strtoupper(trim($country ?? '')) === 'GHANA';
+
+    if ($isGhana) {
         $ghanaMatrix = \App\Models\CountryPricing::getGhanaPricingMatrix();
         $categories = [];
         $idx = 0;
@@ -2718,12 +2724,14 @@ Route::get('/admin/run-system-migrations', function () {
         \Illuminate\Support\Facades\Artisan::call('route:clear');
         \Illuminate\Support\Facades\Artisan::call('config:clear');
         \App\Models\CountryRideCategoryPricing::ensureTableExists();
+        \App\Models\CountryRideCategoryPricing::syncGhanaPdfTiers(true);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Migrations executed successfully and caches refreshed.',
+            'message' => 'Migrations executed successfully and official Ghana PDF Cost Matrix synchronized.',
             'country_ride_category_pricings_exists' => \Illuminate\Support\Facades\Schema::hasTable('country_ride_category_pricings'),
             'categories_count' => \App\Models\CountryRideCategoryPricing::count(),
+            'ghana_tiers_count' => \App\Models\CountryRideCategoryPricing::where('country_code', 'GHA')->count(),
             'rides_has_hold_columns' => \Illuminate\Support\Facades\Schema::hasColumn('rides', 'hold_payment_intent_id'),
         ]);
     } catch (\Throwable $e) {
@@ -2731,6 +2739,24 @@ Route::get('/admin/run-system-migrations', function () {
             'status' => 'error',
             'message' => $e->getMessage(),
             'file' => $e->getFile() . ':' . $e->getLine(),
+        ], 500);
+    }
+});
+
+Route::get('/admin/sync-ghana-pricing', function () {
+    try {
+        \App\Models\CountryRideCategoryPricing::syncGhanaPdfTiers(true);
+        $tiers = \App\Models\CountryRideCategoryPricing::where('country_code', 'GHA')->orderBy('sort_order')->get();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Official Ghana PDF Cost Matrix synchronized successfully.',
+            'tiers_count' => $tiers->count(),
+            'tiers' => $tiers,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
         ], 500);
     }
 });

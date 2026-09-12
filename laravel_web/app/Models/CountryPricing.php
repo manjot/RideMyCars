@@ -252,6 +252,7 @@ class CountryPricing extends Model
     public static function getGhanaPricingMatrix(): array
     {
         try {
+            CountryRideCategoryPricing::ensureTableExists();
             $dbTiers = CountryRideCategoryPricing::forCountry('GHA');
             if ($dbTiers->isNotEmpty()) {
                 $matrix = [];

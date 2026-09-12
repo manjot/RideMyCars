@@ -169,9 +169,10 @@ class PricingService
     ): array {
         $pricing = CountryPricing::forCountry($country);
         $countryCode = strtoupper($pricing->country_code ?? 'USA');
+        $currencyCode = strtoupper($pricing->currency_code ?? 'USD');
 
         // Check if Ghana Market Disruption Cost Matrix applies
-        if ($countryCode === 'GHA') {
+        if ($countryCode === 'GHA' || $currencyCode === 'GHS' || strtoupper(trim($country ?? '')) === 'GHA' || strtoupper(trim($country ?? '')) === 'GHANA') {
             $ghanaMatrix = CountryPricing::getGhanaPricingMatrix();
             $lower = strtolower($vehicleType ?? 'standard');
 
