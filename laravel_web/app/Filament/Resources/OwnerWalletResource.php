@@ -98,6 +98,7 @@ class OwnerWalletResource extends Resource
     {
         return [
             'index' => Pages\ListOwnerWallets::route('/'),
+            'edit' => Pages\EditOwnerWallet::route('/{record}/edit'),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CountryPricingResource\RelationManagers;
 
+use App\Models\CountryRideCategoryPricing;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -18,7 +19,7 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        $symbol = $this->ownerRecord->currency_symbol ?? 'GH₵';
+        $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? 'GH₵';
 
         return $form
             ->schema([
@@ -89,7 +90,8 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        $symbol = $this->ownerRecord->currency_symbol ?? 'GH₵';
+        CountryRideCategoryPricing::ensureTableExists();
+        $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? 'GH₵';
 
         return $table
             ->recordTitleAttribute('category_name')
@@ -105,26 +107,26 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
                     ->badge(),
                 Tables\Columns\TextColumn::make('minimum_fare')
                     ->label('Min Fare')
-                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) $state, 2))
+                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('base_fare')
                     ->label('Base Fare')
-                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) $state, 2))
+                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('per_km_rate')
                     ->label('Per KM Rate')
-                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) $state, 2))
+                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('per_minute_rate')
                     ->label('Per Min')
-                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) $state, 2)),
+                    ->formatStateUsing(fn ($state) => "{$symbol}" . number_format((float) ($state ?? 0), 2)),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Active'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
-                        $data['country_code'] = $this->ownerRecord->country_code;
+                        $data['country_code'] = $this->getOwnerRecord()?->country_code ?? $this->ownerRecord?->country_code ?? 'GHA';
                         return $data;
                     }),
             ])

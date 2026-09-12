@@ -167,6 +167,7 @@ class PayoutLedgerResource extends Resource
     {
         return [
             'index' => Pages\ListPayoutLedgers::route('/'),
+            'edit' => Pages\EditPayoutLedger::route('/{record}/edit'),
         ];
     }
 }

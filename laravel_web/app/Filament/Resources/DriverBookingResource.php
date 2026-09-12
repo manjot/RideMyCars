@@ -190,6 +190,7 @@ class DriverBookingResource extends Resource
     {
         return [
             'index' => Pages\ListDriverBookings::route('/'),
+            'edit' => Pages\EditDriverBooking::route('/{record}/edit'),
         ];
     }
 }

@@ -31,7 +31,11 @@ class CountryRideCategoryPricingResource extends Resource
                             Forms\Components\Select::make('country_code')
                                 ->label('Country')
                                 ->options(function () {
-                                    return CountryPricing::query()->pluck('country_name', 'country_code');
+                                    try {
+                                        return CountryPricing::query()->pluck('country_name', 'country_code')->toArray();
+                                    } catch (\Throwable $e) {
+                                        return ['GHA' => 'Ghana', 'USA' => 'United States'];
+                                    }
                                 })
                                 ->default('GHA')
                                 ->required()
@@ -106,6 +110,12 @@ class CountryRideCategoryPricingResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        CountryRideCategoryPricing::ensureTableExists();
+        return parent::getEloquentQuery();
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -129,19 +139,19 @@ class CountryRideCategoryPricingResource extends Resource
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('minimum_fare')
                     ->label('Min Fare')
-                    ->formatStateUsing(fn ($state, CountryRideCategoryPricing $record) => ($record->country_code === 'GHA' ? 'GH₵' : '$') . number_format((float) $state, 2))
+                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('base_fare')
                     ->label('Base Fare')
-                    ->formatStateUsing(fn ($state, CountryRideCategoryPricing $record) => ($record->country_code === 'GHA' ? 'GH₵' : '$') . number_format((float) $state, 2))
+                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('per_km_rate')
                     ->label('Per KM')
-                    ->formatStateUsing(fn ($state, CountryRideCategoryPricing $record) => ($record->country_code === 'GHA' ? 'GH₵' : '$') . number_format((float) $state, 2))
+                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('per_minute_rate')
                     ->label('Per Min')
-                    ->formatStateUsing(fn ($state, CountryRideCategoryPricing $record) => ($record->country_code === 'GHA' ? 'GH₵' : '$') . number_format((float) $state, 2)),
+                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2)),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Active'),
             ])

@@ -240,6 +240,7 @@ class CountryPricing extends Model
      */
     public function rideCategoryPricings(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
+        CountryRideCategoryPricing::ensureTableExists();
         return $this->hasMany(CountryRideCategoryPricing::class, 'country_code', 'country_code');
     }
 

@@ -2710,6 +2710,31 @@ Route::get('/admin/package-delivery-tracker', function () {
 Route::get('/admin/financial-statement/export-csv', [AdminFinancialExportController::class, 'exportCsv']);
 Route::get('/admin/financial-statement/export-pdf', [AdminFinancialExportController::class, 'exportPdf']);
 
+// Safe Diagnostics & Migration Runner Route
+Route::get('/admin/run-system-migrations', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \App\Models\CountryRideCategoryPricing::ensureTableExists();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Migrations executed successfully and caches refreshed.',
+            'country_ride_category_pricings_exists' => \Illuminate\Support\Facades\Schema::hasTable('country_ride_category_pricings'),
+            'categories_count' => \App\Models\CountryRideCategoryPricing::count(),
+            'rides_has_hold_columns' => \Illuminate\Support\Facades\Schema::hasColumn('rides', 'hold_payment_intent_id'),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile() . ':' . $e->getLine(),
+        ], 500);
+    }
+});
+
 // Contact & Inquiry Submission Route
 Route::post('/contact/send', function (\Illuminate\Http\Request $request) {
     $validated = $request->validate([

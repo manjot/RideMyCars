@@ -96,6 +96,7 @@ class RentalInspectionResource extends Resource
     {
         return [
             'index' => Pages\ListRentalInspections::route('/'),
+            'edit' => Pages\EditRentalInspection::route('/{record}/edit'),
         ];
     }
 }

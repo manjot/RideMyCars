@@ -244,7 +244,7 @@ class CountryPricingResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->badge()
-                    ->color(fn (CountryPricing $record): string => $record->is_default ? 'success' : 'gray'),
+                    ->color(fn ($record): string => ($record?->is_default) ? 'success' : 'gray'),
                 Tables\Columns\TextColumn::make('country_name')
                     ->label('Country')
                     ->sortable()
@@ -252,16 +252,16 @@ class CountryPricingResource extends Resource
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('currency')
                     ->label('Currency')
-                    ->state(fn (CountryPricing $record): string => "{$record->currency_symbol} ({$record->currency_code})"),
+                    ->state(fn ($record): string => "{$record?->currency_symbol} ({$record?->currency_code})"),
                 Tables\Columns\TextColumn::make('ride_rates')
                     ->label('Ride (Base / KM)')
-                    ->state(fn (CountryPricing $record): string => "{$record->currency_symbol}{$record->ride_base_fare} + {$record->currency_symbol}{$record->ride_per_km_rate}/km"),
+                    ->state(fn ($record): string => "{$record?->currency_symbol}{$record?->ride_base_fare} + {$record?->currency_symbol}{$record?->ride_per_km_rate}/km"),
                 Tables\Columns\TextColumn::make('delivery_rates')
                     ->label('Delivery (Base / KM)')
-                    ->state(fn (CountryPricing $record): string => "{$record->currency_symbol}{$record->delivery_base_fare} + {$record->currency_symbol}{$record->delivery_per_km_rate}/km"),
+                    ->state(fn ($record): string => "{$record?->currency_symbol}{$record?->delivery_base_fare} + {$record?->currency_symbol}{$record?->delivery_per_km_rate}/km"),
                 Tables\Columns\TextColumn::make('driver_hourly_rate')
                     ->label('Driver/Hr')
-                    ->formatStateUsing(fn ($state, CountryPricing $record): string => "{$record->currency_symbol}{$state}"),
+                    ->formatStateUsing(fn ($state, $record): string => "{$record?->currency_symbol}" . number_format((float) ($state ?? 0), 2)),
                 Tables\Columns\TextColumn::make('rental_price_multiplier')
                     ->label('Rental Mult.')
                     ->suffix('x'),
@@ -277,8 +277,9 @@ class CountryPricingResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn (CountryPricing $record) => !$record->is_default)
-                    ->action(function (CountryPricing $record) {
+                    ->visible(fn ($record) => !($record?->is_default))
+                    ->action(function ($record) {
+                        if (!$record) return;
                         CountryPricing::where('id', '!=', $record->id)->update(['is_default' => false]);
                         $record->update(['is_default' => true]);
                         Notification::make()
@@ -288,7 +289,7 @@ class CountryPricingResource extends Resource
                     }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn (CountryPricing $record) => !$record->is_default),
+                    ->visible(fn ($record) => !($record?->is_default)),
             ])
             ->bulkActions([
             ]);

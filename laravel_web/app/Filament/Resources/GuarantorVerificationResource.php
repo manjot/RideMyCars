@@ -165,6 +165,7 @@ class GuarantorVerificationResource extends Resource
     {
         return [
             'index' => Pages\ListGuarantorVerifications::route('/'),
+            'edit' => Pages\EditGuarantorVerification::route('/{record}/edit'),
         ];
     }
 }
