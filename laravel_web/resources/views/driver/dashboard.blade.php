@@ -9,12 +9,106 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-800 rounded-2xl text-sm font-semibold">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('info'))
+                <div class="mb-6 p-4 bg-blue-100 border border-blue-200 text-blue-800 rounded-2xl text-sm font-semibold">
+                    {{ session('info') }}
+                </div>
+            @endif
+
+            {{-- Inactive Account Warning Banner --}}
+            @if(!$profile->is_live)
+                <div class="mb-8 p-6 rounded-3xl bg-gradient-to-r from-amber-500/15 via-red-500/10 to-amber-500/5 border-2 border-amber-500/40 shadow-lg relative overflow-hidden">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500 text-gray-950 flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
+                                ⚠️
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800">
+                                        Account Inactive
+                                    </span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                                        Verification Action Required
+                                    </span>
+                                </div>
+                                <h3 class="text-lg font-extrabold text-gray-900 dark:text-white">
+                                    Your account is inactive
+                                </h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
+                                    Your account is inactive please connect to admin or check your profile section and make nessesory action.
+                                    Upload your <strong>Vehicle Insurance</strong> and <strong>Vehicle Fitness (Roadworthy) certificate</strong> picture scans so admin can verify and make your account live.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0 w-full md:w-auto">
+                            <a href="#vehicle-certificates-section" class="flex-1 md:flex-none px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span>Check Profile & Upload Certificates</span>
+                            </a>
+                            <a href="mailto:admin@ridemycars.com?subject=Driver%20Account%20Activation%20Request%20-%20{{ urlencode($user->name) }}" class="px-4 py-3 rounded-xl bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/15 font-bold text-xs transition-all flex items-center justify-center">
+                                Connect to Admin
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Status Summary -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 pt-4 border-t border-amber-500/20">
+                        <div class="flex items-center gap-2.5 text-xs font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full {{ $profile->vehicle_insurance_status === 'approved' ? 'bg-emerald-500' : ($profile->vehicle_insurance_status === 'submitted' || $profile->vehicle_insurance_status === 'under_review' ? 'bg-amber-500 animate-pulse' : 'bg-red-500') }}"></span>
+                            <span class="text-gray-600 dark:text-gray-300">Vehicle Insurance:</span>
+                            <span class="font-bold {{ $profile->vehicle_insurance_status === 'approved' ? 'text-emerald-600 dark:text-emerald-400' : ($profile->vehicle_insurance_status === 'submitted' || $profile->vehicle_insurance_status === 'under_review' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400') }}">
+                                {{ ucfirst(str_replace('_', ' ', $profile->vehicle_insurance_status ?? 'not submitted')) }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2.5 text-xs font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full {{ $profile->vehicle_fitness_status === 'approved' ? 'bg-emerald-500' : ($profile->vehicle_fitness_status === 'submitted' || $profile->vehicle_fitness_status === 'under_review' ? 'bg-amber-500 animate-pulse' : 'bg-red-500') }}"></span>
+                            <span class="text-gray-600 dark:text-gray-300">Vehicle Fitness:</span>
+                            <span class="font-bold {{ $profile->vehicle_fitness_status === 'approved' ? 'text-emerald-600 dark:text-emerald-400' : ($profile->vehicle_fitness_status === 'submitted' || $profile->vehicle_fitness_status === 'under_review' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400') }}">
+                                {{ ucfirst(str_replace('_', ' ', $profile->vehicle_fitness_status ?? 'not submitted')) }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2.5 text-xs font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                            <span class="text-gray-600 dark:text-gray-300">Dispatch Status:</span>
+                            <span class="font-bold text-red-600 dark:text-red-400">Blocked (Inactive Account)</span>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="mb-8 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                            Account is Live & Active — You are eligible to receive and accept trip requests from customers!
+                        </span>
+                    </div>
+                    <span class="hidden sm:inline-flex px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-black uppercase">
+                        LIVE DRIVER
+                    </span>
+                </div>
+            @endif
+
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {{ $user->name }}</h1>
                     <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your driver hiring requests, active jobs, and verification.</p>
                 </div>
                 <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase
+                        {{ $profile->is_live ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/30' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-300 dark:border-red-800/30' }}">
+                        <span class="w-2 h-2 rounded-full {{ $profile->is_live ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                        {{ $profile->is_live ? 'Account: Live (Active)' : 'Account: Inactive' }}
+                    </span>
                     <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase
                         {{ $profile->verification_status === 'verified' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-300 dark:border-green-800/30' : 
                           ($profile->verification_status === 'submitted' || $profile->verification_status === 'under_review' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400') }}">
@@ -653,6 +747,195 @@
                         @endif
                     </div>
 
+                    <!-- Vehicle Insurance & Vehicle Fitness (Roadworthy) Certificate Upload Section -->
+                    <div id="vehicle-certificates-section" class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm mb-8">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-gray-100 dark:border-white/10">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <span>🛡️</span>
+                                    <span>Vehicle Certificates Verification</span>
+                                </h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Upload picture scans of your Vehicle Insurance and Roadworthy (Vehicle Fitness) certificates. Admin will review and approve these documents to activate your account.
+                                </p>
+                            </div>
+                            <div>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase
+                                    {{ $profile->is_certificates_approved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }}">
+                                    <span class="w-2 h-2 rounded-full {{ $profile->is_certificates_approved ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                                    {{ $profile->is_certificates_approved ? 'Certificates Approved' : 'Certificates Pending' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <form action="/driver/upload-vehicle-certificates" method="POST" enctype="multipart/form-data" class="space-y-6">
+                            @csrf
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Vehicle Insurance Card -->
+                                <div class="p-5 rounded-2xl border {{ $profile->vehicle_insurance_status === 'rejected' ? 'border-red-300 bg-red-50/40 dark:bg-red-950/20 dark:border-red-900/40' : ($profile->vehicle_insurance_status === 'approved' ? 'border-emerald-300 bg-emerald-50/40 dark:bg-emerald-950/20 dark:border-emerald-900/40' : 'border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5') }} flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h3 class="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                                                <span>📄</span>
+                                                <span>Vehicle Insurance Certificate</span>
+                                            </h3>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase
+                                                {{ $profile->vehicle_insurance_status === 'approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                                                  ($profile->vehicle_insurance_status === 'submitted' || $profile->vehicle_insurance_status === 'under_review' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
+                                                  ($profile->vehicle_insurance_status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300')) }}">
+                                                {{ ucfirst(str_replace('_', ' ', $profile->vehicle_insurance_status ?? 'not submitted')) }}
+                                            </span>
+                                        </div>
+
+                                        @if($profile->vehicle_insurance_status === 'rejected')
+                                            <div class="mb-4 p-3 bg-red-100/70 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-left">
+                                                <p class="text-xs font-bold text-red-800 dark:text-red-300">
+                                                    ⚠️ Rejected by Admin:
+                                                </p>
+                                                <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                                                    {{ $profile->vehicle_insurance_rejection_reason ?? 'Your certificate did not meet requirements. Please re-upload a clear copy.' }}
+                                                </p>
+                                                <p class="text-[10px] font-bold text-red-600 dark:text-red-400 mt-1">
+                                                    Action Required: Please upload a clear picture scan of your valid insurance below.
+                                                </p>
+                                            </div>
+                                        @elseif($profile->vehicle_insurance_status === 'approved')
+                                            <div class="mb-4 p-3 bg-emerald-100/70 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                                                <p class="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                                    ✓ Verified & Approved
+                                                </p>
+                                                <p class="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                                                    Your vehicle insurance is approved by admin.
+                                                </p>
+                                            </div>
+                                        @elseif($profile->vehicle_insurance_status === 'submitted' || $profile->vehicle_insurance_status === 'under_review')
+                                            <div class="mb-4 p-3 bg-amber-100/70 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                                                <p class="text-xs font-bold text-amber-800 dark:text-amber-300">
+                                                    ⏳ Under Review
+                                                </p>
+                                                <p class="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                                                    Admin is currently reviewing your uploaded insurance scan.
+                                                </p>
+                                            </div>
+                                        @endif
+
+                                        @if($profile->insurance_certificate_url)
+                                            <div class="mb-4 p-3 bg-white dark:bg-black/40 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between">
+                                                <div class="flex items-center gap-2.5 overflow-hidden">
+                                                    <span class="text-lg">📷</span>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">Current Insurance Scan</span>
+                                                </div>
+                                                <a href="{{ $profile->insurance_certificate_url }}" target="_blank" class="px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[11px] font-bold shrink-0 shadow-sm">
+                                                    View Scan ↗
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                    {{ $profile->vehicle_insurance_image ? 'Upload New / Replace Insurance Picture Scan' : 'Upload Insurance Picture Scan *' }}
+                                                </label>
+                                                <input type="file" name="vehicle_insurance" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white hover:file:bg-brand-600 cursor-pointer">
+                                                <p class="text-[10px] text-gray-400 mt-1">Photo scan (JPEG, PNG, WEBP) or PDF up to 10MB.</p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Insurance Expiry Date</label>
+                                                <input type="date" name="vehicle_insurance_expiry" value="{{ $profile->vehicle_insurance_expiry ? \Carbon\Carbon::parse($profile->vehicle_insurance_expiry)->format('Y-m-d') : '' }}" class="w-full px-3 py-2 bg-white dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-900 dark:text-white">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Vehicle Fitness (Roadworthy) Card -->
+                                <div class="p-5 rounded-2xl border {{ $profile->vehicle_fitness_status === 'rejected' ? 'border-red-300 bg-red-50/40 dark:bg-red-950/20 dark:border-red-900/40' : ($profile->vehicle_fitness_status === 'approved' ? 'border-emerald-300 bg-emerald-50/40 dark:bg-emerald-950/20 dark:border-emerald-900/40' : 'border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5') }} flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h3 class="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                                                <span>🚗</span>
+                                                <span>Vehicle Fitness (Roadworthy)</span>
+                                            </h3>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase
+                                                {{ $profile->vehicle_fitness_status === 'approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                                                  ($profile->vehicle_fitness_status === 'submitted' || $profile->vehicle_fitness_status === 'under_review' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
+                                                  ($profile->vehicle_fitness_status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300')) }}">
+                                                {{ ucfirst(str_replace('_', ' ', $profile->vehicle_fitness_status ?? 'not submitted')) }}
+                                            </span>
+                                        </div>
+
+                                        @if($profile->vehicle_fitness_status === 'rejected')
+                                            <div class="mb-4 p-3 bg-red-100/70 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-left">
+                                                <p class="text-xs font-bold text-red-800 dark:text-red-300">
+                                                    ⚠️ Rejected by Admin:
+                                                </p>
+                                                <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                                                    {{ $profile->vehicle_fitness_rejection_reason ?? 'Your certificate did not meet requirements. Please re-upload a clear copy.' }}
+                                                </p>
+                                                <p class="text-[10px] font-bold text-red-600 dark:text-red-400 mt-1">
+                                                    Action Required: Please upload a clear picture scan of your valid roadworthy certificate below.
+                                                </p>
+                                            </div>
+                                        @elseif($profile->vehicle_fitness_status === 'approved')
+                                            <div class="mb-4 p-3 bg-emerald-100/70 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                                                <p class="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                                    ✓ Verified & Approved
+                                                </p>
+                                                <p class="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                                                    Your vehicle fitness (roadworthy) certificate is approved.
+                                                </p>
+                                            </div>
+                                        @elseif($profile->vehicle_fitness_status === 'submitted' || $profile->vehicle_fitness_status === 'under_review')
+                                            <div class="mb-4 p-3 bg-amber-100/70 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                                                <p class="text-xs font-bold text-amber-800 dark:text-amber-300">
+                                                    ⏳ Under Review
+                                                </p>
+                                                <p class="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                                                    Admin is currently reviewing your uploaded roadworthy scan.
+                                                </p>
+                                            </div>
+                                        @endif
+
+                                        @if($profile->fitness_certificate_url)
+                                            <div class="mb-4 p-3 bg-white dark:bg-black/40 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between">
+                                                <div class="flex items-center gap-2.5 overflow-hidden">
+                                                    <span class="text-lg">📷</span>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">Current Roadworthy Scan</span>
+                                                </div>
+                                                <a href="{{ $profile->fitness_certificate_url }}" target="_blank" class="px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[11px] font-bold shrink-0 shadow-sm">
+                                                    View Scan ↗
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                    {{ $profile->vehicle_fitness_image ? 'Upload New / Replace Roadworthy Picture Scan' : 'Upload Roadworthy Picture Scan *' }}
+                                                </label>
+                                                <input type="file" name="vehicle_fitness" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white hover:file:bg-brand-600 cursor-pointer">
+                                                <p class="text-[10px] text-gray-400 mt-1">Photo scan (JPEG, PNG, WEBP) or PDF up to 10MB.</p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Roadworthiness Expiry Date</label>
+                                                <input type="date" name="vehicle_fitness_expiry" value="{{ $profile->vehicle_fitness_expiry ? \Carbon\Carbon::parse($profile->vehicle_fitness_expiry)->format('Y-m-d') : '' }}" class="w-full px-3 py-2 bg-white dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-900 dark:text-white">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    💡 <em>Once submitted, the admin panel will inspect your certificates. When approved, admin will activate your driver live status.</em>
+                                </p>
+                                <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                    <span>Upload & Submit Certificates</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                     <!-- License Verification Upload Section -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Driver License Verification</h2>
@@ -863,12 +1146,43 @@
                                 <span class="font-bold text-gray-900 dark:text-white">${{ number_format($profile->daily_rate ?? (($profile->hourly_rate ?? 25) * 8 * 0.85), 2) }}</span>
                             </li>
 
+                            <li class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-white/10">
+                                <span class="text-gray-500 dark:text-gray-400 font-medium">Account Live Status</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black uppercase
+                                    {{ $profile->is_live ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $profile->is_live ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                                    {{ $profile->is_live ? 'Live (Active)' : 'Inactive' }}
+                                </span>
+                            </li>
+                            <li class="flex justify-between items-center text-xs">
+                                <span class="text-gray-500 dark:text-gray-400">Vehicle Insurance</span>
+                                <span class="font-bold {{ $profile->vehicle_insurance_status === 'approved' ? 'text-emerald-600 dark:text-emerald-400' : ($profile->vehicle_insurance_status === 'submitted' || $profile->vehicle_insurance_status === 'under_review' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400') }}">
+                                    {{ ucfirst(str_replace('_', ' ', $profile->vehicle_insurance_status ?? 'not submitted')) }}
+                                </span>
+                            </li>
+                            <li class="flex justify-between items-center text-xs">
+                                <span class="text-gray-500 dark:text-gray-400">Vehicle Fitness</span>
+                                <span class="font-bold {{ $profile->vehicle_fitness_status === 'approved' ? 'text-emerald-600 dark:text-emerald-400' : ($profile->vehicle_fitness_status === 'submitted' || $profile->vehicle_fitness_status === 'under_review' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400') }}">
+                                    {{ ucfirst(str_replace('_', ' ', $profile->vehicle_fitness_status ?? 'not submitted')) }}
+                                </span>
+                            </li>
+
                             <li class="pt-4 border-t border-gray-100 dark:border-white/10">
+                                @if(!$profile->is_live)
+                                    <div class="mb-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl text-left">
+                                        <p class="text-[11px] text-amber-800 dark:text-amber-300 font-semibold leading-relaxed">
+                                            ⚠️ <strong>Account Inactive:</strong> You cannot go online until your Vehicle Insurance and Roadworthy certificates are approved and made Live by admin.
+                                        </p>
+                                    </div>
+                                @endif
                                 <form action="/driver/toggle-availability" method="POST">
                                     @csrf
-                                    <label class="flex justify-between items-center cursor-pointer">
-                                        <span class="font-bold text-gray-900 dark:text-white">Available for Booking</span>
-                                        <input type="checkbox" name="is_available" value="1" onchange="this.form.submit()" {{ $profile->is_available ? 'checked' : '' }} class="w-5 h-5 accent-brand-500">
+                                    <label class="flex justify-between items-center {{ $profile->is_live ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
+                                        <div>
+                                            <span class="font-bold text-gray-900 dark:text-white block">Online for Booking</span>
+                                            <span class="text-[11px] text-gray-400">{{ $profile->is_live ? ($profile->is_available ? 'Online (Receiving Trips)' : 'Offline') : 'Locked (Account Inactive)' }}</span>
+                                        </div>
+                                        <input type="checkbox" name="is_available" value="1" onchange="this.form.submit()" {{ $profile->is_available && $profile->is_live ? 'checked' : '' }} {{ !$profile->is_live ? 'disabled' : '' }} class="w-5 h-5 accent-brand-500">
                                     </label>
                                 </form>
                             </li>
@@ -883,6 +1197,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('driverPolling', () => ({
+                isLive: {{ $profile->is_live ? 'true' : 'false' }},
                 requests: [],
                 responding: false,
                 pollingInterval: null,
@@ -896,6 +1211,10 @@
                 },
                 
                 initPolling() {
+                    // Only poll for customer requests if driver account is active/live
+                    if (!this.isLive) {
+                        return;
+                    }
                     this.fetchRequests();
                     this.pollingInterval = setInterval(() => this.fetchRequests(), 5000); // Check every 5s
                     this.countdownInterval = setInterval(() => {

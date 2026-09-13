@@ -82,8 +82,9 @@ class RideAssignmentService
 
         $allExcluded = array_unique(array_merge($excludedDriverIds, $busyDriverIds));
 
-        // 3. Get all online drivers
+        // 3. Get all online and live (active) drivers
         $query = DriverProfile::where('is_available', true)
+            ->where('is_live', true)
             ->whereNotIn('user_id', $allExcluded);
 
         // Prioritize active drivers who have recent activity over ghost/seed accounts

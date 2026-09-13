@@ -37,10 +37,22 @@ class DriverProfile extends Model
         'current_lat',
         'current_lng',
         'last_location_update',
+        'vehicle_insurance_image',
+        'vehicle_insurance_status',
+        'vehicle_insurance_expiry',
+        'vehicle_insurance_rejection_reason',
+        'vehicle_fitness_image',
+        'vehicle_fitness_status',
+        'vehicle_fitness_expiry',
+        'vehicle_fitness_rejection_reason',
+        'is_live',
     ];
 
     protected $casts = [
         'is_available' => 'boolean',
+        'is_live' => 'boolean',
+        'vehicle_insurance_expiry' => 'date',
+        'vehicle_fitness_expiry' => 'date',
         'last_location_update' => 'datetime',
         'current_lat' => 'float',
         'current_lng' => 'float',
@@ -50,6 +62,9 @@ class DriverProfile extends Model
         'photo_url',
         'masked_license',
         'is_verified',
+        'insurance_certificate_url',
+        'fitness_certificate_url',
+        'is_certificates_approved',
     ];
 
     /**
@@ -117,6 +132,50 @@ class DriverProfile extends Model
         $photoOk = ($this->photo_formality_status === 'verified');
 
         return $licenseOk && $backgroundOk && $photoOk;
+    }
+
+    /**
+     * Get URL for Vehicle Insurance certificate picture scan.
+     */
+    public function getInsuranceCertificateUrlAttribute(): ?string
+    {
+        if (empty($this->vehicle_insurance_image)) {
+            return null;
+        }
+        if (str_starts_with($this->vehicle_insurance_image, 'http://') || str_starts_with($this->vehicle_insurance_image, 'https://')) {
+            return $this->vehicle_insurance_image;
+        }
+        return asset('storage/' . ltrim($this->vehicle_insurance_image, '/'));
+    }
+
+    /**
+     * Get URL for Vehicle Fitness (Roadworthy) certificate picture scan.
+     */
+    public function getFitnessCertificateUrlAttribute(): ?string
+    {
+        if (empty($this->vehicle_fitness_image)) {
+            return null;
+        }
+        if (str_starts_with($this->vehicle_fitness_image, 'http://') || str_starts_with($this->vehicle_fitness_image, 'https://')) {
+            return $this->vehicle_fitness_image;
+        }
+        return asset('storage/' . ltrim($this->vehicle_fitness_image, '/'));
+    }
+
+    /**
+     * Check if both Vehicle Insurance and Fitness certificates are approved.
+     */
+    public function getIsCertificatesApprovedAttribute(): bool
+    {
+        return $this->vehicle_insurance_status === 'approved' && $this->vehicle_fitness_status === 'approved';
+    }
+
+    /**
+     * Check if driver is eligible to be made live by admin.
+     */
+    public function getCanGoLiveAttribute(): bool
+    {
+        return $this->is_certificates_approved;
     }
 
     /**

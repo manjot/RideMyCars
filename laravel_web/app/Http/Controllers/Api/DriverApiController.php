@@ -483,13 +483,78 @@ class DriverApiController extends Controller
         );
 
         $isAvailable = $request->has('is_available') ? $request->boolean('is_available') : !$profile->is_available;
+
+        if ($isAvailable && !$profile->is_live) {
+            return response()->json([
+                'success' => false,
+                'is_available' => false,
+                'is_live' => false,
+                'message' => 'Your account is inactive. Please connect to admin or check your profile section and take necessary action.',
+            ], 422);
+        }
+
         $profile->update(['is_available' => $isAvailable]);
 
         return response()->json([
             'success' => true,
             'is_available' => (bool)$isAvailable,
+            'is_live' => (bool)$profile->is_live,
             'message' => $isAvailable ? 'You are now online and ready for jobs.' : 'You are now offline.',
         ]);
+    }
+
+    /**
+     * Upload vehicle insurance and fitness (roadworthy) certificates picture scans.
+     */
+    public function uploadVehicleCertificates(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $request->validate([
+            'vehicle_insurance' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'vehicle_insurance_expiry' => 'nullable|date',
+            'vehicle_fitness' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'vehicle_fitness_expiry' => 'nullable|date',
+        ]);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
+        $updatedFields = [];
+
+        if ($request->hasFile('vehicle_insurance')) {
+            $path = $request->file('vehicle_insurance')->store('driver_certificates/insurance', 'public');
+            $updatedFields['vehicle_insurance_image'] = $path;
+            $updatedFields['vehicle_insurance_status'] = 'submitted';
+            $updatedFields['vehicle_insurance_rejection_reason'] = null;
+        }
+        if ($request->filled('vehicle_insurance_expiry')) {
+            $updatedFields['vehicle_insurance_expiry'] = $request->vehicle_insurance_expiry;
+        }
+
+        if ($request->hasFile('vehicle_fitness')) {
+            $path = $request->file('vehicle_fitness')->store('driver_certificates/fitness', 'public');
+            $updatedFields['vehicle_fitness_image'] = $path;
+            $updatedFields['vehicle_fitness_status'] = 'submitted';
+            $updatedFields['vehicle_fitness_rejection_reason'] = null;
+        }
+        if ($request->filled('vehicle_fitness_expiry')) {
+            $updatedFields['vehicle_fitness_expiry'] = $request->vehicle_fitness_expiry;
+        }
+
+        if (!empty($updatedFields)) {
+            $profile->update($updatedFields);
+            ActivityLogService::log('document_upload', 'Driver uploaded vehicle certificates via API', $user->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Vehicle certificates uploaded successfully. Admin will review and activate your account.',
+                'data' => $profile->fresh(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No certificate files were provided for upload.',
+        ], 422);
     }
 
     /**
@@ -499,6 +564,16 @@ class DriverApiController extends Controller
     {
         $user = $request->user();
         if (!$user) return response()->json(['success' => true, 'requests' => []]);
+
+        // If driver account is inactive (not live), return empty requests (do not receive customer requests)
+        if ($user->driverProfile && !$user->driverProfile->is_live) {
+            return response()->json([
+                'success' => true,
+                'requests' => [],
+                'is_live' => false,
+                'message' => 'Your account is inactive. Please connect to admin or check your profile section and take necessary action.',
+            ]);
+        }
 
         $requests = [];
         $processedRideIds = [];

@@ -10,6 +10,7 @@ class DriverProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
 
   bool _isOnline = false;
+  bool _isLive = false;
   bool _isLoading = false;
   String? _errorMessage;
   double? _currentLat;
@@ -24,6 +25,7 @@ class DriverProvider extends ChangeNotifier {
   Timer? _locationTimer;
 
   bool get isOnline => _isOnline;
+  bool get isLive => _isLive;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   double? get currentLat => _currentLat;
@@ -44,21 +46,26 @@ class DriverProvider extends ChangeNotifier {
       final res = await _dio.get(ApiConstants.me);
       if (res.statusCode == 200 && res.data['success'] == true) {
         final profile = res.data['driver_profile'];
-        if (profile != null && profile['is_available'] == true) {
-          _isOnline = true;
-          _startDispatchLoop();
-          notifyListeners();
-          return;
+        if (profile != null) {
+          _isLive = profile['is_live'] == true || profile['is_live'] == 1 || profile['is_live'] == '1';
+          if (_isLive && profile['is_available'] == true) {
+            _isOnline = true;
+            _startDispatchLoop();
+            notifyListeners();
+            return;
+          }
         }
       }
     } catch (_) {}
 
-    // If online, ensure dispatch loop runs
-    if (_isOnline) {
+    // If online and live, ensure dispatch loop runs
+    if (_isOnline && _isLive) {
       _startDispatchLoop();
     }
     // Initial fetch of pending requests
-    pollPendingRequests();
+    if (_isLive) {
+      pollPendingRequests();
+    }
   }
 
   Future<void> toggleOnline() async {
@@ -88,7 +95,11 @@ class DriverProvider extends ChangeNotifier {
       }
     } catch (e) {
       _isOnline = previousState;
-      _errorMessage = 'Network connection error. Please try again.';
+      if (e is DioException && e.response?.data != null && e.response?.data['message'] != null) {
+        _errorMessage = e.response?.data['message'].toString();
+      } else {
+        _errorMessage = 'Network connection error. Please try again.';
+      }
       debugPrint('Error toggling availability: $e');
     }
 

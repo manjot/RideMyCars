@@ -2016,6 +2016,11 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json([]);
 
+    // If driver account is inactive (not live), return empty requests (do not receive customer requests)
+    if ($user->driverProfile && !$user->driverProfile->is_live) {
+        return response()->json([]);
+    }
+
     $userIds = [$user->id];
     $matchingIds = \App\Models\User::where('name', $user->name)
         ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
@@ -2023,8 +2028,8 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
         ->toArray();
     $userIds = array_unique(array_merge($userIds, $matchingIds));
 
-    // If driver is online/available, automatically dispatch any pending unassigned rides and bookings
-    if (($user->role === 'driver' || $user->driverProfile) && $user->driverProfile && $user->driverProfile->is_available) {
+    // If driver is online/available and live (active), automatically dispatch any pending unassigned rides and bookings
+    if (($user->role === 'driver' || $user->driverProfile) && $user->driverProfile && $user->driverProfile->is_available && $user->driverProfile->is_live) {
         $user->driverProfile->update(['last_location_update' => now()]);
 
         $pendingRides = \App\Models\Ride::where('status', 'pending')
@@ -2410,7 +2415,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->toArray();
 
         $unassignedPendingRideIds = [];
-        if ($profile->is_available) {
+        if ($profile->is_available && $profile->is_live) {
             $unassignedPendingRideIds = \App\Models\Ride::where('status', 'pending')
                 ->whereNull('driver_id')
                 ->latest()
@@ -2439,7 +2444,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->toArray();
 
         $unassignedBookingIds = [];
-        if ($profile->is_available) {
+        if ($profile->is_available && $profile->is_live) {
             $unassignedBookingIds = \App\Models\DriverBooking::where('booking_status', 'pending')
                 ->whereNull('driver_id')
                 ->latest()
@@ -2539,6 +2544,10 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         if ($user && $user->driverProfile) {
             $wantsAvailable = $request->has('is_available');
 
+            if ($wantsAvailable && !$user->driverProfile->is_live) {
+                return back()->with('error', 'Cannot go online. Your driver account is currently inactive. Please ensure your Vehicle Insurance and Roadworthy certificates are approved by admin, or contact admin to activate your account.');
+            }
+
             if ($wantsAvailable && !$user->driverProfile->is_fully_verified) {
                 $missing = [];
                 if ($user->driverProfile->verification_status !== 'verified') $missing[] = 'Driver License Verification';
@@ -2555,6 +2564,49 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             \App\Services\ActivityLogService::log('status_change', "Driver availability toggled to " . ($user->driverProfile->is_available ? 'Available' : 'Unavailable'), $user->id);
         }
         return back()->with('success', 'Availability updated.');
+    });
+
+    Route::post('/upload-vehicle-certificates', function (\Illuminate\Http\Request $request) {
+        $user = auth()->user();
+        if (!$user) return redirect('/login');
+
+        $request->validate([
+            'vehicle_insurance' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'vehicle_insurance_expiry' => 'nullable|date',
+            'vehicle_fitness' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'vehicle_fitness_expiry' => 'nullable|date',
+        ]);
+
+        $profile = $user->driverProfile ?? \App\Models\DriverProfile::firstOrCreate(['user_id' => $user->id]);
+        $updatedFields = [];
+
+        if ($request->hasFile('vehicle_insurance')) {
+            $insurancePath = $request->file('vehicle_insurance')->store('driver_certificates/insurance', 'public');
+            $updatedFields['vehicle_insurance_image'] = $insurancePath;
+            $updatedFields['vehicle_insurance_status'] = 'submitted';
+            $updatedFields['vehicle_insurance_rejection_reason'] = null; // Clear rejection reason upon new upload
+        }
+        if ($request->filled('vehicle_insurance_expiry')) {
+            $updatedFields['vehicle_insurance_expiry'] = $request->vehicle_insurance_expiry;
+        }
+
+        if ($request->hasFile('vehicle_fitness')) {
+            $fitnessPath = $request->file('vehicle_fitness')->store('driver_certificates/fitness', 'public');
+            $updatedFields['vehicle_fitness_image'] = $fitnessPath;
+            $updatedFields['vehicle_fitness_status'] = 'submitted';
+            $updatedFields['vehicle_fitness_rejection_reason'] = null; // Clear rejection reason upon new upload
+        }
+        if ($request->filled('vehicle_fitness_expiry')) {
+            $updatedFields['vehicle_fitness_expiry'] = $request->vehicle_fitness_expiry;
+        }
+
+        if (!empty($updatedFields)) {
+            $profile->update($updatedFields);
+            \App\Services\ActivityLogService::log('document_upload', 'Driver submitted vehicle certificates for verification', $user->id);
+            return back()->with('success', 'Vehicle certificates uploaded successfully! Admin will review and approve your certificates to activate your account.');
+        }
+
+        return back()->with('info', 'Please select at least one certificate file to upload.');
     });
 
     Route::post('/profile/update', function (\Illuminate\Http\Request $request) {

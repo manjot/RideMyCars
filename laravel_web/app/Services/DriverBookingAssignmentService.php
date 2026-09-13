@@ -41,7 +41,7 @@ class DriverBookingAssignmentService
         // 3. If customer picked a specific driver and they haven't been asked yet
         if ($booking->driver_profile_id && !in_array($booking->driver_id, $excludedDriverIds)) {
             $requestedDriver = DriverProfile::find($booking->driver_profile_id);
-            if ($requestedDriver && $requestedDriver->is_available && !in_array($requestedDriver->user_id, $allExcluded)) {
+            if ($requestedDriver && $requestedDriver->is_available && $requestedDriver->is_live && !in_array($requestedDriver->user_id, $allExcluded)) {
                 $assignment = RideAssignment::create([
                     'driver_booking_id' => $booking->id,
                     'ride_id' => null,
@@ -54,8 +54,9 @@ class DriverBookingAssignmentService
             }
         }
 
-        // 4. Proximity matching for online available drivers
+        // 4. Proximity matching for online available and live (active) drivers
         $query = DriverProfile::where('is_available', true)
+            ->where('is_live', true)
             ->whereNotIn('user_id', $allExcluded);
 
         // Prioritize active drivers who have recent activity over ghost/seed accounts

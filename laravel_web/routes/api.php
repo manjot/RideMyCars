@@ -132,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/driver/earnings', [DriverApiController::class, 'earnings']);
     Route::post('/driver/profile', [DriverApiController::class, 'updateProfile']);
     Route::post('/driver/photo', [DriverApiController::class, 'uploadPhoto']);
+    Route::post('/driver/vehicle-certificates', [DriverApiController::class, 'uploadVehicleCertificates']);
 
     // Driver Bookings & Reviews
     Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
