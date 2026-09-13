@@ -13,6 +13,7 @@ class AppColors {
   static const Color info = Color(0xFF3B82F6); // Blue 500
   static const Color warning = Color(0xFFF59E0B); // Amber 500
   static const Color danger = Color(0xFFEF4444); // Red 500
+  static const Color error = Color(0xFFEF4444);
   static const Color purple = Color(0xFF6366F1); // Indigo 500
 
   // Text Colors

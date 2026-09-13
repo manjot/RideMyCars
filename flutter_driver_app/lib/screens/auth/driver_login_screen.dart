@@ -20,7 +20,7 @@ class DriverLoginScreen extends StatefulWidget {
 
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'sipho@ridemycars.com');
+  final _emailController = TextEditingController(text: 'michael.driver@ridemycars.com');
   final _otpEmailController = TextEditingController();
   final _passwordController = TextEditingController(text: '123456');
   final _mobileNumberController = TextEditingController();
