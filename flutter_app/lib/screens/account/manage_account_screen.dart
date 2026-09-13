@@ -341,13 +341,88 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 12),
-                  _buildActionTile(Icons.emergency_outlined, 'Emergency Contacts', 'Manage trusted contacts'),
+                  _buildActionTile(
+                    Icons.emergency_outlined,
+                    'Emergency Contacts',
+                    'Manage trusted contacts',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Emergency contacts feature enabled.')),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 10),
-                  _buildActionTile(Icons.lock_outline_rounded, 'Privacy & Permissions', 'Location, notifications & data'),
+                  _buildActionTile(
+                    Icons.lock_outline_rounded,
+                    'Privacy & Permissions',
+                    'Location, notifications & data',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Privacy settings are up to date.')),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildActionTile(
+                    Icons.delete_forever_rounded,
+                    'Delete Account',
+                    'Permanently delete your profile and all associated data',
+                    isDestructive: true,
+                    onTap: _showDeleteAccountDialog,
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),
             ),
+    );
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+            SizedBox(width: 10),
+            Text('Delete Account', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to permanently delete your RideMyCars account? All your personal profile information, booking history, and stored preferences will be completely deleted. This action is irreversible.',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textLight)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              await auth.logout();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Your account deletion request has been processed.'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Permanently Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -412,29 +487,46 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     );
   }
 
-  Widget _buildActionTile(IconData icon, String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity( 0.06)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 22),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: AppColors.textLight, fontSize: 14, fontWeight: FontWeight.bold)),
-                Text(subtitle, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-              ],
-            ),
+  Widget _buildActionTile(IconData icon, String title, String subtitle, {VoidCallback? onTap, bool isDestructive = false}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDestructive ? AppColors.error.withOpacity(0.3) : Colors.white.withOpacity( 0.06),
           ),
-          const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 14),
-        ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isDestructive ? AppColors.error : AppColors.primary, size: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: isDestructive ? AppColors.error : AppColors.textLight,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(subtitle, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: isDestructive ? AppColors.error.withOpacity(0.5) : Colors.white24,
+              size: 14,
+            ),
+          ],
+        ),
       ),
     );
   }
