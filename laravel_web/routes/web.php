@@ -2615,18 +2615,40 @@ Route::prefix('driver')->middleware('auth')->group(function () {
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:50',
-            'hourly_rate' => 'nullable|numeric|min:5',
-            'daily_rate' => 'nullable|numeric|min:20',
-            'weekly_rate' => 'nullable|numeric|min:100',
-            'bio' => 'nullable|string|max:1000',
+            'country' => 'nullable|string|max:100',
             'service_area' => 'nullable|string|max:255',
+            'experience_years' => 'nullable|integer|min:1|max:60',
+            'hourly_rate' => 'nullable|numeric|min:1',
+            'daily_rate' => 'nullable|numeric|min:10',
+            'weekly_rate' => 'nullable|numeric|min:50',
+            'bio' => 'nullable|string|max:2000',
+            'license_number' => 'nullable|string|max:100',
+            'license_expiry' => 'nullable|date',
+            'license_country' => 'nullable|string|max:100',
             'driver_photo' => 'nullable|image|max:10240',
+            'license_front_image' => 'nullable|image|max:10240',
+            'license_back_image' => 'nullable|image|max:10240',
         ]);
 
         $userUpdates = ['name' => $validated['name']];
+        if (!empty($validated['email'])) {
+            $userUpdates['email'] = $validated['email'];
+        }
         if (!empty($validated['phone'])) {
-            $userUpdates['phone'] = $validated['phone'];
+            try {
+                $smsService = app(\App\Services\TwilioSmsService::class);
+                $userUpdates['phone'] = $smsService->formatE164($validated['phone']);
+            } catch (\Throwable $e) {
+                $userUpdates['phone'] = $validated['phone'];
+            }
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'country') && !empty($validated['country'])) {
+            $userUpdates['country'] = $validated['country'];
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'city') && !empty($validated['service_area'])) {
+            $userUpdates['city'] = $validated['service_area'];
         }
         $user->update($userUpdates);
 
@@ -2636,8 +2658,13 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             'hourly_rate' => $validated['hourly_rate'] ?? $profile->hourly_rate,
             'daily_rate' => $validated['daily_rate'] ?? $profile->daily_rate,
             'weekly_rate' => $validated['weekly_rate'] ?? $profile->weekly_rate,
-            'bio' => $validated['bio'] ?? $profile->bio,
+            'experience_years' => $validated['experience_years'] ?? $profile->experience_years,
+            'country' => $validated['country'] ?? $profile->country,
             'service_area' => $validated['service_area'] ?? $profile->service_area,
+            'bio' => $validated['bio'] ?? $profile->bio,
+            'license_number' => $validated['license_number'] ?? $profile->license_number,
+            'license_expiry' => $validated['license_expiry'] ?? $profile->license_expiry,
+            'license_country' => $validated['license_country'] ?? $profile->license_country ?? ($validated['country'] ?? $profile->country),
         ];
 
         if ($request->hasFile('driver_photo')) {
@@ -2647,9 +2674,23 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             $user->update(['avatar' => $photoPath]);
         }
 
-        $profile->update($profileUpdates);
+        if ($request->hasFile('license_front_image')) {
+            $frontPath = $request->file('license_front_image')->store('drivers/licenses', 'public');
+            $profileUpdates['license_front_image'] = $frontPath;
+            if ($profile->verification_status === 'rejected' || empty($profile->verification_status)) {
+                $profileUpdates['verification_status'] = 'submitted';
+            }
+        }
 
-        return back()->with('success', 'Driver profile and photo updated successfully!');
+        if ($request->hasFile('license_back_image')) {
+            $backPath = $request->file('license_back_image')->store('drivers/licenses', 'public');
+            $profileUpdates['license_back_image'] = $backPath;
+        }
+
+        $profile->update($profileUpdates);
+        \App\Services\ActivityLogService::log('profile_update', 'Driver profile and registration credentials updated', $user->id);
+
+        return back()->with('success', 'Driver profile, credentials, and rates updated successfully!');
     });
 });
 
@@ -2705,7 +2746,9 @@ Route::get('/activity', function () {
 
 Route::get('/account', function () {
     $user = auth()->user();
-    return view('account', compact('user'));
+    $vehicles = $user->vehicles()->latest()->get();
+    $driverProfile = $user->driverProfile;
+    return view('account', compact('user', 'vehicles', 'driverProfile'));
 })->middleware('auth');
 
 Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {
@@ -2719,6 +2762,104 @@ Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {
         $user->driverProfile->update(['image_url' => $path]);
     }
     return back()->with('success', 'Profile photo updated successfully!');
+})->middleware('auth');
+
+Route::post('/account/update', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user) return redirect('/login');
+
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+        'phone' => 'nullable|string|max:50',
+        'country' => 'nullable|string|max:100',
+        'city' => 'nullable|string|max:100',
+    ]);
+
+    $updates = [
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+    ];
+
+    if (!empty($validated['phone'])) {
+        try {
+            $smsService = app(\App\Services\TwilioSmsService::class);
+            $updates['phone'] = $smsService->formatE164($validated['phone']);
+        } catch (\Throwable $e) {
+            $updates['phone'] = $validated['phone'];
+        }
+    }
+
+    if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'country') && !empty($validated['country'])) {
+        $updates['country'] = $validated['country'];
+    }
+    if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'city') && !empty($validated['city'])) {
+        $updates['city'] = $validated['city'];
+    }
+
+    $user->update($updates);
+
+    if ($user->driverProfile) {
+        $driverUpdates = [];
+        if (!empty($validated['country'])) $driverUpdates['country'] = $validated['country'];
+        if (!empty($validated['city'])) $driverUpdates['service_area'] = $validated['city'];
+        if (!empty($driverUpdates)) {
+            $user->driverProfile->update($driverUpdates);
+        }
+    }
+
+    \App\Services\ActivityLogService::log('profile_update', 'User account details updated', $user->id);
+
+    if ($request->expectsJson() || $request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully!',
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'country' => $user->country ?? 'USA',
+                'city' => $user->city ?? '',
+            ]
+        ]);
+    }
+
+    return back()->with('success', 'Profile updated successfully!');
+})->middleware('auth');
+
+Route::post('/account/password', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user) return redirect('/login');
+
+    $request->validate([
+        'current_password' => 'required|string',
+        'password' => 'required|string|min:8|confirmed',
+    ]);
+
+    if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The provided current password does not match our records.'
+            ], 422);
+        }
+        return back()->withErrors(['current_password' => 'The provided current password does not match our records.']);
+    }
+
+    $user->update([
+        'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+    ]);
+
+    \App\Services\ActivityLogService::log('password_update', 'User password changed', $user->id);
+
+    if ($request->expectsJson() || $request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully!'
+        ]);
+    }
+
+    return back()->with('success', 'Password updated successfully!');
 })->middleware('auth');
 
 Route::get('/wallet', function () {

@@ -1046,9 +1046,10 @@
                 <!-- Sidebar (Profile & Rates) -->
                 <div class="space-y-8">
                     <!-- Driver Profile Details -->
-                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm" x-data="{ showEditModal: false }">
+                    <!-- Driver Profile Details & Edit Profile Feature -->
+                    <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm" x-data="driverProfileModal()">
                         <div class="flex items-center gap-4 mb-5 pb-5 border-b border-gray-100 dark:border-white/10">
-                            <div class="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 flex-shrink-0 border-2 border-brand-500 shadow-md">
+                            <div class="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/10 flex-shrink-0 border-2 border-brand-500 shadow-md group">
                                 @if($profile->image_url)
                                     <img src="{{ str_starts_with($profile->image_url, 'http') ? $profile->image_url : asset('storage/' . $profile->image_url) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                                 @elseif($user->profile_photo_path)
@@ -1060,62 +1061,382 @@
                                         {{ strtoupper(substr($user->name ?? 'D', 0, 1)) }}
                                     </div>
                                 @endif
-                                <button type="button" @click="showEditModal = true" class="absolute bottom-0 right-0 left-0 bg-black/70 hover:bg-black text-[10px] text-white py-0.5 text-center font-bold transition-colors">
+                                <button type="button" @click="showEditModal = true" class="absolute bottom-0 right-0 left-0 bg-black/80 hover:bg-amber-400 hover:text-black text-[10px] text-white py-0.5 text-center font-bold transition-colors cursor-pointer">
                                     Edit
                                 </button>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-black text-gray-900 dark:text-white text-base truncate">{{ $user->name }}</h3>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h3 class="font-black text-gray-900 dark:text-white text-base truncate">{{ $user->name }}</h3>
+                                    @if(($profile->verification_status ?? '') === 'verified')
+                                        <span class="text-amber-500 inline-flex items-center" title="Verified Chauffeur">
+                                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                                        </span>
+                                    @endif
+                                </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $user->phone ?? 'No phone added' }}</p>
-                                <button type="button" @click="showEditModal = true" class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline">
-                                    <span>📸 Edit Profile & Photo</span>
+                                <button type="button" @click="showEditModal = true" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400/15 hover:bg-amber-400/25 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                                    <span>⚙️ Edit Profile & Documents</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Edit Profile & Photo Modal -->
-                        <div x-show="showEditModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @keydown.escape.window="showEditModal = false">
-                            <div class="bg-white dark:bg-[#1e1e1e] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 dark:border-white/10 overflow-y-auto max-h-[90vh]" @click.away="showEditModal = false">
-                                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
-                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Edit Driver Profile & Photo</h3>
-                                    <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">&times;</button>
+                        <!-- REDESIGNED FULL EDIT DRIVER PROFILE MODAL (Teleported directly to Body to eliminate container clipping) -->
+                        <template x-teleport="body">
+                            <div x-show="showEditModal" 
+                                 x-cloak 
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 x-transition:leave="transition ease-in duration-200"
+                                 x-transition:leave-start="opacity-100"
+                                 x-transition:leave-end="opacity-0"
+                                 class="fixed inset-0 z-[999999] overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6" 
+                                 @keydown.escape.window="showEditModal = false">
+                                
+                                <div class="bg-white dark:bg-[#151515] text-gray-900 dark:text-white rounded-3xl max-w-3xl w-full shadow-2xl border border-gray-200 dark:border-white/10 flex flex-col my-auto max-h-[92vh] overflow-hidden" 
+                                     @click.away="showEditModal = false">
+                                    
+                                    <!-- Modal Header (Sticky) -->
+                                    <div class="px-6 py-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between bg-gray-50/80 dark:bg-[#1a1a1a] sticky top-0 z-20">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-500 flex items-center justify-center text-xl font-bold">
+                                                👨‍✈️
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                                    <span>Edit Driver Profile</span>
+                                                </h3>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">Manage all registration information, chauffeur rates, license documents, and service area.</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[11px] font-black uppercase px-2.5 py-1 rounded-full {{ $profile->is_live ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-500/30' }}">
+                                                {{ $profile->is_live ? '● Live' : '○ Inactive' }}
+                                            </span>
+                                            <button type="button" @click="showEditModal = false" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-500 dark:text-gray-300 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Navigation Tabs -->
+                                    <div class="flex items-center gap-1 sm:gap-2 px-6 pt-3 pb-2 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#151515] overflow-x-auto text-xs font-bold">
+                                        <button type="button" @click="activeTab = 'personal'" 
+                                                class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5"
+                                                :class="activeTab === 'personal' ? 'bg-[#102b54] text-white dark:bg-amber-400 dark:text-[#102b54] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                            <span>👤</span> Personal & Contact
+                                        </button>
+                                        <button type="button" @click="activeTab = 'chauffeur'" 
+                                                class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5"
+                                                :class="activeTab === 'chauffeur' ? 'bg-[#102b54] text-white dark:bg-amber-400 dark:text-[#102b54] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                            <span>👨‍✈️</span> Chauffeur & Rates
+                                        </button>
+                                        <button type="button" @click="activeTab = 'license'" 
+                                                class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5"
+                                                :class="activeTab === 'license' ? 'bg-[#102b54] text-white dark:bg-amber-400 dark:text-[#102b54] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                            <span>🪪</span> License & Documents
+                                        </button>
+                                        <button type="button" @click="activeTab = 'compliance'" 
+                                                class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5"
+                                                :class="activeTab === 'compliance' ? 'bg-[#102b54] text-white dark:bg-amber-400 dark:text-[#102b54] shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                            <span>🛡️</span> Vehicle Compliance
+                                        </button>
+                                    </div>
+
+                                    <!-- Modal Body (Scrollable Form) -->
+                                    <form action="/driver/profile/update" method="POST" enctype="multipart/form-data" class="flex-1 overflow-y-auto px-6 py-5 space-y-6 text-left" @submit="isSaving = true">
+                                        @csrf
+                                        
+                                        <!-- TAB 1: PERSONAL & CONTACT -->
+                                        <div x-show="activeTab === 'personal'" class="space-y-4">
+                                            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3 text-xs text-amber-800 dark:text-amber-200">
+                                                <span class="text-base">ℹ️</span>
+                                                <span>Personal and contact details entered during registration. These help passengers identify and contact their assigned chauffeur.</span>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Full Name *</label>
+                                                    <input type="text" name="name" value="{{ $user->name }}" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Registered Email Address</label>
+                                                    <div class="relative">
+                                                        <input type="email" name="email" value="{{ $user->email }}" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Verified</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Mobile Phone Number</label>
+                                                    <input type="tel" name="phone" value="{{ $user->phone }}" placeholder="+1 555-0199" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+
+                                                <!-- Country Selector with Flag Dropdown -->
+                                                <div class="relative">
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Operating Country *</label>
+                                                    <input type="hidden" name="country" :value="selectedCountry ? selectedCountry.name : '{{ $profile->country ?? $user->country ?? 'United States' }}'">
+                                                    
+                                                    <button type="button" @click="countryOpen = !countryOpen" 
+                                                            class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-900 dark:text-white text-left cursor-pointer hover:border-amber-400 transition-colors">
+                                                        <div class="flex items-center gap-2.5 min-w-0">
+                                                            <template x-if="selectedCountry">
+                                                                <img :src="selectedCountry.flagUrl || `https://flagcdn.com/w40/${(selectedCountry.code || 'us').toLowerCase()}.png`" 
+                                                                     :alt="selectedCountry.name" 
+                                                                     class="w-5 h-3.5 object-cover rounded-sm shadow-xs shrink-0">
+                                                            </template>
+                                                            <span class="truncate" x-text="selectedCountry ? selectedCountry.name : '{{ $profile->country ?? 'United States' }}'"></span>
+                                                        </div>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200" :class="countryOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                    </button>
+                                                    
+                                                    <div x-show="countryOpen" @click.away="countryOpen = false" style="display: none;"
+                                                         class="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#1c1c1c] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-50 overflow-hidden">
+                                                        <div class="p-2 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-gray-50 dark:bg-[#222]">
+                                                            <input type="text" x-model="countrySearch" placeholder="Search country..."
+                                                                   class="w-full px-3 py-2 bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-amber-400">
+                                                        </div>
+                                                        <div class="max-h-48 overflow-y-auto p-1 text-xs space-y-0.5">
+                                                            <template x-for="c in countryList" :key="c.code">
+                                                                <button type="button" @click="selectedCountry = c; countryOpen = false; countrySearch = ''"
+                                                                        class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer"
+                                                                        :class="selectedCountry && selectedCountry.code === c.code ? 'bg-amber-400 text-black font-bold' : 'text-gray-800 dark:text-gray-200'">
+                                                                    <div class="flex items-center gap-2.5 min-w-0">
+                                                                        <img :src="c.flagUrl || `https://flagcdn.com/w40/${(c.code || 'us').toLowerCase()}.png`" 
+                                                                             :alt="c.name" 
+                                                                             loading="lazy"
+                                                                             class="w-5 h-3.5 object-cover rounded-sm shadow-xs shrink-0">
+                                                                        <span class="truncate" x-text="c.name"></span>
+                                                                    </div>
+                                                                    <span class="font-mono text-[10px] opacity-70" x-text="c.code"></span>
+                                                                </button>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Primary Service Area / Operating City</label>
+                                                <input type="text" name="service_area" value="{{ $profile->service_area ?? $user->city ?? '' }}" placeholder="e.g. Greater London, Johannesburg & Sandton, Miami Metro" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Specify cities or regions where you are ready to receive ride requests and chauffeur bookings.</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- TAB 2: CHAUFFEUR & RATES -->
+                                        <div x-show="activeTab === 'chauffeur'" class="space-y-5" style="display: none;">
+                                            <!-- Chauffeur Formal Photo -->
+                                            <div>
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                                        Formal Chauffeur Photo <span class="text-amber-500 font-semibold normal-case">(Professional Attire)</span>
+                                                    </label>
+                                                    <span class="text-[11px] text-gray-400">Max 10MB</span>
+                                                </div>
+                                                
+                                                <input type="file" name="driver_photo" id="driverPhotoEditInput" x-ref="driverPhotoInput" accept="image/*" class="hidden" @change="handleDriverPhoto($event.target.files[0])">
+                                                
+                                                <div class="flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-[#202020]">
+                                                    <div class="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-black/40 border-2 border-amber-400 shadow-md shrink-0">
+                                                        <template x-if="driverPhotoPreview">
+                                                            <img :src="driverPhotoPreview" alt="Preview" class="w-full h-full object-cover">
+                                                        </template>
+                                                        <template x-if="!driverPhotoPreview">
+                                                            @if($profile->image_url)
+                                                                <img src="{{ str_starts_with($profile->image_url, 'http') ? $profile->image_url : asset('storage/' . $profile->image_url) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                                            @elseif($user->avatar_url)
+                                                                <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                                            @else
+                                                                <div class="w-full h-full flex items-center justify-center text-3xl">👨‍✈️</div>
+                                                            @endif
+                                                        </template>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white" x-text="driverFileName ? driverFileName : 'Formal Chauffeur Profile Picture'"></h4>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Formal suit, shirt or tie recommended. Visible to customers on booking.</p>
+                                                        <div class="mt-2.5 flex items-center gap-2">
+                                                            <button type="button" @click="$refs.driverPhotoInput.click()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[#102b54] font-black text-xs rounded-xl transition cursor-pointer shadow-xs">
+                                                                Browse / Change Photo
+                                                            </button>
+                                                            <template x-if="driverPhotoPreview">
+                                                                <button type="button" @click="driverPhotoPreview = null; driverFileName = ''; $refs.driverPhotoInput.value = ''" class="px-3 py-1.5 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-200 transition cursor-pointer">
+                                                                    Revert
+                                                                </button>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Commercial Driving Experience (Years)</label>
+                                                    <input type="number" name="experience_years" min="1" max="60" value="{{ $profile->experience_years ?? 5 }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Hourly Chauffeur Rate ($)</label>
+                                                    <input type="number" step="0.50" name="hourly_rate" min="1" value="{{ $profile->hourly_rate ?? 25.00 }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Daily Chauffeur Rate ($)</label>
+                                                    <input type="number" step="1.00" name="daily_rate" min="10" value="{{ $profile->daily_rate ?? 170.00 }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Weekly Chauffeur Rate ($)</label>
+                                                    <input type="number" step="5.00" name="weekly_rate" min="50" value="{{ $profile->weekly_rate ?? 950.00 }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Professional Bio & Experience Summary</label>
+                                                <textarea name="bio" rows="3" placeholder="Describe your executive chauffeuring background, vehicle safety habits, and notable service highlights..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">{{ $profile->bio }}</textarea>
+                                            </div>
+                                        </div>
+
+                                        <!-- TAB 3: LICENSE & DOCUMENTS -->
+                                        <div x-show="activeTab === 'license'" class="space-y-5" style="display: none;">
+                                            <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
+                                                <div class="flex items-center gap-2.5">
+                                                    <span class="text-base">🪪</span>
+                                                    <div>
+                                                        <span class="font-bold text-blue-900 dark:text-blue-200">License Status:</span>
+                                                        <span class="font-black uppercase tracking-wider ml-1 text-amber-600 dark:text-amber-400">{{ ucfirst($profile->verification_status ?? 'unverified') }}</span>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 font-mono">{{ $profile->masked_license }}</span>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Driver License Number *</label>
+                                                    <input type="text" name="license_number" value="{{ $profile->license_number }}" required placeholder="e.g. DL-99887766" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-mono font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">License Expiry Date</label>
+                                                    <input type="date" name="license_expiry" value="{{ $profile->license_expiry ? \Carbon\Carbon::parse($profile->license_expiry)->format('Y-m-d') : '' }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">License Issuing Country / Jurisdiction</label>
+                                                <input type="text" name="license_country" value="{{ $profile->license_country ?? $profile->country ?? 'USA' }}" placeholder="e.g. United States, United Kingdom, South Africa" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                            </div>
+
+                                            <!-- Document Upload Previews -->
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <!-- Front Document -->
+                                                <div class="p-4 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-2xl space-y-2">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">License Front Image</span>
+                                                        @if($profile->license_front_image)
+                                                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">Uploaded</span>
+                                                        @endif
+                                                    </div>
+                                                    
+                                                    @if($profile->license_front_image)
+                                                        <div class="h-28 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                                                            <img src="{{ asset('storage/' . $profile->license_front_image) }}" alt="License Front" class="w-full h-full object-cover">
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    <input type="file" name="license_front_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#102b54] file:text-white dark:file:bg-amber-400 dark:file:text-black hover:file:opacity-90 cursor-pointer">
+                                                    <p class="text-[10px] text-gray-400">Select file to replace current front copy.</p>
+                                                </div>
+
+                                                <!-- Back Document -->
+                                                <div class="p-4 bg-gray-50 dark:bg-[#202020] border border-gray-200 dark:border-white/10 rounded-2xl space-y-2">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">License Back Image</span>
+                                                        @if($profile->license_back_image)
+                                                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">Uploaded</span>
+                                                        @endif
+                                                    </div>
+                                                    
+                                                    @if($profile->license_back_image)
+                                                        <div class="h-28 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                                                            <img src="{{ asset('storage/' . $profile->license_back_image) }}" alt="License Back" class="w-full h-full object-cover">
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    <input type="file" name="license_back_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#102b54] file:text-white dark:file:bg-amber-400 dark:file:text-black hover:file:opacity-90 cursor-pointer">
+                                                    <p class="text-[10px] text-gray-400">Select file to replace current back copy.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- TAB 4: COMPLIANCE & CERTIFICATES -->
+                                        <div x-show="activeTab === 'compliance'" class="space-y-4" style="display: none;">
+                                            <div class="p-4 bg-gray-50 dark:bg-[#202020] rounded-2xl border border-gray-200 dark:border-white/10">
+                                                <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Compliance Status Summary</h4>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">Both Vehicle Insurance and Roadworthy Fitness certificates must be approved by admin to activate your driver live status.</p>
+                                                
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                                    <div class="p-3 rounded-xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10">
+                                                        <div class="flex items-center justify-between text-xs mb-1">
+                                                            <span class="font-semibold text-gray-600 dark:text-gray-400">Vehicle Insurance</span>
+                                                            <span class="font-bold {{ $profile->vehicle_insurance_status === 'approved' ? 'text-emerald-500' : ($profile->vehicle_insurance_status === 'submitted' ? 'text-amber-500' : 'text-red-500') }}">
+                                                                {{ ucfirst(str_replace('_', ' ', $profile->vehicle_insurance_status ?? 'Not submitted')) }}
+                                                            </span>
+                                                        </div>
+                                                        <p class="text-[11px] text-gray-400 font-mono">
+                                                            Expiry: {{ $profile->vehicle_insurance_expiry ? \Carbon\Carbon::parse($profile->vehicle_insurance_expiry)->format('d M Y') : 'Not set' }}
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="p-3 rounded-xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10">
+                                                        <div class="flex items-center justify-between text-xs mb-1">
+                                                            <span class="font-semibold text-gray-600 dark:text-gray-400">Roadworthy Fitness</span>
+                                                            <span class="font-bold {{ $profile->vehicle_fitness_status === 'approved' ? 'text-emerald-500' : ($profile->vehicle_fitness_status === 'submitted' ? 'text-amber-500' : 'text-red-500') }}">
+                                                                {{ ucfirst(str_replace('_', ' ', $profile->vehicle_fitness_status ?? 'Not submitted')) }}
+                                                            </span>
+                                                        </div>
+                                                        <p class="text-[11px] text-gray-400 font-mono">
+                                                            Expiry: {{ $profile->vehicle_fitness_expiry ? \Carbon\Carbon::parse($profile->vehicle_fitness_expiry)->format('d M Y') : 'Not set' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mt-4 pt-3 border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
+                                                    <span class="text-xs text-gray-500">Need to upload new certificate scans?</span>
+                                                    <button type="button" @click="showEditModal = false; const el = document.getElementById('vehicleCertificatesSection'); if(el) el.scrollIntoView({behavior: 'smooth'})" class="px-3 py-1.5 bg-[#102b54] text-white hover:bg-black font-bold text-xs rounded-xl transition cursor-pointer">
+                                                        Go to Certificate Scanner →
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Modal Footer (Sticky) -->
+                                        <div class="pt-4 border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 sticky bottom-0 bg-white dark:bg-[#151515] z-20">
+                                            <div class="text-xs text-gray-500">
+                                                <span x-show="activeTab === 'personal'">Section 1 of 4: Personal Details</span>
+                                                <span x-show="activeTab === 'chauffeur'">Section 2 of 4: Chauffeur & Rates</span>
+                                                <span x-show="activeTab === 'license'">Section 3 of 4: License & Docs</span>
+                                                <span x-show="activeTab === 'compliance'">Section 4 of 4: Compliance</span>
+                                            </div>
+                                            <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                                                <button type="button" @click="showEditModal = false" class="px-5 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition cursor-pointer">
+                                                    Cancel
+                                                </button>
+                                                <button type="submit" :disabled="isSaving" class="px-6 py-2.5 text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#102b54] rounded-xl shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center gap-2">
+                                                    <span x-show="!isSaving">Save Profile Changes</span>
+                                                    <span x-show="isSaving" style="display: none;" class="flex items-center gap-1.5">
+                                                        <svg class="animate-spin h-3.5 w-3.5 text-[#102b54]" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                        <span>Saving...</span>
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </form>
                                 </div>
-                                <form action="/driver/profile/update" method="POST" enctype="multipart/form-data" class="space-y-4 text-left">
-                                    @csrf
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
-                                        <input type="text" name="name" value="{{ $user->name }}" required class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
-                                        <input type="text" name="phone" value="{{ $user->phone }}" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Driver Profile Picture</label>
-                                        <input type="file" name="driver_photo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white hover:file:bg-brand-600 cursor-pointer">
-                                        <p class="text-[11px] text-gray-400 mt-1">Upload a clear photo of yourself.</p>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Hourly Rate ($)</label>
-                                            <input type="number" step="0.5" name="hourly_rate" value="{{ $profile->hourly_rate ?? 25.00 }}" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Daily Rate ($)</label>
-                                            <input type="number" step="1" name="daily_rate" value="{{ $profile->daily_rate ?? 170.00 }}" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Bio / Experience</label>
-                                        <textarea name="bio" rows="3" class="w-full px-4 py-2 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl text-xs text-gray-900 dark:text-white">{{ $profile->bio }}</textarea>
-                                    </div>
-                                    <div class="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
-                                        <button type="button" @click="showEditModal = false" class="px-4 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl">Cancel</button>
-                                        <button type="submit" class="px-5 py-2 text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-md">Save Changes</button>
-                                    </div>
-                                </form>
                             </div>
-                        </div>
+                        </template>
 
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Profile & Status</h2>
                         <ul class="space-y-3 text-sm">
@@ -1196,6 +1517,43 @@
 
     <script>
         document.addEventListener('alpine:init', () => {
+            Alpine.data('driverProfileModal', () => ({
+                showEditModal: false,
+                activeTab: 'personal',
+                isSaving: false,
+                countryOpen: false,
+                countrySearch: '',
+                selectedCountry: null,
+                driverPhotoPreview: null,
+                driverFileName: '',
+
+                init() {
+                    const countries = window.WORLD_COUNTRIES || [];
+                    const currentCountry = '{{ addslashes($profile->country ?? $user->country ?? 'United States') }}';
+                    const found = countries.find(c => 
+                        (c.name && c.name.toLowerCase() === currentCountry.toLowerCase()) || 
+                        (c.cca3 && c.cca3.toLowerCase() === currentCountry.toLowerCase()) ||
+                        (c.code && c.code.toLowerCase() === currentCountry.toLowerCase())
+                    );
+                    this.selectedCountry = found || (countries.length ? countries[0] : { name: 'United States', code: 'US', flagUrl: 'https://flagcdn.com/w40/us.png' });
+                },
+
+                get countryList() {
+                    const all = window.WORLD_COUNTRIES || [];
+                    if (!this.countrySearch) return all;
+                    const q = this.countrySearch.toLowerCase().trim();
+                    return all.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.code && c.code.toLowerCase().includes(q)));
+                },
+
+                handleDriverPhoto(file) {
+                    if (!file || !file.type.startsWith('image/')) return;
+                    this.driverFileName = file.name;
+                    const reader = new FileReader();
+                    reader.onload = (e) => { this.driverPhotoPreview = e.target.result; };
+                    reader.readAsDataURL(file);
+                }
+            }));
+
             Alpine.data('driverPolling', () => ({
                 isLive: {{ $profile->is_live ? 'true' : 'false' }},
                 requests: [],

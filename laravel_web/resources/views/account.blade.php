@@ -45,6 +45,30 @@
                             class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer">
                         Personal info
                     </button>
+
+                    @if($user->role === 'owner' || (isset($vehicles) && $vehicles->count() > 0))
+                        <button @click="currentTab = 'fleet'" 
+                                :class="currentTab === 'fleet' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border-l-4 border-amber-500' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-300'" 
+                                class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span>🏎️</span>
+                                <span>My Vehicles & Fleet</span>
+                            </div>
+                            <span class="text-[11px] font-mono font-bold bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-full">{{ isset($vehicles) ? $vehicles->count() : 0 }}</span>
+                        </button>
+                    @endif
+
+                    @if($user->role === 'driver' || isset($driverProfile))
+                        <a href="/driver/dashboard" 
+                           class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl hover:bg-amber-400/10 text-amber-600 dark:text-amber-400 flex items-center justify-between font-bold">
+                            <div class="flex items-center gap-2">
+                                <span>👨‍✈️</span>
+                                <span>Driver Dashboard</span>
+                            </div>
+                            <span>→</span>
+                        </a>
+                    @endif
+
                     <button @click="currentTab = 'security'" 
                             :class="currentTab === 'security' ? 'bg-gray-100 dark:bg-[#222] font-semibold text-gray-900 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-300'" 
                             class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer">
@@ -366,6 +390,16 @@
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"><path d="m9 18 6-6-6-6"/></svg>
                         </button>
+
+                        <button type="button" @click="showCountryModal = true" class="w-full text-left py-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center group cursor-pointer">
+                            <div>
+                                <div class="font-bold text-gray-900 dark:text-white mb-1">Country & City</div>
+                                <div class="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                    <span x-text="userCountry ? userCountry + (userCity ? ' • ' + userCity : '') : 'United States'"></span>
+                                </div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
                         
                         <button type="button" @click="showLangModal = true" class="w-full text-left py-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center group cursor-pointer">
                             <div>
@@ -375,6 +409,67 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                         </button>
                     </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-gray-900 dark:text-white text-sm">Unified Profile Editor</h3>
+                            <p class="text-xs text-gray-500">Edit all your registration and personal details in one comprehensive form.</p>
+                        </div>
+                        <button type="button" @click="showFullEditModal = true" class="px-5 py-2.5 bg-[#102b54] dark:bg-amber-400 text-white dark:text-[#102b54] font-black rounded-xl text-xs hover:opacity-90 transition shadow cursor-pointer flex items-center gap-2">
+                            <span>✏️ Edit Profile</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OWNER FLEET TAB -->
+                <div x-show="currentTab === 'fleet'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                        <div>
+                            <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">My Vehicles & Fleet</h1>
+                            <p class="text-gray-500 dark:text-gray-400 mt-1">Manage vehicles listed on RideMyCars, rates, and approval status.</p>
+                        </div>
+                        <a href="/owner-signup" class="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#102b54] font-black rounded-xl text-sm transition shadow flex items-center gap-2 shrink-0">
+                            <span>+ List New Vehicle</span>
+                        </a>
+                    </div>
+
+                    @if(isset($vehicles) && $vehicles->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            @foreach($vehicles as $veh)
+                                <div class="bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm space-y-4">
+                                    <div class="relative h-44 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/5">
+                                        @if($veh->image_url)
+                                            <img src="{{ $veh->image_src }}" alt="{{ $veh->make }} {{ $veh->model }}" class="w-full h-full object-cover">
+                                        @else
+                                            <div class="w-full h-full flex items-center justify-center text-4xl bg-gray-200 dark:bg-white/10">🏎️</div>
+                                        @endif
+                                        <div class="absolute top-3 right-3">
+                                            <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full {{ ($veh->approval_status ?? 'approved') === 'approved' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-black' }}">
+                                                {{ ucfirst($veh->approval_status ?? 'Approved') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black text-lg text-gray-900 dark:text-white">{{ $veh->make }} {{ $veh->model }} ({{ $veh->year }})</h3>
+                                        <p class="text-xs text-gray-500 font-mono mt-0.5">Plate: {{ $veh->license_plate }} • {{ ucfirst($veh->type ?? 'Sedan') }}</p>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/10 text-sm">
+                                        <span class="text-gray-500 text-xs">Daily Rate:</span>
+                                        <span class="font-black text-amber-500">${{ number_format($veh->daily_rate, 2) }} / day</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="p-10 text-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-3xl">
+                            <span class="text-4xl mb-3 block">🏎️</span>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">No vehicles listed yet</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-5 max-w-md mx-auto">Turn your idle car into consistent passive earnings by listing it on RideMyCars.</p>
+                            <a href="/owner-signup" class="px-6 py-3 bg-[#102b54] text-white font-bold text-xs rounded-xl hover:bg-black transition">
+                                List Your Vehicle Now →
+                            </a>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- SECURITY TAB -->
@@ -699,9 +794,12 @@
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">Edit Full Name</h3>
                         <button type="button" @click="showNameModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
                     </div>
-                    <form @submit.prevent="userName = tempName; showNameModal = false; showToast('Name updated successfully!')" class="space-y-4">
+                    <form @submit.prevent="saveProfileData({ name: tempName })" class="space-y-4">
                         <input type="text" x-model="tempName" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
-                        <button type="submit" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">Save Name</button>
+                        <button type="submit" :disabled="isSaving" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                            <span x-show="!isSaving">Save Name</span>
+                            <span x-show="isSaving" style="display: none;">Saving...</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -715,9 +813,12 @@
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">Edit Phone Number</h3>
                         <button type="button" @click="showPhoneModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
                     </div>
-                    <form @submit.prevent="userPhone = tempPhone; showPhoneModal = false; showToast('Phone number updated successfully!')" class="space-y-4">
-                        <input type="tel" x-model="tempPhone" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
-                        <button type="submit" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">Save Phone</button>
+                    <form @submit.prevent="saveProfileData({ phone: tempPhone })" class="space-y-4">
+                        <input type="tel" x-model="tempPhone" required placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                        <button type="submit" :disabled="isSaving" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                            <span x-show="!isSaving">Save Phone</span>
+                            <span x-show="isSaving" style="display: none;">Saving...</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -731,9 +832,94 @@
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">Edit Email Address</h3>
                         <button type="button" @click="showEmailModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
                     </div>
-                    <form @submit.prevent="userEmail = tempEmail; showEmailModal = false; showToast('Email updated successfully!')" class="space-y-4">
+                    <form @submit.prevent="saveProfileData({ email: tempEmail })" class="space-y-4">
                         <input type="email" x-model="tempEmail" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
-                        <button type="submit" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">Save Email</button>
+                        <button type="submit" :disabled="isSaving" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                            <span x-show="!isSaving">Save Email</span>
+                            <span x-show="isSaving" style="display: none;">Saving...</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
+
+        <!-- EDIT COUNTRY & CITY MODAL -->
+        <template x-teleport="body">
+            <div x-show="showCountryModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showCountryModal = false">
+                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Edit Country & City</h3>
+                        <button type="button" @click="showCountryModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
+                    </div>
+                    <form @submit.prevent="saveProfileData({ country: tempCountry, city: tempCity })" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Country</label>
+                            <input type="text" x-model="tempCountry" required placeholder="e.g. United States, United Kingdom, South Africa" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">City / Region</label>
+                            <input type="text" x-model="tempCity" placeholder="e.g. New York, London, Johannesburg" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                        </div>
+                        <button type="submit" :disabled="isSaving" class="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                            <span x-show="!isSaving">Save Location</span>
+                            <span x-show="isSaving" style="display: none;">Saving...</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
+
+        <!-- UNIFIED EDIT FULL PROFILE MODAL -->
+        <template x-teleport="body">
+            <div x-show="showFullEditModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md" @click.away="showFullEditModal = false">
+                <div class="bg-white dark:bg-[#181818] w-full max-w-lg rounded-3xl shadow-2xl p-6 sm:p-8 relative border border-gray-100 dark:border-white/10 max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-500 flex items-center justify-center text-xl font-bold">
+                                ✏️
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-black text-gray-900 dark:text-white">Edit Full Profile</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">All registered account information.</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showFullEditModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
+                    </div>
+
+                    <form @submit.prevent="saveProfileData({ name: tempName, email: tempEmail, phone: tempPhone, country: tempCountry, city: tempCity })" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Full Name *</label>
+                            <input type="text" x-model="tempName" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-semibold">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Email Address *</label>
+                            <input type="email" x-model="tempEmail" required class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Mobile Phone Number</label>
+                            <input type="tel" x-model="tempPhone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Country</label>
+                                <input type="text" x-model="tempCountry" placeholder="e.g. United States" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">City / Region</label>
+                                <input type="text" x-model="tempCity" placeholder="e.g. New York" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm font-medium">
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-end gap-3">
+                            <button type="button" @click="showFullEditModal = false" class="px-5 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl">Cancel</button>
+                            <button type="submit" :disabled="isSaving" class="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#102b54] font-black rounded-xl text-xs shadow-lg transition flex items-center gap-2">
+                                <span x-show="!isSaving">Save Profile Changes</span>
+                                <span x-show="isSaving" style="display: none;">Saving...</span>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -810,15 +996,20 @@
         Alpine.data('accountManager', () => ({
             currentTab: new URLSearchParams(window.location.search).get('tab') || 'home',
             toast: '',
+            isSaving: false,
             
-            userName: '{{ $user->name ?? 'Michael Driver' }}',
-            userEmail: '{{ $user->email ?? 'michael@example.com' }}',
-            userPhone: '{{ $user->phone ?? '+1 (555) 000-0000' }}',
+            userName: '{{ addslashes($user->name ?? 'User') }}',
+            userEmail: '{{ addslashes($user->email ?? '') }}',
+            userPhone: '{{ addslashes($user->phone ?? '') }}',
+            userCountry: '{{ addslashes($user->country ?? 'United States') }}',
+            userCity: '{{ addslashes($user->city ?? '') }}',
             userLang: 'English (US)',
             
-            tempName: '{{ $user->name ?? 'Michael Driver' }}',
-            tempEmail: '{{ $user->email ?? 'michael@example.com' }}',
-            tempPhone: '{{ $user->phone ?? '+1 (555) 000-0000' }}',
+            tempName: '{{ addslashes($user->name ?? 'User') }}',
+            tempEmail: '{{ addslashes($user->email ?? '') }}',
+            tempPhone: '{{ addslashes($user->phone ?? '') }}',
+            tempCountry: '{{ addslashes($user->country ?? 'United States') }}',
+            tempCity: '{{ addslashes($user->city ?? '') }}',
             
             copyReferralCode(code) {
                 if (!code) return;
@@ -837,6 +1028,54 @@
                     this.showToast('Invite link copied!');
                 });
             },
+
+            async saveProfileData(fields) {
+                this.isSaving = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                    const res = await fetch('/account/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken || ''
+                        },
+                        body: JSON.stringify({
+                            name: fields.name !== undefined ? fields.name : this.userName,
+                            email: fields.email !== undefined ? fields.email : this.userEmail,
+                            phone: fields.phone !== undefined ? fields.phone : this.userPhone,
+                            country: fields.country !== undefined ? fields.country : this.userCountry,
+                            city: fields.city !== undefined ? fields.city : this.userCity,
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.userName = data.user.name;
+                        this.userEmail = data.user.email;
+                        this.userPhone = data.user.phone || '';
+                        this.userCountry = data.user.country || '';
+                        this.userCity = data.user.city || '';
+                        this.tempName = this.userName;
+                        this.tempEmail = this.userEmail;
+                        this.tempPhone = this.userPhone;
+                        this.tempCountry = this.userCountry;
+                        this.tempCity = this.userCity;
+                        this.showNameModal = false;
+                        this.showPhoneModal = false;
+                        this.showEmailModal = false;
+                        this.showCountryModal = false;
+                        this.showFullEditModal = false;
+                        this.showToast(data.message || 'Profile updated successfully!');
+                    } else {
+                        alert(data.message || (data.errors ? Object.values(data.errors).flat().join("\n") : 'Failed to update profile.'));
+                    }
+                } catch (e) {
+                    console.error('Update error:', e);
+                    alert('Network error while updating profile.');
+                } finally {
+                    this.isSaving = false;
+                }
+            },
             
             // Security Modals
             showPasskeyModal: false,
@@ -850,6 +1089,8 @@
             showNameModal: false,
             showPhoneModal: false,
             showEmailModal: false,
+            showCountryModal: false,
+            showFullEditModal: false,
             showLangModal: false,
             showCommPrefModal: false,
             
@@ -857,12 +1098,12 @@
             passkeys: [
                 { name: 'Windows Hello / Chrome', date: 'Jan 2025' }
             ],
-            passwordLastChanged: '27 September 2023',
+            passwordLastChanged: 'Recently',
             authenticatorConfigured: false,
             twoFactorEnabled: true,
             twoFactorSMS: true,
             twoFactorAuthApp: false,
-            recoveryPhone: '{{ $user->phone ?? '+1 (555) 000-0000' }}',
+            recoveryPhone: '{{ addslashes($user->phone ?? '') }}',
             googleConnected: true,
             appleConnected: true,
             
@@ -886,17 +1127,44 @@
                 this.showToast('Passkey removed.');
             },
             
-            updatePassword() {
+            async updatePassword() {
                 if (this.pwdForm.new !== this.pwdForm.confirm) {
                     alert('New passwords do not match!');
                     return;
                 }
-                this.passwordLastChanged = 'Just now';
-                this.pwdForm.current = '';
-                this.pwdForm.new = '';
-                this.pwdForm.confirm = '';
-                this.showPasswordModal = false;
-                this.showToast('Password updated successfully!');
+                this.isSaving = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                    const res = await fetch('/account/password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken || ''
+                        },
+                        body: JSON.stringify({
+                            current_password: this.pwdForm.current,
+                            password: this.pwdForm.new,
+                            password_confirmation: this.pwdForm.confirm,
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.passwordLastChanged = 'Just now';
+                        this.pwdForm.current = '';
+                        this.pwdForm.new = '';
+                        this.pwdForm.confirm = '';
+                        this.showPasswordModal = false;
+                        this.showToast('Password updated successfully!');
+                    } else {
+                        alert(data.message || 'Current password incorrect or validation failed.');
+                    }
+                } catch (e) {
+                    console.error('Password change error', e);
+                    alert('Network error while changing password.');
+                } finally {
+                    this.isSaving = false;
+                }
             },
             
             enableAuthApp() {
