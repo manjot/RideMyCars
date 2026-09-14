@@ -2882,12 +2882,43 @@ Route::get('/legal', function () {
 // Package Delivery Live Tracker Admin Routes
 Route::get('/admin/live-delivery-tracker/data', [DeliveryTrackerController::class, 'getData']);
 Route::post('/admin/live-delivery-tracker/reassign', [DeliveryTrackerController::class, 'reassignDriver']);
+Route::get('/admin/live-delivery-tracker-standalone', function () {
+    $controller = app(DeliveryTrackerController::class);
+    $data = $controller->getData(request())->getData(true);
+    return view('admin.live-delivery-tracker-standalone', [
+        'initialOrders' => $data['orders'] ?? [],
+        'initialAvailableDrivers' => $data['available_drivers'] ?? [],
+        'selectedOrderId' => request('order_id'),
+    ]);
+})->name('admin.live-delivery-tracker-standalone');
+
+Route::get('/admin/live-delivery-tracker-standalone/{id}', function ($id) {
+    $controller = app(DeliveryTrackerController::class);
+    $data = $controller->getData(request())->getData(true);
+    return view('admin.live-delivery-tracker-standalone', [
+        'initialOrders' => $data['orders'] ?? [],
+        'initialAvailableDrivers' => $data['available_drivers'] ?? [],
+        'selectedOrderId' => $id,
+    ]);
+});
+
 Route::get('/admin/package-delivery-tracker', function () {
     $controller = app(DeliveryTrackerController::class);
     $data = $controller->getData(request())->getData(true);
     return view('admin.live-delivery-tracker-standalone', [
         'initialOrders' => $data['orders'] ?? [],
         'initialAvailableDrivers' => $data['available_drivers'] ?? [],
+        'selectedOrderId' => request('order_id'),
+    ]);
+})->name('admin.package-delivery-tracker');
+
+Route::get('/admin/package-delivery-tracker/{id}', function ($id) {
+    $controller = app(DeliveryTrackerController::class);
+    $data = $controller->getData(request())->getData(true);
+    return view('admin.live-delivery-tracker-standalone', [
+        'initialOrders' => $data['orders'] ?? [],
+        'initialAvailableDrivers' => $data['available_drivers'] ?? [],
+        'selectedOrderId' => $id,
     ]);
 });
 

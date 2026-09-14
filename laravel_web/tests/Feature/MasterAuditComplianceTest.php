@@ -253,6 +253,12 @@ class MasterAuditComplianceTest extends TestCase
 
         $response->assertStatus(200)
                  ->assertJsonPath('success', true);
+
+        $standaloneResponse = $this->get('/admin/live-delivery-tracker-standalone');
+        $standaloneResponse->assertStatus(200);
+
+        $packageResponse = $this->get('/admin/package-delivery-tracker');
+        $packageResponse->assertStatus(200);
     }
 
     public function test_manual_order_reassignment(): void

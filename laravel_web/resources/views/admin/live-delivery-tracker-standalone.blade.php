@@ -4,6 +4,7 @@
     <script>
         window.INITIAL_DELIVERY_ORDERS = @json($initialOrders ?? []);
         window.INITIAL_AVAILABLE_DRIVERS = @json($initialAvailableDrivers ?? []);
+        window.PRESELECTED_ORDER_ID = @json($selectedOrderId ?? null);
     </script>
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="liveDeliveryTracker()" x-init="init()">
@@ -413,13 +414,15 @@
         function liveDeliveryTracker() {
             const initialOrders = window.INITIAL_DELIVERY_ORDERS || [];
             const initialDrivers = window.INITIAL_AVAILABLE_DRIVERS || [];
+            const preselectedId = window.PRESELECTED_ORDER_ID;
+            const matchedOrder = preselectedId ? initialOrders.find(o => o.id == preselectedId) : null;
 
             return {
                 search: '',
                 selectedFilter: 'ALL',
                 orders: initialOrders,
                 availableDrivers: initialDrivers,
-                selectedOrder: initialOrders.length > 0 ? initialOrders[0] : null,
+                selectedOrder: matchedOrder || (initialOrders.length > 0 ? initialOrders[0] : null),
                 selectedDriverForReassign: null,
                 showReassignModal: false,
                 showPodModal: false,
