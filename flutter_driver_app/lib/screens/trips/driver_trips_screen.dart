@@ -166,31 +166,37 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.local_taxi_rounded, color: AppColors.primary, size: 20),
                           ),
-                          child: const Icon(Icons.local_taxi_rounded, color: AppColors.primary, size: 20),
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$vehicleType Ride',
-                              style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 15),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$vehicleType Ride',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                Text(
+                                  'Passenger: $riderName · $date',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                ),
+                              ],
                             ),
-                            Text(
-                              'Passenger: $riderName · $date',
-                              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
