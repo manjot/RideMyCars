@@ -305,6 +305,11 @@
                 <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">We'll send you a 4-digit code to verify your account.</p>
                 
                 <form action="#" method="POST" @submit.prevent="submitMobile()">
+                    <!-- Invisible Anti-Bot Honeypot Trap & Timing Shield -->
+                    <div style="display:none !important;" aria-hidden="true">
+                        <input type="text" name="website_anti_bot_check" x-model="honeypot" tabindex="-1" autocomplete="off" value="">
+                        <input type="hidden" name="form_loaded_at" :value="formLoadedAt">
+                    </div>
                     <div class="phone-input-container relative mb-3" @click.away="countryDropdownOpen = false">
                         <!-- Main Phone Input Bar -->
                         <div class="phone-input-bar" style="height: 52px; min-height: 52px;">
@@ -697,6 +702,8 @@
                     countrySearch: '',
                     mobileNumber: '',
                     registerNotice: null,
+                    honeypot: '',
+                    formLoadedAt: Math.floor(Date.now() / 1000),
                     selectedCountry: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES[0] : { name: 'United States', code: 'US', dial: '+1', flagUrl: 'https://flagcdn.com/w40/us.png' },
                     countries: (window.WORLD_COUNTRIES && window.WORLD_COUNTRIES.length) ? window.WORLD_COUNTRIES : [],
 
@@ -777,7 +784,12 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({ phone: fullPhone, action: 'login' })
+                            body: JSON.stringify({ 
+                                phone: fullPhone, 
+                                action: 'login',
+                                website_anti_bot_check: this.honeypot || '',
+                                form_loaded_at: this.formLoadedAt || ''
+                            })
                         })
                         .then(async res => {
                             let data = {};
@@ -805,7 +817,10 @@
                                     window.location.href = targetUrl;
                                 }, 1800);
                             } else {
-                                this.mobileError = (data && data.error) || 'Failed to send SMS code. Please try again.';
+                                if (data && data.cooldown) {
+                                    this.startTimer(data.cooldown);
+                                }
+                                this.mobileError = (data && (data.error || data.message)) || 'Failed to send SMS code. Please try again.';
                             }
                         })
                         .catch(err => {
@@ -828,7 +843,11 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({ email: this.emailForOtp })
+                            body: JSON.stringify({ 
+                                email: this.emailForOtp,
+                                website_anti_bot_check: this.honeypot || '',
+                                form_loaded_at: this.formLoadedAt || ''
+                            })
                         })
                         .then(res => res.json().catch(() => ({})))
                         .then(data => {
@@ -839,6 +858,9 @@
                                 this.startTimer(300);
                                 this.$nextTick(() => { this.$refs.c1?.focus(); });
                             } else {
+                                if (data && data.cooldown) {
+                                    this.startTimer(data.cooldown);
+                                }
                                 this.otpError = (data && (data.error || data.message)) || 'Failed to send email verification code.';
                             }
                         })
@@ -863,7 +885,11 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify(payload)
+                            body: JSON.stringify({
+                                ...payload,
+                                website_anti_bot_check: this.honeypot || '',
+                                form_loaded_at: this.formLoadedAt || ''
+                            })
                         })
                         .then(res => res.json().catch(() => ({})))
                         .then(data => {
@@ -873,7 +899,10 @@
                                 this.otpSuccess = 'A new 4-digit code was sent!';
                                 setTimeout(() => { this.otpSuccess = ''; }, 3500);
                             } else {
-                                this.otpError = (data && data.error) || 'Failed to resend code.';
+                                if (data && data.cooldown) {
+                                    this.startTimer(data.cooldown);
+                                }
+                                this.otpError = (data && (data.error || data.message)) || 'Failed to resend code.';
                             }
                         })
                         .catch(() => {

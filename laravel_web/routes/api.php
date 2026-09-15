@@ -26,16 +26,16 @@ Route::get('/places/reverse', [PlacesApiController::class, 'reverse']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/otp/send', [AuthController::class, 'sendOtp']);
-Route::post('/otp/verify', [AuthController::class, 'verifyOtp']);
-Route::post('/auth/phone/send-otp', [AuthController::class, 'sendOtp']);
-Route::post('/auth/phone/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/otp/send', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');
+Route::post('/otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:15,1');
+Route::post('/auth/phone/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');
+Route::post('/auth/phone/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:15,1');
 Route::post('/auth/social/google', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiGoogleAuth']);
 Route::post('/auth/social/apple', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiAppleAuth']);
 Route::post('/auth/google', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiGoogleAuth']);
 Route::post('/auth/apple', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiAppleAuth']);
-Route::post('/auth/email/send-otp', [AuthController::class, 'sendOtp']);
-Route::post('/auth/email/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/auth/email/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');
+Route::post('/auth/email/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:15,1');
 
 use App\Http\Controllers\StripeVerificationController;
 

@@ -382,6 +382,12 @@
                     @csrf
                     <input type="hidden" name="role" :value="currentRole">
                     
+                    <!-- Invisible Anti-Bot Honeypot Trap & Timing Shield -->
+                    <div style="display:none !important;" aria-hidden="true">
+                        <input type="text" name="website_anti_bot_check" tabindex="-1" autocomplete="off" value="">
+                        <input type="hidden" name="form_loaded_at" value="{{ time() }}">
+                    </div>
+                    
                     <!-- Driver Section Header -->
                     <div x-show="currentRole === 'driver'" class="pb-2 border-b border-gray-200 dark:border-white/10 mb-1">
                         <div class="flex items-center gap-2">
@@ -1241,6 +1247,8 @@
                     this.otpSuccess = '';
 
                     const emailVal = form.querySelector('input[name="email"]')?.value || '';
+                    const honeypotVal = form.querySelector('input[name="website_anti_bot_check"]')?.value || '';
+                    const loadedAtVal = form.querySelector('input[name="form_loaded_at"]')?.value || '';
 
                     try {
                         const res = await fetch('/api/otp/send', {
@@ -1252,7 +1260,9 @@
                             body: JSON.stringify({ 
                                 phone: this.phone, 
                                 email: emailVal,
-                                action: 'register' 
+                                action: 'register',
+                                website_anti_bot_check: honeypotVal,
+                                form_loaded_at: loadedAtVal
                             })
                         });
                         const data = await res.json().catch(() => ({ success: false, error: 'Server error (Status ' + res.status + ')' }));
@@ -1264,6 +1274,9 @@
                             this.startTimer(300);
                             this.$nextTick(() => { this.$refs.sc1?.focus({ preventScroll: true }); });
                         } else {
+                            if (data && data.cooldown) {
+                                this.startTimer(data.cooldown);
+                            }
                             alert((data && (data.error || data.message)) || 'Failed to send SMS OTP. Please check your phone number.');
                         }
                     } catch (err) {
@@ -1280,6 +1293,8 @@
 
                     const form = this.$refs.signupForm;
                     const emailVal = form?.querySelector('input[name="email"]')?.value || '';
+                    const honeypotVal = form?.querySelector('input[name="website_anti_bot_check"]')?.value || '';
+                    const loadedAtVal = form?.querySelector('input[name="form_loaded_at"]')?.value || '';
 
                     try {
                         const res = await fetch('/api/otp/send', {
@@ -1291,7 +1306,9 @@
                             body: JSON.stringify({ 
                                 phone: this.phone, 
                                 email: emailVal,
-                                action: 'register' 
+                                action: 'register',
+                                website_anti_bot_check: honeypotVal,
+                                form_loaded_at: loadedAtVal
                             })
                         });
                         const data = await res.json().catch(() => ({ success: false, error: 'Server error (Status ' + res.status + ')' }));
@@ -1301,6 +1318,9 @@
                             this.otpSuccess = 'New 4-digit code sent!';
                             setTimeout(() => { this.otpSuccess = ''; }, 3500);
                         } else {
+                            if (data && data.cooldown) {
+                                this.startTimer(data.cooldown);
+                            }
                             this.otpError = (data && (data.error || data.message)) || 'Failed to resend code.';
                         }
                     } catch (e) {

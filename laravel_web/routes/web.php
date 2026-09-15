@@ -341,6 +341,28 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
             ], 422);
         }
 
+        // Anti-Bot, Cooldown & SMS Toll-Fraud Security Shield
+        $securityCheck = \App\Services\OtpSecurityService::checkOtpRequest($request, $formattedPhone, 'phone');
+        if ($securityCheck['silent_mock']) {
+            // Silently neutralize automated bot without calling Twilio or spending money
+            return response()->json([
+                'success' => true,
+                'user_exists' => false,
+                'action' => $action,
+                'message' => "Verification code sent to {$formattedPhone}",
+                'phone' => $formattedPhone,
+                'expires_in' => 300,
+            ]);
+        }
+        if (!$securityCheck['allowed']) {
+            return response()->json([
+                'success' => false,
+                'error' => $securityCheck['error'],
+                'message' => $securityCheck['error'],
+                'cooldown' => $securityCheck['retry_after'] ?? 60,
+            ], $securityCheck['code'] ?? 429);
+        }
+
         // Check if phone number exists in database
         $user = \App\Models\User::where('phone', $formattedPhone)
             ->orWhere('phone', $phone)
@@ -408,6 +430,9 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
             ], 422);
         }
 
+        // Record successful dispatch in OtpSecurityService to activate cooldown and rate limiting
+        \App\Services\OtpSecurityService::recordOtpSent($formattedPhone, $request->ip(), 'phone');
+
         return response()->json([
             'success' => true,
             'user_exists' => ($user !== null),
@@ -422,6 +447,27 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
     if (!empty($email)) {
         $request->validate(['email' => 'required|email']);
         $cleanEmail = trim(strtolower($email));
+
+        // Anti-Bot & Rate Limit Security Shield for Email
+        $securityCheck = \App\Services\OtpSecurityService::checkOtpRequest($request, $cleanEmail, 'email');
+        if ($securityCheck['silent_mock']) {
+            return response()->json([
+                'success' => true,
+                'message' => "Verification code sent to {$cleanEmail}",
+                'hint' => 'Verification code sent. Please check your email inbox.',
+                'email' => $cleanEmail,
+                'expires_in' => 300,
+            ]);
+        }
+        if (!$securityCheck['allowed']) {
+            return response()->json([
+                'success' => false,
+                'error' => $securityCheck['error'],
+                'message' => $securityCheck['error'],
+                'cooldown' => $securityCheck['retry_after'] ?? 60,
+            ], $securityCheck['code'] ?? 429);
+        }
+
         $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
         // Store in Cache with exact 5-minute validity
@@ -443,6 +489,9 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
                 'message' => $result['error'] ?? 'Unable to send email verification code. Please try again.',
             ], 422);
         }
+
+        // Record successful dispatch in OtpSecurityService to activate cooldown and rate limiting
+        \App\Services\OtpSecurityService::recordOtpSent($cleanEmail, $request->ip(), 'email');
 
         return response()->json([
             'success' => true,

@@ -457,6 +457,27 @@ class AuthController extends Controller
                     ], 422);
                 }
 
+                // Anti-Bot, Cooldown & SMS Toll-Fraud Security Shield
+                $securityCheck = \App\Services\OtpSecurityService::checkOtpRequest($request, $formattedPhone, 'phone');
+                if ($securityCheck['silent_mock']) {
+                    return response()->json([
+                        'success' => true,
+                        'user_exists' => false,
+                        'action' => $action,
+                        'message' => "Verification code sent to {$formattedPhone}",
+                        'phone' => $formattedPhone,
+                        'expires_in' => 300,
+                    ]);
+                }
+                if (!$securityCheck['allowed']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $securityCheck['error'],
+                        'error' => $securityCheck['error'],
+                        'cooldown' => $securityCheck['retry_after'] ?? 60,
+                    ], $securityCheck['code'] ?? 429);
+                }
+
                 // Check if phone number exists in database
                 $user = User::where('phone', $formattedPhone)
                     ->orWhere('phone', $phone)
@@ -507,6 +528,9 @@ class AuthController extends Controller
                     ], 422);
                 }
 
+                // Record successful dispatch in OtpSecurityService to activate cooldown and rate limiting
+                \App\Services\OtpSecurityService::recordOtpSent($formattedPhone, $request->ip(), 'phone');
+
                 return response()->json([
                     'success' => true,
                     'user_exists' => ($user !== null),
@@ -525,6 +549,28 @@ class AuthController extends Controller
                         'message' => 'Please provide a valid email address.',
                         'error' => 'Please provide a valid email address.',
                     ], 422);
+                }
+
+                // Anti-Bot & Rate Limit Security Shield for Email
+                $securityCheck = \App\Services\OtpSecurityService::checkOtpRequest($request, $cleanEmail, 'email');
+                if ($securityCheck['silent_mock']) {
+                    return response()->json([
+                        'success' => true,
+                        'user_exists' => false,
+                        'action' => $action,
+                        'message' => "Verification code sent to {$cleanEmail}",
+                        'hint' => 'Verification code sent. Please check your email inbox.',
+                        'email' => $cleanEmail,
+                        'expires_in' => 300,
+                    ]);
+                }
+                if (!$securityCheck['allowed']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $securityCheck['error'],
+                        'error' => $securityCheck['error'],
+                        'cooldown' => $securityCheck['retry_after'] ?? 60,
+                    ], $securityCheck['code'] ?? 429);
                 }
 
                 $action = $request->input('action', 'login');
@@ -569,6 +615,9 @@ class AuthController extends Controller
                         'error' => $result['error'] ?? 'Unable to send email verification code.',
                     ], 422);
                 }
+
+                // Record successful dispatch in OtpSecurityService to activate cooldown and rate limiting
+                \App\Services\OtpSecurityService::recordOtpSent($cleanEmail, $request->ip(), 'email');
 
                 return response()->json([
                     'success' => true,
