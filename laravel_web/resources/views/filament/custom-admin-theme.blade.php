@@ -25,21 +25,46 @@
     }
 
     /* --------------------------------------------------------------------------
-       1. Topbar Styling (Glassmorphism & Crisp Depth)
+       1. Topbar Styling (Clean Solid Depth & Open-Down Dropdowns)
        -------------------------------------------------------------------------- */
     .fi-topbar {
-        background: rgba(255, 255, 255, 0.88) !important;
-        backdrop-filter: blur(14px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+        background: #ffffff !important;
         border-bottom: 1px solid rgba(226, 232, 240, 0.9) !important;
         box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03) !important;
-        transition: all 0.2s ease !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        transform: none !important;
+        overflow: visible !important;
     }
 
     .dark .fi-topbar {
-        background: rgba(15, 23, 42, 0.88) !important;
+        background: #0f172a !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
         box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        transform: none !important;
+        overflow: visible !important;
+    }
+
+    /* Topbar Containers & User Menu */
+    .fi-topbar nav,
+    .fi-topbar-nav,
+    .fi-topbar > div,
+    .fi-user-menu {
+        overflow: visible !important;
+    }
+
+    /* Force Profile & Topbar Dropdowns to Open Downward */
+    .fi-user-menu .fi-dropdown-panel,
+    .fi-topbar .fi-dropdown-panel {
+        top: 100% !important;
+        bottom: auto !important;
+        right: 0 !important;
+        left: auto !important;
+        transform: none !important;
+        margin-top: 0.5rem !important;
+        z-index: 99999 !important;
     }
 
     /* --------------------------------------------------------------------------
@@ -388,3 +413,29 @@
         }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Reposition any topbar/user-menu dropdown that tries to open upwards
+    const ensureDropdownDownwards = () => {
+        const topbar = document.querySelector('.fi-topbar');
+        if (!topbar) return;
+        const topbarBottom = topbar.getBoundingClientRect().bottom;
+
+        document.querySelectorAll('.fi-dropdown-panel').forEach(panel => {
+            const rect = panel.getBoundingClientRect();
+            if (panel.closest('.fi-topbar') || panel.closest('.fi-user-menu') || rect.top < topbarBottom) {
+                if (rect.top < topbarBottom) {
+                    panel.style.top = (topbarBottom + 6) + 'px';
+                    panel.style.bottom = 'auto';
+                }
+            }
+        });
+    };
+
+    const observer = new MutationObserver(ensureDropdownDownwards);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    window.addEventListener('resize', ensureDropdownDownwards);
+    window.addEventListener('scroll', ensureDropdownDownwards, true);
+});
+</script>
