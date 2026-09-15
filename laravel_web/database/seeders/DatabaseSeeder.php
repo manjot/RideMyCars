@@ -22,6 +22,16 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $adminOwner = User::updateOrCreate(
+            ['email' => 'ridemycars1@gmail.com'],
+            [
+                'name' => 'RideMyCars Administrator',
+                'password' => Hash::make('Rideme2026#'),
+                'role' => 'admin',
+                'account_status' => 'active',
+            ]
+        );
+
         // Client User
         $client = User::updateOrCreate(
             ['email' => 'customer@ridemycars.com'],

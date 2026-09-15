@@ -111,7 +111,22 @@ class User extends Authenticatable implements FilamentUser
             return true;
         }
 
-        return $this->role === 'admin' || $this->email === 'admin@ridemycars.com';
+        $adminEmails = [
+            'admin@ridemycars.com',
+            'ridemycars1@gmail.com',
+            'ridemycars@gmail.com',
+            'support@ridemycars.com',
+        ];
+
+        if (in_array(strtolower(trim($this->email ?? '')), $adminEmails)) {
+            if ($this->role !== 'admin') {
+                $this->role = 'admin';
+                $this->saveQuietly();
+            }
+            return true;
+        }
+
+        return $this->role === 'admin';
     }
 
     /**

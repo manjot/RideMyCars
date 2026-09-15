@@ -22,6 +22,26 @@ class UserResource extends Resource
     protected static ?string $navigationLabel = 'Users & Memberships';
     protected static ?int $navigationSort = 1;
 
+    public static function canViewAny(): bool
+    {
+        return true;
+    }
+
+    public static function canCreate(): bool
+    {
+        return true;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return true;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return true;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

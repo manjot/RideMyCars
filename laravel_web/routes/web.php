@@ -3306,6 +3306,25 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
         $output['ride_categories_seeded'] = true;
 
+        // Ensure all admin users have role 'admin' and active status
+        \Illuminate\Support\Facades\DB::table('users')
+            ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), [
+                'admin@ridemycars.com',
+                'ridemycars1@gmail.com',
+                'ridemycars@gmail.com',
+                'support@ridemycars.com',
+            ])
+            ->update([
+                'role' => 'admin',
+                'account_status' => 'active',
+            ]);
+        $output['admin_roles_synced'] = true;
+
+        try {
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            $output['optimize_clear'] = \Illuminate\Support\Facades\Artisan::output();
+        } catch (\Throwable $e) {}
+
         // Directly update all vehicle records with relevant high-definition landscape images & categories
         $vehicleImagesMap = [
             'TSL-9901' => ['image_url' => 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sedan'],
