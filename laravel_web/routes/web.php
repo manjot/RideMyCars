@@ -3244,6 +3244,39 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
             // Purge PayPal configuration from database
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'like', 'payment.paypal%')->delete();
+
+            // Support setting Apple OAuth settings dynamically
+            if ($request->has('apple_client_id') && !empty($request->query('apple_client_id'))) {
+                $appleIdVal = trim($request->query('apple_client_id'));
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.apple_client_id'],
+                    ['value' => $appleIdVal, 'group' => 'Social Logins', 'label' => 'Apple Service ID / Client ID', 'type' => 'text']
+                );
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.apple_enabled'],
+                    ['value' => '1', 'group' => 'Social Logins', 'label' => 'Apple Login Enabled', 'type' => 'text']
+                );
+                $output['apple_client_id_saved'] = $appleIdVal;
+            }
+
+            if ($request->has('apple_team_id') && !empty($request->query('apple_team_id'))) {
+                $appleTeamVal = trim($request->query('apple_team_id'));
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.apple_team_id'],
+                    ['value' => $appleTeamVal, 'group' => 'Social Logins', 'label' => 'Apple Developer Team ID', 'type' => 'text']
+                );
+                $output['apple_team_id_saved'] = $appleTeamVal;
+            }
+
+            if ($request->has('apple_key_id') && !empty($request->query('apple_key_id'))) {
+                $appleKeyVal = trim($request->query('apple_key_id'));
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.apple_key_id'],
+                    ['value' => $appleKeyVal, 'group' => 'Social Logins', 'label' => 'Apple Key ID', 'type' => 'text']
+                );
+                $output['apple_key_id_saved'] = $appleKeyVal;
+            }
+
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;
             $output['stripe_settings_synced'] = true;
