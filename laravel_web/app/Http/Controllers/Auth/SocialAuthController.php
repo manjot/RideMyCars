@@ -218,17 +218,32 @@ class SocialAuthController extends Controller
      */
     public function redirectToApple(Request $request)
     {
-        $clientId = config('services.apple.client_id');
-        $redirectUri = config('services.apple.redirect', url('/auth/apple/callback'));
+        $clientId = \App\Services\SettingService::get('oauth.apple_client_id')
+            ?: config('services.apple.client_id')
+            ?: env('APPLE_CLIENT_ID');
+
+        $redirectUri = \App\Services\SettingService::get('oauth.apple_redirect_uri')
+            ?: config('services.apple.redirect')
+            ?: url('/auth/apple/callback');
 
         if (empty($clientId)) {
-            return redirect('/login')->with('error', 'Apple Sign-In is currently being initialized. Please configure APPLE_CLIENT_ID in your settings.');
+            Log::warning('Apple Sign-In requested but APPLE_CLIENT_ID / oauth.apple_client_id is not set.');
+            return redirect('/login')->with('error', 'Apple Sign-In is being initialized. Please provide your Apple Services ID in settings.');
         }
 
-        $state = Str::random(40);
+        $role = $request->query('role', 'customer');
+        if ($role === 'rider') $role = 'customer';
+
+        $stateData = [
+            'token' => Str::random(32),
+            'role' => $role,
+            'time' => time(),
+        ];
+        $state = base64_encode(json_encode($stateData));
+
         session([
             'oauth_apple_state' => $state,
-            'oauth_intended_role' => $request->query('role', 'customer'),
+            'oauth_intended_role' => $role,
         ]);
 
         $queryParams = http_build_query([
@@ -249,12 +264,14 @@ class SocialAuthController extends Controller
     public function handleAppleCallback(Request $request)
     {
         if ($request->has('error')) {
-            Log::warning('Apple OAuth cancelled or error', ['error' => $request->get('error')]);
-            return redirect('/login')->with('error', 'Apple Sign-In was cancelled or failed.');
+            $err = $request->get('error');
+            Log::warning('Apple OAuth cancelled or error', ['error' => $err]);
+            return redirect('/login')->with('error', ($err === 'user_cancelled_authorize') ? 'Apple Sign-In was cancelled.' : 'Apple Sign-In was cancelled or failed.');
         }
 
         $idToken = $request->input('id_token');
         if (empty($idToken)) {
+            Log::warning('Apple OAuth callback received without id_token', ['all' => $request->all()]);
             return redirect('/login')->with('error', 'No identification token received from Apple.');
         }
 
@@ -276,7 +293,7 @@ class SocialAuthController extends Controller
             // Apple only sends name details on FIRST authorization in the 'user' POST field
             $name = null;
             if ($request->filled('user')) {
-                $userData = json_decode($request->input('user'), true);
+                $userData = is_string($request->input('user')) ? json_decode($request->input('user'), true) : $request->input('user');
                 if (!empty($userData['name'])) {
                     $firstName = $userData['name']['firstName'] ?? '';
                     $lastName = $userData['name']['lastName'] ?? '';
@@ -284,7 +301,17 @@ class SocialAuthController extends Controller
                 }
             }
 
-            $role = session()->pull('oauth_intended_role', 'customer');
+            // Restore role from session OR decode from state if cross-site cookie was dropped
+            $role = session()->pull('oauth_intended_role');
+            if (empty($role) && $request->filled('state')) {
+                $stateDecoded = json_decode(base64_decode($request->input('state')), true);
+                if (!empty($stateDecoded['role'])) {
+                    $role = $stateDecoded['role'];
+                }
+            }
+            if (empty($role)) {
+                $role = 'customer';
+            }
 
             $user = $this->findOrCreateSocialUser([
                 'provider' => 'apple',
