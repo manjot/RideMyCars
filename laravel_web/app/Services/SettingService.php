@@ -171,6 +171,10 @@ class SettingService
             if ($twilioMsgSid) {
                 Config::set('twilio.messaging_service_sid', $twilioMsgSid);
             }
+            $twilioAlpha = static::get('sms.twilio_alphanumeric_sender');
+            if ($twilioAlpha) {
+                Config::set('twilio.alphanumeric_sender', $twilioAlpha);
+            }
             $twilioEnabled = static::get('sms.twilio_enabled');
             if ($twilioEnabled !== null) {
                 Config::set('twilio.enabled', filter_var($twilioEnabled, FILTER_VALIDATE_BOOLEAN));

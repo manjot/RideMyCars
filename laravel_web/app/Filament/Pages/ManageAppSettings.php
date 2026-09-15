@@ -66,6 +66,7 @@ class ManageAppSettings extends Page implements HasForms
             'sms_twilio_auth_token' => $all['sms.twilio_auth_token'] ?? '',
             'sms_twilio_phone_number' => $all['sms.twilio_phone_number'] ?? '',
             'sms_twilio_messaging_service_sid' => $all['sms.twilio_messaging_service_sid'] ?? '',
+            'sms_twilio_alphanumeric_sender' => $all['sms.twilio_alphanumeric_sender'] ?? 'RideMyCars',
 
             // Mail & SMTP
             'mail_mailer' => $all['mail.mailer'] ?? 'smtp',
@@ -281,13 +282,21 @@ class ManageAppSettings extends Page implements HasForms
                                                 ->revealable()
                                                 ->placeholder('Auth Token'),
                                         ]),
-                                        Forms\Components\Grid::make(2)->schema([
+                                        Forms\Components\Grid::make(3)->schema([
                                             Forms\Components\TextInput::make('sms_twilio_phone_number')
                                                 ->label('Sender Phone Number (E.164)')
-                                                ->placeholder('+1234567890'),
+                                                ->placeholder('+18555933328')
+                                                ->helperText('Required for US/Canada. If using a Toll-Free number (+1855...), Toll-Free Verification must be approved in Twilio Console to prevent carrier filtering.'),
                                             Forms\Components\TextInput::make('sms_twilio_messaging_service_sid')
                                                 ->label('Messaging Service SID (Optional)')
-                                                ->placeholder('MG...'),
+                                                ->placeholder('MG52...2c4e')
+                                                ->helperText('Recommended for high throughput and smart carrier sender pools.'),
+                                            Forms\Components\TextInput::make('sms_twilio_alphanumeric_sender')
+                                                ->label('Alphanumeric Sender ID (Ghana/Intl)')
+                                                ->placeholder('RideMyCars')
+                                                ->maxLength(11)
+                                                ->default('RideMyCars')
+                                                ->helperText('Used for Ghana (+233) and overseas where US Toll-Free numbers cannot route. Up to 11 alphanumeric characters.'),
                                         ]),
                                     ]),
                             ]),
@@ -546,6 +555,7 @@ class ManageAppSettings extends Page implements HasForms
             'sms_twilio_auth_token' => ['key' => 'sms.twilio_auth_token', 'group' => 'SMS Gateway'],
             'sms_twilio_phone_number' => ['key' => 'sms.twilio_phone_number', 'group' => 'SMS Gateway'],
             'sms_twilio_messaging_service_sid' => ['key' => 'sms.twilio_messaging_service_sid', 'group' => 'SMS Gateway'],
+            'sms_twilio_alphanumeric_sender' => ['key' => 'sms.twilio_alphanumeric_sender', 'group' => 'SMS Gateway'],
 
             // Mail
             'mail_mailer' => ['key' => 'mail.mailer', 'group' => 'Mail & SMTP'],
@@ -784,26 +794,39 @@ class ManageAppSettings extends Page implements HasForms
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->color('gray')
                 ->modalHeading('Send Test SMS via Twilio')
-                ->modalDescription('Verify your Twilio credentials by sending a live test SMS.')
+                ->modalDescription('Verify your Twilio credentials by sending a live test SMS. E.164 country code is required (e.g. +233 55 977 6761 for Ghana, +1 305 368 8734 for USA).')
                 ->form([
                     Forms\Components\TextInput::make('test_phone')
-                        ->label('Recipient Phone (E.164)')
+                        ->label('Recipient Phone Number')
                         ->required()
-                        ->placeholder('+1234567890'),
+                        ->placeholder('+233559776761 or +13053688734')
+                        ->helperText('Include country code (e.g., +233 for Ghana, +1 for USA). If you enter a local number starting with 0, +233 will be applied automatically.'),
                 ])
                 ->action(function (array $data): void {
                     try {
                         SettingService::syncToConfig();
                         $smsService = app(TwilioSmsService::class);
+                        $formattedPhone = $smsService->formatE164($data['test_phone']);
+                        $validation = $smsService->validatePhoneNumber($formattedPhone);
+
+                        if (!$validation['valid']) {
+                            Notification::make()
+                                ->title('Invalid Phone Number')
+                                ->body($validation['error'])
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
                         $result = $smsService->sendSms(
-                            $data['test_phone'],
+                            $formattedPhone,
                             "RideMyCars SMS Gateway Test: Twilio credentials are functioning! (Sent: " . now()->format('H:i:s') . ")"
                         );
 
                         if ($result['success']) {
                             Notification::make()
                                 ->title('Test SMS Sent Successfully!')
-                                ->body("Dispatched to {$data['test_phone']}. SID: " . ($result['message_sid'] ?? 'simulated'))
+                                ->body("Dispatched to {$formattedPhone}. SID: " . ($result['message_sid'] ?? 'simulated') . " (Status: " . ($result['status'] ?? 'queued') . ")")
                                 ->success()
                                 ->send();
                         } else {
@@ -811,6 +834,7 @@ class ManageAppSettings extends Page implements HasForms
                                 ->title('SMS Sending Failed')
                                 ->body($result['error'] ?? 'Unknown error from Twilio gateway.')
                                 ->danger()
+                                ->persistent()
                                 ->send();
                         }
                     } catch (\Throwable $e) {
@@ -818,6 +842,7 @@ class ManageAppSettings extends Page implements HasForms
                             ->title('Twilio Test Failed')
                             ->body($e->getMessage())
                             ->danger()
+                            ->persistent()
                             ->send();
                     }
                 }),

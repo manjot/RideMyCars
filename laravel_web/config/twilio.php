@@ -24,6 +24,7 @@ return [
     */
     'phone_number' => env('TWILIO_PHONE_NUMBER', ''),
     'messaging_service_sid' => env('TWILIO_MESSAGING_SERVICE_SID', ''),
+    'alphanumeric_sender' => env('TWILIO_ALPHANUMERIC_SENDER', 'RideMyCars'),
 
     /*
     |--------------------------------------------------------------------------

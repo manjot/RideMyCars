@@ -978,6 +978,9 @@
                                 I explicitly agree to the <a href="/terms-and-conditions" target="_blank" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Ride My Cars Terms & Conditions</a> and <a href="/privacy" target="_blank" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Privacy Policy</a>.
                             </span>
                         </label>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-2 pl-7 leading-relaxed">
+                            By providing your phone number, you consent to receive a one-time verification code (OTP) via SMS from RideMyCars for account authentication. Message & data rates may apply. Reply STOP to cancel.
+                        </p>
                         @error('terms')
                             <p class="text-xs text-red-500 font-bold mt-1">You must agree to the Terms & Conditions to create an account.</p>
                         @enderror
@@ -1148,8 +1151,11 @@
                 },
 
                 updatePhone() {
-                    const raw = (this.mobileNumber || '').replace(/[^\d]/g, '');
-                    this.phone = this.selectedCountry.dial + (raw ? ' ' + raw : '');
+                    let raw = (this.mobileNumber || '').replace(/[^\d]/g, '');
+                    if (raw.startsWith('0') && this.selectedCountry && this.selectedCountry.dial !== '+1') {
+                        raw = raw.substring(1);
+                    }
+                    this.phone = (this.selectedCountry ? this.selectedCountry.dial : '+233') + (raw ? ' ' + raw : '');
                 },
 
                 startTimer(seconds = 300) {

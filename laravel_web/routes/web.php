@@ -333,11 +333,11 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         $formattedPhone = $smsService->formatE164($phone);
         $rawCleanPhone = preg_replace('/\s+/', '', $phone);
 
-        $digitsOnly = preg_replace('/\D/', '', $formattedPhone);
-        if (strlen($digitsOnly) < 7) {
+        $validation = $smsService->validatePhoneNumber($formattedPhone);
+        if (!$validation['valid']) {
             return response()->json([
                 'success' => false,
-                'error' => 'Please enter a valid mobile number with country code.'
+                'error' => $validation['error']
             ], 422);
         }
 

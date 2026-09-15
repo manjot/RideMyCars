@@ -449,11 +449,11 @@ class AuthController extends Controller
                 $formattedPhone = $smsService->formatE164($phone);
                 $cleanPhone = preg_replace('/\s+/', '', $phone);
 
-                $digitsOnly = preg_replace('/\D/', '', $formattedPhone);
-                if (strlen($digitsOnly) < 7) {
+                $validation = $smsService->validatePhoneNumber($formattedPhone);
+                if (!$validation['valid']) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Please enter a valid mobile number with country code.'
+                        'message' => $validation['error']
                     ], 422);
                 }
 
