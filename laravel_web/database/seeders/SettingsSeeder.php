@@ -93,7 +93,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'oauth.google_redirect_uri', 'label' => 'Google OAuth Redirect URI', 'value' => env('GOOGLE_REDIRECT_URI', 'https://ridemycars.com/auth/google/callback'), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.apple_enabled', 'label' => 'Apple Login Enabled', 'value' => '1', 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.apple_client_id', 'label' => 'Apple Service ID / Client ID', 'value' => env('APPLE_CLIENT_ID', 'com.ridemycars.web.auth'), 'group' => 'Social Logins', 'type' => 'text'],
-            ['key' => 'oauth.apple_team_id', 'label' => 'Apple Developer Team ID', 'value' => env('APPLE_TEAM_ID', ''), 'group' => 'Social Logins', 'type' => 'text'],
+            ['key' => 'oauth.apple_team_id', 'label' => 'Apple Developer Team ID', 'value' => env('APPLE_TEAM_ID', '3RLRZVVCJR'), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.apple_key_id', 'label' => 'Apple Key ID', 'value' => env('APPLE_KEY_ID', ''), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.apple_client_secret', 'label' => 'Apple Generated Client Secret / Key', 'value' => env('APPLE_CLIENT_SECRET', ''), 'group' => 'Social Logins', 'type' => 'text'],
             ['key' => 'oauth.apple_redirect_uri', 'label' => 'Apple Redirect URI', 'value' => env('APPLE_REDIRECT_URI', 'https://ridemycars.com/auth/apple/callback'), 'group' => 'Social Logins', 'type' => 'text'],
