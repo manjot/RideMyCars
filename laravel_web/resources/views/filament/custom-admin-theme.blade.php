@@ -51,19 +51,20 @@
     .fi-topbar nav,
     .fi-topbar-nav,
     .fi-topbar > div,
-    .fi-user-menu {
+    .fi-user-menu,
+    .fi-user-menu .fi-dropdown {
+        position: relative !important;
         overflow: visible !important;
     }
 
     /* Force Profile & Topbar Dropdowns to Open Downward */
-    .fi-user-menu .fi-dropdown-panel,
-    .fi-topbar .fi-dropdown-panel {
-        top: 100% !important;
+    .fi-user-menu .fi-dropdown-panel {
+        position: absolute !important;
+        top: calc(100% + 0.5rem) !important;
         bottom: auto !important;
         right: 0 !important;
         left: auto !important;
         transform: none !important;
-        margin-top: 0.5rem !important;
         z-index: 99999 !important;
     }
 
@@ -426,8 +427,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const rect = panel.getBoundingClientRect();
             if (panel.closest('.fi-topbar') || panel.closest('.fi-user-menu') || rect.top < topbarBottom) {
                 if (rect.top < topbarBottom) {
-                    panel.style.top = (topbarBottom + 6) + 'px';
-                    panel.style.bottom = 'auto';
+                    panel.style.setProperty('top', (topbarBottom + 6) + 'px', 'important');
+                    panel.style.setProperty('bottom', 'auto', 'important');
                 }
             }
         });
