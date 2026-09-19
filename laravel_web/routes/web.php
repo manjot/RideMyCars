@@ -3312,6 +3312,15 @@ Route::get('/admin/seed-incentives', function (\Illuminate\Http\Request $request
                 'milestones_count' => count($driverPayload['tabs']['monthly']['milestones'] ?? []),
             ],
         ],
+        'filament_table_check' => \App\Models\Incentive::all()->map(function ($record) {
+            $drivers = \App\Models\User::where('role', 'driver')->with('driverProfile')->get();
+            $count = $drivers->filter(fn ($d) => $record->matchesDriver($d))->count();
+            return [
+                'id' => $record->id,
+                'name' => $record->name,
+                'target_drivers' => "{$count} Drivers",
+            ];
+        }),
         'incentives' => \App\Models\Incentive::select('id', 'name', 'type', 'country', 'currency', 'status', 'targets')->get(),
     ]);
 });
