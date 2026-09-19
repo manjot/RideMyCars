@@ -3247,10 +3247,33 @@ foreach ($pages as $page) {
 
 Route::get('/admin/seed-incentives', function (\Illuminate\Http\Request $request) {
     \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
+    $driver = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+    $driverPayload = $driver ? \App\Services\IncentiveService::getDriverIncentivesPayload($driver) : null;
     return response()->json([
         'success' => true,
         'message' => 'Daily, Weekly, and Monthly Incentive programs seeded successfully!',
         'count' => \App\Models\Incentive::count(),
+        'test_driver' => $driver ? ['id' => $driver->id, 'email' => $driver->email] : null,
+        'driver_tabs' => [
+            'daily' => [
+                'has_incentive' => $driverPayload['tabs']['daily']['has_incentive'] ?? false,
+                'name' => $driverPayload['tabs']['daily']['name'] ?? null,
+                'hero' => $driverPayload['tabs']['daily']['hero_reward_text'] ?? null,
+                'milestones_count' => count($driverPayload['tabs']['daily']['milestones'] ?? []),
+            ],
+            'weekly' => [
+                'has_incentive' => $driverPayload['tabs']['weekly']['has_incentive'] ?? false,
+                'name' => $driverPayload['tabs']['weekly']['name'] ?? null,
+                'hero' => $driverPayload['tabs']['weekly']['hero_reward_text'] ?? null,
+                'milestones_count' => count($driverPayload['tabs']['weekly']['milestones'] ?? []),
+            ],
+            'monthly' => [
+                'has_incentive' => $driverPayload['tabs']['monthly']['has_incentive'] ?? false,
+                'name' => $driverPayload['tabs']['monthly']['name'] ?? null,
+                'hero' => $driverPayload['tabs']['monthly']['hero_reward_text'] ?? null,
+                'milestones_count' => count($driverPayload['tabs']['monthly']['milestones'] ?? []),
+            ],
+        ],
         'incentives' => \App\Models\Incentive::select('id', 'name', 'type', 'country', 'currency', 'status', 'targets')->get(),
     ]);
 });
