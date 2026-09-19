@@ -238,7 +238,7 @@ class IncentiveResource extends Resource
                 Tables\Columns\TextColumn::make('city')
                     ->label('City')
                     ->searchable()
-                    ->default('All Cities'),
+                    ->placeholder('All Cities'),
 
                 Tables\Columns\TextColumn::make('vehicle_type')
                     ->label('Vehicle Type')
@@ -252,39 +252,20 @@ class IncentiveResource extends Resource
                     ->formatStateUsing(fn ($state) => ucfirst($state)),
 
                 Tables\Columns\TextColumn::make('active_drivers')
-                    ->label('Active Drivers')
+                    ->label('Target Drivers')
                     ->badge()
                     ->color('info')
-                    ->state(function (Incentive $record): int {
-                        $q = User::where('role', 'driver');
-                        $country = $record->country;
-                        $city = $record->city;
-                        $vType = $record->vehicle_type;
-
-                        $q->where(function ($sub) use ($country) {
-                            $sub->where('country', $country)
-                                ->orWhereHas('driverProfile', function ($p) use ($country) {
-                                    $p->where('country', $country);
-                                });
-                        });
-
-                        if (!empty($city)) {
-                            $q->where(function ($sub) use ($city) {
-                                $sub->where('city', $city)
-                                    ->orWhereHas('driverProfile', function ($p) use ($city) {
-                                        $p->where('city', $city)
-                                          ->orWhere('service_area', $city);
-                                    });
-                            });
+                    ->state(function (Incentive $record): string {
+                        try {
+                            static $drivers = null;
+                            if ($drivers === null) {
+                                $drivers = User::where('role', 'driver')->with('driverProfile')->get();
+                            }
+                            $count = $drivers->filter(fn ($d) => $record->matchesDriver($d))->count();
+                            return "{$count} Drivers";
+                        } catch (\Throwable $e) {
+                            return '—';
                         }
-
-                        if (!empty($vType) && $vType !== 'All Vehicles') {
-                            $q->whereHas('driverProfile', function ($p) use ($vType) {
-                                $p->where('vehicle_type', $vType);
-                            });
-                        }
-
-                        return $q->count();
                     }),
 
                 Tables\Columns\TextColumn::make('start_date')
@@ -295,7 +276,7 @@ class IncentiveResource extends Resource
                 Tables\Columns\TextColumn::make('end_date')
                     ->label('End Date')
                     ->date('M d, Y')
-                    ->default('Ongoing')
+                    ->placeholder('Ongoing')
                     ->sortable(),
             ])
             ->filters([

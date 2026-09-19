@@ -3602,14 +3602,24 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Cache::flush();
     \App\Services\SettingService::syncToConfig();
 
+    \App\Services\IncentiveService::ensureTables();
+    \App\Models\Incentive::ensureTableExists();
+
     // Include recent laravel.log lines for debugging
     $logFiles = glob(storage_path('logs/*.log'));
     $output['log_files'] = $logFiles;
-    $output['otp_grep'] = shell_exec('grep -h -i "OTP" ' . storage_path('logs/*.log') . ' 2>&1 | tail -n 25');
     $logPath = storage_path('logs/laravel.log');
     if (file_exists($logPath)) {
         $lines = file($logPath);
-        $output['last_log'] = array_slice($lines, -15);
+        $recentErrors = [];
+        $total = count($lines);
+        for ($i = max(0, $total - 250); $i < $total; $i++) {
+            if (str_contains($lines[$i], 'ERROR') || str_contains($lines[$i], 'Exception') || str_contains($lines[$i], 'incentive')) {
+                $recentErrors[] = trim($lines[$i]);
+            }
+        }
+        $output['recent_errors'] = array_slice($recentErrors, -15);
+        $output['last_log'] = array_slice($lines, -20);
     }
     
     return response()->json([
