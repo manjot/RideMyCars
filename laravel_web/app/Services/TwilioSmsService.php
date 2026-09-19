@@ -77,43 +77,21 @@ class TwilioSmsService
         ];
 
         // 3. Smart Sender Selection:
-        // Identify whether destination is US/Canada (+1) or International
-        $isNorthAmerica = str_starts_with($formattedTo, '+1');
-        $isFromTollFree = $this->isTollFreeNumber($this->fromNumber);
-
-        if (!$isNorthAmerica) {
-            // Destination is outside North America (e.g. Ghana +233, UK +44, Nigeria +234)
-            // US Toll-Free numbers (+1855...) CANNOT route to Ghana/international (Error 21612).
-            // Explicitly force Alphanumeric Sender ID 'RideMyCars' so Twilio never selects the toll-free number.
-            if (!empty($this->alphanumericSender)) {
-                $payload['From'] = substr($this->alphanumericSender, 0, 11);
-                Log::info("Twilio SMS: Routing international message to {$formattedTo} explicitly via Alphanumeric Sender ID '{$payload['From']}'");
-            } elseif (!empty($this->messagingServiceSid)) {
-                $payload['MessagingServiceSid'] = $this->messagingServiceSid;
-            } elseif (!empty($this->fromNumber)) {
-                $payload['From'] = $this->fromNumber;
-            } else {
-                return [
-                    'success' => false,
-                    'message_sid' => null,
-                    'error' => 'No valid sender (Phone Number, Messaging Service SID, or Alphanumeric Sender ID) is configured.',
-                    'code' => 500,
-                ];
-            }
+        // When MessagingServiceSid is configured, use it as it pools both Alphanumeric Sender ('RideMyCars')
+        // and Phone Numbers (+1855...), allowing Twilio Copilot to route optimally per destination.
+        if (!empty($this->messagingServiceSid)) {
+            $payload['MessagingServiceSid'] = $this->messagingServiceSid;
+        } elseif (!$isNorthAmerica && !empty($this->alphanumericSender)) {
+            $payload['From'] = substr($this->alphanumericSender, 0, 11);
+        } elseif (!empty($this->fromNumber)) {
+            $payload['From'] = $this->fromNumber;
         } else {
-            // Destination is North America (+1): Alpha Sender ID is NOT supported by US/CA carriers.
-            if (!empty($this->messagingServiceSid)) {
-                $payload['MessagingServiceSid'] = $this->messagingServiceSid;
-            } elseif (!empty($this->fromNumber)) {
-                $payload['From'] = $this->fromNumber;
-            } else {
-                return [
-                    'success' => false,
-                    'message_sid' => null,
-                    'error' => 'A valid Twilio phone number or Messaging Service SID is required for US/Canada destinations.',
-                    'code' => 500,
-                ];
-            }
+            return [
+                'success' => false,
+                'message_sid' => null,
+                'error' => 'No valid sender (Messaging Service SID, Phone Number, or Alphanumeric Sender ID) is configured.',
+                'code' => 500,
+            ];
         }
 
         $url = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json";
@@ -140,8 +118,9 @@ class TwilioSmsService
             $rawMessage = $data['message'] ?? 'Failed to send SMS via Twilio';
             $errorCode = (int) ($data['code'] ?? $response->status());
 
-            // If primary sender failed with routing error 21612 or 21614, attempt fallback sender if configured
-            if (!$response->successful() && in_array($errorCode, [21612, 21614])) {
+            // If primary sender failed with routing error 21612, 21614, or 21703, attempt fallback sender if configured
+            if (!$response->successful() && in_array($errorCode, [21612, 21614, 21703])) {
+                $retryPayload = null;
                 if (isset($payload['From']) && !empty($this->messagingServiceSid)) {
                     Log::info("Twilio SMS: Sender '{$payload['From']}' returned {$errorCode}. Retrying {$formattedTo} via MessagingServiceSid {$this->messagingServiceSid}...");
                     $retryPayload = [
@@ -149,6 +128,23 @@ class TwilioSmsService
                         'Body' => $message,
                         'MessagingServiceSid' => $this->messagingServiceSid,
                     ];
+                } elseif (isset($payload['MessagingServiceSid']) && !empty($this->alphanumericSender) && !str_starts_with($formattedTo, '+1')) {
+                    Log::info("Twilio SMS: MessagingService returned {$errorCode}. Retrying {$formattedTo} via Alphanumeric Sender '{$this->alphanumericSender}'...");
+                    $retryPayload = [
+                        'To' => $formattedTo,
+                        'Body' => $message,
+                        'From' => substr($this->alphanumericSender, 0, 11),
+                    ];
+                } elseif (isset($payload['MessagingServiceSid']) && !empty($this->fromNumber)) {
+                    Log::info("Twilio SMS: MessagingService returned {$errorCode}. Retrying {$formattedTo} via phone number '{$this->fromNumber}'...");
+                    $retryPayload = [
+                        'To' => $formattedTo,
+                        'Body' => $message,
+                        'From' => $this->fromNumber,
+                    ];
+                }
+
+                if ($retryPayload) {
                     $retryResponse = Http::withBasicAuth($this->accountSid, $this->authToken)
                         ->timeout($this->timeout)
                         ->asForm()
@@ -363,7 +359,7 @@ class TwilioSmsService
     {
         return match ($code) {
             21211 => "The phone number {$phone} is invalid according to telecom carrier standards. Please check the country code and mobile number.",
-            21612 => "SMS carrier routing to {$phone} is restricted by international telecom regulations. Please verify via email or contact support.",
+            21612, 21703 => "SMS carrier routing to {$phone} is restricted by international telecom regulations. Please verify via email or contact support.",
             30032 => "Toll-Free Verification Required: The Twilio toll-free number has not completed carrier verification. US carriers block unverified toll-free SMS. Submit Toll-Free Verification in Twilio Console.",
             30006 => "Undelivered: The destination number is either a landline, unreachable carrier, or being filtered by carriers. SMS can only be sent to mobile handsets.",
             30005 => "Handset unreachable: The recipient mobile phone is turned off, out of cell coverage, or unreachable.",
