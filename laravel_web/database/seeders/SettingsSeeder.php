@@ -75,6 +75,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'sms.twilio_auth_token', 'label' => 'Twilio Auth Token', 'value' => env('TWILIO_AUTH_TOKEN', ''), 'group' => 'SMS Gateway', 'type' => 'text'],
             ['key' => 'sms.twilio_phone_number', 'label' => 'Twilio Sender Phone Number', 'value' => env('TWILIO_PHONE_NUMBER', ''), 'group' => 'SMS Gateway', 'type' => 'text'],
             ['key' => 'sms.twilio_messaging_service_sid', 'label' => 'Twilio Messaging Service SID', 'value' => env('TWILIO_MESSAGING_SERVICE_SID', ''), 'group' => 'SMS Gateway', 'type' => 'text'],
+            ['key' => 'sms.twilio_alphanumeric_sender', 'label' => 'Twilio Alphanumeric Sender ID', 'value' => env('TWILIO_ALPHANUMERIC_SENDER', 'RideMyCars'), 'group' => 'SMS Gateway', 'type' => 'text'],
 
             // Mail & SMTP Settings
             ['key' => 'mail.mailer', 'label' => 'Mail Transport Driver (smtp, log, sendmail)', 'value' => env('MAIL_MAILER', 'smtp'), 'group' => 'Mail & SMTP', 'type' => 'text'],
