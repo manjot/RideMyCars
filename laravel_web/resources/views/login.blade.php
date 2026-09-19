@@ -803,6 +803,10 @@
                         .then(({ status, data }) => {
                             this.isLoading = false;
                             if (data && data.success) {
+                                if (data.fallback_to_email && data.email) {
+                                    this.targetDestination = data.email;
+                                    this.isPhoneAuth = false;
+                                }
                                 this.view = 'otp';
                                 this.c1 = this.c2 = this.c3 = this.c4 = '';
                                 this.startTimer(300);

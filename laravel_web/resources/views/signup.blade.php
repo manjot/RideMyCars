@@ -1015,18 +1015,31 @@
                  @click.away="otpModalOpen = false">
                 
                 <div class="flex items-center justify-between mb-4">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+                    <span x-show="!isFallbackEmail" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0-2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
                         <span>Phone Verification</span>
+                    </span>
+                    <span x-show="isFallbackEmail" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <span>Email Verification (SMS Carrier Fallback)</span>
                     </span>
                     <button type="button" @click="otpModalOpen = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
-                <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Verify your mobile</h3>
-                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-2" x-text="isFallbackEmail ? 'Check your email inbox' : 'Verify your mobile'"></h3>
+                
+                <div x-show="isFallbackEmail" class="mb-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Carrier SMS is restricted in your region (<span class="font-semibold" x-text="phone"></span>). We have delivered your 4-digit code to <strong x-text="fallbackEmailAddress"></strong>.</span>
+                </div>
+
+                <p x-show="!isFallbackEmail" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
                     We sent a 4-digit code to <span class="font-bold text-gray-900 dark:text-white" x-text="phone"></span>. Please enter it below to complete your registration.
+                </p>
+                <p x-show="isFallbackEmail" class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    Please check the inbox (or spam folder) for <span class="font-bold text-gray-900 dark:text-white" x-text="fallbackEmailAddress"></span> and enter your 4-digit code.
                 </p>
 
                 <div class="flex items-center gap-2 mb-6">
@@ -1070,7 +1083,7 @@
                             @click="resendOtp()" 
                             class="text-xs font-bold text-amber-700 dark:text-brand-400 hover:underline cursor-pointer"
                             style="display: none;">
-                        Didn't receive code? Resend SMS OTP
+                        <span x-text="isFallbackEmail ? 'Didn\'t receive code? Resend to Email' : 'Didn\'t receive code? Resend SMS OTP'"></span>
                     </button>
                     <span x-show="timer > 0" class="text-xs text-gray-400">
                         Resend code in <span class="font-mono font-bold" x-text="formattedTimer"></span>
@@ -1105,6 +1118,9 @@
                 isLoading: false,
                 otpError: '',
                 otpSuccess: '',
+                isFallbackEmail: false,
+                fallbackEmailAddress: '',
+                fallbackNotice: '',
                 timer: 300,
                 timerInterval: null,
                 c1: '', c2: '', c3: '', c4: '',
@@ -1269,6 +1285,9 @@
                         this.isLoading = false;
 
                         if (data && data.success) {
+                            this.isFallbackEmail = !!data.fallback_to_email;
+                            this.fallbackEmailAddress = data.email || emailVal;
+                            this.fallbackNotice = data.hint || '';
                             this.otpModalOpen = true;
                             this.c1 = this.c2 = this.c3 = this.c4 = '';
                             this.startTimer(300);
@@ -1314,8 +1333,14 @@
                         const data = await res.json().catch(() => ({ success: false, error: 'Server error (Status ' + res.status + ')' }));
                         this.isLoading = false;
                         if (data && data.success) {
+                            this.isFallbackEmail = !!data.fallback_to_email;
+                            if (data.fallback_to_email) {
+                                this.fallbackEmailAddress = data.email || emailVal;
+                                this.otpSuccess = 'New 4-digit code sent to your email!';
+                            } else {
+                                this.otpSuccess = 'New 4-digit code sent!';
+                            }
                             this.startTimer(300);
-                            this.otpSuccess = 'New 4-digit code sent!';
                             setTimeout(() => { this.otpSuccess = ''; }, 3500);
                         } else {
                             if (data && data.cooldown) {

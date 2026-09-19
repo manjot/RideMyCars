@@ -521,6 +521,33 @@ class AuthController extends Controller
                 Log::info("API OTP for phone {$formattedPhone}: {$otp}. Action: {$action}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
 
                 if (!$result['success']) {
+                    // Fallback to email if provided or if user exists
+                    $fallbackEmail = !empty($email) ? $email : ($user?->email ?? null);
+                    if (!empty($fallbackEmail)) {
+                        $cleanFallbackEmail = trim(strtolower($fallbackEmail));
+                        $emailService = app(\App\Services\EmailOtpService::class);
+                        $emailResult = $emailService->sendOtp($cleanFallbackEmail, $otp);
+
+                        if ($emailResult['success']) {
+                            \Illuminate\Support\Facades\Cache::put('otp_' . $cleanFallbackEmail, $otp, now()->addMinutes(5));
+                            \App\Services\OtpSecurityService::recordOtpSent($formattedPhone, $request->ip(), 'phone');
+                            \App\Services\OtpSecurityService::recordOtpSent($cleanFallbackEmail, $request->ip(), 'email');
+
+                            Log::info("API SMS dispatch failed for {$formattedPhone} ({$result['error']}), seamlessly fell back to Email OTP for {$cleanFallbackEmail}.");
+
+                            return response()->json([
+                                'success' => true,
+                                'user_exists' => ($user !== null),
+                                'action' => $action,
+                                'message' => "Verification code sent to {$cleanFallbackEmail}",
+                                'phone' => $formattedPhone,
+                                'email' => $cleanFallbackEmail,
+                                'fallback_to_email' => true,
+                                'expires_in' => 300,
+                            ]);
+                        }
+                    }
+
                     return response()->json([
                         'success' => false,
                         'message' => $result['error'] ?? 'Unable to send SMS verification code.',
@@ -662,14 +689,22 @@ class AuthController extends Controller
                 $formattedPhone = $smsService->formatE164($phone);
                 $cleanPhone = preg_replace('/\s+/', '', $phone);
 
+                $cleanEmail = !empty($email) ? strtolower(trim($email)) : null;
+                $emailOtp = $cleanEmail ? (\Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail) ?? \Illuminate\Support\Facades\Cache::get('otp_email_' . $cleanEmail)) : null;
+
                 $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
                           ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $cleanPhone)
-                          ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone);
+                          ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone)
+                          ?? $emailOtp;
 
                 if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
                     \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $formattedPhone);
                     \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $cleanPhone);
                     \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $phone);
+                    if ($cleanEmail) {
+                        \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
+                        \Illuminate\Support\Facades\Cache::forget('otp_email_' . $cleanEmail);
+                    }
 
                     $user = User::where('phone', $formattedPhone)
                         ->orWhere('phone', $phone)
@@ -884,10 +919,12 @@ class AuthController extends Controller
             if (!empty($email)) {
                 $cleanEmail = trim(strtolower($email));
                 $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail)
+                          ?? \Illuminate\Support\Facades\Cache::get('otp_email_' . $cleanEmail)
                           ?? \Illuminate\Support\Facades\Cache::get('otp_' . $email);
 
                 if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
                     \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
+                    \Illuminate\Support\Facades\Cache::forget('otp_email_' . $cleanEmail);
                     \Illuminate\Support\Facades\Cache::forget('otp_' . $email);
 
                     $inputReferral = strtoupper(trim($request->input('referral_code') ?? $request->input('referred_by') ?? ''));

@@ -140,6 +140,33 @@ class TwilioSmsService
             $rawMessage = $data['message'] ?? 'Failed to send SMS via Twilio';
             $errorCode = (int) ($data['code'] ?? $response->status());
 
+            // If primary sender failed with routing error 21612 or 21614, attempt fallback sender if configured
+            if (!$response->successful() && in_array($errorCode, [21612, 21614])) {
+                if (isset($payload['From']) && !empty($this->messagingServiceSid)) {
+                    Log::info("Twilio SMS: Sender '{$payload['From']}' returned {$errorCode}. Retrying {$formattedTo} via MessagingServiceSid {$this->messagingServiceSid}...");
+                    $retryPayload = [
+                        'To' => $formattedTo,
+                        'Body' => $message,
+                        'MessagingServiceSid' => $this->messagingServiceSid,
+                    ];
+                    $retryResponse = Http::withBasicAuth($this->accountSid, $this->authToken)
+                        ->timeout($this->timeout)
+                        ->asForm()
+                        ->post($url, $retryPayload);
+                    $retryData = $retryResponse->json();
+                    if ($retryResponse->successful() && !empty($retryData['sid'])) {
+                        Log::info("Twilio SMS sent successfully on retry to {$formattedTo}. SID: {$retryData['sid']}");
+                        return [
+                            'success' => true,
+                            'message_sid' => $retryData['sid'],
+                            'status' => $retryData['status'] ?? 'queued',
+                            'error' => null,
+                            'code' => null,
+                        ];
+                    }
+                }
+            }
+
             // 4. Translate Twilio errors into clear, actionable messages
             $friendlyError = $this->translateTwilioError($errorCode, $rawMessage, $formattedTo);
 
@@ -320,7 +347,10 @@ class TwilioSmsService
     {
         $cleaned = preg_replace('/[^\d]/', '', $phone);
         if (str_starts_with($cleaned, '1') && strlen($cleaned) === 11) {
-            $npa = substr($cleaned, 1, 3);
+            $cleaned = substr($cleaned, 1);
+        }
+        if (strlen($cleaned) === 10) {
+            $npa = substr($cleaned, 0, 3);
             return in_array($npa, ['800', '888', '877', '866', '855', '844', '833'], true);
         }
         return false;
@@ -333,7 +363,7 @@ class TwilioSmsService
     {
         return match ($code) {
             21211 => "The phone number {$phone} is invalid according to telecom carrier standards. Please check the country code and mobile number.",
-            21612 => "Routing restriction: The Twilio sender (+1855 toll-free) cannot send SMS to this destination country ({$phone}). Please use an Alphanumeric Sender ID ('RideMyCars') or a local number.",
+            21612 => "SMS carrier routing to {$phone} is restricted by international telecom regulations. Please verify via email or contact support.",
             30032 => "Toll-Free Verification Required: The Twilio toll-free number has not completed carrier verification. US carriers block unverified toll-free SMS. Submit Toll-Free Verification in Twilio Console.",
             30006 => "Undelivered: The destination number is either a landline, unreachable carrier, or being filtered by carriers. SMS can only be sent to mobile handsets.",
             30005 => "Handset unreachable: The recipient mobile phone is turned off, out of cell coverage, or unreachable.",

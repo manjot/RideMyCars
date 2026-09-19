@@ -387,9 +387,41 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
         \Illuminate\Support\Facades\Log::info("OTP generated for phone {$formattedPhone}: {$otp}. Action: {$action}. Twilio: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
 
         if (!$result['success']) {
+            // Resilient Fallback: If carrier SMS dispatch fails (e.g. Twilio 21612 routing restriction, 21408, toll-free filter),
+            // automatically dispatch the verification code to user's email if available.
+            $fallbackEmail = !empty($email) ? $email : ($user?->email ?? null);
+
+            if (!empty($fallbackEmail)) {
+                $cleanFallbackEmail = trim(strtolower($fallbackEmail));
+                $emailService = app(\App\Services\EmailOtpService::class);
+                $emailResult = $emailService->sendOtp($cleanFallbackEmail, $otp);
+
+                if ($emailResult['success']) {
+                    \Illuminate\Support\Facades\Cache::put('otp_' . $cleanFallbackEmail, $otp, now()->addMinutes(5));
+                    $request->session()->put('otp_' . $cleanFallbackEmail, $otp);
+
+                    \App\Services\OtpSecurityService::recordOtpSent($formattedPhone, $request->ip(), 'phone');
+                    \App\Services\OtpSecurityService::recordOtpSent($cleanFallbackEmail, $request->ip(), 'email');
+
+                    \Illuminate\Support\Facades\Log::info("SMS dispatch failed for {$formattedPhone} ({$result['error']}), seamlessly fell back to Email OTP for {$cleanFallbackEmail}.");
+
+                    return response()->json([
+                        'success' => true,
+                        'user_exists' => ($user !== null),
+                        'action' => $action,
+                        'message' => "Verification code sent to {$cleanFallbackEmail}",
+                        'hint' => "Carrier SMS is restricted in your region. We sent your 4-digit code to {$cleanFallbackEmail}.",
+                        'phone' => $formattedPhone,
+                        'email' => $cleanFallbackEmail,
+                        'fallback_to_email' => true,
+                        'expires_in' => 300,
+                    ]);
+                }
+            }
+
             return response()->json([
                 'success' => false,
-                'error' => $result['error'] ?? 'Unable to send SMS verification code. Please try again.',
+                'error' => $result['error'] ?? 'Unable to send SMS verification code. Please try again or use Email verification.',
                 'code' => $result['code'] ?? 500,
             ], 422);
         }
@@ -493,15 +525,23 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
                 ? ($request->session()->get('otp_phone_' . $formattedPhone) ?? $request->session()->get('otp_phone_' . $rawCleanPhone)) 
                 : null;
 
+            $cleanEmail = !empty($email) ? strtolower(trim($email)) : null;
+            $emailOtp = $cleanEmail ? (\Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail) ?? $request->session()->get('otp_' . $cleanEmail)) : null;
+
             $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
                       ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $rawCleanPhone)
                       ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone)
+                      ?? $emailOtp
                       ?? $sessionOtp;
 
             if ($cachedOtp && (string) $cachedOtp === $inputOtp) {
                 \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $formattedPhone);
                 \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $rawCleanPhone);
                 \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $phone);
+                if ($cleanEmail) {
+                    \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
+                    $request->session()->forget(['otp_' . $cleanEmail, 'otp_expires_' . $cleanEmail]);
+                }
                 $request->session()->forget(['otp_phone_' . $formattedPhone, 'otp_phone_' . $rawCleanPhone, 'otp_phone_expires']);
 
                 // Find existing user or Register new user via phone
