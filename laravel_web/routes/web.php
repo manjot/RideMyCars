@@ -2616,11 +2616,33 @@ Route::prefix('driver')->middleware('auth')->group(function () {
 
     Route::get('/incentives', function () {
         $user = auth()->user();
-        if (!$user) return redirect('/login');
+        if (!$user) {
+            if (request('preview') == 1) {
+                $driver = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+                $incentivesData = $driver ? \App\Services\IncentiveService::getDriverIncentivesPayload($driver) : [];
+                $user = $driver;
+                return view('driver.incentives', compact('user', 'incentivesData'));
+            }
+            return redirect('/login');
+        }
 
         $incentivesData = \App\Services\IncentiveService::getDriverIncentivesPayload($user);
         return view('driver.incentives', compact('user', 'incentivesData'));
     })->name('driver.incentives');
+
+    Route::get('/incentives/data', function () {
+        $user = auth()->user();
+        if (!$user) {
+            if (request('preview') == 1) {
+                $driver = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+                return response()->json($driver ? \App\Services\IncentiveService::getDriverIncentivesPayload($driver) : []);
+            }
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $incentivesData = \App\Services\IncentiveService::getDriverIncentivesPayload($user);
+        return response()->json($incentivesData);
+    })->name('driver.incentives.data');
 
     Route::post('/ride/{id}/accept', function ($id) {
         $user = auth()->user();

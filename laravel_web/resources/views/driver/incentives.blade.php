@@ -479,12 +479,21 @@
                         async fetchIncentives() {
                             this.loading = true;
                             try {
-                                const res = await fetch('/api/driver/incentives', {
+                                const previewParam = window.location.search.includes('preview=1') ? '?preview=1' : '';
+                                let res = await fetch('/driver/incentives/data' + previewParam, {
                                     headers: {
                                         'Accept': 'application/json',
                                         'X-Requested-With': 'XMLHttpRequest'
                                     }
                                 });
+                                if (!res.ok) {
+                                    res = await fetch('/api/driver/incentives', {
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
+                                    });
+                                }
                                 if (res.ok) {
                                     const json = await res.json();
                                     this.data = json;
