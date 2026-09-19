@@ -3245,6 +3245,16 @@ foreach ($pages as $page) {
     });
 }
 
+Route::get('/admin/seed-incentives', function (\Illuminate\Http\Request $request) {
+    \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
+    return response()->json([
+        'success' => true,
+        'message' => 'Daily, Weekly, and Monthly Incentive programs seeded successfully!',
+        'count' => \App\Models\Incentive::count(),
+        'incentives' => \App\Models\Incentive::select('id', 'name', 'type', 'country', 'currency', 'status', 'targets')->get(),
+    ]);
+});
+
 Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     if ($request->query('key') !== 'rmc2026') {
         return response()->json(['error' => 'Unauthorized'], 403);
@@ -3399,6 +3409,14 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
         $output['ride_categories_seeded'] = true;
+
+        // Seed Daily, Weekly, Monthly Incentive Programs
+        try {
+            \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
+            $output['incentive_programs_seeded'] = \App\Models\Incentive::count();
+        } catch (\Throwable $e) {
+            $output['incentive_programs_seed_err'] = $e->getMessage();
+        }
 
         // Ensure all admin users have role 'admin' and active status
         \Illuminate\Support\Facades\DB::table('users')

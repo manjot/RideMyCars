@@ -26,11 +26,191 @@ class IncentiveService
     }
 
     /**
+     * Seed realistic example incentive programs for Daily, Weekly, and Monthly tiers.
+     */
+    public static function seedDefaultIncentivesIfEmpty(bool $force = false): void
+    {
+        self::ensureTables();
+
+        if (!$force && Incentive::count() >= 3) {
+            return;
+        }
+
+        $defaultPrograms = [
+            // USA Daily
+            [
+                'name' => 'Daily Sprint Bonus',
+                'description' => 'Complete daily rides in your registered area to unlock instant cash bonuses.',
+                'type' => 'daily',
+                'country' => 'USA',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '$',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 5, 'reward' => 25],
+                    ['rides' => 10, 'reward' => 60],
+                    ['rides' => 15, 'reward' => 120],
+                ],
+            ],
+            // USA Weekly
+            [
+                'name' => 'Weekly Power Quest',
+                'description' => 'Hit weekly completed ride targets Monday through Sunday for an earnings surge.',
+                'type' => 'weekly',
+                'country' => 'USA',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '$',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 25, 'reward' => 150],
+                    ['rides' => 50, 'reward' => 350],
+                    ['rides' => 80, 'reward' => 650],
+                ],
+            ],
+            // USA Monthly
+            [
+                'name' => 'Monthly Elite Driver Challenge',
+                'description' => 'Top-tier monthly driver milestone program with huge wallet cash bonuses.',
+                'type' => 'monthly',
+                'country' => 'USA',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '$',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 100, 'reward' => 500],
+                    ['rides' => 200, 'reward' => 1200],
+                    ['rides' => 300, 'reward' => 2200],
+                ],
+            ],
+            // India Daily
+            [
+                'name' => 'Daily Peak Hours Quest',
+                'description' => 'Complete daily rides in your city to earn automatic cash bonuses in your driver wallet.',
+                'type' => 'daily',
+                'country' => 'India',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '₹',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 5, 'reward' => 200],
+                    ['rides' => 10, 'reward' => 500],
+                    ['rides' => 15, 'reward' => 1000],
+                ],
+            ],
+            // India Weekly
+            [
+                'name' => 'Weekly Superstar Milestone',
+                'description' => 'Reach weekly trip milestones to earn progressive cash rewards.',
+                'type' => 'weekly',
+                'country' => 'India',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '₹',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 25, 'reward' => 1500],
+                    ['rides' => 50, 'reward' => 3500],
+                    ['rides' => 80, 'reward' => 6500],
+                ],
+            ],
+            // India Monthly
+            [
+                'name' => 'Monthly Diamond Quest',
+                'description' => 'Achieve monthly ride goals to receive tiered cash rewards in your driver wallet.',
+                'type' => 'monthly',
+                'country' => 'India',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '₹',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 100, 'reward' => 5000],
+                    ['rides' => 200, 'reward' => 12000],
+                    ['rides' => 300, 'reward' => 22000],
+                ],
+            ],
+            // Global / All Locations Daily
+            [
+                'name' => 'Daily Fast-Track Quest',
+                'description' => 'Complete daily ride milestones to earn instant wallet bonuses.',
+                'type' => 'daily',
+                'country' => 'All Locations',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '$',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 5, 'reward' => 25],
+                    ['rides' => 10, 'reward' => 60],
+                    ['rides' => 15, 'reward' => 120],
+                ],
+            ],
+            // Global / All Locations Weekly
+            [
+                'name' => 'Weekly Premier Milestone',
+                'description' => 'Hit weekly trip milestones Monday to Sunday to earn progressive rewards.',
+                'type' => 'weekly',
+                'country' => 'All Locations',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '$',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 25, 'reward' => 150],
+                    ['rides' => 50, 'reward' => 350],
+                    ['rides' => 80, 'reward' => 650],
+                ],
+            ],
+            // Global / All Locations Monthly
+            [
+                'name' => 'Monthly Master Champion',
+                'description' => 'Top monthly ride challenge with grand milestone bonuses.',
+                'type' => 'monthly',
+                'country' => 'All Locations',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '$',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 100, 'reward' => 500],
+                    ['rides' => 200, 'reward' => 1200],
+                    ['rides' => 300, 'reward' => 2200],
+                ],
+            ],
+        ];
+
+        foreach ($defaultPrograms as $prog) {
+            Incentive::firstOrCreate(
+                [
+                    'name' => $prog['name'],
+                    'country' => $prog['country'],
+                    'type' => $prog['type'],
+                ],
+                $prog
+            );
+        }
+    }
+
+    /**
      * Get active incentives matching the driver's location and vehicle.
      */
     public static function getApplicableIncentives(User $driver, ?string $type = null, ?Carbon $date = null): array
     {
         self::ensureTables();
+        self::seedDefaultIncentivesIfEmpty();
 
         $d = $date ?: Carbon::now();
         $query = Incentive::query()->where('status', 'active');
@@ -45,6 +225,16 @@ class IncentiveService
         foreach ($allActive as $inc) {
             if ($inc->isScheduleActive($d) && $inc->matchesDriver($driver)) {
                 $applicable[] = $inc;
+            }
+        }
+
+        // If no specific country incentive matched, fallback to 'All Locations' / 'Global'
+        if (empty($applicable)) {
+            foreach ($allActive as $inc) {
+                $incCountry = strtolower(trim($inc->country));
+                if (in_array($incCountry, ['all', 'all locations', 'all countries', 'global']) && $inc->isScheduleActive($d)) {
+                    $applicable[] = $inc;
+                }
             }
         }
 
@@ -70,7 +260,17 @@ class IncentiveService
             $periodEnd = $d->copy()->endOfDay();
         }
 
-        $rideQuery = Ride::where('driver_id', $driver->id)
+        $userIds = [$driver->id];
+        if (!empty($driver->email)) {
+            $prefix = explode('@', $driver->email)[0];
+            $matchingIds = User::where('name', $driver->name)
+                ->orWhere('email', 'like', $prefix . '%')
+                ->pluck('id')
+                ->toArray();
+            $userIds = array_unique(array_merge($userIds, $matchingIds));
+        }
+
+        $rideQuery = Ride::whereIn('driver_id', $userIds)
             ->where('status', 'completed')
             ->where(function ($q) use ($periodStart, $periodEnd) {
                 $q->whereBetween('completed_at', [$periodStart, $periodEnd])
@@ -92,7 +292,21 @@ class IncentiveService
             });
         }
 
-        return $rideQuery->count();
+        $rideCount = $rideQuery->count();
+
+        // Also check completed DriverBooking trips
+        $bookingCount = 0;
+        if (class_exists(\App\Models\DriverBooking::class)) {
+            $bookingCount = \App\Models\DriverBooking::whereIn('driver_id', $userIds)
+                ->where('booking_status', 'completed')
+                ->where(function ($q) use ($periodStart, $periodEnd) {
+                    $q->whereBetween('updated_at', [$periodStart, $periodEnd])
+                      ->orWhereBetween('created_at', [$periodStart, $periodEnd]);
+                })
+                ->count();
+        }
+
+        return $rideCount + $bookingCount;
     }
 
     /**
@@ -321,11 +535,14 @@ class IncentiveService
         self::ensureTables();
 
         $profile = $driver->driverProfile;
-        $driverCountry = $profile?->country ?? $driver->country ?? 'India';
-        $driverState = $profile?->state ?? '';
-        $driverCity = $profile?->city ?? $profile?->service_area ?? $driver->city ?? 'Hyderabad';
-        $driverZone = $profile?->zone ?? '';
-        $driverVehicle = $profile?->vehicle_type ?? 'Car';
+        $driverCountry = trim($profile?->country ?? $driver->country ?? 'USA');
+        $driverState = trim($profile?->state ?? '');
+        $driverCity = trim($profile?->city ?? $profile?->service_area ?? $driver->city ?? 'New York');
+        $driverZone = trim($profile?->zone ?? '');
+        $driverVehicle = trim($profile?->vehicle_type ?? 'Car');
+
+        $isIndia = strcasecmp($driverCountry, 'India') === 0;
+        $currencySymbol = $isIndia ? '₹' : '$';
 
         $tabs = [
             'daily' => self::buildIncentiveTabPayload($driver, 'daily'),
@@ -339,14 +556,14 @@ class IncentiveService
             ->orderBy('credited_at', 'desc')
             ->take(50)
             ->get()
-            ->map(function ($tx) {
+            ->map(function ($tx) use ($currencySymbol) {
                 return [
                     'id' => $tx->id,
                     'date' => $tx->credited_at ? $tx->credited_at->format('d M') : $tx->created_at->format('d M'),
                     'full_date' => $tx->credited_at ? $tx->credited_at->format('d M Y, h:i A') : $tx->created_at->format('d M Y'),
                     'incentive' => $tx->incentive ? $tx->incentive->name : 'Incentive Program',
                     'incentive_type' => $tx->incentive?->type ?? 'daily',
-                    'reward' => ($tx->currency ?? '₹') . number_format($tx->amount, 0),
+                    'reward' => ($tx->currency ?? $currencySymbol) . number_format($tx->amount, 0),
                     'reward_raw' => (float)$tx->amount,
                     'trips' => ($tx->milestone_rides ? "{$tx->milestone_rides} Rides" : 'Target Achieved'),
                     'status' => 'Credited',
@@ -377,7 +594,7 @@ class IncentiveService
             'wallet_summary' => [
                 'balance' => $walletBalance,
                 'total_incentive_earned' => (float)$totalEarned,
-                'currency' => '₹',
+                'currency' => $currencySymbol,
             ],
             'tabs' => $tabs,
             'reward_history' => $rewardHistory,
@@ -423,7 +640,11 @@ class IncentiveService
 
         $achievedMilestones = is_array($progress->achieved_milestones) ? $progress->achieved_milestones : [];
         $targets = $incentive->getSortedTargets();
-        $currency = $incentive->currency ?: '₹';
+        
+        $profile = $driver->driverProfile;
+        $driverCountry = trim($profile?->country ?? $driver->country ?? 'USA');
+        $defaultCurrency = (strcasecmp($driverCountry, 'India') === 0) ? '₹' : '$';
+        $currency = $incentive->currency ?: $defaultCurrency;
 
         $maxTarget = $incentive->getMaxTarget();
         $maxRides = (int)($maxTarget['rides'] ?? 0);

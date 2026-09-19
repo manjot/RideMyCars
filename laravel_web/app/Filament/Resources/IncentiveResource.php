@@ -70,10 +70,12 @@ class IncentiveResource extends Resource
                                     ->label('Country (Required)')
                                     ->options(function () {
                                         $countries = [
+                                            'All Locations' => 'All Locations (Global)',
+                                            'USA' => 'USA (United States)',
                                             'India' => 'India',
+                                            'United States' => 'United States',
                                             'United Arab Emirates' => 'United Arab Emirates',
                                             'Ghana' => 'Ghana',
-                                            'United States' => 'United States',
                                             'United Kingdom' => 'United Kingdom',
                                             'Canada' => 'Canada',
                                             'Australia' => 'Australia',

@@ -180,28 +180,44 @@ class Incentive extends Model
             return false;
         }
 
-        if (strcasecmp($this->country, $driverCountry) !== 0 &&
-            !str_contains(strtolower($driverCountry), strtolower($this->country)) &&
-            !str_contains(strtolower($this->country), strtolower($driverCountry))) {
-            return false;
+        $c = strtolower(trim($this->country));
+        $dc = strtolower(trim($driverCountry));
+
+        // If incentive is global / all locations
+        if (in_array($c, ['all', 'all locations', 'all countries', 'global'])) {
+            // Matches any driver
+        } else {
+            if (!empty($dc)) {
+                $isMatch = (strcasecmp($this->country, $driverCountry) === 0)
+                    || str_contains($dc, $c)
+                    || str_contains($c, $dc)
+                    || ($c === 'usa' && ($dc === 'united states' || str_contains($dc, 'us')))
+                    || ($c === 'united states' && ($dc === 'usa' || str_contains($dc, 'us')))
+                    || ($c === 'uae' && (str_contains($dc, 'emirates') || str_contains($dc, 'dubai')))
+                    || ($c === 'uk' && (str_contains($dc, 'united kingdom') || str_contains($dc, 'britain')));
+
+                if (!$isMatch) {
+                    return false;
+                }
+            }
         }
 
         // 2. State match (Optional)
-        if (!empty($this->state)) {
+        if (!empty($this->state) && strcasecmp($this->state, 'All') !== 0) {
             if (empty($driverState) || strcasecmp($this->state, $driverState) !== 0) {
                 return false;
             }
         }
 
         // 3. City match (Optional)
-        if (!empty($this->city)) {
+        if (!empty($this->city) && strcasecmp($this->city, 'All') !== 0) {
             if (empty($driverCity) || (strcasecmp($this->city, $driverCity) !== 0 && !str_contains(strtolower($driverCity), strtolower($this->city)))) {
                 return false;
             }
         }
 
         // 4. Zone match (Optional)
-        if (!empty($this->zone)) {
+        if (!empty($this->zone) && strcasecmp($this->zone, 'All') !== 0) {
             if (empty($driverZone) || strcasecmp($this->zone, $driverZone) !== 0) {
                 return false;
             }
@@ -210,7 +226,7 @@ class Incentive extends Model
         // 5. Vehicle Type match (Optional / 'All Vehicles')
         $targetVehicle = trim($this->vehicle_type ?? 'All Vehicles');
         if (!empty($targetVehicle) && strcasecmp($targetVehicle, 'All Vehicles') !== 0 && strcasecmp($targetVehicle, 'All') !== 0) {
-            if (!empty($driverVehicle) && strcasecmp($targetVehicle, $driverVehicle) !== 0) {
+            if (!empty($driverVehicle) && strcasecmp($targetVehicle, $driverVehicle) !== 0 && !str_contains(strtolower($driverVehicle), strtolower($targetVehicle))) {
                 return false;
             }
         }
