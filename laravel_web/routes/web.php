@@ -1705,6 +1705,12 @@ Route::post('/api/ride/{id}/update-status', function (\Illuminate\Http\Request $
 
     $ride->update($updates);
 
+    if ($newStatus === 'completed') {
+        try {
+            \App\Services\IncentiveService::handleRideCompleted($ride);
+        } catch (\Throwable $e) {}
+    }
+
     // Send notifications to rider and driver
     if ($newStatus === 'en_route') {
         \App\Services\NotificationService::notifyEnRoute($ride);
@@ -2599,12 +2605,15 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         $weekTrips = $completedRides->where('updated_at', '>=', $startOfWeek)->count() + $completedDriverBookings->where('updated_at', '>=', $startOfWeek)->count();
         $monthTrips = $completedRides->where('updated_at', '>=', $startOfMonth)->count() + $completedDriverBookings->where('updated_at', '>=', $startOfMonth)->count();
         
+        $incentivesData = \App\Services\IncentiveService::getDriverIncentivesPayload($user);
+
         return view('driver.dashboard', compact(
             'user', 'profile', 'vehicles', 
             'activeRides', 'pendingRides', 'completedRides',
             'driverBookings', 'activeDriverBookings', 'pendingDriverBookings', 'completedDriverBookings',
             'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings',
-            'todayTrips', 'weekTrips', 'monthTrips'
+            'todayTrips', 'weekTrips', 'monthTrips',
+            'incentivesData'
         ));
     });
 
@@ -3046,10 +3055,12 @@ Route::get('/admin/run-system-migrations', function () {
         \Illuminate\Support\Facades\Artisan::call('config:clear');
         \App\Models\CountryRideCategoryPricing::ensureTableExists();
         \App\Models\CountryRideCategoryPricing::syncGhanaPdfTiers(true);
+        \App\Services\IncentiveService::ensureTables();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Migrations executed successfully and official Ghana PDF Cost Matrix synchronized.',
+            'message' => 'Migrations executed successfully, official Ghana PDF Cost Matrix synchronized, and Incentive Program initialized.',
+            'incentives_table_exists' => \Illuminate\Support\Facades\Schema::hasTable('incentives'),
             'country_ride_category_pricings_exists' => \Illuminate\Support\Facades\Schema::hasTable('country_ride_category_pricings'),
             'categories_count' => \App\Models\CountryRideCategoryPricing::count(),
             'ghana_tiers_count' => \App\Models\CountryRideCategoryPricing::where('country_code', 'GHA')->count(),

@@ -8,6 +8,7 @@ import '../../providers/notification_provider.dart';
 import '../account/manage_account_screen.dart';
 import '../auth/driver_login_screen.dart';
 import '../earnings/driver_earnings_screen.dart';
+import '../earnings/incentives_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../support/help_support_screen.dart';
 import '../trip/active_trip_screen.dart';
@@ -197,6 +198,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             children: [
               // Online / Offline Toggle Banner
               _buildOnlineStatusCard(driver),
+              const SizedBox(height: 14),
+
+              // Incentive Quick Banner
+              _buildIncentiveQuickBanner(context),
               const SizedBox(height: 20),
 
               // Active Rides Section (PRIORITY #1 AT TOP OF CONSOLE)
@@ -537,6 +542,94 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 color: Colors.white.withOpacity(0.8),
                 fontSize: 13,
                 height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncentiveQuickBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const IncentivesScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1E1B4B), Color(0xFF312E81)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.primary.withOpacity(0.35), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    "Today's Incentive Program",
+                    style: TextStyle(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Complete ride targets to earn cash bonuses',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'VIEW',
+                    style: TextStyle(
+                      color: AppColors.backgroundDark,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(width: 3),
+                  Icon(Icons.arrow_forward_ios_rounded, color: AppColors.backgroundDark, size: 9),
+                ],
               ),
             ),
           ],
@@ -1551,6 +1644,22 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverEarningsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.card_giftcard_rounded, color: AppColors.warning),
+                    title: const Text('Incentive Program', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('BONUS', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const IncentivesScreen()));
                     },
                   ),
                   ListTile(

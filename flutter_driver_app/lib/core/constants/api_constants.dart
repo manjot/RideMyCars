@@ -31,6 +31,8 @@ class ApiConstants {
   static const String driverEarnings = '/driver/earnings';
   static const String driverProfile = '/driver/profile';
   static const String driverPhoto = '/driver/photo';
+  static const String driverIncentives = '/driver/incentives';
+  static const String driverIncentivesHistory = '/driver/incentives/history';
 
   // Notifications
   static const String notifications = '/notifications';

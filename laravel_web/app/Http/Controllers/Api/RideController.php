@@ -525,6 +525,12 @@ class RideController extends Controller
 
         $ride->update($updates);
 
+        if ($newStatus === 'completed') {
+            try {
+                \App\Services\IncentiveService::handleRideCompleted($ride);
+            } catch (\Throwable $e) {}
+        }
+
         // Notifications
         try {
             if ($newStatus === 'en_route') {
