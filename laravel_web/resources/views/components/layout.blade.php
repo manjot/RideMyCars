@@ -258,7 +258,58 @@
                             <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('/') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
                             <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('driver/dashboard*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/driver/dashboard">Dashboard</a>
                             <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('ride*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/ride">Ride</a>
-                            <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('wallet*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/wallet">Earnings</a>
+                            <!-- Earnings Dropdown -->
+                            <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                                <button @click="open = !open" 
+                                        class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('wallet*') || request()->is('driver/incentives*') || request()->is('incentives*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                    <span>Earnings</span>
+                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m6 9 6 6 6-6"/>
+                                    </svg>
+                                </button>
+
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-[320px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
+                                     style="display: none;">
+                                    
+                                    <div class="space-y-1">
+                                        <!-- Earnings & Wallet -->
+                                        <a href="/wallet" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('wallet*') ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                                                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                                                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Earnings & Wallet</span>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Payouts, balance & transactions</span>
+                                            </div>
+                                        </a>
+
+                                        <!-- Incentive Program -->
+                                        <a href="/driver/incentives" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('driver/incentives*') || request()->is('incentives*') ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400' }}">
+                                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm text-lg transition-transform group-hover:scale-105">
+                                                🎁
+                                            </div>
+                                            <div class="flex flex-col text-left min-w-0">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Incentive Program</span>
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Live</span>
+                                                </div>
+                                                <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Daily, weekly & monthly rewards</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                             <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                         @else
                             <!-- Home -->
@@ -1018,6 +1069,11 @@
                                 <a href="/driver/dashboard" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                                     <span class="font-medium text-black dark:text-white text-[15px]">Driver Dashboard</span>
+                                </a>
+                                <a href="/driver/incentives" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                    <span class="text-lg">🎁</span>
+                                    <span class="font-medium text-black dark:text-white text-[15px]">Incentive Program</span>
+                                    <span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400">Live</span>
                                 </a>
                                 <a href="/my-rides" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>

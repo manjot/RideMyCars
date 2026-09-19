@@ -2604,18 +2604,23 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         $todayTrips = $completedRides->where('updated_at', '>=', $today)->count() + $completedDriverBookings->where('updated_at', '>=', $today)->count();
         $weekTrips = $completedRides->where('updated_at', '>=', $startOfWeek)->count() + $completedDriverBookings->where('updated_at', '>=', $startOfWeek)->count();
         $monthTrips = $completedRides->where('updated_at', '>=', $startOfMonth)->count() + $completedDriverBookings->where('updated_at', '>=', $startOfMonth)->count();
-        
-        $incentivesData = \App\Services\IncentiveService::getDriverIncentivesPayload($user);
 
         return view('driver.dashboard', compact(
             'user', 'profile', 'vehicles', 
             'activeRides', 'pendingRides', 'completedRides',
             'driverBookings', 'activeDriverBookings', 'pendingDriverBookings', 'completedDriverBookings',
             'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings',
-            'todayTrips', 'weekTrips', 'monthTrips',
-            'incentivesData'
+            'todayTrips', 'weekTrips', 'monthTrips'
         ));
     });
+
+    Route::get('/incentives', function () {
+        $user = auth()->user();
+        if (!$user) return redirect('/login');
+
+        $incentivesData = \App\Services\IncentiveService::getDriverIncentivesPayload($user);
+        return view('driver.incentives', compact('user', 'incentivesData'));
+    })->name('driver.incentives');
 
     Route::post('/ride/{id}/accept', function ($id) {
         $user = auth()->user();
@@ -2984,6 +2989,10 @@ Route::post('/account/password', function (\Illuminate\Http\Request $request) {
 
 Route::get('/wallet', function () {
     return view('wallet');
+})->middleware('auth');
+
+Route::get('/incentives', function () {
+    return redirect('/driver/incentives');
 })->middleware('auth');
 
 Route::get('/promotions', function () {
