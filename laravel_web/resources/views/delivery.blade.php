@@ -363,8 +363,8 @@
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select payment method for parcel dispatch.</p>
                     </div>
 
-                    <!-- Payment Method Selector (Stripe & MoMo Pay) -->
-                    <x-payment-method-selector modelName="paymentMethod" phoneModel="momoPhone" networkModel="momoNetwork" />
+                    <!-- Payment Method Selector (Stripe, MoMo Pay & Cash) -->
+                    <x-payment-method-selector modelName="paymentMethod" phoneModel="momoPhone" networkModel="momoNetwork" :allowCash="true" />
 
                     <div class="flex justify-between pt-2">
                         <button type="button" @click="currentStep = 4" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">

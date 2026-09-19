@@ -171,7 +171,7 @@ class StripeVerificationController extends Controller
         }
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
-        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized']);
+        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash']);
         $bookingStatus = strtolower($booking->booking_status ?? 'pending');
         $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
 
@@ -217,7 +217,7 @@ class StripeVerificationController extends Controller
     }
 
     /**
-     * Authorize & place payment on hold (Stripe hold, Apple Pay hold, or MoMo Pay hold).
+     * Authorize & place payment on hold (Stripe hold, Apple Pay hold, or MoMo Pay hold, or Cash on drop-off).
      * Triggers active driver search.
      */
     public function authorizePaymentHold(Request $request): JsonResponse
@@ -225,7 +225,7 @@ class StripeVerificationController extends Controller
         $request->validate([
             'service_type' => 'required|string|in:ride,rental,driver_booking,hire-driver,package_delivery,delivery',
             'service_id' => 'required|integer',
-            'payment_method' => 'required|string|in:stripe,apple_pay,momo,card',
+            'payment_method' => 'required|string|in:stripe,apple_pay,momo,card,cash',
             'momo_phone' => 'nullable|string',
             'momo_network' => 'nullable|string',
         ]);
@@ -236,9 +236,73 @@ class StripeVerificationController extends Controller
         $momoPhone = $request->input('momo_phone');
         $momoNetwork = $request->input('momo_network', 'MTN');
 
+        // Strictly disallow cash payment for Vehicle Rental and Hire a Driver
+        if ($paymentMethod === 'cash' && !in_array($serviceType, ['ride', 'package_delivery', 'delivery'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cash on drop-off is only permitted for Rides and Package Deliveries. Vehicle Rentals and Driver Hiring require digital pre-authorization.'
+            ], 422);
+        }
+
         $booking = $this->getBookingModel($serviceType, $serviceId);
         if (!$booking) {
             return response()->json(['success' => false, 'message' => 'Booking record not found.'], 404);
+        }
+
+        $amount = (float) ($booking->total_price ?? $booking->fare ?? $booking->total_amount ?? 0.00);
+        $currency = $booking->currency ?? 'USD';
+        $userId = $booking->client_id ?? $booking->customer_id ?? $booking->rider_id ?? Auth::id() ?? 1;
+
+        // Handle Cash on Drop-off (Exclusively for Ride & Delivery)
+        if ($paymentMethod === 'cash') {
+            $booking->update([
+                'payment_status' => 'pending_cash',
+                'payment_method' => 'cash',
+                'booking_status' => ($booking->booking_status === 'accepted') ? 'accepted' : 'pending',
+            ]);
+
+            $foreignKey = match ($serviceType) {
+                'ride', 'rental' => 'ride_id',
+                'driver_booking', 'hire-driver' => 'driver_booking_id',
+                'package_delivery', 'delivery' => 'package_delivery_id',
+                default => 'ride_id',
+            };
+
+            $transaction = PaymentTransaction::updateOrCreate(
+                [$foreignKey => $serviceId],
+                [
+                    'transaction_ref' => 'TXN-CASH-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'user_id' => $userId,
+                    'country' => $booking->country ?? 'Ghana',
+                    'currency' => $currency,
+                    'amount' => $amount,
+                    'payment_method' => 'cash',
+                    'provider' => 'CashOnArrival',
+                    'status' => 'pending_cash',
+                    'service_vertical' => $serviceType,
+                    'gateway_response' => [
+                        'held_at' => now()->toIso8601String(),
+                        'method' => 'cash',
+                        'status' => 'pay_on_dropoff',
+                    ],
+                ]
+            );
+
+            ActivityLogService::log(
+                'payment_cash_selected',
+                "Cash on drop-off selected for {$serviceType} #{$serviceId} ({$currency} {$amount}). Searching for available drivers.",
+                $userId
+            );
+
+            return response()->json([
+                'success' => true,
+                'payment_status' => 'pending_cash',
+                'payment_method' => 'cash',
+                'transaction_ref' => $transaction->transaction_ref,
+                'booking_status' => $booking->booking_status,
+                'is_payment_confirmed' => true,
+                'message' => "Cash payment on drop-off confirmed. Searching for available driver...",
+            ]);
         }
 
         // Update booking to payment hold state & ensure search is active
@@ -247,10 +311,6 @@ class StripeVerificationController extends Controller
             'payment_method' => $paymentMethod,
             'booking_status' => ($booking->booking_status === 'accepted') ? 'accepted' : 'pending',
         ]);
-
-        $amount = (float) ($booking->total_price ?? $booking->fare ?? $booking->total_amount ?? 0.00);
-        $currency = $booking->currency ?? 'USD';
-        $userId = $booking->client_id ?? $booking->customer_id ?? $booking->rider_id ?? Auth::id() ?? 1;
 
         // Route to ExpressPay Ghana Gateway if MoMo selected and ExpressPay enabled
         if ($paymentMethod === 'momo' && \App\Services\SettingService::isExpressPayEnabled()) {
@@ -564,7 +624,7 @@ class StripeVerificationController extends Controller
         $time = $booking->start_time ?? $booking->pickup_time ?? '09:00 AM';
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
-        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized']);
+        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash']);
         $bookingStatus = strtolower($booking->booking_status ?? 'pending');
         $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
 
@@ -617,7 +677,7 @@ class StripeVerificationController extends Controller
         $currentVerif = $booking->verification_status ?? 'pending_verification';
 
         $transaction = null;
-        if (in_array($paymentStatus, ['paid', 'hold', 'authorized'])) {
+        if (in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash'])) {
             $foreignKey = match ($serviceType) {
                 'ride', 'rental' => 'ride_id',
                 'driver_booking', 'hire-driver' => 'driver_booking_id',

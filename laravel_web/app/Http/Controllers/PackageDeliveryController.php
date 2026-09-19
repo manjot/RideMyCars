@@ -183,7 +183,7 @@ class PackageDeliveryController extends Controller
                 'total_price' => $priceRes['total_price'] ?? 0,
                 'currency' => $priceRes['currency'] ?? 'USD',
                 'payment_method' => $validated['payment_method'],
-                'payment_status' => 'pending',
+                'payment_status' => (strtolower($validated['payment_method']) === 'cash') ? 'pending_cash' : 'pending',
             ];
 
             // Safely set prohibited_items_acknowledged only if the column exists in the database
@@ -219,7 +219,7 @@ class PackageDeliveryController extends Controller
             }
 
             $method = strtolower($validated['payment_method'] ?? '');
-            $redirectUrl = in_array($method, ['stripe', 'card', 'credit_card', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'])
+            $redirectUrl = in_array($method, ['stripe', 'card', 'credit_card', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo', 'cash'])
                 ? route('payment.verify-details', ['serviceType' => 'package_delivery', 'serviceId' => $delivery->id])
                 : route('package-delivery.tracker', $delivery->id);
 

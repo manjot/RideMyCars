@@ -162,6 +162,11 @@ class DriverBookingController extends Controller
             'cargo_details' => 'nullable|string|max:1000',
         ]);
 
+        // Disallow cash for driver hiring
+        if (strtolower($validated['payment_method'] ?? '') === 'cash') {
+            return back()->withErrors(['payment_method' => 'Cash payment is not permitted for driver hiring. Please choose Stripe or MoMo Pay.'])->withInput();
+        }
+
         $driverProfile = null;
         if (!empty($validated['driver_profile_id'])) {
             $driverProfile = DriverProfile::find($validated['driver_profile_id']);

@@ -599,17 +599,22 @@
                         <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
                             <button type="button" @click="paymentModal = true; paymentStep = 'select';" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-[#1a1a1a] hover:bg-gray-100 dark:hover:bg-[#222] rounded-2xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
                                 <div class="flex items-center gap-3">
+                                    <template x-if="paymentMethod === 'cash'">
+                                        <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300/40 flex items-center justify-center text-lg shrink-0">
+                                            💵
+                                        </div>
+                                    </template>
                                     <template x-if="paymentMethod === 'momo'">
                                         <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-8 h-8 rounded-xl object-contain shrink-0">
                                     </template>
-                                    <template x-if="paymentMethod !== 'momo'">
+                                    <template x-if="paymentMethod !== 'momo' && paymentMethod !== 'cash'">
                                         <img src="/images/stripe-icon.svg" alt="Stripe" class="w-8 h-8 rounded-xl object-contain shrink-0">
                                     </template>
                                     <div class="text-left">
                                         <div class="text-xs font-black text-gray-900 dark:text-white" 
-                                             x-text="paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe (Cards & Apple Pay)')"></div>
+                                             x-text="paymentMethod === 'cash' ? 'Cash Direct Pay' : (paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe (Cards & Apple Pay)'))"></div>
                                         <div class="text-[10px] font-bold text-gray-500 dark:text-gray-400" 
-                                             x-text="paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'mobile')) : 'Pre-authorization hold secured by Stripe'"></div>
+                                             x-text="paymentMethod === 'cash' ? 'Pay driver directly on drop-off (No hold)' : (paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'mobile')) : 'Pre-authorization hold secured by Stripe')"></div>
                                     </div>
                                 </div>
                                 <span class="text-gray-400 font-bold text-xs">></span>
@@ -942,6 +947,25 @@
                                 </div>
                             </div>
                             <span class="text-gray-400 font-bold text-xs">></span>
+                        </div>
+
+                        <!-- Option 3: Cash (Direct Pay on Drop-off) -->
+                        <div @click="paymentMethod = 'cash'; paymentModal = false;" 
+                             :class="paymentMethod === 'cash' ? 'border-emerald-500 dark:border-emerald-500 ring-2 ring-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                             class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300/40 flex items-center justify-center text-2xl shrink-0 shadow-xs">
+                                    💵
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-black text-sm text-gray-900 dark:text-white">Cash Direct Pay</h4>
+                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">Pay on Drop-off</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Pay driver physical cash upon reaching destination (No upfront hold)</p>
+                                </div>
+                            </div>
+                            <span x-show="paymentMethod === 'cash'" class="text-emerald-500 font-extrabold text-sm">✓</span>
                         </div>
 
                         <!-- Option 2: Credit / Debit Cards Header & List -->
@@ -2325,6 +2349,10 @@
                         } else if (data.ride_id) {
                             this.currentRideId = data.ride_id;
                             localStorage.setItem('rmc_active_ride_id', data.ride_id);
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                                return;
+                            }
                             this.bookingStep = 'finding_driver';
                             this.isAuthorizingPayment = false;
                             this.startRideStatusPolling(data.ride_id);

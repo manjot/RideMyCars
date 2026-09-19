@@ -5,7 +5,8 @@
     'showMomoDetails' => true,
     'showSecurityBadge' => true,
     'inputName' => 'payment_method',
-    'momoInputName' => 'momo_phone'
+    'momoInputName' => 'momo_phone',
+    'allowCash' => false,
 ])
 
 <div class="space-y-4" x-cloak>
@@ -16,8 +17,8 @@
     <!-- Hidden form input for standard form submission -->
     <input type="hidden" name="{{ $inputName }}" :value="{{ $modelName }}">
 
-    <!-- 2 Professional Payment Method Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+    <!-- Payment Method Cards -->
+    <div class="grid grid-cols-1 {{ $allowCash ? 'sm:grid-cols-3' : 'sm:grid-cols-2' }} gap-3.5">
         
         <!-- BUTTON 1: STRIPE -->
         <button type="button" 
@@ -96,7 +97,66 @@
             </div>
         </button>
 
+        @if($allowCash)
+        <!-- BUTTON 3: CASH (Direct Pay on Drop-off) -->
+        <button type="button" 
+                @click="{{ $modelName }} = 'cash'"
+                :class="{{ $modelName }} === 'cash' 
+                    ? 'border-emerald-500 bg-gradient-to-b from-emerald-500/[0.08] via-white to-transparent dark:from-emerald-500/20 dark:via-[#141416] dark:to-transparent ring-2 ring-emerald-500 text-gray-900 dark:text-white shadow-md shadow-emerald-500/10' 
+                    : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300 hover:shadow-xs'"
+                class="p-4 rounded-2xl border text-left transition-all duration-200 relative flex flex-col justify-between gap-3.5 cursor-pointer group">
+            
+            <!-- Top Row: Logo and Checkmark Indicator -->
+            <div class="flex items-center justify-between w-full">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 p-1 border border-emerald-300/60 shadow-xs flex items-center justify-center text-2xl shrink-0">
+                    💵
+                </div>
+                <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-all shrink-0"
+                     :class="{{ $modelName }} === 'cash' ? 'border-emerald-500 bg-emerald-500 text-white shadow-xs' : 'border-gray-300 dark:border-white/20 bg-transparent'">
+                    <svg x-show="{{ $modelName }} === 'cash'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Middle Row: Title, Category Badge & Subtitle -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between gap-1.5">
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white leading-tight">Cash</h4>
+                    <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 whitespace-nowrap shrink-0">Direct Pay</span>
+                </div>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-tight">Pay driver upon drop-off</p>
+            </div>
+
+            <!-- Cash Feature Badges Row -->
+            <div class="flex items-center gap-1.5 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
+                <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300/40">✓ No Hold</span>
+                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-white/10">Exact Fare</span>
+            </div>
+        </button>
+        @endif
+
     </div>
+
+    @if($allowCash)
+    <!-- CASH NOTICE (When Cash selected) -->
+    <div x-show="{{ $modelName }} === 'cash'" 
+         x-transition.opacity 
+         style="display: none;"
+         class="p-4 bg-emerald-50/70 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 flex items-start gap-3 text-xs shadow-xs">
+        <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+            💵
+        </div>
+        <div class="min-w-0 flex-1">
+            <div class="font-extrabold text-gray-900 dark:text-white">
+                Cash on Delivery / Drop-off
+            </div>
+            <p class="text-[11px] text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
+                Zero upfront charge. Hand physical cash directly to your dispatch courier or chauffeur once your delivery or trip is safely completed.
+            </p>
+        </div>
+    </div>
+    @endif
 
     @if($showSecurityBadge)
     <!-- STRIPE SECURITY NOTICE (Clean, no direct raw card inputs) -->

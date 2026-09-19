@@ -161,6 +161,11 @@ class VehicleRentalController extends Controller
             'insurance_accepted.required' => 'You must read and agree to the Insurance & Protection Terms before confirming.',
         ]);
 
+        // Disallow cash for vehicle rentals
+        if (strtolower($request->payment_method ?? '') === 'cash') {
+            return back()->withErrors(['payment_method' => 'Cash payment is not permitted for vehicle rentals. Please select Stripe or MoMo Pay.'])->withInput();
+        }
+
         // Age requirement validation
         if ((int) $request->customer_age < ($vehicle->min_driver_age ?? 18)) {
             return back()->withErrors(['customer_age' => "This vehicle requires a minimum driver age of {$vehicle->min_driver_age} years."])->withInput();

@@ -1240,13 +1240,13 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         }
 
         // 1. PAYMENT GATE: Drivers are NOT dispatched upon initial booking request.
-        // Payment must be authorized/held via Stripe, Apple Pay, or MoMo Pay FIRST.
+        // Payment must be authorized/held via Stripe, Apple Pay, MoMo Pay, or Cash on drop-off.
         $method = strtolower($paymentMethod);
-        $allowedMethods = ['stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'];
+        $allowedMethods = ['stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo', 'cash'];
 
         if (!in_array($method, $allowedMethods, true)) {
             return response()->json([
-                'error' => 'Unsupported payment method. Please select Stripe or MoMo Pay.'
+                'error' => 'Unsupported payment method. Please select Stripe, MoMo Pay, or Cash on drop-off.'
             ], 422);
         }
 
@@ -1343,6 +1343,53 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             }
         }
 
+        // Handle Cash Payment (Direct Pay on Drop-off)
+        if ($method === 'cash') {
+            $ride->update([
+                'payment_method' => 'cash',
+                'payment_status' => 'pending_cash',
+                'status' => 'pending',
+            ]);
+
+            \App\Models\PaymentTransaction::updateOrCreate(
+                ['ride_id' => $ride->id],
+                [
+                    'transaction_ref' => 'TXN-CASH-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'user_id' => $riderId,
+                    'country' => $country ?? 'Ghana',
+                    'currency' => $ride->currency ?? 'USD',
+                    'amount' => $amount,
+                    'payment_method' => 'cash',
+                    'provider' => 'CashOnArrival',
+                    'status' => 'pending_cash',
+                    'service_vertical' => 'ride',
+                    'gateway_response' => [
+                        'created_at' => now()->toIso8601String(),
+                        'method' => 'cash',
+                        'status' => 'pay_on_dropoff',
+                    ],
+                ]
+            );
+
+            session(['active_guest_ride_id' => $ride->id]);
+
+            try {
+                \App\Services\NotificationService::notifyRideRequested($ride);
+            } catch (\Throwable $e) {}
+
+            return response()->json([
+                'success' => true,
+                'requires_payment_hold' => false,
+                'ride_id' => $ride->id,
+                'payment_method' => 'cash',
+                'payment_status' => 'pending_cash',
+                'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+                'message' => 'Ride request placed with cash on drop-off. Searching for available driver...',
+                'tracking_url' => "/ride/track/{$ride->id}",
+                'polling_url' => "/api/ride/{$ride->id}/status",
+            ]);
+        }
+
         return response()->json(['error' => 'Payment initialization failed.'], 400);
     } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json(['error' => implode(' ', \Illuminate\Support\Arr::flatten($e->errors()))], 422);
@@ -1357,6 +1404,17 @@ Route::post('/ride/confirm-hold', function (\Illuminate\Http\Request $request) {
     $ride = \App\Models\Ride::find($rideId);
     if (!$ride) {
         return response()->json(['error' => 'Ride not found.'], 404);
+    }
+
+    if ($ride->payment_method === 'cash' || $ride->payment_status === 'pending_cash') {
+        return response()->json([
+            'success' => true,
+            'status' => 'pending_cash',
+            'message' => 'Cash on drop-off selected. Driver search is active.',
+            'ride_id' => $ride->id,
+            'tracking_url' => "/ride/track/{$ride->id}",
+            'polling_url' => "/api/ride/{$ride->id}/status",
+        ]);
     }
 
     $paymentIntentId = $request->input('payment_intent_id') ?: $ride->hold_payment_intent_id;
