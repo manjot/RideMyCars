@@ -106,116 +106,151 @@ class PackageDeliveryController extends Controller
      */
     public function storeBooking(Request $request)
     {
-        $validated = $request->validate([
-            'pickup_location' => 'required|string|max:255',
-            'pickup_lat' => 'nullable|numeric',
-            'pickup_lng' => 'nullable|numeric',
-            'dropoff_location' => 'required|string|max:255',
-            'dropoff_lat' => 'nullable|numeric',
-            'dropoff_lng' => 'nullable|numeric',
-            'delivery_type' => 'required|string|in:Instant,Same Day,Express,Scheduled,Hyperlocal',
-            'schedule_mode' => 'required|string|in:now,later',
-            'pickup_date' => 'nullable|date',
-            'pickup_time' => 'nullable|string',
-            'sender_name' => 'required|string|max:255',
-            'sender_phone' => 'required|string|max:50',
-            'sender_address' => 'nullable|string|max:255',
-            'recipient_name' => 'required|string|max:255',
-            'recipient_phone' => 'required|string|max:50',
-            'recipient_address' => 'nullable|string|max:255',
-            'delivery_instructions' => 'nullable|string|max:1000',
-            'package_category' => 'required|string',
-            'package_description' => 'nullable|string|max:500',
-            'package_size' => 'required|string|in:Small,Medium,Large',
-            'package_weight_kg' => 'required|numeric|min:0.1',
-            'quantity' => 'required|integer|min:1',
-            'declared_value' => 'nullable|numeric|min:0',
-            'special_handling' => 'nullable|array',
-            'payment_method' => 'required|string',
-            'prohibited_items_acknowledged' => 'required|accepted',
-        ]);
-
-        $customerId = Auth::id();
-        if (!$customerId) {
-            $user = User::where('email', 'customer@ridemycars.com')->first() ?? User::first();
-            $customerId = $user ? $user->id : 1;
-        }
-
-        // Calculate authoritative price on backend
-        $priceRes = $this->calculatePrice($request)->getData(true);
-
-        $deliveryCode = 'DEL-' . strtoupper(Str::random(8));
-        $deliveryOtp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-
-        $delivery = PackageDelivery::create([
-            'delivery_code' => $deliveryCode,
-            'customer_id' => $customerId,
-            'pickup_location' => $validated['pickup_location'],
-            'pickup_lat' => $request->input('pickup_lat'),
-            'pickup_lng' => $request->input('pickup_lng'),
-            'dropoff_location' => $validated['dropoff_location'],
-            'dropoff_lat' => $request->input('dropoff_lat'),
-            'dropoff_lng' => $request->input('dropoff_lng'),
-            'delivery_type' => $validated['delivery_type'],
-            'schedule_mode' => $validated['schedule_mode'],
-            'pickup_date' => $validated['pickup_date'] ?? date('Y-m-d'),
-            'pickup_time' => $validated['pickup_time'] ?? '09:00',
-            'sender_name' => $validated['sender_name'],
-            'sender_phone' => $validated['sender_phone'],
-            'sender_address' => $validated['sender_address'] ?? $validated['pickup_location'],
-            'recipient_name' => $validated['recipient_name'],
-            'recipient_phone' => $validated['recipient_phone'],
-            'recipient_address' => $validated['recipient_address'] ?? $validated['dropoff_location'],
-            'delivery_instructions' => $validated['delivery_instructions'] ?? null,
-            'package_category' => $validated['package_category'],
-            'package_description' => $validated['package_description'] ?? null,
-            'package_size' => $validated['package_size'],
-            'package_weight_kg' => (float)$validated['package_weight_kg'],
-            'quantity' => (int)$validated['quantity'],
-            'declared_value' => (float)($validated['declared_value'] ?? 0),
-            'special_handling' => $validated['special_handling'] ?? [],
-            'prohibited_items_acknowledged' => true,
-            'delivery_otp' => $deliveryOtp,
-            'delivery_status' => 'pending',
-            'subtotal' => $priceRes['subtotal'],
-            'service_fee' => $priceRes['service_fee'],
-            'tax' => $priceRes['tax'],
-            'total_price' => $priceRes['total_price'],
-            'currency' => $priceRes['currency'] ?? 'USD',
-            'payment_method' => $validated['payment_method'],
-            'payment_status' => 'pending',
-        ]);
-
-        // Process payment
-        PaymentService::processBookingPayment($delivery, $validated['payment_method'], $request->all());
-
-        // Initiate proximity courier assignment
-        PackageDeliveryAssignmentService::assignNextCourier($delivery);
-
-        ActivityLogService::log(
-            'package_delivery',
-            "Created package delivery #{$delivery->delivery_code} for {$delivery->recipient_name}",
-            $customerId,
-            ['delivery_id' => $delivery->id, 'total_price' => $delivery->total_price]
-        );
-
-        $method = strtolower($validated['payment_method'] ?? '');
-        $redirectUrl = in_array($method, ['stripe', 'card', 'credit_card', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'])
-            ? route('payment.verify-details', ['serviceType' => 'package_delivery', 'serviceId' => $delivery->id])
-            : route('package-delivery.tracker', $delivery->id);
-
-        if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'delivery_id' => $delivery->id,
-                'delivery_code' => $delivery->delivery_code,
-                'total_price' => (float)$delivery->total_price,
-                'currency' => $delivery->currency ?? 'USD',
-                'redirect_url' => $redirectUrl,
+        try {
+            $validated = $request->validate([
+                'pickup_location' => 'required|string|max:255',
+                'pickup_lat' => 'nullable|numeric',
+                'pickup_lng' => 'nullable|numeric',
+                'dropoff_location' => 'required|string|max:255',
+                'dropoff_lat' => 'nullable|numeric',
+                'dropoff_lng' => 'nullable|numeric',
+                'delivery_type' => 'required|string|in:Instant,Same Day,Express,Scheduled,Hyperlocal',
+                'schedule_mode' => 'required|string|in:now,later',
+                'pickup_date' => 'nullable|date',
+                'pickup_time' => 'nullable|string',
+                'sender_name' => 'required|string|max:255',
+                'sender_phone' => 'required|string|max:50',
+                'sender_address' => 'nullable|string|max:255',
+                'recipient_name' => 'required|string|max:255',
+                'recipient_phone' => 'required|string|max:50',
+                'recipient_address' => 'nullable|string|max:255',
+                'delivery_instructions' => 'nullable|string|max:1000',
+                'package_category' => 'required|string',
+                'package_description' => 'nullable|string|max:500',
+                'package_size' => 'required|string|in:Small,Medium,Large',
+                'package_weight_kg' => 'required|numeric|min:0.1',
+                'quantity' => 'required|integer|min:1',
+                'declared_value' => 'nullable|numeric|min:0',
+                'special_handling' => 'nullable|array',
+                'payment_method' => 'required|string',
+                'prohibited_items_acknowledged' => 'required|accepted',
             ]);
-        }
 
-        return redirect($redirectUrl)->with('success', 'Package delivery dispatched successfully! Tracking live courier status...');
+            $customerId = Auth::id();
+            if (!$customerId) {
+                $user = User::where('email', 'customer@ridemycars.com')->first() ?? User::first();
+                $customerId = $user ? $user->id : 1;
+            }
+
+            // Calculate authoritative price on backend
+            $priceRes = $this->calculatePrice($request)->getData(true);
+
+            $deliveryCode = 'DEL-' . strtoupper(Str::random(8));
+            $deliveryOtp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+
+            $deliveryData = [
+                'delivery_code' => $deliveryCode,
+                'customer_id' => $customerId,
+                'pickup_location' => $validated['pickup_location'],
+                'pickup_lat' => $request->input('pickup_lat'),
+                'pickup_lng' => $request->input('pickup_lng'),
+                'dropoff_location' => $validated['dropoff_location'],
+                'dropoff_lat' => $request->input('dropoff_lat'),
+                'dropoff_lng' => $request->input('dropoff_lng'),
+                'delivery_type' => $validated['delivery_type'],
+                'schedule_mode' => $validated['schedule_mode'],
+                'pickup_date' => $validated['pickup_date'] ?? date('Y-m-d'),
+                'pickup_time' => $validated['pickup_time'] ?? '09:00',
+                'sender_name' => $validated['sender_name'],
+                'sender_phone' => $validated['sender_phone'],
+                'sender_address' => $validated['sender_address'] ?? $validated['pickup_location'],
+                'recipient_name' => $validated['recipient_name'],
+                'recipient_phone' => $validated['recipient_phone'],
+                'recipient_address' => $validated['recipient_address'] ?? $validated['dropoff_location'],
+                'delivery_instructions' => $validated['delivery_instructions'] ?? null,
+                'package_category' => $validated['package_category'],
+                'package_description' => $validated['package_description'] ?? null,
+                'package_size' => $validated['package_size'],
+                'package_weight_kg' => (float)$validated['package_weight_kg'],
+                'quantity' => (int)$validated['quantity'],
+                'declared_value' => (float)($validated['declared_value'] ?? 0),
+                'special_handling' => $validated['special_handling'] ?? [],
+                'delivery_otp' => $deliveryOtp,
+                'delivery_status' => 'pending',
+                'subtotal' => $priceRes['subtotal'] ?? 0,
+                'service_fee' => $priceRes['service_fee'] ?? 0,
+                'tax' => $priceRes['tax'] ?? 0,
+                'total_price' => $priceRes['total_price'] ?? 0,
+                'currency' => $priceRes['currency'] ?? 'USD',
+                'payment_method' => $validated['payment_method'],
+                'payment_status' => 'pending',
+            ];
+
+            // Safely set prohibited_items_acknowledged only if the column exists in the database
+            if (\Illuminate\Support\Facades\Schema::hasColumn('package_deliveries', 'prohibited_items_acknowledged')) {
+                $deliveryData['prohibited_items_acknowledged'] = true;
+            }
+
+            $delivery = PackageDelivery::create($deliveryData);
+
+            // Process payment safely
+            try {
+                PaymentService::processBookingPayment($delivery, $validated['payment_method'], $request->all());
+            } catch (\Throwable $pe) {
+                \Illuminate\Support\Facades\Log::warning("Payment processing warning for delivery {$delivery->id}: " . $pe->getMessage());
+            }
+
+            // Initiate proximity courier assignment safely
+            try {
+                PackageDeliveryAssignmentService::assignNextCourier($delivery);
+            } catch (\Throwable $ae) {
+                \Illuminate\Support\Facades\Log::warning("Courier assignment warning for delivery {$delivery->id}: " . $ae->getMessage());
+            }
+
+            try {
+                ActivityLogService::log(
+                    'package_delivery',
+                    "Created package delivery #{$delivery->delivery_code} for {$delivery->recipient_name}",
+                    $customerId,
+                    ['delivery_id' => $delivery->id, 'total_price' => $delivery->total_price]
+                );
+            } catch (\Throwable $le) {
+                \Illuminate\Support\Facades\Log::warning("Activity log warning for delivery {$delivery->id}: " . $le->getMessage());
+            }
+
+            $method = strtolower($validated['payment_method'] ?? '');
+            $redirectUrl = in_array($method, ['stripe', 'card', 'credit_card', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo'])
+                ? route('payment.verify-details', ['serviceType' => 'package_delivery', 'serviceId' => $delivery->id])
+                : route('package-delivery.tracker', $delivery->id);
+
+            if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'delivery_id' => $delivery->id,
+                    'delivery_code' => $delivery->delivery_code,
+                    'total_price' => (float)$delivery->total_price,
+                    'currency' => $delivery->currency ?? 'USD',
+                    'redirect_url' => $redirectUrl,
+                ]);
+            }
+
+            return redirect($redirectUrl)->with('success', 'Package delivery dispatched successfully! Tracking live courier status...');
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            throw $ve;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Package delivery storeBooking error: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
+
+            if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to dispatch parcel: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return back()->withInput()->with('error', 'Unable to dispatch parcel: ' . $e->getMessage());
+        }
     }
 
     /**

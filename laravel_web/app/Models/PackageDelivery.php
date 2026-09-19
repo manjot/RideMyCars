@@ -86,6 +86,7 @@ class PackageDelivery extends Model
         'tax' => 'float',
         'total_price' => 'float',
         'special_handling' => 'array',
+        'prohibited_items_acknowledged' => 'boolean',
         'pickup_date' => 'date',
         'pod_timestamp' => 'datetime',
         'arrived_at_pickup_at' => 'datetime',

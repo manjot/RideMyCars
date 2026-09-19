@@ -64,42 +64,6 @@ Route::post('/membership/corporate-request', function (\Illuminate\Http\Request 
     return redirect('/membership')->with('success', "🎉 Corporate Membership request for '{$request->company_name}' submitted! Our concierge team will contact you shortly.");
 });
 
-Route::get('/delivery', function (\Illuminate\Http\Request $request) {
-    return view('delivery', [
-        'pickup' => $request->query('pickup'),
-        'dropoff' => $request->query('dropoff'),
-    ]);
-});
-
-Route::post('/delivery/book', function (\Illuminate\Http\Request $request) {
-    $request->validate([
-        'pickup_location' => 'required|string|max:255',
-        'dropoff_location' => 'required|string|max:255',
-    ]);
-
-    $riderId = auth()->id() ?? \App\Models\User::first()->id ?? 1;
-
-    $digitalReceipt = 'REC-' . strtoupper(\Illuminate\Support\Str::random(8));
-
-    $ride = \App\Models\Ride::create([
-        'rider_id' => $riderId,
-        'pickup_location' => $request->pickup_location,
-        'dropoff_location' => $request->dropoff_location,
-        'vehicle_type' => 'Package Delivery (' . ($request->package_size ?? 'Small') . ')',
-        'payment_method' => $request->payment_method ?? 'Credit Card',
-        'notes' => $request->notes,
-        'signature_required' => $request->has('signature_required'),
-        'climate_control' => $request->has('climate_control'),
-        'discreet_packaging' => $request->has('discreet_packaging'),
-        'digital_receipt_code' => $digitalReceipt,
-        'status' => 'pending',
-    ]);
-
-    \App\Services\ActivityLogService::log('delivery_created', "Created package delivery #{$ride->id} with receipt {$digitalReceipt}", $riderId);
-
-    return redirect('/delivery')->with('success', "Package dispatched successfully! Digital Receipt Code: {$digitalReceipt}. A driver is being assigned.");
-});
-
 Route::get('/login', function () {
     return view('login');
 })->name('login');
@@ -3286,8 +3250,20 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['tokens_table_err'] = $e->getMessage();
     }
     
-    // Run git pull
-    $output['git_pull'] = shell_exec('cd ' . base_path('..') . ' && git pull origin main 2>&1');
+    // Run git pull from correct repo directory
+    $gitDir = file_exists(base_path('.git')) ? base_path() : (file_exists(base_path('../.git')) ? base_path('..') : base_path());
+    $gitCmd = 'cd ' . escapeshellarg($gitDir) . ' && git pull origin main 2>&1';
+    if (function_exists('shell_exec')) {
+        $output['git_pull'] = @shell_exec($gitCmd);
+    } elseif (function_exists('exec')) {
+        $lines = [];
+        @exec($gitCmd, $lines);
+        $output['git_pull'] = implode("\n", $lines);
+    } else {
+        $output['git_pull'] = 'exec/shell_exec unavailable';
+    }
+    $output['git_dir'] = $gitDir;
+    $output['disabled_functions'] = ini_get('disable_functions');
     
     // Run migrations & seeders
     try {

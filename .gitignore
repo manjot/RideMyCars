@@ -12,4 +12,5 @@ apks/
 apk_builds/
 release_builds/
 screencap_*.png
-
+**/build/
+.dart_tool/

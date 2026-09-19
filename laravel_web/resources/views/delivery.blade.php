@@ -79,6 +79,7 @@
             <input type="hidden" name="pickup_lng" x-model="pickupLng" id="pickup_lng_input">
             <input type="hidden" name="dropoff_lat" x-model="dropoffLat" id="dropoff_lat_input">
             <input type="hidden" name="dropoff_lng" x-model="dropoffLng" id="dropoff_lng_input">
+            <input type="hidden" name="country" value="{{ $currentCountryCode ?? 'USA' }}">
 
             <!-- Left & Middle: Step Form Container -->
             <div class="lg:col-span-2 space-y-6">
@@ -972,7 +973,18 @@
                             body: formData
                         });
 
-                        const data = await response.json();
+                        const text = await response.text();
+                        let data;
+                        try {
+                            data = JSON.parse(text);
+                        } catch (parseErr) {
+                            console.error("Non-JSON response from /delivery/book:", text);
+                            this.isSubmitting = false;
+                            this.submitError = response.status >= 500
+                                ? `Server encountered an issue (${response.status}). Please try again or contact support.`
+                                : `Request failed with status ${response.status}. Please check your inputs.`;
+                            return;
+                        }
 
                         if (!response.ok || !data.success) {
                             this.isSubmitting = false;
