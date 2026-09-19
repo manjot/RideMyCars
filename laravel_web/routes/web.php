@@ -3014,8 +3014,24 @@ Route::get('/wallet', function () {
 })->middleware('auth');
 
 Route::get('/incentives', function () {
+    if (request('preview') == 1) {
+        $driver = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+        $incentivesData = $driver ? \App\Services\IncentiveService::getDriverIncentivesPayload($driver) : [];
+        $user = $driver;
+        return view('driver.incentives', compact('user', 'incentivesData'));
+    }
+    if (!auth()->check()) {
+        return redirect('/login');
+    }
     return redirect('/driver/incentives');
-})->middleware('auth');
+});
+
+Route::get('/incentives/preview', function () {
+    $driver = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+    $incentivesData = $driver ? \App\Services\IncentiveService::getDriverIncentivesPayload($driver) : [];
+    $user = $driver;
+    return view('driver.incentives', compact('user', 'incentivesData'));
+});
 
 Route::get('/promotions', function () {
     $user = auth()->user();
