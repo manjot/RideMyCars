@@ -141,18 +141,16 @@
                                 <div class="space-y-8">
                                     
                                     <!-- Hero Incentive Spotlight Card -->
-                                    <div class="relative overflow-hidden rounded-3xl text-white shadow-2xl border transition-all duration-300"
+                                    <div class="relative overflow-hidden rounded-3xl text-white shadow-2xl border-2 transition-all duration-300"
                                          :class="tabKey === 'daily' 
-                                            ? 'bg-gradient-to-br from-[#0c1222] via-[#0f172a] to-[#1e1b4b] border-amber-400/30' 
+                                            ? 'bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-500 border-amber-300 shadow-amber-500/25' 
                                             : (tabKey === 'weekly' 
-                                                ? 'bg-gradient-to-br from-[#0a1128] via-[#001f54] to-[#034078] border-indigo-400/30' 
-                                                : 'bg-gradient-to-br from-[#05201c] via-[#0b3c35] to-[#134e4a] border-emerald-400/30')">
+                                                ? 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 border-blue-300 shadow-blue-500/25' 
+                                                : 'bg-gradient-to-br from-emerald-600 via-teal-600 to-green-600 border-emerald-300 shadow-emerald-500/25')">
                                         
                                         <!-- Glowing Decorative Ambient Orbs -->
-                                        <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full blur-3xl opacity-40 pointer-events-none"
-                                             :class="tabKey === 'daily' ? 'bg-amber-400' : (tabKey === 'weekly' ? 'bg-cyan-400' : 'bg-emerald-400')"></div>
-                                        <div class="absolute -left-16 -bottom-16 w-64 h-64 rounded-full blur-3xl opacity-30 pointer-events-none"
-                                             :class="tabKey === 'daily' ? 'bg-yellow-500' : (tabKey === 'weekly' ? 'bg-indigo-500' : 'bg-teal-500')"></div>
+                                        <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full blur-3xl opacity-30 bg-white pointer-events-none"></div>
+                                        <div class="absolute -left-16 -bottom-16 w-64 h-64 rounded-full blur-3xl opacity-20 bg-yellow-200 pointer-events-none"></div>
 
                                         <div class="relative z-10 p-6 sm:p-10">
                                             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -160,53 +158,44 @@
                                                 <!-- Left Spotlight Info -->
                                                 <div class="space-y-3 max-w-xl">
                                                     <!-- Badge -->
-                                                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider uppercase border shadow-sm"
-                                                         :class="tabKey === 'daily' 
-                                                            ? 'bg-amber-400/15 text-amber-300 border-amber-400/30' 
-                                                            : (tabKey === 'weekly' ? 'bg-cyan-400/15 text-cyan-300 border-cyan-400/30' : 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30')">
+                                                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider uppercase border shadow-sm bg-black/20 text-white border-white/30 backdrop-blur-sm">
                                                         <span x-text="tabKey === 'daily' ? '⚡ TODAY\'S REWARD GOAL' : (tabKey === 'weekly' ? '📅 WEEKLY CHALLENGE' : '🏆 MONTHLY GRAND QUEST')"></span>
                                                     </div>
 
-                                                    <!-- Reward Text with Glowing Gradient -->
+                                                    <!-- Reward Text with Glowing White Typography -->
                                                     <div class="flex items-baseline gap-3">
-                                                        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight bg-gradient-to-r from-white via-amber-200 to-yellow-400 bg-clip-text text-transparent"
+                                                        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white drop-shadow-md"
                                                             x-text="data.tabs[tabKey].hero_reward_text"></h2>
-                                                        <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-800/40">
+                                                        <span class="text-xs sm:text-sm font-black uppercase tracking-wider text-gray-950 px-3 py-1 rounded-xl bg-white shadow-md border border-white/80 shrink-0">
                                                             Cash Bonus
                                                         </span>
                                                     </div>
 
-                                                    <h3 class="text-lg sm:text-xl font-bold text-gray-200" x-text="data.tabs[tabKey].name"></h3>
-                                                    <p class="text-xs sm:text-sm text-gray-300/90 font-medium" x-text="data.tabs[tabKey].hero_target_text + ' in ' + (data.tabs[tabKey].city || data.tabs[tabKey].country || 'your area') + ' to claim this reward tier.'"></p>
+                                                    <h3 class="text-lg sm:text-xl font-black text-white drop-shadow-xs" x-text="data.tabs[tabKey].name"></h3>
+                                                    <p class="text-xs sm:text-sm text-white/90 font-medium" x-text="data.tabs[tabKey].hero_target_text + ' in ' + (data.tabs[tabKey].city || data.tabs[tabKey].country || 'your area') + ' to claim this reward tier.'"></p>
                                                 </div>
 
                                                 <!-- Right Big Progress Counter -->
-                                                <div class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col items-center sm:items-end justify-center text-center sm:text-right shrink-0 min-w-[220px]">
-                                                    <span class="text-xs font-extrabold uppercase tracking-wider text-gray-400">Target Progress</span>
-                                                    <div class="text-4xl sm:text-5xl font-black mt-1"
-                                                         :class="tabKey === 'daily' ? 'text-amber-400' : (tabKey === 'weekly' ? 'text-cyan-300' : 'text-emerald-400')"
+                                                <div class="p-6 rounded-2xl bg-black/20 border border-white/25 backdrop-blur-md flex flex-col items-center sm:items-end justify-center text-center sm:text-right shrink-0 min-w-[220px]">
+                                                    <span class="text-xs font-extrabold uppercase tracking-wider text-white/80">Target Progress</span>
+                                                    <div class="text-4xl sm:text-5xl font-black mt-1 text-white"
                                                          x-text="data.tabs[tabKey].progress_fraction"></div>
-                                                    <div class="mt-2 text-xs font-black px-3 py-1 rounded-full bg-white/10 border border-white/10"
+                                                    <div class="mt-2 text-xs font-black px-3 py-1 rounded-full bg-white/20 text-white border border-white/30"
                                                          x-text="data.tabs[tabKey].remaining_text"></div>
                                                 </div>
                                             </div>
 
                                             <!-- High-Visibility Shimmer Progress Bar -->
-                                            <div class="mt-8 pt-6 border-t border-white/10 space-y-3">
+                                            <div class="mt-8 pt-6 border-t border-white/20 space-y-3">
                                                 <div class="flex justify-between items-center text-xs font-bold">
-                                                    <span class="text-gray-300">0 Rides</span>
-                                                    <span class="text-amber-300 font-extrabold tracking-wider" x-text="data.tabs[tabKey].progress_percentage + '% Completed'"></span>
-                                                    <span class="text-gray-300" x-text="data.tabs[tabKey].hero_target_rides + ' Target Rides'"></span>
+                                                    <span class="text-white/80 font-bold">0 Rides</span>
+                                                    <span class="text-white font-black tracking-wider" x-text="data.tabs[tabKey].progress_percentage + '% Completed'"></span>
+                                                    <span class="text-white/80 font-bold" x-text="data.tabs[tabKey].hero_target_rides + ' Target Rides'"></span>
                                                 </div>
 
                                                 <!-- Progress Track -->
-                                                <div class="w-full bg-black/40 rounded-full h-4 p-0.5 border border-white/15 overflow-hidden">
-                                                    <div class="h-full rounded-full transition-all duration-700 ease-out shadow-lg"
-                                                         :class="tabKey === 'daily' 
-                                                            ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 shadow-amber-400/50' 
-                                                            : (tabKey === 'weekly' 
-                                                                ? 'bg-gradient-to-r from-blue-500 via-indigo-400 to-cyan-300 shadow-cyan-400/50' 
-                                                                : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-green-300 shadow-emerald-400/50')"
+                                                <div class="w-full bg-black/25 rounded-full h-4 p-0.5 border border-white/30 overflow-hidden">
+                                                    <div class="h-full rounded-full transition-all duration-700 ease-out bg-white shadow-lg shadow-white/50"
                                                          :style="'width: ' + Math.max(3, data.tabs[tabKey].progress_percentage) + '%'">
                                                     </div>
                                                 </div>
@@ -384,40 +373,40 @@
                     </div>
 
                     <!-- VIP Driver Wallet Card (1 Col) -->
-                    <div class="rounded-3xl bg-gradient-to-br from-[#0c1222] via-[#0f172a] to-[#1e1b4b] border-2 border-amber-400/40 p-6 sm:p-7 text-white shadow-xl shadow-amber-500/10 flex flex-col justify-between relative overflow-hidden">
+                    <div class="rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-500 border-2 border-amber-300 p-6 sm:p-7 text-white shadow-xl shadow-amber-500/25 flex flex-col justify-between relative overflow-hidden">
                         <!-- Decorative glow -->
-                        <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                        <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-white/20 rounded-full blur-2xl pointer-events-none"></div>
 
                         <div class="relative z-10">
                             <!-- Card Header -->
                             <div class="flex items-center justify-between mb-4">
-                                <span class="text-[11px] uppercase font-black tracking-wider text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
+                                <span class="text-[11px] uppercase font-black tracking-wider text-amber-950 bg-white px-3.5 py-1 rounded-full border border-white/80 shadow-xs">
                                     Driver Wallet
                                 </span>
-                                <span class="text-xl">💳</span>
+                                <span class="text-2xl">💳</span>
                             </div>
 
                             <!-- Total Incentive Cash -->
                             <div class="space-y-1">
-                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Incentive Bonuses Earned</span>
-                                <div class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 tracking-tight">
+                                <span class="text-xs text-white/90 font-extrabold uppercase tracking-wider">Total Incentive Bonuses Earned</span>
+                                <div class="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
                                     <span x-text="(data.wallet_summary?.currency || '$') + Number(data.wallet_summary?.total_incentive_earned || 0).toLocaleString()"></span>
                                 </div>
-                                <p class="text-xs text-gray-300/80 mt-2 font-medium">
+                                <p class="text-xs text-white/90 mt-2 font-medium">
                                     All incentive rewards are credited directly to your driver wallet with zero delays.
                                 </p>
                             </div>
                         </div>
 
                         <!-- Card Balance & Quick Action Button -->
-                        <div class="mt-8 pt-5 border-t border-white/10 relative z-10 space-y-4">
+                        <div class="mt-8 pt-5 border-t border-white/25 relative z-10 space-y-4">
                             <div class="flex items-center justify-between text-xs">
-                                <span class="text-gray-400 font-medium">Available Balance:</span>
-                                <span class="font-black text-emerald-400 text-lg" 
+                                <span class="text-white/90 font-bold">Available Balance:</span>
+                                <span class="font-black text-white text-2xl drop-shadow-xs" 
                                       x-text="(data.wallet_summary?.currency || '$') + Number(data.wallet_summary?.balance || 0).toFixed(2)"></span>
                             </div>
 
-                            <a href="/wallet" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-gray-950 font-black text-xs text-center uppercase tracking-wider shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 hover:scale-102 active:scale-98">
+                            <a href="/wallet" class="w-full py-3.5 rounded-xl bg-white hover:bg-amber-50 text-amber-950 font-black text-xs text-center uppercase tracking-wider shadow-lg shadow-black/10 transition-all flex items-center justify-center gap-2 hover:scale-102 active:scale-98">
                                 <span>Go to Wallet & Payouts</span>
                                 <span>→</span>
                             </a>
