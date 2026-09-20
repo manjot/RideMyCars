@@ -2277,6 +2277,9 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
                 $type = 'package_delivery';
             }
 
+            $sourceModel = $ride ?: ($db ?: ($pkg ?: $a));
+            $createdAt = $sourceModel->created_at ?? $a->created_at ?? now();
+
             return [
                 'id' => $a->id,
                 'assignment_id' => $a->id,
@@ -2296,6 +2299,11 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
                 'duration_minutes' => $ride->duration_minutes ?? 15,
                 'expires_at' => $a->expires_at ? $a->expires_at->toIso8601String() : null,
                 'status' => $a->status,
+                'created_at' => $createdAt ? $createdAt->toIso8601String() : null,
+                'request_time_formatted' => $createdAt ? $createdAt->format('M d, Y • h:i A') : null,
+                'request_time_human' => $createdAt ? $createdAt->diffForHumans() : null,
+                'pickup_date' => $ride && $ride->pickup_date ? \Carbon\Carbon::parse($ride->pickup_date)->format('M d, Y') : ($db->start_date ?? null),
+                'pickup_time' => $ride->pickup_time ?? ($db->start_time ?? null),
             ];
         });
         
@@ -2488,6 +2496,10 @@ Route::get('/ride/success', function (\Illuminate\Http\Request $request) {
     return redirect('/ride')->with('success', "Your ride has been confirmed!");
 });
 
+Route::match(['get', 'post'], '/ride/{id}/decline', function ($id) {
+    return redirect("/driver/ride/{$id}/decline");
+})->middleware('auth');
+
 // Driver Dashboard
 Route::get('/dashboard', function () {
     if (auth()->user()->role === 'admin') {
@@ -2524,10 +2536,17 @@ Route::prefix('driver')->middleware('auth')->group(function () {
 
         $vehicles = \App\Models\Vehicle::whereIn('owner_id', $userIds)->get();
         
+        $rejectedRideIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+            ->where('status', 'rejected')
+            ->whereNotNull('ride_id')
+            ->pluck('ride_id')
+            ->toArray();
+
         $assignedRideIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->whereNotNull('ride_id')
+            ->whereNotIn('ride_id', $rejectedRideIds)
             ->pluck('ride_id')
             ->toArray();
 
@@ -2535,13 +2554,14 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         if ($profile->is_available && $profile->is_live) {
             $unassignedPendingRideIds = \App\Models\Ride::where('status', 'pending')
                 ->whereNull('driver_id')
+                ->whereNotIn('id', $rejectedRideIds)
                 ->latest()
-                ->take(5)
+                ->take(10)
                 ->pluck('id')
                 ->toArray();
         }
 
-        $allPendingRideIds = array_unique(array_merge($assignedRideIds, $unassignedPendingRideIds));
+        $allPendingRideIds = array_values(array_diff(array_unique(array_merge($assignedRideIds, $unassignedPendingRideIds)), $rejectedRideIds));
 
         $rides = \App\Models\Ride::where(function ($q) use ($userIds, $allPendingRideIds) {
                 $q->whereIn('driver_id', $userIds);
@@ -2553,10 +2573,17 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->orderBy('created_at', 'desc')
             ->get();
         
+        $rejectedBookingIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+            ->where('status', 'rejected')
+            ->whereNotNull('driver_booking_id')
+            ->pluck('driver_booking_id')
+            ->toArray();
+
         $assignedBookingIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->whereNotNull('driver_booking_id')
+            ->whereNotIn('driver_booking_id', $rejectedBookingIds)
             ->pluck('driver_booking_id')
             ->toArray();
 
@@ -2564,13 +2591,14 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         if ($profile->is_available && $profile->is_live) {
             $unassignedBookingIds = \App\Models\DriverBooking::where('booking_status', 'pending')
                 ->whereNull('driver_id')
+                ->whereNotIn('id', $rejectedBookingIds)
                 ->latest()
-                ->take(5)
+                ->take(10)
                 ->pluck('id')
                 ->toArray();
         }
 
-        $allPendingBookingIds = array_unique(array_merge($assignedBookingIds, $unassignedBookingIds));
+        $allPendingBookingIds = array_values(array_diff(array_unique(array_merge($assignedBookingIds, $unassignedBookingIds)), $rejectedBookingIds));
 
         $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($userIds, $allPendingBookingIds) {
                 $q->whereIn('driver_id', $userIds);
@@ -2583,11 +2611,11 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->get();
             
         $activeDriverBookings = $driverBookings->whereIn('booking_status', ['accepted', 'in_progress']);
-        $pendingDriverBookings = $driverBookings->where('booking_status', 'pending');
+        $pendingDriverBookings = $driverBookings->where('booking_status', 'pending')->whereNotIn('id', $rejectedBookingIds);
         $completedDriverBookings = $driverBookings->where('booking_status', 'completed');
         
         $activeRides = $rides->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
-        $pendingRides = $rides->where('status', 'pending');
+        $pendingRides = $rides->where('status', 'pending')->whereNotIn('id', $rejectedRideIds);
         $completedRides = $rides->where('status', 'completed');
         
         $today = now()->startOfDay();
@@ -2675,16 +2703,54 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         return back()->with('success', "🎉 Ride #{$ride->id} accepted! You can now manage this trip.");
     });
 
-    Route::post('/ride/{id}/decline', function ($id) {
-        $user = auth()->user();
-        if (!$user) return redirect('/login');
+    Route::match(['get', 'post'], '/ride/{id}/decline', function ($id, \Illuminate\Http\Request $request) {
+        $user = auth()->user() ?? $request->user();
+        if (!$user) {
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+            return redirect('/login');
+        }
 
-        \App\Models\RideAssignment::where('ride_id', $id)
-            ->where('driver_id', $user->id)
-            ->update(['status' => 'rejected']);
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+        // 1. Mark or create RideAssignment as rejected for all matching driver IDs
+        foreach ($userIds as $uId) {
+            \App\Models\RideAssignment::updateOrCreate(
+                ['ride_id' => $id, 'driver_id' => $uId],
+                ['status' => 'rejected', 'expires_at' => now()]
+            );
+        }
+
+        // 2. If the ride was assigned to this driver, unassign the driver
+        $ride = \App\Models\Ride::find($id);
+        if ($ride) {
+            if (in_array($ride->driver_id, $userIds)) {
+                $ride->update([
+                    'driver_id' => null,
+                    'status' => 'pending',
+                ]);
+            }
+
+            // 3. Dispatch to next available driver
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Ride decline assignNextDriver: " . $e->getMessage());
+            }
+        }
+
+        if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Ride request declined.']);
+        }
 
         return back()->with('info', 'Ride request declined.');
-    });
+    })->name('driver.ride.decline');
 
     Route::post('/toggle-availability', function (\Illuminate\Http\Request $request) {
         $user = auth()->user();

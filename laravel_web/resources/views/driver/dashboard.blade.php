@@ -331,6 +331,12 @@
                                         </div>
 
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
+                                            <p class="text-xs text-indigo-700 dark:text-indigo-300 font-semibold flex items-center gap-1.5 bg-indigo-50/70 dark:bg-white/5 p-2 rounded-lg" x-show="req.request_time_formatted || req.created_at">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                <span>Requested:</span>
+                                                <span class="font-extrabold text-gray-900 dark:text-white" x-text="req.request_time_formatted || (req.created_at ? new Date(req.created_at).toLocaleString() : 'Just now')"></span>
+                                                <span class="text-gray-400 font-normal" x-show="req.request_time_human" x-text="'(' + req.request_time_human + ')'"></span>
+                                            </p>
                                             <p><strong>📍 Pickup:</strong> <span x-text="req.pickup_location || (req.ride ? req.ride.pickup_location : '')"></span></p>
                                             <p x-show="req.dropoff_location || (req.ride && req.ride.dropoff_location)"><strong>🏁 Dropoff:</strong> <span x-text="req.dropoff_location || (req.ride ? req.ride.dropoff_location : '')"></span></p>
                                             <p x-show="req.duration_type"><strong>Schedule:</strong> <span x-text="req.start_date + ' (' + req.duration_count + ' ' + req.duration_type + ')'"></span></p>
@@ -424,6 +430,11 @@
                                                     </template>
                                                 </div>
                                             </template>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5" x-show="ride.created_at">
+                                                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                <span>Requested:</span>
+                                                <span class="font-bold text-gray-700 dark:text-gray-200" x-text="new Date(ride.created_at).toLocaleString()"></span>
+                                            </p>
                                             <p><strong>📍 Pickup:</strong> <span x-text="ride.pickup_location"></span></p>
                                             <template x-if="ride.stops && ride.stops.length > 0">
                                                 <div class="my-1.5 pl-3 border-l-2 border-dashed border-amber-400 space-y-1">
@@ -597,10 +608,19 @@
                                     <div class="p-5 border border-indigo-200 dark:border-indigo-800/40 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20">
                                         <div class="flex justify-between items-start mb-3">
                                             <div>
-                                                <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
-                                                    {{ $pr->vehicle_type ?? 'Standard' }} Ride #{{ $pr->id }}
-                                                </span>
-                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2">
+                                                <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                                                    <span class="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg">
+                                                        {{ $pr->vehicle_type ?? 'Standard' }} Ride #{{ $pr->id }}
+                                                    </span>
+                                                    @if($pr->created_at)
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 bg-white/90 dark:bg-white/10 text-indigo-900 dark:text-indigo-200 rounded-lg border border-indigo-200/60 dark:border-white/10 shadow-2xs">
+                                                            <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                            <span>Requested: {{ $pr->created_at->format('M d, Y • h:i A') }}</span>
+                                                            <span class="text-gray-500 dark:text-gray-400 font-medium">({{ $pr->created_at->diffForHumans() }})</span>
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-base mt-1">
                                                     Customer: {{ $pr->customer_name ?? $pr->rider->name ?? $pr->passenger_name ?? 'Guest Passenger' }}
                                                 </h4>
                                                 @php
@@ -638,6 +658,26 @@
                                         </div>
 
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1.5 mb-4">
+                                            <!-- Ride Request Date & Time Detail Row -->
+                                            <div class="p-3 bg-white/80 dark:bg-white/5 rounded-xl border border-indigo-100 dark:border-white/10 text-xs space-y-1.5 shadow-2xs mb-2">
+                                                <div class="flex items-center justify-between text-gray-700 dark:text-gray-200">
+                                                    <span class="font-bold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                        Ride Request Date & Time:
+                                                    </span>
+                                                    <span class="font-extrabold font-mono text-gray-900 dark:text-white">{{ $pr->created_at ? $pr->created_at->format('D, M d, Y · h:i A') : 'N/A' }}</span>
+                                                </div>
+                                                @if($pr->pickup_date || $pr->pickup_time)
+                                                    <div class="flex items-center justify-between text-amber-700 dark:text-amber-300 pt-1.5 border-t border-gray-100 dark:border-white/10">
+                                                        <span class="font-bold flex items-center gap-1.5">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                                            Scheduled Pickup:
+                                                        </span>
+                                                        <span class="font-extrabold">{{ $pr->pickup_date ? \Carbon\Carbon::parse($pr->pickup_date)->format('M d, Y') : '' }} {{ $pr->pickup_time ? 'at ' . $pr->pickup_time : '' }}</span>
+                                                    </div>
+                                                @endif
+                                            </div>
+
                                             <p><strong>📍 Pickup:</strong> {{ $pr->pickup_location }}</p>
                                             @if($pr->dropoff_location)
                                                 <p><strong>🏁 Destination:</strong> {{ $pr->dropoff_location }}</p>
@@ -648,15 +688,15 @@
                                         </div>
 
                                         <div class="flex gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
-                                            <form action="/driver/ride/{{ $pr->id }}/accept" method="POST" class="inline">
+                                            <form action="/driver/ride/{{ $pr->id }}/accept" method="POST" class="inline" onsubmit="var btn=this.querySelector('button'); btn.disabled=true; btn.innerHTML='Accepting...';">
                                                 @csrf
-                                                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all">
                                                     <span>✓ Accept Ride & Earn ${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
                                                 </button>
                                             </form>
-                                            <form action="/driver/ride/{{ $pr->id }}/decline" method="POST" class="inline">
+                                            <form action="/driver/ride/{{ $pr->id }}/decline" method="POST" class="inline" onsubmit="var btn=this.querySelector('button'); btn.disabled=true; btn.innerHTML='Declining...';">
                                                 @csrf
-                                                <button type="submit" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
+                                                <button type="submit" class="px-5 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-300 font-bold rounded-xl text-xs cursor-pointer transition-all">
                                                     Decline
                                                 </button>
                                             </form>
@@ -715,6 +755,14 @@
                                         </div>
 
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
+                                            @if($bk->created_at)
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 pb-1">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                    <span>Requested:</span>
+                                                    <span class="font-bold text-gray-700 dark:text-gray-200">{{ $bk->created_at->format('M d, Y • h:i A') }}</span>
+                                                    <span class="text-gray-400">({{ $bk->created_at->diffForHumans() }})</span>
+                                                </p>
+                                            @endif
                                             <p><strong>Schedule:</strong> {{ $bk->start_date }} at {{ $bk->start_time }} ({{ $bk->duration_count }} {{ $bk->duration_type }})</p>
                                             <p><strong>Pickup:</strong> {{ $bk->pickup_location }}</p>
                                             @if($bk->service_category === 'private')
@@ -726,17 +774,17 @@
                                         </div>
 
                                         <div class="flex gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
-                                            <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST" class="inline">
+                                            <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST" class="inline" onsubmit="var btn=this.querySelector('button'); btn.disabled=true; btn.innerHTML='Accepting...';">
                                                 @csrf
                                                 <input type="hidden" name="status" value="accepted">
-                                                <button type="submit" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow-sm">
+                                                <button type="submit" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow-sm cursor-pointer transition-all">
                                                     Accept Booking
                                                 </button>
                                             </form>
-                                            <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST" class="inline">
+                                            <form action="/driver-booking/{{ $bk->id }}/update-status" method="POST" class="inline" onsubmit="var btn=this.querySelector('button'); btn.disabled=true; btn.innerHTML='Declining...';">
                                                 @csrf
                                                 <input type="hidden" name="status" value="cancelled">
-                                                <button type="submit" class="px-5 py-2 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs">
+                                                <button type="submit" class="px-5 py-2 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-300 font-bold rounded-xl text-xs cursor-pointer transition-all">
                                                     Decline
                                                 </button>
                                             </form>

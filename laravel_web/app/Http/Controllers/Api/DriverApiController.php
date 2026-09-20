@@ -578,11 +578,36 @@ class DriverApiController extends Controller
         $requests = [];
         $processedRideIds = [];
 
+        $rejectedRideIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+            ->where('status', 'rejected')
+            ->whereNotNull('ride_id')
+            ->pluck('ride_id')
+            ->toArray();
+        $rejectedBookingIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+            ->where('status', 'rejected')
+            ->whereNotNull('driver_booking_id')
+            ->pluck('driver_booking_id')
+            ->toArray();
+        $rejectedDeliveryIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+            ->where('status', 'rejected')
+            ->whereNotNull('package_delivery_id')
+            ->pluck('package_delivery_id')
+            ->toArray();
+
         // 1. Direct assignments assigned to this driver
         $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client', 'packageDelivery.customer'])
             ->where('driver_id', $user->id)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
+            ->where(function ($q) use ($rejectedRideIds) {
+                $q->whereNull('ride_id')->orWhereNotIn('ride_id', $rejectedRideIds);
+            })
+            ->where(function ($q) use ($rejectedBookingIds) {
+                $q->whereNull('driver_booking_id')->orWhereNotIn('driver_booking_id', $rejectedBookingIds);
+            })
+            ->where(function ($q) use ($rejectedDeliveryIds) {
+                $q->whereNull('package_delivery_id')->orWhereNotIn('package_delivery_id', $rejectedDeliveryIds);
+            })
             ->get();
 
         foreach ($assignments as $a) {
@@ -593,6 +618,7 @@ class DriverApiController extends Controller
                 $customerPhone = $a->ride->rider?->phone;
                 $pocName = $a->ride->passenger_name;
                 $pocPhone = $a->ride->passenger_phone;
+                $rCreatedAt = $a->ride->created_at ?? $a->created_at;
 
                 $requests[] = [
                     'assignment_id' => $a->id,
@@ -616,6 +642,11 @@ class DriverApiController extends Controller
                     'distance_km' => $a->ride->distance_km,
                     'duration_minutes' => $a->ride->duration_minutes,
                     'expires_at' => $a->expires_at->toIso8601String(),
+                    'created_at' => $rCreatedAt ? $rCreatedAt->toIso8601String() : null,
+                    'request_time_formatted' => $rCreatedAt ? $rCreatedAt->format('M d, Y • h:i A') : null,
+                    'request_time_human' => $rCreatedAt ? $rCreatedAt->diffForHumans() : null,
+                    'pickup_date' => $a->ride->pickup_date ? \Carbon\Carbon::parse($a->ride->pickup_date)->format('M d, Y') : null,
+                    'pickup_time' => $a->ride->pickup_time ?? null,
                 ];
             } elseif ($a->driverBooking && $a->driverBooking->booking_status === 'pending') {
                 $clientName = $a->driverBooking->client?->name ?? 'Client';
@@ -669,7 +700,7 @@ class DriverApiController extends Controller
             ->where('status', 'pending')
             ->whereNull('driver_id')
             ->whereIn('payment_status', ['hold', 'authorized', 'paid'])
-            ->whereNotIn('id', $processedRideIds)
+            ->whereNotIn('id', array_unique(array_merge($processedRideIds, $rejectedRideIds)))
             ->latest()
             ->take(15)
             ->get();
@@ -680,10 +711,15 @@ class DriverApiController extends Controller
                 ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
             );
 
+            if ($assignment->status === 'rejected') {
+                continue;
+            }
+
             $customerName = $pr->rider?->name ?? 'Customer';
             $customerPhone = $pr->rider?->phone;
             $pocName = $pr->passenger_name;
             $pocPhone = $pr->passenger_phone;
+            $prCreatedAt = $pr->created_at ?? now();
 
             $requests[] = [
                 'assignment_id' => $assignment->id,
@@ -707,6 +743,11 @@ class DriverApiController extends Controller
                 'distance_km' => $pr->distance_km,
                 'duration_minutes' => $pr->duration_minutes,
                 'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),
+                'created_at' => $prCreatedAt ? $prCreatedAt->toIso8601String() : null,
+                'request_time_formatted' => $prCreatedAt ? $prCreatedAt->format('M d, Y • h:i A') : null,
+                'request_time_human' => $prCreatedAt ? $prCreatedAt->diffForHumans() : null,
+                'pickup_date' => $pr->pickup_date ? \Carbon\Carbon::parse($pr->pickup_date)->format('M d, Y') : null,
+                'pickup_time' => $pr->pickup_time ?? null,
             ];
         }
 
@@ -721,7 +762,7 @@ class DriverApiController extends Controller
         $openPendingDeliveries = \App\Models\PackageDelivery::with('customer')
             ->whereIn('delivery_status', ['pending', 'created', 'searching'])
             ->whereNull('courier_id')
-            ->whereNotIn('id', $processedDeliveryIds)
+            ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
             ->latest()
             ->take(10)
             ->get();
@@ -731,6 +772,10 @@ class DriverApiController extends Controller
                 ['package_delivery_id' => $pd->id, 'driver_id' => $user->id],
                 ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
             );
+
+            if ($assignment->status === 'rejected') {
+                continue;
+            }
 
             $custName = $pd->customer?->name ?? $pd->sender_name ?? 'Sender';
             $custPhone = $pd->customer?->phone ?? $pd->sender_phone;
@@ -847,10 +892,18 @@ class DriverApiController extends Controller
                 ]);
             }
         } else {
-            $assignment->update(['status' => 'rejected']);
+            $assignment->update(['status' => 'rejected', 'expires_at' => now()]);
 
             if ($assignment->ride) {
-                \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
+                if ($assignment->ride->driver_id === $user->id) {
+                    $assignment->ride->update([
+                        'driver_id' => null,
+                        'status' => 'pending',
+                    ]);
+                }
+                try {
+                    \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
+                } catch (\Throwable $e) {}
             }
 
             return response()->json(['success' => true, 'message' => 'Job declined.']);

@@ -355,19 +355,30 @@ class DriverBookingController extends Controller
             if ($booking->driverProfile) {
                 $booking->driverProfile->update(['is_available' => true]);
             }
-            \App\Models\RideAssignment::where('driver_booking_id', $booking->id)
-                ->where('driver_id', Auth::id())
-                ->update(['status' => 'rejected']);
+            \App\Models\RideAssignment::updateOrCreate(
+                ['driver_booking_id' => $booking->id, 'driver_id' => Auth::id()],
+                ['status' => 'rejected', 'expires_at' => now()]
+            );
 
-            if ($booking->client_id) {
-                \App\Services\NotificationService::send(
-                    $booking->client_id,
-                    'booking_cancelled',
-                    'Booking Declined',
-                    "Your driver booking #{$booking->booking_code} could not be accepted.",
-                    null,
-                    '/my-rides'
-                );
+            // If the booking was pending and declined by one driver, unassign and re-dispatch to others
+            if ($booking->booking_status === 'pending' || is_null($booking->driver_id) || $booking->driver_id === Auth::id()) {
+                $updates['driver_id'] = null;
+                $updates['driver_profile_id'] = null;
+                $updates['booking_status'] = 'pending';
+                try {
+                    \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+                } catch (\Throwable $e) {}
+            } else {
+                if ($booking->client_id) {
+                    \App\Services\NotificationService::send(
+                        $booking->client_id,
+                        'booking_cancelled',
+                        'Booking Declined',
+                        "Your driver booking #{$booking->booking_code} could not be accepted.",
+                        null,
+                        '/my-rides'
+                    );
+                }
             }
         }
 

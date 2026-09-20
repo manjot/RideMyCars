@@ -1368,6 +1368,36 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ],
             const SizedBox(height: 10),
 
+            // Request Date & Time Row
+            if (job['request_time_formatted'] != null || job['created_at'] != null) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDark.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Requested: ${job['request_time_formatted'] ?? job['created_at']}${job['request_time_human'] != null ? ' (${job['request_time_human']})' : ''}',
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // Locations Card
             Container(
               padding: const EdgeInsets.all(12),
