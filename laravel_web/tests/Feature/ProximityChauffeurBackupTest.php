@@ -79,4 +79,46 @@ class ProximityChauffeurBackupTest extends TestCase
         $this->assertContains(202, $declined);
         $this->assertNotContains(203, $declined);
     }
+
+    /**
+     * Test: Backup Chauffeur confirmation email template generation contains key chauffeur & ride details.
+     */
+    public function test_backup_chauffeur_confirmation_email_content(): void
+    {
+        $driver = new User(['id' => 301, 'name' => 'Michael Lawson', 'phone' => '+233240001122']);
+        $profile = new DriverProfile([
+            'user_id' => 301,
+            'rating' => 4.95,
+            'vehicle_make' => 'Mercedes-Benz',
+            'vehicle_model' => 'E-Class',
+            'license_number' => 'GT-4022-26',
+        ]);
+        $driver->setRelation('driverProfile', $profile);
+
+        $ride = new Ride([
+            'id' => 55,
+            'pickup_location' => 'Kotoka International Airport (ACC)',
+            'dropoff_location' => 'Kempinski Hotel Gold Coast City, Accra',
+            'fare' => 45.00,
+            'currency' => 'GH₵',
+            'payment_method' => 'card',
+            'digital_receipt_code' => 'REC-BK-55',
+        ]);
+
+        $html = \App\Services\BackupChauffeurEmailService::buildHtmlTemplate($ride, $driver, 'Sarah Jenkins');
+        $text = \App\Services\BackupChauffeurEmailService::buildPlainTextTemplate($ride, $driver, 'Sarah Jenkins');
+
+        $this->assertStringContainsString('Michael Lawson', $html);
+        $this->assertStringContainsString('Mercedes-Benz E-Class', $html);
+        $this->assertStringContainsString('GT-4022-26', $html);
+        $this->assertStringContainsString('Kotoka International Airport', $html);
+        $this->assertStringContainsString('Kempinski Hotel Gold Coast City', $html);
+        $this->assertStringContainsString('GH₵45.00', $html);
+        $this->assertStringContainsString('/ride/track/55', $html);
+
+        $this->assertStringContainsString('Michael Lawson', $text);
+        $this->assertStringContainsString('Mercedes-Benz E-Class', $text);
+        $this->assertStringContainsString('/ride/track/55', $text);
+    }
 }
+

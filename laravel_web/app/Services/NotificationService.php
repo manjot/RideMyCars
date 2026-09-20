@@ -348,6 +348,24 @@ class NotificationService
     }
 
     /**
+     * Send automated email notification immediately after a customer confirms the assigned Backup Chauffeur.
+     *
+     * @param Ride $ride
+     * @param User|null $driver
+     * @param string|null $recipientEmail
+     * @return array
+     */
+    public static function sendBackupChauffeurConfirmationEmail(Ride $ride, ?User $driver = null, ?string $recipientEmail = null): array
+    {
+        $driver = $driver ?: ($ride->driver ?: User::with('driverProfile')->find($ride->driver_id));
+        if (!$driver) {
+            return ['success' => false, 'error' => 'No assigned driver found'];
+        }
+
+        return BackupChauffeurEmailService::sendConfirmationEmail($ride, $driver, $recipientEmail);
+    }
+
+    /**
      * Notify Customer that no backup driver could be found.
      */
     public static function notifyCustomerNoBackupDriverAvailable(Ride $ride): void

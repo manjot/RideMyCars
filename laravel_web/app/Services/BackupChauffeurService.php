@@ -242,7 +242,10 @@ class BackupChauffeurService
      */
     public static function customerConfirmBackupDriver(Ride $ride, User $customer): array
     {
-        return DB::transaction(function () use ($ride, $customer) {
+        $confirmedDriver = null;
+        $recipientEmail = $customer->email ?? null;
+
+        $result = DB::transaction(function () use ($ride, $customer, &$confirmedDriver) {
             $lockedRide = Ride::lockForUpdate()->find($ride->id);
 
             if (!$lockedRide) {
@@ -290,12 +293,26 @@ class BackupChauffeurService
 
             Log::info("BackupChauffeurService: Customer confirmed backup Driver #{$driverId} for Ride #{$lockedRide->id}. Trip accepted.");
 
+            $confirmedDriver = $driver;
+
             return [
                 'success' => true,
                 'message' => 'Backup chauffeur confirmed successfully.',
                 'ride' => $lockedRide->fresh(['driver.driverProfile', 'stops', 'rider']),
             ];
         });
+
+        // Send automated email notification immediately after confirmation commits
+        if (($result['success'] ?? false) && $confirmedDriver && isset($result['ride'])) {
+            try {
+                $targetEmail = $recipientEmail ?: ($result['ride']->rider?->email ?? null);
+                NotificationService::sendBackupChauffeurConfirmationEmail($result['ride'], $confirmedDriver, $targetEmail);
+            } catch (\Throwable $e) {
+                Log::warning("BackupChauffeurService: Automated confirmation email notice: " . $e->getMessage());
+            }
+        }
+
+        return $result;
     }
 
     /**
