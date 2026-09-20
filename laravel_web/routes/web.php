@@ -3611,6 +3611,8 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
         $output['ride_categories_seeded'] = true;
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'HireDriverSeeder', '--force' => true]);
+        $output['hire_driver_seed'] = \Illuminate\Support\Facades\Artisan::output();
 
         // Seed Daily, Weekly, Monthly Incentive Programs
         try {

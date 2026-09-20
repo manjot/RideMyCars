@@ -4,7 +4,7 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
           x-data="{ 
               search: '{{ request('search') }}', 
-              selectedCountry: '{{ $currentCountryCode ?? 'USA' }}',
+              selectedCountry: '{{ $selectedCountry ?? ($currentCountryCode ?? 'All') }}',
               currencySymbol: '{{ $currentCurrencySymbol ?? '$' }}',
               minRating: '{{ request('rating', '') }}',
               availability: '{{ request('availability', '') }}',
@@ -20,21 +20,37 @@
                   this.$watch('perPage', () => { this.currentPage = 1; });
               },
 
+              resetFilters() {
+                  this.search = '';
+                  this.selectedCountry = 'All';
+                  this.availability = '';
+                  this.minRating = '';
+                  this.currentPage = 1;
+              },
+
+              get isFiltered() {
+                  return Boolean(this.search) || (this.selectedCountry && this.selectedCountry !== 'All') || Boolean(this.availability) || Boolean(this.minRating);
+              },
+
               get filteredDrivers() {
                   return this.drivers.filter(d => {
-                      const searchStr = this.search.toLowerCase();
-                      const matchesSearch = !this.search 
-                          || (d.user && d.user.name && d.user.name.toLowerCase().includes(searchStr)) 
-                          || (d.bio && d.bio.toLowerCase().includes(searchStr))
-                          || (d.service_area && d.service_area.toLowerCase().includes(searchStr));
+                      const searchStr = (this.search || '').trim().toLowerCase();
+                      const driverName = ((d.user && d.user.name) || d.name || '').toLowerCase();
+                      const bio = (d.bio || '').toLowerCase();
+                      const serviceArea = (d.service_area || '').toLowerCase();
 
-                      const driverCountry = (d.country || '').toUpperCase();
-                      const sel = (this.selectedCountry || 'All').toUpperCase();
+                      const matchesSearch = !searchStr 
+                          || driverName.includes(searchStr) 
+                          || bio.includes(searchStr)
+                          || serviceArea.includes(searchStr);
+
+                      const driverCountry = (d.country || '').trim().toUpperCase();
+                      const sel = (this.selectedCountry || 'All').trim().toUpperCase();
 
                       const matchesCountry = sel === 'ALL' 
                           || driverCountry === sel
                           || (sel === 'GHA' && (driverCountry === 'GHANA' || driverCountry === 'GH'))
-                          || (sel === 'USA' && (driverCountry === 'UNITED STATES' || driverCountry === 'US'))
+                          || (sel === 'USA' && (driverCountry === 'UNITED STATES' || driverCountry === 'US' || driverCountry === 'AMERICA'))
                           || (sel === 'NGA' && (driverCountry === 'NIGERIA' || driverCountry === 'NG'))
                           || (sel === 'ZAF' && (driverCountry === 'SOUTH AFRICA' || driverCountry === 'ZA'))
                           || (sel === 'IND' && (driverCountry === 'INDIA' || driverCountry === 'IN'))
@@ -43,8 +59,8 @@
                           || (sel === 'ARE' && (driverCountry === 'UNITED ARAB EMIRATES' || driverCountry === 'UAE' || driverCountry === 'AE'))
                           || (sel === 'KEN' && (driverCountry === 'KENYA' || driverCountry === 'KE'));
 
-                      const matchesAvail = !this.availability || (this.availability === 'available' ? d.is_available : true);
-                      const matchesRating = !this.minRating || (parseFloat(d.rating) >= parseFloat(this.minRating));
+                      const matchesAvail = !this.availability || (this.availability === 'available' ? (d.is_available == 1 || d.is_available === true) : true);
+                      const matchesRating = !this.minRating || (parseFloat(d.rating || 0) >= parseFloat(this.minRating));
                       return matchesSearch && matchesCountry && matchesAvail && matchesRating;
                   });
               },
@@ -134,43 +150,64 @@
         @endif
 
         <!-- Search and Filters Bar -->
-        <div class="flex flex-col lg:flex-row gap-4 mb-12 bg-white dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm items-center">
-            
-            <!-- Search -->
-            <div class="relative flex-1 w-full border-r border-gray-200 dark:border-white/10 pr-4">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <div class="mb-8 bg-white dark:bg-[#111] p-3 sm:p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+                
+                <!-- Search Input -->
+                <div class="relative lg:col-span-4">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                    <input x-model="search" type="text" placeholder="Search driver by name or city..." class="w-full pl-10 pr-9 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                    <button x-show="search" @click="search = ''" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <input x-model="search" type="text" placeholder="Search driver by name..." class="w-full pl-12 pr-4 py-3 bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-0">
-            </div>
 
-            <!-- Country / Region Select -->
-            <div class="w-full lg:w-56 border-r border-gray-200 dark:border-white/10 pr-4">
-                <select x-model="selectedCountry" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
-                    <option value="All" class="dark:bg-[#111] dark:text-white">🌍 Worldwide (All)</option>
-                    @foreach($countries as $cCode => $cConfig)
-                        <option value="{{ $cCode }}" class="dark:bg-[#111] dark:text-white">{{ $cConfig['name'] ?? $cCode }}</option>
-                    @endforeach
-                </select>
-            </div>
+                <!-- Country / Region Select -->
+                <div class="relative lg:col-span-3">
+                    <select x-model="selectedCountry" class="w-full pl-3.5 pr-10 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 appearance-none cursor-pointer transition-all">
+                        <option value="All" class="dark:bg-[#181818] dark:text-white">🌍 Worldwide (All)</option>
+                        @foreach($countries as $cCode => $cConfig)
+                            <option value="{{ $cCode }}" class="dark:bg-[#181818] dark:text-white">{{ $cConfig['flag'] ?? '' }} {{ $cConfig['name'] ?? $cCode }}</option>
+                        @endforeach
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
 
-            <!-- Availability Select -->
-            <div class="w-full lg:w-48 border-r border-gray-200 dark:border-white/10 pr-4">
-                <select x-model="availability" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
-                    <option value="" class="dark:bg-[#111] dark:text-white">All Availability</option>
-                    <option value="available" class="dark:bg-[#111] dark:text-white">Available Now</option>
-                </select>
-            </div>
+                <!-- Availability Select -->
+                <div class="relative lg:col-span-2">
+                    <select x-model="availability" class="w-full pl-3.5 pr-10 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 appearance-none cursor-pointer transition-all">
+                        <option value="" class="dark:bg-[#181818] dark:text-white">All Availability</option>
+                        <option value="available" class="dark:bg-[#181818] dark:text-white">Available Now</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
 
-            <!-- Rating Select -->
-            <div class="w-full lg:w-48 pr-4">
-                <select x-model="minRating" class="w-full px-4 py-3 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-none appearance-none cursor-pointer">
-                    <option value="" class="dark:bg-[#111] dark:text-white">Any Rating</option>
-                    <option value="4.5" class="dark:bg-[#111] dark:text-white">4.5+ Stars</option>
-                    <option value="4.0" class="dark:bg-[#111] dark:text-white">4.0+ Stars</option>
-                </select>
+                <!-- Rating Select -->
+                <div class="relative lg:col-span-2">
+                    <select x-model="minRating" class="w-full pl-3.5 pr-10 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 appearance-none cursor-pointer transition-all">
+                        <option value="" class="dark:bg-[#181818] dark:text-white">Any Rating</option>
+                        <option value="4.5" class="dark:bg-[#181818] dark:text-white">⭐ 4.5+ Stars</option>
+                        <option value="4.0" class="dark:bg-[#181818] dark:text-white">⭐ 4.0+ Stars</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <div class="lg:col-span-1 flex justify-end">
+                    <button x-show="isFiltered" @click="resetFilters()" type="button" title="Reset all filters" class="w-full lg:w-auto px-3 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span class="lg:hidden">Reset</span>
+                    </button>
+                </div>
             </div>
-            
         </div>
 
         <!-- Driver Grid -->
@@ -178,12 +215,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
                 <template x-if="filteredDrivers.length === 0">
-                    <div class="col-span-full text-center py-16 bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10">
-                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400">
+                    <div class="col-span-full text-center py-16 bg-white dark:bg-[#111] rounded-3xl border border-gray-100 dark:border-white/10 px-6">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">No drivers found</h3>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm">Try relaxing your search or region filters.</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">No drivers found in this view</h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-6">We don't have available drivers matching this specific country or search criteria right now.</p>
+                        <button @click="resetFilters()" type="button" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-sm transition-all shadow-md hover:shadow-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Explore Worldwide Drivers
+                        </button>
                     </div>
                 </template>
 
@@ -194,17 +235,17 @@
                             <!-- Image -->
                             <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#222] shrink-0 overflow-hidden relative border-2 border-gray-100 dark:border-white/10 flex items-center justify-center text-xl font-bold text-gray-400">
                                 <template x-if="driver.photo_url">
-                                    <img :src="driver.photo_url" class="w-full h-full object-cover" :alt="driver.user.name">
+                                    <img :src="driver.photo_url" class="w-full h-full object-cover" :alt="((driver.user && driver.user.name) || driver.name || 'Driver')">
                                 </template>
                                 <template x-if="!driver.photo_url">
-                                    <span x-text="driver.user.name.split(' ').map(n => n[0]).join('').substring(0, 2)"></span>
+                                    <span x-text="(((driver.user && driver.user.name) || driver.name || 'DR').split(' ').map(n => n[0]).join('').substring(0, 2)).toUpperCase()"></span>
                                 </template>
                             </div>
                             
                             <!-- Header -->
                             <div class="flex-1 pr-2">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="driver.user.name"></h3>
+                                    <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="(driver.user && driver.user.name) || driver.name || 'Professional Driver'"></h3>
                                     <span x-show="driver.verification_status === 'verified'" title="Verified Driver" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white shadow-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                     </span>

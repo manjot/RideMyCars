@@ -22,55 +22,40 @@ class DriverBookingController extends Controller
      */
     public function index(Request $request)
     {
-        $country = $request->query('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
-        $rating = $request->query('rating');
-        $availability = $request->query('availability');
-        $search = $request->query('search');
+        $requestedCountry = $request->query('country');
+        $visitorCountry = \App\Services\CountryService::getCurrentCountryCode($request);
 
-        $query = DriverProfile::with(['user', 'reviews'])
+        // Fetch all verified/legitimate drivers with active hourly rates so client-side Alpine filters work across all regions
+        $drivers = DriverProfile::with(['user', 'reviews'])
             ->whereNotNull('hourly_rate')
-            ->where('hourly_rate', '>', 0);
+            ->where('hourly_rate', '>', 0)
+            ->where(function ($q) {
+                // Filter out spam registrations containing spam URLs
+                $q->whereNull('bio')
+                  ->orWhere(function ($sub) {
+                      $sub->where('bio', 'not like', '%[url=%')
+                          ->where('bio', 'not like', '%narkolog%')
+                          ->where('bio', 'not like', '%chicken road%');
+                  });
+            })
+            ->get();
 
-        if ($country && $country !== 'All') {
-            $code = \App\Services\CountryService::normalizeToCode($country) ?: $country;
-            $countryAliases = [
-                'GHA' => ['GHA', 'Ghana', 'GH'],
-                'USA' => ['USA', 'United States', 'US'],
-                'NGA' => ['NGA', 'Nigeria', 'NG'],
-                'ZAF' => ['ZAF', 'South Africa', 'ZA'],
-                'IND' => ['IND', 'India', 'IN'],
-                'GBR' => ['GBR', 'United Kingdom', 'UK', 'GB'],
-                'EUR' => ['EUR', 'Europe', 'EU', 'Germany', 'France'],
-                'ARE' => ['ARE', 'United Arab Emirates', 'UAE', 'AE'],
-                'KEN' => ['KEN', 'Kenya', 'KE'],
-            ];
-            $matches = $countryAliases[$code] ?? [$country, $code];
-            $query->whereIn('country', $matches);
-        }
+        // Check if we have drivers in the database for the user's current country
+        $hasVisitorDrivers = $drivers->contains(function ($d) use ($visitorCountry) {
+            $dc = strtoupper($d->country ?? '');
+            return $dc === strtoupper($visitorCountry) 
+                || \App\Services\CountryService::normalizeToCode($dc) === $visitorCountry;
+        });
 
-        if ($availability === 'available') {
-            $query->where('is_available', true);
-        }
+        // If specific country requested in URL, use that.
+        // Otherwise, if visitor's country has drivers, default to visitor's country.
+        // Otherwise, default to 'All' (Worldwide) so users always see available drivers immediately!
+        $selectedCountry = $requestedCountry ?: ($hasVisitorDrivers ? $visitorCountry : 'All');
 
-        if ($rating) {
-            $minRating = (float) str_replace('+', '', $rating);
-            $query->where('rating', '>=', $minRating);
-        }
+        $countries = CountryService::getAll($request);
+        $country = $selectedCountry;
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('user', function ($uq) use ($search) {
-                    $uq->where('name', 'like', "%{$search}%");
-                })
-                ->orWhere('bio', 'like', "%{$search}%")
-                ->orWhere('service_area', 'like', "%{$search}%");
-            });
-        }
-
-        $drivers = $query->get();
-        $countries = CountryService::getAll();
-
-        return view('hire-driver', compact('drivers', 'countries', 'country'));
+        return view('hire-driver', compact('drivers', 'countries', 'country', 'selectedCountry'));
     }
 
     /**
