@@ -15,6 +15,7 @@ class RideAssignment extends Model
         'package_delivery_id',
         'driver_id',
         'status',
+        'assignment_type',
         'expires_at',
     ];
 

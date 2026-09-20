@@ -1219,6 +1219,8 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
+            'backup_chauffeur_enabled' => $request->boolean('backup_chauffeur_enabled', false),
+            'driver_assignment_type' => 'primary',
         ]);
 
         // Save stops
@@ -1641,18 +1643,78 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         'started_at' => $ride->started_at?->toIso8601String(),
         'completed_at' => $ride->completed_at?->toIso8601String(),
         'has_review' => $ride->riderReview !== null,
+        'backup_chauffeur_enabled' => (bool)$ride->backup_chauffeur_enabled,
+        'backup_status' => $ride->backup_status,
+        'backup_driver_id' => $ride->backup_driver_id,
+        'driver_assignment_type' => $ride->driver_assignment_type ?? 'primary',
+        'backup_reserved_at' => $ride->backup_reserved_at?->toIso8601String(),
     ];
+
+    if ($ride->backup_driver_id && $ride->backupDriver) {
+        $bp = $ride->backupDriver->driverProfile;
+        $response['backup_driver'] = [
+            'id' => $ride->backupDriver->id,
+            'name' => $ride->backupDriver->name,
+            'phone' => $ride->backupDriver->phone,
+            'photo_url' => $bp?->photo_url,
+            'rating' => $bp ? floatval($bp->rating) : 4.9,
+            'vehicle' => $bp ? trim($bp->vehicle_make . ' ' . $bp->vehicle_model) : ($ride->vehicle_type ?? 'Executive Sedan'),
+            'plate' => $bp?->license_number ?? 'REG-8899',
+        ];
+    } else {
+        $response['backup_driver'] = null;
+    }
+
+    // If waiting for customer confirmation, check timeout
+    if ($ride->backup_status === 'waiting' && $ride->backup_reserved_at) {
+        $customerTimeout = (int) \App\Services\BackupChauffeurService::getConfig('backup.customer_timeout_sec', 60);
+        if ($ride->backup_reserved_at->addSeconds($customerTimeout)->lt(now())) {
+            if ($ride->backup_driver_id) {
+                $dp = \App\Models\DriverProfile::where('user_id', $ride->backup_driver_id)->first();
+                if ($dp) $dp->update(['is_available' => true]);
+            }
+            $ride->update(['backup_driver_id' => null, 'backup_status' => 'expired']);
+            \App\Services\BackupChauffeurService::dispatchBackupOffer($ride);
+            $ride->refresh();
+        }
+    }
 
     // If still pending and payment has been held/confirmed, check for expired assignments
     if ($ride->status === 'pending' && in_array(strtolower($ride->payment_status ?? ''), ['hold', 'authorized', 'paid'], true)) {
         $activeAssignment = \App\Models\RideAssignment::where('ride_id', $ride->id)->where('status', 'pending')->first();
-        if (!$activeAssignment) {
+        if ($activeOffer = $activeAssignment) {
+            if ($activeOffer->expires_at && $activeOffer->expires_at->lt(now())) {
+                $activeOffer->update(['status' => 'expired']);
+                if ($activeOffer->assignment_type === 'backup') {
+                    \App\Services\BackupChauffeurService::dispatchBackupOffer($ride);
+                } else {
+                    \App\Services\BackupChauffeurService::handlePrimaryDriverUnavailable($ride, 'timeout');
+                }
+            }
+        } elseif (!$activeAssignment) {
             // Re-trigger proximity assignment (payment gate is respected)
             \App\Services\RideAssignmentService::assignNextDriver($ride);
         }
     }
 
     return response()->json($response);
+});
+
+// Proximity Chauffeur Backup Web Actions
+Route::post('/api/ride/{id}/backup/confirm', function (\Illuminate\Http\Request $request, $id) {
+    $ride = \App\Models\Ride::find($id);
+    if (!$ride) return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+    $user = auth()->user() ?? $request->user() ?? $ride->rider;
+    $result = \App\Services\BackupChauffeurService::customerConfirmBackupDriver($ride, $user);
+    return response()->json($result, $result['success'] ? 200 : 422);
+});
+
+Route::post('/api/ride/{id}/backup/decline', function (\Illuminate\Http\Request $request, $id) {
+    $ride = \App\Models\Ride::find($id);
+    if (!$ride) return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+    $user = auth()->user() ?? $request->user() ?? $ride->rider;
+    $result = \App\Services\BackupChauffeurService::customerDeclineBackupDriver($ride, $user);
+    return response()->json($result, $result['success'] ? 200 : 422);
 });
 
 // Driver updates ride status through lifecycle

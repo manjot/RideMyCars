@@ -125,6 +125,95 @@
             </div>
         </div>
 
+        <!-- Backup Chauffeur In-App Notification Banner -->
+        <div x-show="ride.backup_status === 'waiting' && ride.backup_driver" 
+             style="display: none;"
+             class="mb-6 p-4 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 flex items-center justify-between gap-4 shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold shrink-0 shadow-md">
+                    🛡️
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-sm text-gray-900 dark:text-white">Primary Chauffeur Unavailable</h4>
+                    <p class="text-xs text-amber-800 dark:text-amber-300 font-medium">
+                        A nearby chauffeur (<span class="font-bold" x-text="ride.backup_driver ? ride.backup_driver.name : 'Driver'"></span>) is reserved and ready to take your ride.
+                    </p>
+                </div>
+            </div>
+            <button type="button" @click="showBackupModal = true" 
+                    class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all shrink-0 cursor-pointer">
+                Review & Confirm →
+            </button>
+        </div>
+
+        <div x-show="ride.backup_status === 'searching'" 
+             style="display: none;"
+             class="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3">
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0"></div>
+            <p class="text-xs font-bold text-amber-800 dark:text-amber-300">
+                Primary chauffeur was unavailable. Searching for a nearby backup chauffeur within radius...
+            </p>
+        </div>
+
+        <!-- Primary Chauffeur Unavailable - Backup Confirmation In-App Modal Dialog -->
+        <div x-show="showBackupModal && ride.backup_driver" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+             style="display: none;"
+             x-cloak>
+            
+            <div class="bg-white dark:bg-[#151515] rounded-[28px] border-2 border-amber-500 max-w-md w-full p-6 sm:p-7 shadow-2xl text-center space-y-5 relative">
+                <div class="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center text-3xl font-black mx-auto">
+                    🛡️
+                </div>
+
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Backup Chauffeur Reserved
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">Primary Chauffeur Unavailable</h3>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed font-medium">
+                        A nearby chauffeur is available to take your ride. Would you like to continue with this chauffeur?
+                    </p>
+                </div>
+
+                <!-- Backup Driver Card Details -->
+                <template x-if="ride.backup_driver">
+                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center gap-3.5 text-left">
+                        <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl font-bold shrink-0">
+                            👨‍✈️
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-sm font-black text-gray-900 dark:text-white truncate" x-text="ride.backup_driver.name"></h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="(ride.backup_driver.vehicle || 'Executive Sedan') + ' • ⭐ ' + (ride.backup_driver.rating || 4.9)"></p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">Nearby</span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Action Buttons: Decline / Confirm -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" @click="declineBackupDriver()" :disabled="isDecliningBackup || isConfirmingBackup"
+                            class="w-full py-3.5 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 font-extrabold text-sm rounded-2xl transition-all cursor-pointer disabled:opacity-50">
+                        <span x-text="isDecliningBackup ? 'Declining...' : 'Decline'">Decline</span>
+                    </button>
+                    <button type="button" @click="confirmBackupDriver()" :disabled="isConfirmingBackup || isDecliningBackup"
+                            class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5">
+                        <span x-text="isConfirmingBackup ? 'Confirming...' : 'Confirm'">Confirm</span>
+                        <span x-show="!isConfirmingBackup">✓</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             <!-- Left 2 Cols: Status Hero, Map & Timeline -->
@@ -438,13 +527,20 @@
                     pickup_lat: {{ $ride->pickup_lat ? floatval($ride->pickup_lat) : 'null' }},
                     pickup_lng: {{ $ride->pickup_lng ? floatval($ride->pickup_lng) : 'null' }},
                     dropoff_lat: {{ $ride->dropoff_lat ? floatval($ride->dropoff_lat) : 'null' }},
-                    dropoff_lng: {{ $ride->dropoff_lng ? floatval($ride->dropoff_lng) : 'null' }}
+                    dropoff_lng: {{ $ride->dropoff_lng ? floatval($ride->dropoff_lng) : 'null' }},
+                    backup_chauffeur_enabled: {{ $ride->backup_chauffeur_enabled ? 'true' : 'false' }},
+                    backup_status: '{{ $ride->backup_status }}',
+                    driver_assignment_type: '{{ $ride->driver_assignment_type ?? "primary" }}',
+                    backup_driver: null
                 },
                 driver: @json($driverData),
                 mapKey: '{{ $mapKey }}',
                 pollingTimer: null,
                 shareSuccess: false,
                 cancelling: false,
+                showBackupModal: false,
+                isConfirmingBackup: false,
+                isDecliningBackup: false,
 
                 init() {
                     // Remember this ride in localStorage for guest tracking continuity
@@ -462,6 +558,17 @@
                             this.ride.fare = data.fare;
                             this.ride.pickup = data.pickup;
                             this.ride.dropoff = data.dropoff;
+                            this.ride.backup_chauffeur_enabled = data.backup_chauffeur_enabled;
+                            this.ride.backup_status = data.backup_status;
+                            this.ride.driver_assignment_type = data.driver_assignment_type;
+                            this.ride.backup_driver = data.backup_driver;
+
+                            if (data.backup_status === 'waiting' && data.backup_driver) {
+                                this.showBackupModal = true;
+                            } else if (data.backup_status !== 'waiting') {
+                                this.showBackupModal = false;
+                            }
+
                             if (data.customer_name) this.ride.customer_name = data.customer_name;
                             if (data.customer_phone) this.ride.customer_phone = data.customer_phone;
                             if (data.poc_name) this.ride.poc_name = data.poc_name;
@@ -497,8 +604,10 @@
                 get statusHeading() {
                     const s = this.ride.status;
                     const d = this.driver ? this.driver.name : 'Driver';
+                    if (this.ride.backup_status === 'waiting') return 'Primary Chauffeur Unavailable — Action Required';
+                    if (this.ride.backup_status === 'searching') return 'Primary Unavailable — Finding Nearby Backup Chauffeur...';
                     if (s === 'pending') return 'Looking for nearest drivers...';
-                    if (s === 'accepted') return `${d} accepted your trip`;
+                    if (s === 'accepted') return (this.ride.driver_assignment_type === 'backup' ? `Backup Chauffeur (${d}) Confirmed!` : `${d} accepted your trip`);
                     if (s === 'en_route') return `${d} is on the way to you`;
                     if (s === 'arrived') return `${d} has arrived at pickup!`;
                     if (s === 'in_progress') return 'Trip in Progress to destination';
@@ -509,14 +618,68 @@
 
                 get statusBadgeText() {
                     const s = this.ride.status;
+                    if (this.ride.backup_status === 'waiting') return '🛡️ Backup Chauffeur Available';
+                    if (this.ride.backup_status === 'searching') return '🛡️ Searching Backup Chauffeur';
                     if (s === 'pending') return '● Searching Drivers';
-                    if (s === 'accepted') return '✓ Driver Accepted';
+                    if (s === 'accepted') return (this.ride.driver_assignment_type === 'backup' ? '✓ Backup Chauffeur Confirmed' : '✓ Driver Accepted');
                     if (s === 'en_route') return '🚗 En Route to Pickup';
                     if (s === 'arrived') return '📍 Driver Arrived';
                     if (s === 'in_progress') return '⚡ Trip in Progress';
                     if (s === 'completed') return '✓ Completed';
                     if (s === 'cancelled') return '✕ Cancelled';
                     return s.toUpperCase();
+                },
+
+                async confirmBackupDriver() {
+                    this.isConfirmingBackup = true;
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                        const res = await fetch(`/api/ride/${this.rideId}/backup/confirm`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.showBackupModal = false;
+                            await this.poll();
+                        } else {
+                            alert(data.message || 'Could not confirm backup chauffeur.');
+                        }
+                    } catch(e) {
+                        alert('Network error confirming backup chauffeur.');
+                    } finally {
+                        this.isConfirmingBackup = false;
+                    }
+                },
+
+                async declineBackupDriver() {
+                    this.isDecliningBackup = true;
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                        const res = await fetch(`/api/ride/${this.rideId}/backup/decline`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.showBackupModal = false;
+                            await this.poll();
+                        } else {
+                            alert(data.message || 'Could not decline backup chauffeur.');
+                        }
+                    } catch(e) {
+                        alert('Network error declining backup chauffeur.');
+                    } finally {
+                        this.isDecliningBackup = false;
+                    }
                 },
 
                 isStepActive(statuses) {

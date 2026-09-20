@@ -77,6 +77,13 @@ class DriverBooking extends Model
         'refund_reference',
         'refunded_at',
         'accepted_at',
+        'backup_chauffeur_enabled',
+        'backup_driver_id',
+        'backup_status',
+        'driver_assignment_type',
+        'backup_attempt_count',
+        'backup_reserved_at',
+        'backup_declined_driver_ids',
     ];
 
     protected $casts = [
@@ -91,6 +98,9 @@ class DriverBooking extends Model
         'actual_distance_km' => 'float',
         'actual_duration_minutes' => 'integer',
         'final_fare' => 'float',
+        'backup_chauffeur_enabled' => 'boolean',
+        'backup_reserved_at' => 'datetime',
+        'backup_declined_driver_ids' => 'array',
     ];
 
     public function vehicle()
@@ -106,6 +116,11 @@ class DriverBooking extends Model
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');
+    }
+
+    public function backupDriver()
+    {
+        return $this->belongsTo(User::class, 'backup_driver_id');
     }
 
     public function driverProfile()

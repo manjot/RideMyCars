@@ -682,6 +682,28 @@
                             </div>
                         </div>
 
+                        <!-- Backup Chauffeur (Proximity Chauffeur Backup) Option -->
+                        <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 flex items-center justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
+                                    🛡️
+                                </div>
+                                <div>
+                                    <div class="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1.5">
+                                        <span>Backup Chauffeur</span>
+                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">Recommended</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-tight mt-0.5">
+                                        If your assigned chauffeur is unavailable, we'll automatically find another nearby chauffeur.
+                                    </p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input type="checkbox" x-model="backup_chauffeur_enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 dark:bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+
                         <!-- Guest Ongoing Ride Live Tracking Reassurance -->
                         <div class="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 text-left space-y-1">
                             <div class="flex items-center gap-1.5">
@@ -1159,6 +1181,7 @@
             Alpine.data('rideBooking', () => ({
                 bookingStep: 'find_trip', // 'find_trip', 'choose_ride', 'confirm_ride', 'finding_driver', 'driver_assigned', 'completed'
                 vehicle_type: 'Economy',
+                backup_chauffeur_enabled: true,
                 schedule_type: 'now',
                 pickup: '',
                 pickupLat: null,
@@ -2272,7 +2295,8 @@
                                 country: '{{ $currentCountryCode ?? "USA" }}',
                                 amount: parseFloat(String(this.selectedFare).replace(/[^0-9.]/g, '')) || (this.fareBreakdown ? this.fareBreakdown.grand_total : 28.50),
                                 momo_phone: this.momoPhone,
-                                momo_network: this.momoNetwork
+                                momo_network: this.momoNetwork,
+                                backup_chauffeur_enabled: this.backup_chauffeur_enabled ? 1 : 0
                             })
                         });
 

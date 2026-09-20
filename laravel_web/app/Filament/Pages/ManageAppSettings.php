@@ -115,6 +115,14 @@ class ManageAppSettings extends Page implements HasForms
             'demo_driver2_email' => $all['demo.driver2_email'] ?? 'michael@example.com',
             'demo_driver3_name' => $all['demo.driver3_name'] ?? 'Sipho (Driver)',
             'demo_driver3_email' => $all['demo.driver3_email'] ?? 'sipho.driver@ridemycars.com',
+
+            // Proximity Chauffeur Backup Settings
+            'backup_chauffeur_enabled' => (bool) ($all['backup.enabled'] ?? true),
+            'backup_chauffeur_radius_km' => (float) ($all['backup.search_radius_km'] ?? 10.0),
+            'backup_chauffeur_driver_timeout_sec' => (int) ($all['backup.driver_timeout_sec'] ?? 45),
+            'backup_chauffeur_customer_timeout_sec' => (int) ($all['backup.customer_timeout_sec'] ?? 60),
+            'backup_chauffeur_max_attempts' => (int) ($all['backup.max_attempts'] ?? 3),
+            'backup_chauffeur_notifications_enabled' => (bool) ($all['backup.notifications_enabled'] ?? true),
         ]);
     }
 
@@ -517,6 +525,51 @@ class ManageAppSettings extends Page implements HasForms
                                         ]),
                                     ]),
                             ]),
+
+                        // TAB: Proximity Chauffeur Backup
+                        Forms\Components\Tabs\Tab::make('Proximity Backup')
+                            ->icon('heroicon-o-shield-check')
+                            ->schema([
+                                Forms\Components\Section::make('Proximity Chauffeur Backup Configuration')
+                                    ->description('Control automated backup chauffeur matching, timeout windows, and notification triggers.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('backup_chauffeur_enabled')
+                                            ->label('Enable Proximity Chauffeur Backup Globally')
+                                            ->helperText('When enabled, bookings with backup enabled will automatically find nearby drivers if primary driver is unavailable.')
+                                            ->default(true),
+
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\TextInput::make('backup_chauffeur_radius_km')
+                                                ->label('Search Radius (km)')
+                                                ->numeric()
+                                                ->default(10.0)
+                                                ->helperText('Maximum radius to look for nearby available backup chauffeurs.'),
+
+                                            Forms\Components\TextInput::make('backup_chauffeur_driver_timeout_sec')
+                                                ->label('Driver Response Timeout (seconds)')
+                                                ->numeric()
+                                                ->default(45)
+                                                ->helperText('How long a backup driver has to accept or decline before offer expires.'),
+
+                                            Forms\Components\TextInput::make('backup_chauffeur_customer_timeout_sec')
+                                                ->label('Customer Confirmation Timeout (seconds)')
+                                                ->numeric()
+                                                ->default(60)
+                                                ->helperText('Time allowed for customer to confirm or decline the reserved chauffeur.'),
+
+                                            Forms\Components\TextInput::make('backup_chauffeur_max_attempts')
+                                                ->label('Maximum Backup Attempts')
+                                                ->numeric()
+                                                ->default(3)
+                                                ->helperText('Maximum consecutive driver offers before falling back to cancellation.'),
+                                        ]),
+
+                                        Forms\Components\Toggle::make('backup_chauffeur_notifications_enabled')
+                                            ->label('Enable Backup Notifications')
+                                            ->helperText('Send automated push, SMS, and in-app alerts during backup flow transitions.')
+                                            ->default(true),
+                                    ]),
+                            ]),
                     ]),
             ])
             ->statePath('data');
@@ -604,6 +657,14 @@ class ManageAppSettings extends Page implements HasForms
             'demo_driver2_email' => ['key' => 'demo.driver2_email', 'group' => 'Demo Accounts'],
             'demo_driver3_name' => ['key' => 'demo.driver3_name', 'group' => 'Demo Accounts'],
             'demo_driver3_email' => ['key' => 'demo.driver3_email', 'group' => 'Demo Accounts'],
+
+            // Proximity Chauffeur Backup
+            'backup_chauffeur_enabled' => ['key' => 'backup.enabled', 'group' => 'Proximity Backup'],
+            'backup_chauffeur_radius_km' => ['key' => 'backup.search_radius_km', 'group' => 'Proximity Backup'],
+            'backup_chauffeur_driver_timeout_sec' => ['key' => 'backup.driver_timeout_sec', 'group' => 'Proximity Backup'],
+            'backup_chauffeur_customer_timeout_sec' => ['key' => 'backup.customer_timeout_sec', 'group' => 'Proximity Backup'],
+            'backup_chauffeur_max_attempts' => ['key' => 'backup.max_attempts', 'group' => 'Proximity Backup'],
+            'backup_chauffeur_notifications_enabled' => ['key' => 'backup.notifications_enabled', 'group' => 'Proximity Backup'],
         ];
 
         foreach ($mapping as $field => $info) {

@@ -284,4 +284,148 @@ class NotificationService
             ['booking_id' => $booking->id, 'type' => 'driver_booking', 'icon' => 'user', 'color' => 'emerald']
         );
     }
+
+    /**
+     * Notify Customer that primary chauffeur is unavailable and search for backup has started.
+     */
+    public static function notifyCustomerPrimaryUnavailableSearchingBackup(Ride $ride): void
+    {
+        if ($ride->rider_id) {
+            self::send(
+                $ride->rider_id,
+                'backup_searching',
+                'Primary Chauffeur Unavailable',
+                'Searching for a nearby chauffeur...',
+                $ride->id,
+                "/ride?resume={$ride->id}",
+                ['ride_id' => $ride->id, 'status' => 'backup_searching', 'icon' => 'clock', 'color' => 'amber']
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that a backup driver was found and is waiting for confirmation.
+     */
+    public static function notifyCustomerBackupDriverFound(Ride $ride, ?User $backupDriver): void
+    {
+        if ($ride->rider_id) {
+            $driverName = $backupDriver?->name ?? 'A nearby chauffeur';
+            self::send(
+                $ride->rider_id,
+                'backup_driver_found',
+                'Backup Driver Found',
+                'A nearby chauffeur is ready. Please confirm.',
+                $ride->id,
+                "/ride?resume={$ride->id}",
+                [
+                    'ride_id' => $ride->id,
+                    'backup_driver_id' => $backupDriver?->id,
+                    'backup_driver_name' => $driverName,
+                    'status' => 'waiting_confirmation',
+                    'icon' => 'user-check',
+                    'color' => 'indigo',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that the backup driver was confirmed and ride is assigned.
+     */
+    public static function notifyCustomerBackupDriverConfirmed(Ride $ride): void
+    {
+        if ($ride->rider_id) {
+            self::send(
+                $ride->rider_id,
+                'backup_confirmed',
+                'Ride Confirmed',
+                'Your ride has been assigned successfully.',
+                $ride->id,
+                "/ride?resume={$ride->id}",
+                ['ride_id' => $ride->id, 'status' => 'accepted', 'icon' => 'check-circle', 'color' => 'emerald']
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that no backup driver could be found.
+     */
+    public static function notifyCustomerNoBackupDriverAvailable(Ride $ride): void
+    {
+        if ($ride->rider_id) {
+            self::send(
+                $ride->rider_id,
+                'backup_unavailable',
+                'No Chauffeur Available',
+                'No nearby chauffeur is currently available.',
+                $ride->id,
+                '/my-rides',
+                ['ride_id' => $ride->id, 'status' => 'cancelled', 'icon' => 'x-circle', 'color' => 'red']
+            );
+        }
+    }
+
+    /**
+     * Notify Backup Driver of incoming backup ride request.
+     */
+    public static function notifyDriverBackupRideAssigned(Ride $ride, int $driverId): void
+    {
+        self::send(
+            $driverId,
+            'backup_ride_request',
+            'New Ride Request',
+            'Customer waiting for confirmation.',
+            $ride->id,
+            '/driver/dashboard',
+            ['ride_id' => $ride->id, 'is_backup' => true, 'icon' => 'car', 'color' => 'indigo']
+        );
+    }
+
+    /**
+     * Notify Backup Driver that they are reserved and customer has been prompted to confirm.
+     */
+    public static function notifyDriverBackupRideWaitingConfirmation(Ride $ride, int $driverId): void
+    {
+        self::send(
+            $driverId,
+            'backup_waiting_confirmation',
+            'New Ride Request',
+            'Customer waiting for confirmation.',
+            $ride->id,
+            '/driver/dashboard',
+            ['ride_id' => $ride->id, 'is_backup' => true, 'status' => 'waiting_customer', 'icon' => 'clock', 'color' => 'amber']
+        );
+    }
+
+    /**
+     * Notify Driver that Customer confirmed backup assignment.
+     */
+    public static function notifyDriverBackupCustomerAccepted(Ride $ride, int $driverId): void
+    {
+        self::send(
+            $driverId,
+            'backup_customer_accepted',
+            'Customer Accepted',
+            'Proceed to pickup.',
+            $ride->id,
+            '/driver/dashboard',
+            ['ride_id' => $ride->id, 'status' => 'accepted', 'icon' => 'navigation', 'color' => 'emerald']
+        );
+    }
+
+    /**
+     * Notify Driver that Customer declined backup assignment.
+     */
+    public static function notifyDriverBackupCustomerDeclined(Ride $ride, int $driverId): void
+    {
+        self::send(
+            $driverId,
+            'backup_customer_declined',
+            'Customer Declined',
+            'Ride cancelled.',
+            $ride->id,
+            '/driver/dashboard',
+            ['ride_id' => $ride->id, 'status' => 'declined', 'icon' => 'x', 'color' => 'red']
+        );
+    }
 }

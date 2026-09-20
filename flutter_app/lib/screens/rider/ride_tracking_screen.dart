@@ -17,6 +17,8 @@ class RideTrackingScreen extends StatefulWidget {
 
 class _RideTrackingScreenState extends State<RideTrackingScreen> {
   GoogleMapController? _mapController;
+  int? _lastPromptedBackupDriverId;
+  bool _isRespondingToBackup = false;
 
   @override
   void initState() {
@@ -90,6 +92,8 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   Widget build(BuildContext context) {
     final rideProv = Provider.of<RideProvider>(context);
     final currentRide = rideProv.activeRide ?? widget.ride;
+
+    _checkAndShowBackupModal(currentRide);
 
     final status = currentRide['status'] ?? 'pending';
     final fare = currentRide['fare'] != null ? double.tryParse(currentRide['fare'].toString()) ?? 0.0 : 0.0;
@@ -202,7 +206,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                _statusDescription(status, driver?['name']),
+                                _statusDescription(status, driver?['name'], currentRide),
                                 style: const TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.bold,
@@ -214,6 +218,12 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // In-App Modal Card: Primary Chauffeur Unavailable
+                      if (currentRide['backup_status'] == 'waiting' && currentRide['backup_driver'] != null) ...[
+                        _buildBackupConfirmationCard(currentRide, currentRide['backup_driver']),
+                        const SizedBox(height: 14),
+                      ],
 
                       // Driver Details (if assigned)
                       if (driver != null) ...[
@@ -424,8 +434,24 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     );
   }
 
-  String _statusDescription(String status, String? driverName) {
+  String _statusDescription(String status, String? driverName, [Map<String, dynamic>? currentRide]) {
     final d = driverName ?? 'Driver';
+    final backupStatus = currentRide?['backup_status'];
+    final assignmentType = currentRide?['driver_assignment_type'];
+
+    if (backupStatus == 'searching') {
+      return 'Searching for another chauffeur...';
+    }
+    if (backupStatus == 'waiting') {
+      return 'Driver Found • Waiting for your confirmation';
+    }
+    if (assignmentType == 'backup' && status == 'accepted') {
+      return 'Driver Assigned • $d';
+    }
+    if (status == 'cancelled' && currentRide?['cancellation_reason'] != null && currentRide!['cancellation_reason'].toString().contains('No nearby')) {
+      return 'No nearby chauffeur is currently available.';
+    }
+
     switch (status) {
       case 'pending': return 'Contacting nearby verified drivers...';
       case 'accepted': return '$d has accepted your ride!';
@@ -435,5 +461,252 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       case 'completed': return 'Trip completed! Safe travels.';
       default: return 'Ride active';
     }
+  }
+
+  void _checkAndShowBackupModal(Map<String, dynamic> ride) {
+    final backupStatus = ride['backup_status'];
+    final backupDriver = ride['backup_driver'];
+
+    if (backupStatus == 'waiting' && backupDriver != null) {
+      final driverId = backupDriver['id'];
+      if (_lastPromptedBackupDriverId != driverId) {
+        _lastPromptedBackupDriverId = driverId;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showBackupChauffeurDialog(ride, backupDriver);
+          }
+        });
+      }
+    }
+  }
+
+  void _showBackupChauffeurDialog(Map<String, dynamic> ride, Map<String, dynamic> backupDriver) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.shield_outlined, color: AppColors.primary, size: 24),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Primary Chauffeur Unavailable',
+                style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'A nearby chauffeur is available to take your ride.\n\nWould you like to continue with this chauffeur?',
+              style: TextStyle(color: AppColors.textLight, fontSize: 13.5, height: 1.3),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  _buildAvatar(backupDriver['photo_url'], backupDriver['name'] ?? 'Chauffeur'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          backupDriver['name'] ?? 'Backup Chauffeur',
+                          style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        Text(
+                          backupDriver['vehicle'] ?? 'Executive Sedan',
+                          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.star_rounded, color: AppColors.primary, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${backupDriver['rating'] ?? 4.9} · ${backupDriver['total_trips'] ?? 35} trips',
+                              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isRespondingToBackup
+                      ? null
+                      : () async {
+                          Navigator.pop(ctx);
+                          setState(() => _isRespondingToBackup = true);
+                          final rideProv = Provider.of<RideProvider>(context, listen: false);
+                          await rideProv.declineBackupDriver(ride['id']);
+                          if (mounted) setState(() => _isRespondingToBackup = false);
+                        },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _isRespondingToBackup
+                      ? null
+                      : () async {
+                          Navigator.pop(ctx);
+                          setState(() => _isRespondingToBackup = true);
+                          final rideProv = Provider.of<RideProvider>(context, listen: false);
+                          await rideProv.confirmBackupDriver(ride['id']);
+                          if (mounted) setState(() => _isRespondingToBackup = false);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackupConfirmationCard(Map<String, dynamic> ride, Map<String, dynamic> backupDriver) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Primary Chauffeur Unavailable',
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'A nearby chauffeur is available to take your ride. Would you like to continue with this chauffeur?',
+            style: TextStyle(color: AppColors.textLight, fontSize: 12.5, height: 1.3),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundDark,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                _buildAvatar(backupDriver['photo_url'], backupDriver['name'] ?? 'Chauffeur'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        backupDriver['name'] ?? 'Backup Chauffeur',
+                        style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      Text(
+                        backupDriver['vehicle'] ?? 'Executive Sedan',
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isRespondingToBackup
+                      ? null
+                      : () async {
+                          setState(() => _isRespondingToBackup = true);
+                          final rideProv = Provider.of<RideProvider>(context, listen: false);
+                          await rideProv.declineBackupDriver(ride['id']);
+                          if (mounted) setState(() => _isRespondingToBackup = false);
+                        },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _isRespondingToBackup
+                      ? null
+                      : () async {
+                          setState(() => _isRespondingToBackup = true);
+                          final rideProv = Provider.of<RideProvider>(context, listen: false);
+                          await rideProv.confirmBackupDriver(ride['id']);
+                          if (mounted) setState(() => _isRespondingToBackup = false);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -63,6 +63,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   double? _userLng;
   double? _dropoffLat;
   double? _dropoffLng;
+  bool _enableBackupChauffeur = true;
 
   List<PlacePrediction> _predictions = [];
   bool _isSearchingPlaces = false;
@@ -495,6 +496,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       dropoffLng: _dropoffLng,
       distanceKm: 15.0,
       durationMinutes: 25,
+      backupChauffeurEnabled: _enableBackupChauffeur,
     );
 
     if (!mounted) return;
@@ -852,6 +854,67 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         _buildDriverSection()
                       else
                         _buildStandardRideOrDeliverSection(),
+
+                      // Backup Chauffeur Switch Option
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundDark,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _enableBackupChauffeur
+                                  ? AppColors.primary.withOpacity(0.4)
+                                  : Colors.white.withOpacity(0.08),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.shield_outlined, color: AppColors.primary, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Enable Backup Chauffeur',
+                                      style: TextStyle(
+                                        color: AppColors.textLight,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "If your assigned chauffeur is unavailable, we'll automatically find another nearby chauffeur.",
+                                      style: TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 11,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: _enableBackupChauffeur,
+                                activeColor: AppColors.primary,
+                                onChanged: (val) {
+                                  setState(() => _enableBackupChauffeur = val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       // CTA Action Button
                       Padding(

@@ -56,6 +56,36 @@ class RideResource extends Resource
                             ->numeric(),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Proximity Chauffeur Backup')
+                    ->schema([
+                        Forms\Components\Toggle::make('backup_chauffeur_enabled')
+                            ->label('Backup Chauffeur Enabled'),
+                        Forms\Components\Select::make('driver_assignment_type')
+                            ->options([
+                                'primary' => 'Primary Driver',
+                                'backup' => 'Backup Chauffeur',
+                            ])
+                            ->default('primary'),
+                        Forms\Components\Select::make('backup_status')
+                            ->options([
+                                'searching' => 'Searching for Backup',
+                                'waiting' => 'Waiting for Customer Confirmation',
+                                'accepted' => 'Accepted & Confirmed',
+                                'declined' => 'Declined by Customer',
+                                'expired' => 'Expired / Exhausted',
+                                'completed' => 'Completed',
+                            ]),
+                        Forms\Components\Select::make('backup_driver_id')
+                            ->relationship('backupDriver', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->label('Reserved Backup Driver'),
+                        Forms\Components\TextInput::make('backup_attempt_count')
+                            ->label('Backup Attempts')
+                            ->numeric()
+                            ->default(0),
+                    ])->columns(2),
+
                 Forms\Components\Section::make('Trip & Route Details')
                     ->schema([
                         Forms\Components\TextInput::make('pickup_location')
@@ -220,6 +250,27 @@ class RideResource extends Resource
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('driver_assignment_type')
+                    ->label('Type')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'backup' => 'warning',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('backup_status')
+                    ->label('Backup Status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'accepted' => 'success',
+                        'waiting' => 'warning',
+                        'searching' => 'info',
+                        'declined', 'expired' => 'danger',
+                        default => 'gray',
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('backupDriver.name')
+                    ->label('Backup Driver')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -80,13 +80,22 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
     final type = request['type']?.toString();
     final isChauffeur = type == 'driver_booking' || (request['ride_id'] == null && (request['driver_booking_id'] != null || booking != null));
     final isDelivery = type == 'package_delivery' || request['package_delivery_id'] != null;
+    final isBackup = request['is_backup'] == true ||
+        request['assignment_type'] == 'backup' ||
+        ride?['driver_assignment_type'] == 'backup' ||
+        booking?['driver_assignment_type'] == 'backup';
 
     String title = 'New Ride Request!';
     String acceptButtonText = '✓ Accept Ride';
     Color themeColor = AppColors.primary;
     IconData orderIcon = Icons.local_taxi_rounded;
 
-    if (isChauffeur) {
+    if (isBackup) {
+      title = isChauffeur ? 'Backup Chauffeur Request' : 'Proximity Backup Request';
+      acceptButtonText = '✓ Accept & Reserve';
+      themeColor = Colors.amber;
+      orderIcon = Icons.shield_rounded;
+    } else if (isChauffeur) {
       title = 'New Chauffeur Request!';
       acceptButtonText = '✓ Accept Chauffeur';
       themeColor = AppColors.purple;
@@ -192,6 +201,35 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 );
               },
             ),
+
+            // Proximity Chauffeur Backup Badge & Notice
+            if (isBackup) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.withOpacity(0.4), width: 1),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_rounded, color: Colors.amber, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'PROXIMITY BACKUP: Primary driver unavailable. Acceptance temporarily reserves you while customer confirms.',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             // Header Row: Type Icon & Order Title
             Row(

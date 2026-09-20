@@ -642,6 +642,8 @@ class DriverApiController extends Controller
                     'distance_km' => $a->ride->distance_km,
                     'duration_minutes' => $a->ride->duration_minutes,
                     'expires_at' => $a->expires_at->toIso8601String(),
+                    'is_backup' => $a->assignment_type === 'backup',
+                    'assignment_type' => $a->assignment_type ?? 'primary',
                     'created_at' => $rCreatedAt ? $rCreatedAt->toIso8601String() : null,
                     'request_time_formatted' => $rCreatedAt ? $rCreatedAt->format('M d, Y • h:i A') : null,
                     'request_time_human' => $rCreatedAt ? $rCreatedAt->diffForHumans() : null,
@@ -842,6 +844,22 @@ class DriverApiController extends Controller
         }
 
         if ($request->action === 'accept') {
+            if ($assignment->assignment_type === 'backup' && $assignment->ride) {
+                $reserved = \App\Services\BackupChauffeurService::reserveBackupDriver($assignment);
+                if (!$reserved) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ride is no longer available for reservation.',
+                    ], 422);
+                }
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Backup ride reserved. Customer waiting for confirmation.',
+                    'is_backup' => true,
+                    'status' => 'waiting_confirmation',
+                ]);
+            }
+
             $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
 
             if ($assignment->ride) {
@@ -892,6 +910,11 @@ class DriverApiController extends Controller
                 ]);
             }
         } else {
+            if ($assignment->assignment_type === 'backup') {
+                \App\Services\BackupChauffeurService::handleDriverDeclinedBackup($assignment);
+                return response()->json(['success' => true, 'message' => 'Backup job declined.']);
+            }
+
             $assignment->update(['status' => 'rejected', 'expires_at' => now()]);
 
             if ($assignment->ride) {
@@ -901,9 +924,18 @@ class DriverApiController extends Controller
                         'status' => 'pending',
                     ]);
                 }
-                try {
-                    \App\Services\RideAssignmentService::assignNextDriver($assignment->ride);
-                } catch (\Throwable $e) {}
+
+                if ($assignment->ride->backup_chauffeur_enabled && \App\Services\BackupChauffeurService::isFeatureEnabled()) {
+                    try {
+                        \App\Services\BackupChauffeurService::dispatchBackupOffer($assignment->ride);
+                    } catch (\Throwable $e) {}
+                } else {
+                    $assignment->ride->update([
+                        'status' => 'cancelled',
+                        'cancellation_reason' => 'Primary chauffeur declined and backup chauffeur was disabled.',
+                    ]);
+                    \App\Models\RideAssignment::where('ride_id', $assignment->ride->id)->update(['status' => 'expired']);
+                }
             }
 
             return response()->json(['success' => true, 'message' => 'Job declined.']);

@@ -9,6 +9,7 @@ use App\Models\RideStop;
 use App\Services\NotificationService;
 use App\Services\PricingService;
 use App\Services\RideAssignmentService;
+use App\Services\BackupChauffeurService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -253,6 +254,8 @@ class RideController extends Controller
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
             'payment_status' => 'pending',
+            'backup_chauffeur_enabled' => $request->boolean('backup_chauffeur_enabled', false),
+            'driver_assignment_type' => 'primary',
         ]);
 
         // Save stops if provided
@@ -315,10 +318,11 @@ class RideController extends Controller
     {
         $user = $request->user();
 
-        $ride = Ride::with(['driver.driverProfile', 'rider', 'stops'])
+        $ride = Ride::with(['driver.driverProfile', 'rider', 'stops', 'backupDriver.driverProfile'])
             ->where(function ($q) use ($user) {
                 $q->where('rider_id', $user->id)
-                  ->orWhere('driver_id', $user->id);
+                  ->orWhere('driver_id', $user->id)
+                  ->orWhere('backup_driver_id', $user->id);
             })
             ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
             ->latest()
@@ -329,6 +333,43 @@ class RideController extends Controller
                 'success' => true,
                 'ride' => null,
             ]);
+        }
+
+        // Live check: If pending and primary driver timed out or went offline, trigger backup if enabled
+        if ($ride->status === 'pending') {
+            $activeOffer = RideAssignment::where('ride_id', $ride->id)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($activeOffer) {
+                $driverProfile = $activeOffer->driver?->driverProfile;
+                $isDriverOffline = $driverProfile && $driverProfile->last_location_update && $driverProfile->last_location_update->lt(now()->subMinutes(5));
+                $isExpired = $activeOffer->expires_at && $activeOffer->expires_at->lt(now());
+
+                if ($isExpired || $isDriverOffline) {
+                    $activeOffer->update(['status' => 'expired']);
+                    if ($activeOffer->assignment_type === 'backup') {
+                        BackupChauffeurService::dispatchBackupOffer($ride);
+                    } else {
+                        BackupChauffeurService::handlePrimaryDriverUnavailable($ride, $isExpired ? 'timeout' : 'driver_offline');
+                    }
+                    $ride->refresh();
+                }
+            }
+
+            // Also check customer confirmation timeout for reserved backup driver
+            if ($ride->backup_status === 'waiting' && $ride->backup_reserved_at) {
+                $customerTimeout = (int) BackupChauffeurService::getConfig('backup.customer_timeout_sec', 60);
+                if ($ride->backup_reserved_at->addSeconds($customerTimeout)->lt(now())) {
+                    if ($ride->backup_driver_id) {
+                        $dp = \App\Models\DriverProfile::where('user_id', $ride->backup_driver_id)->first();
+                        if ($dp) $dp->update(['is_available' => true]);
+                    }
+                    $ride->update(['backup_driver_id' => null, 'backup_status' => 'expired']);
+                    BackupChauffeurService::dispatchBackupOffer($ride);
+                    $ride->refresh();
+                }
+            }
         }
 
         $isDriverAccepted = !empty($ride->driver_id) && in_array($ride->status, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'], true);
@@ -362,6 +403,27 @@ class RideController extends Controller
             ];
         }
 
+        // Prepare backup driver preview if reserved
+        $backupDriverData = null;
+        if ($ride->backup_driver_id && $ride->backupDriver) {
+            $bp = $ride->backupDriver->driverProfile;
+            $rawBPhone = $ride->backupDriver->phone ?: '';
+            $cleanBPhone = preg_replace('/[^0-9]/', '', $rawBPhone);
+            $backupDriverData = [
+                'id' => $ride->backupDriver->id,
+                'name' => $ride->backupDriver->name,
+                'phone' => $ride->backupDriver->phone,
+                'email' => $ride->backupDriver->email,
+                'photo_url' => $bp?->photo_url,
+                'rating' => $bp ? floatval($bp->rating) : 4.9,
+                'total_trips' => $bp ? $bp->total_completed_trips : 35,
+                'vehicle' => $bp ? trim($bp->vehicle_make . ' ' . $bp->vehicle_model) : ($ride->vehicle_type ?? 'Executive Sedan'),
+                'plate' => $bp?->license_number ?? 'REG-8899',
+                'current_lat' => $bp?->current_lat ? floatval($bp->current_lat) : null,
+                'current_lng' => $bp?->current_lng ? floatval($bp->current_lng) : null,
+            ];
+        }
+
         return response()->json([
             'success' => true,
             'ride' => [
@@ -381,6 +443,12 @@ class RideController extends Controller
                 'duration_minutes' => $ride->duration_minutes,
                 'created_at' => $ride->created_at->toIso8601String(),
                 'driver' => $driverData,
+                'backup_chauffeur_enabled' => (bool)$ride->backup_chauffeur_enabled,
+                'backup_status' => $ride->backup_status,
+                'backup_driver_id' => $ride->backup_driver_id,
+                'driver_assignment_type' => $ride->driver_assignment_type ?? 'primary',
+                'backup_driver' => $backupDriverData,
+                'backup_reserved_at' => $ride->backup_reserved_at?->toIso8601String(),
                 'rider' => [
                     'id' => $ride->rider?->id,
                     'name' => $ride->rider?->name ?? $ride->passenger_name ?? 'Rider',
@@ -577,6 +645,184 @@ class RideController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Ride cancelled successfully.',
+        ]);
+    }
+
+    /**
+     * Enable or disable Backup Chauffeur option for a ride
+     */
+    public function toggleBackupChauffeur(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        $user = $request->user();
+        if ($user && $user->id !== $ride->rider_id && ($user->role ?? null) !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $enabled = $request->has('enabled') ? $request->boolean('enabled') : !$ride->backup_chauffeur_enabled;
+        $ride->update(['backup_chauffeur_enabled' => $enabled]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Backup chauffeur ' . ($enabled ? 'enabled' : 'disabled'),
+            'backup_chauffeur_enabled' => $enabled,
+        ]);
+    }
+
+    /**
+     * Find nearby backup drivers for a ride
+     */
+    public function getNearbyBackupDrivers(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        $radius = $request->has('radius_km') ? floatval($request->radius_km) : null;
+        $drivers = BackupChauffeurService::findNearbyBackupDrivers($ride, $radius);
+
+        return response()->json([
+            'success' => true,
+            'count' => $drivers->count(),
+            'drivers' => $drivers->map(fn($d) => [
+                'id' => $d->user_id,
+                'name' => $d->user?->name ?? 'Chauffeur',
+                'distance_km' => round($d->distance_km ?? 0, 2),
+                'rating' => floatval($d->rating ?? 4.9),
+                'photo_url' => $d->photo_url,
+                'vehicle' => trim($d->vehicle_make . ' ' . $d->vehicle_model),
+            ]),
+        ]);
+    }
+
+    /**
+     * Send backup ride request to nearest drivers
+     */
+    public function sendBackupRequest(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        $assignment = BackupChauffeurService::dispatchBackupOffer($ride);
+
+        if (!$assignment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No nearby chauffeur is currently available.',
+                'status' => 'cancelled',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Backup ride offer dispatched.',
+            'assignment_id' => $assignment->id,
+            'driver_id' => $assignment->driver_id,
+            'expires_at' => $assignment->expires_at?->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Driver accepts backup ride offer (temporarily reserves driver)
+     */
+    public function driverAcceptBackup(Request $request, $assignmentId): JsonResponse
+    {
+        $assignment = RideAssignment::find($assignmentId);
+        if (!$assignment) {
+            return response()->json(['success' => false, 'message' => 'Assignment not found'], 404);
+        }
+
+        $user = $request->user();
+        if ($user && $user->id !== $assignment->driver_id && ($user->role ?? null) !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $reserved = BackupChauffeurService::reserveBackupDriver($assignment);
+
+        if (!$reserved) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ride is no longer available for reservation.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Backup ride reserved. Customer waiting for confirmation.',
+            'status' => 'waiting_confirmation',
+        ]);
+    }
+
+    /**
+     * Driver declines backup ride offer
+     */
+    public function driverDeclineBackup(Request $request, $assignmentId): JsonResponse
+    {
+        $assignment = RideAssignment::find($assignmentId);
+        if (!$assignment) {
+            return response()->json(['success' => false, 'message' => 'Assignment not found'], 404);
+        }
+
+        BackupChauffeurService::handleDriverDeclinedBackup($assignment);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Backup ride offer declined.',
+        ]);
+    }
+
+    /**
+     * Customer confirms backup driver from the in-app modal
+     */
+    public function customerConfirmBackup(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        $result = BackupChauffeurService::customerConfirmBackupDriver($ride, $request->user());
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Customer declines backup driver from the in-app modal
+     */
+    public function customerDeclineBackup(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        $result = BackupChauffeurService::customerDeclineBackupDriver($ride, $request->user());
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Cancel active backup assignment
+     */
+    public function cancelBackupAssignment(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
+        }
+
+        BackupChauffeurService::cancelBackup($ride);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Backup assignment cancelled.',
         ]);
     }
 }

@@ -20,6 +20,7 @@ class DriverProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _pendingVerifications = [];
   List<Map<String, dynamic>> _activeRides = [];
   Map<String, dynamic> _earnings = {'today': 0.0, 'week': 0.0, 'month': 0.0, 'total_trips': 0};
+  Map<String, dynamic>? _lastAssignmentResponse;
 
   Timer? _pollingTimer;
   Timer? _locationTimer;
@@ -34,6 +35,7 @@ class DriverProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get pendingVerifications => _pendingVerifications;
   List<Map<String, dynamic>> get activeRides => _activeRides;
   Map<String, dynamic> get earnings => _earnings;
+  Map<String, dynamic>? get lastAssignmentResponse => _lastAssignmentResponse;
 
   void init() {
     checkAvailabilityAndInit();
@@ -269,6 +271,7 @@ class DriverProvider extends ChangeNotifier {
       });
 
       if (res.statusCode == 200 && res.data['success'] == true) {
+        _lastAssignmentResponse = Map<String, dynamic>.from(res.data);
         if (assignmentId != null) {
           _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId);
         }

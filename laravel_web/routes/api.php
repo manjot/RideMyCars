@@ -118,6 +118,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rides/{id}/status', [RideController::class, 'updateStatus']);
     Route::post('/rides/{id}/confirm-payment', [RideController::class, 'confirmPayment']);
     Route::post('/rides/{id}/cancel', [RideController::class, 'cancel']);
+
+    // Proximity Chauffeur Backup Lifecycle
+    Route::post('/rides/{id}/backup/toggle', [RideController::class, 'toggleBackupChauffeur']);
+    Route::post('/rides/{id}/backup-chauffeur/toggle', [RideController::class, 'toggleBackupChauffeur']);
+    Route::get('/rides/{id}/backup-drivers', [RideController::class, 'getNearbyBackupDrivers']);
+    Route::post('/rides/{id}/backup-request', [RideController::class, 'sendBackupRequest']);
+    Route::post('/rides/{id}/backup/confirm', [RideController::class, 'customerConfirmBackup']);
+    Route::post('/rides/{id}/backup/decline', [RideController::class, 'customerDeclineBackup']);
+    Route::post('/rides/{id}/backup/cancel', [RideController::class, 'cancelBackupAssignment']);
+    Route::post('/driver/backup-ride/{assignmentId}/accept', [RideController::class, 'driverAcceptBackup']);
+    Route::post('/driver/backup-ride/{assignmentId}/decline', [RideController::class, 'driverDeclineBackup']);
+
     Route::apiResource('rides', RideController::class);
     Route::apiResource('vehicles', VehicleController::class);
 

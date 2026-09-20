@@ -11,15 +11,22 @@ class RideProvider extends ChangeNotifier {
   bool _isBooking = false;
   String? _errorMessage;
   String _selectedVehicle = 'Standard';
+  bool _backupChauffeurEnabled = false;
   Timer? _ridePollTimer;
 
   Map<String, dynamic>? get activeRide => _activeRide;
   bool get isBooking => _isBooking;
   String? get errorMessage => _errorMessage;
   String get selectedVehicle => _selectedVehicle;
+  bool get backupChauffeurEnabled => _backupChauffeurEnabled;
 
   void setSelectedVehicle(String v) {
     _selectedVehicle = v;
+    notifyListeners();
+  }
+
+  void setBackupChauffeurEnabled(bool val) {
+    _backupChauffeurEnabled = val;
     notifyListeners();
   }
 
@@ -58,6 +65,7 @@ class RideProvider extends ChangeNotifier {
     double? distanceKm,
     int? durationMinutes,
     String paymentMethod = 'cash',
+    bool? backupChauffeurEnabled,
   }) async {
     _isBooking = true;
     _errorMessage = null;
@@ -75,6 +83,7 @@ class RideProvider extends ChangeNotifier {
         'payment_method': paymentMethod,
         'distance_km': distanceKm ?? 10.0,
         'duration_minutes': durationMinutes ?? 15,
+        'backup_chauffeur_enabled': backupChauffeurEnabled ?? _backupChauffeurEnabled,
       });
 
       if ((res.statusCode == 200 || res.statusCode == 201) && res.data['success'] == true) {
@@ -102,6 +111,32 @@ class RideProvider extends ChangeNotifier {
 
     _isBooking = false;
     notifyListeners();
+    return false;
+  }
+
+  Future<bool> confirmBackupDriver(int rideId) async {
+    try {
+      final res = await _dio.post(ApiConstants.rideBackupConfirm(rideId));
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        await fetchActiveRide();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error confirming backup chauffeur: $e');
+    }
+    return false;
+  }
+
+  Future<bool> declineBackupDriver(int rideId) async {
+    try {
+      final res = await _dio.post(ApiConstants.rideBackupDecline(rideId));
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        await fetchActiveRide();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error declining backup chauffeur: $e');
+    }
     return false;
   }
 

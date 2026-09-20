@@ -58,14 +58,25 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           onAccept: () async {
             Navigator.pop(context);
             _dialogOpen = false;
+            final isBackup = job['is_backup'] == true || job['assignment_type'] == 'backup';
             final ok = await driver.respondToRequest(assignmentId, 'accept', rideId: rideId);
-            if (ok && mounted && driver.activeRides.isNotEmpty) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
-                ),
-              );
+            if (ok && mounted) {
+              if (isBackup || driver.lastAssignmentResponse?['reserved'] == true) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✓ Reserved as Backup Chauffeur! Awaiting customer confirmation.'),
+                    backgroundColor: Colors.amber,
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+              } else if (driver.activeRides.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
+                  ),
+                );
+              }
             }
           },
           onDecline: () async {
@@ -1175,12 +1186,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final vehicleType = job['vehicle_type'] ?? 'Standard';
     final isDriverBooking = job['type'] == 'driver_booking';
     final isDelivery = job['type'] == 'package_delivery' || job['package_delivery_id'] != null;
+    final isBackup = job['is_backup'] == true || job['assignment_type'] == 'backup';
 
     Color badgeColor = AppColors.primary;
     IconData badgeIcon = Icons.local_taxi_rounded;
     String badgeLabel = '$vehicleType RIDE';
 
-    if (isDriverBooking) {
+    if (isBackup) {
+      badgeColor = Colors.amber;
+      badgeIcon = Icons.shield_rounded;
+      badgeLabel = 'PROXIMITY BACKUP';
+    } else if (isDriverBooking) {
       badgeColor = AppColors.purple;
       badgeIcon = Icons.airline_seat_recline_extra_rounded;
       badgeLabel = 'DRIVER HIRING';
@@ -1461,24 +1477,34 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         'accept',
                         rideId: job['ride_id'],
                       );
-                      if (ok && context.mounted && driver.activeRides.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
-                          ),
-                        );
+                      if (ok && context.mounted) {
+                        if (isBackup || driver.lastAssignmentResponse?['reserved'] == true) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✓ Reserved as Backup Chauffeur! Awaiting customer confirmation.'),
+                              backgroundColor: Colors.amber,
+                              duration: Duration(seconds: 5),
+                            ),
+                          );
+                        } else if (driver.activeRides.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
+                      backgroundColor: isBackup ? Colors.amber.shade700 : AppColors.success,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    icon: const Icon(Icons.check_circle_rounded, size: 18),
+                    icon: Icon(isBackup ? Icons.shield_rounded : Icons.check_circle_rounded, size: 18),
                     label: Text(
-                      'Accept & Earn \$${fare.toStringAsFixed(2)}',
+                      isBackup ? 'Reserve as Backup (\$${fare.toStringAsFixed(2)})' : 'Accept & Earn \$${fare.toStringAsFixed(2)}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),

@@ -20,6 +20,9 @@ class ApiConstants {
   static const String activeRide = '/rides/active';
   static String rideStatus(int id) => '/rides/$id/status';
   static String rideCancel(int id) => '/rides/$id/cancel';
+  static String rideBackupConfirm(int id) => '/rides/$id/backup/confirm';
+  static String rideBackupDecline(int id) => '/rides/$id/backup/decline';
+  static String rideBackupToggle(int id) => '/rides/$id/backup/toggle';
 
   // Rentals & Vehicles
   static const String rentalVehicles = '/rent/search';
