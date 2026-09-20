@@ -104,25 +104,57 @@
                     </ul>
                 </div>
 
-                <form action="/membership/subscribe" method="POST" x-data="{ paymentMethod: 'stripe', momoPhone: '', momoNetwork: 'MTN' }" class="space-y-4">
+                <form action="/membership/subscribe" method="POST" x-data="{ paymentMethod: 'stripe', momoPhone: '', momoNetwork: 'MTN', agreementAccepted: true }" class="space-y-4">
                     @csrf
                     <input type="hidden" name="membership_type" value="club">
 
                     <x-payment-method-selector modelName="paymentMethod" phoneModel="momoPhone" networkModel="momoNetwork" />
 
+                    <!-- Comprehensive Profile Verification Agreement (Required) -->
+                    <div class="pt-2 text-left">
+                        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                            <input type="checkbox" 
+                                   name="profile_verification_agreement" 
+                                   id="profile_verification_agreement"
+                                   value="1" 
+                                   required 
+                                   checked 
+                                   x-model="agreementAccepted"
+                                   class="w-4 h-4 rounded text-[#635BFF] focus:ring-[#635BFF] accent-[#635BFF] cursor-pointer shrink-0">
+                            <span class="font-bold text-sm text-gray-900 dark:text-white leading-tight">
+                                Comprehensive Profile Verification Agreement (Required)
+                            </span>
+                        </label>
+                        <div class="border-l-2 border-gray-300 dark:border-gray-600 pl-3.5 ml-2 mt-2 text-xs sm:text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
+                            I confirm that I have read and understood that RideMyCars will verify my profile, driving licence, identity, and, where applicable, corporate documents. I understand that the verification process may take <strong class="font-bold text-gray-900 dark:text-white">24–48 hours</strong>. My Club Membership, chauffeur booking, or vehicle release is subject to successful verification and final approval by the RideMyCars Security Team.
+                        </div>
+                        <p x-show="!agreementAccepted" x-cloak class="text-[11px] font-bold text-rose-500 mt-1 pl-2">
+                            ⚠️ You must accept the verification agreement before completing payment.
+                        </p>
+                    </div>
+
                     @auth
                         @if(auth()->user()->membership_type === 'club')
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base flex items-center justify-center gap-2 cursor-pointer">
+                            <button type="submit" 
+                                    :disabled="!agreementAccepted"
+                                    :class="!agreementAccepted ? 'opacity-50 cursor-not-allowed hover:bg-brand-500 shadow-none' : 'cursor-pointer hover:bg-brand-600 shadow-xl shadow-brand-500/25'"
+                                    class="w-full py-4 bg-brand-500 text-slate-950 font-black rounded-2xl transition-all text-base flex items-center justify-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                                 <span>Active Member — Renew $250/mo</span>
                             </button>
                         @else
-                            <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
+                            <button type="submit" 
+                                    :disabled="!agreementAccepted"
+                                    :class="!agreementAccepted ? 'opacity-50 cursor-not-allowed hover:bg-brand-500 shadow-none' : 'cursor-pointer hover:bg-brand-600 shadow-xl shadow-brand-500/25'"
+                                    class="w-full py-4 bg-brand-500 text-slate-950 font-black rounded-2xl transition-all text-base">
                                 <span x-text="paymentMethod === 'momo' ? 'Subscribe with MoMo Pay ($250/mo)' : 'Subscribe with Stripe ($250/mo)'"></span>
                             </button>
                         @endif
                     @else
-                        <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-brand-500/25 transition-all text-base cursor-pointer">
+                        <button type="submit" 
+                                :disabled="!agreementAccepted"
+                                :class="!agreementAccepted ? 'opacity-50 cursor-not-allowed hover:bg-brand-500 shadow-none' : 'cursor-pointer hover:bg-brand-600 shadow-xl shadow-brand-500/25'"
+                                class="w-full py-4 bg-brand-500 text-slate-950 font-black rounded-2xl transition-all text-base">
                             <span x-text="paymentMethod === 'momo' ? 'Subscribe with MoMo Pay ($250/mo)' : 'Subscribe with Stripe ($250/mo)'"></span>
                         </button>
                     @endauth

@@ -26,6 +26,10 @@ Route::get('/membership', function () {
 });
 
 Route::post('/membership/subscribe', function (\Illuminate\Http\Request $request) {
+    if (!$request->has('profile_verification_agreement') && !$request->boolean('profile_verification_agreement')) {
+        return redirect('/membership')->with('error', 'You must accept the Comprehensive Profile Verification Agreement before proceeding.');
+    }
+
     $user = auth()->user();
     if (!$user) {
         return redirect('/login')->with('error', 'Please sign in or create an account to activate your Club Membership.');
@@ -39,7 +43,7 @@ Route::post('/membership/subscribe', function (\Illuminate\Http\Request $request
         'membership_price' => 250.00,
     ]);
 
-    \App\Services\ActivityLogService::log('membership_created', "Subscribed to Club Membership ($250/mo) via {$paymentMethod}", $user->id);
+    \App\Services\ActivityLogService::log('membership_created', "Subscribed to Club Membership ($250/mo) via {$paymentMethod} (Profile Verification Agreement accepted)", $user->id);
 
     return redirect('/membership')->with('success', '🎉 Welcome to Club Membership! Your $250/mo executive privileges are now active.');
 });
