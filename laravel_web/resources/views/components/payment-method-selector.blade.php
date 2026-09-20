@@ -45,17 +45,21 @@
             <div class="space-y-1">
                 <div class="flex items-center justify-between gap-1.5">
                     <h4 class="font-black text-sm text-gray-900 dark:text-white leading-tight">Stripe</h4>
-                    <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/25 dark:text-[#a29bfe] whitespace-nowrap shrink-0">Cards & Apple Pay</span>
+                    <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/25 dark:text-[#a29bfe] whitespace-nowrap shrink-0">
+                        <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4C2.89 4 2.01 4.89 2.01 6L2 18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 18H4V12H20V18ZM20 8H4V6H20V8Z"/></svg>
+                        <span>Cards &amp; Pay</span>
+                    </span>
                 </div>
                 <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-tight">Credit / Debit Card, Apple Pay</p>
             </div>
 
-            <!-- Card Badges Row -->
-            <div class="flex items-center gap-1.5 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
-                <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">VISA</span>
-                <span class="px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200/50">Mastercard</span>
-                <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50">AMEX</span>
-                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-white/10">Apple Pay</span>
+            <!-- Card Badges Row (Original Logos) -->
+            <div class="flex items-center gap-1.5 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
+                <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
             </div>
         </button>
 
@@ -84,16 +88,19 @@
             <div class="space-y-1">
                 <div class="flex items-center justify-between gap-1.5">
                     <h4 class="font-black text-sm text-gray-900 dark:text-white leading-tight">MoMo Pay</h4>
-                    <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 whitespace-nowrap shrink-0">Mobile Money</span>
+                    <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 whitespace-nowrap shrink-0">
+                        <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                        <span>Mobile Money</span>
+                    </span>
                 </div>
                 <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-tight">Instant USSD Handset Prompt</p>
             </div>
 
-            <!-- MoMo Network Badges Row -->
-            <div class="flex items-center gap-1.5 text-[9px] font-extrabold text-gray-500 dark:text-gray-400 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
-                <span class="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300/40">MTN MoMo</span>
-                <span class="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/50">Telecel</span>
-                <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">AirtelTigo</span>
+            <!-- MoMo Network Badges Row (Original Logos) -->
+            <div class="flex items-center gap-1.5 flex-wrap pt-2.5 border-t border-gray-100 dark:border-white/5">
+                <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-5 sm:h-5.5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
             </div>
         </button>
 
@@ -200,21 +207,24 @@
         <div class="grid grid-cols-3 gap-2">
             <button type="button" 
                     @click="{{ $networkModel }} = 'MTN'" 
-                    :class="{{ $networkModel }} === 'MTN' ? 'bg-amber-400 text-slate-950 font-black shadow-sm ring-1 ring-amber-500' : 'bg-white dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
-                    class="py-2.5 px-2 rounded-xl text-xs font-extrabold text-center transition cursor-pointer">
-                MTN MoMo
+                    :class="{{ $networkModel }} === 'MTN' ? 'bg-amber-400 text-slate-950 font-black shadow-sm ring-2 ring-amber-500' : 'bg-white dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                    class="py-2.5 px-2 rounded-xl text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition cursor-pointer">
+                <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-4 w-auto rounded shrink-0">
+                <span class="hidden sm:inline">MTN</span>
             </button>
             <button type="button" 
                     @click="{{ $networkModel }} = 'Telecel'" 
-                    :class="{{ $networkModel }} === 'Telecel' ? 'bg-rose-500 text-white font-black shadow-sm ring-1 ring-rose-500' : 'bg-white dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
-                    class="py-2.5 px-2 rounded-xl text-xs font-extrabold text-center transition cursor-pointer">
-                Telecel
+                    :class="{{ $networkModel }} === 'Telecel' ? 'bg-rose-500 text-white font-black shadow-sm ring-2 ring-rose-500' : 'bg-white dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                    class="py-2.5 px-2 rounded-xl text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition cursor-pointer">
+                <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4 w-auto rounded shrink-0">
+                <span class="hidden sm:inline">Telecel</span>
             </button>
             <button type="button" 
                     @click="{{ $networkModel }} = 'AT'" 
-                    :class="{{ $networkModel }} === 'AT' ? 'bg-blue-600 text-white font-black shadow-sm ring-1 ring-blue-500' : 'bg-white dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
-                    class="py-2.5 px-2 rounded-xl text-xs font-extrabold text-center transition cursor-pointer">
-                AirtelTigo
+                    :class="{{ $networkModel }} === 'AT' ? 'bg-blue-600 text-white font-black shadow-sm ring-2 ring-blue-500' : 'bg-white dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                    class="py-2.5 px-2 rounded-xl text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition cursor-pointer">
+                <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4 w-auto rounded shrink-0">
+                <span class="hidden sm:inline">AirtelTigo</span>
             </button>
         </div>
 

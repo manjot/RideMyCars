@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 28" width="68" height="28" fill="none">
+    <rect width="68" height="28" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+    <g transform="translate(5, 4)">
+        <circle cx="10" cy="10" r="9.5" fill="#E60000"/>
+        <!-- Telecel Monogram -->
+        <path d="M7 6.5H13V9H11.2V14.5H8.8V9H7V6.5Z" fill="#FFFFFF"/>
+        <!-- Wordmark -->
+        <text x="23.5" y="13.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="800" fill="#E60000" letter-spacing="-0.3">telecel</text>
+    </g>
+</svg>

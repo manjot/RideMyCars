@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 28" width="76" height="28" fill="none">
+    <rect width="76" height="28" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+    <g transform="translate(5, 3.5)">
+        <!-- Navy Rounded Square -->
+        <rect width="21" height="21" rx="4.5" fill="#0E3352"/>
+        <!-- Yellow double sail motif from MoMo MTN -->
+        <path d="M5.5 16L12 5.5C12.8 8.8 12.8 11.5 11.2 14C9.8 15.8 7.8 16 5.5 16Z" fill="#FFC800"/>
+        <path d="M12.5 16C13.2 13.5 13.8 9.5 16 7.5C15.8 11 15.4 14 13.8 16Z" fill="#FFC800"/>
+        <circle cx="8" cy="13.5" r="1.3" fill="#0E3352"/>
+        
+        <!-- Wordmark MoMo from MTN -->
+        <text x="25.5" y="11.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" fill="#0E3352" letter-spacing="-0.3">MoMo</text>
+        <text x="26" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="5" font-weight="700" fill="#0E3352" opacity="0.9">from MTN</text>
+    </g>
+</svg>

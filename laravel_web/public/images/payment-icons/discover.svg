@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 28" width="48" height="28" fill="none">
+    <rect width="48" height="28" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+    <g transform="translate(3.5, 7.5)">
+        <text x="1" y="9.5" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" font-weight="900" fill="#1E293B" letter-spacing="0.4">DISC</text>
+        <circle cx="25" cy="6.6" r="3.4" fill="#FF6000"/>
+        <text x="29" y="9.5" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" font-weight="900" fill="#1E293B" letter-spacing="0.4">VER</text>
+        <path d="M1 11.8 Q20 14.5 40 10.8 L40 12.8 Q20 16.5 1 13.8 Z" fill="#FF6000"/>
+    </g>
+</svg>

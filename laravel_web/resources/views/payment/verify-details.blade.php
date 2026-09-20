@@ -131,10 +131,12 @@
                                     <div class="text-[11px] font-bold text-gray-700 dark:text-gray-300">Credit / Debit Card</div>
                                     <div class="text-[11px] text-gray-500 mt-1">Secure and reliable payments powered by Stripe.</div>
                                 </div>
-                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1.5 flex-wrap text-[9px] font-extrabold text-gray-500">
-                                    <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">VISA</span>
-                                    <span class="px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200/50">Mastercard</span>
-                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50">AMEX</span>
+                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1.5 flex-wrap">
+                                    <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-5 w-auto rounded shadow-2xs">
                                 </div>
                             </button>
 
@@ -154,10 +156,10 @@
                                     <div class="text-[11px] font-bold text-gray-700 dark:text-gray-300">Instant Mobile Money Payment</div>
                                     <div class="text-[11px] text-gray-500 mt-1">Prompt sent directly to your phone.</div>
                                 </div>
-                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1.5 flex-wrap text-[9px] font-extrabold">
-                                    <span class="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300/40">MTN MoMo</span>
-                                    <span class="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/50">Telecel</span>
-                                    <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50">AirtelTigo</span>
+                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1.5 flex-wrap">
+                                    <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-5 w-auto rounded shadow-2xs">
                                 </div>
                             </button>
 
@@ -220,19 +222,22 @@
                         
                         <div class="grid grid-cols-3 gap-2">
                             <button type="button" @click="momoNetwork = 'MTN'"
-                                    :class="momoNetwork === 'MTN' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
-                                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition text-center">
-                                🟡 MTN MoMo
+                                    :class="momoNetwork === 'MTN' ? 'bg-amber-400 text-slate-950 font-black shadow ring-2 ring-amber-500' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                                    class="py-2 px-2.5 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                                <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-4 w-auto rounded shrink-0">
+                                <span>MTN MoMo</span>
                             </button>
                             <button type="button" @click="momoNetwork = 'Telecel'"
-                                    :class="momoNetwork === 'Telecel' ? 'bg-red-500 text-white font-black shadow' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
-                                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition text-center">
-                                🔴 Telecel (Vodafone)
+                                    :class="momoNetwork === 'Telecel' ? 'bg-red-500 text-white font-black shadow ring-2 ring-red-500' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                                    class="py-2 px-2.5 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                                <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4 w-auto rounded shrink-0">
+                                <span>Telecel</span>
                             </button>
                             <button type="button" @click="momoNetwork = 'AT'"
-                                    :class="momoNetwork === 'AT' ? 'bg-blue-600 text-white font-black shadow' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10'"
-                                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition text-center">
-                                🔵 AirtelTigo Money
+                                    :class="momoNetwork === 'AT' ? 'bg-blue-600 text-white font-black shadow ring-2 ring-blue-500' : 'bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'"
+                                    class="py-2 px-2.5 rounded-xl text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                                <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4 w-auto rounded shrink-0">
+                                <span>AirtelTigo</span>
                             </button>
                         </div>
 

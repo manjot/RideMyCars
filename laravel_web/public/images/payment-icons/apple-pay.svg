@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 28" width="46" height="28" fill="none">
+    <rect width="46" height="28" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+    <g transform="translate(9, 7)" fill="#000000">
+        <!-- Apple Logo -->
+        <path d="M4.6 3.7C4.2 4.2 3.5 4.5 2.8 4.5C2.7 3.9 3.0 3.3 3.4 2.8C3.8 2.3 4.5 2.0 5.2 2.0C5.2 2.6 4.9 3.2 4.6 3.7ZM5.2 4.6C4.5 4.6 4.0 4.2 3.4 4.2C2.8 4.2 2.3 4.6 1.8 4.6C0.9 4.6 0 3.8 0 2.4C0 1.2 0.7 0.5 1.6 0.5C2.2 0.5 2.7 0.8 3.2 0.8C3.7 0.8 4.0 0.5 4.8 0.5C5.5 0.5 6.1 0.9 6.5 1.5C5.4 2.1 5.6 3.7 6.7 4.1C6.3 5.0 5.7 6.0 5.0 6.0C5.1 5.9 5.2 4.6 5.2 4.6Z" transform="translate(0, 3) scale(1.1)"/>
+        <!-- Pay text -->
+        <text x="14" y="10.5" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif" font-size="9" font-weight="700" fill="#000000" letter-spacing="-0.3">Pay</text>
+    </g>
+</svg>

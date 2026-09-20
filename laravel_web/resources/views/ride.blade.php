@@ -946,9 +946,18 @@
                                 <div>
                                     <div class="flex items-center gap-1.5">
                                         <h4 class="font-black text-sm text-gray-900 dark:text-white">Stripe</h4>
-                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">Cards & Apple Pay</span>
+                                        <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">
+                                            <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4C2.89 4 2.01 4.89 2.01 6L2 18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 18H4V12H20V18ZM20 8H4V6H20V8Z"/></svg>
+                                            Cards &amp; Pay
+                                        </span>
                                     </div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Visa, Mastercard, Amex, Apple Pay (Secured by Stripe)</p>
+                                    <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                                        <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/amex.svg" alt="Amex" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-4.5 w-auto rounded shadow-2xs">
+                                    </div>
                                 </div>
                             </div>
                             <span x-show="paymentMethod === 'stripe'" class="text-emerald-500 font-extrabold text-sm">✓</span>
@@ -963,9 +972,16 @@
                                 <div>
                                     <div class="flex items-center gap-1.5">
                                         <h4 class="font-black text-sm text-gray-900 dark:text-white">MoMo Pay</h4>
-                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">Mobile Money</span>
+                                        <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">
+                                            <svg class="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                                            Mobile Money
+                                        </span>
                                     </div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">MTN MoMo, Telecel Cash, AirtelTigo Money</p>
+                                    <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                                        <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4.5 w-auto rounded shadow-2xs">
+                                    </div>
                                 </div>
                             </div>
                             <span class="text-gray-400 font-bold text-xs">></span>
@@ -1061,19 +1077,22 @@
                             <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Select Mobile Network</label>
                             <div class="grid grid-cols-3 gap-2">
                                 <button type="button" @click="momoNetwork = 'MTN'" 
-                                        :class="momoNetwork === 'MTN' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 ring-1 ring-amber-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
-                                        class="py-2.5 px-2 rounded-xl border text-xs font-black text-center transition-all cursor-pointer">
-                                    MTN MoMo
+                                        :class="momoNetwork === 'MTN' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 ring-2 ring-amber-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
+                                        class="py-2.5 px-2 rounded-xl border text-xs font-black flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    <img src="/images/payment-icons/mtn-momo.svg" alt="MTN" class="h-4 w-auto rounded shrink-0">
+                                    <span>MTN</span>
                                 </button>
                                 <button type="button" @click="momoNetwork = 'Telecel'" 
-                                        :class="momoNetwork === 'Telecel' ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 ring-1 ring-rose-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
-                                        class="py-2.5 px-2 rounded-xl border text-xs font-black text-center transition-all cursor-pointer">
-                                    Telecel
+                                        :class="momoNetwork === 'Telecel' ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 ring-2 ring-rose-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
+                                        class="py-2.5 px-2 rounded-xl border text-xs font-black flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4 w-auto rounded shrink-0">
+                                    <span>Telecel</span>
                                 </button>
                                 <button type="button" @click="momoNetwork = 'AT'" 
-                                        :class="momoNetwork === 'AT' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 ring-1 ring-blue-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
-                                        class="py-2.5 px-2 rounded-xl border text-xs font-black text-center transition-all cursor-pointer">
-                                    AirtelTigo
+                                        :class="momoNetwork === 'AT' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 ring-2 ring-blue-500' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'"
+                                        class="py-2.5 px-2 rounded-xl border text-xs font-black flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4 w-auto rounded shrink-0">
+                                    <span>AirtelTigo</span>
                                 </button>
                             </div>
                         </div>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 74 28" width="74" height="28" fill="none">
+    <rect width="74" height="28" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+    <g transform="translate(5, 4)">
+        <circle cx="10" cy="10" r="9.5" fill="#005BAC"/>
+        <path d="M4 10C4 5 7 2 11 2C8 5 8 15 11 18C7 18 4 15 4 10Z" fill="#E40000"/>
+        <text x="9.5" y="13.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="7.5" font-weight="900" fill="#FFFFFF" text-anchor="middle">AT</text>
+        <text x="23" y="13.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="800" fill="#005BAC" letter-spacing="-0.2">Airtel<tspan fill="#E40000">Tigo</tspan></text>
+    </g>
+</svg>

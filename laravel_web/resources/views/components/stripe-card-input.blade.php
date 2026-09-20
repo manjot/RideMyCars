@@ -57,11 +57,11 @@
                 <label class="block text-[11px] font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Card Number <span class="text-red-500">*</span>
                 </label>
-                <div class="flex items-center space-x-1 text-[9px] font-bold">
-                    <span :class="detectedBrand === 'visa' ? 'bg-blue-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">VISA</span>
-                    <span :class="detectedBrand === 'mastercard' ? 'bg-orange-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">MC</span>
-                    <span :class="detectedBrand === 'amex' ? 'bg-emerald-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">AMEX</span>
-                    <span :class="detectedBrand === 'discover' ? 'bg-amber-600 text-white font-extrabold shadow-sm' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'" class="px-1.5 py-0.5 rounded transition-all">DISCOVER</span>
+                <div class="flex items-center space-x-1.5">
+                    <img src="/images/payment-icons/visa.svg" alt="VISA" class="h-4.5 w-auto rounded transition-all" :class="detectedBrand === 'visa' ? 'ring-2 ring-blue-500 shadow-sm scale-110 opacity-100' : 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100'">
+                    <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4.5 w-auto rounded transition-all" :class="detectedBrand === 'mastercard' ? 'ring-2 ring-orange-500 shadow-sm scale-110 opacity-100' : 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100'">
+                    <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4.5 w-auto rounded transition-all" :class="detectedBrand === 'discover' ? 'ring-2 ring-amber-500 shadow-sm scale-110 opacity-100' : 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100'">
+                    <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-4.5 w-auto rounded transition-all" :class="detectedBrand === 'amex' ? 'ring-2 ring-blue-600 shadow-sm scale-110 opacity-100' : 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100'">
                 </div>
             </div>
             <div class="relative w-full">

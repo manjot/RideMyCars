@@ -90,7 +90,13 @@
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">
                                 Card Information <span class="text-red-500">*</span>
                             </label>
-                            <span class="text-[10px] text-gray-400 font-bold">💳 Visa, Mastercard, Amex, Discover</span>
+                            <div class="flex items-center gap-1">
+                                <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-4 w-auto rounded">
+                                <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4 w-auto rounded">
+                                <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4 w-auto rounded">
+                                <img src="/images/payment-icons/amex.svg" alt="Amex" class="h-4 w-auto rounded">
+                                <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-4 w-auto rounded">
+                            </div>
                         </div>
                         <div id="stripe-card-element" class="p-4 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-900 shadow-sm transition-all focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white"></div>
                     </div>
