@@ -17,51 +17,56 @@
     <!-- Hidden form input for standard form submission -->
     <input type="hidden" name="{{ $inputName }}" :value="{{ $modelName }}">
 
-    <!-- Payment Method Cards (Compact, Sleek, Professional Layout) -->
-    <div class="space-y-2">
+    <!-- Payment Method Cards (Compact, Sleek, Professional 2-Tier Layout) -->
+    <div class="space-y-2.5">
         
         <!-- BUTTON 1: STRIPE -->
         <button type="button" 
                 @click="{{ $modelName }} = 'stripe'"
                 :class="{{ $modelName }} === 'stripe' 
-                    ? 'border-[#635BFF] bg-gradient-to-r from-[#635BFF]/[0.07] via-white to-transparent dark:from-[#635BFF]/20 dark:via-[#141416] dark:to-transparent ring-2 ring-[#635BFF] text-gray-900 dark:text-white shadow-sm' 
+                    ? 'border-[#635BFF] bg-gradient-to-r from-[#635BFF]/[0.06] via-white to-transparent dark:from-[#635BFF]/20 dark:via-[#141416] dark:to-transparent ring-2 ring-[#635BFF] text-gray-900 dark:text-white shadow-sm' 
                     : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300'"
-                class="w-full p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border text-left transition-all duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 cursor-pointer group">
+                class="w-full p-3 sm:px-4 sm:py-3 rounded-2xl border text-left transition-all duration-150 flex flex-col gap-2.5 cursor-pointer group">
             
-            <!-- Left: Radio + Icon + Method Name & Description -->
-            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <!-- Radio indicator -->
-                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
-                     :class="{{ $modelName }} === 'stripe' ? 'border-[#635BFF] bg-[#635BFF]' : 'border-gray-300 dark:border-gray-600 bg-transparent'">
-                    <div x-show="{{ $modelName }} === 'stripe'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
-                </div>
+            <!-- TOP ROW: Icon + Title + Pill Badge + Radio Checkmark -->
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <!-- Stripe Icon -->
+                    <div class="w-8 h-8 rounded-xl bg-[#635BFF]/10 dark:bg-[#635BFF]/20 p-1 border border-[#635BFF]/20 flex items-center justify-center shrink-0 shadow-2xs">
+                        <img src="/images/stripe-icon.svg" alt="Stripe" class="w-full h-full object-contain">
+                    </div>
 
-                <!-- Stripe Icon -->
-                <div class="w-8 h-8 rounded-lg bg-[#635BFF]/10 dark:bg-[#635BFF]/20 p-1 border border-[#635BFF]/20 flex items-center justify-center shrink-0 shadow-2xs">
-                    <img src="/images/stripe-icon.svg" alt="Stripe" class="w-full h-full object-contain">
-                </div>
-
-                <!-- Text info -->
-                <div class="min-w-0">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-extrabold text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">Cards &amp; Apple Pay</span>
-                        <span class="inline-flex items-center text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/25 dark:text-[#a29bfe]">
-                            Stripe
+                    <!-- Title & Badge (Always on one line, never wraps vertically) -->
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-black text-sm text-gray-900 dark:text-white whitespace-nowrap">Stripe</span>
+                        <span class="inline-flex items-center text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/25 dark:text-[#a29bfe] whitespace-nowrap">
+                            Cards &amp; Apple Pay
                         </span>
                     </div>
-                    <p class="text-[10.5px] text-gray-500 dark:text-gray-400 font-medium leading-tight truncate">
-                        Credit / Debit Card, Apple Pay, Amex
-                    </p>
+                </div>
+
+                <!-- Radio Checkmark Indicator -->
+                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ml-2"
+                     :class="{{ $modelName }} === 'stripe' ? 'border-[#635BFF] bg-[#635BFF]' : 'border-gray-300 dark:border-gray-600 bg-transparent'">
+                    <div x-show="{{ $modelName }} === 'stripe'" class="w-2 h-2 rounded-full bg-white"></div>
                 </div>
             </div>
 
-            <!-- Right: Single-Line Card Badges (No Wrapping) -->
-            <div class="flex items-center gap-1 sm:gap-1.5 pl-6.5 sm:pl-0 shrink-0 flex-nowrap">
-                <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
-                <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
-                <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
-                <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
-                <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+            <!-- BOTTOM ROW: Logos Strip + Description -->
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-white/5 w-full">
+                <!-- 5 Logos in single crisp row -->
+                <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">
+                    <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                    <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                    <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                    <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                    <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                </div>
+
+                <!-- Subtitle on the right -->
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+                    Credit / Debit, Apple Pay
+                </span>
             </div>
         </button>
 
@@ -69,42 +74,47 @@
         <button type="button" 
                 @click="{{ $modelName }} = 'momo'"
                 :class="{{ $modelName }} === 'momo' 
-                    ? 'border-amber-500 bg-gradient-to-r from-amber-500/[0.07] via-white to-transparent dark:from-amber-500/20 dark:via-[#141416] dark:to-transparent ring-2 ring-amber-500 text-gray-900 dark:text-white shadow-sm' 
+                    ? 'border-amber-500 bg-gradient-to-r from-amber-500/[0.06] via-white to-transparent dark:from-amber-500/20 dark:via-[#141416] dark:to-transparent ring-2 ring-amber-500 text-gray-900 dark:text-white shadow-sm' 
                     : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300'"
-                class="w-full p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border text-left transition-all duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 cursor-pointer group">
+                class="w-full p-3 sm:px-4 sm:py-3 rounded-2xl border text-left transition-all duration-150 flex flex-col gap-2.5 cursor-pointer group">
             
-            <!-- Left: Radio + Icon + Method Name & Description -->
-            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <!-- Radio indicator -->
-                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
-                     :class="{{ $modelName }} === 'momo' ? 'border-amber-500 bg-amber-500' : 'border-gray-300 dark:border-gray-600 bg-transparent'">
-                    <div x-show="{{ $modelName }} === 'momo'" class="w-1.5 h-1.5 rounded-full bg-slate-950"></div>
-                </div>
+            <!-- TOP ROW: Icon + Title + Pill Badge + Radio Checkmark -->
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <!-- MoMo Icon -->
+                    <div class="w-8 h-8 rounded-lg bg-amber-400 p-0.5 border border-amber-300/60 flex items-center justify-center shrink-0 shadow-2xs">
+                        <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-full h-full object-contain">
+                    </div>
 
-                <!-- MoMo Icon -->
-                <div class="w-8 h-8 rounded-lg bg-amber-400 p-0.5 border border-amber-300/60 flex items-center justify-center shrink-0 shadow-2xs">
-                    <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-full h-full object-contain">
-                </div>
-
-                <!-- Text info -->
-                <div class="min-w-0">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-extrabold text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">Mobile Money</span>
-                        <span class="inline-flex items-center text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">
-                            MoMo Pay
+                    <!-- Title & Badge -->
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-black text-sm text-gray-900 dark:text-white whitespace-nowrap">MoMo Pay</span>
+                        <span class="inline-flex items-center text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300 whitespace-nowrap">
+                            Mobile Money
                         </span>
                     </div>
-                    <p class="text-[10.5px] text-gray-500 dark:text-gray-400 font-medium leading-tight truncate">
-                        Instant USSD prompt for Ghanaian networks
-                    </p>
+                </div>
+
+                <!-- Radio Checkmark Indicator -->
+                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ml-2"
+                     :class="{{ $modelName }} === 'momo' ? 'border-amber-500 bg-amber-500' : 'border-gray-300 dark:border-gray-600 bg-transparent'">
+                    <div x-show="{{ $modelName }} === 'momo'" class="w-2 h-2 rounded-full bg-slate-950"></div>
                 </div>
             </div>
 
-            <!-- Right: Single-Line Network Badges (No Wrapping) -->
-            <div class="flex items-center gap-1 sm:gap-1.5 pl-6.5 sm:pl-0 shrink-0 flex-nowrap">
-                <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
-                <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
-                <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+            <!-- BOTTOM ROW: Logos Strip + Description -->
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-white/5 w-full">
+                <!-- 3 Network Logos in single crisp row -->
+                <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">
+                    <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                    <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                    <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs transition-transform group-hover:scale-105" loading="lazy">
+                </div>
+
+                <!-- Subtitle on the right -->
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+                    Instant USSD Push
+                </span>
             </div>
         </button>
 
@@ -113,36 +123,37 @@
         <button type="button" 
                 @click="{{ $modelName }} = 'cash'"
                 :class="{{ $modelName }} === 'cash' 
-                    ? 'border-emerald-500 bg-gradient-to-r from-emerald-500/[0.07] via-white to-transparent dark:from-emerald-500/20 dark:via-[#141416] dark:to-transparent ring-2 ring-emerald-500 text-gray-900 dark:text-white shadow-sm' 
+                    ? 'border-emerald-500 bg-gradient-to-r from-emerald-500/[0.06] via-white to-transparent dark:from-emerald-500/20 dark:via-[#141416] dark:to-transparent ring-2 ring-emerald-500 text-gray-900 dark:text-white shadow-sm' 
                     : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-300'"
-                class="w-full p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border text-left transition-all duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 cursor-pointer group">
+                class="w-full p-3 sm:px-4 sm:py-3 rounded-2xl border text-left transition-all duration-150 flex flex-col gap-2.5 cursor-pointer group">
             
-            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
-                     :class="{{ $modelName }} === 'cash' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300 dark:border-gray-600 bg-transparent'">
-                    <div x-show="{{ $modelName }} === 'cash'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
-                </div>
-
-                <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300/40 flex items-center justify-center text-base shrink-0 shadow-2xs">
-                    💵
-                </div>
-
-                <div class="min-w-0">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-extrabold text-xs sm:text-sm text-gray-900 dark:text-white leading-tight">Cash on Delivery</span>
-                        <span class="inline-flex items-center text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300/40 flex items-center justify-center text-base shrink-0 shadow-2xs">
+                        💵
+                    </div>
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-black text-sm text-gray-900 dark:text-white whitespace-nowrap">Cash</span>
+                        <span class="inline-flex items-center text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 whitespace-nowrap">
                             Direct Pay
                         </span>
                     </div>
-                    <p class="text-[10.5px] text-gray-500 dark:text-gray-400 font-medium leading-tight truncate">
-                        Pay driver or dispatch upon safe drop-off
-                    </p>
+                </div>
+
+                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ml-2"
+                     :class="{{ $modelName }} === 'cash' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300 dark:border-gray-600 bg-transparent'">
+                    <div x-show="{{ $modelName }} === 'cash'" class="w-2 h-2 rounded-full bg-white"></div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-1.5 pl-6.5 sm:pl-0 shrink-0">
-                <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300/40 text-[10px] font-bold">✓ No Hold</span>
-                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 text-[10px] font-bold">Exact Fare</span>
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-white/5 w-full">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300/40 text-[10px] font-bold">✓ No Hold</span>
+                    <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 text-[10px] font-bold">Exact Fare</span>
+                </div>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+                    Pay upon drop-off
+                </span>
             </div>
         </button>
         @endif
@@ -173,18 +184,18 @@
     <!-- STRIPE SECURITY NOTICE (Compact Bank-Grade Badge) -->
     <div x-show="{{ $modelName }} === 'stripe'" 
          x-transition.opacity 
-         class="px-3 py-2 bg-gradient-to-r from-[#635BFF]/[0.05] via-white to-transparent dark:from-[#635BFF]/15 dark:via-[#141416] dark:to-transparent rounded-xl border border-[#635BFF]/20 flex items-center justify-between gap-2 text-xs shadow-2xs">
-        <div class="flex items-center gap-2 min-w-0">
-            <div class="w-5 h-5 rounded-md bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/20 flex items-center justify-center shrink-0">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+         class="px-3.5 py-2.5 bg-gradient-to-r from-[#635BFF]/[0.05] via-white to-transparent dark:from-[#635BFF]/15 dark:via-[#141416] dark:to-transparent rounded-xl border border-[#635BFF]/20 flex items-center justify-between gap-2.5 text-xs shadow-2xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-6 h-6 rounded-lg bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/20 flex items-center justify-center shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
             </div>
             <div class="min-w-0">
-                <span class="text-[11px] font-bold text-gray-800 dark:text-gray-200">
+                <span class="text-[11px] font-extrabold text-gray-900 dark:text-white">
                     Stripe PCI-DSS Level 1 Secure Authorization
                 </span>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500 hidden sm:inline">· Bank-grade tokenized encryption</span>
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">· Bank-grade tokenized encryption</span>
             </div>
         </div>
         <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shrink-0 whitespace-nowrap">
