@@ -113,7 +113,7 @@
 
                 <!-- Subtitle on the right -->
                 <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-                    Instant USSD Push
+                    MTN, Telecel, AirtelTigo
                 </span>
             </div>
         </button>
@@ -211,12 +211,9 @@
          style="display: none;"
          class="p-3 sm:p-3.5 bg-amber-50/70 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800/40 space-y-2.5 text-xs">
         
-        <div class="flex items-center justify-between">
+        <div>
             <span class="font-extrabold text-amber-950 dark:text-amber-300 uppercase tracking-wider text-[11px]">
                 Select Mobile Money Network
-            </span>
-            <span class="text-[10px] font-black text-amber-700 dark:text-amber-400 bg-amber-200/60 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
-                Instant USSD Push
             </span>
         </div>
 
