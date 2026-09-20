@@ -948,7 +948,7 @@
                                         <h4 class="font-black text-sm text-gray-900 dark:text-white">Stripe</h4>
                                         <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#635BFF]/10 text-[#635BFF] dark:bg-[#635BFF]/30 dark:text-[#a29bfe]">
                                             <svg class="w-2.5 h-2.5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4C2.89 4 2.01 4.89 2.01 6L2 18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 18H4V12H20V18ZM20 8H4V6H20V8Z"/></svg>
-                                            Cards &amp; Pay
+                                            Cards &amp; Apple Pay
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-1 mt-1.5 flex-wrap">

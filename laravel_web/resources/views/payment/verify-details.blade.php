@@ -131,12 +131,12 @@
                                     <div class="text-[11px] font-bold text-gray-700 dark:text-gray-300">Credit / Debit Card</div>
                                     <div class="text-[11px] text-gray-500 mt-1">Secure and reliable payments powered by Stripe.</div>
                                 </div>
-                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1.5 flex-wrap">
-                                    <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-5 w-auto rounded shadow-2xs">
-                                    <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-5 w-auto rounded shadow-2xs">
-                                    <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-5 w-auto rounded shadow-2xs">
-                                    <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-5 w-auto rounded shadow-2xs">
-                                    <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-5 w-auto rounded shadow-2xs">
+                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1 sm:gap-1.5 flex-nowrap overflow-hidden">
+                                    <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/amex.svg" alt="AMEX" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/apple-pay.svg" alt="Apple Pay" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
                                 </div>
                             </button>
 
@@ -156,10 +156,10 @@
                                     <div class="text-[11px] font-bold text-gray-700 dark:text-gray-300">Instant Mobile Money Payment</div>
                                     <div class="text-[11px] text-gray-500 mt-1">Prompt sent directly to your phone.</div>
                                 </div>
-                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1.5 flex-wrap">
-                                    <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-5 w-auto rounded shadow-2xs">
-                                    <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-5 w-auto rounded shadow-2xs">
-                                    <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-5 w-auto rounded shadow-2xs">
+                                <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-1 sm:gap-1.5 flex-nowrap overflow-hidden">
+                                    <img src="/images/payment-icons/mtn-momo.svg" alt="MTN MoMo" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/telecel.svg" alt="Telecel" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
+                                    <img src="/images/payment-icons/airteltigo.svg" alt="AirtelTigo" class="h-4.5 sm:h-5 w-auto rounded shadow-2xs">
                                 </div>
                             </button>
 
