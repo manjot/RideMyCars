@@ -1592,30 +1592,6 @@
                         Your unified smart mobility and fleet logistics network. On-demand ride hailing, commercial vehicle rentals, verified chauffeur dispatches, and secure parcel deliveries.
                     </p>
 
-                    <p class="text-zinc-500 text-xs leading-relaxed border-l-2 border-brand-500/50 pl-3">
-                        Operated by <strong>Ride My Cars (Ghana)</strong> and managed under <strong>Ride My Cars LLC</strong> (USA). Multi-tier background checks and real-time GPS telematics.
-                    </p>
-
-                    <!-- Trust & Clearing Micro-Badges -->
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
-                            <span class="text-emerald-400 text-xs shrink-0">🛡️</span>
-                            <span class="font-medium truncate">Insured Fleet</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
-                            <span class="text-amber-400 text-xs shrink-0">⚡</span>
-                            <span class="font-medium truncate">Live GPS</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
-                            <span class="text-blue-400 text-xs shrink-0">🔒</span>
-                            <span class="font-medium truncate">Escrow Rail</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
-                            <span class="text-indigo-400 text-xs shrink-0">💳</span>
-                            <span class="font-medium truncate">Stripe & MoMo</span>
-                        </div>
-                    </div>
-
                     <!-- Social Channels -->
                     <div class="flex items-center gap-2 pt-1 flex-wrap">
                         <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on X (Twitter)">
