@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class InvestorComplianceService
 {
     /**
-     * Get default compliance rules fallback by country code
+     * Get compliance rules by country code (prefers DB rule if active and up-to-date, falls back to default definition)
      */
     public static function getCountryRules(string $countryCode): array
     {
@@ -24,7 +24,7 @@ class InvestorComplianceService
             ->where('is_active', true)
             ->first();
 
-        if ($dbRule) {
+        if ($dbRule && !str_contains($dbRule->verification_gate_title ?? '', 'Eminsang') && !str_contains(json_encode($dbRule->declarations ?? []), 'Eminsang')) {
             return [
                 'country_code' => $dbRule->country_code,
                 'country_name' => $dbRule->country_name,
@@ -39,7 +39,16 @@ class InvestorComplianceService
             ];
         }
 
-        // Standard dynamic fallbacks matching SRS specifications
+        return self::getDefaultRules($code);
+    }
+
+    /**
+     * Get standard dynamic default rules matching regulatory specifications
+     */
+    public static function getDefaultRules(string $countryCode): array
+    {
+        $code = strtoupper(trim($countryCode));
+
         return match ($code) {
             'USA', 'US' => [
                 'country_code' => 'USA',

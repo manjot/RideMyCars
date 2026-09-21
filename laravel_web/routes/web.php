@@ -3635,6 +3635,31 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['investor_portal_seed_err'] = $e->getMessage();
         }
 
+        // Ensure GHA country compliance rule is synced with Ride My Cars (Ghana)
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('country_compliance_rules')) {
+                $ghaRule = \App\Services\InvestorComplianceService::getDefaultRules('GHA');
+                \App\Models\CountryComplianceRule::updateOrCreate(
+                    ['country_code' => 'GHA'],
+                    [
+                        'country_name' => $ghaRule['country_name'],
+                        'regulatory_body' => $ghaRule['regulatory_body'],
+                        'regulatory_tier' => $ghaRule['regulatory_tier'],
+                        'verification_gate_title' => $ghaRule['verification_gate_title'],
+                        'verification_gate_description' => $ghaRule['verification_gate_description'],
+                        'required_documents' => $ghaRule['required_documents'],
+                        'declarations' => $ghaRule['declarations'],
+                        'compliance_text' => $ghaRule['compliance_text'],
+                        'legal_notices' => $ghaRule['legal_notices'],
+                        'is_active' => true,
+                    ]
+                );
+                $output['gha_compliance_rule_updated'] = true;
+            }
+        } catch (\Throwable $e) {
+            $output['gha_compliance_rule_err'] = $e->getMessage();
+        }
+
         // Ensure all admin users have role 'admin' and active status
         \Illuminate\Support\Facades\DB::table('users')
             ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), [

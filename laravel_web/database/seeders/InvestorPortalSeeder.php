@@ -91,7 +91,7 @@ class InvestorPortalSeeder extends Seeder
         // 2. Seed Country Compliance Rules
         $countries = ['USA', 'GHA', 'CAN', 'GBR', 'EU', 'AFRICA', 'ROW'];
         foreach ($countries as $idx => $code) {
-            $rule = InvestorComplianceService::getCountryRules($code);
+            $rule = InvestorComplianceService::getDefaultRules($code);
             CountryComplianceRule::updateOrCreate(
                 ['country_code' => $rule['country_code']],
                 [
