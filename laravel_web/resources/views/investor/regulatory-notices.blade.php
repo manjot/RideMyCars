@@ -1,24 +1,26 @@
 <x-layout title="Regulatory Notices & Disclaimers | NDFG LLC & Eminsang Group">
-    <div class="min-h-screen bg-slate-50/60 dark:bg-[#0b0f17] text-gray-900 dark:text-white relative overflow-hidden transition-colors selection:bg-brand-500 selection:text-black">
-        <!-- Ambient glows -->
-        <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[450px] bg-gradient-to-tr from-amber-500/15 via-brand-500/10 to-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+    <x-investor-nav />
 
-        <div class="max-w-5xl 2xl:max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-20 relative z-10">
+    <div class="min-h-screen bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-white relative overflow-hidden transition-colors selection:bg-brand-500 selection:text-black">
+        <!-- Ambient glows -->
+        <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[450px] bg-gradient-to-tr from-amber-500/10 via-brand-500/5 to-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-5xl 2xl:max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-20 relative z-10">
             <!-- Header -->
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider mb-3">
-                    Securities Transparency
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-black uppercase tracking-wider mb-3">
+                    ⚖️ Statutory Disclosures
                 </div>
-                <h1 class="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Regulatory Compliance & Legal Notices</h1>
-                <p class="text-base sm:text-lg text-gray-600 dark:text-zinc-300 mt-4 leading-relaxed font-medium">
+                <h1 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">Regulatory Compliance & Legal Notices</h1>
+                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mt-4 leading-relaxed font-medium">
                     Official statutory disclosures, risk factors, transfer restrictions, and regional securities routing notices for the Ride My Cars New Development Finance Group (NDFG) LLC Private Placement.
                 </p>
             </div>
 
-            <div class="space-y-8 text-xs sm:text-sm text-gray-600 dark:text-zinc-300 leading-relaxed">
+            <div class="space-y-8 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 <!-- Section 1 -->
-                <div class="p-8 rounded-3xl bg-white dark:bg-[#151b26] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                    <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-amber-500 shadow-sm">
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                         1. General Offering Restrictions
                     </h2>
@@ -31,8 +33,8 @@
                 </div>
 
                 <!-- Section 2 -->
-                <div class="p-8 rounded-3xl bg-white dark:bg-[#151b26] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                    <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-blue-500 shadow-sm">
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
                         2. United States Investors (SEC Rule 506(c) Regulation D)
                     </h2>
@@ -45,8 +47,8 @@
                 </div>
 
                 <!-- Section 3 -->
-                <div class="p-8 rounded-3xl bg-white dark:bg-[#151b26] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                    <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-emerald-500 shadow-sm">
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                         3. United Kingdom & European Union Investors
                     </h2>
@@ -59,8 +61,8 @@
                 </div>
 
                 <!-- Section 4 -->
-                <div class="p-8 rounded-3xl bg-white dark:bg-[#151b26] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                    <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-amber-500 shadow-sm">
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                         4. Ghanaian & Cross-Border Remittance Protocol (Eminsang Group Limited)
                     </h2>
@@ -73,8 +75,8 @@
                 </div>
 
                 <!-- Section 5 -->
-                <div class="p-8 rounded-3xl bg-white dark:bg-[#151b26] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                    <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-rose-500 shadow-sm">
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
                         5. Comprehensive Risk Warning
                     </h2>
@@ -88,7 +90,7 @@
             </div>
 
             <div class="mt-12 text-center">
-                <a href="/investor/register" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-sm tracking-wide transition-all shadow-md shadow-brand-500/25 hover:scale-105">
+                <a href="/investor/register" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-400 text-black font-black text-sm tracking-wide transition-all shadow-md shadow-brand-500/25 hover:scale-105">
                     Proceed to Accreditation Sequence →
                 </a>
             </div>

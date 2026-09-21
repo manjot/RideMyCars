@@ -154,22 +154,6 @@
         html:not(.dark) .text-brand-500 {
             color: #b45309;
         }
-        /* Prevent blurry or washed-out transparent background-clipped text in light mode */
-        html:not(.dark) .bg-clip-text.text-transparent {
-            -webkit-text-fill-color: initial;
-            color: #d97706 !important;
-            background: none !important;
-        }
-        /* Tailwind v3 to v4 Gradient Compatibility */
-        .bg-gradient-to-r {
-            background-image: linear-gradient(to right, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
-        }
-        .bg-gradient-to-br {
-            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
-        }
-        .bg-gradient-to-b {
-            background-image: linear-gradient(to bottom, var(--tw-gradient-stops, var(--tw-gradient-from, #f97316), var(--tw-gradient-to, #ea580c)));
-        }
     </style>
     <script src="{{ asset('js/countries-data.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.3/dist/cdn.min.js"></script>
@@ -748,10 +732,10 @@
 
                         <!-- Investors Dropdown -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                            <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('investor*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                            <button @click="open = !open" class="text-xs xl:text-xs 2xl:text-sm font-semibold transition-all flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-full whitespace-nowrap {{ request()->is('investor*') ? 'text-amber-900 dark:text-brand-400 bg-amber-500/20 font-bold border border-amber-500/30 shadow-xs' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span>Investors</span>
-                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
                             <div x-show="open" 
                                  x-transition:enter="transition ease-out duration-200"
@@ -1528,7 +1512,7 @@
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/[0.015] rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/[0.015] rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-7xl 2xl:max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10">
             
             <!-- Guest Ongoing Ride Live Tracker Banner -->
             <div class="mb-14 p-6 sm:p-8 lg:p-7 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-slate-900/95 to-slate-900/90 border border-emerald-500/20 hover:border-emerald-500/40 shadow-[0_12px_40px_-15px_rgba(16,185,129,0.15)] relative overflow-hidden backdrop-blur-xl transition-all duration-300 group"
