@@ -296,7 +296,7 @@
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Preferred Capital Remittance Path *</label>
                             <select name="remittance_method" x-model="form.remittance_method" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
                                 <option value="wire_swift">Bank Wire (USD / EUR / GBP / CAD SWIFT)</option>
-                                <option value="local_bank_eminsang">Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))</option>
+                                <option value="local_bank_ghana">Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))</option>
                                 <option value="mobile_money">Mobile Money Gateway (MTN MoMo / Telecel Cash)</option>
                             </select>
                             <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Full wire coordinates and merchant push instructions will be unlocked upon administrative compliance verification.</span>
@@ -516,7 +516,7 @@
 
                 onCountryChange() {
                     if (this.form.country_code === 'GHA') {
-                        this.form.remittance_method = 'local_bank_eminsang';
+                        this.form.remittance_method = 'local_bank_ghana';
                     } else if (this.form.country_code === 'AFRICA') {
                         this.form.remittance_method = 'mobile_money';
                     } else {

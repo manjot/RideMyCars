@@ -95,6 +95,7 @@ class InvestorProfileResource extends Resource
                                 ->label('Remittance Method')
                                 ->options([
                                     'wire_swift' => 'Bank Wire (USD/EUR/GBP/CAD SWIFT)',
+                                    'local_bank_ghana' => 'Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))',
                                     'local_bank_eminsang' => 'Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))',
                                     'mobile_money' => 'Mobile Money Gateway (MTN MoMo/Telecel Cash)',
                                 ]),

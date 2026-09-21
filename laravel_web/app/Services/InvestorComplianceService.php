@@ -212,7 +212,7 @@ class InvestorComplianceService
                         'required' => true,
                     ],
                     [
-                        'id' => 'gh_eminsang_ack',
+                        'id' => 'gh_rmc_ack',
                         'label' => 'I acknowledge and agree that local escrow custody and capital remittance tracking are conducted in coordination with Ride My Cars (Ghana).',
                         'required' => true,
                     ]
