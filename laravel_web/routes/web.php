@@ -1117,25 +1117,96 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
     ]);
 });
 
-// Ride Cancellation Endpoint
-Route::post('/api/ride/{id}/cancel', function ($id, \Illuminate\Http\Request $request) {
+// Unified Ride Cancellation Endpoint (Supports Riders, Guests, Drivers & Admins)
+$unifiedCancelRideHandler = function ($id, \Illuminate\Http\Request $request) {
     $ride = \App\Models\Ride::find($id);
-    if (!$ride) return response()->json(['error' => 'Ride not found'], 404);
+    if (!$ride) {
+        session()->forget('active_guest_ride_id');
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride not found or already cancelled.',
+            'status' => 'not_found',
+        ], 200);
+    }
+
+    if ($ride->status === 'cancelled') {
+        session()->forget('active_guest_ride_id');
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride is already cancelled.',
+            'status' => 'cancelled',
+            'ride_id' => $ride->id,
+        ], 200);
+    }
+
+    if ($ride->status === 'completed') {
+        return response()->json([
+            'success' => false,
+            'error' => 'Ride has already been completed and cannot be cancelled.',
+            'status' => 'completed',
+        ], 400);
+    }
 
     $reason = $request->input('reason', 'Cancelled by user');
+
     $ride->update([
         'status' => 'cancelled',
         'cancellation_reason' => $reason,
     ]);
 
-    \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'rejected']);
+    // Clear active guest session
+    session()->forget('active_guest_ride_id');
+
+    // Expire/reject all active driver offers for this ride
+    \App\Models\RideAssignment::where('ride_id', $ride->id)
+        ->whereNotIn('status', ['completed'])
+        ->update(['status' => 'cancelled']);
+
+    // Release any payment pre-authorization holds (Stripe, etc.)
+    try {
+        if (class_exists(\App\Services\StripeService::class)) {
+            \App\Services\StripeService::releaseRideHold($ride, $reason);
+        }
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::warning("Ride cancel hold release notice for #{$ride->id}: " . $e->getMessage());
+    }
+
+    // Send notifications to rider and driver
+    try {
+        if ($ride->rider_id && class_exists(\App\Services\NotificationService::class)) {
+            \App\Services\NotificationService::send(
+                $ride->rider_id,
+                'cancelled',
+                'Ride Cancelled',
+                "Ride #{$ride->id} to {$ride->dropoff_location} has been cancelled.",
+                $ride->id,
+                '/'
+            );
+        }
+        if ($ride->driver_id && class_exists(\App\Services\NotificationService::class)) {
+            \App\Services\NotificationService::send(
+                $ride->driver_id,
+                'cancelled',
+                'Ride Cancelled',
+                "Ride #{$ride->id} was cancelled.",
+                $ride->id,
+                '/driver/dashboard'
+            );
+        }
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::warning("Ride cancel notification notice for #{$ride->id}: " . $e->getMessage());
+    }
 
     return response()->json([
         'success' => true,
         'message' => 'Ride cancelled successfully.',
         'status' => 'cancelled',
-    ]);
-});
+        'ride_id' => $ride->id,
+    ], 200);
+};
+
+Route::match(['post', 'get', 'delete'], '/api/ride/{id}/cancel', $unifiedCancelRideHandler);
+Route::match(['post', 'get', 'delete'], '/api/rides/{id}/cancel', $unifiedCancelRideHandler);
 
 Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
     try {
@@ -2077,11 +2148,17 @@ Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request
     ]]);
 });
 
-// Boost fare and resend ride to all drivers
+// Boost fare and resend ride to all drivers (Supports riders and guests)
 Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $request, $id) {
     $user = auth()->user();
-    $ride = \App\Models\Ride::where('id', $id)->where('rider_id', $user->id)->first();
+    $ride = \App\Models\Ride::find($id);
     if (!$ride) return response()->json(['error' => 'Ride not found'], 404);
+
+    // If user is logged in and ride has a different rider_id, ensure admin or owner
+    if ($user && $ride->rider_id && $ride->rider_id !== $user->id && ($user->role ?? '') !== 'admin') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
     if (!in_array($ride->status, ['pending', 'failed'])) {
         return response()->json(['error' => 'Cannot boost fare for this ride'], 400);
     }
@@ -2100,58 +2177,7 @@ Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $req
     \App\Services\RideAssignmentService::assignNextDriver($ride);
 
     return response()->json(['success' => true, 'new_fare' => $newFare]);
-})->middleware('auth');
-
-// Cancel a ride (rider, driver, or admin)
-Route::post('/api/ride/{id}/cancel', function ($id) {
-    $user = auth()->user();
-    $ride = \App\Models\Ride::where('id', $id)
-        ->where(function ($q) use ($user) {
-            $q->where('rider_id', $user->id)
-              ->orWhere('driver_id', $user->id)
-              ->orWhereRaw('? = "admin"', [$user->role]);
-        })
-        ->first();
-
-    if (!$ride) {
-        $ride = \App\Models\Ride::find($id);
-    }
-
-    if (!$ride) return response()->json(['error' => 'Ride not found'], 404);
-
-    if (in_array($ride->status, ['completed', 'cancelled'])) {
-        return response()->json(['error' => 'Ride already finished'], 400);
-    }
-
-    $ride->update(['status' => 'cancelled']);
-
-    // Expire assignments
-    \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
-
-    // Send notifications
-    if ($ride->rider_id) {
-        \App\Services\NotificationService::send(
-            $ride->rider_id,
-            'cancelled',
-            'Ride Cancelled',
-            "Ride #{$ride->id} to {$ride->dropoff_location} has been cancelled.",
-            $ride->id,
-            '/'
-        );
-    }
-    if ($ride->driver_id) {
-        \App\Services\NotificationService::send(
-            $ride->driver_id,
-            'cancelled',
-            'Ride Cancelled',
-            "Ride #{$ride->id} was cancelled.",
-            $ride->id,
-            '/driver/dashboard'
-        );
-    }
-
-    return response()->json(['success' => true, 'message' => 'Ride cancelled successfully']);
-})->middleware('auth');
+});
 
 // Get active rides for driver
 $driverActiveRidesHandler = function (\Illuminate\Http\Request $request) {

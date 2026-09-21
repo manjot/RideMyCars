@@ -2409,11 +2409,20 @@
                 cancelRide() {
                     if (this.pollTimer) clearInterval(this.pollTimer);
                     localStorage.removeItem('rmc_active_ride_id');
+                    sessionStorage.removeItem('rmc_active_ride_id');
                     if (this.currentRideId) {
                         const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                         fetch(`/api/ride/${this.currentRideId}/cancel`, {
                             method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': csrfToken }
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken || '' 
+                            },
+                            body: JSON.stringify({
+                                reason: 'Cancelled by user',
+                                guest_ride_id: this.currentRideId
+                            })
                         }).catch(() => {});
                     }
                     this.bookingStep = 'find_trip';

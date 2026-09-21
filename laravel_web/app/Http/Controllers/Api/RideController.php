@@ -825,4 +825,91 @@ class RideController extends Controller
             'message' => 'Backup assignment cancelled.',
         ]);
     }
+
+    /**
+     * Cancel a ride
+     */
+    public function cancel(Request $request, $id): JsonResponse
+    {
+        $ride = Ride::find($id);
+        if (!$ride) {
+            session()->forget('active_guest_ride_id');
+            return response()->json([
+                'success' => true,
+                'message' => 'Ride not found or already cancelled.',
+                'status' => 'not_found',
+            ], 200);
+        }
+
+        if ($ride->status === 'cancelled') {
+            session()->forget('active_guest_ride_id');
+            return response()->json([
+                'success' => true,
+                'message' => 'Ride is already cancelled.',
+                'status' => 'cancelled',
+                'ride_id' => $ride->id,
+            ], 200);
+        }
+
+        if ($ride->status === 'completed') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Ride has already been completed and cannot be cancelled.',
+                'status' => 'completed',
+            ], 400);
+        }
+
+        $reason = $request->input('reason', 'Cancelled by user');
+
+        $ride->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $reason,
+        ]);
+
+        session()->forget('active_guest_ride_id');
+
+        \App\Models\RideAssignment::where('ride_id', $ride->id)
+            ->whereNotIn('status', ['completed'])
+            ->update(['status' => 'cancelled']);
+
+        try {
+            if (class_exists(\App\Services\StripeService::class)) {
+                \App\Services\StripeService::releaseRideHold($ride, $reason);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Ride cancel hold release notice for #{$ride->id}: " . $e->getMessage());
+        }
+
+        try {
+            if ($ride->rider_id && class_exists(\App\Services\NotificationService::class)) {
+                \App\Services\NotificationService::send(
+                    $ride->rider_id,
+                    'cancelled',
+                    'Ride Cancelled',
+                    "Ride #{$ride->id} to {$ride->dropoff_location} has been cancelled.",
+                    $ride->id,
+                    '/'
+                );
+            }
+            if ($ride->driver_id && class_exists(\App\Services\NotificationService::class)) {
+                \App\Services\NotificationService::send(
+                    $ride->driver_id,
+                    'cancelled',
+                    'Ride Cancelled',
+                    "Ride #{$ride->id} was cancelled.",
+                    $ride->id,
+                    '/driver/dashboard'
+                );
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Ride cancel notification notice for #{$ride->id}: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride cancelled successfully.',
+            'status' => 'cancelled',
+            'ride_id' => $ride->id,
+        ], 200);
+    }
 }

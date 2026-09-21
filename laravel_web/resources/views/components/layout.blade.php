@@ -2770,18 +2770,18 @@
                         headers: { 
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'X-CSRF-TOKEN': token 
+                            'X-CSRF-TOKEN': token || ''
                         },
                         body: JSON.stringify({ fare: parseFloat(this.boostFare) })
                     });
-                    const data = await res.json();
-                    if (res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
                         this.boostSuccess = true;
                         this.ride.fare = data.new_fare;
                         this.boostFare = (parseFloat(data.new_fare) + 5).toFixed(2);
                         setTimeout(() => this.boostSuccess = false, 4000);
                     } else {
-                        this.boostError = data.error || 'Failed to boost fare';
+                        this.boostError = data.error || data.message || 'Failed to boost fare';
                     }
                 } catch(e) { this.boostError = 'Network error'; }
                 this.boosting = false;
@@ -2790,30 +2790,45 @@
                 if (!this.ride) return;
                 if (!confirm('Are you sure you want to cancel this ride request?')) return;
                 this.cancelling = true;
+                const rideId = this.ride.id;
                 try {
                     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                    const res = await fetch(`/api/ride/${this.ride.id}/cancel`, {
+                    const res = await fetch(`/api/ride/${rideId}/cancel`, {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'X-CSRF-TOKEN': token 
-                        }
+                            'X-CSRF-TOKEN': token || ''
+                        },
+                        body: JSON.stringify({ 
+                            reason: 'Cancelled by user',
+                            guest_ride_id: rideId 
+                        })
                     });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok || data.success || data.status === 'cancelled' || res.status === 404) {
+                        localStorage.removeItem('rmc_active_ride_id');
+                        sessionStorage.removeItem('rmc_active_ride_id');
                         this.ride = null;
                         this.expanded = false;
                         this.dismissed = true;
-                        alert('Ride cancelled successfully.');
+                        alert('Ride request has been cancelled.');
                         window.location.reload();
                     } else {
-                        alert(data.error || 'Failed to cancel ride');
+                        alert(data.error || data.message || 'Failed to cancel ride');
                     }
                 } catch(e) { 
-                    alert('Network error while cancelling ride'); 
+                    if (confirm('Could not connect to server. Would you like to clear this ride request from your screen?')) {
+                        localStorage.removeItem('rmc_active_ride_id');
+                        sessionStorage.removeItem('rmc_active_ride_id');
+                        this.ride = null;
+                        this.expanded = false;
+                        this.dismissed = true;
+                        window.location.reload();
+                    }
+                } finally {
+                    this.cancelling = false;
                 }
-                this.cancelling = false;
             }
         }));
     });

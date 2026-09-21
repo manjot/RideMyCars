@@ -706,18 +706,33 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': token
-                            }
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token || ''
+                            },
+                            body: JSON.stringify({
+                                reason: 'Cancelled by user',
+                                guest_ride_id: this.rideId
+                            })
                         });
-                        if (res.ok) {
-                            this.ride.status = 'cancelled';
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok || data.success || data.status === 'cancelled' || res.status === 404) {
+                            if (this.ride) this.ride.status = 'cancelled';
                             localStorage.removeItem('rmc_active_ride_id');
+                            sessionStorage.removeItem('rmc_active_ride_id');
                             alert('Ride request has been cancelled.');
+                            window.location.reload();
+                        } else {
+                            alert(data.error || data.message || 'Failed to cancel ride.');
                         }
                     } catch(e) {
-                        alert('Failed to cancel ride.');
+                        if (confirm('Could not connect to server. Would you like to clear this ride request from your screen?')) {
+                            localStorage.removeItem('rmc_active_ride_id');
+                            sessionStorage.removeItem('rmc_active_ride_id');
+                            window.location.reload();
+                        }
+                    } finally {
+                        this.cancelling = false;
                     }
-                    this.cancelling = false;
                 }
             };
         }
