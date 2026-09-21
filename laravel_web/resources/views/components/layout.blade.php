@@ -1579,180 +1579,207 @@
                 </div>
             </div>
 
-            <!-- Main Grid: 12-Column Responsive Layout -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-10">
+            <!-- Main Grid: Fully Responsive 5-Column Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 sm:gap-6 lg:gap-5 xl:gap-8 mb-12">
                 
-                <!-- Brand Column (Span 4) -->
-                <div class="lg:col-span-4 space-y-5">
+                <!-- Brand Column (Full width on sm/md, 1 col on lg+) -->
+                <div class="sm:col-span-2 md:col-span-4 lg:col-span-1 space-y-4">
                     <a class="inline-flex items-center gap-2 group" href="/">
                         <img src="{{ asset('images/logo.png') }}" alt="RideMyCars Logo" class="h-14 w-auto object-contain transition-transform group-hover:scale-105">
                     </a>
-                    <p class="text-zinc-400 text-sm leading-relaxed max-w-sm">
-                        Your unified mobility platform. Book rides, rent vehicles, hire verified private chauffeurs, and track parcel deliveries in real time.
+                    
+                    <p class="text-zinc-400 text-xs sm:text-[13px] leading-relaxed">
+                        Your unified smart mobility and fleet logistics network. On-demand ride hailing, commercial vehicle rentals, verified chauffeur dispatches, and secure parcel deliveries.
                     </p>
-                    <div class="flex items-center gap-2.5 pt-1">
-                        <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on X (Twitter)">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+
+                    <p class="text-zinc-500 text-xs leading-relaxed border-l-2 border-brand-500/50 pl-3">
+                        Operated by <strong>Ride My Cars (Ghana)</strong> and managed under <strong>Ride My Cars LLC</strong> (USA). Multi-tier background checks and real-time GPS telematics.
+                    </p>
+
+                    <!-- Trust & Clearing Micro-Badges -->
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
+                            <span class="text-emerald-400 text-xs shrink-0">🛡️</span>
+                            <span class="font-medium truncate">Insured Fleet</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
+                            <span class="text-amber-400 text-xs shrink-0">⚡</span>
+                            <span class="font-medium truncate">Live GPS</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
+                            <span class="text-blue-400 text-xs shrink-0">🔒</span>
+                            <span class="font-medium truncate">Escrow Rail</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-zinc-300 shadow-xs">
+                            <span class="text-indigo-400 text-xs shrink-0">💳</span>
+                            <span class="font-medium truncate">Stripe & MoMo</span>
+                        </div>
+                    </div>
+
+                    <!-- Social Channels -->
+                    <div class="flex items-center gap-2 pt-1 flex-wrap">
+                        <a href="https://x.com/ridemycars" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on X (Twitter)">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                         </a>
-                        <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on Instagram">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                        <a href="https://www.instagram.com/ridemycars1?igsi=ZHc2ZjltdHdiaDNj&utm_source=qr" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on Instagram">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                         </a>
-                        <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on Facebook">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
+                        <a href="https://www.facebook.com/profile.php?id=61594184214102" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on Facebook">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.778 5H18V0h-3.808C10.593 0 9 1.583 9 4.615z"/></svg>
                         </a>
-                        <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on LinkedIn">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        <a href="https://www.linkedin.com/in/ride-mycars-587b03432" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on LinkedIn">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                         </a>
-                        <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on TikTok">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.33-6.33V9.05a8.3 8.3 0 0 0 4.92 1.6V7.21a4.85 4.85 0 0 1-1-.52z"/></svg>
+                        <a href="{{ site_setting('social.tiktok_url', 'https://www.tiktok.com/@ridemycars') }}" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-brand-500 hover:text-black text-zinc-400 flex items-center justify-center transition-all duration-200 border border-white/[0.08] hover:border-brand-400 hover:scale-105 shadow-sm" title="Follow RideMyCars on TikTok">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.33-6.33V9.05a8.3 8.3 0 0 0 4.92 1.6V7.21a4.85 4.85 0 0 1-1-.52z"/></svg>
                         </a>
                     </div>
                 </div>
 
-                <!-- Column 1: Services (Span 2) — 8 Items -->
-                <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
-                        Services
+                <!-- Column 1: Services (8 Items) -->
+                <div class="space-y-4">
+                    <h4 class="text-[11px] font-black uppercase tracking-wider text-zinc-200 flex items-center gap-1.5 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)] shrink-0"></span>
+                        <span class="whitespace-nowrap">Services</span>
                     </h4>
-                    <ul class="space-y-3 text-[13px] sm:text-sm">
+                    <ul class="space-y-2.5 text-xs sm:text-[13px]">
                         <li>
                             <a href="/ride" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Book a Ride</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Book a Ride</span>
                             </a>
                         </li>
                         <li>
                             <a href="/ride/track" class="text-zinc-400 hover:text-emerald-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5 whitespace-nowrap">
                                     <span class="relative flex h-2 w-2">
                                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                     </span>
                                     <span>Track Ongoing Ride</span>
                                 </span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Live</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 ml-1">Live</span>
                             </a>
                         </li>
                         <li>
                             <a href="/rent" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Rent a Vehicle</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Rent a Vehicle</span>
                             </a>
                         </li>
                         <li>
                             <a href="/hire-driver" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Hire a Driver</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Hire a Driver</span>
                             </a>
                         </li>
                         <li>
                             <a href="/delivery" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Package Delivery</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Package Delivery</span>
                             </a>
                         </li>
                         <li>
                             <a href="/pricing" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Pricing & Rates</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Pricing & Rates</span>
                             </a>
                         </li>
                         <li>
                             <a href="/membership" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Club Membership</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">VIP</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Club Membership</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30 shrink-0 ml-1">VIP</span>
                             </a>
                         </li>
                         <li>
                             <a href="/apps#rider-app" class="text-brand-400/90 hover:text-brand-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Download Rider App</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">App</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Download Rider App</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30 shrink-0 ml-1">App</span>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Column 2: Company (Span 2) — Exactly 8 Items -->
-                <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
-                        Company
+                <!-- Column 2: Company (8 Items) -->
+                <div class="space-y-4">
+                    <h4 class="text-[11px] font-black uppercase tracking-wider text-zinc-200 flex items-center gap-1.5 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)] shrink-0"></span>
+                        <span class="whitespace-nowrap">Company</span>
                     </h4>
-                    <ul class="space-y-3 text-[13px] sm:text-sm">
+                    <ul class="space-y-2.5 text-xs sm:text-[13px]">
                         <li>
                             <a href="/about" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">About Us</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">About Us</span>
                             </a>
                         </li>
                         <li>
                             <a href="/safety" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Safety & Trust</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Safety & Trust</span>
                             </a>
                         </li>
                         <li>
                             <a href="/blogs" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">News & Insights</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">News & Insights</span>
                             </a>
                         </li>
                         <li>
                             <a href="/signup" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Rider Signup</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/30">Free</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Rider Signup</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/30 shrink-0 ml-1">Free</span>
                             </a>
                         </li>
                         <li>
                             <a href="/driver-signup" class="text-zinc-400 hover:text-amber-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Become a Driver</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">Earn</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Become a Driver</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">Earn</span>
                             </a>
                         </li>
                         <li>
                             <a href="/owner-signup" class="text-zinc-400 hover:text-purple-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">List Your Vehicle</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/30">Host</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">List Your Vehicle</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/30 shrink-0 ml-1">Host</span>
                             </a>
                         </li>
                         <li>
                             <a href="/investor" class="text-brand-400 hover:text-brand-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Investor Relations</span>
-                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">NDFG</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Investor Relations</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30 shrink-0 ml-1">NDFG</span>
                             </a>
                         </li>
                         <li>
                             <a href="/contact#offices" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Global Offices</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">HQ</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Global Offices</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 ml-1">HQ</span>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Column 3: Support (Span 2) — Exactly 8 Items -->
-                <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
-                        Support
+                <!-- Column 3: Support (8 Items) -->
+                <div class="space-y-4">
+                    <h4 class="text-[11px] font-black uppercase tracking-wider text-zinc-200 flex items-center gap-1.5 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)] shrink-0"></span>
+                        <span class="whitespace-nowrap">Support</span>
                     </h4>
-                    <ul class="space-y-3 text-[13px] sm:text-sm">
+                    <ul class="space-y-2.5 text-xs sm:text-[13px]">
                         <li>
                             <a href="/contact" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Help Center</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Help Center</span>
                             </a>
                         </li>
                         <li>
                             <a href="mailto:{{ site_setting('footer.support_email', 'support@ridemycars.com') }}" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Concierge Support</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Concierge Support</span>
                             </a>
                         </li>
                         <li>
                             <a href="/onboarding" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">How It Works</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">How It Works</span>
                             </a>
                         </li>
                         <li>
                             <a href="/delivery/tracker" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Delivery Tracker</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Delivery Tracker</span>
                             </a>
                         </li>
                         <li>
                             <a href="/ride/track" class="text-zinc-400 hover:text-emerald-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5 whitespace-nowrap">
                                     <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     <span>Guest Ride Tracker</span>
                                 </span>
@@ -1760,76 +1787,76 @@
                         </li>
                         <li>
                             <a href="/driver/dashboard" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Portal</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Driver Portal</span>
                             </a>
                         </li>
                         <li>
                             <a href="/disputes" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Disputes & Claims</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">72h</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Disputes & Claims</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">72h</span>
                             </a>
                         </li>
                         <li>
                             <a href="/apps#driver-app" class="text-amber-400/90 hover:text-amber-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Download Driver App</span>
-                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">90%</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Download Driver App</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">90%</span>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Column 4: Legal & Compliance (Span 2) — Exactly 8 Items & Direct Link to Regulatory Disclosures -->
-                <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 mb-4">
+                <!-- Column 4: Legal & Compliance (8 Items) -->
+                <div class="space-y-4">
+                    <h4 class="text-[11px] font-black uppercase tracking-wider text-zinc-200 mb-4">
                         <a href="/regulatory-compliance" class="flex items-center justify-between hover:text-brand-400 transition-colors group" title="View Regulatory Compliance & Legal Notices">
-                            <span class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
-                                Legal & Compliance
+                            <span class="flex items-center gap-1.5 whitespace-nowrap">
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)] shrink-0"></span>
+                                <span>Legal & Compliance</span>
                             </span>
-                            <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
                     </h4>
-                    <ul class="space-y-3 text-[13px] sm:text-sm">
+                    <ul class="space-y-2.5 text-xs sm:text-[13px]">
                         <li>
                             <a href="/terms-and-conditions" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Terms & Conditions</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Terms & Conditions</span>
                             </a>
                         </li>
                         <li>
                             <a href="/privacy-policy" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Privacy Policy</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Privacy Policy</span>
                             </a>
                         </li>
                         <li>
                             <a href="/refund-cancellation-policy" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Refund & Cancellation</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Refund & Cancellation</span>
                             </a>
                         </li>
                         <li>
                             <a href="/privacy-requests" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Privacy Data Rights</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Privacy Data Rights</span>
                             </a>
                         </li>
                         <li>
                             <a href="/delete-account" class="text-rose-400 hover:text-rose-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5" title="Request permanent account and personal data deletion">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Delete Account</span>
-                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 border border-rose-500/30">Data Purge</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Delete Account</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0 ml-1">Data Purge</span>
                             </a>
                         </li>
                         <li>
                             <a href="/driver-compliance" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Compliance</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Driver Compliance</span>
                             </a>
                         </li>
                         <li>
                             <a href="/legal" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Compliance & Trust</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Compliance & Trust</span>
                             </a>
                         </li>
                         <li>
                             <a href="/regulatory-compliance" class="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5" title="Statutory SEC & Ghana Securities Disclosures">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Regulatory Disclosures</span>
-                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">SEC</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Regulatory Disclosures</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 ml-1">SEC</span>
                             </a>
                         </li>
                     </ul>
