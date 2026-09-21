@@ -207,5 +207,38 @@ class InvestorPortalFeatureTest extends TestCase
             'original_filename' => 'fresh_bank_statement.pdf',
         ]);
     }
+
+    public function test_plans_page_displays_per_country_structure(): void
+    {
+        $response = $this->get('/investor/plans');
+        $response->assertStatus(200);
+
+        // Assert Country Tabs Exist
+        $response->assertSee('Ghana');
+        $response->assertSee('South Africa');
+        $response->assertSee('USA');
+        $response->assertSee('Other Countries');
+
+        // Assert Ghana tranches
+        $response->assertSee('720,000 GHC');
+        $response->assertSee('1,440,000 GHC');
+        $response->assertSee('2,640,000 GHC');
+
+        // Assert South Africa tranches
+        $response->assertSee('1,100,000 ZAR');
+        $response->assertSee('2,200,000 ZAR');
+        $response->assertSee('4,000,000 ZAR');
+
+        // Assert USA tranches
+        $response->assertSee('$60,000 USD');
+        $response->assertSee('$120,000 USD');
+        $response->assertSee('$220,000 USD');
+
+        // Assert Other Countries
+        $response->assertSee('United Kingdom');
+        $response->assertSee('Gulf Region');
+        $response->assertSee('Nigeria');
+        $response->assertSee('Kenya');
+    }
 }
 

@@ -422,8 +422,26 @@
                         Capital Allocation Tranches
                     </h2>
                     <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">
-                        Select an allocation tranche customized for your portfolio goals. All tranches include structured Year 3 buyout provisions and quarterly dividend distributions.
+                        Investment tranches are structured per country. Active capital allocation is currently open for <strong>Ghana</strong>. Select a region below:
                     </p>
+
+                    <!-- Country Selector Quick Tabs -->
+                    <div class="flex justify-center mt-6">
+                        <div class="inline-flex flex-wrap justify-center p-1.5 rounded-2xl bg-slate-100 dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-xs gap-1.5 sm:gap-2">
+                            <a href="/investor/plans?country=ghana" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-xs hover:bg-amber-400 transition-all">
+                                <span>🇬🇭 Ghana (Live Offering)</span>
+                            </a>
+                            <a href="/investor/plans?country=south-africa" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                                <span>🇿🇦 South Africa</span>
+                            </a>
+                            <a href="/investor/plans?country=usa" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                                <span>🇺🇸 USA</span>
+                            </a>
+                            <a href="/investor/plans?country=other" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                                <span>🌍 Other Countries</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
