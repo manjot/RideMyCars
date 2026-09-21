@@ -346,6 +346,7 @@ class DatabaseSeeder extends Seeder
             DisputeSeeder::class,
             PackageDeliverySeeder::class,
             HireDriverSeeder::class,
+            InvestorPortalSeeder::class,
         ];
 
         if (file_exists(__DIR__ . '/CountryPricingSeeder.php')) {

@@ -69,6 +69,10 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\SettingResource::class,
                 \App\Filament\Resources\RideCategoryResource::class,
                 \App\Filament\Resources\UserResource::class,
+                \App\Filament\Resources\InvestorProfileResource::class,
+                \App\Filament\Resources\InvestmentPlanResource::class,
+                \App\Filament\Resources\CountryComplianceRuleResource::class,
+                \App\Filament\Resources\InvestorAuditLogResource::class,
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -79,6 +83,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 \App\Filament\Widgets\DashboardHeroWidget::class,
                 \App\Filament\Widgets\StatsOverviewWidget::class,
+                \App\Filament\Widgets\InvestorStatsOverviewWidget::class,
                 \App\Filament\Widgets\RecentRidesWidget::class,
             ])
             ->middleware([

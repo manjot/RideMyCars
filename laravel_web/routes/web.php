@@ -3,9 +3,11 @@
 use App\Http\Controllers\AdminFinancialExportController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DeliveryTrackerController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DriverBookingController;
+use App\Http\Controllers\InvestorDashboardController;
+use App\Http\Controllers\InvestorRegistrationController;
 use App\Http\Controllers\PackageDeliveryController;
+use Illuminate\Support\Facades\Route;
 
 // Social Authentication Routes (Google & Apple)
 Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
@@ -147,6 +149,9 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
 
         if (auth()->user()->role === 'driver') {
             return redirect('/driver/dashboard');
+        }
+        if (auth()->user()->role === 'investor') {
+            return redirect('/investor/dashboard');
         }
         return redirect()->intended('/');
     }
@@ -3622,6 +3627,14 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['incentive_programs_seed_err'] = $e->getMessage();
         }
 
+        // Seed Investor Portal plans, rules, and demo accounts
+        try {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'InvestorPortalSeeder', '--force' => true]);
+            $output['investor_portal_seeded'] = true;
+        } catch (\Throwable $e) {
+            $output['investor_portal_seed_err'] = $e->getMessage();
+        }
+
         // Ensure all admin users have role 'admin' and active status
         \Illuminate\Support\Facades\DB::table('users')
             ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), [
@@ -3793,5 +3806,118 @@ Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) 
         ], 200);
     }
 });
+
+/*
+|--------------------------------------------------------------------------
+| Multi-Jurisdictional Investor Portal Routes (NDFG LLC & Eminsang Group)
+|--------------------------------------------------------------------------
+*/
+
+// Public Marketing & Legal Pages
+Route::get('/investor', function () {
+    return view('investor.index');
+})->name('investor.index');
+
+Route::get('/investors', function () {
+    return redirect('/investor');
+});
+
+Route::get('/investor/why-invest', function () {
+    return view('investor.why-invest');
+})->name('investor.why-invest');
+
+Route::get('/investor/opportunity', function () {
+    return view('investor.opportunity');
+})->name('investor.opportunity');
+
+Route::get('/investor/plans', function () {
+    return view('investor.plans');
+})->name('investor.plans');
+
+Route::get('/investor/faq', function () {
+    return view('investor.faq');
+})->name('investor.faq');
+
+Route::get('/investor/regulatory-notices', function () {
+    return view('investor.regulatory-notices');
+})->name('investor.regulatory-notices');
+
+Route::get('/investor/contact', function () {
+    return view('investor.contact');
+})->name('investor.contact');
+
+Route::post('/investor/contact', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'required|string|max:50',
+        'country' => 'required|string|max:100',
+        'interested_tranche' => 'nullable|string|max:100',
+        'message' => 'required|string|max:3000',
+    ]);
+
+    \Illuminate\Support\Facades\Log::info("Investor Relations Inquiry from {$validated['name']} ({$validated['email']}) [Country: {$validated['country']}, Tranche: {$validated['interested_tranche']}]: {$validated['message']}");
+
+    return back()->with('success', 'Thank you. Your inquiry has been received by Marilyn Watson and the Compliance Framework Desk. We will respond within 12 business hours.');
+});
+
+// Dynamic Onboarding Wizard & Country Rules API
+Route::get('/investor/register', [InvestorRegistrationController::class, 'create'])->name('investor.register');
+Route::get('/investor/onboarding', [InvestorRegistrationController::class, 'create']);
+Route::post('/investor/register', [InvestorRegistrationController::class, 'store'])->name('investor.register.store');
+Route::get('/api/investor/country-rules/{code}', [InvestorRegistrationController::class, 'getCountryRules'])->name('api.investor.country-rules');
+
+// Investor Authentication
+Route::get('/investor/login', function () {
+    if (auth()->check()) {
+        return redirect('/investor/dashboard');
+    }
+    return view('investor.login');
+})->name('investor.login');
+
+Route::post('/investor/login', function (\Illuminate\Http\Request $request) {
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
+
+    $email = strtolower(trim($request->email));
+    $password = (string) $request->password;
+    $remember = $request->boolean('remember');
+
+    if (auth()->attempt(['email' => $email, 'password' => $password], $remember)) {
+        $request->session()->regenerate();
+        $user = auth()->user();
+
+        // Audit log login
+        $profile = \App\Models\InvestorProfile::where('user_id', $user->id)
+            ->orWhere('email', $email)
+            ->first();
+
+        if ($profile) {
+            \App\Services\InvestorComplianceService::logAction(
+                $profile->id,
+                $user->id,
+                'LOGGED_IN',
+                "Investor authenticated successfully into portal"
+            );
+        }
+
+        return redirect()->intended('/investor/dashboard');
+    }
+
+    return back()->withInput($request->only('email'))->withErrors([
+        'email' => 'The provided credentials do not match our investor records.',
+    ]);
+});
+
+// Protected Investor Dashboard & Document Vault Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/investor/dashboard', [InvestorDashboardController::class, 'index'])->name('investor.dashboard');
+    Route::get('/investor/vault/document/{id}/download', [InvestorDashboardController::class, 'downloadDocument'])->name('investor.vault.download');
+    Route::post('/investor/vault/reupload', [InvestorDashboardController::class, 'reuploadDocument'])->name('investor.vault.reupload');
+    Route::get('/investor/agreement/download', [InvestorDashboardController::class, 'downloadAgreement'])->name('investor.agreement.download');
+});
+
 
 

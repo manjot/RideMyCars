@@ -199,5 +199,20 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(PaymentMethod::class)->where('is_default', true);
     }
+
+    public function investorProfile()
+    {
+        return $this->hasOne(InvestorProfile::class);
+    }
+
+    public function isInvestor(): bool
+    {
+        return $this->role === 'investor' || $this->investorProfile()->exists();
+    }
+
+    public function hasApprovedInvestorProfile(): bool
+    {
+        return $this->investorProfile && $this->investorProfile->isVerified();
+    }
 }
 

@@ -746,6 +746,78 @@
                             </div>
                         </div>
 
+                        <!-- Investors Dropdown -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" class="text-sm font-semibold transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap {{ request()->is('investor*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Investors</span>
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">92% Net</span>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
+                                 style="display: none;">
+                                <div class="space-y-1 pb-1">
+                                    <a href="/investor" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs">🌐</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investor Portal Overview</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Super-App Expansion Gateway</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/why-invest" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/why-invest*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 text-xs">📈</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Why Invest</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Host-owned single cohort thesis</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/opportunity" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/opportunity*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-xs">🚀</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investment Opportunity</div>
+                                            <div class="text-[10px] text-gray-500 truncate">500-driver cohort metrics</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/plans" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/plans*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📊</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investment Plans</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Tranches A (10%), B (14%), C (22%)</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/faq" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/faq*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-xs">❓</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investor FAQ</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Compliance, escrow, and returns</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/contact" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/contact*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 text-xs">✉️</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Contact Relations</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Marilyn Watson / Compliance</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="pt-2 border-t border-gray-100 dark:border-white/5 grid grid-cols-2 gap-1.5">
+                                    <a href="/investor/login" class="py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-colors">
+                                        Investor Login
+                                    </a>
+                                    <a href="/investor/register" class="py-2 text-center text-xs font-black text-black bg-brand-500 hover:bg-brand-600 rounded-xl shadow-xs transition-all">
+                                        Register Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Pricing -->
                         <a class="text-sm font-semibold transition-all whitespace-nowrap px-3.5 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
                     @endauth
@@ -1375,6 +1447,40 @@
                 </div>
             </div>
 
+            <!-- Investor Hub Mobile -->
+            <div class="space-y-1.5 pt-1 border-t border-gray-100 dark:border-white/10">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-500 px-3.5 flex items-center justify-between">
+                    <span>Investor Portal (NDFG LLC)</span>
+                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">92% Margin</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 px-1">
+                    <a href="/investor" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>🌐</span> <span>Portal Home</span>
+                    </a>
+                    <a href="/investor/why-invest" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>📈</span> <span>Why Invest</span>
+                    </a>
+                    <a href="/investor/opportunity" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>🚀</span> <span>Opportunity</span>
+                    </a>
+                    <a href="/investor/plans" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>📊</span> <span>Investment Plans</span>
+                    </a>
+                    <a href="/investor/faq" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>❓</span> <span>Investor FAQ</span>
+                    </a>
+                    <a href="/investor/contact" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
+                        <span>✉️</span> <span>Contact Relations</span>
+                    </a>
+                    <a href="/investor/login" class="px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 font-bold text-gray-800 dark:text-white transition-colors flex items-center gap-1.5">
+                        <span>🔒</span> <span>Investor Login</span>
+                    </a>
+                    <a href="/investor/register" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold transition-colors flex items-center gap-1.5">
+                        <span>📝</span> <span>Onboarding</span>
+                    </a>
+                </div>
+            </div>
+
             <!-- Mobile Auth Action Buttons -->
             <div class="pt-3 border-t border-gray-100 dark:border-white/10">
                 @auth
@@ -1724,6 +1830,18 @@
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">Compliance & Trust</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="/investor/regulatory-notices" class="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Regulatory Disclosures</span>
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">SEC</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/investor" class="text-brand-400 hover:text-brand-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Investor Relations</span>
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">NDFG</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -1888,8 +2006,42 @@
                 </div>
             </div>
             
+            <!-- Global Investor Website Footer Disclaimers (SRS Specification Section 2) -->
+            <div class="pt-8 pb-6 border-t border-white/[0.08] text-xs">
+                <div class="rounded-2xl bg-white/[0.02] border border-white/[0.08] p-5 sm:p-6 lg:p-7 space-y-4">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-400">
+                            ⚖️ REGULATORY COMPLIANCE & LEGAL NOTICES (NDFG LLC / EMINSANG GROUP)
+                        </h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-[11.5px] sm:text-[12px] text-zinc-400 leading-relaxed">
+                        <div>
+                            <p class="mb-3">
+                                <strong class="text-zinc-200">General Offering Restrictions:</strong> The information contained on this web portal does not constitute a public offer of securities in any jurisdiction. Access to the Ride My Cars Ghana project data room and the investment offerings of Ride My Cars New Development Finance Group (NDFG) LLC is strictly restricted to verified institutional, sophisticated, and accredited private placement investors who meet specific regional wealth or income thresholds.
+                            </p>
+                            <p>
+                                <strong class="text-zinc-200">United States Investors:</strong> Securities offered through this portal have not been registered under the U.S. Securities Act of 1933, as amended, and are being issued under private placement exemptions via Rule 506(c) of Regulation D. These securities are subject to strict legal transfer restrictions. Investors must undergo mandatory independent verification of their Accredited Investor status before executing any operating agreements.
+                            </p>
+                        </div>
+                        <div>
+                            <p class="mb-3">
+                                <strong class="text-zinc-200">United Kingdom & European Union Investors:</strong> Content on this portal has not been approved by an authorized person under Section 21 of the Financial Services and Markets Act 2000 (FSMA). This opportunity is exempt from the requirement to publish a prospectus under Article 1(4) of the EU Prospectus Regulation and FCA Handbook rules, and is directed exclusively at Certified Sophisticated Investors and Professional Clients.
+                            </p>
+                            <p class="mb-3">
+                                <strong class="text-zinc-200">Ghanaian & Cross-Border Remittance:</strong> All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Eminsang Group Limited (Ghana)</strong>. This arrangement ensures that cross-border capital repatriation routes comply with Ghana's central bank and Securities and Exchange Commission (SEC) guidelines.
+                            </p>
+                            <p>
+                                <strong class="text-amber-400/90">Risk Warning:</strong> Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily revenue per driver across a 500-driver cohort) are projections and do not guarantee future exact yields. Prospective partners should carefully analyze the NDFG LLC Operating Agreement, performance clawback matrices, and Year 3 structured buyout provisions before deploying capital.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Bottom Footer Bar -->
-            <div class="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
+            <div class="pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
                 <p class="text-center md:text-left font-medium">
                     {{ site_setting('footer.copyright', '© 2026 New Development Finance Group Pty Ltd. All rights reserved.') }}
                 </p>
