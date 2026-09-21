@@ -89,7 +89,24 @@
                 </div>
             </div>
 
-            <div class="mt-12 text-center">
+            <!-- Legal Hub Quick Links -->
+            <div class="mt-12 p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                    <span class="font-bold text-slate-900 dark:text-white">Related Legal Policies:</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="/terms-and-conditions" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 font-semibold transition-colors">Terms & Conditions</a>
+                    <span class="text-slate-300 dark:text-slate-700">•</span>
+                    <a href="/privacy-policy" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 font-semibold transition-colors">Privacy Policy</a>
+                    <span class="text-slate-300 dark:text-slate-700">•</span>
+                    <a href="/refund-cancellation-policy" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 font-semibold transition-colors">Refund Policy</a>
+                    <span class="text-slate-300 dark:text-slate-700">•</span>
+                    <a href="/legal" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 font-semibold transition-colors">Compliance & Trust</a>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
                 <a href="/investor/register" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-400 text-black font-black text-sm tracking-wide transition-all shadow-md shadow-brand-500/25 hover:scale-105">
                     Proceed to Accreditation Sequence →
                 </a>

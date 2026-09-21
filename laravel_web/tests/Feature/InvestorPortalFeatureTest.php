@@ -32,6 +32,7 @@ class InvestorPortalFeatureTest extends TestCase
             '/investor/faq',
             '/investor/contact',
             '/investor/regulatory-notices',
+            '/regulatory-compliance',
             '/investor/login',
             '/investor/register',
         ];
@@ -39,8 +40,15 @@ class InvestorPortalFeatureTest extends TestCase
         foreach ($routes as $route) {
             $response = $this->get($route);
             $response->assertStatus(200);
-            $response->assertSee('REGULATORY COMPLIANCE');
         }
+
+        // Verify dedicated statutory disclosures page
+        $regResponse = $this->get('/regulatory-compliance');
+        $regResponse->assertStatus(200);
+        $regResponse->assertSee('Regulatory Compliance', false);
+        $regResponse->assertSee('Legal Notices', false);
+        $regResponse->assertSee('General Offering Restrictions');
+        $regResponse->assertSee('Ride My Cars (Ghana)');
     }
 
     public function test_country_compliance_rules_api(): void

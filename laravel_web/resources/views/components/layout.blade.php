@@ -1580,7 +1580,7 @@
             </div>
 
             <!-- Main Grid: 12-Column Responsive Layout -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-14">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-10">
                 
                 <!-- Brand Column (Span 4) -->
                 <div class="lg:col-span-4 space-y-5">
@@ -1609,7 +1609,7 @@
                     </div>
                 </div>
 
-                <!-- Column 1: Services (Span 2) -->
+                <!-- Column 1: Services (Span 2) — 8 Items -->
                 <div class="lg:col-span-2 space-y-4">
                     <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
                         <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
@@ -1668,7 +1668,7 @@
                     </ul>
                 </div>
 
-                <!-- Column 2: Company (Span 2) -->
+                <!-- Column 2: Company (Span 2) — Exactly 8 Items -->
                 <div class="lg:col-span-2 space-y-4">
                     <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
                         <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
@@ -1708,10 +1708,22 @@
                                 <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-400 border border-purple-500/30">Host</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="/investor" class="text-brand-400 hover:text-brand-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Investor Relations</span>
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">NDFG</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/contact#offices" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Global Offices</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">HQ</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
-                <!-- Column 3: Support (Span 2) -->
+                <!-- Column 3: Support (Span 2) — Exactly 8 Items -->
                 <div class="lg:col-span-2 space-y-4">
                     <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
                         <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
@@ -1719,7 +1731,7 @@
                     </h4>
                     <ul class="space-y-3 text-[13px] sm:text-sm">
                         <li>
-                            <a href="/about" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                            <a href="/contact" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">Help Center</span>
                             </a>
                         </li>
@@ -1752,6 +1764,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/disputes" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Disputes & Claims</span>
+                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">72h</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="/apps#driver-app" class="text-amber-400/90 hover:text-amber-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">Download Driver App</span>
                                 <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">90%</span>
@@ -1760,11 +1778,16 @@
                     </ul>
                 </div>
 
-                <!-- Column 4: Legal (Span 2) -->
+                <!-- Column 4: Legal & Compliance (Span 2) — Exactly 8 Items & Direct Link to Regulatory Disclosures -->
                 <div class="lg:col-span-2 space-y-4">
-                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 flex items-center gap-2 mb-4">
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
-                        Legal & Compliance
+                    <h4 class="text-[11px] font-black uppercase tracking-widest text-zinc-200 mb-4">
+                        <a href="/regulatory-compliance" class="flex items-center justify-between hover:text-brand-400 transition-colors group" title="View Regulatory Compliance & Legal Notices">
+                            <span class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(249,197,42,0.8)]"></span>
+                                Legal & Compliance
+                            </span>
+                            <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
                     </h4>
                     <ul class="space-y-3 text-[13px] sm:text-sm">
                         <li>
@@ -1794,18 +1817,8 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/disputes" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Disputes & Claims (72h)</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/contact" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Contact Us</span>
-                            </a>
-                        </li>
-                        <li>
                             <a href="/driver-compliance" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Onboarding</span>
+                                <span class="group-hover:translate-x-1 transition-transform duration-150">Driver Compliance</span>
                             </a>
                         </li>
                         <li>
@@ -1814,15 +1827,9 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/investor/regulatory-notices" class="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                            <a href="/regulatory-compliance" class="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5" title="Statutory SEC & Ghana Securities Disclosures">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150">Regulatory Disclosures</span>
                                 <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">SEC</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/investor" class="text-brand-400 hover:text-brand-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150">Investor Relations</span>
-                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30">NDFG</span>
                             </a>
                         </li>
                     </ul>
@@ -1989,40 +1996,6 @@
                 </div>
             </div>
             
-            <!-- Global Investor Website Footer Disclaimers (SRS Specification Section 2) -->
-            <div class="pt-8 pb-6 border-t border-white/[0.08] text-xs">
-                <div class="rounded-2xl bg-white/[0.02] border border-white/[0.08] p-5 sm:p-6 lg:p-7 space-y-4">
-                    <div class="flex items-center gap-2.5 mb-3">
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
-                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-400">
-                            ⚖️ REGULATORY COMPLIANCE & LEGAL NOTICES (NDFG LLC / RIDE MY CARS (GHANA))
-                        </h4>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-[11.5px] sm:text-[12px] text-zinc-400 leading-relaxed">
-                        <div>
-                            <p class="mb-3">
-                                <strong class="text-zinc-200">General Offering Restrictions:</strong> The information contained on this web portal does not constitute a public offer of securities in any jurisdiction. Access to the Ride My Cars Ghana project data room and the investment offerings of Ride My Cars New Development Finance Group (NDFG) LLC is strictly restricted to verified institutional, sophisticated, and accredited private placement investors who meet specific regional wealth or income thresholds.
-                            </p>
-                            <p>
-                                <strong class="text-zinc-200">United States Investors:</strong> Securities offered through this portal have not been registered under the U.S. Securities Act of 1933, as amended, and are being issued under private placement exemptions via Rule 506(c) of Regulation D. These securities are subject to strict legal transfer restrictions. Investors must undergo mandatory independent verification of their Accredited Investor status before executing any operating agreements.
-                            </p>
-                        </div>
-                        <div>
-                            <p class="mb-3">
-                                <strong class="text-zinc-200">United Kingdom & European Union Investors:</strong> Content on this portal has not been approved by an authorized person under Section 21 of the Financial Services and Markets Act 2000 (FSMA). This opportunity is exempt from the requirement to publish a prospectus under Article 1(4) of the EU Prospectus Regulation and FCA Handbook rules, and is directed exclusively at Certified Sophisticated Investors and Professional Clients.
-                            </p>
-                            <p class="mb-3">
-                                <strong class="text-zinc-200">Ghanaian & Cross-Border Remittance:</strong> All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Ride My Cars (Ghana)</strong>. This arrangement ensures that cross-border capital repatriation routes comply with Ghana's central bank and Securities and Exchange Commission (SEC) guidelines.
-                            </p>
-                            <p>
-                                <strong class="text-amber-400/90">Risk Warning:</strong> Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily basic platform revenue per active vehicle across a 500-unit cohort) are projections and do not guarantee future exact yields. Prospective partners should carefully analyze the NDFG LLC Operating Agreement, performance clawback matrices, and Year 3 structured buyout provisions before deploying capital.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Bottom Footer Bar -->
             <div class="pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
                 <p class="text-center md:text-left font-medium">

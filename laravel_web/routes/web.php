@@ -3863,6 +3863,10 @@ Route::get('/investor/faq', function () {
     return view('investor.faq');
 })->name('investor.faq');
 
+Route::get('/regulatory-compliance', function () {
+    return view('investor.regulatory-notices');
+})->name('regulatory-compliance');
+
 Route::get('/investor/regulatory-notices', function () {
     return view('investor.regulatory-notices');
 })->name('investor.regulatory-notices');
