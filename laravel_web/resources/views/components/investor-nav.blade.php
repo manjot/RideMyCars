@@ -10,11 +10,15 @@
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </span>
                 <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Ghana Cohort: <span class="text-amber-600 dark:text-amber-400 font-bold">50 GHC/day Basic Rev</span>
+                    COHORT 1: <span class="text-amber-600 dark:text-amber-400 font-bold">500 UPD (Users Per Day)</span>
                 </span>
                 <span class="text-slate-300 dark:text-slate-700">•</span>
                 <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                     85–92% Targeted Margin
+                </span>
+                <span class="text-slate-300 dark:text-slate-700">•</span>
+                <span class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                    25,000 GHC/day
                 </span>
             </div>
 

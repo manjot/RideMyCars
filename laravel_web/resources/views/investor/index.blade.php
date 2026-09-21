@@ -49,14 +49,14 @@
 
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
                             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Platform Units</div>
-                                <div class="text-xl font-black text-slate-900 dark:text-white mt-0.5">500 Active Units</div>
-                                <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Cohort 1 Base</div>
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Active Base</div>
+                                <div class="text-xl font-black text-slate-900 dark:text-white mt-0.5">500 UPD</div>
+                                <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Users Per Day</div>
                             </div>
                             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                                 <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Baseline</div>
                                 <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">25,000 GHC</div>
-                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">50 GHC / active unit</div>
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">50 GHC / user / day</div>
                             </div>
                             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                                 <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Net Margin</div>

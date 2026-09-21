@@ -9,9 +9,9 @@
              x-data="{
                 activeScale: 'y1',
                 scaleData: {
-                    'y1': { drivers: '500 Platform Units', rev: '50 GHC', dailyGmv: '25,000 GHC', annualGross: '9,125,000 GHC', netMargin: '8,395,000 GHC', qPool: '2,098,750 GHC' },
-                    'y2': { drivers: '1,250 Platform Units', rev: '50 GHC', dailyGmv: '62,500 GHC', annualGross: '22,812,500 GHC', netMargin: '20,987,500 GHC', qPool: '5,246,875 GHC' },
-                    'y3': { drivers: '2,500 Platform Units', rev: '50 GHC', dailyGmv: '125,000 GHC', annualGross: '45,625,000 GHC', netMargin: '41,975,000 GHC', qPool: '10,493,750 GHC' }
+                    'y1': { drivers: '500 UPD (Users Per Day)', rev: '50 GHC', dailyGmv: '25,000 GHC', annualGross: '9,125,000 GHC', netMargin: '8,395,000 GHC', qPool: '2,098,750 GHC' },
+                    'y2': { drivers: '1,250 UPD (Users Per Day)', rev: '50 GHC', dailyGmv: '62,500 GHC', annualGross: '22,812,500 GHC', netMargin: '20,987,500 GHC', qPool: '5,246,875 GHC' },
+                    'y3': { drivers: '2,500 UPD (Users Per Day)', rev: '50 GHC', dailyGmv: '125,000 GHC', annualGross: '45,625,000 GHC', netMargin: '41,975,000 GHC', qPool: '10,493,750 GHC' }
                 }
              }">
             <!-- Header -->
@@ -29,17 +29,17 @@
                     <button type="button" @click="activeScale = 'y1'"
                             :class="activeScale === 'y1' ? 'bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
                             class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                        Year 1 (500 Active Units)
+                        Year 1 (500 UPD)
                     </button>
                     <button type="button" @click="activeScale = 'y2'"
                             :class="activeScale === 'y2' ? 'bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
                             class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                        Year 2 (1,250 Active Units)
+                        Year 2 (1,250 UPD)
                     </button>
                     <button type="button" @click="activeScale = 'y3'"
                             :class="activeScale === 'y3' ? 'bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
                             class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                        Year 3 (2,500 Active Units)
+                        Year 3 (2,500 UPD)
                     </button>
                 </div>
             </div>
@@ -53,10 +53,10 @@
                             <span>Cohort Unit Economics Engine</span>
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                            <span x-text="scaleData[activeScale].drivers">500 Platform Units</span> Expansion Model
+                            <span x-text="scaleData[activeScale].drivers">500 UPD (Users Per Day)</span> Expansion Model
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xl">
-                            Modeled upon a baseline of 50 GHC daily basic platform revenue per active commercial unit with host-owned agility.
+                            Modeled upon a baseline of 50 GHC daily basic platform revenue per active user (UPD) with host-owned agility.
                         </p>
                     </div>
 
@@ -89,10 +89,10 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-[#131926]">
                             <tr>
-                                <td class="p-4 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-700">Active Commercial Fleet & Platform Units</td>
-                                <td class="p-4 font-medium border-r border-slate-200 dark:border-slate-700" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y1' }">500 Active Units</td>
-                                <td class="p-4 font-medium border-r border-slate-200 dark:border-slate-700" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y2' }">1,250 Active Units</td>
-                                <td class="p-4 font-medium" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y3' }">2,500 Active Units</td>
+                                <td class="p-4 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-700">Daily Active Users / Units (UPD)</td>
+                                <td class="p-4 font-medium border-r border-slate-200 dark:border-slate-700" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y1' }">500 UPD</td>
+                                <td class="p-4 font-medium border-r border-slate-200 dark:border-slate-700" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y2' }">1,250 UPD</td>
+                                <td class="p-4 font-medium" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y3' }">2,500 UPD</td>
                             </tr>
                             <tr class="bg-slate-50/50 dark:bg-slate-850/40">
                                 <td class="p-4 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-700">Daily Platform Revenue Baseline (50 GHC/day)</td>
