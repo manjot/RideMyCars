@@ -71,6 +71,8 @@ class InvestorDashboardController extends Controller
             'local_branch' => 'Airport City Branch, Accra',
             'momo_merchant_id' => 'RMC-GHANA-ESCROW',
             'momo_number' => '+233 24 000 8899 (MTN MoMo / Telecel Cash)',
+            'stripe_merchant_name' => 'Ride My Cars LLC (Stripe Verified)',
+            'stripe_support' => 'Visa, MasterCard, American Express, Apple Pay',
             'reference_code' => $investor->payment_reference_code,
         ];
 

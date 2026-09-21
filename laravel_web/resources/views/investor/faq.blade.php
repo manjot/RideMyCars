@@ -49,7 +49,7 @@
                         <span class="text-amber-600 dark:text-brand-400 text-xl font-black" x-text="active === 3 ? '−' : '+'"></span>
                     </button>
                     <div x-show="active === 3" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                        <p>Dividends are paid quarterly directly to your verified remittance path (International SWIFT wire, domestic Ghana Cedis transfer, or Mobile Money push). Distributions are drawn from net cohort cash flow after operational reserves, reflecting your tranche equity stake (10.0%, 14.0%, or 22.0%).</p>
+                        <p>Dividends are paid quarterly directly to your verified remittance path (International SWIFT wire, domestic Ghana Cedis transfer, Stripe card payout, or MoMo Pay push). Distributions are drawn from net cohort cash flow after operational reserves, reflecting your tranche equity stake (10.0%, 14.0%, or 22.0%).</p>
                     </div>
                 </div>
 
@@ -82,7 +82,7 @@
                         <span class="text-amber-600 dark:text-brand-400 text-xl font-black" x-text="active === 6 ? '−' : '+'"></span>
                     </button>
                     <div x-show="active === 6" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                        <p>Global securities and anti-money laundering regulations strictly forbid accepting investment funds prior to positive identity verification and regulatory suitability vetting. Wire routing codes, escrow account coordinates, and MoMo payment references unlock only after compliance officers approve your profile.</p>
+                        <p>Global securities and anti-money laundering regulations strictly forbid accepting investment funds prior to positive identity verification and regulatory suitability vetting. Wire routing codes, escrow account coordinates, Stripe settlement links, and MoMo Pay merchant references unlock only after compliance officers approve your profile.</p>
                     </div>
                 </div>
             </div>

@@ -128,26 +128,33 @@
             </div>
 
             <!-- Capital Remittance Channels Grid with Top Accent Stripes -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-                <div class="p-7 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-blue-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="text-3xl mb-3">🏦</div>
-                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Multi-Currency Bank SWIFT Wire</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-indigo-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="text-3xl mb-3">💳</div>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Stripe Gateway</h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        International wires accepted in USD, EUR, GBP, and CAD routed into an institutional escrow account managed under Ride My Cars LLC.
+                        Instant, secure card settlement supporting Visa, Mastercard, and Apple Pay integrated through the Ride My Cars Stripe portal.
                     </p>
                 </div>
-                <div class="p-7 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-amber-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="text-3xl mb-3">📱</div>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">MoMo Pay Gateway</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Instant push collections via MTN MoMo and Telecel Cash merchant rails for domestic West African capital deployment.
+                    </p>
+                </div>
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-amber-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                     <div class="text-3xl mb-3">🇬🇭</div>
                     <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Ghanaian Local Banking Rails</h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         Direct local clearing (ACH / GHIPSS) in Ghana Cedis (GHC) to Ride My Cars (Ghana) corporate custody accounts in Accra.
                     </p>
                 </div>
-                <div class="p-7 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="text-3xl mb-3">📱</div>
-                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Mobile Money Gateway</h3>
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-blue-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="text-3xl mb-3">🏦</div>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Multi-Currency Bank SWIFT Wire</h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Instant merchant push collections supported via MTN MoMo and Telecel Cash for regional and domestic West African capital deployment.
+                        International wires accepted in USD, EUR, GBP, and CAD routed into an institutional escrow account managed under Ride My Cars LLC.
                     </p>
                 </div>
             </div>

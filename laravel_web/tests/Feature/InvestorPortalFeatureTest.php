@@ -160,6 +160,67 @@ class InvestorPortalFeatureTest extends TestCase
         ]);
     }
 
+    public function test_investor_registration_with_stripe_and_momo_pay(): void
+    {
+        Storage::fake('local');
+
+        // Test Stripe
+        $stripeEmail = 'stripe.investor.' . time() . '@example.com';
+        $file = UploadedFile::fake()->create('accreditation_cpa.pdf', 500, 'application/pdf');
+
+        $this->post('/investor/register', [
+            'legal_name' => 'Stripe Global Investor LLC',
+            'email' => $stripeEmail,
+            'phone_number' => '+1 415 555 0188',
+            'country_code' => 'USA',
+            'country_residence' => 'United States',
+            'entity_type' => 'corporate',
+            'address' => '500 Howard St',
+            'city' => 'San Francisco',
+            'state' => 'CA',
+            'postal_code' => '94105',
+            'password' => 'CapitalSecure2026!',
+            'selected_tranche' => 'A',
+            'remittance_method' => 'stripe',
+            'declarations' => ['income_check' => '1'],
+            'document_cpa_letter' => $file,
+            'governance_clause_accepted' => '1',
+            'signer_name' => 'Stripe Partner',
+        ])->assertRedirect('/investor/dashboard');
+
+        $stripeProfile = InvestorProfile::where('email', $stripeEmail)->first();
+        $this->assertNotNull($stripeProfile);
+        $this->assertEquals('stripe', $stripeProfile->remittance_method);
+
+        // Test MoMo Pay
+        $momoEmail = 'momo.investor.' . time() . '@example.com';
+        $file2 = UploadedFile::fake()->create('accreditation_tin.pdf', 500, 'application/pdf');
+
+        $this->post('/investor/register', [
+            'legal_name' => 'MoMo Regional Ventures Ltd',
+            'email' => $momoEmail,
+            'phone_number' => '+233 24 555 0199',
+            'country_code' => 'GHA',
+            'country_residence' => 'Ghana',
+            'entity_type' => 'corporate',
+            'address' => 'Airport City Tower',
+            'city' => 'Accra',
+            'state' => 'Greater Accra',
+            'postal_code' => '00233',
+            'password' => 'CapitalSecure2026!',
+            'selected_tranche' => 'B',
+            'remittance_method' => 'momo_pay',
+            'declarations' => ['tin_check' => '1'],
+            'document_cpa_letter' => $file2,
+            'governance_clause_accepted' => '1',
+            'signer_name' => 'MoMo Director',
+        ])->assertRedirect('/investor/dashboard');
+
+        $momoProfile = InvestorProfile::where('email', $momoEmail)->first();
+        $this->assertNotNull($momoProfile);
+        $this->assertEquals('momo_pay', $momoProfile->remittance_method);
+    }
+
     public function test_approved_investor_can_download_agreement_certificate(): void
     {
         $user = User::where('email', 'investor.approved@ridemycars.com')->first();

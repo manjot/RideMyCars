@@ -169,7 +169,7 @@
                                 SEC Exempt Private Placement Routing. Validated Ghana Card/TIN verification via <strong>Ride My Cars (Ghana)</strong> with local MoMo (MTN / Telecel) and domestic clearing accounts.
                             </p>
                             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
-                                <div>• <strong>Escrow Rail:</strong> Local Cedis (GHC) & Mobile Money</div>
+                                <div>• <strong>Escrow Rail:</strong> Local Cedis (GHC) & MoMo Pay</div>
                                 <div>• <strong>Required:</strong> Ghana Card / Corporate TIN</div>
                             </div>
                         </div>
@@ -593,7 +593,7 @@
                     </div>
                     <div>
                         <h4 class="text-base font-black text-slate-900 dark:text-white">Backed by Ride My Cars (Ghana)</h4>
-                        <p class="text-xs text-slate-600 dark:text-slate-400">All domestic clearing, Mobile Money escrow custody, and cross-border bank repatriation are administered through certified frameworks.</p>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">All domestic clearing, MoMo Pay escrow custody, and cross-border bank repatriation are administered through certified frameworks.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 shrink-0">

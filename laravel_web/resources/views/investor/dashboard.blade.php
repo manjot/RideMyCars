@@ -369,49 +369,48 @@
 
                         <!-- Wire Coordinates Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- International SWIFT Wire -->
-                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-3 shadow-sm">
-                                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                                    <span class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">International Bank SWIFT Wire (USD / EUR / GBP / CAD)</span>
-                                    <span class="text-xl">🌐</span>
-                                </div>
-                                <div class="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-                                    <div class="flex justify-between items-center"><span class="text-slate-400">Escrow Bank:</span> <strong class="text-slate-900 dark:text-white">{{ $escrowDetails['swift_bank_name'] }}</strong></div>
-                                    <div class="flex justify-between items-center"><span class="text-slate-400">Account Name:</span> <strong class="text-slate-900 dark:text-white">{{ $escrowDetails['swift_account_name'] }}</strong></div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-slate-400">USD Account No:</span>
-                                        <div class="flex items-center gap-1">
-                                            <strong class="text-amber-600 dark:text-amber-400 font-mono">{{ $escrowDetails['swift_account_usd'] }}</strong>
-                                            <button type="button" @click="navigator.clipboard.writeText('{{ $escrowDetails['swift_account_usd'] }}'); copiedItem = 'usd'; setTimeout(() => copiedItem = '', 2000)" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                                <span x-text="copiedItem === 'usd' ? '✓' : 'Copy'"></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-slate-400">IBAN:</span>
-                                        <div class="flex items-center gap-1">
-                                            <strong class="text-slate-900 dark:text-white font-mono">{{ $escrowDetails['swift_iban'] }}</strong>
-                                            <button type="button" @click="navigator.clipboard.writeText('{{ $escrowDetails['swift_iban'] }}'); copiedItem = 'iban'; setTimeout(() => copiedItem = '', 2000)" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                                <span x-text="copiedItem === 'iban' ? '✓' : 'Copy'"></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-slate-400">SWIFT/BIC:</span>
-                                        <div class="flex items-center gap-1">
-                                            <strong class="text-slate-900 dark:text-white font-mono">{{ $escrowDetails['swift_code'] }}</strong>
-                                            <button type="button" @click="navigator.clipboard.writeText('{{ $escrowDetails['swift_code'] }}'); copiedItem = 'swift'; setTimeout(() => copiedItem = '', 2000)" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                                <span x-text="copiedItem === 'swift' ? '✓' : 'Copy'"></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center"><span class="text-slate-400">Mandatory Memo:</span> <strong class="text-amber-600 dark:text-amber-400 font-mono">{{ $escrowDetails['reference_code'] }}</strong></div>
-                                </div>
-                            </div>
-
-                            <!-- Ghana Local Banking & Mobile Money -->
+                            <!-- Bank Wire & Local Clearing -->
                             <div class="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-4 shadow-sm">
                                 <div>
+                                    <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                                        <span class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Bank SWIFT Wire (USD / EUR / GBP / CAD)</span>
+                                        <span class="text-xl">🌐</span>
+                                    </div>
+                                    <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 pt-2">
+                                        <div class="flex justify-between items-center"><span class="text-slate-400">Escrow Bank:</span> <strong class="text-slate-900 dark:text-white">{{ $escrowDetails['swift_bank_name'] }}</strong></div>
+                                        <div class="flex justify-between items-center"><span class="text-slate-400">Account Name:</span> <strong class="text-slate-900 dark:text-white">{{ $escrowDetails['swift_account_name'] }}</strong></div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-slate-400">USD Account No:</span>
+                                            <div class="flex items-center gap-1">
+                                                <strong class="text-amber-600 dark:text-amber-400 font-mono">{{ $escrowDetails['swift_account_usd'] }}</strong>
+                                                <button type="button" @click="navigator.clipboard.writeText('{{ $escrowDetails['swift_account_usd'] }}'); copiedItem = 'usd'; setTimeout(() => copiedItem = '', 2000)" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                    <span x-text="copiedItem === 'usd' ? '✓' : 'Copy'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-slate-400">IBAN:</span>
+                                            <div class="flex items-center gap-1">
+                                                <strong class="text-slate-900 dark:text-white font-mono">{{ $escrowDetails['swift_iban'] }}</strong>
+                                                <button type="button" @click="navigator.clipboard.writeText('{{ $escrowDetails['swift_iban'] }}'); copiedItem = 'iban'; setTimeout(() => copiedItem = '', 2000)" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                    <span x-text="copiedItem === 'iban' ? '✓' : 'Copy'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-slate-400">SWIFT/BIC:</span>
+                                            <div class="flex items-center gap-1">
+                                                <strong class="text-slate-900 dark:text-white font-mono">{{ $escrowDetails['swift_code'] }}</strong>
+                                                <button type="button" @click="navigator.clipboard.writeText('{{ $escrowDetails['swift_code'] }}'); copiedItem = 'swift'; setTimeout(() => copiedItem = '', 2000)" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                    <span x-text="copiedItem === 'swift' ? '✓' : 'Copy'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center"><span class="text-slate-400">Mandatory Memo:</span> <strong class="text-amber-600 dark:text-amber-400 font-mono">{{ $escrowDetails['reference_code'] }}</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
                                     <div class="flex items-center justify-between mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
                                         <span class="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Ghana Cedis (GHC) Local Clearing</span>
                                         <span class="text-xl">🇬🇭</span>
@@ -429,10 +428,28 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Direct Payment Gateways: Stripe & MoMo Pay -->
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-4 shadow-sm">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                                        <span class="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Stripe Gateway (Cards & Apple Pay)</span>
+                                        <span class="text-xl">💳</span>
+                                    </div>
+                                    <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                                        <div class="flex justify-between items-center"><span class="text-slate-400">Merchant:</span> <strong class="text-slate-900 dark:text-white">{{ $escrowDetails['stripe_merchant_name'] ?? 'Ride My Cars LLC (Stripe Verified)' }}</strong></div>
+                                        <div class="flex justify-between items-center"><span class="text-slate-400">Accepted:</span> <span class="font-bold text-slate-800 dark:text-slate-200">{{ $escrowDetails['stripe_support'] ?? 'Visa, MasterCard, Apple Pay' }}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-slate-400">Mandatory Memo:</span> <strong class="text-amber-600 dark:text-amber-400 font-mono">{{ $escrowDetails['reference_code'] }}</strong></div>
+                                        <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 text-[11px] text-indigo-800 dark:text-indigo-300 mt-2">
+                                            To initiate immediate card settlement via Stripe, quote your reference code to the compliance desk or use your direct invoice checkout link.
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
                                     <div class="flex items-center justify-between mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
-                                        <span class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Mobile Money Gateway (MTN MoMo / Telecel Cash)</span>
+                                        <span class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">MoMo Pay Gateway (MTN / Telecel Direct)</span>
                                         <span class="text-xl">📱</span>
                                     </div>
                                     <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">

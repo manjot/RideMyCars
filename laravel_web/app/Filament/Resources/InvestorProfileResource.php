@@ -94,10 +94,12 @@ class InvestorProfileResource extends Resource
                             Forms\Components\Select::make('remittance_method')
                                 ->label('Remittance Method')
                                 ->options([
+                                    'stripe' => 'Stripe Gateway (Cards & Apple Pay)',
+                                    'momo_pay' => 'MoMo Pay Gateway (MTN / Telecel Cash)',
                                     'wire_swift' => 'Bank Wire (USD/EUR/GBP/CAD SWIFT)',
                                     'local_bank_ghana' => 'Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))',
                                     'local_bank_eminsang' => 'Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))',
-                                    'mobile_money' => 'Mobile Money Gateway (MTN MoMo/Telecel Cash)',
+                                    'mobile_money' => 'MoMo Pay (Legacy)',
                                 ]),
                         ])->columns(2),
 
