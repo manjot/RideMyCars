@@ -62,7 +62,7 @@
 
                     <div class="flex flex-wrap items-center gap-4">
                         <div class="px-5 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
-                            <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Driver Rev</div>
+                            <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Basic Platform Revenue</div>
                             <div class="text-xl font-black text-amber-600 dark:text-amber-400" x-text="scaleData[activeScale].rev">50 GHC</div>
                         </div>
                         <div class="px-5 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
