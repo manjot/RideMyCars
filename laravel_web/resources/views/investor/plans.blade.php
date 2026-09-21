@@ -515,7 +515,7 @@
 
                             <div class="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200 dark:border-indigo-500/30 text-center mb-6">
                                 <span class="text-xs text-slate-600 dark:text-slate-300">Equity Allocation:</span>
-                                <div class="text-xl font-black text-indigo-600 dark:text-indigo-400">10.0% Fixed Stake</div>
+                                <div class="text-xl font-black text-indigo-600 dark:text-indigo-400">6.0% Fixed Stake</div>
                             </div>
 
                             <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
@@ -567,7 +567,7 @@
 
                             <div class="p-3.5 rounded-2xl bg-indigo-600 text-white text-center mb-6 shadow-xs">
                                 <span class="text-xs font-bold opacity-80">Equity Allocation:</span>
-                                <div class="text-xl font-black">14.0% Fixed Stake</div>
+                                <div class="text-xl font-black">10.0% Fixed Stake</div>
                             </div>
 
                             <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
@@ -615,7 +615,7 @@
 
                             <div class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 text-center mb-6">
                                 <span class="text-xs text-slate-600 dark:text-slate-300">Equity Allocation:</span>
-                                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">22.0% Fixed Stake</div>
+                                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">18.0% Fixed Stake</div>
                             </div>
 
                             <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
