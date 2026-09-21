@@ -275,14 +275,14 @@
 
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Current Active Drivers</div>
-                                <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">500</div>
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Platform Fleet Units</div>
+                                <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">500 Units</div>
                                 <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">Synchronized Expansion Base</div>
                             </div>
                             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
                                 <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Cohort Baseline</div>
                                 <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">25,000 GHC</div>
-                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">50 GHC / driver daily baseline</div>
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">50 GHC / active unit baseline</div>
                             </div>
                             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
                                 <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Net Contribution Margin</div>
@@ -478,7 +478,7 @@
                                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-[#131926]">
                                     <tr>
                                         <td class="p-3.5 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-700">Year 1 (Q1-Q4)</td>
-                                        <td class="p-3.5 border-r border-slate-200 dark:border-slate-700 font-medium">500 Drivers</td>
+                                        <td class="p-3.5 border-r border-slate-200 dark:border-slate-700 font-medium">500 Platform Units</td>
                                         <td class="p-3.5 text-amber-600 dark:text-amber-400 font-mono font-bold border-r border-slate-200 dark:border-slate-700">25,000 GHC/day</td>
                                         <td class="p-3.5 font-mono border-r border-slate-200 dark:border-slate-700">9,125,000 GHC</td>
                                         <td class="p-3.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold border-r border-slate-200 dark:border-slate-700">8,395,000 GHC</td>
@@ -486,7 +486,7 @@
                                     </tr>
                                     <tr class="bg-slate-50/50 dark:bg-slate-800/30">
                                         <td class="p-3.5 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-700">Year 2 (Q1-Q4)</td>
-                                        <td class="p-3.5 border-r border-slate-200 dark:border-slate-700 font-medium">1,250 Drivers</td>
+                                        <td class="p-3.5 border-r border-slate-200 dark:border-slate-700 font-medium">1,250 Platform Units</td>
                                         <td class="p-3.5 text-amber-600 dark:text-amber-400 font-mono font-bold border-r border-slate-200 dark:border-slate-700">62,500 GHC/day</td>
                                         <td class="p-3.5 font-mono border-r border-slate-200 dark:border-slate-700">22,812,500 GHC</td>
                                         <td class="p-3.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold border-r border-slate-200 dark:border-slate-700">20,987,500 GHC</td>
@@ -494,7 +494,7 @@
                                     </tr>
                                     <tr class="bg-emerald-50/70 dark:bg-emerald-950/20 font-semibold border-t-2 border-b-2 border-emerald-300 dark:border-emerald-700/60">
                                         <td class="p-3.5 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-700">Year 3 (Q1-Q4 + Exit)</td>
-                                        <td class="p-3.5 border-r border-slate-200 dark:border-slate-700 font-medium">2,500 Drivers</td>
+                                        <td class="p-3.5 border-r border-slate-200 dark:border-slate-700 font-medium">2,500 Platform Units</td>
                                         <td class="p-3.5 text-amber-600 dark:text-amber-400 font-mono font-bold border-r border-slate-200 dark:border-slate-700">125,000 GHC/day</td>
                                         <td class="p-3.5 font-mono border-r border-slate-200 dark:border-slate-700">45,625,000 GHC</td>
                                         <td class="p-3.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold border-r border-slate-200 dark:border-slate-700">41,975,000 GHC</td>

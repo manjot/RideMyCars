@@ -35,9 +35,9 @@
                     <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl font-black mb-6 shadow-xs">
                         📊
                     </div>
-                    <h3 class="text-xl font-black text-slate-900 dark:text-white mb-3">500-Driver Cohort Engine</h3>
+                    <h3 class="text-xl font-black text-slate-900 dark:text-white mb-3">500-Unit Cohort Engine</h3>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Modeled on our baseline of 50 GHC daily revenue per driver across a synchronized 500-driver initial expansion cohort, generating an immediate run-rate baseline of <strong>25,000 GHC daily</strong> with robust unit economics.
+                        Modeled on our baseline of 50 GHC daily basic platform revenue per active vehicle across a synchronized 500-unit initial expansion cohort, generating an immediate run-rate baseline of <strong>25,000 GHC daily</strong> with robust unit economics.
                     </p>
                 </div>
 

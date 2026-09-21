@@ -81,7 +81,7 @@
                         5. Comprehensive Risk Warning
                     </h2>
                     <p class="mb-3">
-                        Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily revenue per driver across a 500-driver cohort) are projections and do not guarantee future exact yields.
+                        Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily basic platform revenue per active vehicle across a 500-unit cohort) are projections and do not guarantee future exact yields.
                     </p>
                     <p>
                         Prospective partners should carefully analyze the NDFG LLC Operating Agreement, performance clawback matrices, and Year 3 structured buyout provisions before deploying capital. You should only commit capital that you can afford to lose without creating personal financial insolvency.

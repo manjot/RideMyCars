@@ -765,7 +765,7 @@
                                         <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-xs">🚀</span>
                                         <div class="min-w-0">
                                             <div class="font-bold">Investment Opportunity</div>
-                                            <div class="text-[10px] text-gray-500 truncate">500-driver cohort metrics</div>
+                                            <div class="text-[10px] text-gray-500 truncate">500-unit cohort metrics</div>
                                         </div>
                                     </a>
                                     <a href="/investor/plans" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/plans*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
@@ -2016,7 +2016,7 @@
                                 <strong class="text-zinc-200">Ghanaian & Cross-Border Remittance:</strong> All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Ride My Cars (Ghana)</strong>. This arrangement ensures that cross-border capital repatriation routes comply with Ghana's central bank and Securities and Exchange Commission (SEC) guidelines.
                             </p>
                             <p>
-                                <strong class="text-amber-400/90">Risk Warning:</strong> Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily revenue per driver across a 500-driver cohort) are projections and do not guarantee future exact yields. Prospective partners should carefully analyze the NDFG LLC Operating Agreement, performance clawback matrices, and Year 3 structured buyout provisions before deploying capital.
+                                <strong class="text-amber-400/90">Risk Warning:</strong> Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily basic platform revenue per active vehicle across a 500-unit cohort) are projections and do not guarantee future exact yields. Prospective partners should carefully analyze the NDFG LLC Operating Agreement, performance clawback matrices, and Year 3 structured buyout provisions before deploying capital.
                             </p>
                         </div>
                     </div>

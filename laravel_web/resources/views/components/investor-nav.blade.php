@@ -10,7 +10,7 @@
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </span>
                 <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Cohort 1: <span class="text-amber-600 dark:text-amber-400 font-bold">500 Drivers</span>
+                    Cohort 1: <span class="text-amber-600 dark:text-amber-400 font-bold">500 Platform Units</span>
                 </span>
                 <span class="text-slate-300 dark:text-slate-700">•</span>
                 <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
