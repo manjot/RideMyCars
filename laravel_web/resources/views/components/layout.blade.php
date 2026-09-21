@@ -1434,7 +1434,7 @@
             <div class="space-y-1.5 pt-1 border-t border-gray-100 dark:border-white/10">
                 <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-500 px-3.5 flex items-center justify-between">
                     <span>Investor Portal (NDFG LLC)</span>
-                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">92% Margin</span>
+                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">85–92% Margin</span>
                 </div>
                 <div class="grid grid-cols-2 gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 px-1">
                     <a href="/investor" class="px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">

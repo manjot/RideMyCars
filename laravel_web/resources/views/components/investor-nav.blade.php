@@ -14,7 +14,7 @@
                 </span>
                 <span class="text-slate-300 dark:text-slate-700">•</span>
                 <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                    92% Net Margin
+                    85–92% Net Margin
                 </span>
                 <span class="text-slate-300 dark:text-slate-700">•</span>
                 <span class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">

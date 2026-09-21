@@ -70,8 +70,8 @@
                             <div class="text-xl font-black text-slate-900 dark:text-white" x-text="scaleData[activeScale].dailyGmv">25,000 GHC</div>
                         </div>
                         <div class="px-5 py-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-center">
-                            <div class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 font-bold">Target Net Margin</div>
-                            <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">92%</div>
+                            <div class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 font-bold">Targeted Net Margin</div>
+                            <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">85–92%</div>
                         </div>
                     </div>
                 </div>
@@ -107,7 +107,7 @@
                                 <td class="p-4 font-mono" :class="{ 'bg-amber-50/50 dark:bg-amber-500/5 font-bold': activeScale === 'y3' }">45,625,000 GHC</td>
                             </tr>
                             <tr class="bg-emerald-50/80 dark:bg-emerald-950/20 font-semibold border-t-2 border-b-2 border-emerald-300 dark:border-emerald-700/60">
-                                <td class="p-4 font-black text-emerald-800 dark:text-emerald-300 border-r border-slate-200 dark:border-slate-700">Net Platform Margin (92%)</td>
+                                <td class="p-4 font-black text-emerald-800 dark:text-emerald-300 border-r border-slate-200 dark:border-slate-700">Targeted Net Platform Margin (85–92%)</td>
                                 <td class="p-4 font-bold text-emerald-700 dark:text-emerald-400 font-mono border-r border-slate-200 dark:border-slate-700">8,395,000 GHC</td>
                                 <td class="p-4 font-bold text-emerald-700 dark:text-emerald-400 font-mono border-r border-slate-200 dark:border-slate-700">20,987,500 GHC</td>
                                 <td class="p-4 font-bold text-emerald-700 dark:text-emerald-400 font-mono">41,975,000 GHC</td>
