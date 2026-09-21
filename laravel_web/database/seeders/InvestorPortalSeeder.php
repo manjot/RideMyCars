@@ -53,7 +53,7 @@ class InvestorPortalSeeder extends Seeder
                     '14.0% non-dilutive single cohort equity stake',
                     'Accelerated quarterly dividend wire clearance',
                     'Full 3-Year Master Cash Ledger telemetry data access',
-                    'Priority clearance via Eminsang Group Limited escrow',
+                    'Priority clearance via Ride My Cars (Ghana) escrow',
                     'Enhanced Year 3 structured buyout terms',
                 ],
                 'is_active' => true,
@@ -153,7 +153,7 @@ class InvestorPortalSeeder extends Seeder
                 'verification_status' => 'APPROVED',
                 'payment_unlocked' => true,
                 'payment_reference_code' => 'NDFG-INV-2026-APEX77',
-                'admin_notes' => 'Accredited investor certification verified by CPA verification letter dated August 2026. Eminsang Group escrow coordinates released.',
+                'admin_notes' => 'Accredited investor certification verified by CPA verification letter dated August 2026. Ride My Cars (Ghana) escrow coordinates released.',
                 'verified_at' => now()->subDays(2),
             ]
         );

@@ -56,7 +56,7 @@ class InvestorEmailService
                         </p>
                     </div>
 
-                    <p>Our compliance desk, in coordination with <strong>Eminsang Group Limited (Ghana)</strong>, has successfully received your verification inputs under the <strong>{$tierName}</strong> framework, alongside your requested allocation for <strong>Tranche {$tranche}</strong>.</p>
+                    <p>Our compliance desk, in coordination with <strong>Ride My Cars (Ghana)</strong>, has successfully received your verification inputs under the <strong>{$tierName}</strong> framework, alongside your requested allocation for <strong>Tranche {$tranche}</strong>.</p>
 
                     <h3 style='color: #0f172a; margin-top: 24px; font-size: 16px;'>Next Steps:</h3>
                     <p>Our compliance officers are reviewing your uploaded documents. This process generally takes between <strong>12 to 24 business hours</strong>. Once verified, you will receive a secure portal notification unlocking full access to our active financial data room, live micro-transaction ticker, and bank escrow wire instructions.</p>
@@ -70,7 +70,7 @@ class InvestorEmailService
                     </p>
                 </div>
                 <div class='footer'>
-                    Ride My Cars New Development Finance Group LLC • In coordination with Eminsang Group Limited (Ghana)<br>
+                    Ride My Cars New Development Finance Group LLC • In coordination with Ride My Cars (Ghana)<br>
                     Securities Private Placement Notice • Confidential & Intended Solely for the Recipient
                 </div>
             </div>
@@ -80,7 +80,7 @@ class InvestorEmailService
 
         $textContent = "Dear {$legalName},\n\n"
             . "Thank you for registering your profile on the NDFG LLC Development Investor Portal for the Ride My Cars Ghana Super-App rollout.\n\n"
-            . "Our compliance desk, in coordination with Eminsang Group Limited (Ghana), has successfully received your verification inputs under the {$tierName} framework, alongside your requested allocation for Tranche {$tranche}.\n\n"
+            . "Our compliance desk, in coordination with Ride My Cars (Ghana), has successfully received your verification inputs under the {$tierName} framework, alongside your requested allocation for Tranche {$tranche}.\n\n"
             . "Next Steps:\n"
             . "Our compliance officers are reviewing your uploaded documents. This process generally takes between 12 to 24 business hours. Once verified, you will receive a secure portal notification unlocking full access to our active financial data room, live micro-transaction ticker, and bank escrow wire instructions.\n\n"
             . "If you have any immediate verification inquiries, please reply directly to this email at investors@ridemycars.com.\n\n"
@@ -166,11 +166,11 @@ class InvestorEmailService
                         <strong>Marilyn Watson</strong><br>
                         <em>Investor Relations Manager</em><br>
                         Ride My Cars New Development Finance Group LLC<br>
-                        <span style='font-size: 12px; color: #64748b;'>Cc: Eminsang Group Limited (Ghana)</span>
+                        <span style='font-size: 12px; color: #64748b;'>Cc: Ride My Cars (Ghana)</span>
                     </p>
                 </div>
                 <div class='footer'>
-                    Ride My Cars New Development Finance Group LLC • Cc: Eminsang Group Limited (Ghana)<br>
+                    Ride My Cars New Development Finance Group LLC • Cc: Ride My Cars (Ghana)<br>
                     Securities Private Placement Notice • Confidential & Privileged
                 </div>
             </div>
@@ -193,7 +193,7 @@ class InvestorEmailService
             . "Marilyn Watson\n"
             . "Investor Relations Manager\n"
             . "Ride My Cars New Development Finance Group LLC\n"
-            . "Cc: Eminsang Group Limited (Ghana)";
+            . "Cc: Ride My Cars (Ghana)";
 
         return self::dispatchEmail($toEmail, $subject, $htmlContent, $textContent, $investor, 'APPROVAL_NOTICE_SENT');
     }

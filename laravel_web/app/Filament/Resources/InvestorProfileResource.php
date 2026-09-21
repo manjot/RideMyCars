@@ -95,7 +95,7 @@ class InvestorProfileResource extends Resource
                                 ->label('Remittance Method')
                                 ->options([
                                     'wire_swift' => 'Bank Wire (USD/EUR/GBP/CAD SWIFT)',
-                                    'local_bank_eminsang' => 'Local Banking Rail (GHC Transfer via Eminsang)',
+                                    'local_bank_eminsang' => 'Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))',
                                     'mobile_money' => 'Mobile Money Gateway (MTN MoMo/Telecel Cash)',
                                 ]),
                         ])->columns(2),
@@ -113,7 +113,7 @@ class InvestorProfileResource extends Resource
                                 ])->required(),
                             Forms\Components\Toggle::make('payment_unlocked')
                                 ->label('Unlock Payment Vault & Wire Instructions')
-                                ->helperText('When enabled, investor can view Eminsang Group escrow details and wire routing numbers on their dashboard.')
+                                ->helperText('When enabled, investor can view Ride My Cars (Ghana) escrow details and wire routing numbers on their dashboard.')
                                 ->onColor('success')
                                 ->offColor('danger'),
                             Forms\Components\Textarea::make('document_request_notes')

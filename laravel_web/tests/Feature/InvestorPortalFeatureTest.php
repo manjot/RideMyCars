@@ -97,7 +97,7 @@ class InvestorPortalFeatureTest extends TestCase
         // Must show unlocked ledger and escrow coordinates
         $response->assertSee('3-Year Master Cash Ledger');
         $response->assertSee('Authorized Capital Remittance Coordinates');
-        $response->assertSee('Eminsang Group Limited');
+        $response->assertSee('Ride My Cars (Ghana)');
         $response->assertSee('MTN MoMo / Telecel Cash');
     }
 

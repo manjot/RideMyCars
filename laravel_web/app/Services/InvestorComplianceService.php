@@ -189,8 +189,8 @@ class InvestorComplianceService
                 'country_name' => 'Ghana',
                 'regulatory_body' => 'Securities & Exchange Commission (SEC Ghana)',
                 'regulatory_tier' => 'GH_SEC',
-                'verification_gate_title' => 'SEC / Exempt Private Placement Routing (Eminsang Group)',
-                'verification_gate_description' => 'Institutional or verified High-Net-Worth individuals. Validated Ghana Card/TIN check via Eminsang Group Limited.',
+                'verification_gate_title' => 'SEC / Exempt Private Placement Routing (Ride My Cars (Ghana))',
+                'verification_gate_description' => 'Institutional or verified High-Net-Worth individuals. Validated Ghana Card/TIN check via Ride My Cars (Ghana).',
                 'required_documents' => [
                     [
                         'type' => 'GH_CARD',
@@ -213,12 +213,12 @@ class InvestorComplianceService
                     ],
                     [
                         'id' => 'gh_eminsang_ack',
-                        'label' => 'I acknowledge and agree that local escrow custody and capital remittance tracking are conducted in coordination with Eminsang Group Limited (Ghana).',
+                        'label' => 'I acknowledge and agree that local escrow custody and capital remittance tracking are conducted in coordination with Ride My Cars (Ghana).',
                         'required' => true,
                     ]
                 ],
                 'compliance_text' => 'Regulated private placement routing adhering to Bank of Ghana foreign exchange and SEC Ghana directives.',
-                'legal_notices' => 'All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with Eminsang Group Limited (Ghana).',
+                'legal_notices' => 'All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with Ride My Cars (Ghana).',
             ],
 
             'AFRICA' => [

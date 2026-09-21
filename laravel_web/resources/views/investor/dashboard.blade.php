@@ -79,7 +79,7 @@
                                     </span>
                                 </div>
                                 <p class="text-xs sm:text-sm text-gray-700 dark:text-zinc-300 leading-relaxed max-w-3xl">
-                                    Our compliance desk, in coordination with <strong>Eminsang Group Limited (Ghana)</strong>, has received your verification credentials under the <strong>{{ $regulatoryTierName }}</strong> framework for <strong>Tranche {{ $investor->selected_tranche }}</strong>.
+                                    Our compliance desk, in coordination with <strong>Ride My Cars (Ghana)</strong>, has received your verification credentials under the <strong>{{ $regulatoryTierName }}</strong> framework for <strong>Tranche {{ $investor->selected_tranche }}</strong>.
                                 </p>
                                 <p class="text-xs text-gray-500 dark:text-zinc-400">
                                     To protect all partners under international securities laws, financial telemetry, real-time ledgers, and escrow wire coordinates remain strictly locked until your credentials receive positive compliance clearance.
@@ -121,7 +121,7 @@
                                     <span class="text-xs text-slate-400 dark:text-slate-500 font-semibold">Queued</span>
                                 </div>
                                 <div class="font-black text-sm text-slate-900 dark:text-white">Escrow & KYC Clearance</div>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Validation check via Eminsang Group Limited.</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Validation check via Ride My Cars (Ghana).</p>
                             </div>
 
                             <!-- Stage 4 -->
@@ -341,7 +341,7 @@
                                 </div>
                                 <h3 class="text-xl font-black text-slate-900 dark:text-white">Authorized Capital Remittance Coordinates</h3>
                                 <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                                    Backed by <strong>Eminsang Group Limited (Ghana)</strong> in adherence to Bank of Ghana foreign exchange and SEC directives.
+                                    Backed by <strong>Ride My Cars (Ghana)</strong> in adherence to Bank of Ghana foreign exchange and SEC directives.
                                 </p>
                             </div>
 

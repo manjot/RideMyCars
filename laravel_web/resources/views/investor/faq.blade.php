@@ -34,11 +34,11 @@
                 <!-- Q2 -->
                 <div class="rounded-2xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all">
                     <button @click="active = (active === 2 ? null : 2)" class="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                        <span>What is the role of Eminsang Group Limited in this transaction?</span>
+                        <span>What is the role of Ride My Cars (Ghana) in this transaction?</span>
                         <span class="text-amber-600 dark:text-brand-400 text-xl font-black" x-text="active === 2 ? '−' : '+'"></span>
                     </button>
                     <div x-show="active === 2" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                        <p>Eminsang Group Limited (Ghana) acts as our licensed regional corporate framework partner. They oversee local financial processing, regulatory tracking, domestic escrow custody, and cross-border capital repatriation routes to guarantee full compliance with the Bank of Ghana and Ghana Securities and Exchange Commission (SEC).</p>
+                        <p>Ride My Cars (Ghana) acts as our licensed regional corporate framework partner. They oversee local financial processing, regulatory tracking, domestic escrow custody, and cross-border capital repatriation routes to guarantee full compliance with the Bank of Ghana and Ghana Securities and Exchange Commission (SEC).</p>
                     </div>
                 </div>
 

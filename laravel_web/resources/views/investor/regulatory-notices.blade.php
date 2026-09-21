@@ -1,4 +1,4 @@
-<x-layout title="Regulatory Notices & Disclaimers | NDFG LLC & Eminsang Group">
+<x-layout title="Regulatory Notices & Disclaimers | NDFG LLC & Ride My Cars (Ghana)">
     <x-investor-nav />
 
     <div class="min-h-screen bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-white relative overflow-hidden transition-colors selection:bg-brand-500 selection:text-black">
@@ -64,10 +64,10 @@
                 <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-amber-500 shadow-sm">
                     <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                        4. Ghanaian & Cross-Border Remittance Protocol (Eminsang Group Limited)
+                        4. Ghanaian & Cross-Border Remittance Protocol (Ride My Cars (Ghana))
                     </h2>
                     <p class="mb-3">
-                        All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Eminsang Group Limited (Ghana)</strong>.
+                        All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Ride My Cars (Ghana)</strong>.
                     </p>
                     <p>
                         This arrangement ensures that cross-border capital repatriation routes comply with Ghana's central bank foreign exchange restrictions and Securities and Exchange Commission (SEC) guidelines. All wire disbursements and dividend repatriations occur through authorized channels.

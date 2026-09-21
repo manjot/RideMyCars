@@ -21,7 +21,7 @@
                 </div>
                 <h1 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">Ride My Cars Ghana Super-App Offering</h1>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mt-4 leading-relaxed font-medium">
-                    A high-velocity, asset-light mobility and logistics infrastructure platform deploying a single-cohort expansion across West Africa with institutional oversight by NDFG LLC and Eminsang Group Limited.
+                    A high-velocity, asset-light mobility and logistics infrastructure platform deploying a single-cohort expansion across West Africa with institutional oversight by NDFG LLC and Ride My Cars (Ghana).
                 </p>
 
                 <!-- Interactive Cohort Horizon Switcher -->
@@ -133,14 +133,14 @@
                     <div class="text-3xl mb-3">🏦</div>
                     <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Multi-Currency Bank SWIFT Wire</h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        International wires accepted in USD, EUR, GBP, and CAD routed into an institutional escrow account managed under Eminsang Group Limited governance.
+                        International wires accepted in USD, EUR, GBP, and CAD routed into an institutional escrow account managed under Ride My Cars (Ghana) governance.
                     </p>
                 </div>
                 <div class="p-7 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-amber-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                     <div class="text-3xl mb-3">🇬🇭</div>
                     <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Ghanaian Local Banking Rails</h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Direct local clearing (ACH / GHIPSS) in Ghana Cedis (GHC) to Eminsang Group Limited corporate custody accounts in Accra.
+                        Direct local clearing (ACH / GHIPSS) in Ghana Cedis (GHC) to Ride My Cars (Ghana) corporate custody accounts in Accra.
                     </p>
                 </div>
                 <div class="p-7 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">

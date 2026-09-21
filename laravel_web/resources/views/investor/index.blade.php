@@ -166,7 +166,7 @@
                             </div>
                             <h3 class="text-lg font-black text-slate-900 dark:text-white mb-2">Ghana & West Africa</h3>
                             <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                SEC Exempt Private Placement Routing. Validated Ghana Card/TIN verification via <strong>Eminsang Group Limited</strong> with local MoMo (MTN / Telecel) and domestic clearing accounts.
+                                SEC Exempt Private Placement Routing. Validated Ghana Card/TIN verification via <strong>Ride My Cars (Ghana)</strong> with local MoMo (MTN / Telecel) and domestic clearing accounts.
                             </p>
                             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
                                 <div>• <strong>Escrow Rail:</strong> Local Cedis (GHC) & Mobile Money</div>
@@ -395,7 +395,7 @@
                     <!-- Direct Allocation Action Bar -->
                     <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800">
                         <div class="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
-                            All capital commitments are protected by Eminsang Group escrow protocols with mandatory 5-day settlement windows.
+                            All capital commitments are protected by Ride My Cars (Ghana) escrow protocols with mandatory 5-day settlement windows.
                         </div>
                         <a :href="'/investor/register?tranche=' + selectedTranche" 
                            class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/25 transition-all flex items-center gap-2">
@@ -504,7 +504,7 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Eminsang Group escrow priority clearance</span>
+                                    <span>Ride My Cars (Ghana) escrow priority clearance</span>
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <span class="text-emerald-500 font-black">✓</span>
@@ -574,7 +574,7 @@
                         🛡️
                     </div>
                     <div>
-                        <h4 class="text-base font-black text-slate-900 dark:text-white">Backed by Eminsang Group Limited (Ghana)</h4>
+                        <h4 class="text-base font-black text-slate-900 dark:text-white">Backed by Ride My Cars (Ghana)</h4>
                         <p class="text-xs text-slate-600 dark:text-slate-400">All domestic clearing, Mobile Money escrow custody, and cross-border bank repatriation are administered through certified frameworks.</p>
                     </div>
                 </div>

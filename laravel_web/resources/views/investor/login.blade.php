@@ -70,7 +70,7 @@
 
             <!-- Escrow Footer Notice -->
             <div class="text-center text-[11px] text-slate-500 dark:text-slate-500">
-                🔒 In coordination with Eminsang Group Limited (Ghana). All logins are digitally logged in the NDFG compliance audit ledger.
+                🔒 In coordination with Ride My Cars (Ghana). All logins are digitally logged in the NDFG compliance audit ledger.
             </div>
         </div>
     </div>

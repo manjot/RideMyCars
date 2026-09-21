@@ -59,17 +59,17 @@ class InvestorDashboardController extends Controller
             default => 'International Private Placement Framework',
         };
 
-        // Escrow coordinates (managed by Eminsang Group Limited)
+        // Escrow coordinates (managed by Ride My Cars (Ghana))
         $escrowDetails = [
             'swift_bank_name' => 'First National Bank / Standard Chartered Bank (Escrow Trust)',
-            'swift_account_name' => 'Eminsang Group Limited - Ride My Cars Escrow Custody',
-            'swift_account_usd' => 'USD-990823410294-EMIN',
+            'swift_account_name' => 'Ride My Cars (Ghana) - Escrow Custody',
+            'swift_account_usd' => 'USD-990823410294-RMC',
             'swift_iban' => 'GH29FNBG0000009908234102',
             'swift_code' => 'FIRNGHACXXX',
-            'local_bank_ghc' => 'Eminsang Group Limited (Ghana Operations Rail)',
+            'local_bank_ghc' => 'Ride My Cars (Ghana) (Ghana Operations Rail)',
             'local_account_number' => '1029384756102',
             'local_branch' => 'Airport City Branch, Accra',
-            'momo_merchant_id' => 'EMINSANG-RMC-ESCROW',
+            'momo_merchant_id' => 'RMC-GHANA-ESCROW',
             'momo_number' => '+233 24 000 8899 (MTN MoMo / Telecel Cash)',
             'reference_code' => $investor->payment_reference_code,
         ];
@@ -198,7 +198,7 @@ class InvestorDashboardController extends Controller
             . "Equity Stake Allocation: {$investor->equity_percentage}%\n"
             . "Capital Commitment:      " . number_format((float) $investor->capital_commitment_ghc, 2) . " GHC ($" . number_format((float) $investor->capital_commitment_usd, 2) . " USD)\n"
             . "Remittance Protocol:     {$investor->remittance_method}\n"
-            . "Escrow Custody Partner:  Eminsang Group Limited (Republic of Ghana)\n"
+            . "Escrow Custody Partner:  Ride My Cars (Ghana) (Republic of Ghana)\n"
             . "Payment Reference Code:  {$investor->payment_reference_code}\n\n"
             . "COHORT BASELINE SPECIFICATIONS:\n"
             . "Active Initial Cohort:   500 Drivers\n"
@@ -216,9 +216,9 @@ class InvestorDashboardController extends Controller
             . "The participant and NDFG LLC covenant to abide by the terms set forth in the\n"
             . "Operating Agreement, including Year 3 structured buyout provisions and performance\n"
             . "clawback matrices. All capital commitments are held under institutional escrow\n"
-            . "safeguards in coordination with Eminsang Group Limited.\n\n"
+            . "safeguards in coordination with Ride My Cars (Ghana).\n\n"
             . "Signed on behalf of NDFG LLC: Marilyn Watson, Investor Relations Manager\n"
-            . "Cc: Eminsang Group Limited (Ghana)\n"
+            . "Cc: Ride My Cars (Ghana)\n"
             . "================================================================================\n";
 
         InvestorComplianceService::logAction(

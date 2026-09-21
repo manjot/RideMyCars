@@ -3809,7 +3809,7 @@ Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) 
 
 /*
 |--------------------------------------------------------------------------
-| Multi-Jurisdictional Investor Portal Routes (NDFG LLC & Eminsang Group)
+| Multi-Jurisdictional Investor Portal Routes (NDFG LLC & Ride My Cars (Ghana))
 |--------------------------------------------------------------------------
 */
 

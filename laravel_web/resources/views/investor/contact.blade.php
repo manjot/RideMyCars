@@ -1,4 +1,4 @@
-<x-layout title="Contact Investor Relations | NDFG LLC & Eminsang Group">
+<x-layout title="Contact Investor Relations | NDFG LLC & Ride My Cars (Ghana)">
     <x-investor-nav />
 
     <div class="min-h-screen bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-white relative overflow-hidden transition-colors selection:bg-brand-500 selection:text-black">
@@ -13,7 +13,7 @@
                 </div>
                 <h1 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">Contact Investor Relations</h1>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mt-4 leading-relaxed font-medium">
-                    Direct communications channel with the NDFG LLC Compliance Framework Desk and Eminsang Group Limited regional directors.
+                    Direct communications channel with the NDFG LLC Compliance Framework Desk and Ride My Cars (Ghana) regional directors.
                 </p>
             </div>
 
@@ -48,11 +48,11 @@
                     <!-- Regional Coordination Partner with Solid Borders -->
                     <div class="p-7 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div class="flex items-center gap-4 mb-4">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 flex items-center justify-center font-black text-lg shadow-xs">
-                                EG
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 flex items-center justify-center font-black text-sm shadow-xs">
+                                RMC
                             </div>
                             <div>
-                                <h3 class="text-base font-black text-slate-900 dark:text-white">Eminsang Group Limited</h3>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white">Ride My Cars (Ghana)</h3>
                                 <p class="text-xs text-emerald-700 dark:text-emerald-400 font-bold">Regional Escrow & Compliance Partner</p>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400">Republic of Ghana Operations Hub</p>
                             </div>

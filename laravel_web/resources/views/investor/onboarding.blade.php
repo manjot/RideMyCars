@@ -131,7 +131,7 @@
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Country of Residence / Incorporation *</label>
                                 <select name="country_code" x-model="form.country_code" @change="onCountryChange()" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
                                     <option value="USA">United States (SEC Rule 506(c))</option>
-                                    <option value="GHA">Ghana (SEC Ghana / Eminsang Group)</option>
+                                    <option value="GHA">Ghana (SEC Ghana / Ride My Cars (Ghana))</option>
                                     <option value="CAN">Canada (NI 45-106 Exemptions)</option>
                                     <option value="GBR">United Kingdom (FCA FPO Sophisticated)</option>
                                     <option value="EU">European Union (Prospectus Reg Art 1(4))</option>
@@ -203,7 +203,7 @@
                                     <span x-text="form.country_code === 'GHA' ? 'National ID / Ghana Card Number / Corporate TIN *' : 'National ID / Tax Identification Number *'"></span>
                                 </label>
                                 <input type="text" name="tax_id_or_national_id" x-model="form.tax_id_or_national_id" required placeholder="GHA-123456789-0 or TIN Number" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Subject to automated verification check via Eminsang Group Limited.</span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Subject to automated verification check via Ride My Cars (Ghana).</span>
                             </div>
                         </template>
 
@@ -296,7 +296,7 @@
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Preferred Capital Remittance Path *</label>
                             <select name="remittance_method" x-model="form.remittance_method" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
                                 <option value="wire_swift">Bank Wire (USD / EUR / GBP / CAD SWIFT)</option>
-                                <option value="local_bank_eminsang">Local Banking Rail (GHC Transfer via Eminsang Group Limited)</option>
+                                <option value="local_bank_eminsang">Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))</option>
                                 <option value="mobile_money">Mobile Money Gateway (MTN MoMo / Telecel Cash)</option>
                             </select>
                             <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Full wire coordinates and merchant push instructions will be unlocked upon administrative compliance verification.</span>
@@ -407,7 +407,7 @@
                                 <strong>Section 4.1 Cohort Architecture & Equity Governance:</strong> The participant agrees to commit capital to Ride My Cars New Development Finance Group (NDFG) LLC specifically designated for the Ride My Cars Ghana single cohort. The equity percentage locked herein (<span x-text="form.selected_tranche === 'A' ? '10.0%' : (form.selected_tranche === 'B' ? '14.0%' : '22.0%')"></span>) shall remain fixed and protected against subsequent phase dilution throughout the three (3) year initial lifecycle.
                             </p>
                             <p>
-                                <strong>Section 6.3 Escrow Custody & Cross-Border Remittance:</strong> All capital remittances, local processing, and currency disbursements are conducted in direct coordination with Eminsang Group Limited (Ghana). The participant covenants that funds transmitted are free of encumbrances and comply with applicable anti-money laundering and Bank of Ghana foreign exchange repatriation protocols.
+                                <strong>Section 6.3 Escrow Custody & Cross-Border Remittance:</strong> All capital remittances, local processing, and currency disbursements are conducted in direct coordination with Ride My Cars (Ghana). The participant covenants that funds transmitted are free of encumbrances and comply with applicable anti-money laundering and Bank of Ghana foreign exchange repatriation protocols.
                             </p>
                             <p>
                                 <strong>Section 8.2 Year 3 Structured Buyout & Liquidity Option:</strong> At the expiration of Year Three (3) from initial deployment, NDFG LLC guarantees structured buyout provisions based on verified cohort gross revenue matrices, allowing the participant to either monetize equity at predefined multiples or elect ongoing perpetual yield distributions.

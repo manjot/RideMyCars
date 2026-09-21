@@ -48,7 +48,7 @@
                     </div>
                     <h3 class="text-xl font-black text-slate-900 dark:text-white mb-3">Institutional Escrow Safeguards</h3>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                        All local financial processing, regulatory tracking, and capital remittance routes are anchored through regional frameworks in direct coordination with <strong>Eminsang Group Limited (Ghana)</strong>, ensuring bank-grade compliance.
+                        All local financial processing, regulatory tracking, and capital remittance routes are anchored through regional frameworks in direct coordination with <strong>Ride My Cars (Ghana)</strong>, ensuring bank-grade compliance.
                     </p>
                 </div>
 

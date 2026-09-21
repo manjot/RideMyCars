@@ -1995,7 +1995,7 @@
                     <div class="flex items-center gap-2.5 mb-3">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
                         <h4 class="text-xs font-black uppercase tracking-widest text-amber-400">
-                            ⚖️ REGULATORY COMPLIANCE & LEGAL NOTICES (NDFG LLC / EMINSANG GROUP)
+                            ⚖️ REGULATORY COMPLIANCE & LEGAL NOTICES (NDFG LLC / RIDE MY CARS (GHANA))
                         </h4>
                     </div>
 
@@ -2013,7 +2013,7 @@
                                 <strong class="text-zinc-200">United Kingdom & European Union Investors:</strong> Content on this portal has not been approved by an authorized person under Section 21 of the Financial Services and Markets Act 2000 (FSMA). This opportunity is exempt from the requirement to publish a prospectus under Article 1(4) of the EU Prospectus Regulation and FCA Handbook rules, and is directed exclusively at Certified Sophisticated Investors and Professional Clients.
                             </p>
                             <p class="mb-3">
-                                <strong class="text-zinc-200">Ghanaian & Cross-Border Remittance:</strong> All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Eminsang Group Limited (Ghana)</strong>. This arrangement ensures that cross-border capital repatriation routes comply with Ghana's central bank and Securities and Exchange Commission (SEC) guidelines.
+                                <strong class="text-zinc-200">Ghanaian & Cross-Border Remittance:</strong> All local financial processing, local compliance tracking, and escrow custody operations are managed securely through regional corporate frameworks in coordination with <strong>Ride My Cars (Ghana)</strong>. This arrangement ensures that cross-border capital repatriation routes comply with Ghana's central bank and Securities and Exchange Commission (SEC) guidelines.
                             </p>
                             <p>
                                 <strong class="text-amber-400/90">Risk Warning:</strong> Early-stage technology fleet ventures involve high operational velocity and risk. Past performance and pro forma metrics (including our baseline of 50 GHC daily revenue per driver across a 500-driver cohort) are projections and do not guarantee future exact yields. Prospective partners should carefully analyze the NDFG LLC Operating Agreement, performance clawback matrices, and Year 3 structured buyout provisions before deploying capital.

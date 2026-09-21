@@ -114,7 +114,7 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <span class="text-amber-600 dark:text-amber-400 font-black">✓</span>
-                                <span>Direct line to Eminsang Group compliance desk</span>
+                                <span>Direct line to Ride My Cars (Ghana) compliance desk</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <span class="text-amber-600 dark:text-amber-400 font-black">✓</span>
@@ -183,7 +183,7 @@
 
             <!-- Escrow Note with Crisp Border -->
             <div class="rounded-2xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 p-6 text-center max-w-2xl mx-auto text-xs text-slate-600 dark:text-slate-400 shadow-sm">
-                🔒 <strong>Settlement Protocol:</strong> In compliance with NDFG LLC governance rules, following administrative approval, all capital commitments must settle into the designated Eminsang Group Limited escrow accounts within <strong>five (5) business days</strong>.
+                🔒 <strong>Settlement Protocol:</strong> In compliance with NDFG LLC governance rules, following administrative approval, all capital commitments must settle into the designated Ride My Cars (Ghana) escrow accounts within <strong>five (5) business days</strong>.
             </div>
         </div>
     </div>
