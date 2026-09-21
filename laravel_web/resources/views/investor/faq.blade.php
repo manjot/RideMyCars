@@ -91,7 +91,7 @@
             <div class="mt-16 p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm text-center max-w-xl mx-auto">
                 <div class="text-3xl mb-3">💬</div>
                 <h3 class="text-lg font-black text-slate-900 dark:text-white">Have Specific Legal or Financial Inquiries?</h3>
-                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 mb-5 font-medium">Our Investor Relations Desk in Bethesda & Accra is standing by.</p>
+                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 mb-5 font-medium">Our investment financing desk will answer your specific request.</p>
                 <a href="/investor/contact" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-500/25 hover:scale-105">
                     Contact Investor Relations Desk →
                 </a>
