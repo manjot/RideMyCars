@@ -105,7 +105,7 @@
                     </p>
 
                     <!-- Interactive Region Filter Tabs -->
-                    <div class="flex items-center justify-center gap-2 overflow-x-auto no-scrollbar pt-6">
+                    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 pt-6 max-w-4xl mx-auto">
                         <button type="button" @click="activeRegion = 'all'"
                                 :class="activeRegion === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
                                 class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer">

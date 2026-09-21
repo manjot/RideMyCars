@@ -154,6 +154,18 @@
         html:not(.dark) .text-brand-500 {
             color: #b45309;
         }
+        /* Completely suppress native scrollbars for elements styled with .no-scrollbar or .scrollbar-none */
+        .no-scrollbar::-webkit-scrollbar,
+        .scrollbar-none::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        .no-scrollbar,
+        .scrollbar-none {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
     </style>
     <script src="{{ asset('js/countries-data.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.3/dist/cdn.min.js"></script>
