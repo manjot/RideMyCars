@@ -38,9 +38,9 @@
                                 <span class="text-slate-400">📧</span>
                                 <a href="mailto:investors@ridemycars.com" class="hover:text-amber-600 dark:hover:text-brand-400 transition-colors font-medium">investors@ridemycars.com</a>
                             </div>
-                            <div class="flex items-start gap-2.5">
-                                <span class="text-slate-400">🏢</span>
-                                <span>Global Executive Office: 4301 Saddle River Dr, Bowie, MD 20720</span>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-slate-400">📧</span>
+                                <a href="mailto:marilyn@newdevelopmentfinance.org" class="hover:text-amber-600 dark:hover:text-brand-400 transition-colors font-medium">marilyn@newdevelopmentfinance.org</a>
                             </div>
                         </div>
                     </div>
