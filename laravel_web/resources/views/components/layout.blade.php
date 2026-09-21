@@ -426,93 +426,223 @@
                                 </div>
                             </div>
 
-                            <!-- Memberships -->
-                            <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('membership*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
+                        <!-- Apps Dropdown -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                                <span>Apps</span> 
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
+                                 style="display: none;">
+                                <div class="space-y-1 pb-2">
+                                    <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                                        <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0 text-base">🚗</span>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <span class="font-bold text-gray-900 dark:text-white">Rider App</span>
+                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Book rides & chauffeurs</span>
+                                        </div>
+                                    </a>
+                                    <a href="/apps#driver-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                                        <span class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 text-base">🚕</span>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <span class="font-bold text-gray-900 dark:text-white">Driver App</span>
+                                            <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Earn & keep 90%</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="pt-2">
+                                    <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400">
+                                        Downloads & QR Hub →
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Company Dropdown -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span>Company</span> 
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
+                                 style="display: none;">
+                                <div class="space-y-1">
+                                    <a href="/about" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 flex items-center justify-center shrink-0 text-xs">🏢</span>
+                                        <span class="flex-1 truncate">About Us</span>
+                                    </a>
+                                    <a href="/safety" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs">🛡️</span>
+                                        <span class="flex-1 truncate">Safety & Trust</span>
+                                    </a>
+                                    <a href="/become-driver" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-sm">👨‍✈️</span>
+                                        <span class="flex-1 truncate">Become a Driver</span>
+                                        <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Earn</span>
+                                    </a>
+                                    <a href="/become-owner" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-sm">🔑</span>
+                                        <span class="flex-1 truncate">List Your Vehicle</span>
+                                        <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Host</span>
+                                    </a>
+                                    <a href="/blogs" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📰</span>
+                                        <span class="flex-1 truncate">Blogs & News</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Investors Dropdown -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('investor*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                                <span>Investors</span>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="dropdown-menu-card absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
+                                 style="display: none;">
+                                <div class="space-y-1 pb-1">
+                                    <a href="/investor" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs">🌐</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investor Portal Overview</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Super-App Expansion Gateway</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/why-invest" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/why-invest*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 text-xs">📈</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Why Invest</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Host-owned single cohort thesis</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/opportunity" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/opportunity*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-xs">🚀</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investment Opportunity</div>
+                                            <div class="text-[10px] text-gray-500 truncate">500-unit cohort metrics</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/plans" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/plans*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📊</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investment Plans</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Tranches A (10%), B (14%), C (22%)</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/faq" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/faq*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-xs">❓</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Investor FAQ</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Compliance, escrow, and returns</div>
+                                        </div>
+                                    </a>
+                                    <a href="/investor/contact" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/contact*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 text-xs">✉️</span>
+                                        <div class="min-w-0">
+                                            <div class="font-bold">Contact Relations</div>
+                                            <div class="text-[10px] text-gray-500 truncate">Marilyn Watson / Compliance</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="pt-2 border-t border-gray-100 dark:border-white/5 grid grid-cols-2 gap-1.5">
+                                    <a href="/investor/login" class="py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-colors">
+                                        Investor Login
+                                    </a>
+                                    <a href="/investor/register" class="py-2 text-center text-xs font-black text-black bg-brand-500 hover:bg-brand-600 rounded-xl shadow-xs transition-all">
+                                        Register Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pricing Dropdown (with Pricing & Memberships) -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" 
+                                    class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('pricing*') || request()->is('membership*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span>Pricing</span>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
                             
-                            <!-- Apps Dropdown -->
-                            <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                                <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-                                    <span>Apps</span> 
-                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                </button>
-                                <div x-show="open" 
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
-                                     style="display: none;">
-                                    <div class="space-y-1 pb-2">
-                                        <a href="/apps#rider-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                                            <span class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-500 flex items-center justify-center shrink-0 text-base">🚗</span>
-                                            <div class="flex flex-col text-left min-w-0">
-                                                <span class="font-bold text-gray-900 dark:text-white">Rider App</span>
-                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Book rides & chauffeurs</span>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="dropdown-menu-card absolute top-full right-0 mt-2 w-[320px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
+                                 style="display: none;">
+                                
+                                <div class="space-y-1 pb-2">
+                                    <!-- Pricing & Rates -->
+                                    <a href="/pricing" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('pricing*') ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Pricing & Rates</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Live</span>
                                             </div>
-                                        </a>
-                                        <a href="/apps#driver-app" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                                            <span class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 text-base">🚕</span>
-                                            <div class="flex flex-col text-left min-w-0">
-                                                <span class="font-bold text-gray-900 dark:text-white">Driver App</span>
-                                                <span class="text-[10px] text-gray-500 dark:text-gray-400 truncate">Earn & keep 90%</span>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Transparent fares & fare calculator</span>
+                                        </div>
+                                    </a>
+
+                                    <!-- Club Memberships -->
+                                    <a href="/membership" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('membership*') ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-sm text-lg transition-transform group-hover:scale-105">
+                                            ⭐
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">Memberships</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">VIP</span>
                                             </div>
-                                        </a>
-                                    </div>
-                                    <div class="pt-2">
-                                        <a href="/apps" class="block px-3 py-1.5 text-center text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400">
-                                            Downloads & QR Hub →
-                                        </a>
-                                    </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Priority fleets, executive perks & discounts</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                
+                                <div class="pt-2 px-1 flex items-center justify-between">
+                                    <a href="/pricing" class="text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">
+                                        <span>View Rate Card</span>
+                                        <span>→</span>
+                                    </a>
+                                    <a href="/membership" class="text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline">
+                                        Club Benefits
+                                    </a>
                                 </div>
                             </div>
-
-                            <!-- Company Dropdown -->
-                            <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                                <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
-                                    <span>Company</span> 
-                                    <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                </button>
-                                <div x-show="open" 
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                                     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                     class="dropdown-menu-card absolute top-full left-0 mt-2 w-60 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[110]" 
-                                     style="display: none;">
-                                    <div class="space-y-1">
-                                        <a href="/about" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('about*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
-                                            <span class="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 flex items-center justify-center shrink-0 text-xs">🏢</span>
-                                            <span class="flex-1 truncate">About Us</span>
-                                        </a>
-                                        <a href="/safety" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('safety*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
-                                            <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-xs">🛡️</span>
-                                            <span class="flex-1 truncate">Safety & Trust</span>
-                                        </a>
-                                        <a href="/become-driver" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-driver*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
-                                            <span class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-sm">👨‍✈️</span>
-                                            <span class="flex-1 truncate">Become a Driver</span>
-                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Earn</span>
-                                        </a>
-                                        <a href="/become-owner" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('become-owner*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
-                                            <span class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-sm">🔑</span>
-                                            <span class="flex-1 truncate">List Your Vehicle</span>
-                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Host</span>
-                                        </a>
-                                        <a href="/blogs" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('blogs*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
-                                            <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📰</span>
-                                            <span class="flex-1 truncate">Blogs & News</span>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Pricing -->
-                            <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
+                        </div>
                         @endif
                     @else
                         <!-- Guest Navigation: Home, Services Dropdown, Memberships, Apps, Company, Investors, Pricing -->
@@ -645,15 +775,12 @@
                             </div>
                         </div>
 
-                        <!-- Memberships -->
-                        <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('membership*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/membership">Memberships</a>
-                        
                         <!-- Apps Dropdown -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
                             <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('apps*') || request()->is('download*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
                                 <span>Apps</span> 
-                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
                             <div x-show="open" 
                                  x-transition:enter="transition ease-out duration-200"
@@ -692,7 +819,7 @@
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
                             <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('about*') || request()->is('safety*') || request()->is('become-*') || request()->is('blogs*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
                                 <span>Company</span> 
-                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
                             <div x-show="open" 
                                  x-transition:enter="transition ease-out duration-200"
@@ -732,10 +859,10 @@
 
                         <!-- Investors Dropdown -->
                         <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
-                            <button @click="open = !open" class="text-xs xl:text-xs 2xl:text-sm font-semibold transition-all flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-full whitespace-nowrap {{ request()->is('investor*') ? 'text-amber-900 dark:text-brand-400 bg-amber-500/20 font-bold border border-amber-500/30 shadow-xs' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <button @click="open = !open" class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('investor*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                 <span>Investors</span>
-                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
                             <div x-show="open" 
                                  x-transition:enter="transition ease-out duration-200"
@@ -801,8 +928,70 @@
                             </div>
                         </div>
 
-                        <!-- Pricing -->
-                        <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('pricing*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/pricing">Pricing</a>
+                        <!-- Pricing Dropdown (with Pricing & Memberships) -->
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false" @keydown.escape="open = false">
+                            <button @click="open = !open" 
+                                    class="text-xs xl:text-sm font-semibold transition-all flex items-center gap-1 px-2.5 xl:px-3 py-2 rounded-full whitespace-nowrap {{ request()->is('pricing*') || request()->is('membership*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}">
+                                <span>Pricing</span>
+                                <svg :class="{'rotate-180': open}" class="transition-transform duration-200 text-gray-500 dark:text-gray-400 shrink-0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </button>
+                            
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                 class="dropdown-menu-card absolute top-full right-0 mt-2 w-[320px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 shadow-2xl rounded-2xl p-2.5 z-[110] divide-y divide-gray-100 dark:divide-white/5" 
+                                 style="display: none;">
+                                
+                                <div class="space-y-1 pb-2">
+                                    <!-- Pricing & Rates -->
+                                    <a href="/pricing" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('pricing*') ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-gray-700 dark:text-gray-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Pricing & Rates</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Live</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Transparent fares & fare calculator</span>
+                                        </div>
+                                    </a>
+
+                                    <!-- Club Memberships -->
+                                    <a href="/membership" class="group flex items-center gap-3.5 p-2.5 rounded-xl transition-all {{ request()->is('membership*') ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400' }}">
+                                        <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-sm text-lg transition-transform group-hover:scale-105">
+                                            ⭐
+                                        </div>
+                                        <div class="flex flex-col text-left min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">Memberships</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">VIP</span>
+                                            </div>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Priority fleets, executive perks & discounts</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                
+                                <div class="pt-2 px-1 flex items-center justify-between">
+                                    <a href="/pricing" class="text-xs font-bold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">
+                                        <span>View Rate Card</span>
+                                        <span>→</span>
+                                    </a>
+                                    <a href="/membership" class="text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline">
+                                        Club Benefits
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     @endauth
                 </div>
                 
@@ -1369,16 +1558,31 @@
                 </div>
             </div>
 
-            <!-- Memberships, Pricing & Apps -->
-            <div class="space-y-1 pt-1 border-t border-gray-100 dark:border-white/10">
-                <a href="/membership" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->is('membership*') ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5' }} transition-colors">
-                    <span>Memberships</span>
-                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30">VIP</span>
-                </a>
-                <a href="/pricing" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->is('pricing*') ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5' }} transition-colors">
-                    <span>Pricing & Rates</span>
-                    <span class="text-xs text-gray-400">→</span>
-                </a>
+            <!-- Pricing & Memberships Mobile Section -->
+            <div class="space-y-1.5 pt-1 border-t border-gray-100 dark:border-white/10">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3.5 flex items-center justify-between">
+                    <span>Pricing & Memberships</span>
+                    <a href="/pricing" class="text-[10px] text-amber-700 dark:text-brand-400 lowercase tracking-normal font-bold">rate card →</a>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="/pricing" class="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center gap-2.5 hover:bg-brand-500/10 transition-colors {{ request()->is('pricing*') ? 'bg-brand-500/15 font-bold' : '' }}">
+                        <span class="text-base">🏷️</span>
+                        <div class="min-w-0">
+                            <span class="block text-xs font-bold text-gray-900 dark:text-white truncate">Pricing & Rates</span>
+                            <span class="block text-[10px] text-gray-500 truncate">Fares & calculator</span>
+                        </div>
+                    </a>
+                    <a href="/membership" class="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center gap-2.5 hover:bg-purple-500/10 transition-colors {{ request()->is('membership*') ? 'bg-purple-500/15 font-bold' : '' }}">
+                        <span class="text-base">⭐</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1">
+                                <span class="block text-xs font-bold text-gray-900 dark:text-white truncate">Memberships</span>
+                                <span class="text-[8px] font-black uppercase px-1 py-0.2 rounded bg-purple-500/15 text-purple-600 dark:text-purple-400">VIP</span>
+                            </div>
+                            <span class="block text-[10px] text-gray-500 truncate">Perks & discounts</span>
+                        </div>
+                    </a>
+                </div>
             </div>
 
             <!-- Apps Hub Mobile -->
