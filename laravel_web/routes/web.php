@@ -3274,6 +3274,14 @@ Route::get('/admin/run-system-migrations', function () {
                     'driver_hourly_rate' => 40.00,
                 ]);
         }
+        if (\Illuminate\Support\Facades\Schema::hasTable('investment_plans')) {
+            \Illuminate\Support\Facades\DB::table('investment_plans')
+                ->where('tranche_code', 'A')
+                ->update([
+                    'equity_percentage' => 7.00,
+                    'updated_at' => now(),
+                ]);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -3708,6 +3716,21 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
         } catch (\Throwable $e) {
             $output['gha_rental_multiplier_err'] = $e->getMessage();
+        }
+
+        // Ensure Tranche A equity percentage is 7.00%
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('investment_plans')) {
+                \Illuminate\Support\Facades\DB::table('investment_plans')
+                    ->where('tranche_code', 'A')
+                    ->update([
+                        'equity_percentage' => 7.00,
+                        'updated_at' => now(),
+                    ]);
+                $output['tranche_a_equity_synced'] = true;
+            }
+        } catch (\Throwable $e) {
+            $output['tranche_a_equity_err'] = $e->getMessage();
         }
 
         // Ensure all admin users have role 'admin' and active status

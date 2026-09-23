@@ -37,7 +37,7 @@ class InvestorRegistrationController extends Controller
                     'tier_name' => 'Seed Tier',
                     'capital_commitment_ghc' => 720000.00,
                     'capital_commitment_usd' => 60000.00,
-                    'equity_percentage' => 10.00,
+                    'equity_percentage' => 7.00,
                     'formatted_ghc' => '720,000 GHC',
                     'formatted_usd' => '$60,000',
                 ],

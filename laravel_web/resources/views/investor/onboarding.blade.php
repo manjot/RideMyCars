@@ -253,7 +253,7 @@
                                 <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">720,000 GHC</div>
                                 <div class="text-xs text-slate-500 dark:text-slate-400">Approx. $60,000 USD</div>
                                 <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                                    10.0% Fixed Equity Stake
+                                    7.0% Fixed Equity Stake
                                 </div>
                             </label>
 
@@ -405,7 +405,7 @@
                                 <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Confidential</span>
                             </div>
                             <p>
-                                <strong>Section 4.1 Cohort Architecture & Equity Governance:</strong> The participant agrees to commit capital to Ride My Cars New Development Finance Group (NDFG) LLC specifically designated for the Ride My Cars Ghana single cohort. The equity percentage locked herein (<span x-text="form.selected_tranche === 'A' ? '10.0%' : (form.selected_tranche === 'B' ? '14.0%' : '22.0%')"></span>) shall remain fixed and protected against subsequent phase dilution throughout the three (3) year initial lifecycle.
+                                <strong>Section 4.1 Cohort Architecture & Equity Governance:</strong> The participant agrees to commit capital to Ride My Cars New Development Finance Group (NDFG) LLC specifically designated for the Ride My Cars Ghana single cohort. The equity percentage locked herein (<span x-text="form.selected_tranche === 'A' ? '7.0%' : (form.selected_tranche === 'B' ? '14.0%' : '22.0%')"></span>) shall remain fixed and protected against subsequent phase dilution throughout the three (3) year initial lifecycle.
                             </p>
                             <p>
                                 <strong>Section 6.3 Escrow Custody & Cross-Border Remittance:</strong> All capital remittances, local processing, and currency disbursements are conducted in direct coordination with Ride My Cars (Ghana). The participant covenants that funds transmitted are free of encumbrances and comply with applicable anti-money laundering and Bank of Ghana foreign exchange repatriation protocols.

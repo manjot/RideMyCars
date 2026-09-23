@@ -314,7 +314,7 @@
                  x-data="{
                     selectedTranche: 'B',
                     tranches: {
-                        'A': { name: 'Tranche A (Seed)', ghc: 720000, usd: 60000, equity: 10.0, qDividend: 209875, yr1: 839500, yr3Exit: 4197500 },
+                        'A': { name: 'Tranche A (Seed)', ghc: 720000, usd: 60000, equity: 7.0, qDividend: 146913, yr1: 587650, yr3Exit: 2938250 },
                         'B': { name: 'Tranche B (Growth)', ghc: 1440000, usd: 120000, equity: 14.0, qDividend: 293825, yr1: 1175300, yr3Exit: 5876500 },
                         'C': { name: 'Tranche C (Venture)', ghc: 2640000, usd: 220000, equity: 22.0, qDividend: 461725, yr1: 1846900, yr3Exit: 9234500 }
                     }
@@ -340,7 +340,7 @@
                             <button type="button" @click="selectedTranche = 'A'"
                                     :class="selectedTranche === 'A' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold'"
                                     class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                                Tranche A (10%)
+                                Tranche A (7%)
                             </button>
                             <button type="button" @click="selectedTranche = 'B'"
                                     :class="selectedTranche === 'B' ? 'bg-amber-500 text-black shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold'"
@@ -462,7 +462,7 @@
                             <div class="text-xs text-slate-500 dark:text-slate-400 mb-6">Approx. $60,000 USD</div>
 
                             <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 font-black text-sm mb-6 text-center">
-                                10.0% Fixed Equity Stake
+                                7.0% Fixed Equity Stake
                             </div>
 
                             <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">

@@ -75,7 +75,7 @@ class InvestorProfileResource extends Resource
                             Forms\Components\Select::make('selected_tranche')
                                 ->label('Tranche Tier')
                                 ->options([
-                                    'A' => 'Tranche A (Seed Tier - 10.0% Equity)',
+                                    'A' => 'Tranche A (Seed Tier - 7.0% Equity)',
                                     'B' => 'Tranche B (Growth Tier - 14.0% Equity)',
                                     'C' => 'Tranche C (Venture Tier - 22.0% Equity)',
                                 ])->required(),

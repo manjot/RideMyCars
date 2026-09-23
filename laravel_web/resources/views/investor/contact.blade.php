@@ -126,7 +126,7 @@
                                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Tranche of Interest</label>
                                     <select name="interested_tranche" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 transition-colors">
                                         <option value="Tranche B (Growth Tier - 14% Equity)">Tranche B: 1,440,000 GHC ($120k)</option>
-                                        <option value="Tranche A (Seed Tier - 10% Equity)">Tranche A: 720,000 GHC ($60k)</option>
+                                        <option value="Tranche A (Seed Tier - 7% Equity)">Tranche A: 720,000 GHC ($60k)</option>
                                         <option value="Tranche C (Venture Tier - 22% Equity)">Tranche C: 2,640,000 GHC ($220k)</option>
                                         <option value="General Inquiry">General Private Placement Inquiry</option>
                                     </select>

@@ -59,7 +59,7 @@
                     </div>
                     <h3 class="text-xl font-black text-slate-900 dark:text-white mb-3">Fixed 3-Year Single Cohort</h3>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Capital is committed to a discrete 3-year performance cohort with locked equity allocations (Tranche A: 10%, Tranche B: 14%, Tranche C: 22%), shielding early investors from unpredictable future dilution.
+                        Capital is committed to a discrete 3-year performance cohort with locked equity allocations (Tranche A: 7%, Tranche B: 14%, Tranche C: 22%), shielding early investors from unpredictable future dilution.
                     </p>
                 </div>
 
