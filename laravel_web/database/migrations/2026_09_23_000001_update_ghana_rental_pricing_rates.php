@@ -17,6 +17,7 @@ return new class extends Migration
                 ->where('country_code', 'GHA')
                 ->update([
                     'rental_price_multiplier' => 12.5000,
+                    'driver_hourly_rate' => 40.00,
                     'updated_at' => now(),
                 ]);
         }

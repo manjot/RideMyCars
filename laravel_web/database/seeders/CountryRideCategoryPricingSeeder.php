@@ -173,7 +173,7 @@ class CountryRideCategoryPricingSeeder extends Seeder
                     'delivery_same_day_addon' => 4.00,
                     'delivery_scheduled_addon' => 2.00,
                     'delivery_per_kg_rate' => 1.00,
-                    'driver_hourly_rate' => 35.00,
+                    'driver_hourly_rate' => 40.00,
                     'driver_daily_rate' => 240.00,
                     'driver_weekly_rate' => 1400.00,
                     'rental_protection_daily_rate' => 25.00,

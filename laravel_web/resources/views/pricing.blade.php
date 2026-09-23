@@ -6,6 +6,8 @@
         // Single Source of Truth: load native country pricing matrix directly from DB
         $dynamicVehicles = \App\Models\CountryPricing::getPricingMatrixForCountry($currentCountryCode);
         $rentalRates = \App\Models\CountryPricing::getRentalFleetRatesForCountry($currentCountryCode, $currentPricing?->rental_price_multiplier ?? 1.0);
+        $isGhana = ($currentCountryCode === 'GHA' || ($currentPricing?->currency_code ?? '') === 'GHS' || ($currentCurrencySymbol ?? '') === 'GH₵');
+        $driverHourlyRate = (float) ($isGhana ? (($currentPricing?->driver_hourly_rate && $currentPricing->driver_hourly_rate != 35.00) ? $currentPricing->driver_hourly_rate : 40.00) : ($currentPricing?->driver_hourly_rate ?? 25.00));
     @endphp
 
     <!-- Ambient Glow Effects -->
@@ -525,13 +527,16 @@
                             <span class="text-xs font-black uppercase text-gray-400">1. Short Errands</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Hourly Chauffeur</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->driver_hourly_rate ?? 25.00, 0) }}</span>
+                                <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($driverHourlyRate, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ hour</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
                                 Ideal for doctor appointments, shopping trips, dinner outings, or safe ride home.
                             </p>
-                            <p class="text-[11px] text-gray-400 font-medium">Min. booking: 2 hours</p>
+                            <div class="space-y-1">
+                                <p class="text-[11px] text-gray-400 font-medium">Min. booking: 2 hours</p>
+                                <p class="text-[11px] text-amber-600 dark:text-amber-400 font-bold">Excludes driver transfers</p>
+                            </div>
                         </div>
                         <a href="/hire-driver?type=hourly" class="mt-5 block w-full py-2.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-900 dark:text-white font-extrabold text-xs rounded-xl transition-all text-center">
                             Hire by Hour →
@@ -544,7 +549,7 @@
                             <span class="text-xs font-black uppercase text-amber-500">2. Business Meetings</span>
                             <h3 class="text-xl font-black text-gray-900 dark:text-white">Half Day (4–8h)</h3>
                             <div class="py-2">
-                                <span class="text-3xl font-black text-amber-500">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->driver_hourly_rate ?? 25.00) * 4 * 0.95, 0) }}</span>
+                                <span class="text-3xl font-black text-amber-500">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($driverHourlyRate * 4 * 0.95, 0) }}</span>
                                 <span class="text-xs text-gray-500 font-bold">/ 4h block</span>
                             </div>
                             <p class="text-xs text-gray-500 leading-relaxed">
@@ -960,7 +965,7 @@
                     const base = baseRates[tier] ? baseRates[tier][period] : 0;
                     return this.currencySymbol + Math.round(base * mult).toLocaleString();
                 },
-                driverHourlyRate: {{ (float) ($currentPricing?->driver_hourly_rate ?? 25.00) }},
+                driverHourlyRate: {{ $driverHourlyRate }},
                 driverDailyRate: {{ (float) ($currentPricing?->driver_daily_rate ?? 160.00) }},
                 driverWeeklyRate: {{ (float) ($currentPricing?->driver_weekly_rate ?? 890.00) }},
                 deliveryBaseRate: {{ (float) ($currentPricing?->delivery_base_fare ?? 8.00) }},

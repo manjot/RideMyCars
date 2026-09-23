@@ -3269,7 +3269,10 @@ Route::get('/admin/run-system-migrations', function () {
         if (\Illuminate\Support\Facades\Schema::hasTable('country_pricings')) {
             \Illuminate\Support\Facades\DB::table('country_pricings')
                 ->where('country_code', 'GHA')
-                ->update(['rental_price_multiplier' => 12.5000]);
+                ->update([
+                    'rental_price_multiplier' => 12.5000,
+                    'driver_hourly_rate' => 40.00,
+                ]);
         }
 
         return response()->json([
@@ -3698,6 +3701,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                     ->where('country_code', 'GHA')
                     ->update([
                         'rental_price_multiplier' => 12.5000,
+                        'driver_hourly_rate' => 40.00,
                         'updated_at' => now(),
                     ]);
                 $output['gha_rental_multiplier_synced'] = true;
