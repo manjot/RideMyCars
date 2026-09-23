@@ -5,6 +5,7 @@
         $currentCountryCode = $currentPricing?->country_code ?? 'USA';
         // Single Source of Truth: load native country pricing matrix directly from DB
         $dynamicVehicles = \App\Models\CountryPricing::getPricingMatrixForCountry($currentCountryCode);
+        $rentalRates = \App\Models\CountryPricing::getRentalFleetRatesForCountry($currentCountryCode, $currentPricing?->rental_price_multiplier ?? 1.0);
     @endphp
 
     <!-- Ambient Glow Effects -->
@@ -421,8 +422,8 @@
                             <div>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-black text-gray-900 dark:text-white"
-                                          x-text="rentalPeriod === 'daily' ? (currencySymbol + Math.round(35 * rentalMultiplier)) : (rentalPeriod === 'weekly' ? (currencySymbol + Math.round(208 * rentalMultiplier)) : (currencySymbol + Math.round(735 * rentalMultiplier)))"></span>
-                                    <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))"></span>
+                                          x-text="getRentalRate('economy', rentalPeriod)">{{ ($currentCurrencySymbol ?? '$') . number_format($rentalRates['economy']['daily'] ?? 500) }}</span>
+                                    <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))">/ day</span>
                                 </div>
                                 <p class="text-[11px] text-emerald-600 font-bold mt-1">✓ Unlimited mileage included</p>
                             </div>
@@ -451,8 +452,8 @@
                             <div>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-black text-brand-600 dark:text-brand-400"
-                                          x-text="rentalPeriod === 'daily' ? (currencySymbol + Math.round(65 * rentalMultiplier)) : (rentalPeriod === 'weekly' ? (currencySymbol + Math.round(386 * rentalMultiplier)) : (currencySymbol + Math.round(1365 * rentalMultiplier)))"></span>
-                                    <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))"></span>
+                                          x-text="getRentalRate('suv', rentalPeriod)">{{ ($currentCurrencySymbol ?? '$') . number_format($rentalRates['suv']['daily'] ?? 800) }}</span>
+                                    <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))">/ day</span>
                                 </div>
                                 <p class="text-[11px] text-emerald-600 font-bold mt-1">✓ Full zero-deductible insurance</p>
                             </div>
@@ -478,8 +479,8 @@
                             <div>
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-black text-gray-900 dark:text-white"
-                                          x-text="rentalPeriod === 'daily' ? (currencySymbol + Math.round(120 * rentalMultiplier)) : (rentalPeriod === 'weekly' ? (currencySymbol + Math.round(714 * rentalMultiplier)) : (currencySymbol + Math.round(2520 * rentalMultiplier)))"></span>
-                                    <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))"></span>
+                                          x-text="getRentalRate('luxury', rentalPeriod)">{{ ($currentCurrencySymbol ?? '$') . number_format($rentalRates['luxury']['daily'] ?? 1500) }}</span>
+                                    <span class="text-xs text-gray-500" x-text="'/ ' + (rentalPeriod === 'daily' ? 'day' : (rentalPeriod === 'weekly' ? 'week' : 'month'))">/ day</span>
                                 </div>
                                 <p class="text-[11px] text-emerald-600 font-bold mt-1">✓ White-glove concierge delivery</p>
                             </div>
@@ -935,6 +936,30 @@
                 currencySymbol: @json($currentCurrencySymbol ?? "$"),
                 currencyCode: @json($currentCurrencyCode ?? "USD"),
                 rentalMultiplier: {{ (float) ($currentPricing?->rental_price_multiplier ?? 1.0) }},
+                rentalRates: @json($rentalRates),
+                getRentalRate(tier, period) {
+                    if (this.rentalRates && this.rentalRates[tier] && this.rentalRates[tier][period] !== undefined) {
+                        return this.currencySymbol + Number(this.rentalRates[tier][period]).toLocaleString();
+                    }
+                    const isGha = (this.currencyCode === 'GHS' || this.currencySymbol === 'GH₵' || '{{ $currentCountryCode }}' === 'GHA');
+                    if (isGha) {
+                        const ghaRates = {
+                            economy: { daily: 500, weekly: 2975, monthly: 10500 },
+                            suv: { daily: 800, weekly: 4760, monthly: 16800 },
+                            luxury: { daily: 1500, weekly: 8925, monthly: 31500 }
+                        };
+                        const val = ghaRates[tier] ? ghaRates[tier][period] : 0;
+                        return this.currencySymbol + Number(val).toLocaleString();
+                    }
+                    const baseRates = {
+                        economy: { daily: 35, weekly: 208, monthly: 735 },
+                        suv: { daily: 65, weekly: 386, monthly: 1365 },
+                        luxury: { daily: 120, weekly: 714, monthly: 2520 }
+                    };
+                    const mult = this.rentalMultiplier || 1.0;
+                    const base = baseRates[tier] ? baseRates[tier][period] : 0;
+                    return this.currencySymbol + Math.round(base * mult).toLocaleString();
+                },
                 driverHourlyRate: {{ (float) ($currentPricing?->driver_hourly_rate ?? 25.00) }},
                 driverDailyRate: {{ (float) ($currentPricing?->driver_daily_rate ?? 160.00) }},
                 driverWeeklyRate: {{ (float) ($currentPricing?->driver_weekly_rate ?? 890.00) }},

@@ -3266,6 +3266,11 @@ Route::get('/admin/run-system-migrations', function () {
         \App\Models\CountryRideCategoryPricing::ensureTableExists();
         \App\Models\CountryRideCategoryPricing::syncGhanaPdfTiers(true);
         \App\Services\IncentiveService::ensureTables();
+        if (\Illuminate\Support\Facades\Schema::hasTable('country_pricings')) {
+            \Illuminate\Support\Facades\DB::table('country_pricings')
+                ->where('country_code', 'GHA')
+                ->update(['rental_price_multiplier' => 12.5000]);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -3684,6 +3689,21 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
         } catch (\Throwable $e) {
             $output['gha_compliance_rule_err'] = $e->getMessage();
+        }
+
+        // Ensure Ghana rental multiplier is synced in database
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('country_pricings')) {
+                \Illuminate\Support\Facades\DB::table('country_pricings')
+                    ->where('country_code', 'GHA')
+                    ->update([
+                        'rental_price_multiplier' => 12.5000,
+                        'updated_at' => now(),
+                    ]);
+                $output['gha_rental_multiplier_synced'] = true;
+            }
+        } catch (\Throwable $e) {
+            $output['gha_rental_multiplier_err'] = $e->getMessage();
         }
 
         // Ensure all admin users have role 'admin' and active status

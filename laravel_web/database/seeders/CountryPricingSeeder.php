@@ -106,7 +106,7 @@ class CountryPricingSeeder extends Seeder
                 'driver_daily_rate' => 240.00,
                 'driver_weekly_rate' => 1400.00,
                 // Rental
-                'rental_price_multiplier' => 1.0000,
+                'rental_price_multiplier' => 12.5000,
                 'rental_protection_daily_rate' => 25.00,
                 'rental_additional_driver_rate' => 20.00,
                 'rental_child_seat_rate' => 15.00,

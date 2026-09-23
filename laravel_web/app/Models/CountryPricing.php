@@ -601,4 +601,54 @@ class CountryPricing extends Model
             return static::getGhanaPricingMatrix();
         }
     }
+
+    /**
+     * Vehicle Rental Fleet Rates (Daily, Weekly, Monthly) for a country.
+     * Native Ghana rates: Economy 500 GH₵, SUV 800 GH₵, Prestige & Luxury 1,500 GH₵.
+     * Weekly includes 15% discount (7 days * daily * 0.85).
+     * Monthly includes 30% discount (30 days * daily * 0.70).
+     */
+    public static function getRentalFleetRatesForCountry(?string $countryCode, ?float $multiplier = 1.0): array
+    {
+        $code = strtoupper(trim($countryCode ?? 'USA'));
+
+        if ($code === 'GHA') {
+            return [
+                'economy' => [
+                    'daily' => 500,
+                    'weekly' => 2975, // 500 * 7 * 0.85
+                    'monthly' => 10500, // 500 * 30 * 0.70
+                ],
+                'suv' => [
+                    'daily' => 800,
+                    'weekly' => 4760, // 800 * 7 * 0.85
+                    'monthly' => 16800, // 800 * 30 * 0.70
+                ],
+                'luxury' => [
+                    'daily' => 1500,
+                    'weekly' => 8925, // 1500 * 7 * 0.85
+                    'monthly' => 31500, // 1500 * 30 * 0.70
+                ],
+            ];
+        }
+
+        $mult = (float) ($multiplier ?: 1.0);
+        return [
+            'economy' => [
+                'daily' => (int) round(35 * $mult),
+                'weekly' => (int) round(208 * $mult),
+                'monthly' => (int) round(735 * $mult),
+            ],
+            'suv' => [
+                'daily' => (int) round(65 * $mult),
+                'weekly' => (int) round(386 * $mult),
+                'monthly' => (int) round(1365 * $mult),
+            ],
+            'luxury' => [
+                'daily' => (int) round(120 * $mult),
+                'weekly' => (int) round(714 * $mult),
+                'monthly' => (int) round(2520 * $mult),
+            ],
+        ];
+    }
 }
