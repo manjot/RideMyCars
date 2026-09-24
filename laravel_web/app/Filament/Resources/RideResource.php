@@ -280,7 +280,53 @@ class RideResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('view_receipt')
+                        ->label('View Receipt')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->url(function (\App\Models\Ride $record): string {
+                            $receipt = $record->receipt ?? \App\Services\ReceiptService::generateReceiptForRide($record, false);
+                            return $receipt->view_url;
+                        })
+                        ->openUrlInNewTab(),
+
+                    Tables\Actions\Action::make('download_receipt_pdf')
+                        ->label('Download PDF')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('primary')
+                        ->url(function (\App\Models\Ride $record): string {
+                            $receipt = $record->receipt ?? \App\Services\ReceiptService::generateReceiptForRide($record, false);
+                            return $receipt->download_url;
+                        })
+                        ->openUrlInNewTab(),
+
+                    Tables\Actions\Action::make('resend_receipt_email')
+                        ->label('Re-send Email')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Re-send Receipt')
+                        ->modalDescription(fn (\App\Models\Ride $record) => "Send receipt email to {$record->rider?->email}?")
+                        ->action(function (\App\Models\Ride $record) {
+                            $receipt = $record->receipt ?? \App\Services\ReceiptService::generateReceiptForRide($record, false);
+                            $sent = \App\Services\ReceiptService::resendReceiptEmail($receipt);
+                            if ($sent) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Receipt Emailed')
+                                    ->body("Receipt #{$receipt->receipt_number} sent to {$receipt->sent_to_email}.")
+                                    ->success()
+                                    ->send();
+                            } else {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Email Failed')
+                                    ->body('Could not deliver email. Please check mail settings.')
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\EditAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

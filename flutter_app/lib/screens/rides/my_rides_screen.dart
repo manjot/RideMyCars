@@ -5,6 +5,7 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
+import '../account/receipts_screen.dart';
 
 class MyRidesScreen extends StatefulWidget {
   final String? initialCategoryFilter;
@@ -173,6 +174,18 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
           'My Activity & Bookings',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 22),
+            tooltip: 'Booking Receipts',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+              );
+            },
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(96),
           child: Column(

@@ -46,4 +46,12 @@ class ApiConstants {
   static const String deliveryCalculate = '/delivery/calculate-price';
   static const String deliveryBook = '/delivery/book';
   static String deliveryStatus(int id) => '/delivery/$id/status';
+
+  // Receipts
+  static const String receipts = '/receipts';
+  static String receiptDetail(int id) => '/receipts/$id';
+  static String receiptDownload(int id) => '/receipts/$id/download';
+  static String receiptResend(int id) => '/receipts/$id/resend';
+  static String receiptViewWeb(String token) => 'https://ridemycars.com/receipts/$token';
+  static String receiptDownloadWeb(String token) => 'https://ridemycars.com/receipts/$token/download';
 }

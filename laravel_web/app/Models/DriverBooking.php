@@ -41,6 +41,7 @@ class DriverBooking extends Model
         'currency',
         'payment_method',
         'payment_status',
+        'receipt_id',
         'verification_status',
         'verified_by_driver_id',
         'verified_at',
@@ -141,5 +142,10 @@ class DriverBooking extends Model
     public function assignments()
     {
         return $this->hasMany(RideAssignment::class, 'driver_booking_id');
+    }
+
+    public function receipt()
+    {
+        return $this->belongsTo(Receipt::class, 'receipt_id');
     }
 }

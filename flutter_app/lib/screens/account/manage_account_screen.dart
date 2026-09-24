@@ -6,6 +6,7 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import 'receipts_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -310,6 +311,24 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                       ],
                     ),
                   ),
+
+                  // Receipts & History Section
+                  const Text(
+                    'Booking History & Receipts',
+                    style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildActionTile(
+                    Icons.receipt_long_rounded,
+                    'Receipts & Tax Invoices',
+                    'View & download PDF receipts for rides, rentals, chauffeurs & deliveries',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
 
                   // Personal Information Section
                   const Text(

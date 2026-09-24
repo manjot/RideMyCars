@@ -369,6 +369,14 @@ class DriverBookingController extends Controller
 
         $booking->update($updates);
 
+        if ($newStatus === 'completed') {
+            try {
+                \App\Services\ReceiptService::generateReceiptForDriverBooking($booking->fresh(), true);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to generate receipt for driver booking #{$booking->id}: " . $e->getMessage());
+            }
+        }
+
         $actType = match ($newStatus) {
             'accepted' => 'driver_booking_accepted',
             'cancelled' => 'driver_booking_rejected',

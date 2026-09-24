@@ -199,24 +199,18 @@
                                             @endif
                                         </div>
 
-                                        <div class="flex items-center gap-2 shrink-0">
-                                            @if($isRental)
-                                                <a href="/rent/booking/{{ $ride->id }}/voucher" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
-                                                    📄 Rental Voucher
+                                            @php
+                                                $rideReceipt = $ride->receipt ?? \App\Models\Receipt::where('booking_type', $isRental ? 'rental' : 'ride')->where('booking_id', $ride->id)->first();
+                                            @endphp
+                                            @if($rideReceipt || in_array($ride->status, ['completed', 'finished']))
+                                                <a href="{{ $rideReceipt ? $rideReceipt->view_url : ('/receipts/CRN' . date('ymd') . str_pad((string)$ride->id, 5, '0', STR_PAD_LEFT)) }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <span>🧾 Receipt</span>
                                                 </a>
-
-                                                @if(!in_array($ride->status, ['completed', 'cancelled']))
-                                                    <form action="/rent/booking/{{ $ride->id }}/cancel" method="POST" onsubmit="return confirm('Are you sure you want to cancel this car rental? Free cancellation terms apply.');">
-                                                        @csrf
-                                                        <button type="submit" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
-                                                            ❌ Cancel
-                                                        </button>
-                                                    </form>
+                                                @if($rideReceipt)
+                                                    <a href="{{ $rideReceipt->download_url }}" class="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white rounded-lg font-bold text-xs shadow-sm transition-colors" title="Download PDF">
+                                                        <span>📥 PDF</span>
+                                                    </a>
                                                 @endif
-                                            @else
-                                                <a href="/ride/track/{{ $ride->id }}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
-                                                    <span>📍 Live Radar & Track</span>
-                                                </a>
                                             @endif
                                         </div>
                                     </div>
@@ -514,10 +508,23 @@
                                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $booking->driver->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                     <span>WhatsApp</span>
                                                 </a>
+                                            @php
+                                                $chfReceipt = $booking->receipt ?? \App\Models\Receipt::where('booking_type', 'driver_booking')->where('booking_id', $booking->id)->first();
+                                            @endphp
+                                            @if($chfReceipt || $isBookingPaid || in_array($booking->booking_status, ['completed', 'confirmed']))
+                                                <a href="{{ $chfReceipt ? $chfReceipt->view_url : ('/driver-hire/confirmation/' . $booking->id) }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <span>🧾 Receipt</span>
+                                                </a>
+                                                @if($chfReceipt)
+                                                    <a href="{{ $chfReceipt->download_url }}" class="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white rounded-lg font-bold text-xs shadow-sm transition-colors" title="Download PDF">
+                                                        <span>📥 PDF</span>
+                                                    </a>
+                                                @endif
+                                            @else
+                                                <a href="/driver-hire/confirmation/{{ $booking->id }}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white rounded-lg font-bold text-xs transition-colors">
+                                                    Booking Summary
+                                                </a>
                                             @endif
-                                            <a href="/driver-hire/confirmation/{{ $booking->id }}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white rounded-lg font-bold text-xs transition-colors">
-                                                Booking Receipt
-                                            </a>
                                         </div>
                                     </div>
                                 @endif
@@ -670,6 +677,18 @@
                                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $delivery->courier->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                     <span>WhatsApp</span>
                                                 </a>
+                                            @php
+                                                $delReceipt = $delivery->receipt ?? \App\Models\Receipt::where('booking_type', 'delivery')->where('booking_id', $delivery->id)->first();
+                                            @endphp
+                                            @if($delReceipt || in_array($delivery->delivery_status, ['completed', 'delivered']))
+                                                <a href="{{ $delReceipt ? $delReceipt->view_url : ('/delivery/tracker?tracking_code=' . $delivery->delivery_code) }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <span>🧾 Receipt</span>
+                                                </a>
+                                                @if($delReceipt)
+                                                    <a href="{{ $delReceipt->download_url }}" class="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white rounded-lg font-bold text-xs shadow-sm transition-colors" title="Download PDF">
+                                                        <span>📥 PDF</span>
+                                                    </a>
+                                                @endif
                                             @endif
                                             <a href="/delivery/tracker?tracking_code={{ $delivery->delivery_code }}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                 Live Tracker

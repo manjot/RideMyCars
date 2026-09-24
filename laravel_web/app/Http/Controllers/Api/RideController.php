@@ -94,6 +94,9 @@ class RideController extends Controller
                     ? ($r->digital_receipt_code ?: ('RNT-' . $r->id)) 
                     : ($isDelivery ? ('DEL-' . $r->id) : ('RIDE-' . $r->id)),
                 'status' => $r->status,
+                'receipt_id' => $r->receipt_id,
+                'receipt_url' => $r->receipt ? $r->receipt->view_url : ($r->receipt_id ? url('/receipts/' . $r->receipt_id) : null),
+                'receipt_download_url' => $r->receipt ? $r->receipt->download_url : ($r->receipt_id ? url('/receipts/' . $r->receipt_id . '/download') : null),
                 'fare' => (float)($r->total_amount ?? $r->fare ?? 0),
                 'paid_amount' => (float)($r->paid_amount ?? 0),
                 'remaining_balance' => (float)($r->remaining_balance ?? 0),
@@ -139,6 +142,9 @@ class RideController extends Controller
                 'type' => 'chauffeur',
                 'booking_code' => $db->booking_code ?? ('BK-' . $db->id),
                 'status' => $db->booking_status ?? ($db->verification_status === 'driver_verified' ? 'completed' : 'pending'),
+                'receipt_id' => $db->receipt_id,
+                'receipt_url' => $db->receipt ? $db->receipt->view_url : ($db->receipt_id ? url('/receipts/' . $db->receipt_id) : null),
+                'receipt_download_url' => $db->receipt ? $db->receipt->download_url : ($db->receipt_id ? url('/receipts/' . $db->receipt_id . '/download') : null),
                 'fare' => (float)($db->total_price ?? 0),
                 'pickup_location' => $db->pickup_location,
                 'dropoff_location' => $db->dropoff_location ?? 'As Directed',
@@ -164,6 +170,9 @@ class RideController extends Controller
                 'type' => 'delivery',
                 'booking_code' => $del->delivery_code ?: ('DEL-' . $del->id),
                 'status' => $del->delivery_status ?: 'pending',
+                'receipt_id' => $del->receipt_id,
+                'receipt_url' => $del->receipt ? $del->receipt->view_url : ($del->receipt_id ? url('/receipts/' . $del->receipt_id) : null),
+                'receipt_download_url' => $del->receipt ? $del->receipt->download_url : ($del->receipt_id ? url('/receipts/' . $del->receipt_id . '/download') : null),
                 'fare' => (float)($del->total_price ?? 0),
                 'pickup_location' => $del->pickup_location,
                 'dropoff_location' => $del->dropoff_location,
@@ -597,6 +606,12 @@ class RideController extends Controller
             try {
                 \App\Services\IncentiveService::handleRideCompleted($ride);
             } catch (\Throwable $e) {}
+
+            try {
+                \App\Services\ReceiptService::generateReceiptForRide($ride, true);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Auto receipt generation for ride error: ' . $e->getMessage());
+            }
         }
 
         // Notifications

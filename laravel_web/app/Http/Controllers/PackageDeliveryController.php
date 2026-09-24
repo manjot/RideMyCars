@@ -350,6 +350,12 @@ class PackageDeliveryController extends Controller
             Auth::id() ?? 1
         );
 
+        try {
+            \App\Services\ReceiptService::generateReceiptForPackageDelivery($delivery->fresh(), true);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to generate receipt for package delivery #{$delivery->id}: " . $e->getMessage());
+        }
+
         return back()->with('success', '🎉 Delivery verified and completed successfully!');
     }
 
@@ -385,6 +391,14 @@ class PackageDeliveryController extends Controller
         }
 
         $delivery->update($updates);
+
+        if ($newStatus === 'delivered') {
+            try {
+                \App\Services\ReceiptService::generateReceiptForPackageDelivery($delivery->fresh(), true);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to generate receipt for package delivery #{$delivery->id}: " . $e->getMessage());
+            }
+        }
 
         ActivityLogService::log(
             'package_delivery_status',

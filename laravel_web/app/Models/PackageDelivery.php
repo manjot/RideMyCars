@@ -47,6 +47,7 @@ class PackageDelivery extends Model
         'currency',
         'payment_method',
         'payment_status',
+        'receipt_id',
         'verification_status',
         'verified_by_driver_id',
         'verified_at',
@@ -113,5 +114,10 @@ class PackageDelivery extends Model
     public function assignments()
     {
         return $this->hasMany(RideAssignment::class, 'package_delivery_id');
+    }
+
+    public function receipt()
+    {
+        return $this->belongsTo(Receipt::class, 'receipt_id');
     }
 }

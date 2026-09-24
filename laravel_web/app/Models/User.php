@@ -214,5 +214,10 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->investorProfile && $this->investorProfile->isVerified();
     }
+
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class)->orderBy('created_at', 'desc');
+    }
 }
 

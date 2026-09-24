@@ -24,6 +24,10 @@ Route::get('/places/details', [PlacesApiController::class, 'details']);
 Route::get('/places/geocode', [PlacesApiController::class, 'geocode']);
 Route::get('/places/reverse', [PlacesApiController::class, 'reverse']);
 
+// Public Receipt Verification & Direct Download
+Route::get('/receipts/verify/{token}', [\App\Http\Controllers\ReceiptController::class, 'apiShow']);
+Route::get('/receipts/{token}/download', [\App\Http\Controllers\ReceiptController::class, 'download']);
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/otp/send', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');
@@ -132,6 +136,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('rides', RideController::class);
     Route::apiResource('vehicles', VehicleController::class);
+
+    // Customer Receipts & Downloads
+    Route::get('/receipts', [\App\Http\Controllers\ReceiptController::class, 'apiIndex']);
+    Route::get('/receipts/{id}', [\App\Http\Controllers\ReceiptController::class, 'apiShow']);
+    Route::get('/receipts/{id}/download', [\App\Http\Controllers\ReceiptController::class, 'download']);
+    Route::post('/receipts/{id}/resend', [\App\Http\Controllers\ReceiptController::class, 'resend']);
+
 
     // Driver Dispatch & Operations
     Route::post('/driver/location', [DriverApiController::class, 'updateLocation']);

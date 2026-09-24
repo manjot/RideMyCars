@@ -69,6 +69,16 @@
                         </a>
                     @endif
 
+                    <button @click="currentTab = 'receipts'" 
+                            :class="currentTab === 'receipts' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border-l-4 border-amber-500' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-300'" 
+                            class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span>🧾</span>
+                            <span>Booking History & Receipts</span>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-full">{{ isset($receipts) ? $receipts->total() : 0 }}</span>
+                    </button>
+
                     <button @click="currentTab = 'security'" 
                             :class="currentTab === 'security' ? 'bg-gray-100 dark:bg-[#222] font-semibold text-gray-900 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-300'" 
                             class="w-full text-left px-4 py-3.5 text-base transition-colors rounded-xl cursor-pointer">
@@ -580,6 +590,163 @@
 
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mt-10 mb-4">Third-party apps with account access</h2>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">Once you allow access to third-party apps, you'll see them here. <a href="/privacy" class="text-gray-900 dark:text-white underline font-medium">Learn more</a></p>
+                </div>
+
+                <!-- BOOKING HISTORY & RECEIPTS TAB -->
+                <div x-show="currentTab === 'receipts'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" x-data="{ receiptFilter: 'all' }">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-100 dark:border-white/10 mb-6 gap-4">
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Booking History / Receipts</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Official tax invoices and digital receipts for Rides, Rentals, Chauffeurs, and Deliveries.</p>
+                        </div>
+                        <a href="/my-rides" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white text-xs font-bold rounded-xl transition-colors shrink-0">
+                            View All Activity &rarr;
+                        </a>
+                    </div>
+
+                    <!-- Category Filter Pills -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6">
+                        <button type="button" @click="receiptFilter = 'all'"
+                                :class="receiptFilter === 'all' ? 'bg-amber-400 text-black font-extrabold' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-semibold'"
+                                class="px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer shrink-0">
+                            All Receipts ({{ isset($receipts) ? $receipts->total() : 0 }})
+                        </button>
+                        <button type="button" @click="receiptFilter = 'ride'"
+                                :class="receiptFilter === 'ride' ? 'bg-amber-400 text-black font-extrabold' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-semibold'"
+                                class="px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer shrink-0">
+                            🚗 Rides
+                        </button>
+                        <button type="button" @click="receiptFilter = 'rental'"
+                                :class="receiptFilter === 'rental' ? 'bg-amber-400 text-black font-extrabold' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-semibold'"
+                                class="px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer shrink-0">
+                            🏎️ Rentals
+                        </button>
+                        <button type="button" @click="receiptFilter = 'driver_booking'"
+                                :class="receiptFilter === 'driver_booking' ? 'bg-amber-400 text-black font-extrabold' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-semibold'"
+                                class="px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer shrink-0">
+                            👔 Chauffeurs
+                        </button>
+                        <button type="button" @click="receiptFilter = 'delivery'"
+                                :class="receiptFilter === 'delivery' ? 'bg-amber-400 text-black font-extrabold' : 'bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-semibold'"
+                                class="px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer shrink-0">
+                            📦 Deliveries
+                        </button>
+                    </div>
+
+                    @if(!isset($receipts) || $receipts->isEmpty())
+                        <div class="p-12 text-center rounded-3xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/10">
+                            <div class="w-16 h-16 mx-auto mb-4 bg-amber-400/10 text-amber-500 rounded-2xl flex items-center justify-center text-3xl">
+                                🧾
+                            </div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white">No Receipts Found</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">
+                                Once you complete a ride, car rental, chauffeur hiring, or package delivery, your tamper-proof official PDF receipt will be automatically generated and saved here permanently.
+                            </p>
+                            <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                                <a href="/ride" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded-xl shadow-sm transition-colors">
+                                    Book a Ride
+                                </a>
+                                <a href="/rent" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 text-gray-800 dark:text-white font-bold text-xs rounded-xl transition-colors">
+                                    Rent a Car
+                                </a>
+                            </div>
+                        </div>
+                    @else
+                        <div class="space-y-4">
+                            @foreach($receipts as $r)
+                                @php
+                                    $snap = $r->snapshot_data ?? [];
+                                @endphp
+                                <div x-show="receiptFilter === 'all' || receiptFilter === '{{ $r->booking_type }}'"
+                                     class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider
+                                                    @if($r->booking_type === 'rental') bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
+                                                    @elseif($r->booking_type === 'driver_booking') bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
+                                                    @elseif($r->booking_type === 'delivery') bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20
+                                                    @else bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
+                                                    @endif">
+                                                    {{ $r->type_label }}
+                                                </span>
+                                                <span class="font-mono text-xs font-bold text-gray-500 dark:text-gray-400">
+                                                    CRN: {{ $r->receipt_number }}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                Issued: {{ $r->created_at->format('d M, Y \a\t h:i A') }}
+                                            </p>
+                                        </div>
+
+                                        <div class="text-left sm:text-right">
+                                            <div class="text-xl font-black text-gray-900 dark:text-white">
+                                                {{ $r->currency }} {{ number_format($r->total_amount, 2) }}
+                                            </div>
+                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                                {{ strtoupper($r->payment_status) }} ({{ ucfirst($r->payment_method) }})
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Route & Vehicle Details -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4 text-xs">
+                                        <div class="space-y-2">
+                                            <div class="flex items-start gap-2">
+                                                <span class="text-emerald-500 font-bold">&#9679;</span>
+                                                <span class="text-gray-600 dark:text-gray-300 font-medium">{{ $snap['pickup_location'] ?? 'Pickup Point' }}</span>
+                                            </div>
+                                            <div class="flex items-start gap-2">
+                                                <span class="text-rose-500 font-bold">&#9679;</span>
+                                                <span class="text-gray-600 dark:text-gray-300 font-medium">{{ $snap['dropoff_location'] ?? 'Dropoff Point' }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-1 sm:text-right">
+                                            @if(!empty($snap['driver_name']))
+                                                <p class="text-gray-500 dark:text-gray-400">
+                                                    <strong>Driver / Partner:</strong> {{ $snap['driver_name'] }}
+                                                </p>
+                                            @endif
+                                            @if(!empty($snap['vehicle_title']))
+                                                <p class="text-gray-500 dark:text-gray-400">
+                                                    <strong>Vehicle:</strong> {{ $snap['vehicle_title'] }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="pt-4 border-t border-gray-100 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
+                                        <span class="text-[11px] font-mono text-gray-400 select-all truncate max-w-[200px]" title="Token: {{ $r->verification_token }}">
+                                            Token: {{ substr($r->verification_token, 0, 16) }}...
+                                        </span>
+
+                                        <div class="flex items-center gap-2">
+                                            <form action="/receipts/{{ $r->id }}/resend" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" title="Resend copy to your email" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                                                    📧 Resend Email
+                                                </button>
+                                            </form>
+
+                                            <a href="{{ $r->view_url }}" target="_blank" class="px-3 py-1.5 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center gap-1">
+                                                <span>🌐 View Online</span>
+                                            </a>
+
+                                            <a href="{{ $r->download_url }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-black shadow-sm transition-colors flex items-center gap-1">
+                                                <span>📥 Download PDF</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            <div class="mt-6">
+                                {{ $receipts->links() }}
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
             </div>

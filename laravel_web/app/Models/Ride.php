@@ -51,6 +51,7 @@ class Ride extends Model
         'paid_amount',
         'remaining_balance',
         'payment_status',
+        'receipt_id',
         'verification_status',
         'verified_by_driver_id',
         'verified_at',
@@ -164,6 +165,11 @@ class Ride extends Model
     public function driverReview()
     {
         return $this->hasOne(RideReview::class)->where('type', 'driver_to_rider');
+    }
+
+    public function receipt()
+    {
+        return $this->belongsTo(Receipt::class, 'receipt_id');
     }
 }
 

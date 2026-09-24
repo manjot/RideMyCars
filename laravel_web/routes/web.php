@@ -2033,6 +2033,18 @@ Route::get('/my-rides', function () {
     return view('my-rides', compact('user', 'rides', 'driverBookings', 'packageDeliveries'));
 })->middleware('auth');
 
+// Automatic Receipt System Routes
+Route::get('/receipts/{token}', [\App\Http\Controllers\ReceiptController::class, 'show'])->name('receipts.show');
+Route::get('/receipts/{token}/download', [\App\Http\Controllers\ReceiptController::class, 'download'])->name('receipts.download');
+Route::post('/receipts/{id}/resend', [\App\Http\Controllers\ReceiptController::class, 'resend'])->name('receipts.resend');
+Route::get('/profile/receipts', function () {
+    return redirect('/account?tab=receipts');
+})->middleware('auth');
+Route::get('/profile', function () {
+    return redirect('/account');
+})->middleware('auth');
+
+
 // Dedicated Live Ride Tracker Page (For Guests and Logged-In Customers)
 Route::get('/ride/track/{id?}', function ($id = null) {
     $guestRideId = $id ?? session('active_guest_ride_id') ?? request()->query('ride_id');
@@ -3058,8 +3070,11 @@ Route::get('/account', function () {
     $user = auth()->user();
     $vehicles = $user->vehicles()->latest()->get();
     $driverProfile = $user->driverProfile;
-    return view('account', compact('user', 'vehicles', 'driverProfile'));
-})->middleware('auth');
+    $receipts = \App\Models\Receipt::where('user_id', $user->id)
+        ->latest()
+        ->paginate(20);
+    return view('account', compact('user', 'vehicles', 'driverProfile', 'receipts'));
+})->middleware('auth')->name('account');
 
 Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {
     $request->validate([

@@ -26,4 +26,6 @@ Homestead.yaml
 Thumbs.db
 /database/*.sqlite
 /database/*.sqlite-journal
+/public/receipts/*
+!/public/receipts/.gitkeep
 scratch/
