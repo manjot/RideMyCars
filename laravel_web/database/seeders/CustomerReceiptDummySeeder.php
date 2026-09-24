@@ -71,15 +71,14 @@ class CustomerReceiptDummySeeder extends Seeder
         $vehicleRide = Vehicle::updateOrCreate(
             ['license_plate' => 'GS-4527-26'],
             [
-                'user_id' => $driver->id,
-                'driver_id' => $driver->id,
+                'assigned_driver_id' => $driver->id,
                 'make' => 'Toyota',
                 'model' => 'Camry XSE',
                 'year' => 2024,
-                'color' => 'Silver Metallic',
                 'type' => 'Sedan',
                 'category' => 'Sedan',
-                'status' => 'active',
+                'is_available' => true,
+                'approval_status' => 'approved',
                 'image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80',
             ]
         );
@@ -87,14 +86,13 @@ class CustomerReceiptDummySeeder extends Seeder
         $vehicleRental = Vehicle::updateOrCreate(
             ['license_plate' => 'LUX-1111'],
             [
-                'user_id' => $driver->id,
                 'make' => 'Mercedes-Benz',
                 'model' => 'GLC 300 4MATIC',
                 'year' => 2024,
-                'color' => 'Obsidian Black',
                 'type' => 'Luxury SUV',
                 'category' => 'SUV',
-                'status' => 'active',
+                'is_available' => true,
+                'approval_status' => 'approved',
                 'daily_rate' => 120.00,
                 'image_url' => 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80',
             ]
