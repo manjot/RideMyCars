@@ -3666,7 +3666,26 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         if (!file_exists($composerPhar) || filesize($composerPhar) < 100000) {
             @copy('https://getcomposer.org/download/latest-stable/composer.phar', $composerPhar);
         }
-        $phpBin = defined('PHP_BINARY') && file_exists(PHP_BINARY) ? PHP_BINARY : 'php';
+        $cliCandidates = [
+            '/usr/local/bin/ea-php82',
+            '/usr/local/bin/ea-php83',
+            '/opt/cpanel/ea-php82/root/usr/bin/php',
+            '/opt/cpanel/ea-php83/root/usr/bin/php',
+            '/usr/local/bin/php',
+            '/usr/bin/php',
+            'php',
+        ];
+        $phpBin = 'php';
+        foreach ($cliCandidates as $cand) {
+            if ($cand === 'php' || file_exists($cand)) {
+                $ver = @shell_exec(escapeshellarg($cand) . ' -v 2>&1');
+                if ($ver && (str_contains($ver, 'cli') || str_contains($ver, 'PHP 8'))) {
+                    $phpBin = $cand;
+                    break;
+                }
+            }
+        }
+        $output['detected_cli_php'] = $phpBin;
         $composerCmd = 'cd ' . escapeshellarg(base_path()) . ' && ' . escapeshellarg($phpBin) . ' composer.phar install --no-dev --optimize-autoloader 2>&1';
         if (function_exists('shell_exec')) {
             $output['composer_install'] = @shell_exec($composerCmd);
