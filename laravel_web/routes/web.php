@@ -2006,7 +2006,7 @@ Route::get('/my-rides', function () {
             $q->where('rider_id', $user->id)
               ->orWhere('driver_id', $user->id);
         })
-        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview'])
+        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview', 'receipt'])
         ->orderBy('created_at', 'desc')
         ->paginate(15);
 
@@ -2015,7 +2015,7 @@ Route::get('/my-rides', function () {
             $q->where('client_id', $user->id)
               ->orWhere('driver_id', $user->id);
         })
-        ->with(['driver', 'driverProfile', 'client'])
+        ->with(['driver', 'driverProfile', 'client', 'receipt'])
         ->orderBy('created_at', 'desc')
         ->take(15)
         ->get();
@@ -2025,7 +2025,7 @@ Route::get('/my-rides', function () {
             $q->where('customer_id', $user->id)
               ->orWhere('courier_id', $user->id);
         })
-        ->with(['courier', 'courierProfile', 'customer'])
+        ->with(['courier', 'courierProfile', 'customer', 'receipt'])
         ->orderBy('created_at', 'desc')
         ->take(15)
         ->get();
@@ -3742,6 +3742,28 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['investor_portal_seeded'] = true;
         } catch (\Throwable $e) {
             $output['investor_portal_seed_err'] = $e->getMessage();
+        }
+
+        // Seed Customer Dummy Data for Receipts (shachisheh@gmail.com)
+        try {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CustomerReceiptDummySeeder', '--force' => true]);
+            $output['customer_receipt_dummy_seed'] = 'Seeded successfully for shachisheh@gmail.com';
+            
+            $testCust = \App\Models\User::where('email', 'shachisheh@gmail.com')->first();
+            if ($testCust) {
+                $output['customer_info'] = [
+                    'id' => $testCust->id,
+                    'email' => $testCust->email,
+                    'rides_count' => \App\Models\Ride::where('rider_id', $testCust->id)->where('ride_type', 'ride')->count(),
+                    'rentals_count' => \App\Models\Ride::where('rider_id', $testCust->id)->where('ride_type', 'rental')->count(),
+                    'chauffeurs_count' => \App\Models\DriverBooking::where('client_id', $testCust->id)->count(),
+                    'deliveries_count' => \App\Models\PackageDelivery::where('customer_id', $testCust->id)->count(),
+                    'receipts_count' => \App\Models\Receipt::where('user_id', $testCust->id)->count(),
+                    'receipt_tokens' => \App\Models\Receipt::where('user_id', $testCust->id)->pluck('verification_token', 'booking_type')->toArray(),
+                ];
+            }
+        } catch (\Throwable $e) {
+            $output['customer_receipt_dummy_seed_err'] = $e->getMessage() . ' on line ' . $e->getLine();
         }
 
         // Ensure GHA country compliance rule is synced with Ride My Cars (Ghana)
