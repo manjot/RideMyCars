@@ -136,6 +136,9 @@ class CustomerReceiptDummySeeder extends Seeder
         ]);
         $ride->save();
 
+        // Ensure clean booking_type on receipt
+        Receipt::where('booking_id', $ride->id)->where('booking_type', 'rental')->delete();
+        $ride->update(['receipt_id' => null]);
         $receiptRide = ReceiptService::generateReceiptForRide($ride, false);
 
         // ========================================================

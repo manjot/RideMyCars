@@ -33,7 +33,10 @@ class ReceiptService
             }
         }
 
-        $existing = Receipt::where('booking_type', $ride->ride_type === 'rental' || $ride->vehicle_id !== null ? 'rental' : 'ride')
+        $isRental = $ride->ride_type === 'rental' || str_starts_with((string)$ride->vehicle_type, 'RENTAL_');
+        $bookingType = $isRental ? 'rental' : 'ride';
+
+        $existing = Receipt::where('booking_type', $bookingType)
             ->where('booking_id', $ride->id)
             ->first();
 
@@ -44,9 +47,6 @@ class ReceiptService
             }
             return $existing;
         }
-
-        $isRental = $ride->ride_type === 'rental' || $ride->vehicle_id !== null || str_starts_with((string)$ride->vehicle_type, 'RENTAL_');
-        $bookingType = $isRental ? 'rental' : 'ride';
 
         $totalAmount = (float)($ride->total_amount ?? $ride->fare ?? 0);
         $taxAmount = 0.00;
