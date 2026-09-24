@@ -14,7 +14,7 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 translate-y-[-20px]"
-                 class="fixed top-24 right-4 sm:right-8 z-[999999] max-w-md w-full bg-slate-900 text-white border border-amber-400/40 shadow-2xl rounded-2xl p-4 flex items-center justify-between font-bold text-sm">
+                 class="fixed top-24 right-4 sm:right-8 z-[999999] max-w-md w-full bg-slate-950 text-white border border-amber-400/50 shadow-2xl rounded-2xl p-4 flex items-center justify-between font-bold text-sm">
                 <div class="flex items-center gap-3">
                     <span class="text-xl">✨</span>
                     <span x-text="toast"></span>
@@ -27,7 +27,7 @@
             
             <!-- ==================== SIDEBAR ==================== -->
             <div class="w-full lg:w-[280px] shrink-0">
-                <div class="bg-white dark:bg-[#141824] rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm sticky top-28">
+                <div class="bg-white dark:bg-[#141824] rounded-3xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm sticky top-28">
                     
                     <!-- User Mini Profile Card in Sidebar -->
                     <div class="flex items-center gap-3.5 pb-5 mb-5 border-b border-slate-100 dark:border-slate-800">
@@ -42,22 +42,21 @@
                             @endif
                         </div>
                         <div class="min-w-0 flex-1">
-                            <h2 class="font-extrabold text-slate-900 dark:text-white text-base leading-tight truncate" x-text="userName"></h2>
+                            <h2 class="font-black text-slate-900 dark:text-white text-sm leading-snug truncate" x-text="userName"></h2>
                             <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5" x-text="userEmail"></p>
-                            <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Verified Customer
+                            <span class="inline-flex items-center gap-1.5 mt-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Verified Customer
                             </span>
                         </div>
                     </div>
 
                     <!-- Navigation Items -->
                     <nav class="space-y-1.5">
-                        <!-- 1. Home -->
+                        <!-- 1. Home / Overview -->
                         <button type="button" @click="setTab('home')" 
-                                :class="currentTab === 'home' 
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                :style="currentTab === 'home' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'home' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                                 <span>Overview</span>
@@ -66,23 +65,21 @@
 
                         <!-- 2. Refer & Earn -->
                         <button type="button" @click="setTab('referral')" 
-                                :class="currentTab === 'referral' 
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                :style="currentTab === 'referral' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'referral' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
                                 <span>Refer & Earn</span>
                             </div>
-                            <span class="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full shadow-sm">NEW</span>
+                            <span :class="currentTab === 'referral' ? 'bg-slate-950 text-amber-400' : 'bg-amber-400 text-slate-950'" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">NEW</span>
                         </button>
 
                         <!-- 3. Personal Info -->
                         <button type="button" @click="setTab('personal_info')" 
-                                :class="currentTab === 'personal_info' 
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                :style="currentTab === 'personal_info' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'personal_info' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                 <span>Personal Info</span>
@@ -91,16 +88,15 @@
 
                         <!-- 4. Booking History & Receipts -->
                         <button type="button" @click="setTab('receipts')" 
-                                :class="currentTab === 'receipts' 
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                :style="currentTab === 'receipts' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'receipts' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>Booking Receipts</span>
                             </div>
                             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full" 
-                                  :class="currentTab === 'receipts' ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300'">
+                                  :class="currentTab === 'receipts' ? 'bg-slate-950 text-amber-400' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300'">
                                 {{ isset($receipts) ? $receipts->total() : 0 }}
                             </span>
                         </button>
@@ -108,10 +104,9 @@
                         @if($user->role === 'owner' || (isset($vehicles) && $vehicles->count() > 0))
                             <!-- Fleet Tab -->
                             <button type="button" @click="setTab('fleet')" 
-                                    :class="currentTab === 'fleet' 
-                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                    class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                    :style="currentTab === 'fleet' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                    :class="currentTab === 'fleet' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                    class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                                 <div class="flex items-center gap-3">
                                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                     <span>My Fleet</span>
@@ -134,10 +129,9 @@
 
                         <!-- 5. Security -->
                         <button type="button" @click="setTab('security')" 
-                                :class="currentTab === 'security' 
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                :style="currentTab === 'security' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'security' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                                 <span>Security & 2FA</span>
@@ -146,10 +140,9 @@
 
                         <!-- 6. Privacy & Data -->
                         <button type="button" @click="setTab('privacy')" 
-                                :class="currentTab === 'privacy' 
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold border-l-4 border-amber-500 pl-3' 
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium pl-4'" 
-                                class="w-full text-left py-3 pr-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                :style="currentTab === 'privacy' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'privacy' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                                 <span>Privacy & Data</span>
@@ -182,23 +175,24 @@
                      style="display: none;">
                     
                     <!-- Executive Header Card -->
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden mb-8">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden mb-8">
                         <!-- Luxury Banner Accent -->
                         <div class="h-32 sm:h-36 w-full relative overflow-hidden" 
-                             style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #b45309 100%);">
-                            <div class="absolute inset-0 opacity-15" style="background-image: radial-gradient(rgba(245, 158, 11, 0.4) 1px, transparent 1px); background-size: 16px 16px;"></div>
+                             style="background: linear-gradient(135deg, #090e17 0%, #0f172a 45%, #1e293b 80%, #78350f 100%);">
+                            <div class="absolute inset-0 opacity-15" style="background-image: radial-gradient(rgba(245, 158, 11, 0.5) 1px, transparent 1px); background-size: 16px 16px;"></div>
                             <div class="absolute right-4 top-4">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-black/40 backdrop-blur-md border border-amber-400/40 rounded-full text-xs font-bold text-amber-300">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-black/60 backdrop-blur-md border border-amber-400/40 rounded-full text-xs font-bold text-amber-300 shadow">
                                     ★ RideMyCars Member
                                 </span>
                             </div>
                         </div>
 
-                        <!-- Profile Info Row -->
+                        <!-- Profile Info Row (Clean Layout: Avatar overlaps banner, all text cleanly on white card!) -->
                         <div class="px-6 sm:px-8 pb-6 sm:pb-8 pt-0 relative">
-                            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-16 sm:-mt-14 mb-6">
-                                <div class="flex flex-col sm:flex-row sm:items-end gap-4">
-                                    <div class="relative w-28 h-28 rounded-full shrink-0 group">
+                            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+                                <div class="flex flex-col sm:flex-row sm:items-end gap-5">
+                                    <!-- Avatar overlaps banner cleanly -->
+                                    <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full shrink-0 -mt-12 sm:-mt-14 group">
                                         <div class="w-full h-full rounded-full bg-slate-900 text-white flex items-center justify-center text-4xl font-black overflow-hidden shadow-2xl border-4 border-white dark:border-[#141824]">
                                             @if(!empty($user->avatar_url))
                                                 <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -217,45 +211,64 @@
                                             </label>
                                         </form>
                                     </div>
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white" x-text="userName"></h1>
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                                    <!-- User text is 100% on the card surface with high contrast -->
+                                    <div class="pt-2 sm:pt-0 pb-1">
+                                        <div class="flex items-center gap-2.5 flex-wrap">
+                                            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight" x-text="userName"></h1>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow-sm">
                                                 ✓ Verified
                                             </span>
                                         </div>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5" x-text="userEmail"></p>
-                                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1" x-text="userPhone ? userPhone + (userCountry ? ' • ' + userCountry : '') : (userCountry || 'RideMyCars Global Rider')"></p>
+                                        <p class="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1" x-text="userEmail"></p>
+                                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5" x-text="userPhone ? userPhone + (userCountry ? ' • ' + userCountry : '') : (userCountry || 'RideMyCars Global Rider')"></p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-2">
-                                    <button type="button" @click="showFullEditModal = true" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm">
-                                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <!-- Edit Profile Action Button -->
+                                <div class="pb-1">
+                                    <button type="button" @click="showFullEditModal = true" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
+                                        <svg class="w-4 h-4 text-amber-400 dark:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         <span>Edit Profile</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- Executive Stats Grid -->
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 border-t border-slate-100 dark:border-slate-800">
-                                <div @click="setTab('receipts')" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 hover:bg-amber-500/10 transition cursor-pointer border border-slate-100 dark:border-slate-800">
-                                    <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Receipts & Bookings</span>
-                                    <span class="text-xl font-black text-slate-900 dark:text-white mt-1 block">{{ isset($receipts) ? $receipts->total() : 0 }}</span>
+                            <!-- Executive Stats Grid with Dedicated Icons & Rich Badges -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-5 border-t border-slate-100 dark:border-slate-800">
+                                <div @click="setTab('receipts')" class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 hover:bg-amber-400/10 hover:border-amber-400/50 transition cursor-pointer border border-slate-200/70 dark:border-slate-800 group">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Bookings</span>
+                                        <span class="w-7 h-7 rounded-lg bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs">🧾</span>
+                                    </div>
+                                    <span class="text-2xl font-black text-slate-900 dark:text-white block group-hover:text-amber-500 transition-colors">{{ isset($receipts) ? $receipts->total() : 0 }}</span>
+                                    <span class="text-[11px] text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 font-semibold mt-1 block">View receipts &rarr;</span>
                                 </div>
-                                <div @click="setTab('referral')" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 hover:bg-amber-500/10 transition cursor-pointer border border-slate-100 dark:border-slate-800">
-                                    <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Referrals</span>
-                                    <span class="text-xl font-black text-amber-500 mt-1 block">{{ $user->referrals ? $user->referrals->count() : 0 }}</span>
+
+                                <div @click="setTab('referral')" class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 hover:bg-amber-400/10 hover:border-amber-400/50 transition cursor-pointer border border-slate-200/70 dark:border-slate-800 group">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Referrals</span>
+                                        <span class="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs">🎁</span>
+                                    </div>
+                                    <span class="text-2xl font-black text-amber-500 block">{{ $user->referrals ? $user->referrals->count() : 0 }}</span>
+                                    <span class="text-[11px] text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 font-semibold mt-1 block">Active invites &rarr;</span>
                                 </div>
-                                <div @click="setTab('security')" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 hover:bg-amber-500/10 transition cursor-pointer border border-slate-100 dark:border-slate-800">
-                                    <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Account Security</span>
-                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 2FA Protected
-                                    </span>
+
+                                <div @click="setTab('security')" class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 hover:bg-amber-400/10 hover:border-amber-400/50 transition cursor-pointer border border-slate-200/70 dark:border-slate-800 group">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Account Security</span>
+                                        <span class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">🛡️</span>
+                                    </div>
+                                    <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 block mt-1">2FA Protected</span>
+                                    <span class="text-[11px] text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 font-semibold mt-1.5 block">Manage &rarr;</span>
                                 </div>
-                                <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                                    <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Member Since</span>
-                                    <span class="text-sm font-bold text-slate-900 dark:text-white mt-1.5 block">{{ $user->created_at ? $user->created_at->format('M Y') : '2025' }}</span>
+
+                                <div class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Member Since</span>
+                                        <span class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs">📅</span>
+                                    </div>
+                                    <span class="text-base font-black text-slate-900 dark:text-white block mt-0.5">{{ $user->created_at ? $user->created_at->format('M Y') : 'Sep 2026' }}</span>
+                                    <span class="text-[11px] text-slate-400 mt-1.5 block">Global Rider</span>
                                 </div>
                             </div>
                         </div>
@@ -265,66 +278,86 @@
                     <div class="mb-8">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Instant Services & Booking</h2>
-                            <a href="/my-rides" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">View Active Rides &rarr;</a>
+                            <a href="/my-rides" class="text-xs font-bold text-slate-900 dark:text-amber-400 hover:text-amber-500 transition">View Active Rides &rarr;</a>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <!-- 1. Ride -->
-                            <a href="/ride" class="group p-5 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col justify-between">
+                            <a href="/ride" class="group p-5 rounded-3xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
                                 <div>
-                                    <div class="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-500 flex items-center justify-center text-2xl font-black mb-3 group-hover:scale-110 transition-transform">
-                                        🚗
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-500 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition-transform">
+                                            🚗
+                                        </div>
+                                        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">On-Demand</span>
                                     </div>
-                                    <h3 class="font-bold text-slate-900 dark:text-white text-base">City Ride</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Instant on-demand cabs & scheduled airport transfers.</p>
+                                    <h3 class="font-black text-slate-900 dark:text-white text-base">City Ride</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Instant on-demand cabs & scheduled airport transfers.</p>
                                 </div>
-                                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
-                                    <span>Book Ride</span>
-                                    <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                <div class="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
+                                    <div class="w-full py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-between group-hover:bg-amber-400 group-hover:text-slate-950 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white">
+                                        <span>Book Ride</span>
+                                        <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                    </div>
                                 </div>
                             </a>
 
                             <!-- 2. Rent -->
-                            <a href="/rent" class="group p-5 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col justify-between">
+                            <a href="/rent" class="group p-5 rounded-3xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
                                 <div>
-                                    <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-500 flex items-center justify-center text-2xl font-black mb-3 group-hover:scale-110 transition-transform">
-                                        🏎️
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-500 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition-transform">
+                                            🏎️
+                                        </div>
+                                        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">Self-Drive</span>
                                     </div>
-                                    <h3 class="font-bold text-slate-900 dark:text-white text-base">Car Rental</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Self-drive rentals, luxury sedans & SUVs by day or week.</p>
+                                    <h3 class="font-black text-slate-900 dark:text-white text-base">Car Rental</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Self-drive rentals, luxury sedans & SUVs by day or week.</p>
                                 </div>
-                                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
-                                    <span>Browse Fleet</span>
-                                    <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                <div class="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
+                                    <div class="w-full py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-between group-hover:bg-amber-400 group-hover:text-slate-950 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white">
+                                        <span>Browse Fleet</span>
+                                        <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                    </div>
                                 </div>
                             </a>
 
                             <!-- 3. Driver -->
-                            <a href="/book-driver" class="group p-5 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col justify-between">
+                            <a href="/book-driver" class="group p-5 rounded-3xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
                                 <div>
-                                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center text-2xl font-black mb-3 group-hover:scale-110 transition-transform">
-                                        👔
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition-transform">
+                                            👔
+                                        </div>
+                                        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">By Hour / Day</span>
                                     </div>
-                                    <h3 class="font-bold text-slate-900 dark:text-white text-base">Hire Chauffeur</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dedicated professional drivers for your own vehicle.</p>
+                                    <h3 class="font-black text-slate-900 dark:text-white text-base">Hire Chauffeur</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Dedicated professional drivers for your own vehicle.</p>
                                 </div>
-                                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
-                                    <span>Hire Driver</span>
-                                    <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                <div class="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
+                                    <div class="w-full py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-between group-hover:bg-amber-400 group-hover:text-slate-950 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white">
+                                        <span>Hire Driver</span>
+                                        <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                    </div>
                                 </div>
                             </a>
 
                             <!-- 4. Delivery -->
-                            <a href="/delivery" class="group p-5 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col justify-between">
+                            <a href="/delivery" class="group p-5 rounded-3xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
                                 <div>
-                                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-2xl font-black mb-3 group-hover:scale-110 transition-transform">
-                                        📦
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition-transform">
+                                            📦
+                                        </div>
+                                        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Same-Day</span>
                                     </div>
-                                    <h3 class="font-bold text-slate-900 dark:text-white text-base">Parcel Delivery</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Same-day courier, documents & urgent item delivery.</p>
+                                    <h3 class="font-black text-slate-900 dark:text-white text-base">Parcel Delivery</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Same-day courier, documents & urgent item delivery.</p>
                                 </div>
-                                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
-                                    <span>Send Package</span>
-                                    <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                <div class="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
+                                    <div class="w-full py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-between group-hover:bg-amber-400 group-hover:text-slate-950 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white">
+                                        <span>Send Package</span>
+                                        <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                    </div>
                                 </div>
                             </a>
                         </div>
@@ -332,16 +365,16 @@
 
                     <!-- HIGH-CONTRAST REFERRAL SPOTLIGHT CARD -->
                     <div class="mb-8 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden" 
-                         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: #ffffff; border: 1px solid rgba(245, 158, 11, 0.4);">
-                        <div class="absolute -right-10 -bottom-10 w-48 h-48 rounded-full blur-3xl pointer-events-none" style="background: rgba(245, 158, 11, 0.15);"></div>
+                         style="background: linear-gradient(135deg, #090e17 0%, #0f172a 50%, #1e293b 100%); color: #ffffff; border: 1px solid rgba(245, 158, 11, 0.45);">
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 rounded-full blur-3xl pointer-events-none" style="background: rgba(245, 158, 11, 0.18);"></div>
                         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2" 
-                                      style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2.5" 
+                                      style="background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5);">
                                     <span>🎁</span> Exclusive Referral Code
                                 </span>
                                 <h3 class="text-xl sm:text-2xl font-black text-white">Earn Ride Perks with Friends</h3>
-                                <p class="text-slate-300 text-xs sm:text-sm mt-1 max-w-md">Share your unique code with family & colleagues. Both of you unlock ride discounts and credit bonuses!</p>
+                                <p class="text-slate-300 text-xs sm:text-sm mt-1 max-w-md leading-relaxed">Share your unique code with family & colleagues. Both of you unlock ride discounts and credit bonuses!</p>
                             </div>
 
                             <div class="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -363,7 +396,7 @@
                                 <!-- WhatsApp Share -->
                                 <a href="https://wa.me/?text={{ urlencode('Sign up on RideMyCars with my referral code ' . ($user->referral_code ?? '') . ' to get special ride perks! ' . url('/signup?ref=' . ($user->referral_code ?? ''))) }}" 
                                    target="_blank" 
-                                   class="px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow transition active:scale-95 cursor-pointer text-white" 
+                                   class="px-5 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow transition active:scale-95 cursor-pointer text-white" 
                                    style="background: #25D366;">
                                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
                                     <span>WhatsApp</span>
@@ -373,13 +406,13 @@
                     </div>
 
                     <!-- RECENT RECEIPTS PREVIEW -->
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm mb-8">
-                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm mb-8">
+                        <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
                             <div>
                                 <h3 class="text-lg font-black text-slate-900 dark:text-white">Recent Tax Invoices & Receipts</h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Download PDF or review booking confirmations.</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Instant PDF downloads & official digital receipts.</p>
                             </div>
-                            <button type="button" @click="setTab('receipts')" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer">
+                            <button type="button" @click="setTab('receipts')" class="text-xs font-bold text-slate-900 dark:text-amber-400 hover:text-amber-500 transition cursor-pointer">
                                 All Invoices ({{ isset($receipts) ? $receipts->total() : 0 }}) &rarr;
                             </button>
                         </div>
@@ -391,35 +424,50 @@
                                 <p class="text-xs text-slate-500 mt-1">Book your first ride or rental to automatically generate official PDF receipts.</p>
                             </div>
                         @else
-                            <div class="space-y-3">
+                            <div class="space-y-3.5">
                                 @foreach($receipts->take(2) as $r)
                                     @php $snap = $r->snapshot_data ?? []; @endphp
-                                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div class="min-w-0">
-                                            <div class="flex items-center gap-2">
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase
-                                                    @if($r->booking_type === 'rental') bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
-                                                    @elseif($r->booking_type === 'driver_booking') bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
-                                                    @elseif($r->booking_type === 'delivery') bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20
-                                                    @else bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
+                                    <div class="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 hover:border-amber-400/50 hover:shadow-md transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2 flex-wrap mb-2">
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider
+                                                    @if($r->booking_type === 'rental') bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30
+                                                    @elseif($r->booking_type === 'driver_booking') bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30
+                                                    @elseif($r->booking_type === 'delivery') bg-blue-500/15 text-blue-800 dark:text-blue-300 border border-blue-500/30
+                                                    @else bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30
                                                     @endif">
                                                     {{ $r->type_label }}
                                                 </span>
-                                                <span class="font-mono text-xs font-bold text-slate-500">CRN: {{ $r->receipt_number }}</span>
+                                                <span class="font-mono text-xs font-extrabold text-slate-600 dark:text-slate-400">CRN: {{ $r->receipt_number }}</span>
+                                                <span class="text-[11px] text-slate-400">• {{ $r->created_at->format('d M, Y') }}</span>
                                             </div>
-                                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 truncate max-w-md">
-                                                {{ $snap['pickup_location'] ?? 'Trip' }} &rarr; {{ $snap['dropoff_location'] ?? 'Destination' }}
-                                            </p>
+                                            
+                                            <div class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                                                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                                <span class="truncate max-w-[260px] sm:max-w-md">{{ $snap['pickup_location'] ?? 'Trip Origin' }}</span>
+                                                <span class="text-slate-400">&rarr;</span>
+                                                <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+                                                <span class="truncate max-w-[260px] sm:max-w-md">{{ $snap['dropoff_location'] ?? 'Destination' }}</span>
+                                            </div>
                                         </div>
 
-                                        <div class="flex items-center gap-3 shrink-0">
-                                            <span class="text-base font-black text-slate-900 dark:text-white">
-                                                {{ $r->currency }} {{ number_format($r->total_amount, 2) }}
-                                            </span>
-                                            <a href="{{ $r->download_url }}" class="px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1 cursor-pointer"
-                                               style="background: #f59e0b; color: #020617;">
-                                                <span>📥 PDF</span>
-                                            </a>
+                                        <div class="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60 dark:border-slate-800">
+                                            <div class="text-left md:text-right">
+                                                <div class="text-lg font-black text-slate-900 dark:text-white">
+                                                    {{ $r->currency }} {{ number_format($r->total_amount, 2) }}
+                                                </div>
+                                                <span class="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Paid • {{ ucfirst($r->payment_method ?? 'Card') }}</span>
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ $r->view_url }}" target="_blank" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                                                    <span>View</span>
+                                                </a>
+                                                <a href="{{ $r->download_url }}" class="px-4 py-2 rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1 cursor-pointer"
+                                                   style="background: #f59e0b; color: #020617;">
+                                                    <span>📥 PDF</span>
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -449,12 +497,12 @@
 
                     <!-- HERO REFERRAL CODE CARD (GUARANTEED HIGH CONTRAST) -->
                     <div class="rounded-3xl p-6 sm:p-8 mb-8 shadow-2xl relative overflow-hidden"
-                         style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: #ffffff; border: 1px solid rgba(245, 158, 11, 0.4);">
+                         style="background: linear-gradient(135deg, #090e17 0%, #0f172a 50%, #1e293b 100%); color: #ffffff; border: 1px solid rgba(245, 158, 11, 0.45);">
                         <div class="absolute -right-8 -bottom-8 w-48 h-48 rounded-full blur-3xl pointer-events-none" style="background: rgba(245, 158, 11, 0.2);"></div>
                         <div class="relative z-10">
                             
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-3" 
-                                  style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+                                  style="background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5);">
                                 <span>🎁</span> Your Unique Invitation Code
                             </span>
 
@@ -490,13 +538,13 @@
                             <!-- Direct Invitation Link Box -->
                             <div class="mt-6 pt-4 border-t border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <span class="text-xs text-slate-300 font-medium">Direct Invitation Link:</span>
-                                <div class="flex items-center gap-2 px-3 py-2 rounded-xl flex-1 max-w-lg" 
+                                <div class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl flex-1 max-w-lg" 
                                      style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.15);">
                                     <span class="font-mono text-xs text-amber-300 truncate flex-1 select-all">
                                         {{ url('/signup?ref=' . ($user->referral_code ?? '')) }}
                                     </span>
                                     <button type="button" @click="copyReferralLink('{{ url('/signup?ref=' . ($user->referral_code ?? '')) }}')" 
-                                            class="text-xs font-bold text-white hover:text-amber-300 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition cursor-pointer">
+                                            class="text-xs font-bold text-white hover:text-amber-300 px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition cursor-pointer">
                                         Copy Link
                                     </button>
                                 </div>
@@ -513,17 +561,17 @@
 
                     <!-- How it Works (3 Steps) -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 shadow-sm text-center">
                             <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-400/20 text-amber-500 flex items-center justify-center font-black text-xl">1</div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Share Your Code</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400">Send your invitation code or link to friends, family, and colleagues.</p>
                         </div>
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 shadow-sm text-center">
                             <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-blue-500/20 text-blue-500 flex items-center justify-center font-black text-xl">2</div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm mb-1">They Sign Up</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400">They register their account on RideMyCars web or mobile app.</p>
                         </div>
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#141824] border border-slate-200/90 dark:border-slate-800 shadow-sm text-center">
                             <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-xl">3</div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Both Unlock Rewards</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400">Both of you receive ride discounts, priority booking, and credit perks.</p>
@@ -531,7 +579,7 @@
                     </div>
 
                     <!-- Your Referrals List -->
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-black text-slate-900 dark:text-white">Your Referrals ({{ $user->referrals ? $user->referrals->count() : 0 }})</h2>
                         </div>
@@ -581,7 +629,7 @@
                      x-transition:enter-end="opacity-100 translate-y-0" 
                      style="display: none;">
                     
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 mb-6">
                             <div>
                                 <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Personal Information</h1>
@@ -688,7 +736,7 @@
                      style="display: none;" 
                      x-data="{ receiptFilter: 'all' }">
                     
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 mb-6 gap-4">
                             <div>
                                 <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Booking History & Receipts</h1>
@@ -757,17 +805,17 @@
                                 @foreach($receipts as $r)
                                     @php $snap = $r->snapshot_data ?? []; @endphp
                                     <div x-show="receiptFilter === 'all' || receiptFilter === '{{ $r->booking_type }}'"
-                                         class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181d2e] border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition">
+                                         class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181d2e] border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md transition">
                                         
                                         <!-- Header -->
                                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                                             <div>
                                                 <div class="flex items-center gap-2">
                                                     <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider
-                                                        @if($r->booking_type === 'rental') bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
-                                                        @elseif($r->booking_type === 'driver_booking') bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
-                                                        @elseif($r->booking_type === 'delivery') bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20
-                                                        @else bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
+                                                        @if($r->booking_type === 'rental') bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30
+                                                        @elseif($r->booking_type === 'driver_booking') bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30
+                                                        @elseif($r->booking_type === 'delivery') bg-blue-500/15 text-blue-800 dark:text-blue-300 border border-blue-500/30
+                                                        @else bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30
                                                         @endif">
                                                         {{ $r->type_label }}
                                                     </span>
@@ -855,7 +903,7 @@
                      x-transition:enter-end="opacity-100 translate-y-0" 
                      style="display: none;">
                     
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800 mb-6">
                             <div>
                                 <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">My Vehicles & Fleet</h1>
@@ -870,7 +918,7 @@
                         @if(isset($vehicles) && $vehicles->count() > 0)
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 @foreach($vehicles as $veh)
-                                    <div class="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                                    <div class="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
                                         <div class="relative h-44 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800">
                                             @if($veh->image_url)
                                                 <img src="{{ $veh->image_src }}" alt="{{ $veh->make }} {{ $veh->model }}" class="w-full h-full object-cover">
@@ -915,7 +963,7 @@
                      x-transition:enter-end="opacity-100 translate-y-0" 
                      style="display: none;">
                     
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="pb-6 border-b border-slate-100 dark:border-slate-800 mb-6">
                             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Security & Sign In</h1>
                             <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Protect your account with biometric passkeys, two-factor authentication, and strong credentials.</p>
@@ -974,7 +1022,7 @@
                             <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Connected Social Sign-In</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Fast one-tap authentication via Google & Apple ID.</p>
                             
-                            <button type="button" @click="showSocialAppsModal = true" class="w-full p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between hover:border-amber-400 transition cursor-pointer">
+                            <button type="button" @click="showSocialAppsModal = true" class="w-full p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/90 dark:border-slate-800 flex items-center justify-between hover:border-amber-400 transition cursor-pointer">
                                 <div class="flex items-center gap-3">
                                     <span class="text-2xl">🌐</span>
                                     <div>
@@ -998,7 +1046,7 @@
                      x-transition:enter-end="opacity-100 translate-y-0" 
                      style="display: none;">
                     
-                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="pb-6 border-b border-slate-100 dark:border-slate-800 mb-6">
                             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Privacy & Data Governance</h1>
                             <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Control how your personal ride data, communications, and telemetry are handled.</p>
