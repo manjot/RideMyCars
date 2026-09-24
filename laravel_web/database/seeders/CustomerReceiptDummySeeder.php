@@ -56,11 +56,12 @@ class CustomerReceiptDummySeeder extends Seeder
             ['user_id' => $driver->id],
             [
                 'rating' => 4.95,
-                'rides_count' => 420,
+                'total_trips' => 420,
                 'license_number' => 'GHA-DL-883921',
                 'is_available' => true,
-                'is_online' => true,
-                'status' => 'approved',
+                'is_live' => true,
+                'kyc_status' => 'approved',
+                'verification_status' => 'approved',
                 'experience_years' => 7,
                 'bio' => 'Certified executive VIP chauffeur and express delivery specialist with over 7 years of incident-free luxury driving across Greater Accra.',
             ]
