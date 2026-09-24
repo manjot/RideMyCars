@@ -509,14 +509,24 @@ class AuthController extends Controller
 
                 $otp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
+                // Add Apple Test Number bypass for App Store Review
+                if (str_starts_with($formattedPhone, '+1555')) {
+                    $otp = '1234';
+                }
+
                 // Store in Cache with 5-minute validity
                 \Illuminate\Support\Facades\Cache::put('otp_phone_' . $formattedPhone, $otp, now()->addMinutes(5));
                 if ($cleanPhone !== $formattedPhone) {
                     \Illuminate\Support\Facades\Cache::put('otp_phone_' . $cleanPhone, $otp, now()->addMinutes(5));
                 }
 
-                // Send via Twilio
-                $result = $smsService->sendOtp($formattedPhone, $otp);
+                if (str_starts_with($formattedPhone, '+1555')) {
+                    // Bypass Twilio for test numbers
+                    $result = ['success' => true];
+                } else {
+                    // Send via Twilio
+                    $result = $smsService->sendOtp($formattedPhone, $otp);
+                }
 
                 Log::info("API OTP for phone {$formattedPhone}: {$otp}. Action: {$action}. Status: " . ($result['success'] ? 'SUCCESS' : 'FAILED'));
 
