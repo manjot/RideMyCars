@@ -508,6 +508,7 @@
                                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $booking->driver->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                     <span>WhatsApp</span>
                                                 </a>
+                                            @endif
                                             @php
                                                 $chfReceipt = $booking->receipt ?? \App\Models\Receipt::where('booking_type', 'driver_booking')->where('booking_id', $booking->id)->first();
                                             @endphp
@@ -677,6 +678,7 @@
                                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $delivery->courier->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                     <span>WhatsApp</span>
                                                 </a>
+                                            @endif
                                             @php
                                                 $delReceipt = $delivery->receipt ?? \App\Models\Receipt::where('booking_type', 'delivery')->where('booking_id', $delivery->id)->first();
                                             @endphp
