@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Prevent direct access to /laravel_web/public/ in URL path
+    RewriteCond %{THE_REQUEST} \s/+laravel_web/public/(\S*) [NC]
+    RewriteRule ^ https://www.ridemycars.com/%1 [L,R=301]
+
     # Pass Authorization Header to FastCGI/PHP
     SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
     SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
