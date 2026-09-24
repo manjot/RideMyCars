@@ -2,13 +2,13 @@
     RewriteEngine On
 
     # 1. Force HTTPS
-    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTPS} !on
     RewriteCond %{HTTP:X-Forwarded-Proto} !https
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=301]
 
-    # 2. Force www.ridemycars.com (Canonical Host)
+    # 2. Force www.ridemycars.com Canonical Host
     RewriteCond %{HTTP_HOST} ^ridemycars\.com$ [NC]
-    RewriteRule ^(.*)$ https://www.ridemycars.com%{REQUEST_URI} [L,R=301]
+    RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=301]
 
     # 3. Strip direct access to internal laravel_web/public/ directory
     RewriteCond %{THE_REQUEST} \s/+laravel_web/public/(\S*) [NC]
