@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :hideFooter="true">
     <x-slot:title>Rental Voucher #{{ $ride->digital_receipt_code }} — RideMyCars</x-slot>
 
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">

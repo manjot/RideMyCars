@@ -1,5 +1,56 @@
-<x-layout>
+<x-layout :hideFooter="true">
     <x-slot:title>Receipt #{{ $receipt->receipt_number }} — RideMyCars</x-slot:title>
+
+    <x-slot:head>
+        <style>
+            @media print {
+                @page {
+                    size: A4 portrait;
+                    margin: 8mm 10mm;
+                }
+                header, footer, nav, #live-ride-tracker, .print\:hidden {
+                    display: none !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                    overflow: hidden !important;
+                }
+                body {
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                main {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .receipt-card {
+                    border: 1px solid #e2e8f0 !important;
+                    box-shadow: none !important;
+                    border-radius: 16px !important;
+                    page-break-inside: avoid;
+                }
+                html.dark body, html.dark main, html.dark .receipt-card {
+                    background-color: #ffffff !important;
+                    color: #0f172a !important;
+                }
+                html.dark .text-white, html.dark .text-gray-900 {
+                    color: #0f172a !important;
+                }
+                html.dark .text-gray-300, html.dark .text-gray-400, html.dark .text-gray-500 {
+                    color: #475569 !important;
+                }
+                html.dark .bg-gray-50, html.dark .bg-gray-100\/60, html.dark [class*="bg-white\/"] {
+                    background-color: #f8fafc !important;
+                }
+                html.dark [class*="border-white\/"] {
+                    border-color: #e2e8f0 !important;
+                }
+            }
+        </style>
+    </x-slot:head>
 
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
@@ -50,7 +101,7 @@
         @endif
 
         <!-- Ola-style Receipt Card -->
-        <div class="bg-white dark:bg-[#121212] rounded-3xl border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden print:border-none print:shadow-none">
+        <div class="receipt-card bg-white dark:bg-[#121212] rounded-3xl border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden print:border print:border-gray-200 print:shadow-none print:m-0">
             
             <!-- Top Brand & Date Row -->
             <div class="px-6 py-5 sm:px-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">

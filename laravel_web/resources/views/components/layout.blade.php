@@ -1,3 +1,9 @@
+@props([
+    'title' => null,
+    'theme' => '',
+    'hideFooter' => false,
+    'hideHeader' => false,
+])
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
       x-data="{ darkMode: localStorage.getItem('theme') === 'dark' }" 
@@ -239,7 +245,7 @@
 <body class="font-sans antialiased bg-[#fafafa] dark:bg-[#0a0a0a] text-gray-900 dark:text-white min-h-screen flex flex-col transition-colors duration-200 {{ $theme ?? '' }}">
     
     <!-- Header -->
-    <header x-data="{ mobileMenuOpen: false }" class="sticky top-0 left-0 right-0 z-[100] bg-white dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-white/10 transition-colors duration-200">
+    <header x-data="{ mobileMenuOpen: false }" class="sticky top-0 left-0 right-0 z-[100] bg-white dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-white/10 transition-colors duration-200 print:hidden">
         <nav class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex h-20 items-center justify-between gap-2 xl:gap-4">
                 <!-- Logo -->
@@ -1722,8 +1728,9 @@
 
     {{ $slot }}
 
+    @if(!($hideFooter ?? false))
     <!-- Footer -->
-    <footer class="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-white/[0.08] relative overflow-hidden">
+    <footer class="bg-[#0b0f17] text-white pt-16 pb-12 border-t border-white/[0.08] relative overflow-hidden print:hidden">
         <!-- Subtle Ambient Background Light -->
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/[0.015] rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/[0.015] rounded-full blur-3xl pointer-events-none"></div>
@@ -2241,6 +2248,7 @@
 
         </div>
     </footer>
+    @endif
 
     @auth
     <script>
@@ -2425,7 +2433,7 @@
 
     <!-- Ongoing Ride Banner & Details Modal (Placed at bottom of body for topmost stacking) -->
     @if(!request()->is('driver*') && (!auth()->check() || auth()->user()->role !== 'driver'))
-    <div x-data="ongoingRide()" x-init="init()" x-cloak>
+    <div x-data="ongoingRide()" x-init="init()" x-cloak class="print:hidden">
         
         <!-- Expanded Fullscreen / Centered Detail Modal (Topmost z-index above Google Maps) -->
         <div x-show="expanded && ride" 
