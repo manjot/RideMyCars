@@ -3565,6 +3565,9 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['privacy_requests_table'] = 'Exists';
         }
 
+        $output['receipts_table'] = \Illuminate\Support\Facades\Schema::hasTable('receipts') ? 'Exists' : 'Missing';
+        $output['dompdf_installed'] = class_exists(\Barryvdh\DomPDF\Facade\Pdf::class);
+
         $output['oauth_columns'] = [
             'google_id' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'google_id'),
             'apple_id' => \Illuminate\Support\Facades\Schema::hasColumn('users', 'apple_id'),
@@ -3656,6 +3659,14 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     }
     $output['git_dir'] = $gitDir;
     $output['disabled_functions'] = ini_get('disable_functions');
+
+    // Run Composer if Barryvdh\\DomPDF is missing
+    if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+        $composerCmd = 'cd ' . escapeshellarg(base_path()) . ' && (composer install --no-dev --optimize-autoloader 2>&1 || php /usr/local/bin/composer install --no-dev --optimize-autoloader 2>&1 || /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader 2>&1)';
+        if (function_exists('shell_exec')) {
+            $output['composer_install'] = @shell_exec($composerCmd);
+        }
+    }
     
     // Run migrations & seeders
     try {
@@ -3663,6 +3674,18 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['migrate'] = \Illuminate\Support\Facades\Artisan::output();
     } catch (\Throwable $e) {
         $output['migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('receipts')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', [
+                '--path' => 'database/migrations/2026_09_24_000001_create_receipts_table.php',
+                '--force' => true,
+            ]);
+            $output['receipts_explicit_migrate'] = \Illuminate\Support\Facades\Artisan::output();
+        }
+    } catch (\Throwable $e) {
+        $output['receipts_explicit_migrate_err'] = $e->getMessage();
     }
 
     try {
