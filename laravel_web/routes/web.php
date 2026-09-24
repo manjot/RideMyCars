@@ -3926,38 +3926,6 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     \App\Services\IncentiveService::ensureTables();
     \App\Models\Incentive::ensureTableExists();
 
-    // Verify /my-rides view rendering for live user
-    try {
-        $testUser = \App\Models\User::find(22) ?? \App\Models\User::first();
-        if ($testUser) {
-            \Illuminate\Support\Facades\Auth::login($testUser);
-            $rides = \App\Models\Ride::where(function ($q) use ($testUser) {
-                    $q->where('rider_id', $testUser->id)->orWhere('driver_id', $testUser->id);
-                })
-                ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview'])
-                ->orderBy('created_at', 'desc')
-                ->paginate(15);
-            $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($testUser) {
-                    $q->where('client_id', $testUser->id)->orWhere('driver_id', $testUser->id);
-                })
-                ->with(['driver', 'driverProfile', 'client'])
-                ->orderBy('created_at', 'desc')
-                ->take(15)
-                ->get();
-            $packageDeliveries = \App\Models\PackageDelivery::where(function ($q) use ($testUser) {
-                    $q->where('customer_id', $testUser->id)->orWhere('courier_id', $testUser->id);
-                })
-                ->with(['courier', 'courierProfile', 'customer'])
-                ->orderBy('created_at', 'desc')
-                ->take(15)
-                ->get();
-            $rendered = view('my-rides', ['user' => $testUser, 'rides' => $rides, 'driverBookings' => $driverBookings, 'packageDeliveries' => $packageDeliveries])->render();
-            $output['my_rides_test_render'] = 'SUCCESS: ' . strlen($rendered) . ' bytes rendered';
-        }
-    } catch (\Throwable $e) {
-        $output['my_rides_test_render_err'] = $e->getMessage() . ' on line ' . $e->getLine();
-    }
-
     // Include recent laravel.log lines for debugging
     $logFiles = glob(storage_path('logs/*.log'));
     $output['log_files'] = $logFiles;
