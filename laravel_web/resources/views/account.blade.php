@@ -134,7 +134,7 @@
                                 class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                <span>Security & 2FA</span>
+                                <span>Security</span>
                             </div>
                         </button>
 
@@ -258,7 +258,7 @@
                                         <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Account Security</span>
                                         <span class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">🛡️</span>
                                     </div>
-                                    <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 block mt-1">2FA Protected</span>
+                                    <span class="text-sm font-black text-emerald-600 dark:text-emerald-400 block mt-1">Active & Protected</span>
                                     <span class="text-[11px] text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 font-semibold mt-1.5 block">Manage &rarr;</span>
                                 </div>
 
@@ -966,20 +966,11 @@
                     <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
                         <div class="pb-6 border-b border-slate-100 dark:border-slate-800 mb-6">
                             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Security & Sign In</h1>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Protect your account with biometric passkeys, two-factor authentication, and strong credentials.</p>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Manage your account password, recovery phone, and connected sign-in accounts.</p>
                         </div>
                         
                         <div class="divide-y divide-slate-100 dark:divide-slate-800">
-                            <!-- 1. Passkeys -->
-                            <button type="button" @click="showPasskeyModal = true" class="w-full text-left py-4.5 flex justify-between items-center group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 -mx-3 px-3 rounded-xl transition">
-                                <div>
-                                    <div class="font-bold text-slate-900 dark:text-white text-base mb-0.5">Biometric Passkeys</div>
-                                    <div class="text-xs text-slate-500 dark:text-slate-400" x-text="passkeys.length + ' passkey' + (passkeys.length === 1 ? '' : 's') + ' configured (TouchID / FaceID / Windows Hello)'"></div>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 group-hover:text-amber-500 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
-                            
-                            <!-- 2. Password -->
+                            <!-- Password -->
                             <button type="button" @click="showPasswordModal = true" class="w-full text-left py-4.5 flex justify-between items-center group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 -mx-3 px-3 rounded-xl transition">
                                 <div>
                                     <div class="font-bold text-slate-900 dark:text-white text-base mb-0.5">Password</div>
@@ -989,25 +980,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 group-hover:text-amber-500 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
                             </button>
 
-                            <!-- 3. Authenticator App -->
-                            <button type="button" @click="showAuthAppModal = true" class="w-full text-left py-4.5 flex justify-between items-center group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 -mx-3 px-3 rounded-xl transition">
-                                <div>
-                                    <div class="font-bold text-slate-900 dark:text-white text-base mb-0.5">Authenticator App (TOTP)</div>
-                                    <div class="text-xs text-slate-500 dark:text-slate-400" x-text="authenticatorConfigured ? '✓ Connected to authenticator app' : 'Set up Google Authenticator or Microsoft Authenticator.'"></div>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 group-hover:text-amber-500 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
-                            
-                            <!-- 4. 2-Step Verification -->
-                            <button type="button" @click="showTwoFactorModal = true" class="w-full text-left py-4.5 flex justify-between items-center group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 -mx-3 px-3 rounded-xl transition">
-                                <div>
-                                    <div class="font-bold text-slate-900 dark:text-white text-base mb-0.5">2-Step Verification</div>
-                                    <div class="text-xs text-slate-500 dark:text-slate-400" x-text="twoFactorEnabled ? '✓ Enabled (SMS & Authenticator Code)' : 'Add additional security to your account with 2-step verification.'"></div>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 group-hover:text-amber-500 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
-                            
-                            <!-- 5. Recovery phone -->
+                            <!-- Recovery phone -->
                             <button type="button" @click="showRecoveryPhoneModal = true" class="w-full text-left py-4.5 flex justify-between items-center group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 -mx-3 px-3 rounded-xl transition">
                                 <div>
                                     <div class="font-bold text-slate-900 dark:text-white text-base mb-0.5">Recovery Phone</div>
@@ -1088,41 +1061,7 @@
 
         <!-- ==================== INTERACTIVE MODALS ==================== -->
 
-        <!-- MODAL 1: PASSKEYS -->
-        <template x-teleport="body">
-            <div x-show="showPasskeyModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showPasskeyModal = false">
-                <div class="bg-white dark:bg-[#181d2e] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-slate-200 dark:border-slate-800">
-                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
-                        <h3 class="text-lg font-black text-slate-900 dark:text-white">Manage Passkeys</h3>
-                        <button type="button" @click="showPasskeyModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">✕</button>
-                    </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Passkeys allow passwordless biometric sign in via fingerprint, Face ID, or Windows Hello.</p>
-                    
-                    <div class="space-y-2 mb-6">
-                        <template x-for="(pk, i) in passkeys" :key="i">
-                            <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between border border-slate-200 dark:border-slate-800">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-xl">🔑</span>
-                                    <div>
-                                        <p class="text-xs font-bold text-slate-900 dark:text-white" x-text="pk.name"></p>
-                                        <p class="text-[11px] text-slate-400" x-text="'Created ' + pk.date"></p>
-                                    </div>
-                                </div>
-                                <button type="button" @click="removePasskey(i)" class="text-xs text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer">Remove</button>
-                            </div>
-                        </template>
-                    </div>
-
-                    <button type="button" @click="addPasskey()" 
-                            class="w-full font-black py-3.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-2 cursor-pointer"
-                            style="background: #f59e0b; color: #020617;">
-                        <span>+ Create New Passkey</span>
-                    </button>
-                </div>
-            </div>
-        </template>
-
-        <!-- MODAL 2: CHANGE PASSWORD -->
+        <!-- MODAL: CHANGE PASSWORD -->
         <template x-teleport="body">
             <div x-show="showPasswordModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showPasswordModal = false">
                 <div class="bg-white dark:bg-[#181d2e] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-slate-200 dark:border-slate-800">
@@ -1153,74 +1092,6 @@
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </template>
-
-        <!-- MODAL 3: AUTHENTICATOR APP -->
-        <template x-teleport="body">
-            <div x-show="showAuthAppModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showAuthAppModal = false">
-                <div class="bg-white dark:bg-[#181d2e] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-slate-200 dark:border-slate-800">
-                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
-                        <h3 class="text-lg font-black text-slate-900 dark:text-white">Authenticator App (TOTP)</h3>
-                        <button type="button" @click="showAuthAppModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">✕</button>
-                    </div>
-                    
-                    <div class="text-center my-4">
-                        <div class="w-32 h-32 bg-slate-100 dark:bg-slate-800 border-2 border-amber-400 rounded-2xl mx-auto flex items-center justify-center text-3xl font-bold font-mono tracking-wider">
-                            📲 QR
-                        </div>
-                        <p class="text-xs text-slate-500 mt-2 font-mono">Secret Key: RMCS-7K9A-2X4M-991P</p>
-                    </div>
-
-                    <form @submit.prevent="enableAuthApp" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Enter 6-Digit Code</label>
-                            <input type="text" maxlength="6" x-model="authAppCode" required placeholder="123456" class="w-full text-center tracking-[0.5em] font-mono text-xl py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        </div>
-                        
-                        <button type="submit" 
-                                class="w-full font-black py-3.5 rounded-xl text-xs transition shadow cursor-pointer"
-                                style="background: #f59e0b; color: #020617;">
-                            Verify & Enable Authenticator App
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </template>
-
-        <!-- MODAL 4: 2-STEP VERIFICATION -->
-        <template x-teleport="body">
-            <div x-show="showTwoFactorModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showTwoFactorModal = false">
-                <div class="bg-white dark:bg-[#181d2e] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-slate-200 dark:border-slate-800">
-                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
-                        <h3 class="text-lg font-black text-slate-900 dark:text-white">2-Step Verification</h3>
-                        <button type="button" @click="showTwoFactorModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">✕</button>
-                    </div>
-
-                    <div class="space-y-3 mb-6">
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between border border-slate-200 dark:border-slate-800">
-                            <div>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white">SMS Security Codes</p>
-                                <p class="text-xs text-slate-500">Send text message code to <span x-text="userPhone"></span></p>
-                            </div>
-                            <input type="checkbox" x-model="twoFactorSMS" class="w-5 h-5 accent-amber-500 cursor-pointer">
-                        </div>
-
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between border border-slate-200 dark:border-slate-800">
-                            <div>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white">Authenticator App (TOTP)</p>
-                                <p class="text-xs text-slate-500">Prompt for 6-digit authenticator code</p>
-                            </div>
-                            <input type="checkbox" x-model="twoFactorAuthApp" class="w-5 h-5 accent-amber-500 cursor-pointer">
-                        </div>
-                    </div>
-
-                    <button type="button" @click="saveTwoFactor()" 
-                            class="w-full font-black py-3.5 rounded-xl text-xs transition shadow cursor-pointer"
-                            style="background: #f59e0b; color: #020617;">
-                        Save 2-Step Verification Settings
-                    </button>
                 </div>
             </div>
         </template>
@@ -1619,10 +1490,7 @@
             },
             
             // Security Modals
-            showPasskeyModal: false,
             showPasswordModal: false,
-            showAuthAppModal: false,
-            showTwoFactorModal: false,
             showRecoveryPhoneModal: false,
             showSocialAppsModal: false,
             
@@ -1636,14 +1504,7 @@
             showCommPrefModal: false,
             
             // Security State
-            passkeys: [
-                { name: 'Windows Hello / Chrome', date: 'Jan 2025' }
-            ],
             passwordLastChanged: 'Recently',
-            authenticatorConfigured: false,
-            twoFactorEnabled: true,
-            twoFactorSMS: true,
-            twoFactorAuthApp: false,
             recoveryPhone: '{{ addslashes($user->phone ?? '') }}',
             googleConnected: true,
             appleConnected: true,
@@ -1652,20 +1513,6 @@
                 current: '',
                 new: '',
                 confirm: ''
-            },
-            authAppCode: '',
-            
-            addPasskey() {
-                this.passkeys.push({
-                    name: 'Biometric Passkey / Device',
-                    date: 'Just Now'
-                });
-                this.showToast('New passkey created successfully!');
-            },
-            
-            removePasskey(index) {
-                this.passkeys.splice(index, 1);
-                this.showToast('Passkey removed.');
             },
             
             async updatePassword() {
@@ -1706,23 +1553,6 @@
                 } finally {
                     this.isSaving = false;
                 }
-            },
-            
-            enableAuthApp() {
-                if (!this.authAppCode || this.authAppCode.length < 6) {
-                    alert('Please enter a valid 6-digit code from your authenticator app.');
-                    return;
-                }
-                this.authenticatorConfigured = true;
-                this.authAppCode = '';
-                this.showAuthAppModal = false;
-                this.showToast('Authenticator app configured & connected!');
-            },
-            
-            saveTwoFactor() {
-                this.twoFactorEnabled = this.twoFactorSMS || this.twoFactorAuthApp;
-                this.showTwoFactorModal = false;
-                this.showToast('2-step verification settings updated!');
             },
             
             saveRecoveryPhone() {
