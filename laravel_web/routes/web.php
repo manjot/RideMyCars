@@ -3686,7 +3686,12 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
         }
         $output['detected_cli_php'] = $phpBin;
-        $composerCmd = 'cd ' . escapeshellarg(base_path()) . ' && ' . escapeshellarg($phpBin) . ' composer.phar install --no-dev --optimize-autoloader 2>&1';
+        $homeDir = dirname(base_path('..'));
+        $composerHome = storage_path('composer');
+        if (!file_exists($composerHome)) {
+            @mkdir($composerHome, 0755, true);
+        }
+        $composerCmd = 'cd ' . escapeshellarg(base_path()) . ' && HOME=' . escapeshellarg($homeDir) . ' COMPOSER_HOME=' . escapeshellarg($composerHome) . ' ' . escapeshellarg($phpBin) . ' composer.phar install --no-dev --optimize-autoloader 2>&1';
         if (function_exists('shell_exec')) {
             $output['composer_install'] = @shell_exec($composerCmd);
         }
