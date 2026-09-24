@@ -3,6 +3,9 @@
     'theme' => '',
     'hideFooter' => false,
     'hideHeader' => false,
+    'canonical' => null,
+    'robots' => null,
+    'description' => null,
 ])
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
@@ -14,6 +17,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'RideMyCars' }}</title>
+    @php
+        $canonicalBase = 'https://www.ridemycars.com';
+        $currentPath = trim(request()->path(), '/');
+        $resolvedCanonical = $canonical ?? ($currentPath === '' ? $canonicalBase . '/' : $canonicalBase . '/' . $currentPath);
+        $resolvedRobots = $robots ?? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+        $resolvedDescription = $description ?? 'RideMyCars - Global executive transportation, chauffeured mobility, flexible vehicle rentals, and express package delivery across the globe.';
+    @endphp
+    <!-- Canonical URL (Fixes Duplicate without user-selected canonical) -->
+    <link rel="canonical" href="{{ $resolvedCanonical }}">
+
+    <!-- Search Engine Indexing Directives -->
+    <meta name="robots" content="{{ $resolvedRobots }}">
+    <meta name="description" content="{{ $resolvedDescription }}">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RideMyCars">
+    <meta property="og:title" content="{{ $title ?? 'RideMyCars - Premium Mobility & Rides' }}">
+    <meta property="og:description" content="{{ $resolvedDescription }}">
+    <meta property="og:url" content="{{ $resolvedCanonical }}">
+    <meta property="og:image" content="{{ asset('favicon-512x512.png') }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $title ?? 'RideMyCars - Premium Mobility & Rides' }}">
+    <meta name="twitter:description" content="{{ $resolvedDescription }}">
+    <meta name="twitter:image" content="{{ asset('favicon-512x512.png') }}">
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">

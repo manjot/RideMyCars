@@ -174,11 +174,11 @@ Route::get('/driver-compliance', function () {
 });
 
 Route::get('/compliance', function () {
-    return view('driver-compliance');
+    return redirect('/driver-compliance', 301);
 });
 
 Route::get('/onboarding-compliance', function () {
-    return view('driver-compliance');
+    return redirect('/driver-compliance', 301);
 });
 
 Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index'])->name('privacy-requests.index');
@@ -187,7 +187,9 @@ Route::post('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController
 // Account Deletion & Data Purge (Google Play & Apple App Store Compliant)
 Route::get('/delete-account', [\App\Http\Controllers\AccountDeletionController::class, 'show'])->name('account.delete');
 Route::post('/delete-account', [\App\Http\Controllers\AccountDeletionController::class, 'process'])->name('account.delete.process');
-Route::get('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'show']);
+Route::get('/account-deletion', function () {
+    return redirect('/delete-account', 301);
+});
 Route::post('/account-deletion', [\App\Http\Controllers\AccountDeletionController::class, 'process']);
 
 Route::get('/refund-cancellation-policy', function () {
@@ -195,11 +197,11 @@ Route::get('/refund-cancellation-policy', function () {
 });
 
 Route::get('/refund-cancellation', function () {
-    return view('refund');
+    return redirect('/refund-cancellation-policy', 301);
 });
 
 Route::get('/refund', function () {
-    return view('refund');
+    return redirect('/refund-cancellation-policy', 301);
 });
 
 Route::get('/contact', function () {
@@ -207,7 +209,7 @@ Route::get('/contact', function () {
 });
 
 Route::get('/contact-us', function () {
-    return view('contact');
+    return redirect('/contact', 301);
 });
 
 Route::post('/contact', function (\Illuminate\Http\Request $request) {
@@ -1008,8 +1010,8 @@ Route::post('/driver/submit-guarantor', [DriverBookingController::class, 'submit
 Route::post('/rental-inspection/upload', [DriverBookingController::class, 'storeRentalInspection']);
 
 // Vehicle Rentals & Rides
-Route::get('/terms', function () { return view('terms'); });
-Route::get('/privacy', function () { return view('privacy'); });
+Route::get('/terms', function () { return redirect('/terms-and-conditions', 301); });
+Route::get('/privacy', function () { return redirect('/privacy-policy', 301); });
 Route::get('/pricing', function (\Illuminate\Http\Request $request) {
     $currentPricing = \App\Services\CountryService::getCurrentPricing($request);
     $currentCurrencySymbol = $currentPricing->currency_symbol ?? '$';
@@ -3413,7 +3415,7 @@ Route::get('/apps', function () {
 })->name('apps.index');
 
 Route::get('/download', function () {
-    return view('apps');
+    return redirect('/apps', 301);
 })->name('apps.download');
 
 Route::get('/download/rider', function () {
@@ -3456,20 +3458,82 @@ Route::get('/download/app', function () {
     return redirect()->route('download.rider');
 });
 
-// Generic & Legal pages
-$pages = [
-    'safety', 'blog', 'careers', 'partner', 'help', 'contact', 'faq', 'support', 
-    'refund', 'cookie', 'pricing', 'list-vehicle', 'legal', 'terms', 'privacy', 
-    'terms-of-service', 'privacy-policy', 'services', 'about', 'cookies',
-    'driver-compliance', 'compliance', 'onboarding-compliance'
+// Canonical URL Redirects (301 Permanent) for duplicate aliases
+$canonicalRedirects = [
+    'terms' => '/terms-and-conditions',
+    'terms-of-service' => '/terms-and-conditions',
+    'privacy' => '/privacy-policy',
+    'refund' => '/refund-cancellation-policy',
+    'refund-cancellation' => '/refund-cancellation-policy',
+    'compliance' => '/driver-compliance',
+    'onboarding-compliance' => '/driver-compliance',
+    'contact-us' => '/contact',
+    'help' => '/contact',
+    'support' => '/contact',
+    'partner' => '/become-driver',
+    'blog' => '/blogs',
+    'cookies' => '/cookie',
+    'download' => '/apps',
+    'account-deletion' => '/delete-account',
 ];
-foreach ($pages as $page) {
+foreach ($canonicalRedirects as $alias => $target) {
+    Route::get('/' . $alias, function () use ($target) {
+        return redirect($target, 301);
+    });
+}
+
+// Canonical XML Sitemap Endpoint for Google Search Console
+Route::get('/sitemap.xml', function () {
+    $baseUrl = 'https://www.ridemycars.com';
+    $today = date('Y-m-d');
+    
+    $urls = [
+        ['loc' => $baseUrl . '/', 'priority' => '1.0', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/ride', 'priority' => '0.9', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/rent', 'priority' => '0.9', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/hire-driver', 'priority' => '0.9', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/delivery', 'priority' => '0.9', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/pricing', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/membership', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/apps', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/become-driver', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/become-owner', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/promotions', 'priority' => '0.7', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/safety', 'priority' => '0.7', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/about', 'priority' => '0.7', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/contact', 'priority' => '0.7', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/blogs', 'priority' => '0.7', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/terms-and-conditions', 'priority' => '0.5', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/privacy-policy', 'priority' => '0.5', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/driver-compliance', 'priority' => '0.5', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/refund-cancellation-policy', 'priority' => '0.5', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/delete-account', 'priority' => '0.4', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/cookie', 'priority' => '0.4', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/legal', 'priority' => '0.4', 'changefreq' => 'monthly'],
+    ];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($urls as $u) {
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>{$u['loc']}</loc>\n";
+        $xml .= "    <lastmod>{$today}</lastmod>\n";
+        $xml .= "    <changefreq>{$u['changefreq']}</changefreq>\n";
+        $xml .= "    <priority>{$u['priority']}</priority>\n";
+        $xml .= "  </url>\n";
+    }
+    $xml .= '</urlset>';
+
+    return response($xml, 200, [
+        'Content-Type' => 'application/xml',
+    ]);
+});
+
+// Standalone pages
+$standalonePages = ['cookie', 'legal', 'careers', 'faq', 'services', 'list-vehicle'];
+foreach ($standalonePages as $page) {
     Route::get('/' . $page, function () use ($page) {
         $title = ucwords(str_replace('-', ' ', $page));
-        if ($page === 'terms-of-service' && view()->exists('terms')) return view('terms');
-        if ($page === 'privacy-policy' && view()->exists('privacy')) return view('privacy');
-        if ($page === 'cookies' && view()->exists('cookie')) return view('cookie');
-        
         if (view()->exists($page)) {
             return view($page);
         }

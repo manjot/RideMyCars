@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Sign Up' }} — RideMyCars</title>
+    <link rel="canonical" href="https://www.ridemycars.com/signup">
+    <meta name="robots" content="noindex, follow">
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">

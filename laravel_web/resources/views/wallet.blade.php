@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :robots="'noindex, nofollow'">
     <x-slot:title>Wallet & Earnings — RideMyCars</x-slot>
 
     <main class="flex-1 w-full max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8 bg-white dark:bg-[#0a0a0a]"

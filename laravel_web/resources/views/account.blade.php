@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :robots="'noindex, nofollow'">
     <x-slot:title>Customer Account & Profile — RideMyCars</x-slot>
 
     <main x-data="accountManager('{{ request('tab', 'home') }}')" 

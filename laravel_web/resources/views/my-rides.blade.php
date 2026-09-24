@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :robots="'noindex, nofollow'">
     <x-slot:title>My Rides & Bookings — RideMyCars</x-slot:title>
 
     <main class="w-full mx-auto px-4 py-8 sm:px-6 lg:px-8" style="max-width: 1100px;" x-data="{ activeTab: new URLSearchParams(window.location.search).get('tab') || 'rides' }">

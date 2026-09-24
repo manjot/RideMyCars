@@ -57,7 +57,7 @@ fi
 # Set production defaults in .env
 sed -i 's/^APP_ENV=.*/APP_ENV=production/' .env 2>/dev/null || true
 sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env 2>/dev/null || true
-sed -i 's|^APP_URL=.*|APP_URL=https://ridemycars.com|' .env 2>/dev/null || true
+sed -i 's|^APP_URL=.*|APP_URL=https://www.ridemycars.com|' .env 2>/dev/null || true
 sed -i 's/^MAIL_MAILER=.*/MAIL_MAILER=smtp/' .env 2>/dev/null || true
 sed -i 's/^MAIL_SCHEME=.*/MAIL_SCHEME=smtps/' .env 2>/dev/null || true
 sed -i 's/^MAIL_HOST=.*/MAIL_HOST=mail.ridemycars.com/' .env 2>/dev/null || true

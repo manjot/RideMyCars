@@ -1,4 +1,24 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # 1. Force HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 2. Force www.ridemycars.com (Canonical Host)
+    RewriteCond %{HTTP_HOST} ^ridemycars\.com$ [NC]
+    RewriteRule ^(.*)$ https://www.ridemycars.com%{REQUEST_URI} [L,R=301]
+
+    # 3. Strip direct access to internal laravel_web/public/ directory
+    RewriteCond %{THE_REQUEST} \s/+laravel_web/public/(\S*) [NC]
+    RewriteRule ^ /%1 [L,R=301]
+
+    # 4. Remove trailing slashes for non-directories (prevents duplicate URLs and path leaks)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+    # 5. Route requests to Laravel public front controller
+    RewriteCond %{REQUEST_URI} !^/laravel_web/public/
     RewriteRule ^(.*)$ laravel_web/public/$1 [L]
 </IfModule>
