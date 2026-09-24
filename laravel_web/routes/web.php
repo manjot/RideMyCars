@@ -3662,7 +3662,12 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
 
     // Run Composer if Barryvdh\\DomPDF is missing
     if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-        $composerCmd = 'cd ' . escapeshellarg(base_path()) . ' && (composer install --no-dev --optimize-autoloader 2>&1 || php /usr/local/bin/composer install --no-dev --optimize-autoloader 2>&1 || /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader 2>&1)';
+        $composerPhar = base_path('composer.phar');
+        if (!file_exists($composerPhar) || filesize($composerPhar) < 100000) {
+            @copy('https://getcomposer.org/download/latest-stable/composer.phar', $composerPhar);
+        }
+        $phpBin = defined('PHP_BINARY') && file_exists(PHP_BINARY) ? PHP_BINARY : 'php';
+        $composerCmd = 'cd ' . escapeshellarg(base_path()) . ' && ' . escapeshellarg($phpBin) . ' composer.phar install --no-dev --optimize-autoloader 2>&1';
         if (function_exists('shell_exec')) {
             $output['composer_install'] = @shell_exec($composerCmd);
         }
