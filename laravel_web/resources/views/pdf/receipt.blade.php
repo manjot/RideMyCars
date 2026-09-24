@@ -199,13 +199,21 @@
     <table class="header-table">
         <tr>
             <td style="vertical-align: middle;">
-                <div class="brand-title"><span class="brand-accent">Ride</span>MyCars</div>
+                @php
+                    $logoPath = public_path('images/logo.png');
+                    $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
+                @endphp
+                @if($logoBase64)
+                    <img src="data:image/png;base64,{{ $logoBase64 }}" alt="RideMyCars" style="height: 44px; width: auto; max-width: 200px; display: block; margin-bottom: 4px;" />
+                @else
+                    <div class="brand-title"><span class="brand-accent">Ride</span>MyCars</div>
+                @endif
                 <div class="brand-sub">Official Booking Receipt & Tax Invoice</div>
             </td>
             <td style="text-align: right; vertical-align: middle;">
                 <span class="badge badge-type">{{ $receipt->type_label }}</span>
                 <span class="badge badge-success">{{ strtoupper($receipt->payment_status) }}</span><br>
-                <span style="font-size: 10px; color: #6b7280;">Date: {{ $receipt->created_at->format('d M Y, h:i A') }}</span>
+                <span style="font-size: 10px; color: #6b7280; display: inline-block; margin-top: 4px;">Date: {{ $receipt->created_at->format('d M Y, h:i A') }}</span>
             </td>
         </tr>
     </table>

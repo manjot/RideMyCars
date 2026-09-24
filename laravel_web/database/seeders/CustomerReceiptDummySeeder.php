@@ -285,5 +285,12 @@ class CustomerReceiptDummySeeder extends Seeder
         $delivery->save();
 
         $receiptDelivery = ReceiptService::generateReceiptForPackageDelivery($delivery, false);
+
+        // Force regenerate all PDF files so they use the latest logo template
+        foreach ([$receiptRide, $receiptRental, $receiptChauffeur, $receiptDelivery] as $rec) {
+            if ($rec) {
+                ReceiptService::generatePdf($rec, true);
+            }
+        }
     }
 }

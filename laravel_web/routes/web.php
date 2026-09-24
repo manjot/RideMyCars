@@ -3766,6 +3766,17 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['customer_receipt_dummy_seed_err'] = $e->getMessage() . ' on line ' . $e->getLine();
         }
 
+        // Regenerate all receipt PDFs with new logo
+        try {
+            $allReceipts = \App\Models\Receipt::all();
+            foreach ($allReceipts as $rec) {
+                \App\Services\ReceiptService::generatePdf($rec, true);
+            }
+            $output['regenerated_receipt_pdfs'] = $allReceipts->count();
+        } catch (\Throwable $e) {
+            $output['regenerate_receipt_pdfs_err'] = $e->getMessage();
+        }
+
         // Ensure GHA country compliance rule is synced with Ride My Cars (Ghana)
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('country_compliance_rules')) {

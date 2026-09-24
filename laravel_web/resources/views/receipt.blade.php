@@ -62,9 +62,9 @@
                     <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400/10 text-amber-500 border border-amber-400/20">
                         {{ $receipt->type_label }}
                     </span>
-                    <span class="text-xl font-black text-gray-900 dark:text-white tracking-tight">
-                        <span class="text-amber-500">Ride</span>MyCars
-                    </span>
+                    <a href="/" class="block transition-transform hover:scale-105" title="RideMyCars Homepage">
+                        <img src="{{ asset('images/logo.png') }}" alt="RideMyCars" class="h-9 sm:h-11 w-auto object-contain" />
+                    </a>
                 </div>
             </div>
 
