@@ -634,34 +634,6 @@ class RideController extends Controller
         ]);
     }
 
-    /**
-     * Cancel a ride
-     */
-    public function cancel(Request $request, $id): JsonResponse
-    {
-        $user = $request->user();
-        $ride = Ride::find($id);
-
-        if (!$ride) {
-            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
-        }
-
-        if ($ride->rider_id !== $user->id && $ride->driver_id !== $user->id && $user->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $ride->update(['status' => 'cancelled']);
-        RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
-
-        if ($ride->driver?->driverProfile) {
-            $ride->driver->driverProfile->update(['is_available' => true]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Ride cancelled successfully.',
-        ]);
-    }
 
     /**
      * Enable or disable Backup Chauffeur option for a ride
