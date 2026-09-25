@@ -9,8 +9,8 @@ class ApiConstants {
   static const String verifyOtp = '/otp/verify';
   static const String googleAuth = '/auth/social/google';
   static const String appleAuth = '/auth/social/apple';
-  static const String googleOAuthUrl = 'https://ridemycars.com/auth/google';
-  static const String appleOAuthUrl = 'https://ridemycars.com/auth/apple';
+  static const String googleOAuthUrl = 'https://www.ridemycars.com/auth/google';
+  static const String appleOAuthUrl = 'https://www.ridemycars.com/auth/apple';
   static const String me = '/me';
   static const String logout = '/logout';
 

@@ -33,8 +33,40 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException error, handler) async {
-          // Handle 401 unauthenticated by automatically re-logging in with saved credentials
-          if (error.response?.statusCode == 401) {
+          // 1. Transparently retry canonical www URL on any 301/302/307/308 redirect
+          final statusCode = error.response?.statusCode;
+          if (statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308) {
+            final location = error.response?.headers.value('location');
+            String targetUri = location ?? error.requestOptions.uri.toString();
+            if (!targetUri.contains('www.ridemycars.com')) {
+              targetUri = targetUri.replaceFirst('https://ridemycars.com', 'https://www.ridemycars.com')
+                                   .replaceFirst('http://ridemycars.com', 'https://www.ridemycars.com');
+            }
+            try {
+              final token = await TokenStorage.getToken();
+              final retryOptions = Options(
+                method: error.requestOptions.method,
+                headers: {
+                  ...error.requestOptions.headers,
+                  if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+                },
+                responseType: error.requestOptions.responseType,
+                contentType: error.requestOptions.contentType,
+              );
+              final retryRes = await dio.request(
+                targetUri,
+                data: error.requestOptions.data,
+                options: retryOptions,
+                queryParameters: error.requestOptions.queryParameters,
+              );
+              return handler.resolve(retryRes);
+            } catch (_) {
+              // Pass original error through if retry fails
+            }
+          }
+
+          // 2. Handle 401 unauthenticated by automatically re-logging in with saved credentials
+          if (statusCode == 401) {
             final email = await TokenStorage.getUserEmail();
             final password = await TokenStorage.getSavedPassword();
 

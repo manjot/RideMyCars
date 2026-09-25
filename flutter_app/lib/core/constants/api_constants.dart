@@ -10,8 +10,8 @@ class ApiConstants {
   static const String verifyOtp = '/otp/verify';
   static const String googleAuth = '/auth/social/google';
   static const String appleAuth = '/auth/social/apple';
-  static const String googleOAuthUrl = 'https://ridemycars.com/auth/google';
-  static const String appleOAuthUrl = 'https://ridemycars.com/auth/apple';
+  static const String googleOAuthUrl = 'https://www.ridemycars.com/auth/google';
+  static const String appleOAuthUrl = 'https://www.ridemycars.com/auth/apple';
   static const String me = '/me';
   static const String logout = '/logout';
 
@@ -52,6 +52,6 @@ class ApiConstants {
   static String receiptDetail(int id) => '/receipts/$id';
   static String receiptDownload(int id) => '/receipts/$id/download';
   static String receiptResend(int id) => '/receipts/$id/resend';
-  static String receiptViewWeb(String token) => 'https://ridemycars.com/receipts/$token';
-  static String receiptDownloadWeb(String token) => 'https://ridemycars.com/receipts/$token/download';
+  static String receiptViewWeb(String token) => 'https://www.ridemycars.com/receipts/$token';
+  static String receiptDownloadWeb(String token) => 'https://www.ridemycars.com/receipts/$token/download';
 }

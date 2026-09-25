@@ -19,7 +19,8 @@
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder (Clean Canonical URL)
+    # Redirect Trailing Slashes If Not A Folder (Clean Canonical URL - exempt /api/ for mobile apps)
+    RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{THE_REQUEST} \s/+(.+?)/+[?\s]
     RewriteRule ^ https://www.ridemycars.com/%1 [L,R=301]

@@ -98,10 +98,14 @@ class RideProvider extends ChangeNotifier {
     } on DioException catch (e) {
       if (e.response?.data is Map && e.response?.data['message'] != null) {
         _errorMessage = e.response!.data['message'].toString();
+      } else if (e.response?.statusCode == 401) {
+        _errorMessage = 'Session expired. Please sign in to request a ride.';
       } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.connectionError) {
         _errorMessage = 'Network connection issue. Please retry.';
+      } else if (e.response?.statusCode == 301 || e.response?.statusCode == 302 || e.response?.statusCode == 308) {
+        _errorMessage = 'Connecting to server. Please tap Request Ride again.';
       } else {
-        _errorMessage = 'Failed to request ride (${e.response?.statusCode ?? 'Error'}).';
+        _errorMessage = 'Unable to request ride (${e.response?.statusCode ?? 'Connection Error'}). Please try again.';
       }
       debugPrint('Error booking ride: $e');
     } catch (e) {

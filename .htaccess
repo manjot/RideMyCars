@@ -1,7 +1,14 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 1. Force HTTPS
+    # 1. Force HTTPS for API requests using HTTP 308 (RFC 7538: preserves POST method & payload)
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteCond %{HTTPS} !on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=308]
+
+    # 1b. Force HTTPS for Web requests
+    RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{HTTPS} !on
     RewriteCond %{HTTP:X-Forwarded-Proto} !https
     RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=301]
@@ -16,7 +23,8 @@
     RewriteCond %{THE_REQUEST} \s/+laravel_web/public/(\S*) [NC]
     RewriteRule ^ /%1 [L,R=301]
 
-    # 4. Remove trailing slashes for non-directories (prevents duplicate URLs and path leaks)
+    # 4. Remove trailing slashes for non-directories (exempt /api/ to prevent 301 breaking mobile client requests)
+    RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)/$ /$1 [L,R=301]
 
