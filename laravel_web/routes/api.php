@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\AppConfigApiController;
 // Public App Settings & Dynamic Ride Categories
 Route::get('/app-settings', [AppConfigApiController::class, 'getPublicSettings']);
 Route::get('/ride-categories', [AppConfigApiController::class, 'getRideCategories']);
+Route::get('/rides/categories', [RideController::class, 'categories']);
+Route::post('/rides/calculate-price', [RideController::class, 'calculatePrice']);
 
 // Places Autocomplete, Geocoding & Reverse Geocoding
 Route::get('/places/autocomplete', [PlacesApiController::class, 'autocomplete']);

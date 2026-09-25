@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../core/api/api_client.dart';
 import '../core/constants/api_constants.dart';
+import '../models/ride_category_model.dart';
+import '../services/ride_service.dart';
 
 class RideProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
@@ -10,9 +12,20 @@ class RideProvider extends ChangeNotifier {
   Map<String, dynamic>? _activeRide;
   bool _isBooking = false;
   String? _errorMessage;
-  String _selectedVehicle = 'Standard';
+  String _selectedVehicle = 'standard';
   bool _backupChauffeurEnabled = false;
   Timer? _ridePollTimer;
+
+  // Dynamic Categories & Dynamic Pricing
+  List<RideCategoryModel> _rideCategories = [];
+  RideCategoryModel? _selectedCategory;
+  double? _estimatedDistanceKm;
+  int? _estimatedDurationMinutes;
+  String _currencySymbol = '\$';
+  String _currencyCode = 'USD';
+  Map<String, dynamic>? _surgeInfo;
+  bool _isCalculatingFares = false;
+  bool _isLoadingCategories = false;
 
   Map<String, dynamic>? get activeRide => _activeRide;
   bool get isBooking => _isBooking;
@@ -20,14 +33,113 @@ class RideProvider extends ChangeNotifier {
   String get selectedVehicle => _selectedVehicle;
   bool get backupChauffeurEnabled => _backupChauffeurEnabled;
 
+  List<RideCategoryModel> get rideCategories => _rideCategories;
+  RideCategoryModel? get selectedCategory => _selectedCategory;
+  double? get estimatedDistanceKm => _estimatedDistanceKm;
+  int? get estimatedDurationMinutes => _estimatedDurationMinutes;
+  String get currencySymbol => _currencySymbol;
+  String get currencyCode => _currencyCode;
+  Map<String, dynamic>? get surgeInfo => _surgeInfo;
+  bool get isCalculatingFares => _isCalculatingFares;
+  bool get isLoadingCategories => _isLoadingCategories;
+
   void setSelectedVehicle(String v) {
     _selectedVehicle = v;
+    final match = _rideCategories.firstWhere(
+      (c) => c.slug.toLowerCase() == v.toLowerCase() || c.name.toLowerCase() == v.toLowerCase(),
+      orElse: () => _rideCategories.isNotEmpty ? _rideCategories.first : _defaultFallbackCategory,
+    );
+    _selectedCategory = match;
+    notifyListeners();
+  }
+
+  void selectCategory(RideCategoryModel cat) {
+    _selectedCategory = cat;
+    _selectedVehicle = cat.slug;
     notifyListeners();
   }
 
   void setBackupChauffeurEnabled(bool val) {
     _backupChauffeurEnabled = val;
     notifyListeners();
+  }
+
+  /// Fetch vehicle categories matching active country
+  Future<void> fetchCategories({String? country}) async {
+    _isLoadingCategories = true;
+    notifyListeners();
+
+    try {
+      final cats = await RideService.getCategories(country: country);
+      if (cats.isNotEmpty) {
+        _rideCategories = cats;
+        // Keep current selected if valid, else pick first
+        final currentSlug = _selectedCategory?.slug ?? _selectedVehicle;
+        _selectedCategory = _rideCategories.firstWhere(
+          (c) => c.slug.toLowerCase() == currentSlug.toLowerCase() || c.name.toLowerCase() == currentSlug.toLowerCase(),
+          orElse: () => _rideCategories.first,
+        );
+        _selectedVehicle = _selectedCategory!.slug;
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories in provider: $e');
+    } finally {
+      _isLoadingCategories = false;
+      notifyListeners();
+    }
+  }
+
+  /// Dynamically recalculate prices for all categories when route changes
+  Future<void> calculateDynamicFares({
+    required double pickupLat,
+    required double pickupLng,
+    required double dropoffLat,
+    required double dropoffLng,
+    double? distanceKm,
+    int? durationMinutes,
+    int stopsCount = 0,
+    String? country,
+  }) async {
+    _isCalculatingFares = true;
+    notifyListeners();
+
+    try {
+      final result = await RideService.calculatePrice(
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        dropoffLat: dropoffLat,
+        dropoffLng: dropoffLng,
+        distanceKm: distanceKm,
+        durationMinutes: durationMinutes,
+        stopsCount: stopsCount,
+        country: country,
+      );
+
+      if (result != null && result['categories'] is List<RideCategoryModel>) {
+        final List<RideCategoryModel> updated = result['categories'];
+        if (updated.isNotEmpty) {
+          _rideCategories = updated;
+          _estimatedDistanceKm = result['distance_km'] as double?;
+          _estimatedDurationMinutes = result['duration_minutes'] as int?;
+          _currencySymbol = result['currency_symbol'] as String? ?? _currencySymbol;
+          _currencyCode = result['currency_code'] as String? ?? _currencyCode;
+          _surgeInfo = result['surge_info'] as Map<String, dynamic>?;
+
+          // Preserve selected tier or fallback to first
+          final currentSlug = _selectedCategory?.slug ?? _selectedVehicle;
+          _selectedCategory = _rideCategories.firstWhere(
+            (c) => c.slug.toLowerCase() == currentSlug.toLowerCase() || c.name.toLowerCase() == currentSlug.toLowerCase(),
+            orElse: () => _rideCategories.first,
+          );
+          _selectedVehicle = _selectedCategory!.slug;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating dynamic fares: $e');
+    } finally {
+      _isCalculatingFares = false;
+      notifyListeners();
+    }
   }
 
   void startActiveRidePolling() {
@@ -66,12 +178,17 @@ class RideProvider extends ChangeNotifier {
     int? durationMinutes,
     String paymentMethod = 'cash',
     bool? backupChauffeurEnabled,
+    String? country,
   }) async {
     _isBooking = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
+      final actualDist = distanceKm ?? _estimatedDistanceKm ?? 10.0;
+      final actualDur = durationMinutes ?? _estimatedDurationMinutes ?? 15;
+      final actualVehicleType = _selectedCategory?.name ?? _selectedCategory?.slug ?? _selectedVehicle;
+
       final res = await _dio.post(ApiConstants.rides, data: {
         'pickup_location': pickupLocation,
         'dropoff_location': dropoffLocation,
@@ -79,11 +196,12 @@ class RideProvider extends ChangeNotifier {
         'pickup_lng': pickupLng,
         'dropoff_lat': dropoffLat,
         'dropoff_lng': dropoffLng,
-        'vehicle_type': _selectedVehicle,
+        'vehicle_type': actualVehicleType,
         'payment_method': paymentMethod,
-        'distance_km': distanceKm ?? 10.0,
-        'duration_minutes': durationMinutes ?? 15,
+        'distance_km': actualDist,
+        'duration_minutes': actualDur,
         'backup_chauffeur_enabled': backupChauffeurEnabled ?? _backupChauffeurEnabled,
+        if (country != null) 'country': country,
       });
 
       if ((res.statusCode == 200 || res.statusCode == 201) && res.data['success'] == true) {
@@ -156,6 +274,19 @@ class RideProvider extends ChangeNotifier {
       debugPrint('Error cancelling ride: $e');
     }
     return false;
+  }
+
+  RideCategoryModel get _defaultFallbackCategory {
+    return const RideCategoryModel(
+      id: 'economy',
+      slug: 'economy',
+      categoryKey: 'economy',
+      name: 'Economy',
+      icon: '🚗',
+      capacity: '1–4 seats',
+      fare: 25.0,
+      fareFormatted: 'GH₵25.00',
+    );
   }
 
   @override

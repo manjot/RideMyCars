@@ -5,11 +5,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/driver_model.dart';
+import '../../models/ride_category_model.dart';
 import '../../models/vehicle_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/country_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/ride_provider.dart';
+import '../../services/delivery_service.dart';
 import '../../services/driver_service.dart';
 import '../../services/places_service.dart';
 import '../../services/rental_service.dart';
@@ -74,17 +76,22 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
   final List<String> _rentalCategories = ['All', 'Economy', 'Compact', 'Sedan', 'SUV', 'Luxury', 'Van'];
   final List<String> _driverFilters = ['All', 'Top Rated', 'City Duty', 'Executive'];
+  String? _lastCountryCode;
+  final Map<String, double> _dynamicDeliveryPrices = {};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rideProv = Provider.of<RideProvider>(context, listen: false);
+      final countryProv = Provider.of<CountryProvider>(context, listen: false);
+      _lastCountryCode = countryProv.selectedCountryCode;
       rideProv.startActiveRidePolling();
+      rideProv.fetchCategories(country: countryProv.selectedCountryCode);
       Provider.of<NotificationProvider>(context, listen: false).startPolling();
       _getCurrentLocation();
-      _fetchRentalVehicles();
-      _fetchDrivers();
+      _fetchRentalVehicles(country: countryProv.selectedCountryCode);
+      _fetchDrivers(country: countryProv.selectedCountryCode);
     });
   }
 
@@ -94,6 +101,45 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     _pickupController.dispose();
     _dropoffController.dispose();
     super.dispose();
+  }
+
+  Future<void> _recalculateDynamicPrices() async {
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
+
+    if (_userLat != null && _userLng != null && _dropoffLat != null && _dropoffLng != null) {
+      final distKm = Geolocator.distanceBetween(_userLat!, _userLng!, _dropoffLat!, _dropoffLng!) / 1000.0;
+      await rideProv.calculateDynamicFares(
+        pickupLat: _userLat!,
+        pickupLng: _userLng!,
+        dropoffLat: _dropoffLat!,
+        dropoffLng: _dropoffLng!,
+        distanceKm: distKm,
+        country: countryProv.selectedCountryCode,
+      );
+      _calculateDynamicDeliveryPrice(distKm: distKm);
+    }
+  }
+
+  Future<void> _calculateDynamicDeliveryPrice({double? distKm}) async {
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    for (final speed in ['Hyperlocal', 'Same Day', 'Express', 'Instant']) {
+      final res = await DeliveryService.calculatePrice(
+        pickupLat: _userLat,
+        pickupLng: _userLng,
+        dropoffLat: _dropoffLat,
+        dropoffLng: _dropoffLng,
+        deliveryType: speed,
+        country: countryProv.selectedCountryCode,
+      );
+      if (res != null && res['total_price'] != null) {
+        if (mounted) {
+          setState(() {
+            _dynamicDeliveryPrices[speed] = (res['total_price'] as num).toDouble();
+          });
+        }
+      }
+    }
   }
 
   Future<void> _fetchRentalVehicles({String? category, String? country}) async {
@@ -187,8 +233,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 
   String get _ctaButtonText {
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
     switch (_selectedService) {
       case ServiceType.ride:
+        final selected = rideProv.selectedCategory;
+        if (selected != null) {
+          return 'Request ${selected.name} • ${selected.fareFormatted} →';
+        }
         return 'Request Ride Now →';
       case ServiceType.rent:
         return _selectedRentalVehicle != null
@@ -199,25 +250,130 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             ? 'Hire ${_selectedDriver!.name} • ${_selectedDriver!.currencySymbol}${_selectedDriver!.hourlyRate.toStringAsFixed(0)}/hr →'
             : 'Hire Chauffeur Now →';
       case ServiceType.deliver:
-        return 'Send Delivery Now →';
+        final delPrice = _dynamicDeliveryPrices[_selectedTierId];
+        final countryProv = Provider.of<CountryProvider>(context, listen: false);
+        final priceStr = delPrice != null ? '${countryProv.currencySymbol}${delPrice.toStringAsFixed(2)}' : '';
+        return priceStr.isNotEmpty ? 'Send $_selectedTierId • $priceStr →' : 'Send Delivery Now →';
     }
   }
 
-  List<Map<String, dynamic>> get _rideTierOptions {
+  List<RideCategoryModel> get _fallbackRideCategories {
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final sym = countryProv.currencySymbol;
     return [
-      {'id': 'Standard', 'label': 'Sedan', 'eta': '4 min', 'price': countryProv.formatAmount(35.0), 'icon': Icons.directions_car_rounded},
-      {'id': 'Executive', 'label': 'SUV', 'eta': '6 min', 'price': countryProv.formatAmount(55.0), 'icon': Icons.directions_bus_rounded},
-      {'id': 'Luxury', 'label': 'VIP', 'eta': '10 min', 'price': countryProv.formatAmount(95.0), 'icon': Icons.local_taxi_rounded},
+      RideCategoryModel(
+        id: 'economy',
+        slug: 'economy',
+        categoryKey: 'economy',
+        name: 'Economy',
+        icon: '🚗',
+        capacity: '1–4 seats',
+        etaMinutes: 3,
+        fare: 22.50,
+        fareFormatted: '$sym${(22.50 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+      ),
+      RideCategoryModel(
+        id: 'standard',
+        slug: 'standard',
+        categoryKey: 'standard',
+        name: 'Standard / Comfort',
+        icon: '🚘',
+        capacity: '1–4 seats',
+        etaMinutes: 4,
+        fare: 35.00,
+        fareFormatted: '$sym${(35.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+      ),
+      RideCategoryModel(
+        id: 'luxury',
+        slug: 'luxury',
+        categoryKey: 'luxury',
+        name: 'Luxury SUV',
+        icon: '🚙',
+        capacity: '1–6 seats',
+        etaMinutes: 6,
+        fare: 55.00,
+        fareFormatted: '$sym${(55.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+      ),
+      RideCategoryModel(
+        id: 'van_xl',
+        slug: 'van_xl',
+        categoryKey: 'van_xl',
+        name: 'Van XL',
+        icon: '🚐',
+        capacity: '1–7 seats',
+        etaMinutes: 8,
+        fare: 75.00,
+        fareFormatted: '$sym${(75.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+      ),
+      RideCategoryModel(
+        id: 'vip_chauffeur',
+        slug: 'vip_chauffeur',
+        categoryKey: 'vip_chauffeur',
+        name: 'VIP Chauffeurs',
+        icon: '👑',
+        capacity: '1–4 seats',
+        etaMinutes: 10,
+        fare: 120.00,
+        fareFormatted: '$sym${(120.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+      ),
+      RideCategoryModel(
+        id: 'group_bus',
+        slug: 'group_bus',
+        categoryKey: 'group_bus',
+        name: 'Group Bus (7–14)',
+        icon: '🚌',
+        capacity: '7–14 seats',
+        etaMinutes: 12,
+        fare: 180.00,
+        fareFormatted: '$sym${(180.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+      ),
     ];
   }
 
   List<Map<String, dynamic>> get _deliverTierOptions {
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final sym = countryProv.currencySymbol;
     return [
-      {'id': 'Hyperlocal', 'label': 'Hyperlocal', 'eta': '< 5 kg', 'price': countryProv.formatAmount(15.0), 'icon': Icons.two_wheeler_rounded},
-      {'id': 'Same Day', 'label': 'Same Day', 'eta': 'Today', 'price': countryProv.formatAmount(19.0), 'icon': Icons.local_shipping_rounded},
-      {'id': 'Instant', 'label': 'Instant', 'eta': '< 30 min', 'price': countryProv.formatAmount(25.0), 'icon': Icons.electric_bolt_rounded},
+      {
+        'id': 'Hyperlocal',
+        'label': 'Hyperlocal',
+        'eta': '< 45 min',
+        'price': _dynamicDeliveryPrices.containsKey('Hyperlocal')
+            ? '$sym${_dynamicDeliveryPrices['Hyperlocal']!.toStringAsFixed(2)}'
+            : countryProv.formatAmount(15.0),
+        'icon': Icons.two_wheeler_rounded,
+        'desc': 'Motorbike courier for fast intra-city deliveries',
+      },
+      {
+        'id': 'Same Day',
+        'label': 'Same Day',
+        'eta': 'By 6 PM',
+        'price': _dynamicDeliveryPrices.containsKey('Same Day')
+            ? '$sym${_dynamicDeliveryPrices['Same Day']!.toStringAsFixed(2)}'
+            : countryProv.formatAmount(19.0),
+        'icon': Icons.local_shipping_rounded,
+        'desc': 'Consolidated dispatch for parcels delivered today',
+      },
+      {
+        'id': 'Express',
+        'label': 'Express',
+        'eta': '< 90 min',
+        'price': _dynamicDeliveryPrices.containsKey('Express')
+            ? '$sym${_dynamicDeliveryPrices['Express']!.toStringAsFixed(2)}'
+            : countryProv.formatAmount(23.0),
+        'icon': Icons.flash_on_rounded,
+        'desc': 'Priority door-to-door courier route',
+      },
+      {
+        'id': 'Instant',
+        'label': 'Instant',
+        'eta': '< 30 min',
+        'price': _dynamicDeliveryPrices.containsKey('Instant')
+            ? '$sym${_dynamicDeliveryPrices['Instant']!.toStringAsFixed(2)}'
+            : countryProv.formatAmount(27.0),
+        'icon': Icons.electric_bolt_rounded,
+        'desc': 'Dedicated urgent direct delivery rider',
+      },
     ];
   }
 
@@ -225,16 +381,22 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     setState(() {
       _selectedService = service;
       if (service == ServiceType.ride) {
-        _selectedTierId = 'Standard';
+        final rideProv = Provider.of<RideProvider>(context, listen: false);
+        _selectedTierId = rideProv.selectedCategory?.slug ?? 'standard';
       } else if (service == ServiceType.deliver) {
         _selectedTierId = 'Hyperlocal';
       }
     });
 
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
     if (service == ServiceType.rent && _rentalVehicles.isEmpty) {
-      _fetchRentalVehicles();
+      _fetchRentalVehicles(country: countryProv.selectedCountryCode);
     } else if (service == ServiceType.driver && _drivers.isEmpty) {
-      _fetchDrivers();
+      _fetchDrivers(country: countryProv.selectedCountryCode);
+    } else if (service == ServiceType.ride) {
+      _recalculateDynamicPrices();
+    } else if (service == ServiceType.deliver) {
+      _calculateDynamicDeliveryPrice();
     }
   }
 
@@ -266,6 +428,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             }
           });
           _updateMapMarkers();
+          if (_dropoffLat != null && _dropoffLng != null) {
+            _recalculateDynamicPrices();
+          }
         }
       }
     } catch (_) {}
@@ -323,6 +488,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     });
 
     _updateMapMarkers();
+    _recalculateDynamicPrices();
     if (!mounted) return;
     FocusScope.of(context).unfocus();
   }
@@ -473,6 +639,17 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     }
 
     final rideProv = Provider.of<RideProvider>(context, listen: false);
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+
+    double? computedDist;
+    int? computedDur;
+    if (_userLat != null && _userLng != null && _dropoffLat != null && _dropoffLng != null) {
+      computedDist = Geolocator.distanceBetween(_userLat!, _userLng!, _dropoffLat!, _dropoffLng!) / 1000.0;
+      computedDur = (computedDist / 30.0 * 60).round().clamp(5, 300);
+    }
+
+    final finalDist = rideProv.estimatedDistanceKm ?? computedDist ?? 10.0;
+    final finalDur = rideProv.estimatedDurationMinutes ?? computedDur ?? 15;
 
     String vehicleTypeTag;
     if (_selectedService == ServiceType.rent && _selectedRentalVehicle != null) {
@@ -482,7 +659,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     } else if (_selectedService == ServiceType.deliver) {
       vehicleTypeTag = 'DELIVERY_$_selectedTierId';
     } else {
-      vehicleTypeTag = _selectedTierId;
+      vehicleTypeTag = rideProv.selectedCategory?.name ?? rideProv.selectedCategory?.slug ?? _selectedTierId;
     }
 
     rideProv.setSelectedVehicle(vehicleTypeTag);
@@ -494,9 +671,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       pickupLng: _userLng,
       dropoffLat: _dropoffLat,
       dropoffLng: _dropoffLng,
-      distanceKm: 15.0,
-      durationMinutes: 25,
+      distanceKm: finalDist,
+      durationMinutes: finalDur,
       backupChauffeurEnabled: _enableBackupChauffeur,
+      country: countryProv.selectedCountryCode,
     );
 
     if (!mounted) return;
@@ -587,11 +765,15 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                       trailing: isSelected
                           ? const Icon(Icons.check_circle_rounded, color: Color(0xFF3B82F6), size: 22)
                           : null,
-                      onTap: () {
-                        countryProv.setCountry(item.code);
-                        _fetchRentalVehicles(country: item.code);
-                        _fetchDrivers(country: item.code);
+                      onTap: () async {
+                        final code = item.code;
                         Navigator.pop(ctx);
+                        final rideProv = Provider.of<RideProvider>(context, listen: false);
+                        await countryProv.setCountry(code);
+                        await rideProv.fetchCategories(country: code);
+                        _fetchRentalVehicles(country: code);
+                        _fetchDrivers(country: code);
+                        _recalculateDynamicPrices();
                       },
                     );
                   },
@@ -612,7 +794,37 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     final notifs = Provider.of<NotificationProvider>(context);
     final countryProv = Provider.of<CountryProvider>(context);
 
-    final initialCenter = LatLng(_userLat ?? 28.6448, _userLng ?? 77.2167);
+    if (_lastCountryCode != countryProv.selectedCountryCode) {
+      _lastCountryCode = countryProv.selectedCountryCode;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        rideProv.fetchCategories(country: countryProv.selectedCountryCode);
+        _fetchRentalVehicles(country: countryProv.selectedCountryCode);
+        _fetchDrivers(country: countryProv.selectedCountryCode);
+        _recalculateDynamicPrices();
+      });
+    }
+
+    LatLng defaultCenterForCountry(String code) {
+      switch (code.toUpperCase()) {
+        case 'GHA':
+          return const LatLng(5.6037, -0.1870); // Accra, Ghana
+        case 'USA':
+          return const LatLng(40.7128, -74.0060); // New York, USA
+        case 'GBR':
+          return const LatLng(51.5074, -0.1278); // London, UK
+        case 'IND':
+          return const LatLng(28.6139, 77.2090); // New Delhi, India
+        case 'ARE':
+          return const LatLng(25.2048, 55.2708); // Dubai, UAE
+        default:
+          return const LatLng(5.6037, -0.1870);
+      }
+    }
+
+    final initialCenter = LatLng(
+      _userLat ?? defaultCenterForCountry(countryProv.selectedCountryCode).latitude,
+      _userLng ?? defaultCenterForCountry(countryProv.selectedCountryCode).longitude,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -1426,7 +1638,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
   // --- STANDARD RIDE & DELIVER SECTIONS ---
   Widget _buildStandardRideOrDeliverSection() {
-    final tiers = _selectedService == ServiceType.deliver ? _deliverTierOptions : _rideTierOptions;
+    final rideProv = Provider.of<RideProvider>(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1549,68 +1761,302 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   ),
           ),
 
-        // Tier Options Selector Cards
+        // Multi-tier Dynamic Categories or Delivery Options Carousel
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-          child: Row(
-            children: tiers.map((opt) {
-              final isSelected = _selectedTierId == opt['id'];
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedTierId = opt['id']);
-                      final rideProv = Provider.of<RideProvider>(context, listen: false);
-                      rideProv.setSelectedVehicle(opt['id']);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                      decoration: BoxDecoration(
-                        color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.backgroundDark,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isSelected ? _serviceColor : Colors.transparent,
-                          width: 1.5,
+          padding: const EdgeInsets.only(top: 4, bottom: 4),
+          child: _selectedService == ServiceType.deliver
+              ? _buildDeliveryTiersList()
+              : _buildRideCategoriesList(rideProv),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRideCategoriesList(RideProvider rideProv) {
+    if (rideProv.isLoadingCategories && rideProv.rideCategories.isEmpty) {
+      return const SizedBox(
+        height: 92,
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          ),
+        ),
+      );
+    }
+
+    final categories = rideProv.rideCategories.isNotEmpty
+        ? rideProv.rideCategories
+        : _fallbackRideCategories;
+
+    final selected = rideProv.selectedCategory ?? (categories.isNotEmpty ? categories.first : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Route Distance & Duration & Surge Pill
+        if (rideProv.estimatedDistanceKm != null && rideProv.estimatedDistanceKm! > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.route_rounded, color: AppColors.primary, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${rideProv.estimatedDistanceKm!.toStringAsFixed(1)} km • ~${rideProv.estimatedDurationMinutes ?? 15} mins',
+                      style: const TextStyle(color: AppColors.textLight, fontSize: 11.5, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                if (rideProv.surgeInfo != null && rideProv.surgeInfo!['is_surge'] == true)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9F0A).withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFF9F0A).withOpacity(0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.bolt_rounded, color: Color(0xFFFF9F0A), size: 12),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${rideProv.surgeInfo!['multiplier']}x Surge Capped',
+                          style: const TextStyle(color: Color(0xFFFF9F0A), fontSize: 10, fontWeight: FontWeight.bold),
                         ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+        // Horizontal Category Cards Carousel (all 6 categories for Ghana or country tiers)
+        SizedBox(
+          height: 92,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              final isSelected = selected?.slug.toLowerCase() == cat.slug.toLowerCase() ||
+                  selected?.name.toLowerCase() == cat.name.toLowerCase();
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedTierId = cat.slug);
+                    rideProv.selectCategory(cat);
+                  },
+                  child: Container(
+                    width: 128,
+                    padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.backgroundDark,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? _serviceColor : Colors.white.withOpacity(0.08),
+                        width: isSelected ? 1.8 : 1,
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            opt['icon'] as IconData,
-                            color: isSelected ? _serviceColor : AppColors.textMuted,
-                            size: 22,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            opt['label'],
-                            style: TextStyle(
-                              color: isSelected ? AppColors.textLight : AppColors.textMuted,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: _serviceColor.withOpacity(0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              cat.icon.isNotEmpty ? cat.icon : '🚗',
+                              style: const TextStyle(fontSize: 18),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            opt['price'],
-                            style: TextStyle(
-                              color: isSelected ? _serviceColor : AppColors.success,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 11.5,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? _serviceColor.withOpacity(0.2)
+                                    : Colors.white.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${cat.etaMinutes}m',
+                                style: TextStyle(
+                                  color: isSelected ? _serviceColor : AppColors.textMuted,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cat.name,
+                              style: TextStyle(
+                                color: isSelected ? AppColors.textLight : AppColors.textMuted,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              cat.capacity,
+                              style: TextStyle(
+                                color: AppColors.textMuted.withOpacity(0.8),
+                                fontSize: 9.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        Text(
+                          cat.fareFormatted,
+                          style: TextStyle(
+                            color: isSelected ? _serviceColor : const Color(0xFF34D399),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12.5,
                           ),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               );
-            }).toList(),
+            },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDeliveryTiersList() {
+    final tiers = _deliverTierOptions;
+    return SizedBox(
+      height: 92,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemCount: tiers.length,
+        itemBuilder: (context, index) {
+          final opt = tiers[index];
+          final isSelected = _selectedTierId == opt['id'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedTierId = opt['id']),
+              child: Container(
+                width: 128,
+                padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.backgroundDark,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? _serviceColor : Colors.white.withOpacity(0.08),
+                    width: isSelected ? 1.8 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: _serviceColor.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          opt['icon'] as IconData,
+                          color: isSelected ? _serviceColor : AppColors.textMuted,
+                          size: 18,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? _serviceColor.withOpacity(0.2)
+                                : Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            opt['eta'],
+                            style: TextStyle(
+                              color: isSelected ? _serviceColor : AppColors.textMuted,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          opt['label'],
+                          style: TextStyle(
+                            color: isSelected ? AppColors.textLight : AppColors.textMuted,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          opt['desc'] ?? '',
+                          style: TextStyle(
+                            color: AppColors.textMuted.withOpacity(0.8),
+                            fontSize: 9.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    Text(
+                      opt['price'],
+                      style: TextStyle(
+                        color: isSelected ? _serviceColor : const Color(0xFF34D399),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

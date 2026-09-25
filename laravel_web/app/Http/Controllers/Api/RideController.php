@@ -10,6 +10,8 @@ use App\Services\NotificationService;
 use App\Services\PricingService;
 use App\Services\RideAssignmentService;
 use App\Services\BackupChauffeurService;
+use App\Models\CountryPricing;
+use App\Services\CountryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -210,6 +212,190 @@ class RideController extends Controller
     }
 
     /**
+     * Get available vehicle categories and pricing matrix for a country.
+     */
+    public function categories(Request $request): JsonResponse
+    {
+        $countryCode = $request->query('country') ?? CountryService::getCurrentCountryCode($request);
+        $pricing = CountryPricing::forCountry($countryCode);
+        $code = strtoupper(trim($pricing->country_code ?? 'USA'));
+        $matrix = CountryPricing::getPricingMatrixForCountry($code);
+
+        $isGhana = ($code === 'GHA' || strtoupper(trim($pricing->currency_code ?? '')) === 'GHS');
+        $surgeInfo = $isGhana ? PricingService::getGhanaSurgeInfo() : [
+            'multiplier' => 1.0,
+            'tier' => 'Standard',
+            'is_surge' => false,
+            'traffic_cap' => 1.80,
+            'description' => 'Standard dynamic pricing',
+            'time' => date('H:i'),
+            'timezone' => 'UTC',
+        ];
+        $surgeMultiplier = (float)($surgeInfo['multiplier'] ?? 1.0);
+
+        $categories = [];
+        $idx = 0;
+        foreach ($matrix as $key => $tier) {
+            $base = (float)($tier['base_fare'] ?? $tier['base'] ?? $pricing->ride_base_fare ?: 5.00);
+            $perKm = (float)($tier['per_km_rate'] ?? $tier['perKm'] ?? $pricing->ride_per_km_rate ?: 1.50);
+            $perMin = (float)($tier['per_minute_rate'] ?? $tier['perMin'] ?? $pricing->ride_per_minute_rate ?: 0.25);
+            $minFare = (float)($tier['minimum_fare'] ?? $tier['min'] ?? $pricing->ride_minimum_fare ?: 10.00);
+            $mult = (float)($tier['multiplier'] ?? 1.0);
+
+            // Default estimate for 10 km, 15 min
+            $sub = ($base + (10.0 * $perKm) + (15.0 * $perMin)) * $mult;
+            $estFare = max($minFare, round($sub * $surgeMultiplier, 2));
+
+            $categories[] = [
+                'id' => $tier['slug'] ?? $tier['category_key'] ?? $key,
+                'slug' => $tier['slug'] ?? $tier['category_key'] ?? $key,
+                'category_key' => $tier['category_key'] ?? $key,
+                'name' => $tier['name'] ?? ucfirst($key),
+                'icon' => $tier['icon'] ?? '🚗',
+                'capacity' => $tier['capacity'] ?? $tier['seats'] ?? '1–4 seats',
+                'luggage' => $tier['luggage'] ?? '2 Bags',
+                'eta_minutes' => 3 + ($idx * 2),
+                'base_fare' => $base,
+                'per_km_rate' => $perKm,
+                'per_minute_rate' => $perMin,
+                'minimum_fare' => $minFare,
+                'multiplier' => $mult,
+                'default_fare' => $estFare,
+                'default_fare_formatted' => $pricing->currency_symbol . number_format($estFare, 2),
+                'description' => $tier['description'] ?? $tier['desc'] ?? '',
+                'target' => $tier['target'] ?? ($tier['name'] ?? ''),
+            ];
+            $idx++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'country_code' => $pricing->country_code,
+            'country_name' => $pricing->country_name,
+            'currency_symbol' => $pricing->currency_symbol,
+            'currency_code' => $pricing->currency_code,
+            'surge_info' => $surgeInfo,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Calculate dynamic trip fare for all categories based on distance/duration/coordinates.
+     */
+    public function calculatePrice(Request $request): JsonResponse
+    {
+        $pickupLat = $request->input('pickup_lat');
+        $pickupLng = $request->input('pickup_lng');
+        $dropoffLat = $request->input('dropoff_lat');
+        $dropoffLng = $request->input('dropoff_lng');
+        $distanceKm = $request->input('distance_km');
+        $durationMin = $request->input('duration_minutes');
+        $stopsCount = (int) $request->input('stops_count', 0);
+        $country = $request->input('country') ?? CountryService::getCurrentCountryCode($request);
+
+        // If coordinates provided, compute precise distance
+        if ($pickupLat !== null && $pickupLng !== null && $dropoffLat !== null && $dropoffLng !== null) {
+            $computedDist = RideAssignmentService::haversineDistance(
+                (float)$pickupLat,
+                (float)$pickupLng,
+                (float)$dropoffLat,
+                (float)$dropoffLng
+            );
+            if ($computedDist > 0) {
+                $distanceKm = round($computedDist, 2);
+            }
+        }
+
+        $distanceKm = floatval($distanceKm ?: 10.0);
+        // Estimated duration: (distanceKm / 30 km/h) * 60 mins + 5 mins per stop, minimum 5 mins
+        if (empty($durationMin)) {
+            $durationMin = max(5, intval(round(($distanceKm / 30.0) * 60) + ($stopsCount * 5)));
+        } else {
+            $durationMin = intval($durationMin);
+        }
+
+        $pricing = CountryPricing::forCountry($country);
+        $code = strtoupper(trim($pricing->country_code ?? 'USA'));
+        $matrix = CountryPricing::getPricingMatrixForCountry($code);
+
+        $isGhana = ($code === 'GHA' || strtoupper(trim($pricing->currency_code ?? '')) === 'GHS');
+        $surgeInfo = $isGhana ? PricingService::getGhanaSurgeInfo() : [
+            'multiplier' => 1.0,
+            'tier' => 'Standard',
+            'is_surge' => false,
+            'traffic_cap' => 1.80,
+            'description' => 'Standard dynamic pricing',
+            'time' => date('H:i'),
+            'timezone' => 'UTC',
+        ];
+        $surgeMultiplier = (float)($surgeInfo['multiplier'] ?? 1.0);
+        $additionalStopFee = (float)($pricing->ride_additional_stop_fee ?: 3.50);
+
+        $results = [];
+        $idx = 0;
+        foreach ($matrix as $key => $tier) {
+            $base = (float)($tier['base_fare'] ?? $tier['base'] ?? $pricing->ride_base_fare ?: 5.00);
+            $perKm = (float)($tier['per_km_rate'] ?? $tier['perKm'] ?? $pricing->ride_per_km_rate ?: 1.50);
+            $perMin = (float)($tier['per_minute_rate'] ?? $tier['perMin'] ?? $pricing->ride_per_minute_rate ?: 0.25);
+            $minFare = (float)($tier['minimum_fare'] ?? $tier['min'] ?? $pricing->ride_minimum_fare ?: 10.00);
+            $mult = (float)($tier['multiplier'] ?? 1.0);
+
+            $distFare = round($distanceKm * $perKm, 2);
+            $durFare = round($durationMin * $perMin, 2);
+            $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
+
+            $standardSubtotal = round(($base + $distFare + $durFare + $stopsFee) * $mult, 2);
+            $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 2);
+            $finalFare = round(max($minFare, $surgedSubtotal), 2);
+            $serviceTax = round($finalFare * 0.05, 2);
+            $grandTotal = round($finalFare + $serviceTax, 2);
+
+            $results[] = [
+                'id' => $tier['slug'] ?? $tier['category_key'] ?? $key,
+                'slug' => $tier['slug'] ?? $tier['category_key'] ?? $key,
+                'category_key' => $tier['category_key'] ?? $key,
+                'name' => $tier['name'] ?? ucfirst($key),
+                'icon' => $tier['icon'] ?? '🚗',
+                'capacity' => $tier['capacity'] ?? $tier['seats'] ?? '1–4 seats',
+                'luggage' => $tier['luggage'] ?? '2 Bags',
+                'eta_minutes' => 3 + ($idx * 2),
+                'base_fare' => $base,
+                'per_km_rate' => $perKm,
+                'per_minute_rate' => $perMin,
+                'minimum_fare' => $minFare,
+                'multiplier' => $mult,
+                'distance_km' => $distanceKm,
+                'distance_fare' => $distFare,
+                'duration_minutes' => $durationMin,
+                'duration_fare' => $durFare,
+                'stops_fee' => $stopsFee,
+                'subtotal' => $standardSubtotal,
+                'fare' => $finalFare,
+                'fare_formatted' => $pricing->currency_symbol . number_format($finalFare, 2),
+                'tax' => $serviceTax,
+                'grand_total' => $grandTotal,
+                'grand_total_formatted' => $pricing->currency_symbol . number_format($grandTotal, 2),
+                'description' => $tier['description'] ?? $tier['desc'] ?? '',
+                'target' => $tier['target'] ?? ($tier['name'] ?? ''),
+            ];
+            $idx++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'distance_km' => $distanceKm,
+            'duration_minutes' => $durationMin,
+            'stops_count' => $stopsCount,
+            'country_code' => $pricing->country_code,
+            'country_name' => $pricing->country_name,
+            'currency_symbol' => $pricing->currency_symbol,
+            'currency_code' => $pricing->currency_code,
+            'surge_info' => $surgeInfo,
+            'categories' => $results,
+        ]);
+    }
+
+    /**
      * Book a new ride
      */
     public function store(Request $request): JsonResponse
@@ -231,11 +417,31 @@ class RideController extends Controller
         ]);
 
         $user = $request->user();
-        $distanceKm = floatval($request->input('distance_km', 10.0));
-        $durationMin = intval($request->input('duration_minutes', 15));
-        $vehicleType = $request->input('vehicle_type', 'Standard');
+        $distanceKm = floatval($request->input('distance_km', 0));
+        $durationMin = intval($request->input('duration_minutes', 0));
+        $vehicleType = $request->input('vehicle_type', 'Economy');
         $stopsInput = $request->input('stops', []);
         $stopsCount = is_array($stopsInput) ? count($stopsInput) : 0;
+
+        if ($request->filled(['pickup_lat', 'pickup_lng', 'dropoff_lat', 'dropoff_lng'])) {
+            $computedDist = RideAssignmentService::haversineDistance(
+                (float)$request->pickup_lat,
+                (float)$request->pickup_lng,
+                (float)$request->dropoff_lat,
+                (float)$request->dropoff_lng
+            );
+            if ($computedDist > 0 && ($distanceKm <= 0 || $distanceKm == 10.0 || $distanceKm == 15.0)) {
+                $distanceKm = round($computedDist, 2);
+            }
+        }
+
+        if ($distanceKm <= 0) {
+            $distanceKm = 10.0;
+        }
+
+        if ($durationMin <= 0) {
+            $durationMin = max(5, intval(round(($distanceKm / 30.0) * 60) + ($stopsCount * 5)));
+        }
 
         $country = $request->input('country') ?? CountryService::getCurrentCountryCode($request);
         $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);

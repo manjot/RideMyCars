@@ -23,12 +23,21 @@ class DriverApiController extends Controller
      */
     public function drivers(Request $request)
     {
-        $country = $request->query('country', 'USA');
-        $query = DriverProfile::with('user');
+        $country = $request->query('country');
+        $visitorCountry = $country ?: CountryService::getCurrentCountryCode($request);
+        $pricing = \App\Models\CountryPricing::forCountry($visitorCountry);
 
-        if ($country && $country !== 'All') {
-            $query->where('country', $country);
-        }
+        $query = DriverProfile::with('user')
+            ->whereNotNull('hourly_rate')
+            ->where('hourly_rate', '>', 0)
+            ->where(function ($q) {
+                $q->whereNull('bio')
+                  ->orWhere(function ($sub) {
+                      $sub->where('bio', 'not like', '%[url=%')
+                          ->where('bio', 'not like', '%narkolog%')
+                          ->where('bio', 'not like', '%chicken road%');
+                  });
+            });
 
         if ($request->has('available')) {
             $query->where('is_available', (bool) $request->query('available'));
@@ -38,9 +47,52 @@ class DriverApiController extends Controller
             $query->where('rating', '>=', (float) $request->query('min_rating'));
         }
 
+        $allDrivers = $query->get();
+        $normVisitor = CountryService::normalizeToCode($visitorCountry) ?? strtoupper($visitorCountry);
+
+        // Filter for country if requested and exists
+        $filtered = $allDrivers;
+        if ($country && $country !== 'All') {
+            $matched = $allDrivers->filter(function ($d) use ($normVisitor, $country) {
+                $dc = strtoupper($d->country ?? '');
+                return $dc === strtoupper($country)
+                    || $dc === $normVisitor
+                    || CountryService::normalizeToCode($dc) === $normVisitor;
+            });
+            if ($matched->isNotEmpty()) {
+                $filtered = $matched;
+            }
+        }
+
+        // Format rates with country currency and standard rates
+        $data = $filtered->map(function ($d) use ($pricing, $normVisitor) {
+            $symbol = $pricing->currency_symbol;
+            $driverCountry = strtoupper($d->country ?? '');
+            $isSameCountry = ($driverCountry === $normVisitor || CountryService::normalizeToCode($driverCountry) === $normVisitor);
+
+            $hourly = (float)($d->hourly_rate > 0 ? $d->hourly_rate : ($pricing->driver_hourly_rate ?: 25.00));
+            // If cross-country, scale hourly to local pricing benchmark
+            if (!$isSameCountry && $pricing->driver_hourly_rate > 0) {
+                $hourly = (float)$pricing->driver_hourly_rate;
+            }
+
+            $daily = (float)($d->daily_rate > 0 && $isSameCountry ? $d->daily_rate : ($pricing->driver_daily_rate ?: ($hourly * 8 * 0.85)));
+            $weekly = (float)($d->weekly_rate > 0 && $isSameCountry ? $d->weekly_rate : ($pricing->driver_weekly_rate ?: ($hourly * 40 * 0.75)));
+
+            return array_merge($d->toArray(), [
+                'currency_symbol' => $symbol,
+                'currency' => $pricing->currency_code,
+                'hourly_rate' => $hourly,
+                'daily_rate' => $daily,
+                'weekly_rate' => $weekly,
+            ]);
+        })->values();
+
         return response()->json([
             'status' => 'success',
-            'data' => $query->get(),
+            'country' => $pricing->country_code,
+            'currency_symbol' => $pricing->currency_symbol,
+            'data' => $data,
         ]);
     }
 

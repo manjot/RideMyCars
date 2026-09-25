@@ -17,6 +17,8 @@ class ApiConstants {
 
   // Rides
   static const String rides = '/rides';
+  static const String rideCategories = '/rides/categories';
+  static const String rideCalculatePrice = '/rides/calculate-price';
   static const String activeRide = '/rides/active';
   static String rideStatus(int id) => '/rides/$id/status';
   static String rideCancel(int id) => '/rides/$id/cancel';
