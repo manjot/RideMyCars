@@ -134,9 +134,12 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     } else if (res['success'] == true) {
       setState(() => _phoneOtpSent = true);
       _startPhoneCountdown();
+      final msg = (res['fallback_to_email'] == true)
+          ? 'Carrier SMS restricted. Verification code sent to ${res['email']}'
+          : 'Verification code sent to $phone (valid for 2 min)';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Verification code sent to $phone (valid for 2 min)'),
+          content: Text(msg),
           backgroundColor: AppColors.success,
         ),
       );

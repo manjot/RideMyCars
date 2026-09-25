@@ -216,16 +216,22 @@ class AuthProvider extends ChangeNotifier {
   Future<Map<String, dynamic>> sendPhoneOtp({
     required String phone,
     required String action, // 'login' or 'register'
+    String? email,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final res = await _dio.post(ApiConstants.sendOtp, data: {
+      final payload = <String, dynamic>{
         'phone': phone.trim(),
         'action': action,
-      });
+      };
+      if (email != null && email.trim().isNotEmpty) {
+        payload['email'] = email.trim().toLowerCase();
+      }
+
+      final res = await _dio.post(ApiConstants.sendOtp, data: payload);
 
       _isLoading = false;
       notifyListeners();

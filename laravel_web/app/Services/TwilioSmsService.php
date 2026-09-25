@@ -58,6 +58,7 @@ class TwilioSmsService
 
         // 1. Format and sanitize phone number to valid E.164
         $formattedTo = $this->formatE164($to);
+        $isNorthAmerica = str_starts_with($formattedTo, '+1');
 
         // 2. Pre-validate phone number locally before calling Twilio (prevents Twilio 21211 fee & provides instant feedback)
         $validation = $this->validatePhoneNumber($formattedTo);
@@ -105,11 +106,46 @@ class TwilioSmsService
             $data = $response->json();
 
             if ($response->successful() && !empty($data['sid'])) {
-                Log::info("Twilio SMS sent successfully to {$formattedTo}. SID: {$data['sid']}. Status: " . ($data['status'] ?? 'unknown'));
+                $sid = $data['sid'];
+                $status = $data['status'] ?? 'queued';
+
+                // For non-North America destinations (e.g. Ghana +233, Nigeria +234, etc.),
+                // Twilio Messaging Service often returns HTTP 201 'accepted' synchronously,
+                // but immediately drops the message in the background due to carrier toll-free restrictions
+                // or unregistered alphanumeric sender policies (Twilio Error 21612).
+                // We perform a rapid 700ms verification to detect immediate async rejections.
+                if (!$isNorthAmerica && in_array($status, ['accepted', 'queued', 'sending'])) {
+                    usleep(700000); // 700ms
+                    try {
+                        $checkRes = Http::withBasicAuth($this->accountSid, $this->authToken)
+                            ->timeout(5)
+                            ->get("https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages/{$sid}.json");
+                        if ($checkRes->successful()) {
+                            $checkData = $checkRes->json();
+                            $asyncStatus = $checkData['status'] ?? '';
+                            $asyncCode = (int) ($checkData['error_code'] ?? 0);
+                            if ($asyncStatus === 'failed' || $asyncStatus === 'undelivered' || $asyncCode > 0) {
+                                $rawMessage = $checkData['error_message'] ?? 'SMS delivery rejected by carrier';
+                                $friendlyError = $this->translateTwilioError($asyncCode ?: 21612, $rawMessage, $formattedTo);
+                                Log::warning("Twilio SMS async rejected for {$formattedTo}: [Code {$asyncCode}] {$rawMessage} -> Friendly: {$friendlyError}");
+                                return [
+                                    'success' => false,
+                                    'message_sid' => $sid,
+                                    'error' => $friendlyError,
+                                    'code' => $asyncCode ?: 21612,
+                                ];
+                            }
+                        }
+                    } catch (\Throwable $te) {
+                        Log::warning("Twilio async verification check note: " . $te->getMessage());
+                    }
+                }
+
+                Log::info("Twilio SMS sent successfully to {$formattedTo}. SID: {$sid}. Status: {$status}");
                 return [
                     'success' => true,
-                    'message_sid' => $data['sid'],
-                    'status' => $data['status'] ?? 'queued',
+                    'message_sid' => $sid,
+                    'status' => $status,
                     'error' => null,
                     'code' => null,
                 ];
@@ -151,10 +187,11 @@ class TwilioSmsService
                         ->post($url, $retryPayload);
                     $retryData = $retryResponse->json();
                     if ($retryResponse->successful() && !empty($retryData['sid'])) {
-                        Log::info("Twilio SMS sent successfully on retry to {$formattedTo}. SID: {$retryData['sid']}");
+                        $retrySid = $retryData['sid'];
+                        Log::info("Twilio SMS sent successfully on retry to {$formattedTo}. SID: {$retrySid}");
                         return [
                             'success' => true,
-                            'message_sid' => $retryData['sid'],
+                            'message_sid' => $retrySid,
                             'status' => $retryData['status'] ?? 'queued',
                             'error' => null,
                             'code' => null,

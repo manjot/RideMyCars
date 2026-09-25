@@ -18,6 +18,8 @@ class ApiClient {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
+        followRedirects: true,
+        maxRedirects: 5,
       ),
     );
 

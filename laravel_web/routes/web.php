@@ -433,6 +433,7 @@ Route::post('/api/otp/send', function (\Illuminate\Http\Request $request) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'] ?? 'Unable to send SMS verification code. Please try again or use Email verification.',
+                'message' => $result['error'] ?? 'Unable to send SMS verification code. Please try again or use Email verification.',
                 'code' => $result['code'] ?? 500,
             ], 422);
         }

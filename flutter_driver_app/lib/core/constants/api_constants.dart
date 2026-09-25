@@ -1,6 +1,6 @@
 class ApiConstants {
-  static const String baseUrl = 'https://ridemycars.com/api';
-  static const String storageBaseUrl = 'https://ridemycars.com/storage';
+  static const String baseUrl = 'https://www.ridemycars.com/api';
+  static const String storageBaseUrl = 'https://www.ridemycars.com/storage';
 
   // Auth
   static const String login = '/login';

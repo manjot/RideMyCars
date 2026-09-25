@@ -69,29 +69,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final phone = '${_selectedCountry.dial} $localNum';
 
+    final email = _emailController.text.trim();
+
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    // 1. Send SMS OTP for registration
-    final res = await auth.sendPhoneOtp(phone: phone, action: 'register');
+    // 1. Send SMS OTP for registration (with email fallback)
+    final res = await auth.sendPhoneOtp(
+      phone: phone,
+      action: 'register',
+      email: email,
+    );
 
     if (!mounted) return;
 
     if (res['success'] == true) {
-      _showOtpVerificationDialog(phone);
+      _showOtpVerificationDialog(
+        phone,
+        email: email,
+        fallbackToEmail: res['fallback_to_email'] == true,
+        hint: res['hint'] as String?,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(auth.errorMessage ?? 'Failed to send SMS verification code.'),
+          content: Text(auth.errorMessage ?? 'Failed to send verification code.'),
           backgroundColor: AppColors.danger,
         ),
       );
     }
   }
 
-  void _showOtpVerificationDialog(String phone) {
+  void _showOtpVerificationDialog(
+    String phone, {
+    required String email,
+    bool fallbackToEmail = false,
+    String? hint,
+  }) {
     final otpController = TextEditingController();
     int countdown = 120;
     Timer? timer;
+    bool isEmailMode = fallbackToEmail;
 
     showModalBottomSheet(
       context: context,
@@ -140,9 +157,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Verify Mobile Number',
-                        style: TextStyle(
+                      Text(
+                        isEmailMode ? 'Verify Security Code' : 'Verify Mobile Number',
+                        style: const TextStyle(
                           color: AppColors.textLight,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -167,11 +184,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'We sent a 4-digit verification code to $phone. Please enter it below to complete registration.',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                  ),
-                  const SizedBox(height: 20),
+                  if (isEmailMode) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.mark_email_read_outlined, color: Colors.amber, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              hint ?? 'Carrier SMS restricted in Ghana. We sent your 4-digit code to $email.',
+                              style: const TextStyle(color: Colors.amber, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      'We sent a 4-digit verification code to $phone. Please enter it below to complete registration.',
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
 
                   TextFormField(
                     controller: otpController,
@@ -216,16 +257,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: countdown == 0
                             ? () async {
                                 final auth = Provider.of<AuthProvider>(context, listen: false);
-                                final res = await auth.sendPhoneOtp(phone: phone, action: 'register');
+                                final res = await auth.sendPhoneOtp(
+                                  phone: phone,
+                                  action: 'register',
+                                  email: email,
+                                );
                                 if (res['success'] == true) {
                                   setSheetState(() {
                                     countdown = 120;
+                                    if (res['fallback_to_email'] == true) {
+                                      isEmailMode = true;
+                                    }
                                   });
                                 }
                               }
                             : null,
                         child: Text(
-                          countdown == 0 ? 'Resend SMS OTP' : 'Resend in $timerStr',
+                          countdown == 0 ? (isEmailMode ? 'Resend to Email' : 'Resend SMS OTP') : 'Resend in $timerStr',
                           style: TextStyle(
                             color: countdown == 0 ? AppColors.primary : AppColors.textMuted,
                             fontWeight: FontWeight.bold,
@@ -234,6 +282,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ],
                   ),
+                  if (!isEmailMode && email.isNotEmpty) ...[
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                        icon: const Icon(Icons.email_outlined, size: 14, color: AppColors.primary),
+                        label: Text(
+                          'Didn\'t get SMS? Send code to $email',
+                          style: const TextStyle(fontSize: 12, color: AppColors.primary),
+                        ),
+                        onPressed: () async {
+                          final auth = Provider.of<AuthProvider>(context, listen: false);
+                          final res = await auth.sendPhoneOtp(
+                            phone: phone,
+                            action: 'register',
+                            email: email,
+                          );
+                          if (res['success'] == true) {
+                            setSheetState(() {
+                              isEmailMode = true;
+                              countdown = 120;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Verification code sent to $email'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(auth.errorMessage ?? 'Failed to send code to email.'),
+                                backgroundColor: AppColors.danger,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   Consumer<AuthProvider>(

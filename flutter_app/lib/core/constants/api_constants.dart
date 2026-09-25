@@ -1,6 +1,6 @@
 class ApiConstants {
-  static const String baseUrl = 'https://ridemycars.com/api';
-  static const String storageBaseUrl = 'https://ridemycars.com/storage';
+  static const String baseUrl = 'https://www.ridemycars.com/api';
+  static const String storageBaseUrl = 'https://www.ridemycars.com/storage';
   static const String googleMapsApiKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
 
   // Auth

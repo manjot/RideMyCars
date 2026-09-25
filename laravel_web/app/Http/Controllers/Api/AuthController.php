@@ -550,6 +550,7 @@ class AuthController extends Controller
                                 'user_exists' => ($user !== null),
                                 'action' => $action,
                                 'message' => "Verification code sent to {$cleanFallbackEmail}",
+                                'hint' => "Carrier SMS is restricted in your region. We sent your 4-digit code to {$cleanFallbackEmail}.",
                                 'phone' => $formattedPhone,
                                 'email' => $cleanFallbackEmail,
                                 'fallback_to_email' => true,
@@ -561,6 +562,7 @@ class AuthController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => $result['error'] ?? 'Unable to send SMS verification code.',
+                        'error' => $result['error'] ?? 'Unable to send SMS verification code.',
                         'code' => $result['code'] ?? 500,
                     ], 422);
                 }
