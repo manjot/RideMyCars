@@ -121,4 +121,33 @@ class PlacesService {
     }
     return null;
   }
+
+  /// Forward geocode an address string to lat/lng coordinates
+  static Future<PlaceDetails?> getCoordinatesFromAddress(String address) async {
+    if (address.trim().isEmpty) return null;
+    try {
+      final url =
+          'https://maps.googleapis.com/maps/api/geocode/json?address=${Uri.encodeComponent(address)}&key=${ApiConstants.googleMapsApiKey}';
+      final res = await _dio.get(url);
+
+      if (res.statusCode == 200 && res.data['status'] == 'OK') {
+        final List results = res.data['results'] ?? [];
+        if (results.isNotEmpty) {
+          final first = results.first;
+          final loc = first['geometry']?['location'];
+          if (loc != null) {
+            return PlaceDetails(
+              lat: (loc['lat'] as num).toDouble(),
+              lng: (loc['lng'] as num).toDouble(),
+              formattedAddress: first['formatted_address'] ?? address,
+              name: first['formatted_address'] ?? address,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Forward geocoding error: $e');
+    }
+    return null;
+  }
 }

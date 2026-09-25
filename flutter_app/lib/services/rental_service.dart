@@ -20,7 +20,10 @@ class RentalService {
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (transmission != null && transmission != 'All') queryParams['transmission'] = transmission.toLowerCase();
       if (fuelType != null && fuelType != 'All') queryParams['fuel_type'] = fuelType.toLowerCase();
-      queryParams['driver_country'] = country ?? 'USA';
+      if (country != null && country.isNotEmpty) {
+        queryParams['country'] = country;
+        queryParams['driver_country'] = country;
+      }
 
       final res = await _dio.get(ApiConstants.rentalVehicles, queryParameters: queryParams);
       if (res.statusCode == 200 && res.data != null) {

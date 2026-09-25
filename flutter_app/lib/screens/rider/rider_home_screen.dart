@@ -107,18 +107,43 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     final rideProv = Provider.of<RideProvider>(context, listen: false);
 
-    if (_userLat != null && _userLng != null && _dropoffLat != null && _dropoffLng != null) {
-      final distKm = Geolocator.distanceBetween(_userLat!, _userLng!, _dropoffLat!, _dropoffLng!) / 1000.0;
-      await rideProv.calculateDynamicFares(
-        pickupLat: _userLat!,
-        pickupLng: _userLng!,
-        dropoffLat: _dropoffLat!,
-        dropoffLng: _dropoffLng!,
-        distanceKm: distKm,
-        country: countryProv.selectedCountryCode,
-      );
-      _calculateDynamicDeliveryPrice(distKm: distKm);
+    // If coordinates missing but text entered, forward-geocode
+    if ((_userLat == null || _userLng == null) && _pickupController.text.trim().isNotEmpty) {
+      final pDetails = await PlacesService.getCoordinatesFromAddress(_pickupController.text.trim());
+      if (pDetails != null && mounted) {
+        setState(() {
+          _userLat = pDetails.lat;
+          _userLng = pDetails.lng;
+        });
+        _updateMapMarkers();
+      }
     }
+
+    if ((_dropoffLat == null || _dropoffLng == null) && _dropoffController.text.trim().isNotEmpty) {
+      final dDetails = await PlacesService.getCoordinatesFromAddress(_dropoffController.text.trim());
+      if (dDetails != null && mounted) {
+        setState(() {
+          _dropoffLat = dDetails.lat;
+          _dropoffLng = dDetails.lng;
+        });
+        _updateMapMarkers();
+      }
+    }
+
+    double distKm = 10.0;
+    if (_userLat != null && _userLng != null && _dropoffLat != null && _dropoffLng != null) {
+      distKm = Geolocator.distanceBetween(_userLat!, _userLng!, _dropoffLat!, _dropoffLng!) / 1000.0;
+    }
+
+    await rideProv.calculateDynamicFares(
+      pickupLat: _userLat,
+      pickupLng: _userLng,
+      dropoffLat: _dropoffLat,
+      dropoffLng: _dropoffLng,
+      distanceKm: distKm,
+      country: countryProv.selectedCountryCode,
+    );
+    _calculateDynamicDeliveryPrice(distKm: distKm);
   }
 
   Future<void> _calculateDynamicDeliveryPrice({double? distKm}) async {
@@ -207,15 +232,17 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 
   String get _pickupHint {
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final isGhana = countryProv.selectedCountryCode.toUpperCase() == 'GHA';
     switch (_selectedService) {
       case ServiceType.ride:
-        return 'Pickup location (e.g. Karol Bagh)';
+        return isGhana ? 'Pickup location (e.g. Kotoka Airport, Osu, Accra)' : 'Enter pickup address';
       case ServiceType.rent:
-        return 'Pick-up location / hub (e.g. Airport, T3)';
+        return isGhana ? 'Pick-up hub (e.g. Accra Mall, Airport)' : 'Pick-up location / airport hub';
       case ServiceType.driver:
-        return 'Reporting location (e.g. Home / Office)';
+        return isGhana ? 'Reporting location (e.g. Cantonments, Airport)' : 'Reporting location (e.g. Home / Office)';
       case ServiceType.deliver:
-        return 'Sender address (Pickup parcel)';
+        return isGhana ? 'Sender address (Pickup parcel in Accra)' : 'Sender address (Pickup parcel)';
     }
   }
 
@@ -259,7 +286,116 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
   List<RideCategoryModel> get _fallbackRideCategories {
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final isGhana = countryProv.selectedCountryCode.toUpperCase() == 'GHA';
     final sym = countryProv.currencySymbol;
+
+    if (isGhana) {
+      return [
+        RideCategoryModel(
+          id: 'economy',
+          slug: 'economy',
+          categoryKey: 'economy',
+          name: 'Economy',
+          icon: '🚗',
+          capacity: '1–4 seats',
+          luggage: '2 Bags',
+          etaMinutes: 3,
+          fare: 18.50,
+          fareFormatted: '$sym 18.50',
+          baseFare: 4.50,
+          perKmRate: 1.10,
+          perMinuteRate: 0.20,
+          minimumFare: 8.50,
+          description: 'Small hatchbacks for affordable daily commuting in Accra',
+        ),
+        RideCategoryModel(
+          id: 'standard',
+          slug: 'standard',
+          categoryKey: 'standard',
+          name: 'Standard / Comfort',
+          icon: '🚘',
+          capacity: '1–4 seats',
+          luggage: '3 Bags',
+          etaMinutes: 5,
+          fare: 29.50,
+          fareFormatted: '$sym 29.50',
+          baseFare: 7.00,
+          perKmRate: 1.80,
+          perMinuteRate: 0.30,
+          minimumFare: 23.50,
+          description: 'Clean climate-controlled sedans with top-rated drivers',
+        ),
+        RideCategoryModel(
+          id: 'luxury',
+          slug: 'luxury',
+          categoryKey: 'luxury',
+          name: 'Luxury SUV',
+          icon: '🚙',
+          capacity: '1–6 seats',
+          luggage: '5 Bags',
+          etaMinutes: 7,
+          fare: 49.50,
+          fareFormatted: '$sym 49.50',
+          baseFare: 12.00,
+          perKmRate: 3.00,
+          perMinuteRate: 0.50,
+          minimumFare: 35.20,
+          description: 'High-ride premium SUVs for business travelers and airport runs',
+        ),
+        RideCategoryModel(
+          id: 'van_xl',
+          slug: 'van_xl',
+          categoryKey: 'van_xl',
+          name: 'Van XL',
+          icon: '🚐',
+          capacity: '1–7 seats',
+          luggage: '6 Bags',
+          etaMinutes: 9,
+          fare: 71.25,
+          fareFormatted: '$sym 71.25',
+          baseFare: 15.00,
+          perKmRate: 4.50,
+          perMinuteRate: 0.75,
+          minimumFare: 50.20,
+          description: 'Multi-passenger vehicles for airport runs or large families',
+        ),
+        RideCategoryModel(
+          id: 'vip_chauffeur',
+          slug: 'vip_chauffeur',
+          categoryKey: 'vip_chauffeur',
+          name: 'VIP Chauffeurs',
+          icon: '👑',
+          capacity: '1–4 seats',
+          luggage: '3 Bags',
+          etaMinutes: 11,
+          fare: 110.00,
+          fareFormatted: '$sym 110.00',
+          baseFare: 30.00,
+          perKmRate: 6.50,
+          perMinuteRate: 1.00,
+          minimumFare: 109.50,
+          description: 'High-end luxury executive sedans with suited vetted chauffeurs',
+        ),
+        RideCategoryModel(
+          id: 'group_bus',
+          slug: 'group_bus',
+          categoryKey: 'group_bus',
+          name: 'Group Bus (7–14)',
+          icon: '🚌',
+          capacity: '7–14 seats',
+          luggage: '10 Bags',
+          etaMinutes: 13,
+          fare: 150.90,
+          fareFormatted: '$sym 150.90',
+          baseFare: 45.00,
+          perKmRate: 8.00,
+          perMinuteRate: 1.20,
+          minimumFare: 150.90,
+          description: 'Microbuses for event transport or corporate teams',
+        ),
+      ];
+    }
+
     return [
       RideCategoryModel(
         id: 'economy',
@@ -269,41 +405,41 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         icon: '🚗',
         capacity: '1–4 seats',
         etaMinutes: 3,
-        fare: 22.50,
-        fareFormatted: '$sym${(22.50 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+        fare: 15.00,
+        fareFormatted: '$sym 15.00',
       ),
       RideCategoryModel(
         id: 'standard',
         slug: 'standard',
         categoryKey: 'standard',
-        name: 'Standard / Comfort',
+        name: 'Comfort',
         icon: '🚘',
         capacity: '1–4 seats',
-        etaMinutes: 4,
-        fare: 35.00,
-        fareFormatted: '$sym${(35.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+        etaMinutes: 5,
+        fare: 22.00,
+        fareFormatted: '$sym 22.00',
       ),
       RideCategoryModel(
         id: 'luxury',
         slug: 'luxury',
         categoryKey: 'luxury',
-        name: 'Luxury SUV',
+        name: 'SUV',
         icon: '🚙',
         capacity: '1–6 seats',
-        etaMinutes: 6,
-        fare: 55.00,
-        fareFormatted: '$sym${(55.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+        etaMinutes: 7,
+        fare: 35.00,
+        fareFormatted: '$sym 35.00',
       ),
       RideCategoryModel(
         id: 'van_xl',
         slug: 'van_xl',
         categoryKey: 'van_xl',
-        name: 'Van XL',
+        name: 'XL Van',
         icon: '🚐',
         capacity: '1–7 seats',
-        etaMinutes: 8,
-        fare: 75.00,
-        fareFormatted: '$sym${(75.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+        etaMinutes: 9,
+        fare: 45.00,
+        fareFormatted: '$sym 45.00',
       ),
       RideCategoryModel(
         id: 'vip_chauffeur',
@@ -312,20 +448,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         name: 'VIP Chauffeurs',
         icon: '👑',
         capacity: '1–4 seats',
-        etaMinutes: 10,
-        fare: 120.00,
-        fareFormatted: '$sym${(120.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
-      ),
-      RideCategoryModel(
-        id: 'group_bus',
-        slug: 'group_bus',
-        categoryKey: 'group_bus',
-        name: 'Group Bus (7–14)',
-        icon: '🚌',
-        capacity: '7–14 seats',
-        etaMinutes: 12,
-        fare: 180.00,
-        fareFormatted: '$sym${(180.00 * countryProv.rentalMultiplier).toStringAsFixed(2)}',
+        etaMinutes: 11,
+        fare: 75.00,
+        fareFormatted: '$sym 75.00',
       ),
     ];
   }
@@ -1658,6 +1783,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 TextField(
                   controller: _pickupController,
                   onChanged: (val) => _onQueryChanged(val, isPickup: true),
+                  onSubmitted: (_) => _recalculateDynamicPrices(),
                   style: const TextStyle(color: AppColors.textLight, fontSize: 13),
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.circle, color: _serviceColor, size: 13),
@@ -1684,6 +1810,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 TextField(
                   controller: _dropoffController,
                   onChanged: (val) => _onQueryChanged(val, isPickup: false),
+                  onSubmitted: (_) => _recalculateDynamicPrices(),
                   style: const TextStyle(color: AppColors.textLight, fontSize: 13),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 15),

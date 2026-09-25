@@ -91,10 +91,10 @@ class RideProvider extends ChangeNotifier {
 
   /// Dynamically recalculate prices for all categories when route changes
   Future<void> calculateDynamicFares({
-    required double pickupLat,
-    required double pickupLng,
-    required double dropoffLat,
-    required double dropoffLng,
+    double? pickupLat,
+    double? pickupLng,
+    double? dropoffLat,
+    double? dropoffLng,
     double? distanceKm,
     int? durationMinutes,
     int stopsCount = 0,

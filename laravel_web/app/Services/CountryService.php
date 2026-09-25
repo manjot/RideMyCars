@@ -25,12 +25,18 @@ class CountryService
     {
         $request = $request ?? request();
 
-        // 1. Explicit query parameter override: ?country=GHA or ?country=Ghana or ?country=IND
-        if ($request && $request->has('country') && !empty($request->query('country'))) {
-            $code = static::normalizeToCode($request->query('country'));
-            if ($code) {
-                static::persistCountry($code, true);
-                return $code;
+        // 1. Explicit parameter or header override: ?country=GHA, body country: GHA, X-Country: GHA
+        if ($request) {
+            $explicitCountry = $request->input('country')
+                ?? $request->input('driver_country')
+                ?? $request->header('X-Country')
+                ?? $request->header('X-Country-Code');
+            if (!empty($explicitCountry)) {
+                $code = static::normalizeToCode($explicitCountry);
+                if ($code) {
+                    static::persistCountry($code, true);
+                    return $code;
+                }
             }
         }
 
@@ -65,6 +71,26 @@ class CountryService
                 $code = static::normalizeToCode($u->driverProfile->country);
                 if ($code) {
                     return $code;
+                }
+            }
+        }
+
+        // 3.5 GPS Coordinate bounding box detection (for rides, rentals, deliveries with lat/lng)
+        if ($request) {
+            $lat = (float)($request->input('pickup_lat') ?? $request->input('latitude') ?? $request->input('current_lat') ?? 0);
+            $lng = (float)($request->input('pickup_lng') ?? $request->input('longitude') ?? $request->input('current_lng') ?? 0);
+            if ($lat != 0 && $lng != 0) {
+                // Ghana bounds: lat 4.5 to 11.5, lng -3.5 to 1.5
+                if ($lat >= 4.5 && $lat <= 11.5 && $lng >= -3.5 && $lng <= 1.5) {
+                    return 'GHA';
+                }
+                // Nigeria bounds: lat 4.0 to 14.0, lng 2.5 to 15.0
+                if ($lat >= 4.0 && $lat <= 14.0 && $lng >= 2.5 && $lng <= 15.0) {
+                    return 'NGA';
+                }
+                // South Africa bounds: lat -35.0 to -22.0, lng 16.0 to 33.0
+                if ($lat >= -35.0 && $lat <= -22.0 && $lng >= 16.0 && $lng <= 33.0) {
+                    return 'ZAF';
                 }
             }
         }
