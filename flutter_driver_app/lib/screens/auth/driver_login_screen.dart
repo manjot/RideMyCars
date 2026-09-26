@@ -22,9 +22,9 @@ class DriverLoginScreen extends StatefulWidget {
 
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'michael.driver@ridemycars.com');
+  final _emailController = TextEditingController();
   final _otpEmailController = TextEditingController();
-  final _passwordController = TextEditingController(text: '123456');
+  final _passwordController = TextEditingController();
   final _mobileNumberController = TextEditingController();
   final _phoneOtpController = TextEditingController();
   final _emailOtpCodeController = TextEditingController();
@@ -304,9 +304,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     
     final initialEmail = _otpEmailController.text.trim().isNotEmpty
         ? _otpEmailController.text.trim()
-        : (_emailController.text.trim().isNotEmpty && _emailController.text.trim() != 'driver@ridemycars.com'
-            ? _emailController.text.trim()
-            : '');
+        : _emailController.text.trim();
     final emailInput = TextEditingController(text: initialEmail);
     final nameInput = TextEditingController();
 
@@ -426,9 +424,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
     final initialEmail = _otpEmailController.text.trim().isNotEmpty
         ? _otpEmailController.text.trim()
-        : (_emailController.text.trim().isNotEmpty && _emailController.text.trim() != 'driver@ridemycars.com'
-            ? _emailController.text.trim()
-            : '');
+        : _emailController.text.trim();
     final emailInput = TextEditingController(text: initialEmail);
     final nameInput = TextEditingController();
 

@@ -22,9 +22,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'customer@ridemycars.com');
+  final _emailController = TextEditingController();
   final _otpEmailController = TextEditingController();
-  final _passwordController = TextEditingController(text: '123456');
+  final _passwordController = TextEditingController();
   final _mobileNumberController = TextEditingController();
   final _phoneOtpController = TextEditingController();
   final _emailOtpCodeController = TextEditingController();
@@ -304,9 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
     
     final initialEmail = _otpEmailController.text.trim().isNotEmpty
         ? _otpEmailController.text.trim()
-        : (_emailController.text.trim().isNotEmpty && _emailController.text.trim() != 'customer@ridemycars.com'
-            ? _emailController.text.trim()
-            : '');
+        : _emailController.text.trim();
     final emailInput = TextEditingController(text: initialEmail);
     final nameInput = TextEditingController();
 
@@ -426,9 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final initialEmail = _otpEmailController.text.trim().isNotEmpty
         ? _otpEmailController.text.trim()
-        : (_emailController.text.trim().isNotEmpty && _emailController.text.trim() != 'customer@ridemycars.com'
-            ? _emailController.text.trim()
-            : '');
+        : _emailController.text.trim();
     final emailInput = TextEditingController(text: initialEmail);
     final nameInput = TextEditingController();
 
