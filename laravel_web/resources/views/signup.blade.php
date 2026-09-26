@@ -1424,7 +1424,7 @@
 
             try {
                 const client = google.accounts.oauth2.initCodeClient({
-                    client_id: '{{ config('services.google.client_id') }}',
+                    client_id: '{{ \App\Services\SettingService::get('oauth.google_client_id') ?: config('services.google.client_id') }}',
                     scope: 'email profile openid',
                     ux_mode: 'popup',
                     callback: (response) => {

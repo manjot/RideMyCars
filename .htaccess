@@ -13,11 +13,12 @@
     RewriteCond %{HTTP:X-Forwarded-Proto} !https
     RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=301]
 
-    # 2. Force www.ridemycars.com Canonical Host (exempt /api/ and /storage/ so POST requests from mobile apps are not redirected)
+    # 2. Force www.ridemycars.com Canonical Host (exempt /auth/, /api/ and /storage/ so POST requests from Apple/mobile apps are not redirected)
+    RewriteCond %{REQUEST_URI} !^/auth/
     RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{REQUEST_URI} !^/storage/
     RewriteCond %{HTTP_HOST} ^ridemycars\.com$ [NC]
-    RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=301]
+    RewriteRule ^(.*)$ https://www.ridemycars.com/$1 [L,R=301,QSA]
 
     # 3. Strip direct access to internal laravel_web/public/ directory
     RewriteCond %{THE_REQUEST} \s/+laravel_web/public/(\S*) [NC]

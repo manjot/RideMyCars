@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
 Route::match(['get', 'post'], '/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::get('/auth/apple', [SocialAuthController::class, 'redirectToApple'])->name('auth.apple');
-Route::post('/auth/apple/callback', [SocialAuthController::class, 'handleAppleCallback'])->name('auth.apple.callback');
+Route::match(['get', 'post'], '/auth/apple/callback', [SocialAuthController::class, 'handleAppleCallback'])->name('auth.apple.callback');
 
 Route::get('/', function () {
     return view('welcome');

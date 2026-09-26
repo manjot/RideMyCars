@@ -31,6 +31,7 @@ class SocialAuthController extends Controller
         session([
             'oauth_google_state' => $state,
             'oauth_intended_role' => $request->query('role', 'customer'),
+            'oauth_google_redirect_uri' => $redirectUri,
         ]);
 
         $queryParams = http_build_query([
@@ -100,34 +101,33 @@ class SocialAuthController extends Controller
             }
             // Flow 2: Authorization code exchange (supports both popup 'postmessage' and standard redirect URI)
             else if (!empty($code)) {
-                $redirectUri = $request->input('redirect_uri');
-                if (empty($redirectUri)) {
-                    $redirectUri = ($request->isMethod('post') && $request->has('code'))
-                        ? 'postmessage'
-                        : config('services.google.redirect', url('/auth/google/callback'));
-                }
+                $candidateUris = array_filter(array_unique([
+                    $request->input('redirect_uri'),
+                    session('oauth_google_redirect_uri'),
+                    \App\Services\SettingService::get('oauth.google_redirect_uri'),
+                    config('services.google.redirect'),
+                    'https://ridemycars.com/auth/google/callback',
+                    'https://www.ridemycars.com/auth/google/callback',
+                    url('/auth/google/callback'),
+                    'postmessage',
+                ]));
 
-                $tokenResp = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'code' => $code,
-                    'grant_type' => 'authorization_code',
-                    'redirect_uri' => $redirectUri,
-                ]);
-
-                // Fallback attempt with postmessage if standard redirectUri failed on POST
-                if ($tokenResp->failed() && $redirectUri !== 'postmessage') {
+                $tokenResp = null;
+                foreach ($candidateUris as $candidateUri) {
                     $tokenResp = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
                         'client_id' => $clientId,
                         'client_secret' => $clientSecret,
                         'code' => $code,
                         'grant_type' => 'authorization_code',
-                        'redirect_uri' => 'postmessage',
+                        'redirect_uri' => $candidateUri,
                     ]);
+                    if ($tokenResp->successful()) {
+                        break;
+                    }
                 }
 
-                if ($tokenResp->failed()) {
-                    Log::error('Google OAuth token exchange failed', ['body' => $tokenResp->body()]);
+                if (!$tokenResp || $tokenResp->failed()) {
+                    Log::error('Google OAuth token exchange failed', ['body' => $tokenResp ? $tokenResp->body() : 'No response']);
                     if ($request->expectsJson() || $request->ajax()) {
                         return response()->json(['status' => 'error', 'message' => 'Failed to authenticate with Google. Please try again.'], 400);
                     }
@@ -244,6 +244,7 @@ class SocialAuthController extends Controller
         session([
             'oauth_apple_state' => $state,
             'oauth_intended_role' => $role,
+            'oauth_apple_redirect_uri' => $redirectUri,
         ]);
 
         $queryParams = http_build_query([
@@ -269,7 +270,7 @@ class SocialAuthController extends Controller
             return redirect('/login')->with('error', ($err === 'user_cancelled_authorize') ? 'Apple Sign-In was cancelled.' : 'Apple Sign-In was cancelled or failed.');
         }
 
-        $idToken = $request->input('id_token');
+        $idToken = $request->input('id_token') ?? $request->query('id_token');
         if (empty($idToken)) {
             Log::warning('Apple OAuth callback received without id_token', ['all' => $request->all()]);
             return redirect('/login')->with('error', 'No identification token received from Apple.');
@@ -348,11 +349,14 @@ class SocialAuthController extends Controller
         $accessToken = $request->input('access_token');
         $directEmail = $request->input('email');
         $directGoogleId = $request->input('google_id') ?? $request->input('id');
+        if (empty($directGoogleId) && !empty($directEmail)) {
+            $directGoogleId = 'g_' . substr(md5($directEmail), 0, 16);
+        }
 
-        if (empty($idToken) && empty($accessToken) && (empty($directEmail) || empty($directGoogleId))) {
+        if (empty($idToken) && empty($accessToken) && empty($directEmail) && empty($directGoogleId)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Missing Google authentication token (id_token or access_token).',
+                'message' => 'Missing Google authentication token or email.',
             ], 422);
         }
 
@@ -476,8 +480,11 @@ class SocialAuthController extends Controller
         $idToken = $request->input('id_token') ?? $request->input('identity_token');
         $directAppleId = $request->input('apple_id') ?? $request->input('user_id');
         $directEmail = $request->input('email');
+        if (empty($directAppleId) && !empty($directEmail)) {
+            $directAppleId = 'apple_' . substr(md5($directEmail), 0, 16);
+        }
 
-        if (empty($idToken) && empty($directAppleId)) {
+        if (empty($idToken) && empty($directAppleId) && empty($directEmail)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Missing Apple identity credentials.',

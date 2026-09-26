@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/countries_data.dart';
 import '../../core/storage/token_storage.dart';
@@ -300,8 +302,12 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   Future<void> _handleGoogleLogin() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     
-    // Show quick account prompt or proceed with social token
-    final emailInput = TextEditingController();
+    final initialEmail = _otpEmailController.text.trim().isNotEmpty
+        ? _otpEmailController.text.trim()
+        : (_emailController.text.trim().isNotEmpty && _emailController.text.trim() != 'driver@ridemycars.com'
+            ? _emailController.text.trim()
+            : '');
+    final emailInput = TextEditingController(text: initialEmail);
     final nameInput = TextEditingController();
 
     final proceed = await showDialog<bool>(
@@ -348,6 +354,20 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                 filled: true,
                 fillColor: AppColors.backgroundDark,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.open_in_browser, size: 16, color: AppColors.primary),
+                label: const Text('Open Google OAuth in Browser', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                onPressed: () async {
+                  final url = Uri.parse(ApiConstants.googleOAuthUrl);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
             ),
           ],
@@ -404,7 +424,12 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   Future<void> _handleAppleLogin() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    final emailInput = TextEditingController();
+    final initialEmail = _otpEmailController.text.trim().isNotEmpty
+        ? _otpEmailController.text.trim()
+        : (_emailController.text.trim().isNotEmpty && _emailController.text.trim() != 'driver@ridemycars.com'
+            ? _emailController.text.trim()
+            : '');
+    final emailInput = TextEditingController(text: initialEmail);
     final nameInput = TextEditingController();
 
     final proceed = await showDialog<bool>(
@@ -447,6 +472,20 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                 filled: true,
                 fillColor: AppColors.backgroundDark,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.open_in_browser, size: 16, color: Colors.white70),
+                label: const Text('Open Apple OAuth in Browser', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                onPressed: () async {
+                  final url = Uri.parse(ApiConstants.appleOAuthUrl);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
             ),
           ],
@@ -845,7 +884,87 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Removed Social Login Buttons for App Store Review Compliance
+                  // Social Sign-In Divider
+                  Row(
+                    children: [
+                      Expanded(child: Container(height: 1, color: Colors.white12)),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          'OR CONTINUE WITH',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Container(height: 1, color: Colors.white12)),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Google & Apple Buttons
+                  Row(
+                    children: [
+                      // Google Button
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: auth.isLoading ? null : _handleGoogleLogin,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(color: Colors.white12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            backgroundColor: AppColors.surfaceDark,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                child: const Center(
+                                  child: Text('G', style: TextStyle(color: Color(0xFF4285F4), fontWeight: FontWeight.bold, fontSize: 14)),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Google',
+                                style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Apple Button
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: auth.isLoading ? null : _handleAppleLogin,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(color: Colors.white12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            backgroundColor: AppColors.surfaceDark,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.apple, color: Colors.white, size: 22),
+                              SizedBox(width: 10),
+                              Text(
+                                'Apple',
+                                style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 24),
 

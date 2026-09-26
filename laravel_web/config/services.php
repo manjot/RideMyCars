@@ -84,13 +84,13 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_id' => env('GOOGLE_CLIENT_ID', '627565778959-4a65og5qlquf9niskg25kcfdkubprp2d.apps.googleusercontent.com'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'https://ridemycars.com/auth/google/callback'),
     ],
 
     'apple' => [
-        'client_id' => env('APPLE_CLIENT_ID'),
+        'client_id' => env('APPLE_CLIENT_ID', 'com.ridemycars.web.auth'),
         'client_secret' => env('APPLE_CLIENT_SECRET'),
         'redirect' => env('APPLE_REDIRECT_URI', 'https://ridemycars.com/auth/apple/callback'),
     ],
