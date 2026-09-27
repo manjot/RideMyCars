@@ -7,6 +7,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import 'receipts_screen.dart';
+import '../safety/sos_contacts_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -362,11 +363,12 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   const SizedBox(height: 12),
                   _buildActionTile(
                     Icons.emergency_outlined,
-                    'Emergency Contacts',
-                    'Manage trusted contacts',
+                    'SOS & Emergency Contacts',
+                    'Manage trusted contacts & safety shield',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Emergency contacts feature enabled.')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SosContactsScreen()),
                       );
                     },
                   ),

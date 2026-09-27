@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/ride_provider.dart';
+import '../safety/widgets/sos_floating_button.dart';
 
 class RideTrackingScreen extends StatefulWidget {
   final Map<String, dynamic> ride;
@@ -163,6 +164,16 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // Map Corner SOS Emergency Button
+          Positioned(
+            right: 16,
+            top: 76,
+            child: SosFloatingButton(
+              rideId: currentRide['id'] as int?,
+              role: 'rider',
             ),
           ),
 

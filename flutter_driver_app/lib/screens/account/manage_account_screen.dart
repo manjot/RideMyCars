@@ -5,6 +5,7 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../safety/sos_contacts_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -437,6 +438,18 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Google Maps navigation selected.')),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildActionTile(
+                    Icons.emergency_rounded,
+                    'SOS & Emergency Contacts',
+                    'Manage trusted emergency contacts and SOS alert settings',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SosContactsScreen()),
                       );
                     },
                   ),

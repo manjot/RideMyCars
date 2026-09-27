@@ -1997,6 +1997,15 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/sos" class="text-red-400 hover:text-red-300 font-bold transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 flex items-center gap-1.5 whitespace-nowrap">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                    <span>SOS Emergency Suite</span>
+                                </span>
+                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/40 shrink-0 ml-1">SOS</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="/onboarding" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">How It Works</span>
                             </a>

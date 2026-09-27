@@ -249,5 +249,16 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->wallet_balance >= $amount && $amount > 0;
     }
+
+    public function emergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class)->orderBy('is_primary', 'desc')->latest();
+    }
+
+    public function sosAlerts()
+    {
+        return $this->hasMany(SosAlert::class)->latest();
+    }
 }
+
 

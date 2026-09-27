@@ -3271,6 +3271,66 @@ Route::delete('/wallet/payout-methods/{id}', function ($id) {
     return response()->json(['success' => $deleted, 'message' => $deleted ? 'Removed.' : 'Not found.']);
 })->middleware('auth');
 
+// Emergency SOS & Trusted Contacts Web Routes
+Route::get('/sos', function () {
+    $user = auth()->user();
+    if (!$user) {
+        if (request('preview') == 1) {
+            $user = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+        } else {
+            return redirect('/login')->with('info', 'Please sign in to manage your emergency SOS contacts.');
+        }
+    }
+
+    $contacts = $user ? \App\Services\SosService::getContacts($user) : collect();
+
+    return view('sos', compact('user', 'contacts'));
+})->name('sos.index');
+
+Route::post('/sos/contacts', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user) {
+        if (request('preview') == 1) {
+            $user = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+        } else {
+            return response()->json(['success' => false, 'message' => 'Please sign in.'], 401);
+        }
+    }
+
+    try {
+        $contact = \App\Services\SosService::addContact($user, $request->all());
+        return response()->json(['success' => true, 'message' => 'Emergency contact added.', 'data' => $contact]);
+    } catch (\InvalidArgumentException $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+});
+
+Route::post('/sos/contacts/{id}/delete', function ($id) {
+    $user = auth()->user();
+    if (!$user) {
+        if (request('preview') == 1) {
+            $user = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
+        } else {
+            return response()->json(['success' => false, 'message' => 'Please sign in.'], 401);
+        }
+    }
+
+    $deleted = \App\Services\SosService::deleteContact($user, (int) $id);
+    return response()->json(['success' => $deleted, 'message' => $deleted ? 'Contact removed.' : 'Not found.']);
+});
+
+Route::post('/sos/trigger', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user() ?? \App\Models\User::first();
+    try {
+        $res = \App\Services\SosService::triggerAlert($user, $request->all());
+        return response()->json(['success' => true, 'data' => $res]);
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+});
+
 Route::get('/incentives', function () {
     if (request('preview') == 1) {
         $driver = \App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first();
@@ -3776,6 +3836,20 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                     ])
                     ->where('wallet_balance', '<=', 0)
                     ->update(['wallet_balance' => 215.95]);
+            }
+
+            // Sync Safety & SOS settings
+            $safetySettings = [
+                'safety.sos_enabled' => ['value' => '1', 'label' => 'Enable In-App Emergency SOS Button'],
+                'safety.hotline_phone' => ['value' => '+18007433692', 'label' => '24/7 Safety Dispatch Phone'],
+                'safety.police_phone' => ['value' => '911', 'label' => 'Default Emergency Police Number'],
+                'safety.max_emergency_contacts' => ['value' => '5', 'label' => 'Max Emergency Contacts Per User'],
+            ];
+            foreach ($safetySettings as $sKey => $sVal) {
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => $sKey],
+                    ['value' => $sVal['value'], 'label' => $sVal['label'], 'group' => 'Safety & SOS', 'type' => 'text', 'updated_at' => now()]
+                );
             }
 
             \Illuminate\Support\Facades\Cache::forget('site_settings');

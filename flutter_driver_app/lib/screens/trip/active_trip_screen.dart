@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/driver_provider.dart';
+import '../safety/widgets/sos_floating_button.dart';
 
 class ActiveTripScreen extends StatefulWidget {
   final Map<String, dynamic> ride;
@@ -158,6 +159,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // SOS Map Corner Floating Button (Driver)
+          Positioned(
+            right: 16,
+            top: 76,
+            child: SosFloatingButton(
+              rideId: _ride['id'] as int?,
+              role: 'driver',
             ),
           ),
 

@@ -11,6 +11,8 @@ import '../earnings/driver_earnings_screen.dart';
 import '../earnings/incentives_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../support/help_support_screen.dart';
+import '../safety/sos_contacts_screen.dart';
+import '../safety/widgets/sos_floating_button.dart';
 import '../trip/active_trip_screen.dart';
 import '../trips/driver_trips_screen.dart';
 import 'incoming_job_dialog.dart';
@@ -101,6 +103,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       drawer: _buildDrawer(context, auth),
+      floatingActionButton: const SosFloatingButton(role: 'driver'),
       appBar: AppBar(
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
@@ -1724,6 +1727,22 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.emergency_rounded, color: AppColors.danger),
+                    title: const Text('SOS (Emergency Contacts)', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('SOS', style: TextStyle(color: AppColors.danger, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SosContactsScreen()));
                     },
                   ),
                   ListTile(

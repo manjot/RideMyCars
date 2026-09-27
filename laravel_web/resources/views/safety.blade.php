@@ -358,6 +358,9 @@
                         Our emergency security dispatch team is standing by around the clock. Every safety ticket receives an initial human response within 120 seconds.
                     </p>
                     <div class="flex flex-wrap items-center justify-center gap-4">
+                        <a href="/sos" class="px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-base shadow-xl transition-all hover:scale-105 flex items-center gap-2">
+                            <span>🚨</span> SOS Emergency & Contacts
+                        </a>
                         <a href="tel:+18007433692" class="px-8 py-4 rounded-2xl bg-white text-emerald-700 font-black text-base shadow-xl hover:bg-gray-50 transition-all hover:scale-105 flex items-center gap-2">
                             <span>📞</span> Call 24/7 Safety Hotline
                         </a>

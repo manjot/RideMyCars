@@ -237,4 +237,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/withdrawals/{id}/reject', [WalletApiController::class, 'adminReject']);
     Route::get('/admin/withdrawal-settings', [WalletApiController::class, 'adminGetSettings']);
     Route::post('/admin/withdrawal-settings', [WalletApiController::class, 'adminUpdateSettings']);
+
+    // Emergency SOS & Trusted Contacts Module (Rider & Driver)
+    Route::get('/emergency-contacts', [\App\Http\Controllers\Api\SosApiController::class, 'index']);
+    Route::post('/emergency-contacts', [\App\Http\Controllers\Api\SosApiController::class, 'store']);
+    Route::put('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'update']);
+    Route::delete('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'destroy']);
+    Route::post('/sos/trigger', [\App\Http\Controllers\Api\SosApiController::class, 'trigger']);
 });
+

@@ -44,5 +44,10 @@ class ApiConstants {
   static const String walletWithdrawals = '/wallet/withdrawals';
   static const String walletPayoutMethods = '/wallet/payout-methods';
   static const String walletTransactions = '/wallet/transactions';
+
+  // Emergency SOS & Trusted Contacts
+  static const String emergencyContacts = '/emergency-contacts';
+  static const String sosTrigger = '/sos/trigger';
 }
+
 

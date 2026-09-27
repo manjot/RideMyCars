@@ -26,6 +26,8 @@ import '../support/help_support_screen.dart';
 import '../wallet/wallet_screen.dart';
 import 'ride_tracking_screen.dart';
 import 'widgets/floating_ride_widget.dart';
+import '../safety/sos_contacts_screen.dart';
+import '../safety/widgets/sos_floating_button.dart';
 
 enum ServiceType {
   ride,
@@ -966,6 +968,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             onMapCreated: (c) => _mapController = c,
+          ),
+
+          // Map Corner SOS Emergency Button
+          const Positioned(
+            right: 16,
+            top: 76,
+            child: SosFloatingButton(role: 'rider'),
           ),
 
           // Top App Bar Floating Header
@@ -2388,6 +2397,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.emergency_rounded, color: AppColors.danger),
+                    title: const Text('SOS (Emergency Contacts)', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SosContactsScreen()));
                     },
                   ),
                   ListTile(
