@@ -2212,9 +2212,10 @@
                             </div>
                         </a>
                         
-                        <!-- Google Play / Direct APK -->
-                        <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" 
-                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-white/20 transition-all group shrink-0" title="Download RideMyCars Rider Android APK">
+                        <!-- Google Play -->
+                        <a href="{{ site_setting('rider.android_url', 'https://play.google.com/store/apps/details?id=com.ridemycars.app') }}" 
+                           target="_blank" rel="noopener"
+                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-white/20 transition-all group shrink-0" title="Download RideMyCars Customer App on Google Play">
                             <svg class="w-4 h-4 shrink-0 text-brand-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                             <div class="flex flex-col text-left">
                                 <span class="text-[7px] uppercase tracking-wider text-zinc-400 leading-none">Get it on</span>
@@ -2239,9 +2240,10 @@
                             </div>
                         </a>
                         
-                        <!-- Google Play / Direct APK -->
-                        <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" 
-                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-amber-500/30 transition-all group shrink-0" title="Download RideMyCars Driver Android APK">
+                        <!-- Google Play -->
+                        <a href="{{ site_setting('driver.android_url', 'https://play.google.com/store/apps/details?id=com.ridemycars.driver') }}" 
+                           target="_blank" rel="noopener"
+                           class="flex items-center gap-2 px-3 py-1.5 h-10 bg-white/[0.04] border border-white/[0.08] text-white rounded-xl hover:bg-white/[0.09] hover:border-amber-500/30 transition-all group shrink-0" title="Download RideMyCars Driver App on Google Play">
                             <svg class="w-4 h-4 shrink-0 text-amber-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                             <div class="flex flex-col text-left">
                                 <span class="text-[7px] uppercase tracking-wider text-zinc-400 leading-none">Get it on</span>

@@ -2,14 +2,8 @@
     <x-slot:title>Download RideMyCars Apps — Rider & Driver Partner Editions | RideMyCars</x-slot>
 
 @php
-    $currentHost = request()->getHost();
-    $isLocalHost = in_array($currentHost, ['localhost', '127.0.0.1', '::1']);
-    $serverIp = $isLocalHost ? gethostbyname(gethostname()) : $currentHost;
-    $port = request()->getPort() ? ':' . request()->getPort() : '';
-    $scheme = request()->getScheme();
-    
-    $riderDownloadTargetUrl = $scheme . '://' . $serverIp . $port . route('download.rider', [], false);
-    $driverDownloadTargetUrl = $scheme . '://' . $serverIp . $port . route('download.driver', [], false);
+    $riderDownloadTargetUrl = site_setting('rider.android_url', 'https://play.google.com/store/apps/details?id=com.ridemycars.app');
+    $driverDownloadTargetUrl = site_setting('driver.android_url', 'https://play.google.com/store/apps/details?id=com.ridemycars.driver');
 @endphp
 
     <!-- Hero Header -->
@@ -115,17 +109,17 @@
                                 </div>
                             </a>
 
-                            <!-- Google Play / Direct APK -->
-                            <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" class="flex items-center gap-3 px-5 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl transition-all shadow-lg shadow-brand-500/25 group">
+                            <!-- Google Play Button -->
+                            <a href="{{ $riderDownloadTargetUrl }}" target="_blank" rel="noopener" class="flex items-center gap-3 px-5 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl transition-all shadow-lg shadow-brand-500/25 group">
                                 <svg class="w-6 h-6 shrink-0 fill-current group-hover:scale-105 transition-transform" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                                 <div class="flex flex-col text-left">
-                                    <span class="text-[9px] uppercase tracking-wider text-white/80 leading-none">Download APK /</span>
+                                    <span class="text-[9px] uppercase tracking-wider text-white/80 leading-none">Get it on</span>
                                     <span class="text-sm font-extrabold leading-tight mt-0.5">Google Play</span>
                                 </div>
                             </a>
 
                             <!-- Direct APK Direct Link -->
-                            <a href="{{ route('download.rider') }}" download="RideMyCars-Rider.apk" class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 text-gray-800 dark:text-gray-200 rounded-2xl text-xs font-bold transition-all">
+                            <a href="{{ route('download.rider', ['apk' => 1]) }}" download="RideMyCars-Rider.apk" class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 text-gray-800 dark:text-gray-200 rounded-2xl text-xs font-bold transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Direct Rider APK (39 MB)
                             </a>
@@ -250,17 +244,17 @@
                                 </div>
                             </a>
 
-                            <!-- Google Play / Direct APK -->
-                            <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="flex items-center gap-3 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black rounded-2xl transition-all shadow-lg shadow-amber-500/25 group">
+                            <!-- Google Play Button -->
+                            <a href="{{ $driverDownloadTargetUrl }}" target="_blank" rel="noopener" class="flex items-center gap-3 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black rounded-2xl transition-all shadow-lg shadow-amber-500/25 group">
                                 <svg class="w-6 h-6 shrink-0 fill-current group-hover:scale-105 transition-transform" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                                 <div class="flex flex-col text-left">
-                                    <span class="text-[9px] uppercase tracking-wider text-gray-900/80 leading-none">Download APK /</span>
+                                    <span class="text-[9px] uppercase tracking-wider text-gray-900/80 leading-none">Get it on</span>
                                     <span class="text-sm font-black leading-tight mt-0.5">Google Play</span>
                                 </div>
                             </a>
 
                             <!-- Direct APK Direct Link -->
-                            <a href="{{ route('download.driver') }}" download="RideMyCars-Driver.apk" class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-amber-500/50 text-gray-800 dark:text-gray-200 rounded-2xl text-xs font-bold transition-all">
+                            <a href="{{ route('download.driver', ['apk' => 1]) }}" download="RideMyCars-Driver.apk" class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-amber-500/50 text-gray-800 dark:text-gray-200 rounded-2xl text-xs font-bold transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Direct Driver APK (39 MB)
                             </a>

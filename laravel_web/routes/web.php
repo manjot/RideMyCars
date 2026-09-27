@@ -3420,43 +3420,63 @@ Route::get('/download', function () {
 })->name('apps.download');
 
 Route::get('/download/rider', function () {
-    $filePath = public_path('ridemycars-rider.apk');
-    if (file_exists($filePath)) {
-        return response()->download($filePath, 'RideMyCars-Rider.apk', [
-            'Content-Type' => 'application/vnd.android.package-archive',
-        ]);
+    if (request()->has('apk')) {
+        $filePath = public_path('ridemycars-rider.apk');
+        if (file_exists($filePath)) {
+            return response()->download($filePath, 'RideMyCars-Rider.apk', [
+                'Content-Type' => 'application/vnd.android.package-archive',
+            ]);
+        }
+        $fallbackPath = public_path('ridemycars.apk');
+        if (file_exists($fallbackPath)) {
+            return response()->download($fallbackPath, 'RideMyCars-Rider.apk', [
+                'Content-Type' => 'application/vnd.android.package-archive',
+            ]);
+        }
     }
-    $fallbackPath = public_path('ridemycars.apk');
-    if (file_exists($fallbackPath)) {
-        return response()->download($fallbackPath, 'RideMyCars-Rider.apk', [
-            'Content-Type' => 'application/vnd.android.package-archive',
-        ]);
-    }
-    return redirect('/apps')->with('info', 'Rider APK is being prepared.');
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
 })->name('download.rider');
 
+Route::get('/download/customer', function () {
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
+});
+
 Route::get('/download/user', function () {
-    return redirect()->route('download.rider');
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
+});
+
+Route::get('/download/app', function () {
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
 });
 
 Route::get('/download/driver', function () {
-    $filePath = public_path('ridemycars-driver.apk');
-    if (file_exists($filePath)) {
-        return response()->download($filePath, 'RideMyCars-Driver.apk', [
-            'Content-Type' => 'application/vnd.android.package-archive',
-        ]);
+    if (request()->has('apk')) {
+        $filePath = public_path('ridemycars-driver.apk');
+        if (file_exists($filePath)) {
+            return response()->download($filePath, 'RideMyCars-Driver.apk', [
+                'Content-Type' => 'application/vnd.android.package-archive',
+            ]);
+        }
+        $fallbackPath = public_path('ridemycars.apk');
+        if (file_exists($fallbackPath)) {
+            return response()->download($fallbackPath, 'RideMyCars-Driver.apk', [
+                'Content-Type' => 'application/vnd.android.package-archive',
+            ]);
+        }
     }
-    $fallbackPath = public_path('ridemycars.apk');
-    if (file_exists($fallbackPath)) {
-        return response()->download($fallbackPath, 'RideMyCars-Driver.apk', [
-            'Content-Type' => 'application/vnd.android.package-archive',
-        ]);
-    }
-    return redirect('/apps')->with('info', 'Driver APK is being prepared.');
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.driver');
 })->name('download.driver');
 
-Route::get('/download/app', function () {
-    return redirect()->route('download.rider');
+Route::get('/app/rider', function () {
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
+});
+
+Route::get('/app/customer', function () {
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
+});
+
+Route::get('/app/driver', function () {
+    return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.driver');
 });
 
 // Canonical URL Redirects (301 Permanent) for duplicate aliases
@@ -3669,6 +3689,21 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             // Purge PayPal configuration from database
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'like', 'payment.paypal%')->delete();
 
+            // Sync official Google Play store links
+            $appLinkSettings = [
+                'app.android_link' => ['value' => 'https://play.google.com/store/apps/details?id=com.ridemycars.app', 'label' => 'App - Android Download Link (Customer)'],
+                'rider.android_url' => ['value' => 'https://play.google.com/store/apps/details?id=com.ridemycars.app', 'label' => 'Customer App - Google Play URL'],
+                'driver.android_url' => ['value' => 'https://play.google.com/store/apps/details?id=com.ridemycars.driver', 'label' => 'Driver App - Google Play URL'],
+            ];
+            foreach ($appLinkSettings as $sKey => $sVal) {
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => $sKey],
+                    ['value' => $sVal['value'], 'label' => $sVal['label'], 'group' => 'App Links', 'type' => 'text', 'updated_at' => now()]
+                );
+            }
+            \Illuminate\Support\Facades\Cache::forget('site_settings');
+            \Illuminate\Support\Facades\Cache::forget('site_settings_all');
+
             // Support setting Apple OAuth settings dynamically
             if ($request->has('apple_client_id') && !empty($request->query('apple_client_id'))) {
                 $appleIdVal = trim($request->query('apple_client_id'));
@@ -3712,7 +3747,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     
     // Run git pull from correct repo directory
     $gitDir = file_exists(base_path('.git')) ? base_path() : (file_exists(base_path('../.git')) ? base_path('..') : base_path());
-    $gitCmd = 'cd ' . escapeshellarg($gitDir) . ' && git pull origin main 2>&1';
+    $gitCmd = 'cd ' . escapeshellarg($gitDir) . ' && git fetch origin main 2>&1 && git reset --hard origin/main 2>&1';
     if (function_exists('shell_exec')) {
         $output['git_pull'] = @shell_exec($gitCmd);
     } elseif (function_exists('exec')) {

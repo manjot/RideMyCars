@@ -32,8 +32,12 @@ class SettingsSeeder extends Seeder
             ['key' => 'social.linkedin_url', 'label' => 'Social - LinkedIn Profile URL', 'value' => 'https://www.linkedin.com/in/ride-mycars-587b03432', 'group' => 'Social Media', 'type' => 'text'],
 
             // App Links
-            ['key' => 'app.ios_link', 'label' => 'App - iOS Download Link', 'value' => '#', 'group' => 'App Links', 'type' => 'text'],
-            ['key' => 'app.android_link', 'label' => 'App - Android Download Link', 'value' => '#', 'group' => 'App Links', 'type' => 'text'],
+            ['key' => 'app.ios_link', 'label' => 'App - iOS Download Link', 'value' => 'https://apps.apple.com/app/ridemycars/id123456789', 'group' => 'App Links', 'type' => 'text'],
+            ['key' => 'app.android_link', 'label' => 'App - Android Download Link (Customer)', 'value' => 'https://play.google.com/store/apps/details?id=com.ridemycars.app', 'group' => 'App Links', 'type' => 'text'],
+            ['key' => 'rider.android_url', 'label' => 'Customer App - Google Play URL', 'value' => 'https://play.google.com/store/apps/details?id=com.ridemycars.app', 'group' => 'App Links', 'type' => 'text'],
+            ['key' => 'driver.android_url', 'label' => 'Driver App - Google Play URL', 'value' => 'https://play.google.com/store/apps/details?id=com.ridemycars.driver', 'group' => 'App Links', 'type' => 'text'],
+            ['key' => 'rider.ios_url', 'label' => 'Customer App - Apple iOS URL', 'value' => 'https://apps.apple.com/app/ridemycars/id123456789', 'group' => 'App Links', 'type' => 'text'],
+            ['key' => 'driver.ios_url', 'label' => 'Driver App - Apple iOS URL', 'value' => 'https://apps.apple.com/app/ridemycars-driver/id987654321', 'group' => 'App Links', 'type' => 'text'],
 
             // Financial & Commission Rules
             ['key' => 'ride_hailing.platform_commission', 'label' => 'Ride Hailing - Platform Commission (%)', 'value' => '10', 'group' => 'Commissions', 'type' => 'text'],
@@ -127,7 +131,7 @@ class SettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            \App\Models\Setting::firstOrCreate(['key' => $setting['key']], $setting);
+            \App\Models\Setting::updateOrCreate(['key' => $setting['key']], $setting);
         }
     }
 }
