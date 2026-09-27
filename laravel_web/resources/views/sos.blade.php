@@ -43,47 +43,47 @@
             </div>
 
             <!-- Emergency SOS Hero Broadcast Card -->
-            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#10141e] via-[#1a0e14] to-[#260e12] border border-red-500/30 p-6 sm:p-10 shadow-2xl shadow-red-950/20 text-white">
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-600 to-red-700 border border-red-400/40 p-6 sm:p-10 shadow-2xl shadow-red-600/30 text-white">
                 <!-- Ambient background glow accents -->
-                <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-red-600/15 blur-3xl pointer-events-none"></div>
-                <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+                <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-rose-400/20 blur-3xl pointer-events-none"></div>
 
                 <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
                     <div class="space-y-3 max-w-2xl">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-bold uppercase tracking-wider border border-red-500/30">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping"></span>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider border border-white/30 backdrop-blur-sm">
+                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
                             <span>Immediate Live GPS Broadcast</span>
                         </div>
                         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
                             Need Urgent Assistance Right Now?
                         </h2>
-                        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                        <p class="text-white/95 text-xs sm:text-sm leading-relaxed font-medium">
                             Pressing the SOS button instantly transmits your real-time GPS coordinates to our central 24/7 security dispatch team and broadcasts SMS & WhatsApp emergency alerts to all your registered trusted contacts.
                         </p>
-                        <div class="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-semibold text-slate-400">
-                            <span class="flex items-center gap-1.5">
-                                <span class="text-emerald-400">✓</span> Real-Time Browser Geolocation
+                        <div class="flex flex-wrap items-center gap-2.5 pt-1 text-[11px] font-bold text-white">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/20">
+                                <span>✓</span> Real-Time Browser Geolocation
                             </span>
-                            <span class="flex items-center gap-1.5">
-                                <span class="text-emerald-400">✓</span> Automated Emergency SMS
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/20">
+                                <span>✓</span> Automated Emergency SMS
                             </span>
-                            <span class="flex items-center gap-1.5">
-                                <span class="text-emerald-400">✓</span> Direct Safety Desk Dispatch
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/20">
+                                <span>✓</span> Direct Safety Desk Dispatch
                             </span>
                         </div>
                     </div>
 
                     <div class="w-full lg:w-auto shrink-0 flex flex-col items-center">
                         <button type="button" onclick="triggerWebSos()" id="mainSosBtn"
-                                class="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3.5 px-8 py-5 rounded-2xl bg-gradient-to-r from-red-600 via-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-base sm:text-lg shadow-xl shadow-red-600/30 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer border border-red-400/40">
+                                class="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3.5 px-8 py-5 rounded-2xl bg-white hover:bg-slate-50 text-red-600 font-black text-base sm:text-lg shadow-2xl shadow-black/25 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer">
                             <span class="relative flex h-3.5 w-3.5">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
                             </span>
                             <span>TRIGGER EMERGENCY SOS</span>
                         </button>
-                        <span class="text-[10px] text-slate-400 font-semibold mt-2.5 tracking-wide">
-                            🔒 100% Encrypted • Instant Dispatch
+                        <span class="text-[11px] text-white/90 font-bold mt-2.5 tracking-wide flex items-center gap-1.5">
+                            <span>🔒</span> 100% Encrypted • Instant Dispatch
                         </span>
                     </div>
                 </div>
@@ -476,7 +476,7 @@
             } catch (e) {
                 alert('SOS dispatched to safety hotline: +1 800 743 3692');
             } finally {
-                document.getElementById('mainSosBtn').innerHTML = '<span class="relative flex h-3.5 w-3.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span><span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span></span><span>TRIGGER EMERGENCY SOS</span>';
+                document.getElementById('mainSosBtn').innerHTML = '<span class="relative flex h-3.5 w-3.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span><span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span></span><span>TRIGGER EMERGENCY SOS</span>';
             }
         }
     </script>
