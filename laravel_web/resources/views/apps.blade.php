@@ -312,7 +312,7 @@
         </div>
     </section>
 
-    <!-- Installation & Sideloading Instructions -->
+    <!-- Official App Store Installation Instructions -->
     <section class="py-20 bg-gray-50 dark:bg-[#080808] border-t border-gray-100 dark:border-white/5">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-2xl mx-auto mb-14">
