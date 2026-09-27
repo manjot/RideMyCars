@@ -80,11 +80,11 @@
                         </div>
 
                         <!-- Flyer View -->
-                        <div x-show="viewMode === 'flyer'" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-300 dark:border-emerald-500/40 group bg-gray-950">
-                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% - Official Flyer" class="w-full h-[450px] sm:h-[520px] object-contain transition-transform duration-700 group-hover:scale-[1.02]">
+                        <div x-show="viewMode === 'flyer'" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-300 dark:border-emerald-500/40 group bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1a1a1a] dark:to-[#121212] p-3 sm:p-4 flex flex-col items-center">
+                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% - Official Flyer" class="w-full h-auto max-h-[480px] sm:max-h-[520px] object-contain rounded-2xl shadow-md transition-transform duration-700 group-hover:scale-[1.01]">
                             
-                            <!-- Floating Glass Badge -->
-                            <div class="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border border-gray-200 dark:border-white/10 shadow-xl flex items-center justify-between">
+                            <!-- Clean Info Bar Below Flyer (no text overlap) -->
+                            <div class="w-full mt-3 p-3.5 rounded-2xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 shadow-md flex items-center justify-between">
                                 <div>
                                     <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">Keep 90% From Trip #1</div>
                                     <div class="text-[11px] text-gray-600 dark:text-gray-400 font-semibold">Weekly Bank + 24/7 MoMo Cashouts</div>

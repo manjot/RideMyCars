@@ -148,13 +148,11 @@
                     
                     <!-- Flyer 1: 50% Off First 3 Rides -->
                     <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-amber-300 dark:border-amber-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
-                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
                              @click="activeFlyerModal = { title: 'Ride More, Pay Less — 50% Off First 3 Rides', img: '{{ asset('images/promo-ride-payless.jpg') }}', link: '/ride', cta: 'Book Ride (50% Off)' }">
-                            <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                                    🔍 Click to Enlarge
-                                </span>
+                            <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
                         <div class="p-5 space-y-3">
@@ -175,13 +173,11 @@
 
                     <!-- Flyer 2: Drive with Us, Earn 90% -->
                     <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-emerald-300 dark:border-emerald-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
-                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
                              @click="activeFlyerModal = { title: 'Drive With Us, Earn 90% — Only 10% Platform Fee', img: '{{ asset('images/promo-driver-earn90.jpg') }}', link: '/become-driver', cta: 'Join as Driver Partner' }">
-                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                                    🔍 Click to Enlarge
-                                </span>
+                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
                         <div class="p-5 space-y-3">
@@ -202,13 +198,11 @@
 
                     <!-- Flyer 3: Become a Chauffeur, Earn 85% -->
                     <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
-                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
                              @click="activeFlyerModal = { title: 'Become a RideMyCars Chauffeur — Earn 85%', img: '{{ asset('images/promo-chauffeur-earn85.jpg') }}', link: '/driver-signup', cta: 'Register as Chauffeur' }">
-                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" alt="Become a RideMyCars Chauffeur" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                                    🔍 Click to Enlarge
-                                </span>
+                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" alt="Become a RideMyCars Chauffeur" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
                         <div class="p-5 space-y-3">
@@ -229,13 +223,11 @@
 
                     <!-- Flyer 4: Accra & Tema Package Delivery -->
                     <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-purple-300 dark:border-purple-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
-                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
                              @click="activeFlyerModal = { title: 'Fast Package Delivery — Accra & Tema', img: '{{ asset('images/promo-delivery-accra.jpg') }}', link: '/delivery', cta: 'Send a Package' }">
-                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" alt="Fast Package Delivery Accra & Tema" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                                    🔍 Click to Enlarge
-                                </span>
+                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" alt="Fast Package Delivery Accra & Tema" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
                         <div class="p-5 space-y-3">

@@ -152,10 +152,10 @@
 
                         <!-- Flyer View -->
                         <div x-show="tab === 'flyer'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-amber-300 dark:border-amber-500/30 shadow-2xl max-w-[280px] w-full group">
-                            <div class="rounded-2xl overflow-hidden aspect-[3/4] bg-gray-950 shadow-md">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md">
                                 <img src="{{ asset('images/promo-ride-payless.jpg') }}" 
                                      alt="Ride More, Pay Less - Rider App Official Flyer" 
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                     class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                             </div>
                             <div class="mt-3 px-1 text-center">
                                 <span class="text-xs font-black text-amber-600 dark:text-amber-400 block">50% Off First 3 Rides</span>
@@ -291,10 +291,10 @@
 
                         <!-- Flyer View -->
                         <div x-show="tab === 'flyer'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-emerald-300 dark:border-emerald-500/30 shadow-2xl max-w-[280px] w-full group">
-                            <div class="rounded-2xl overflow-hidden aspect-[3/4] bg-gray-950 shadow-md">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md">
                                 <img src="{{ asset('images/promo-driver-earn90.jpg') }}" 
                                      alt="Drive With Us, Earn 90% - Driver App Official Flyer" 
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                     class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                             </div>
                             <div class="mt-3 px-1 text-center">
                                 <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 block">Keep 90% from Trip #1</span>

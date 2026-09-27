@@ -343,48 +343,44 @@
                     <!-- Card 1: Rider Offer (50% Off) -->
                     <div class="group bg-white dark:bg-[#151515] rounded-3xl border-2 border-amber-200 dark:border-amber-500/20 hover:border-amber-500 dark:hover:border-amber-400 shadow-lg hover:shadow-2xl hover:shadow-amber-500/15 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1.5">
                         <!-- Poster Preview with Zoom Trigger -->
-                        <div class="relative bg-gray-100 dark:bg-gray-900/60 overflow-hidden cursor-pointer aspect-[3/4]"
+                        <div class="relative p-3 sm:p-4 bg-gradient-to-b from-gray-50 via-gray-100/60 to-gray-50 dark:from-[#1b1b1b] dark:via-[#141414] dark:to-[#1b1b1b] border-b border-gray-100 dark:border-white/5 flex items-center justify-center h-80 sm:h-96 cursor-pointer group/poster overflow-hidden"
                              @click="activePosterModal = posters[0]">
                             <img src="{{ asset('images/promo-ride-payless.jpg') }}" 
                                  alt="Ride More, Pay Less - 50% Off First 3 Rides" 
-                                 class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                                 class="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl shadow-md transition-transform duration-500 group-hover/poster:scale-[1.03]"
                                  loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                             
-                            <!-- Badges on Image -->
-                            <div class="absolute top-3 left-3">
+                            <!-- Badges on Image Frame -->
+                            <div class="absolute top-3.5 left-3.5 z-10">
                                 <span class="px-2.5 py-1 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] uppercase tracking-wider shadow-md">
                                     50% OFF
                                 </span>
                             </div>
-                            <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                🔍
-                            </div>
-
-                            <div class="absolute bottom-3 left-3 right-3 text-white">
-                                <div class="text-[11px] font-bold text-amber-300 uppercase tracking-wider mb-0.5">Rider Welcome Campaign</div>
-                                <div class="text-base font-black leading-tight text-white drop-shadow">Ride More, Pay Less</div>
+                            <div class="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white text-[11px] font-bold opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
 
                         <!-- Card Content -->
-                        <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div class="p-6 flex-1 flex flex-col justify-between space-y-4">
                             <div>
-                                <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 mb-1">
-                                    <span>⚡</span>
-                                    <span>First 3 Rides Promo</span>
+                                <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">
+                                    Rider Welcome Campaign
                                 </div>
+                                <h3 class="text-xl font-black text-gray-950 dark:text-white leading-tight mb-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                    Ride More, Pay Less
+                                </h3>
                                 <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                                     Download the mobile app and claim an automatic 50% discount on your first 3 trips. Quick pickups in minutes, 24/7 available.
                                 </p>
 
-                                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-white/5 space-y-1.5">
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>50% off on first 3 trips</span>
                                     </div>
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>24/7 availability city-wide</span>
                                     </div>
                                 </div>
@@ -398,7 +394,7 @@
                                 <button type="button" 
                                         @click="activePosterModal = posters[0]"
                                         class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <span>🔍 View Official Flyer</span>
+                                    <span>🔍 View Full Resolution Flyer</span>
                                 </button>
                             </div>
                         </div>
@@ -407,48 +403,44 @@
                     <!-- Card 2: Driver Partner (Keep 90%) -->
                     <div class="group bg-white dark:bg-[#151515] rounded-3xl border-2 border-emerald-200 dark:border-emerald-500/20 hover:border-emerald-500 dark:hover:border-emerald-400 shadow-lg hover:shadow-2xl hover:shadow-emerald-500/15 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1.5">
                         <!-- Poster Preview with Zoom Trigger -->
-                        <div class="relative bg-gray-100 dark:bg-gray-900/60 overflow-hidden cursor-pointer aspect-[3/4]"
+                        <div class="relative p-3 sm:p-4 bg-gradient-to-b from-gray-50 via-gray-100/60 to-gray-50 dark:from-[#1b1b1b] dark:via-[#161616] dark:to-[#1b1b1b] border-b border-gray-100 dark:border-white/5 flex items-center justify-center h-80 sm:h-96 cursor-pointer group/poster overflow-hidden"
                              @click="activePosterModal = posters[1]">
                             <img src="{{ asset('images/promo-driver-earn90.jpg') }}" 
                                  alt="Drive with Us, Earn 90% - Keep 90% from Trip #1" 
-                                 class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                                 class="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl shadow-md transition-transform duration-500 group-hover/poster:scale-[1.03]"
                                  loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                             
-                            <!-- Badges on Image -->
-                            <div class="absolute top-3 left-3">
+                            <!-- Badges on Image Frame -->
+                            <div class="absolute top-3.5 left-3.5 z-10">
                                 <span class="px-2.5 py-1 rounded-full bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider shadow-md">
                                     KEEP 90%
                                 </span>
                             </div>
-                            <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                🔍
-                            </div>
-
-                            <div class="absolute bottom-3 left-3 right-3 text-white">
-                                <div class="text-[11px] font-bold text-emerald-300 uppercase tracking-wider mb-0.5">Driver Earnings Guarantee</div>
-                                <div class="text-base font-black leading-tight text-white drop-shadow">Drive With Us, Earn 90%</div>
+                            <div class="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white text-[11px] font-bold opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
 
                         <!-- Card Content -->
-                        <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div class="p-6 flex-1 flex flex-col justify-between space-y-4">
                             <div>
-                                <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                                    <span>💰</span>
-                                    <span>Only 10% Platform Fee</span>
+                                <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
+                                    Driver Earnings Guarantee
                                 </div>
+                                <h3 class="text-xl font-black text-gray-950 dark:text-white leading-tight mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                    Drive With Us, Earn 90%
+                                </h3>
                                 <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                                     Keep 90% from your very first trip. Flexible payouts with weekly bank transfers, smart wallet balance & instant 24/7 MoMo cash outs.
                                 </p>
 
-                                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-white/5 space-y-1.5">
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>Keep 90% from Trip #1</span>
                                     </div>
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>Instant MoMo & Weekly Bank</span>
                                     </div>
                                 </div>
@@ -462,7 +454,7 @@
                                 <button type="button" 
                                         @click="activePosterModal = posters[1]"
                                         class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <span>🔍 View Official Flyer</span>
+                                    <span>🔍 View Full Resolution Flyer</span>
                                 </button>
                             </div>
                         </div>
@@ -471,48 +463,44 @@
                     <!-- Card 3: Executive Chauffeur (Earn 85%) -->
                     <div class="group bg-white dark:bg-[#151515] rounded-3xl border-2 border-blue-200 dark:border-blue-500/20 hover:border-blue-500 dark:hover:border-blue-400 shadow-lg hover:shadow-2xl hover:shadow-blue-500/15 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1.5">
                         <!-- Poster Preview with Zoom Trigger -->
-                        <div class="relative bg-gray-100 dark:bg-gray-900/60 overflow-hidden cursor-pointer aspect-[3/4]"
+                        <div class="relative p-3 sm:p-4 bg-gradient-to-b from-gray-50 via-gray-100/60 to-gray-50 dark:from-[#1b1b1b] dark:via-[#161616] dark:to-[#1b1b1b] border-b border-gray-100 dark:border-white/5 flex items-center justify-center h-80 sm:h-96 cursor-pointer group/poster overflow-hidden"
                              @click="activePosterModal = posters[2]">
                             <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" 
                                  alt="Become a RideMyCars Chauffeur - Earn 85%" 
-                                 class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                                 class="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl shadow-md transition-transform duration-500 group-hover/poster:scale-[1.03]"
                                  loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                             
-                            <!-- Badges on Image -->
-                            <div class="absolute top-3 left-3">
+                            <!-- Badges on Image Frame -->
+                            <div class="absolute top-3.5 left-3.5 z-10">
                                 <span class="px-2.5 py-1 rounded-full bg-blue-600 text-white font-black text-[10px] uppercase tracking-wider shadow-md">
                                     EARN 85%
                                 </span>
                             </div>
-                            <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                🔍
-                            </div>
-
-                            <div class="absolute bottom-3 left-3 right-3 text-white">
-                                <div class="text-[11px] font-bold text-blue-300 uppercase tracking-wider mb-0.5">Executive & Luxury Fleet</div>
-                                <div class="text-base font-black leading-tight text-white drop-shadow">Become a Chauffeur</div>
+                            <div class="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white text-[11px] font-bold opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
 
                         <!-- Card Content -->
-                        <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div class="p-6 flex-1 flex flex-col justify-between space-y-4">
                             <div>
-                                <div class="flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                    <span>⭐</span>
-                                    <span>Executive Tier Protocol</span>
+                                <div class="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
+                                    Executive & Luxury Fleet
                                 </div>
+                                <h3 class="text-xl font-black text-gray-950 dark:text-white leading-tight mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    Become a Chauffeur
+                                </h3>
                                 <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                                     Drive corporate leaders and high-profile clients in luxury sedans. Keep 85% from Trip 1, free app, background verification & 24/7 partner support.
                                 </p>
 
-                                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-white/5 space-y-1.5">
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>Keep 85% from Trip #1</span>
                                     </div>
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>Verified Executive Riders</span>
                                     </div>
                                 </div>
@@ -526,7 +514,7 @@
                                 <button type="button" 
                                         @click="activePosterModal = posters[2]"
                                         class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <span>🔍 View Official Flyer</span>
+                                    <span>🔍 View Full Resolution Flyer</span>
                                 </button>
                             </div>
                         </div>
@@ -535,48 +523,44 @@
                     <!-- Card 4: Parcel Delivery (Accra & Tema) -->
                     <div class="group bg-white dark:bg-[#151515] rounded-3xl border-2 border-purple-200 dark:border-purple-500/20 hover:border-purple-500 dark:hover:border-purple-400 shadow-lg hover:shadow-2xl hover:shadow-purple-500/15 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1.5">
                         <!-- Poster Preview with Zoom Trigger -->
-                        <div class="relative bg-gray-100 dark:bg-gray-900/60 overflow-hidden cursor-pointer aspect-[3/4]"
+                        <div class="relative p-3 sm:p-4 bg-gradient-to-b from-gray-50 via-gray-100/60 to-gray-50 dark:from-[#1b1b1b] dark:via-[#161616] dark:to-[#1b1b1b] border-b border-gray-100 dark:border-white/5 flex items-center justify-center h-80 sm:h-96 cursor-pointer group/poster overflow-hidden"
                              @click="activePosterModal = posters[3]">
                             <img src="{{ asset('images/promo-delivery-accra.jpg') }}" 
                                  alt="Fast Package Delivery - Accra & Tema" 
-                                 class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                                 class="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl shadow-md transition-transform duration-500 group-hover/poster:scale-[1.03]"
                                  loading="lazy">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                             
-                            <!-- Badges on Image -->
-                            <div class="absolute top-3 left-3">
+                            <!-- Badges on Image Frame -->
+                            <div class="absolute top-3.5 left-3.5 z-10">
                                 <span class="px-2.5 py-1 rounded-full bg-purple-600 text-white font-black text-[10px] uppercase tracking-wider shadow-md">
                                     ACCRA & TEMA
                                 </span>
                             </div>
-                            <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                🔍
-                            </div>
-
-                            <div class="absolute bottom-3 left-3 right-3 text-white">
-                                <div class="text-[11px] font-bold text-purple-300 uppercase tracking-wider mb-0.5">Express Logistics & Courier</div>
-                                <div class="text-base font-black leading-tight text-white drop-shadow">Fast Package Delivery</div>
+                            <div class="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white text-[11px] font-bold opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
 
                         <!-- Card Content -->
-                        <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div class="p-6 flex-1 flex flex-col justify-between space-y-4">
                             <div>
-                                <div class="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">
-                                    <span>⚡</span>
-                                    <span>Same Day Delivery Service</span>
+                                <div class="text-[11px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
+                                    Express Logistics & Courier
                                 </div>
+                                <h3 class="text-xl font-black text-gray-950 dark:text-white leading-tight mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                    Fast Package Delivery
+                                </h3>
                                 <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
                                     Motorcycle & van fleet serving Greater Accra. Live GPS tracking, smart wallet, instant MoMo payment & dedicated hotline: 0559776761.
                                 </p>
 
-                                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-white/5 space-y-1.5">
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>Door-to-door GPS tracked</span>
                                     </div>
-                                    <div class="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                                        <span class="text-emerald-500">✓</span>
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
                                         <span>Hotline: 0559776761</span>
                                     </div>
                                 </div>
@@ -590,7 +574,7 @@
                                 <button type="button" 
                                         @click="activePosterModal = posters[3]"
                                         class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <span>🔍 View Official Flyer</span>
+                                    <span>🔍 View Full Resolution Flyer</span>
                                 </button>
                             </div>
                         </div>
@@ -1003,8 +987,8 @@
                                 </ul>
                             </div>
                             <div class="sm:col-span-4 flex justify-center">
-                                <div class="w-32 sm:w-36 rounded-2xl overflow-hidden shadow-lg border border-amber-300 dark:border-amber-600/40 group-hover:scale-105 transition-transform duration-300">
-                                    <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less Flyer" class="w-full h-auto object-cover">
+                                <div class="w-32 sm:w-36 rounded-2xl p-1 bg-amber-50 dark:bg-amber-950/30 overflow-hidden shadow-lg border border-amber-300 dark:border-amber-600/40 group-hover:scale-105 transition-transform duration-300">
+                                    <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less Flyer" class="w-full h-auto object-contain rounded-xl">
                                 </div>
                             </div>
                         </div>
@@ -1039,8 +1023,8 @@
                                 </ul>
                             </div>
                             <div class="sm:col-span-4 flex justify-center">
-                                <div class="w-32 sm:w-36 rounded-2xl overflow-hidden shadow-lg border border-emerald-300 dark:border-emerald-600/40 group-hover:scale-105 transition-transform duration-300">
-                                    <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% Flyer" class="w-full h-auto object-cover">
+                                <div class="w-32 sm:w-36 rounded-2xl p-1 bg-emerald-50 dark:bg-emerald-950/30 overflow-hidden shadow-lg border border-emerald-300 dark:border-emerald-600/40 group-hover:scale-105 transition-transform duration-300">
+                                    <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% Flyer" class="w-full h-auto object-contain rounded-xl">
                                 </div>
                             </div>
                         </div>
