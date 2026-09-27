@@ -285,29 +285,29 @@
                     </div>
 
                     <!-- Emergency SOS Safety Banner in Profile -->
-                    <div class="mb-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-red-950/40 via-slate-900/90 to-red-950/30 border border-red-500/30 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="mb-8 p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#141824] border border-red-200 dark:border-red-900/40 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
+                            <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md shadow-red-600/25">
                                 🚨
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-xs font-black uppercase tracking-wider text-red-400 bg-red-500/20 px-2.5 py-0.5 rounded-full border border-red-500/30">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-red-700 bg-red-100 dark:bg-red-950/60 dark:text-red-400 px-2.5 py-0.5 rounded-full border border-red-200 dark:border-red-800">
                                         SOS Safety Shield
                                     </span>
-                                    <span class="text-xs text-slate-400 font-semibold">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold">
                                         24/7 Rapid Emergency Response
                                     </span>
                                 </div>
-                                <h3 class="text-base sm:text-lg font-black text-white">
+                                <h3 class="text-base sm:text-lg font-black text-gray-900 dark:text-white">
                                     Manage Emergency Contacts & Live SOS Dispatch
                                 </h3>
-                                <p class="text-xs text-slate-300 mt-0.5">
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                     Configure trusted family and safety contacts who receive automatic GPS coordinates in an emergency.
                                 </p>
                             </div>
                         </div>
-                        <a href="/sos" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/30 shrink-0 flex items-center gap-2 hover:scale-105">
+                        <a href="/sos" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/25 shrink-0 flex items-center gap-2 hover:scale-[1.02]">
                             <span>Open SOS Suite</span>
                             <span>&rarr;</span>
                         </a>

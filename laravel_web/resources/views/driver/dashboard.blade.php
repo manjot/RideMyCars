@@ -149,21 +149,21 @@
             </div>
 
             <!-- 24/7 Driver Safety & SOS Shield Banner -->
-            <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/30 via-slate-900/90 to-red-950/20 border border-red-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#121214] border border-red-200 dark:border-red-900/40 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
-                    <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md">
+                    <div class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-red-600/25">
                         🚨
                     </div>
                     <div>
                         <div class="flex items-center gap-2 mb-0.5">
-                            <h4 class="text-sm font-bold text-white">Driver Safety Shield & Emergency Contacts</h4>
-                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-red-500/20 text-red-400 border border-red-500/30">SOS Live</span>
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white">Driver Safety Shield & Emergency Contacts</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-800">SOS Live</span>
                         </div>
-                        <p class="text-xs text-slate-300">Set trusted contacts for automatic GPS dispatch in an emergency. Directly access 24/7 security hotline or dial local emergency services.</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Set trusted contacts for automatic GPS dispatch in an emergency. Directly access 24/7 security hotline or dial local emergency services.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
-                    <a href="/sos" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-red-600/30 flex items-center gap-2 hover:scale-105">
+                    <a href="/sos" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-red-600/25 flex items-center gap-2 hover:scale-[1.02]">
                         <span>Open SOS Suite</span>
                         <span>&rarr;</span>
                     </a>
