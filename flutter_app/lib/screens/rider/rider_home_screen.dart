@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/driver_model.dart';
@@ -19,7 +20,10 @@ import '../account/manage_account_screen.dart';
 import '../auth/login_screen.dart';
 import '../delivery/delivery_booking_screen.dart';
 import '../driver/driver_detail_screen.dart';
+import '../driver/hire_driver_catalog_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../payment/payment_gateway_sheet.dart';
+import '../rent/rental_catalog_screen.dart';
 import '../rent/rental_detail_screen.dart';
 import '../rides/my_rides_screen.dart';
 import '../support/help_support_screen.dart';
@@ -728,19 +732,42 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             ),
           ),
         );
-        return;
-      }
-    } else if (_selectedService == ServiceType.driver) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DriverDetailScreen(
-            driver: _selectedDriver,
-            initialPickupLocation: pickup.isNotEmpty ? pickup : null,
-            initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RentalCatalogScreen(
+              initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+              initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+            ),
           ),
-        ),
-      );
+        );
+      }
+      return;
+    } else if (_selectedService == ServiceType.driver) {
+      if (_selectedDriver != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DriverDetailScreen(
+              driver: _selectedDriver,
+              initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+              initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+            ),
+          ),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HireDriverCatalogScreen(
+              initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+              initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+            ),
+          ),
+        );
+      }
+      return;
     } else if (_selectedService == ServiceType.deliver) {
       Navigator.push(
         context,
@@ -757,8 +784,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
     if (pickup.isEmpty || dropoff.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please fill in required fields for ${_selectedService.name.toUpperCase()}.'),
+        const SnackBar(
+          content: Text('Please enter both pickup and destination locations for your ride.'),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -766,8 +793,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     }
 
     final rideProv = Provider.of<RideProvider>(context, listen: false);
-    final countryProv = Provider.of<CountryProvider>(context, listen: false);
-
     double? computedDist;
     int? computedDur;
     if (_userLat != null && _userLng != null && _dropoffLat != null && _dropoffLng != null) {
@@ -778,63 +803,456 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     final finalDist = rideProv.estimatedDistanceKm ?? computedDist ?? 10.0;
     final finalDur = rideProv.estimatedDurationMinutes ?? computedDur ?? 15;
 
-    String vehicleTypeTag;
-    if (_selectedService == ServiceType.rent && _selectedRentalVehicle != null) {
-      vehicleTypeTag = 'RENTAL_${_selectedRentalVehicle!.id}_${_selectedRentalVehicle!.fullName}';
-    } else if (_selectedService == ServiceType.driver && _selectedDriver != null) {
-      vehicleTypeTag = 'CHAUFFEUR_${_selectedDriver!.id}_${_selectedDriver!.name}';
-    } else if (_selectedService == ServiceType.deliver) {
-      vehicleTypeTag = 'DELIVERY_$_selectedTierId';
-    } else {
-      vehicleTypeTag = rideProv.selectedCategory?.name ?? rideProv.selectedCategory?.slug ?? _selectedTierId;
-    }
+    _showRideConfirmationModal(pickup, dropoff, finalDist, finalDur);
+  }
 
-    rideProv.setSelectedVehicle(vehicleTypeTag);
+  void _showRideConfirmationModal(String pickup, String dropoff, double distKm, int durMins) {
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final success = await rideProv.bookRide(
-      pickupLocation: pickup,
-      dropoffLocation: dropoff,
-      pickupLat: _userLat,
-      pickupLng: _userLng,
-      dropoffLat: _dropoffLat,
-      dropoffLng: _dropoffLng,
-      distanceKm: finalDist,
-      durationMinutes: finalDur,
-      backupChauffeurEnabled: _enableBackupChauffeur,
-      country: countryProv.selectedCountryCode,
+    final baseFare = rideProv.selectedCategory?.fare ?? 15.0;
+    String scheduleMode = 'now';
+    DateTime scheduledDate = DateTime.now();
+    TimeOfDay scheduledTime = TimeOfDay.now();
+    final notesController = TextEditingController();
+    final promoController = TextEditingController();
+    double discountPercent = 0.0;
+    String? promoMsg;
+    bool backupChauffeur = _enableBackupChauffeur;
+    PaymentSelectionResult selectedPayment = PaymentSelectionResult(paymentMethod: 'cash');
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final discountAmount = baseFare * discountPercent;
+          final finalFare = (baseFare - discountAmount).clamp(1.0, 9999.0);
+
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              top: 16,
+              left: 20,
+              right: 20,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF161922) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
+                  // Header with Tier & Price
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                rideProv.selectedCategory?.name ?? 'Standard Ride',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${distKm.toStringAsFixed(1)} km • ~${durMins}m',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Comfortable door-to-door transportation',
+                            style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (discountPercent > 0)
+                            Text(
+                              '${rideProv.currencySymbol}${baseFare.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                decoration: TextDecoration.lineThrough,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          Text(
+                            '${rideProv.currencySymbol}${finalFare.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Route Box
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.black26 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.radio_button_checked, size: 16, color: Colors.green),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                pickup,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 14),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 16, color: Colors.red),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                dropoff,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Ride Now vs Schedule for Later
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => scheduleMode = 'now'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: scheduleMode == 'now'
+                                  ? AppColors.primary
+                                  : (isDark ? Colors.white10 : Colors.grey.shade100),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '⚡ Ride Now',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: scheduleMode == 'now' ? Colors.white : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            setModalState(() => scheduleMode = 'later');
+                            final d = await showDatePicker(
+                              context: context,
+                              initialDate: scheduledDate,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 30)),
+                            );
+                            if (d != null) {
+                              final t = await showTimePicker(
+                                context: context,
+                                initialTime: scheduledTime,
+                              );
+                              if (t != null) {
+                                setModalState(() {
+                                  scheduledDate = d;
+                                  scheduledTime = t;
+                                });
+                              }
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: scheduleMode == 'later'
+                                  ? AppColors.primary
+                                  : (isDark ? Colors.white10 : Colors.grey.shade100),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              scheduleMode == 'later'
+                                  ? '📅 ${DateFormat('MMM d').format(scheduledDate)} ${scheduledTime.format(context)}'
+                                  : '📅 Schedule Later',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: scheduleMode == 'later' ? Colors.white : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Promo Code Input
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: promoController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            hintText: 'Enter Promo Code (e.g. RIDE50)',
+                            isDense: true,
+                            prefixIcon: const Icon(Icons.local_offer_outlined, size: 18),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          final code = promoController.text.trim().toUpperCase();
+                          if (code == 'RIDE50') {
+                            setModalState(() {
+                              discountPercent = 0.50;
+                              promoMsg = '🎉 50% discount applied!';
+                            });
+                          } else if (code.isNotEmpty) {
+                            setModalState(() {
+                              discountPercent = 0.15;
+                              promoMsg = '🎉 15% discount applied!';
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber.shade700,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ),
+                        child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  if (promoMsg != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      promoMsg!,
+                      style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+
+                  // Payment Method Row with Selector
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.black26 : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          selectedPayment.paymentMethod == 'stripe'
+                              ? Icons.credit_card
+                              : selectedPayment.paymentMethod == 'momo'
+                                  ? Icons.phone_iphone
+                                  : selectedPayment.paymentMethod == 'wallet'
+                                      ? Icons.account_balance_wallet
+                                      : Icons.payments,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Payment: ${selectedPayment.paymentMethod.toUpperCase()}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                selectedPayment.paymentMethod == 'cash'
+                                    ? 'Pay driver directly on arrival'
+                                    : selectedPayment.paymentMethod == 'momo'
+                                        ? 'MoMo: ${selectedPayment.momoNetwork ?? 'MTN'} • ${selectedPayment.momoPhone ?? ''}'
+                                        : selectedPayment.paymentMethod == 'wallet'
+                                            ? 'In-app wallet balance'
+                                            : 'Card ending in ${selectedPayment.cardLast4 ?? '4242'}',
+                                style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final res = await PaymentGatewaySheet.show(
+                              context,
+                              serviceType: 'ride',
+                              totalAmount: finalFare,
+                              payNowAmount: finalFare,
+                              currencySymbol: rideProv.currencySymbol,
+                              initialMethod: selectedPayment.paymentMethod,
+                            );
+                            if (res != null) {
+                              setModalState(() => selectedPayment = res);
+                            }
+                          },
+                          child: const Text('Change', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Driver Notes
+                  TextField(
+                    controller: notesController,
+                    decoration: InputDecoration(
+                      hintText: 'Notes for driver (e.g. Near main gate, luggage)',
+                      isDense: true,
+                      prefixIcon: const Icon(Icons.note_alt_outlined, size: 18),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Backup Chauffeur Toggle
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: backupChauffeur,
+                        activeColor: AppColors.primary,
+                        onChanged: (v) => setModalState(() => backupChauffeur = v ?? true),
+                      ),
+                      const Expanded(
+                        child: Text(
+                          'Enable Proximity Chauffeur Backup if primary driver is delayed',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Confirm Button
+                  ElevatedButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            setModalState(() => isSubmitting = true);
+
+                            final success = await rideProv.bookRide(
+                              pickupLocation: pickup,
+                              dropoffLocation: dropoff,
+                              pickupLat: _userLat,
+                              pickupLng: _userLng,
+                              dropoffLat: _dropoffLat,
+                              dropoffLng: _dropoffLng,
+                              distanceKm: distKm,
+                              durationMinutes: durMins,
+                              paymentMethod: selectedPayment.paymentMethod,
+                              backupChauffeurEnabled: backupChauffeur,
+                              country: countryProv.selectedCountryCode,
+                              notes: notesController.text.trim(),
+                              promoCode: promoController.text.trim(),
+                              scheduleDate: scheduleMode == 'later' ? DateFormat('yyyy-MM-dd').format(scheduledDate) : null,
+                              scheduleTime: scheduleMode == 'later' ? scheduledTime.format(context) : null,
+                              momoPhone: selectedPayment.momoPhone,
+                              momoNetwork: selectedPayment.momoNetwork,
+                            );
+
+                            setModalState(() => isSubmitting = false);
+
+                            if (success && rideProv.activeRide != null) {
+                              Navigator.pop(ctx);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => RideTrackingScreen(ride: rideProv.activeRide!),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(rideProv.errorMessage ?? 'Failed to request ride. Please retry.'),
+                                  backgroundColor: AppColors.danger,
+                                ),
+                              );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 4,
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : Text(
+                            'Confirm & Dispatch ${rideProv.selectedCategory?.name ?? 'Ride'} (${rideProv.currencySymbol}${finalFare.toStringAsFixed(2)}) →',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
-
-    if (!mounted) return;
-
-    if (success && rideProv.activeRide != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RideTrackingScreen(ride: rideProv.activeRide!),
-        ),
-      );
-    } else {
-      if (rideProv.errorMessage?.contains('Unauthenticated') == true ||
-          rideProv.errorMessage?.contains('sign in') == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Session expired. Please sign in to request a service.'),
-            backgroundColor: AppColors.warning,
-          ),
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(rideProv.errorMessage ?? 'Failed to submit request. Please try again.'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    }
   }
 
   void _showCountrySelector(CountryProvider countryProv) {
@@ -1404,6 +1822,29 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           ),
         ),
 
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Featured Fleet', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RentalCatalogScreen(
+                        initialPickupLocation: _pickupController.text.isNotEmpty ? _pickupController.text : null,
+                        initialDropoffLocation: _dropoffController.text.isNotEmpty ? _dropoffController.text : null,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Search & Filter All Vehicles →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF60A5FA))),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 6),
 
         // Live Vehicles Carousel from API
@@ -1603,6 +2044,29 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           ),
         ),
 
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Featured Chauffeurs', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HireDriverCatalogScreen(
+                        initialPickupLocation: _pickupController.text.isNotEmpty ? _pickupController.text : null,
+                        initialDropoffLocation: _dropoffController.text.isNotEmpty ? _dropoffController.text : null,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Browse Full Chauffeur Directory →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF10B981))),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 6),
 
         // Live Drivers Carousel from API

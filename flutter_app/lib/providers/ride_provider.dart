@@ -179,6 +179,12 @@ class RideProvider extends ChangeNotifier {
     String paymentMethod = 'cash',
     bool? backupChauffeurEnabled,
     String? country,
+    String? notes,
+    String? promoCode,
+    String? scheduleDate,
+    String? scheduleTime,
+    String? momoPhone,
+    String? momoNetwork,
   }) async {
     _isBooking = true;
     _errorMessage = null;
@@ -202,6 +208,12 @@ class RideProvider extends ChangeNotifier {
         'duration_minutes': actualDur,
         'backup_chauffeur_enabled': backupChauffeurEnabled ?? _backupChauffeurEnabled,
         if (country != null) 'country': country,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
+        if (scheduleDate != null) 'pickup_date': scheduleDate,
+        if (scheduleTime != null) 'pickup_time': scheduleTime,
+        if (momoPhone != null) 'momo_phone': momoPhone,
+        if (momoNetwork != null) 'momo_network': momoNetwork,
       });
 
       if ((res.statusCode == 200 || res.statusCode == 201) && res.data['success'] == true) {

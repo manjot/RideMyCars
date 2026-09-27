@@ -6,6 +6,7 @@ import '../../models/vehicle_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/country_provider.dart';
 import '../../services/rental_service.dart';
+import '../payment/booking_confirmation_screen.dart';
 import '../rides/my_rides_screen.dart';
 
 class RentalDetailScreen extends StatefulWidget {
@@ -349,7 +350,27 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     if (result != null && (result['status'] == 'success' || result['status'] == 200)) {
       final booking = result['booking'] ?? {};
       final rentalCode = booking['rental_code'] ?? 'RMC-${widget.vehicle.id}${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
-      _showSuccessDialog(rentalCode, countryProv);
+      final payNow = _getPayNowDeposit(countryProv);
+      final balance = _getBalanceAtPickup(countryProv);
+      final total = _getTotalAmount(countryProv);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingConfirmationScreen(
+            serviceType: 'rental',
+            bookingReference: rentalCode,
+            serviceTitle: 'Car Rental: ${widget.vehicle.fullName}',
+            pickupLocation: _pickupLocationController.text.trim(),
+            dropoffLocation: _differentDropoff ? _dropoffLocationController.text.trim() : _pickupLocationController.text.trim(),
+            dateTimeText: '${DateFormat('MMM d, yyyy').format(_startDate)} to ${DateFormat('MMM d, yyyy').format(_returnDate)} ($_daysCount days)',
+            totalAmount: total,
+            paidAmount: payNow,
+            remainingBalance: balance,
+            paymentMethod: _paymentMethod,
+            currencySymbol: countryProv.currencySymbol,
+          ),
+        ),
+      );
     } else if (result != null && result['message'] != null && !result['message'].toString().contains('could not be found')) {
       final errMsg = result['message'] ?? 'Failed to complete reservation. Please check details and try again.';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -358,7 +379,27 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     } else {
       // Offline / Direct reservation confirmation fallback with synced rates
       final rentalCode = 'RMC-RENT-${widget.vehicle.id}${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-      _showSuccessDialog(rentalCode, countryProv);
+      final payNow = _getPayNowDeposit(countryProv);
+      final balance = _getBalanceAtPickup(countryProv);
+      final total = _getTotalAmount(countryProv);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingConfirmationScreen(
+            serviceType: 'rental',
+            bookingReference: rentalCode,
+            serviceTitle: 'Car Rental: ${widget.vehicle.fullName}',
+            pickupLocation: _pickupLocationController.text.trim(),
+            dropoffLocation: _differentDropoff ? _dropoffLocationController.text.trim() : _pickupLocationController.text.trim(),
+            dateTimeText: '${DateFormat('MMM d, yyyy').format(_startDate)} to ${DateFormat('MMM d, yyyy').format(_returnDate)} ($_daysCount days)',
+            totalAmount: total,
+            paidAmount: payNow,
+            remainingBalance: balance,
+            paymentMethod: _paymentMethod,
+            currencySymbol: countryProv.currencySymbol,
+          ),
+        ),
+      );
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../../services/delivery_service.dart';
+import 'delivery_tracker_screen.dart';
 
 class DeliveryBookingScreen extends StatefulWidget {
   final String? initialPickup;
@@ -357,8 +358,28 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
     final trackingCode = result?['delivery_code'] ?? 'DEL-${Random().nextInt(90000000) + 10000000}';
     final deliveryOtp = result?['delivery_otp'] ?? '${Random().nextInt(9000) + 1000}';
+    final deliveryId = (result?['delivery_id'] is int)
+        ? result!['delivery_id']
+        : int.tryParse(result?['delivery_id']?.toString() ?? '1') ?? 1;
 
-    _showConfirmationDialog(trackingCode, deliveryOtp);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DeliveryTrackerScreen(
+          deliveryId: deliveryId,
+          deliveryCode: trackingCode,
+          pickupLocation: _pickupController.text.trim(),
+          dropoffLocation: _dropoffController.text.trim(),
+          recipientName: _recipientNameController.text.trim(),
+          recipientPhone: _recipientPhoneController.text.trim(),
+          packageCategory: _selectedCategory,
+          totalPrice: _totalAmount,
+          currencySymbol: countryProv.currencySymbol,
+          initialOtp: deliveryOtp,
+          paymentMethod: _paymentMethod,
+        ),
+      ),
+    );
   }
 
   void _showConfirmationDialog(String deliveryCode, String otpPin) {

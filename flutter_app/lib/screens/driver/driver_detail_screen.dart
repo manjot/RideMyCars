@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/driver_model.dart';
 import '../../services/driver_service.dart';
 import '../../services/places_service.dart';
+import '../payment/booking_confirmation_screen.dart';
 
 class DriverDetailScreen extends StatefulWidget {
   final DriverModel? driver;
@@ -331,7 +332,27 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
           : result;
       final bookingCode = bookingData['booking_code']?.toString() ?? 'DRV-REQUESTED';
 
-      _showConfirmationDialog(bookingCode);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingConfirmationScreen(
+            serviceType: 'driver_booking',
+            bookingReference: bookingCode,
+            serviceTitle: widget.driver != null
+                ? 'Executive Chauffeur: ${widget.driver!.name}'
+                : 'Professional Chauffeur Booking',
+            pickupLocation: pickup,
+            dropoffLocation: _dropoffController.text.trim().isNotEmpty
+                ? _dropoffController.text.trim()
+                : 'As Directed / Multi-Stop',
+            dateTimeText: '${DateFormat('MMM d, yyyy').format(_startDate)} at ${_startTime.format(context)} ($_durationCount $_durationType)',
+            totalAmount: _totalPrice,
+            paidAmount: _totalPrice,
+            paymentMethod: _paymentMethod,
+            currencySymbol: _currencySymbol,
+          ),
+        ),
+      );
     } else {
       final errMsg = result?['message']?.toString() ?? 'Failed to submit driver request. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
