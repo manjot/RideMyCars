@@ -3410,7 +3410,7 @@ Route::get('/payment/failed', function () {
     return view('payment.failed');
 });
 
-// Dedicated Apps Hub & Direct APK Download Endpoints
+// Dedicated Apps Hub & App Download Endpoints
 Route::get('/apps', function () {
     return view('apps');
 })->name('apps.index');
@@ -3420,20 +3420,6 @@ Route::get('/download', function () {
 })->name('apps.download');
 
 Route::get('/download/rider', function () {
-    if (request()->has('apk')) {
-        $filePath = public_path('ridemycars-rider.apk');
-        if (file_exists($filePath)) {
-            return response()->download($filePath, 'RideMyCars-Rider.apk', [
-                'Content-Type' => 'application/vnd.android.package-archive',
-            ]);
-        }
-        $fallbackPath = public_path('ridemycars.apk');
-        if (file_exists($fallbackPath)) {
-            return response()->download($fallbackPath, 'RideMyCars-Rider.apk', [
-                'Content-Type' => 'application/vnd.android.package-archive',
-            ]);
-        }
-    }
     return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.app');
 })->name('download.rider');
 
@@ -3450,20 +3436,6 @@ Route::get('/download/app', function () {
 });
 
 Route::get('/download/driver', function () {
-    if (request()->has('apk')) {
-        $filePath = public_path('ridemycars-driver.apk');
-        if (file_exists($filePath)) {
-            return response()->download($filePath, 'RideMyCars-Driver.apk', [
-                'Content-Type' => 'application/vnd.android.package-archive',
-            ]);
-        }
-        $fallbackPath = public_path('ridemycars.apk');
-        if (file_exists($fallbackPath)) {
-            return response()->download($fallbackPath, 'RideMyCars-Driver.apk', [
-                'Content-Type' => 'application/vnd.android.package-archive',
-            ]);
-        }
-    }
     return redirect('https://play.google.com/store/apps/details?id=com.ridemycars.driver');
 })->name('download.driver');
 

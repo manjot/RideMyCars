@@ -118,11 +118,6 @@
                                 </div>
                             </a>
 
-                            <!-- Direct APK Direct Link -->
-                            <a href="{{ route('download.rider', ['apk' => 1]) }}" download="RideMyCars-Rider.apk" class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-brand-500/50 text-gray-800 dark:text-gray-200 rounded-2xl text-xs font-bold transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                Direct Rider APK (39 MB)
-                            </a>
                         </div>
                     </div>
 
@@ -253,12 +248,6 @@
                                 </div>
                             </a>
 
-                            <!-- Direct APK Direct Link -->
-                            <a href="{{ route('download.driver', ['apk' => 1]) }}" download="RideMyCars-Driver.apk" class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-amber-500/50 text-gray-800 dark:text-gray-200 rounded-2xl text-xs font-bold transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                Direct Driver APK (39 MB)
-                            </a>
-
                             <a href="/become-driver" class="flex items-center gap-1.5 px-4 py-3 text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors">
                                 Apply to Drive Online →
                             </a>
@@ -335,17 +324,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#121212] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-3">
                     <span class="w-10 h-10 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-black text-base">1</span>
-                    <h4 class="text-base font-bold text-gray-900 dark:text-white">Download APK or App</h4>
+                    <h4 class="text-base font-bold text-gray-900 dark:text-white">Choose Your App</h4>
                     <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                        Tap either the <strong>Rider APK</strong> or <strong>Driver APK</strong> download button above to save the package directly to your phone.
+                        Tap either <strong>Google Play</strong> or <strong>App Store</strong>, or scan the official QR code to open the store listing directly on your phone.
                     </p>
                 </div>
 
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#121212] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-3">
                     <span class="w-10 h-10 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-black text-base">2</span>
-                    <h4 class="text-base font-bold text-gray-900 dark:text-white">Allow Installation</h4>
+                    <h4 class="text-base font-bold text-gray-900 dark:text-white">Install Directly</h4>
                     <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                        If prompted by Android, tap <em>"Allow from this source"</em> or <em>"Install anyway"</em> to complete the secure direct installation.
+                        Tap <em>"Install"</em> or <em>"Get"</em> in the official app store for verified, malware-free installation with automatic background updates.
                     </p>
                 </div>
 
