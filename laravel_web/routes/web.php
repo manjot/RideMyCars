@@ -3211,7 +3211,7 @@ Route::get('/wallet', function () {
     $transactions = \App\Models\WalletTransaction::where('user_id', $user->id)->latest()->take(30)->get();
 
     return view('wallet', compact('user', 'summary', 'withdrawals', 'payoutMethods', 'transactions'));
-})->middleware('auth')->name('wallet.index');
+})->name('wallet.index');
 
 Route::post('/wallet/withdraw', function (\Illuminate\Http\Request $request) {
     $user = auth()->user();
