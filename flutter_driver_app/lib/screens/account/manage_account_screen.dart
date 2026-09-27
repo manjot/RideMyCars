@@ -5,6 +5,7 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
@@ -445,12 +446,28 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   _buildActionTile(
                     Icons.emergency_rounded,
                     'SOS & Emergency Contacts',
-                    'Manage trusted emergency contacts and SOS alert settings',
+                    'In-app emergency contacts & live safety dispatch',
+                    badge: 'SOS',
+                    iconColor: AppColors.error,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SosContactsScreen()),
                       );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildActionTile(
+                    Icons.language_rounded,
+                    'Web SOS Safety Portal',
+                    'https://www.ridemycars.com/sos',
+                    badge: 'WEB',
+                    iconColor: AppColors.primary,
+                    onTap: () async {
+                      final uri = Uri.parse('https://www.ridemycars.com/sos');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
                     },
                   ),
                   const SizedBox(height: 10),
@@ -562,7 +579,17 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     );
   }
 
-  Widget _buildActionTile(IconData icon, String title, String subtitle, {VoidCallback? onTap, bool isDestructive = false}) {
+  Widget _buildActionTile(
+    IconData icon,
+    String title,
+    String subtitle, {
+    VoidCallback? onTap,
+    bool isDestructive = false,
+    String? badge,
+    Color? iconColor,
+  }) {
+    final effectiveColor = isDestructive ? AppColors.error : (iconColor ?? AppColors.primary);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -577,20 +604,44 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: isDestructive ? AppColors.error : AppColors.primary, size: 22),
+            Icon(icon, color: effectiveColor, size: 22),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isDestructive ? AppColors.error : AppColors.textLight,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: isDestructive ? AppColors.error : AppColors.textLight,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: effectiveColor.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: effectiveColor.withOpacity(0.4)),
+                          ),
+                          child: Text(
+                            badge,
+                            style: TextStyle(
+                              color: effectiveColor,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
+                  const SizedBox(height: 2),
                   Text(subtitle, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
                 ],
               ),

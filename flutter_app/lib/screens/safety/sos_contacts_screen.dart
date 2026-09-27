@@ -193,6 +193,14 @@ class _SosContactsScreenState extends State<SosContactsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.language_rounded, color: Colors.white),
+            tooltip: 'Web SOS Portal (https://www.ridemycars.com/sos)',
+            onPressed: () => launchUrl(
+              Uri.parse('https://www.ridemycars.com/sos'),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
             onPressed: _loadContacts,
           ),
@@ -200,9 +208,16 @@ class _SosContactsScreenState extends State<SosContactsScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)))
-          : _contacts.isEmpty
-              ? _buildEmptyState() // Matching Reference Screenshot 2
-              : _buildContactsList(),
+          : Column(
+              children: [
+                _buildWebPortalBanner(),
+                Expanded(
+                  child: _contacts.isEmpty
+                      ? _buildEmptyState() // Matching Reference Screenshot 2
+                      : _buildContactsList(),
+                ),
+              ],
+            ),
       bottomNavigationBar: _contacts.isEmpty
           ? Container(
               padding: const EdgeInsets.all(16),
@@ -228,6 +243,54 @@ class _SosContactsScreenState extends State<SosContactsScreen> {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildWebPortalBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF97316).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF97316).withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.public_rounded, color: Color(0xFFF97316), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Web SOS Safety Portal',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                Text(
+                  'https://www.ridemycars.com/sos',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => launchUrl(
+              Uri.parse('https://www.ridemycars.com/sos'),
+              mode: LaunchMode.externalApplication,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF97316),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Open Web', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

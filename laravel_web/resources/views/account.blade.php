@@ -148,6 +148,16 @@
                                 <span>Privacy & Data</span>
                             </div>
                         </button>
+
+                        <!-- 7. SOS Emergency Suite -->
+                        <a href="/sos" 
+                           class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-between font-bold border border-red-500/20 group">
+                            <div class="flex items-center gap-3">
+                                <span class="text-base group-hover:scale-110 transition-transform">🚨</span>
+                                <span>SOS Emergency</span>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
+                        </a>
                     </nav>
 
                     <!-- Quick Logout Button -->
@@ -272,6 +282,35 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Emergency SOS Safety Banner in Profile -->
+                    <div class="mb-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-red-950/40 via-slate-900/90 to-red-950/30 border border-red-500/30 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
+                                🚨
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-black uppercase tracking-wider text-red-400 bg-red-500/20 px-2.5 py-0.5 rounded-full border border-red-500/30">
+                                        SOS Safety Shield
+                                    </span>
+                                    <span class="text-xs text-slate-400 font-semibold">
+                                        24/7 Rapid Emergency Response
+                                    </span>
+                                </div>
+                                <h3 class="text-base sm:text-lg font-black text-white">
+                                    Manage Emergency Contacts & Live SOS Dispatch
+                                </h3>
+                                <p class="text-xs text-slate-300 mt-0.5">
+                                    Configure trusted family and safety contacts who receive automatic GPS coordinates in an emergency.
+                                </p>
+                            </div>
+                        </div>
+                        <a href="/sos" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/30 shrink-0 flex items-center gap-2 hover:scale-105">
+                            <span>Open SOS Suite</span>
+                            <span>&rarr;</span>
+                        </a>
                     </div>
 
                     <!-- Instant Booking Shortcuts Grid -->

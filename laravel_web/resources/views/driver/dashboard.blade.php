@@ -119,11 +119,15 @@
                         <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.994 1.994 0 0 1-.61-.954V2.768c.118-.363.33-.687.609-.954zm11.233 11.233l2.257 2.257-11.83 6.697 9.573-8.954zm2.257-2.094l2.845 1.611c.907.514.907 1.353 0 1.867l-2.845 1.611-2.09-2.09 2.09-2.999zm-2.257-2.093L5.27 0.906l11.83 6.697-2.258 2.257z"/></svg>
                         <span>Driver App (Play Store)</span>
                     </a>
+                    <a href="/sos" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-md shadow-red-600/30 transition-all hover:scale-105">
+                        <span class="animate-pulse">🚨</span>
+                        <span>SOS Emergency</span>
+                    </a>
                 </div>
             </div>
 
             <!-- Mobile App Companion Banner -->
-            <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/5 to-transparent border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="mb-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/5 to-transparent border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
                     <div class="w-10 h-10 rounded-xl bg-amber-500 text-gray-950 flex items-center justify-center font-black text-lg shrink-0">
                         🚕
@@ -140,6 +144,28 @@
                     </a>
                     <a href="/apps#driver-app" class="px-3.5 py-2 bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-semibold hover:bg-gray-50 dark:hover:bg-white/15 transition-all">
                         Store / QR
+                    </a>
+                </div>
+            </div>
+
+            <!-- 24/7 Driver Safety & SOS Shield Banner -->
+            <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/30 via-slate-900/90 to-red-950/20 border border-red-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md">
+                        🚨
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <h4 class="text-sm font-bold text-white">Driver Safety Shield & Emergency Contacts</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-red-500/20 text-red-400 border border-red-500/30">SOS Live</span>
+                        </div>
+                        <p class="text-xs text-slate-300">Set trusted contacts for automatic GPS dispatch in an emergency. Directly access 24/7 security hotline or dial local emergency services.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                    <a href="/sos" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-red-600/30 flex items-center gap-2 hover:scale-105">
+                        <span>Open SOS Suite</span>
+                        <span>&rarr;</span>
                     </a>
                 </div>
             </div>

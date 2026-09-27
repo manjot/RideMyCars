@@ -1375,6 +1375,13 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
                                     <span class="font-medium text-black dark:text-white text-[15px]">Manage account</span>
                                 </a>
+                                <a href="/sos" class="flex items-center gap-3 py-3 px-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
+                                    <div class="w-5 h-5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-black">
+                                        🚨
+                                    </div>
+                                    <span class="font-bold text-red-600 dark:text-red-400 text-[15px]">SOS Emergency Contacts</span>
+                                    <span class="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
+                                </a>
                                 <a href="/legal" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                                     <span class="font-medium text-black dark:text-white text-[15px]">Legal</span>
@@ -1408,6 +1415,13 @@
                                 <a href="/account" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
                                     <span class="font-medium text-black dark:text-white text-[15px]">Manage account</span>
+                                </a>
+                                <a href="/sos" class="flex items-center gap-3 py-3 px-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
+                                    <div class="w-5 h-5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-black">
+                                        🚨
+                                    </div>
+                                    <span class="font-bold text-red-600 dark:text-red-400 text-[15px]">SOS Emergency Contacts</span>
+                                    <span class="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
                                 </a>
                                 <a href="/my-rides" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
