@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'phone', 'country', 'city', 'phone_verified_at', 'google_id', 'apple_id', 'oauth_provider', 'oauth_avatar', 'password', 'role', 'avatar', 'referral_code', 'referred_by', 'referrer_id', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
+#[Fillable(['name', 'email', 'phone', 'country', 'city', 'wallet_balance', 'phone_verified_at', 'google_id', 'apple_id', 'oauth_provider', 'oauth_avatar', 'password', 'role', 'avatar', 'referral_code', 'referred_by', 'referrer_id', 'membership_type', 'membership_status', 'membership_price', 'corporate_company_name', 'corporate_billing_email', 'terms_accepted', 'terms_accepted_at', 'terms_version', 'account_status', 'suspension_reason', 'suspended_at', 'admin_notes'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -218,6 +218,36 @@ class User extends Authenticatable implements FilamentUser
     public function receipts()
     {
         return $this->hasMany(Receipt::class)->orderBy('created_at', 'desc');
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(WalletWithdrawal::class)->orderBy('created_at', 'desc');
+    }
+
+    public function payoutMethods()
+    {
+        return $this->hasMany(UserPayoutMethod::class)->orderBy('is_default', 'desc')->latest();
+    }
+
+    public function defaultPayoutMethod()
+    {
+        return $this->hasOne(UserPayoutMethod::class)->where('is_default', true);
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class)->orderBy('created_at', 'desc');
+    }
+
+    public function getWalletBalanceAttribute($value): float
+    {
+        return (float) ($value ?? 0.00);
+    }
+
+    public function hasSufficientWalletBalance(float $amount): bool
+    {
+        return $this->wallet_balance >= $amount && $amount > 0;
     }
 }
 

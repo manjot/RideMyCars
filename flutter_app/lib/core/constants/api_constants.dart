@@ -56,4 +56,11 @@ class ApiConstants {
   static String receiptResend(int id) => '/receipts/$id/resend';
   static String receiptViewWeb(String token) => 'https://www.ridemycars.com/receipts/$token';
   static String receiptDownloadWeb(String token) => 'https://www.ridemycars.com/receipts/$token/download';
+
+  // Wallet & Withdrawals
+  static const String walletBalance = '/wallet/balance';
+  static const String walletWithdraw = '/wallet/withdraw';
+  static const String walletWithdrawals = '/wallet/withdrawals';
+  static const String walletPayoutMethods = '/wallet/payout-methods';
+  static const String walletTransactions = '/wallet/transactions';
 }

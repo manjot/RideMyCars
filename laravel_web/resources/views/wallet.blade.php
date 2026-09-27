@@ -1,592 +1,824 @@
 <x-layout :robots="'noindex, nofollow'">
-    <x-slot:title>Wallet & Earnings — RideMyCars</x-slot>
+    <x-slot:title>Wallet & Withdrawals — RideMyCars</x-slot>
 
-    <main class="flex-1 w-full max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8 bg-white dark:bg-[#0a0a0a]"
-          x-data="walletManager()">
+    @php
+        $currUser = auth()->user() ?? (\App\Models\User::where('role', 'driver')->first() ?? \App\Models\User::first());
+        $summary = $summary ?? ($currUser ? \App\Services\WalletService::getWalletSummary($currUser) : [
+            'balance' => 215.95,
+            'currency' => '₹',
+            'pending_withdrawals_sum' => 0.0,
+            'approved_withdrawals_sum' => 0.0,
+            'withdrawals_count' => ['pending' => 0, 'approved' => 0, 'rejected' => 0, 'total' => 0],
+            'settings' => \App\Services\WalletService::getSettings(),
+        ]);
+        $withdrawalsList = $withdrawals ?? ($currUser ? \App\Models\WalletWithdrawal::where('user_id', $currUser->id)->latest()->take(25)->get() : collect());
+        $savedPayouts = $payoutMethods ?? ($currUser ? \App\Models\UserPayoutMethod::where('user_id', $currUser->id)->orderBy('is_default', 'desc')->get() : collect());
+        $transactionsList = $transactions ?? ($currUser ? \App\Models\WalletTransaction::where('user_id', $currUser->id)->latest()->take(25)->get() : collect());
+    @endphp
+
+    <main class="flex-1 w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 bg-white dark:bg-[#0a0a0a]"
+          x-data="walletManager({
+              initialBalance: {{ (float) ($summary['balance'] ?? 0.00) }},
+              currency: '{{ $summary['currency'] ?? '₹' }}',
+              settings: {{ json_encode($summary['settings'] ?? \App\Services\WalletService::getSettings()) }},
+              withdrawals: {{ json_encode($withdrawalsList) }},
+              payoutMethods: {{ json_encode($savedPayouts) }},
+              transactions: {{ json_encode($transactionsList) }}
+          })">
         
-        <!-- Success Toast Notification -->
+        <!-- Success / Error Toast Notification -->
         <template x-teleport="body">
-            <div x-show="toast" style="display: none;" 
+            <div x-show="toast.message" style="display: none;" 
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-[-20px]"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 translate-y-[-20px]"
-                 class="fixed top-24 right-4 sm:right-8 z-[999999] max-w-md w-full bg-emerald-600 text-white shadow-2xl rounded-2xl p-4 flex items-center justify-between font-bold text-sm">
+                 class="fixed top-24 right-4 sm:right-8 z-[999999] max-w-md w-full text-white shadow-2xl rounded-2xl p-4 flex items-center justify-between font-bold text-sm"
+                 :class="toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'">
                 <div class="flex items-center gap-3">
-                    <span class="text-xl">🎉</span>
-                    <span x-text="toast"></span>
+                    <span class="text-xl" x-text="toast.type === 'error' ? '⚠️' : '🎉'"></span>
+                    <span x-text="toast.message"></span>
                 </div>
-                <button @click="toast = ''" class="text-white/80 hover:text-white font-bold ml-4 text-base">✕</button>
+                <button @click="toast.message = ''" class="text-white/80 hover:text-white font-bold ml-4 text-base">✕</button>
             </div>
         </template>
 
-        <!-- Top Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-            <!-- Balance Card -->
-            <div class="bg-white dark:bg-[#111] border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                <div>
-                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Balance</h3>
-                    <div class="text-3xl font-bold text-black dark:text-white mb-4" x-text="'$' + balance.toFixed(2)"></div>
-                    <template x-if="!bankAccount">
-                        <p class="text-sm font-bold text-black dark:text-white mb-6">Add the bank account where you want to receive payouts</p>
-                    </template>
-                    <template x-if="bankAccount">
-                        <div class="p-3.5 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl mb-6 border border-gray-200 dark:border-white/10">
-                            <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">✓ Linked Bank Account</p>
-                            <p class="text-sm font-bold text-gray-900 dark:text-white mt-1" x-text="bankAccount.bank_name + ' (•••• ' + (bankAccount.account_number ? bankAccount.account_number.slice(-4) : '4821') + ')'"></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="'Holder: ' + bankAccount.holder_name"></p>
-                        </div>
-                    </template>
-                </div>
-                <div>
-                    <button type="button" @click="showBankModal = true" class="bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-sm font-bold py-2.5 px-5 rounded-full inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                        <span x-text="bankAccount ? 'Update bank account' : 'Add bank account'"></span>
-                    </button>
-                </div>
+        <!-- Back & Title Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <a href="{{ auth()->user() && auth()->user()->role === 'driver' ? '/driver/dashboard' : '/my-rides' }}" 
+                   class="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+                </a>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Wallet</h1>
             </div>
+            <div class="flex items-center gap-2">
+                <button type="button" @click="activeTab = 'withdrawals'" 
+                        class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border"
+                        :class="activeTab === 'withdrawals' ? 'bg-amber-500 text-gray-950 border-amber-500' : 'bg-transparent text-gray-600 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-400'">
+                    Withdrawal History (<span x-text="withdrawals.length"></span>)
+                </button>
+            </div>
+        </div>
 
-            <!-- RideMyCars Cash Card -->
-            <div class="bg-gradient-to-br from-[#f6f6f6] to-[#e6e6e6] dark:from-[#1a1a1a] dark:to-[#222] rounded-2xl p-6 flex flex-col justify-between border border-gray-100 dark:border-white/5 min-h-[200px] relative overflow-hidden">
-                <div class="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-bl from-white/40 to-transparent dark:from-white/5 dark:to-transparent skew-x-[-20deg] translate-x-1/4"></div>
-                <div class="relative z-10">
-                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">RideMyCars Cash</h3>
-                    <div class="text-3xl font-bold text-black dark:text-white mb-6" x-text="'$' + giftCash.toFixed(2)"></div>
+        <!-- HERO WALLET CARD (Matching Reference 1 & 2) -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#f97316] via-[#ea580c] to-[#c2410c] text-white p-7 sm:p-8 shadow-xl shadow-orange-500/20 mb-8 border border-white/10">
+            <!-- Decorative Background Graphic -->
+            <div class="absolute -right-8 -bottom-8 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+            <div class="absolute -left-8 -top-8 w-40 h-40 rounded-full bg-black/10 blur-xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col items-center text-center">
+                <span class="text-xs sm:text-sm font-semibold tracking-wide uppercase text-white/80 mb-2">
+                    Wallet Balance
+                </span>
+                
+                <div class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-6 flex items-baseline justify-center gap-1.5">
+                    <span x-text="balance.toFixed(2)"></span>
+                    <span class="text-3xl sm:text-4xl font-extrabold text-white/90" x-text="currency"></span>
                 </div>
-                <div class="relative z-10">
-                    <button type="button" @click="showGiftModal = true" class="bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-sm font-bold py-2.5 px-5 rounded-full inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                        + Gift card
+
+                <!-- Action Buttons Row: Add Money & Withdraw (Circled in Reference 1) -->
+                <div class="w-full max-w-md grid grid-cols-2 gap-3 sm:gap-4 pt-2 border-t border-white/20">
+                    <button type="button" @click="showAddMoneyModal = true"
+                            class="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-sm transition-all shadow-sm active:scale-95 border border-white/20 backdrop-blur-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                        <span>Add Money</span>
+                    </button>
+
+                    <button type="button" @click="openWithdrawModal()"
+                            id="wallet-withdraw-btn"
+                            class="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white hover:bg-gray-100 text-orange-950 font-black text-sm transition-all shadow-lg shadow-black/10 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/></svg>
+                        <span>Withdraw</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Payment Methods -->
-        <div class="mb-12">
-            <h2 class="text-xl font-bold text-black dark:text-white mb-6">Payment methods</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <!-- Dynamic List of Payment Methods -->
-                <template x-for="(pm, index) in paymentMethods" :key="index">
-                    <div class="rounded-2xl p-5 min-h-[160px] relative border transition-all cursor-pointer shadow-sm"
-                         :class="pm.preferred ? 'bg-[#3c7840] hover:bg-[#346b38] border-transparent text-white' : 'bg-[#ebebeb] dark:bg-[#222] border-transparent hover:border-gray-300 dark:hover:border-white/20 text-black dark:text-white'">
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-[15px]" x-text="pm.name"></span>
-                                <template x-if="pm.preferred">
-                                    <span class="bg-white/20 text-white text-[11px] font-bold px-2 py-0.5 rounded">Preferred</span>
+        <!-- NAVIGATION TABS -->
+        <div class="flex items-center border-b border-gray-200 dark:border-white/10 mb-6 gap-6 sm:gap-8 text-sm font-bold">
+            <button type="button" @click="activeTab = 'transactions'" 
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+                    :class="activeTab === 'transactions' ? 'border-orange-500 text-orange-600 dark:text-orange-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/></svg>
+                <span>Recent Transactions</span>
+            </button>
+
+            <button type="button" @click="activeTab = 'withdrawals'" 
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer relative"
+                    :class="activeTab === 'withdrawals' ? 'border-orange-500 text-orange-600 dark:text-orange-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span>Recent Withdrawal</span>
+                <template x-if="pendingCount > 0">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                </template>
+            </button>
+
+            <button type="button" @click="activeTab = 'payout_methods'" 
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+                    :class="activeTab === 'payout_methods' ? 'border-orange-500 text-orange-600 dark:text-orange-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                <span>Payout Accounts</span>
+            </button>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB 1: RECENT TRANSACTIONS (Matching Reference 1) -->
+        <!-- ======================================================== -->
+        <div x-show="activeTab === 'transactions'" x-transition:enter="transition ease-out duration-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Recent Transactions</h3>
+                <span class="text-xs text-gray-500" x-text="transactions.length + ' records'"></span>
+            </div>
+
+            <template x-if="transactions.length === 0">
+                <div class="p-8 text-center rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+                    <div class="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+                        💳
+                    </div>
+                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">No transactions recorded yet</p>
+                    <p class="text-xs text-gray-500 mt-1">Earnings, ride commissions, incentives, and approved withdrawals will appear here.</p>
+                </div>
+            </template>
+
+            <div class="space-y-3">
+                <template x-for="(trx, idx) in transactions" :key="trx.id || idx">
+                    <div class="flex items-center justify-between p-4 rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-[#121212] shadow-sm hover:border-orange-500/30 transition-all">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                                 :class="trx.type === 'withdrawal' ? 'bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'">
+                                <template x-if="trx.type === 'withdrawal'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                                </template>
+                                <template x-if="trx.type !== 'withdrawal'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 5 7 7-7 7"/><path d="M5 12h14"/></svg>
                                 </template>
                             </div>
-                            <div class="w-8 h-8 rounded flex items-center justify-center"
-                                 :class="pm.preferred ? 'bg-[#bedca9] text-[#2c582f]' : 'bg-black text-white dark:bg-white dark:text-black'">
-                                <template x-if="pm.type === 'upi'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h6v6H3z"/><path d="M15 3h6v6h-6z"/><path d="M3 15h6v6H3z"/><path d="M21 21v-6h-6"/><path d="M15 15v6h6"/><path d="M9 9h6v6H9z"/></svg>
-                                </template>
-                                <template x-if="pm.type === 'momo'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1H7C5.34 1 4 2.34 4 4v16c0 1.66 1.34 3 3 3h10c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-5 20c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm6.5-4H5.5V4h13v13z"/></svg>
-                                </template>
-                                <template x-if="pm.type === 'card'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-                                </template>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white" x-text="trx.description || trx.type"></h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="formatDate(trx.created_at)"></p>
                             </div>
                         </div>
-                        <template x-if="pm.details">
-                            <p class="text-xs mt-8 opacity-80 font-medium" x-text="pm.details"></p>
+
+                        <div class="text-right">
+                            <div class="text-base font-black"
+                                 :class="trx.type === 'withdrawal' ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
+                                <span x-text="trx.type === 'withdrawal' ? '- ' : '+ '"></span>
+                                <span x-text="(trx.currency || currency) + parseFloat(trx.amount).toFixed(2)"></span>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full"
+                                  :class="trx.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 text-gray-600'">
+                                <span x-text="trx.status"></span>
+                            </span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB 2: RECENT WITHDRAWAL (Matching Reference 2) -->
+        <!-- ======================================================== -->
+        <div x-show="activeTab === 'withdrawals'" x-transition:enter="transition ease-out duration-200">
+            <!-- Filter Pills -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Withdrawal History</h3>
+                <div class="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 text-xs font-bold">
+                    <button type="button" @click="filterStatus = 'all'" 
+                            :class="filterStatus === 'all' ? 'bg-white dark:bg-white/20 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
+                            class="px-2.5 py-1 rounded-lg transition-all">All</button>
+                    <button type="button" @click="filterStatus = 'pending'" 
+                            :class="filterStatus === 'pending' ? 'bg-amber-500 text-gray-950 shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
+                            class="px-2.5 py-1 rounded-lg transition-all">Pending</button>
+                    <button type="button" @click="filterStatus = 'approved'" 
+                            :class="filterStatus === 'approved' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
+                            class="px-2.5 py-1 rounded-lg transition-all">Approved</button>
+                    <button type="button" @click="filterStatus = 'rejected'" 
+                            :class="filterStatus === 'rejected' ? 'bg-red-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'"
+                            class="px-2.5 py-1 rounded-lg transition-all">Rejected</button>
+                </div>
+            </div>
+
+            <!-- EMPTY STATE (Matching Reference 2) -->
+            <template x-if="filteredWithdrawals.length === 0">
+                <div class="py-16 px-4 text-center rounded-3xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+                    <div class="w-32 h-32 mx-auto mb-6 flex items-center justify-center rounded-full bg-orange-500/10 text-orange-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/><path d="M7 15h.01"/><path d="M11 15h2"/></svg>
+                    </div>
+                    <h4 class="text-base font-bold text-gray-900 dark:text-white">No payment history yet.</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
+                        Start your journey by booking a ride or providing trips today! All your payout requests will be listed here.
+                    </p>
+                    <div class="mt-6">
+                        <button type="button" @click="openWithdrawModal()"
+                                class="px-7 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-950 font-black rounded-2xl text-sm transition-all shadow-lg shadow-orange-500/25 active:scale-95">
+                            Request Withdraw
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- WITHDRAWAL LIST -->
+            <div class="space-y-4" x-show="filteredWithdrawals.length > 0">
+                <template x-for="item in filteredWithdrawals" :key="item.id || item.withdrawal_ref">
+                    <div class="p-5 rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-[#121212] shadow-sm hover:shadow-md transition-all">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-white/10">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-mono font-bold text-gray-500" x-text="item.withdrawal_ref"></span>
+                                    <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                                          :class="{
+                                              'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700': item.status === 'pending',
+                                              'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700': item.status === 'approved',
+                                              'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-300 dark:border-red-700': item.status === 'rejected'
+                                          }"
+                                          x-text="item.status"></span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1" x-text="'Requested: ' + formatDate(item.created_at)"></p>
+                            </div>
+
+                            <div class="text-left sm:text-right">
+                                <div class="text-xl font-black text-gray-900 dark:text-white"
+                                     x-text="(item.currency || currency) + parseFloat(item.amount).toFixed(2)"></div>
+                                <div class="text-[11px] font-bold text-gray-500" x-text="item.payout_method === 'momo' ? '📱 Mobile Money (MoMo)' : '🏦 Bank Transfer'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Payout Account Snapshot -->
+                        <div class="pt-3 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-600 dark:text-gray-300 gap-2">
+                            <div>
+                                <template x-if="item.payout_method === 'momo'">
+                                    <span>
+                                        <strong>Network:</strong> <span x-text="item.payout_details?.momo_network || 'MoMo'"></span> • 
+                                        <strong>Number:</strong> <span x-text="item.payout_details?.momo_phone || '—'"></span>
+                                    </span>
+                                </template>
+                                <template x-if="item.payout_method !== 'momo'">
+                                    <span>
+                                        <strong>Bank:</strong> <span x-text="item.payout_details?.bank_name || 'Bank'"></span> • 
+                                        <strong>Acc:</strong> <span x-text="item.payout_details?.account_number ? '•••• ' + item.payout_details.account_number.slice(-4) : '••••'"></span>
+                                    </span>
+                                </template>
+                            </div>
+
+                            <!-- Approved / Transaction Ref -->
+                            <template x-if="item.status === 'approved'">
+                                <div class="text-emerald-600 dark:text-emerald-400 font-bold">
+                                    ✓ Disbursed <span x-show="item.transaction_reference" x-text="'• Ref: ' + item.transaction_reference"></span>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- REJECTION REASON CALLOUT (If Rejected) -->
+                        <template x-if="item.status === 'rejected'">
+                            <div class="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-xs">
+                                <p class="font-bold text-red-700 dark:text-red-300">Declined by Administration:</p>
+                                <p class="text-red-600 dark:text-red-400 mt-0.5" x-text="item.rejection_reason || 'Please verify payout account details and request again.'"></p>
+                            </div>
                         </template>
                     </div>
                 </template>
             </div>
 
-            <button type="button" @click="showPaymentModal = true" class="flex items-center gap-4 text-black dark:text-white font-bold text-base hover:bg-gray-50 dark:hover:bg-[#111] p-3 -ml-3 rounded-xl transition-colors cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Add payment method
-            </button>
-        </div>
-
-        <hr class="border-gray-200 dark:border-white/10 mb-8">
-
-        <!-- Profiles -->
-        <div class="mb-12">
-            <h2 class="text-xl font-bold text-black dark:text-white mb-4">Profiles</h2>
-            <div class="space-y-1">
-                <button type="button" @click="openProfileModal('personal')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors text-left cursor-pointer">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border border-brand-500/30 shrink-0">
-                            @if(auth()->user()->avatar_url)
-                                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div style="display: none;" class="w-full h-full bg-black text-white items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                </div>
-                            @else
-                                <div class="w-full h-full bg-black text-white flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                </div>
-                            @endif
-                        </div>
-                        <div>
-                            <div class="font-bold text-[15px] text-black dark:text-white">Personal</div>
-                            <div class="text-[13px] text-gray-500 font-medium">Default • Stripe / MoMo Pay</div>
-                        </div>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-black dark:text-white"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-                <button type="button" @click="openProfileModal('business')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors text-left cursor-pointer">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-[#2d6def] text-white rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10-2h4v2h-4V5z"/></svg>
-                        </div>
-                        <div>
-                            <div class="font-bold text-[15px] text-black dark:text-white">ajath Infotech private limited</div>
-                            <div class="text-[13px] text-gray-500 font-medium">Business Account • Expense Code Active</div>
-                        </div>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-black dark:text-white"><path d="m9 18 6-6-6-6"/></svg>
+            <!-- Sticky Bottom Request Withdraw CTA (Matching Reference 2) -->
+            <div class="mt-8 pt-4 border-t border-gray-100 dark:border-white/10 text-center">
+                <button type="button" @click="openWithdrawModal()"
+                        class="w-full sm:w-auto px-10 py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-950 font-black rounded-2xl text-sm transition-all shadow-lg shadow-orange-500/25 active:scale-95 inline-flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                    <span>Request Withdraw</span>
                 </button>
             </div>
         </div>
 
-        <hr class="border-gray-200 dark:border-white/10 mb-8">
-
-        <!-- Shared with you -->
-        <div class="mb-12">
-            <h2 class="text-[15px] font-medium text-gray-600 dark:text-gray-400 mb-4">Shared with you</h2>
-            <button type="button" @click="showBusinessModal = true" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors text-left cursor-pointer">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gray-300 dark:bg-gray-700 text-white rounded-full flex items-center justify-center shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                    </div>
-                    <div>
-                        <div class="font-bold text-[15px] text-black dark:text-white flex items-center gap-2">
-                            <span>Manage business rides for others</span>
-                            <template x-if="businessRequestSent">
-                                <span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-full">Pending Approval</span>
-                            </template>
-                        </div>
-                        <div class="text-[13px] text-gray-500 font-medium mt-0.5" x-text="businessRequestSent ? ('Access requested to ' + (businessForm.email || 'admin')) : 'Request access to their business profile'"></div>
-                    </div>
+        <!-- ======================================================== -->
+        <!-- TAB 3: PAYOUT ACCOUNTS (Bank & MoMo) -->
+        <!-- ======================================================== -->
+        <div x-show="activeTab === 'payout_methods'" x-transition:enter="transition ease-out duration-200">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Linked Payout Accounts</h3>
+                    <p class="text-xs text-gray-500">Accounts where approved withdrawals are directly disbursed.</p>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-black dark:text-white"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-        </div>
+                <button type="button" @click="showPayoutMethodModal = true"
+                        class="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+                    + Add Account
+                </button>
+            </div>
 
-        <hr class="border-gray-200 dark:border-white/10 mb-8">
-
-        <!-- Vouchers -->
-        <div class="mb-12">
-            <h2 class="text-xl font-bold text-black dark:text-white mb-6">Vouchers</h2>
-            <template x-if="vouchers.length > 0">
-                <div class="space-y-2 mb-4">
-                    <template x-for="(v, index) in vouchers" :key="index">
-                        <div class="p-4 bg-gray-50 dark:bg-[#181818] rounded-xl border border-gray-200 dark:border-white/10 flex justify-between items-center">
-                            <div>
-                                <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="v.code"></span>
-                                <p class="text-xs text-gray-500 mt-0.5" x-text="v.discount"></p>
-                            </div>
-                            <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">Active</span>
-                        </div>
-                    </template>
+            <template x-if="payoutMethods.length === 0">
+                <div class="p-8 text-center rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+                        🏦
+                    </div>
+                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">No linked payout account yet</p>
+                    <p class="text-xs text-gray-500 mt-1">Add your Bank Account or Mobile Money (MoMo) number to withdraw your earnings.</p>
+                    <button type="button" @click="showPayoutMethodModal = true" class="mt-4 px-4 py-2 bg-orange-500 text-gray-950 font-bold text-xs rounded-xl">
+                        + Add Payout Account
+                    </button>
                 </div>
             </template>
-            <button type="button" @click="showVoucherModal = true" class="flex items-center gap-4 text-black dark:text-white font-bold text-base hover:bg-gray-50 dark:hover:bg-[#111] p-3 -ml-3 rounded-xl transition-colors cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Add voucher
-            </button>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <template x-for="(pm, idx) in payoutMethods" :key="pm.id || idx">
+                    <div class="p-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#121212] relative shadow-sm hover:border-orange-500/40 transition-all flex flex-col justify-between min-h-[140px]">
+                        <div>
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg" x-text="pm.type === 'momo' ? '📱' : '🏦'"></span>
+                                    <h4 class="font-bold text-sm text-gray-900 dark:text-white" x-text="pm.type === 'momo' ? (pm.momo_network || 'MoMo') : (pm.bank_name || 'Bank Account')"></h4>
+                                </div>
+                                <template x-if="pm.is_default">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">Default</span>
+                                </template>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
+                                <p x-text="pm.type === 'momo' ? 'Phone: ' + pm.momo_phone : 'Acc: •••• ' + (pm.account_number ? pm.account_number.slice(-4) : '••••')"></p>
+                                <p class="text-[11px] text-gray-500" x-text="'Holder: ' + (pm.account_holder_name || pm.momo_account_name || '{{ auth()->user()->name ?? 'Account Holder' }}')"></p>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-xs">
+                            <span class="text-gray-400 text-[11px]" x-text="pm.type === 'momo' ? 'Mobile Money' : (pm.routing_code ? 'IFSC: ' + pm.routing_code : 'Direct Transfer')"></span>
+                            <button type="button" @click="deletePayoutMethod(pm.id)" class="text-red-500 hover:text-red-700 font-bold text-xs">Remove</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
 
-        <!-- MODAL 1: ADD BANK ACCOUNT -->
+        <!-- ======================================================== -->
+        <!-- MODAL: WITHDRAWAL REQUEST (Matching Reference 3) -->
+        <!-- ======================================================== -->
         <template x-teleport="body">
-            <div x-show="showBankModal" style="display: none;" 
-                 class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            <div x-show="showWithdrawModal" style="display: none;"
+                 class="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
                  x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:enter-start="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95">
                 
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showBankModal = false">
-                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Add Bank Account</h3>
-                        <button type="button" @click="showBankModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
-                    </div>
+                <div class="bg-white dark:bg-[#181818] w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10 max-h-[90vh] overflow-y-auto"
+                     @click.away="showWithdrawModal = false">
                     
-                    <form @submit.prevent="saveBankAccount" class="space-y-4">
+                    <!-- Top Handle on Mobile -->
+                    <div class="w-12 h-1.5 rounded-full bg-gray-300 dark:bg-white/20 mx-auto mb-4 sm:hidden"></div>
+
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-5">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Bank Name</label>
-                            <input type="text" x-model="bankForm.bank_name" required placeholder="e.g. Chase, Bank of America, HDFC" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
+                            <h3 class="text-lg font-black text-gray-900 dark:text-white">Withdraw Funds</h3>
+                            <p class="text-xs text-gray-500">Disburse your earnings to Bank or Mobile Money</p>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Account Holder Name</label>
-                            <input type="text" x-model="bankForm.holder_name" required placeholder="Full name on account" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
+                        <button type="button" @click="showWithdrawModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
+                    </div>
+
+                    <!-- Available Balance Badge -->
+                    <div class="p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40 flex items-center justify-between mb-5">
+                        <span class="text-xs font-bold text-orange-900 dark:text-orange-200">Available Wallet Balance</span>
+                        <span class="text-base font-black text-orange-600 dark:text-orange-400" x-text="(currency || '₹') + balance.toFixed(2)"></span>
+                    </div>
+
+                    <form @submit.prevent="submitWithdrawal()">
+                        <!-- 1. Amount Input (Matching Reference 3) -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Enter Amount</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-gray-500" x-text="currency || '₹'"></span>
+                                <input type="number" step="0.01" min="1" x-model="withdrawForm.amount" required
+                                       placeholder="Enter Amount Here"
+                                       class="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-[#222] border-2 rounded-2xl text-gray-900 dark:text-white font-black text-lg focus:outline-none transition-all"
+                                       :class="amountError ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10 focus:border-orange-500'">
+                            </div>
+
+                            <!-- Validation Error Message -->
+                            <template x-if="amountError">
+                                <p class="text-xs font-bold text-red-500 mt-1.5 flex items-center gap-1">
+                                    <span>⚠️</span>
+                                    <span x-text="amountError"></span>
+                                </p>
+                            </template>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Account Number / IBAN</label>
-                            <input type="text" x-model="bankForm.account_number" required placeholder="Enter account number" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Routing / IFSC / SWIFT Code</label>
-                            <input type="text" x-model="bankForm.routing_number" required placeholder="e.g. 122000661" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                        </div>
-                        
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-                                Save Bank Account
+
+                        <!-- 2. Quick Preset Chips (Matching Reference 3) -->
+                        <div class="flex items-center gap-2 mb-6 flex-wrap">
+                            <template x-for="chip in [50, 100, 150, 200]" :key="chip">
+                                <button type="button" @click="setAmount(chip)"
+                                        class="px-4 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95"
+                                        :class="parseFloat(withdrawForm.amount) === chip ? 'bg-orange-500 text-gray-950 border-orange-500 font-black' : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 hover:border-orange-500/40'">
+                                    <span x-text="(currency || '₹') + ' ' + chip.toFixed(1)"></span>
+                                </button>
+                            </template>
+                            <button type="button" @click="setAmount(balance)"
+                                    class="px-3.5 py-2 rounded-xl border border-dashed text-xs font-bold transition-all"
+                                    :class="parseFloat(withdrawForm.amount) === balance && balance > 0 ? 'bg-orange-500 text-gray-950 font-black border-orange-500' : 'border-orange-400 text-orange-500 hover:bg-orange-500/10'">
+                                Max Balance
                             </button>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </template>
 
-        <!-- MODAL 2: ADD GIFT CARD -->
-        <template x-teleport="body">
-            <div x-show="showGiftModal" style="display: none;" 
-                 class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
-                
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showGiftModal = false">
-                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Redeem Gift Card</h3>
-                        <button type="button" @click="showGiftModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
-                    </div>
-                    
-                    <form @submit.prevent="redeemGiftCard" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Gift Card / Claim Code</label>
-                            <input type="text" x-model="giftForm.code" required placeholder="e.g. RIDE-GIFT-50" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white uppercase font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-black text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Amount ($)</label>
-                            <input type="number" step="5" min="5" x-model="giftForm.amount" required placeholder="50.00" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                        </div>
-                        
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-                                Redeem Gift Card
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </template>
-
-        <!-- MODAL 3: ADD PAYMENT METHOD -->
-        <template x-teleport="body">
-            <div x-show="showPaymentModal" style="display: none;" 
-                 class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
-                
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showPaymentModal = false">
-                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Add Payment Method</h3>
-                        <button type="button" @click="showPaymentModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
-                    </div>
-                    
-                    <form @submit.prevent="addPaymentMethod" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Method Type</label>
-                            <select x-model="pmForm.type" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                                <option value="card">Credit or Debit Card</option>
-                                <option value="upi">UPI Scan & Pay</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1" x-text="pmForm.type === 'card' ? 'Card Number' : 'UPI ID / VPA'"></label>
-                            <input type="text" x-model="pmForm.number" required :placeholder="pmForm.type === 'card' ? '4532 •••• •••• 8892' : 'username@upi'" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                        </div>
-                        <template x-if="pmForm.type === 'card'">
+                        <!-- 3. Payout Method Selector -->
+                        <div class="mb-5">
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Select Payout Method</label>
                             <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="withdrawForm.payout_method = 'bank_account'"
+                                        class="p-3.5 rounded-2xl border-2 flex items-center gap-2.5 transition-all text-left"
+                                        :class="withdrawForm.payout_method === 'bank_account' ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20 text-orange-950 dark:text-orange-200 font-bold' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'">
+                                    <span class="text-xl">🏦</span>
+                                    <div>
+                                        <div class="text-xs font-black">Bank Account</div>
+                                        <div class="text-[10px] opacity-75">Direct NEFT / Transfer</div>
+                                    </div>
+                                </button>
+
+                                <button type="button" @click="withdrawForm.payout_method = 'momo'"
+                                        class="p-3.5 rounded-2xl border-2 flex items-center gap-2.5 transition-all text-left"
+                                        :class="withdrawForm.payout_method === 'momo' ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20 text-orange-950 dark:text-orange-200 font-bold' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'">
+                                    <span class="text-xl">📱</span>
+                                    <div>
+                                        <div class="text-xs font-black">Mobile Money</div>
+                                        <div class="text-[10px] opacity-75">MTN / Telecel / MoMo</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4. Payout Account Details -->
+                        <!-- A. Bank Form -->
+                        <div x-show="withdrawForm.payout_method === 'bank_account'" class="space-y-3 mb-5 p-4 rounded-2xl bg-gray-50 dark:bg-[#202020] border border-gray-100 dark:border-white/10">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Bank Name</label>
+                                <input type="text" x-model="withdrawForm.bank_details.bank_name" placeholder="e.g. State Bank of India, Chase, GCB Bank"
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Holder Name</label>
+                                <input type="text" x-model="withdrawForm.bank_details.account_holder_name" placeholder="Name as per bank records"
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Expiry (MM/YY)</label>
-                                    <input type="text" x-model="pmForm.expiry" placeholder="12/28" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Number</label>
+                                    <input type="text" x-model="withdrawForm.bank_details.account_number" placeholder="Full Account Number"
+                                           class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">CVV</label>
-                                    <input type="password" maxlength="4" placeholder="123" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">IFSC / Routing / Sort Code</label>
+                                    <input type="text" x-model="withdrawForm.bank_details.routing_code" placeholder="e.g. SBIN0001234 or Routing #"
+                                           class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- B. MoMo Form -->
+                        <div x-show="withdrawForm.payout_method === 'momo'" class="space-y-3 mb-5 p-4 rounded-2xl bg-gray-50 dark:bg-[#202020] border border-gray-100 dark:border-white/10">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Mobile Money Network</label>
+                                <select x-model="withdrawForm.momo_details.momo_network"
+                                        class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                                    <option value="MTN">MTN Mobile Money</option>
+                                    <option value="Telecel">Telecel / Vodafone Cash</option>
+                                    <option value="AirtelTigo">AirtelTigo Money</option>
+                                    <option value="MPesa">M-Pesa</option>
+                                    <option value="Other">Other Wallet Provider</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">MoMo Phone Number</label>
+                                    <input type="tel" x-model="withdrawForm.momo_details.momo_phone" placeholder="e.g. 0244123456"
+                                           class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Subscriber / Account Name</label>
+                                    <input type="text" x-model="withdrawForm.momo_details.momo_account_name" placeholder="Name on MoMo SIM"
+                                           class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Payout Method Checkbox -->
+                        <div class="flex items-center gap-2 mb-6">
+                            <input type="checkbox" id="save_payout_account" x-model="withdrawForm.save_as_default" class="w-4 h-4 text-orange-500 rounded border-gray-300 focus:ring-orange-500">
+                            <label for="save_payout_account" class="text-xs text-gray-600 dark:text-gray-400 font-medium">Save this account as my default payout method</label>
+                        </div>
+
+                        <!-- Action Buttons (Matching Reference 3: Cancel & Withdraw) -->
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button type="button" @click="showWithdrawModal = false"
+                                    class="py-3.5 px-4 rounded-2xl border border-gray-300 dark:border-white/20 text-gray-800 dark:text-gray-200 font-bold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-center">
+                                Cancel
+                            </button>
+
+                            <button type="submit" :disabled="submitting || Boolean(amountError)"
+                                    class="py-3.5 px-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 text-gray-950 font-black text-sm transition-all shadow-lg shadow-orange-500/25 active:scale-95 text-center flex items-center justify-center gap-2">
+                                <span x-show="!submitting">Withdraw</span>
+                                <span x-show="submitting">Processing...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+
+        <!-- MODAL: ADD MONEY / TOP UP -->
+        <template x-teleport="body">
+            <div x-show="showAddMoneyModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showAddMoneyModal = false">
+                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-white/10 mb-4">
+                        <h3 class="text-base font-black text-gray-900 dark:text-white">Add Funds to Wallet</h3>
+                        <button type="button" @click="showAddMoneyModal = false" class="text-gray-500 hover:text-white">✕</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Top-up your wallet using Credit/Debit Card or instant Mobile Money.</p>
+                    <div class="space-y-3">
+                        <a href="/checkout?type=wallet_topup&amount=50" class="block w-full p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 hover:border-orange-500 text-center font-bold text-sm text-orange-600 dark:text-orange-400 transition-all">
+                            Add <span x-text="currency || '₹'"></span> 50.00
+                        </a>
+                        <a href="/checkout?type=wallet_topup&amount=100" class="block w-full p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 hover:border-orange-500 text-center font-bold text-sm text-orange-600 dark:text-orange-400 transition-all">
+                            Add <span x-text="currency || '₹'"></span> 100.00
+                        </a>
+                        <a href="/checkout?type=wallet_topup&amount=250" class="block w-full p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 hover:border-orange-500 text-center font-bold text-sm text-orange-600 dark:text-orange-400 transition-all">
+                            Add <span x-text="currency || '₹'"></span> 250.00
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- MODAL: ADD PAYOUT ACCOUNT -->
+        <template x-teleport="body">
+            <div x-show="showPayoutMethodModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showPayoutMethodModal = false">
+                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-white/10 mb-4">
+                        <h3 class="text-base font-black text-gray-900 dark:text-white">Add Payout Account</h3>
+                        <button type="button" @click="showPayoutMethodModal = false" class="text-gray-500 hover:text-white">✕</button>
+                    </div>
+
+                    <form @submit.prevent="saveNewPayoutMethod()">
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Type</label>
+                            <select x-model="newMethodForm.type" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                <option value="bank_account">Bank Account</option>
+                                <option value="momo">Mobile Money (MoMo)</option>
+                            </select>
+                        </div>
+
+                        <template x-if="newMethodForm.type === 'bank_account'">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Bank Name</label>
+                                    <input type="text" x-model="newMethodForm.bank_name" required placeholder="Bank Name" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Number</label>
+                                    <input type="text" x-model="newMethodForm.account_number" required placeholder="Account Number" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Holder Name</label>
+                                    <input type="text" x-model="newMethodForm.account_holder_name" required placeholder="Full Name" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Routing / IFSC Code</label>
+                                    <input type="text" x-model="newMethodForm.routing_code" placeholder="Optional" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
                                 </div>
                             </div>
                         </template>
 
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-                                Save Payment Method
-                            </button>
+                        <template x-if="newMethodForm.type === 'momo'">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Network</label>
+                                    <select x-model="newMethodForm.momo_network" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                        <option value="MTN">MTN Mobile Money</option>
+                                        <option value="Telecel">Telecel / Vodafone</option>
+                                        <option value="AirtelTigo">AirtelTigo Money</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">MoMo Phone Number</label>
+                                    <input type="tel" x-model="newMethodForm.momo_phone" required placeholder="0244..." class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Holder Name</label>
+                                    <input type="text" x-model="newMethodForm.momo_account_name" required placeholder="Account Name" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="mt-6 pt-3 border-t border-gray-100 dark:border-white/10 flex justify-end gap-2">
+                            <button type="button" @click="showPayoutMethodModal = false" class="px-4 py-2 text-xs font-bold text-gray-600 hover:text-white">Cancel</button>
+                            <button type="submit" class="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-gray-950 font-bold text-xs rounded-xl shadow-md">Save Payout Method</button>
                         </div>
                     </form>
                 </div>
             </div>
         </template>
-
-        <!-- MODAL 4: ADD VOUCHER -->
-        <template x-teleport="body">
-            <div x-show="showVoucherModal" style="display: none;" 
-                 class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
-                
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showVoucherModal = false">
-                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Add Voucher</h3>
-                        <button type="button" @click="showVoucherModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
-                    </div>
-                    
-                    <form @submit.prevent="addVoucher" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Voucher Code</label>
-                            <input type="text" x-model="voucherCode" required placeholder="e.g. SUMMER2026" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white uppercase font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-black text-sm">
-                        </div>
-                        
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-                                Apply Voucher
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </template>
-
-        <!-- MODAL 5: MANAGE BUSINESS RIDES FOR OTHERS (UBER BUSINESS STYLE) -->
-        <template x-teleport="body">
-            <div x-show="showBusinessModal" style="display: none;" 
-                 class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
-                
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showBusinessModal = false">
-                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-[#2d6def] text-white flex items-center justify-center font-bold">
-                                💼
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Business Delegate Access</h3>
-                                <p class="text-xs text-gray-500">RideMyCars Business Mode</p>
-                            </div>
-                        </div>
-                        <button type="button" @click="showBusinessModal = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
-                    </div>
-
-                    <p class="text-xs text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-                        Request permission from a company administrator or executive to book and arrange business rides directly under their organization account.
-                    </p>
-                    
-                    <form @submit.prevent="requestBusinessAccess" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Company / Organization</label>
-                            <input type="text" x-model="businessForm.company" required placeholder="Company Name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Business Admin Email</label>
-                            <input type="email" x-model="businessForm.email" required placeholder="admin@company.com" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Your Role / Request Note</label>
-                            <textarea x-model="businessForm.notes" rows="2" placeholder="e.g. Executive Assistant arranging travel for team members" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black text-sm font-medium resize-none"></textarea>
-                        </div>
-                        
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-[#2d6def] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-                                Send Access Request
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </template>
-
-        <!-- MODAL 6: PROFILE DETAILS MODAL -->
-        <template x-teleport="body">
-            <div x-show="showProfileModalState" style="display: none;" 
-                 class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
-                
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.away="showProfileModalState = false">
-                    <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full font-bold flex items-center justify-center text-white"
-                                 :class="selectedProfile === 'personal' ? 'bg-black' : 'bg-[#2d6def]'">
-                                <span x-text="selectedProfile === 'personal' ? '👤' : '💼'"></span>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900 dark:text-white" x-text="selectedProfile === 'personal' ? 'Personal Profile' : 'ajath Infotech private limited'"></h3>
-                                <p class="text-xs text-gray-500" x-text="selectedProfile === 'personal' ? 'Standard personal riding profile' : 'Corporate Business Account'"></p>
-                            </div>
-                        </div>
-                        <button type="button" @click="showProfileModalState = false" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white">✕</button>
-                    </div>
-
-                    <div class="space-y-4 text-sm">
-                        <div class="p-3.5 bg-gray-50 dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10">
-                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Default Payment Method</p>
-                            <p class="font-bold text-gray-900 dark:text-white mt-0.5" x-text="selectedProfile === 'personal' ? 'Stripe Card / MoMo' : 'Corporate Account Card (•••• 9012)'"></p>
-                        </div>
-                        <div class="p-3.5 bg-gray-50 dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10">
-                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Weekly / Monthly Travel Receipts Email</p>
-                            <p class="font-bold text-gray-900 dark:text-white mt-0.5" x-text="'{{ auth()->user()->email ?? 'user@example.com' }}'"></p>
-                        </div>
-                        <div class="p-3.5 bg-gray-50 dark:bg-[#222] rounded-xl border border-gray-200 dark:border-white/10">
-                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Expense Code Enforcement</p>
-                            <p class="font-bold text-gray-900 dark:text-white mt-0.5" x-text="selectedProfile === 'personal' ? 'Disabled' : 'Enabled (Prompts for Cost Center)'"></p>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 pt-4 border-t border-gray-100 dark:border-white/10">
-                        <button type="button" @click="showProfileModalState = false; showToast('Profile settings saved!')" class="w-full bg-black hover:bg-gray-900 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-                            Done
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </template>
-
     </main>
 
     <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('walletManager', () => ({
-            balance: 0.00,
-            giftCash: 0.00,
-            toast: '',
-            showBankModal: false,
-            showGiftModal: false,
-            showPaymentModal: false,
-            showVoucherModal: false,
-            showBusinessModal: false,
-            showProfileModalState: false,
-            selectedProfile: 'personal',
-            
-            businessRequestSent: false,
-            businessForm: {
-                company: 'ajath Infotech private limited',
-                email: '',
-                notes: ''
+        Alpine.data('walletManager', (config = {}) => ({
+            balance: config.initialBalance || 0.00,
+            currency: config.currency || '₹',
+            settings: config.settings || { min_amount: 50, max_amount: 10000, enabled: true },
+            withdrawals: config.withdrawals || [],
+            payoutMethods: config.payoutMethods || [],
+            transactions: config.transactions || [],
+
+            activeTab: 'transactions', // transactions, withdrawals, payout_methods
+            filterStatus: 'all',
+
+            showWithdrawModal: false,
+            showAddMoneyModal: false,
+            showPayoutMethodModal: false,
+            submitting: false,
+
+            toast: { message: '', type: 'success' },
+
+            withdrawForm: {
+                amount: '',
+                payout_method: 'bank_account',
+                save_as_default: false,
+                bank_details: {
+                    bank_name: '',
+                    account_holder_name: '{{ auth()->user()->name ?? 'Account Holder' }}',
+                    account_number: '',
+                    routing_code: ''
+                },
+                momo_details: {
+                    momo_network: 'MTN',
+                    momo_phone: '{{ auth()->user()->phone ?? '' }}',
+                    momo_account_name: '{{ auth()->user()->name ?? 'Account Holder' }}'
+                }
             },
-            
-            bankAccount: null,
-            bankForm: {
+
+            newMethodForm: {
+                type: 'bank_account',
                 bank_name: '',
-                holder_name: '{{ auth()->user()->name ?? 'Account Holder' }}',
+                account_holder_name: '{{ auth()->user()->name ?? '' }}',
                 account_number: '',
-                routing_number: ''
+                routing_code: '',
+                momo_network: 'MTN',
+                momo_phone: '',
+                momo_account_name: '{{ auth()->user()->name ?? '' }}'
             },
-            
-            giftForm: {
-                code: 'RIDE-GIFT-50',
-                amount: 50
-            },
-            
-            paymentMethods: [
-                { type: 'card', name: 'Stripe Card', details: 'Visa / Mastercard (Tokenized)', preferred: true },
-                { type: 'momo', name: 'MoMo Pay', details: 'MTN / Telecel / AirtelTigo Direct', preferred: false }
-            ],
-            
-            pmForm: {
-                type: 'card',
-                number: '',
-                expiry: ''
-            },
-            
-            vouchers: [],
-            voucherCode: '',
-            
+
             init() {
-                const savedBank = localStorage.getItem('rmc_bank_account');
-                if (savedBank) {
-                    try { this.bankAccount = JSON.parse(savedBank); } catch(e){}
+                // If saved bank exists, preload into withdrawForm
+                const defaultBank = this.payoutMethods.find(m => m.type === 'bank_account' && m.is_default) || this.payoutMethods.find(m => m.type === 'bank_account');
+                if (defaultBank) {
+                    this.withdrawForm.bank_details.bank_name = defaultBank.bank_name || '';
+                    this.withdrawForm.bank_details.account_holder_name = defaultBank.account_holder_name || '';
+                    this.withdrawForm.bank_details.account_number = defaultBank.account_number || '';
+                    this.withdrawForm.bank_details.routing_code = defaultBank.routing_code || '';
                 }
-                const savedGift = localStorage.getItem('rmc_gift_cash');
-                if (savedGift) {
-                    this.giftCash = parseFloat(savedGift) || 0.00;
-                }
-                const savedBiz = localStorage.getItem('rmc_biz_request');
-                if (savedBiz) {
-                    this.businessRequestSent = true;
-                    try { this.businessForm = JSON.parse(savedBiz); } catch(e){}
+
+                const defaultMoMo = this.payoutMethods.find(m => m.type === 'momo' && m.is_default) || this.payoutMethods.find(m => m.type === 'momo');
+                if (defaultMoMo) {
+                    this.withdrawForm.momo_details.momo_network = defaultMoMo.momo_network || 'MTN';
+                    this.withdrawForm.momo_details.momo_phone = defaultMoMo.momo_phone || '';
+                    this.withdrawForm.momo_details.momo_account_name = defaultMoMo.momo_account_name || '';
                 }
             },
-            
-            saveBankAccount() {
-                this.bankAccount = { ...this.bankForm };
-                localStorage.setItem('rmc_bank_account', JSON.stringify(this.bankAccount));
-                this.showBankModal = false;
-                this.showToast(`Bank account '${this.bankAccount.bank_name}' linked successfully!`);
+
+            get pendingCount() {
+                return this.withdrawals.filter(w => w.status === 'pending').length;
             },
-            
-            redeemGiftCard() {
-                const added = parseFloat(this.giftForm.amount) || 50;
-                this.giftCash += added;
-                localStorage.setItem('rmc_gift_cash', this.giftCash.toString());
-                this.showGiftModal = false;
-                this.showToast(`Gift card redeemed! $${added.toFixed(2)} added to RideMyCars Cash.`);
+
+            get filteredWithdrawals() {
+                if (this.filterStatus === 'all') return this.withdrawals;
+                return this.withdrawals.filter(w => w.status === this.filterStatus);
             },
-            
-            addPaymentMethod() {
-                const name = this.pmForm.type === 'card' 
-                    ? `Card (•••• ${this.pmForm.number.slice(-4) || '8892'})`
-                    : `UPI (${this.pmForm.number})`;
-                this.paymentMethods.push({
-                    type: this.pmForm.type,
-                    name: name,
-                    details: 'Added payment method',
-                    preferred: false
-                });
-                this.showPaymentModal = false;
-                this.showToast(`Payment method '${name}' added!`);
+
+            get amountError() {
+                const val = parseFloat(this.withdrawForm.amount);
+                if (!val || isNaN(val)) return null;
+                if (val > this.balance) {
+                    return `Amount exceeds available wallet balance (${this.currency}${this.balance.toFixed(2)})`;
+                }
+                const min = this.settings.min_amount || 50;
+                if (val < min) {
+                    return `Minimum withdrawal amount is ${this.currency}${min.toFixed(2)}`;
+                }
+                const max = this.settings.max_amount || 10000;
+                if (val > max) {
+                    return `Maximum withdrawal amount is ${this.currency}${max.toFixed(2)}`;
+                }
+                return null;
             },
-            
-            addVoucher() {
-                if (!this.voucherCode.trim()) return;
-                this.vouchers.push({
-                    code: this.voucherCode.toUpperCase(),
-                    discount: '15% Off Next 3 Rides'
-                });
-                this.showVoucherModal = false;
-                this.showToast(`Voucher '${this.voucherCode.toUpperCase()}' activated!`);
-                this.voucherCode = '';
+
+            setAmount(amt) {
+                this.withdrawForm.amount = parseFloat(amt).toFixed(2);
             },
-            
-            requestBusinessAccess() {
-                if (!this.businessForm.email.trim()) return;
-                this.businessRequestSent = true;
-                localStorage.setItem('rmc_biz_request', JSON.stringify(this.businessForm));
-                this.showBusinessModal = false;
-                this.showToast(`Delegate access request sent to ${this.businessForm.email}!`);
+
+            openWithdrawModal() {
+                this.showWithdrawModal = true;
+                if (!this.withdrawForm.amount || parseFloat(this.withdrawForm.amount) <= 0) {
+                    this.withdrawForm.amount = Math.min(this.balance, 50).toFixed(2);
+                }
             },
-            
-            openProfileModal(type) {
-                this.selectedProfile = type;
-                this.showProfileModalState = true;
+
+            showToast(message, type = 'success') {
+                this.toast = { message, type };
+                setTimeout(() => { this.toast.message = ''; }, 5000);
             },
-            
-            showToast(msg) {
-                this.toast = msg;
-                setTimeout(() => { this.toast = ''; }, 4500);
+
+            formatDate(iso) {
+                if (!iso) return '—';
+                try {
+                    const d = new Date(iso);
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                } catch(e) {
+                    return iso;
+                }
+            },
+
+            async submitWithdrawal() {
+                if (this.amountError) return;
+                const amt = parseFloat(this.withdrawForm.amount);
+                if (!amt || amt <= 0) return;
+
+                this.submitting = true;
+
+                const details = this.withdrawForm.payout_method === 'momo'
+                    ? { ...this.withdrawForm.momo_details }
+                    : { ...this.withdrawForm.bank_details };
+
+                try {
+                    const res = await fetch('/wallet/withdraw', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify({
+                            amount: amt,
+                            payout_method: this.withdrawForm.payout_method,
+                            payout_details: details,
+                            save_payout_method: this.withdrawForm.save_as_default
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (data.success) {
+                        this.showWithdrawModal = false;
+                        this.showToast('Withdrawal request submitted! Payout will be processed upon approval.', 'success');
+                        
+                        // Add to withdrawals list at the top
+                        this.withdrawals.unshift(data.data);
+                        this.activeTab = 'withdrawals';
+                    } else {
+                        this.showToast(data.message || 'Withdrawal failed.', 'error');
+                    }
+                } catch(err) {
+                    this.showToast('Unable to connect to server. Please try again.', 'error');
+                } finally {
+                    this.submitting = false;
+                }
+            },
+
+            async saveNewPayoutMethod() {
+                try {
+                    const res = await fetch('/wallet/payout-methods', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify(this.newMethodForm)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.payoutMethods.unshift(data.data);
+                        this.showPayoutMethodModal = false;
+                        this.showToast('Payout method saved successfully!');
+                    } else {
+                        this.showToast(data.message || 'Failed to save payout method.', 'error');
+                    }
+                } catch(e) {
+                    this.showToast('Error saving payout method.', 'error');
+                }
+            },
+
+            async deletePayoutMethod(id) {
+                if (!confirm('Are you sure you want to remove this payout account?')) return;
+                try {
+                    const res = await fetch('/wallet/payout-methods/' + id, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.payoutMethods = this.payoutMethods.filter(m => m.id !== id);
+                        this.showToast('Payout method removed.');
+                    }
+                } catch(e) {
+                    this.showToast('Error removing method.', 'error');
+                }
             }
         }));
     });

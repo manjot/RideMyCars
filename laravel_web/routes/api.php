@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\StripePaymentController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\PlacesApiController;
 use App\Http\Controllers\Api\AppConfigApiController;
+use App\Http\Controllers\Api\WalletApiController;
 
 // Public App Settings & Dynamic Ride Categories
 Route::get('/app-settings', [AppConfigApiController::class, 'getPublicSettings']);
@@ -219,4 +220,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Activity Logs
     Route::get('/activity-logs', [DriverApiController::class, 'activityLogs']);
+
+    // Wallet & Withdrawals Module (Customer, Driver & Owner)
+    Route::get('/wallet/balance', [WalletApiController::class, 'getBalance']);
+    Route::post('/wallet/withdraw', [WalletApiController::class, 'submitWithdrawal']);
+    Route::get('/wallet/withdrawals', [WalletApiController::class, 'getWithdrawalHistory']);
+    Route::get('/wallet/withdrawals/{id}', [WalletApiController::class, 'getWithdrawalDetail']);
+    Route::get('/wallet/payout-methods', [WalletApiController::class, 'getPayoutMethods']);
+    Route::post('/wallet/payout-methods', [WalletApiController::class, 'savePayoutMethod']);
+    Route::delete('/wallet/payout-methods/{id}', [WalletApiController::class, 'deletePayoutMethod']);
+    Route::get('/wallet/transactions', [WalletApiController::class, 'getTransactions']);
+
+    // Admin Wallet Withdrawal Management
+    Route::get('/admin/withdrawals', [WalletApiController::class, 'adminListWithdrawals']);
+    Route::post('/admin/withdrawals/{id}/approve', [WalletApiController::class, 'adminApprove']);
+    Route::post('/admin/withdrawals/{id}/reject', [WalletApiController::class, 'adminReject']);
+    Route::get('/admin/withdrawal-settings', [WalletApiController::class, 'adminGetSettings']);
+    Route::post('/admin/withdrawal-settings', [WalletApiController::class, 'adminUpdateSettings']);
 });

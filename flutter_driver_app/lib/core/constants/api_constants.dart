@@ -37,4 +37,12 @@ class ApiConstants {
   // Notifications
   static const String notifications = '/notifications';
   static const String notificationsMarkRead = '/notifications/mark-read';
+
+  // Wallet & Withdrawals
+  static const String walletBalance = '/wallet/balance';
+  static const String walletWithdraw = '/wallet/withdraw';
+  static const String walletWithdrawals = '/wallet/withdrawals';
+  static const String walletPayoutMethods = '/wallet/payout-methods';
+  static const String walletTransactions = '/wallet/transactions';
 }
+
