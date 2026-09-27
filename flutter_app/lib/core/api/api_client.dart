@@ -30,6 +30,11 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          final countryCode = await TokenStorage.getSelectedCountryCode();
+          if (countryCode != null && countryCode.isNotEmpty) {
+            options.headers['X-Country'] = countryCode;
+            options.headers['X-Country-Code'] = countryCode;
+          }
           return handler.next(options);
         },
         onError: (DioException error, handler) async {
@@ -44,11 +49,16 @@ class ApiClient {
             }
             try {
               final token = await TokenStorage.getToken();
+              final countryCode = await TokenStorage.getSelectedCountryCode();
               final retryOptions = Options(
                 method: error.requestOptions.method,
                 headers: {
                   ...error.requestOptions.headers,
                   if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+                  if (countryCode != null && countryCode.isNotEmpty) ...{
+                    'X-Country': countryCode,
+                    'X-Country-Code': countryCode,
+                  },
                 },
                 responseType: error.requestOptions.responseType,
                 contentType: error.requestOptions.contentType,

@@ -10,6 +10,25 @@ class Country {
     required this.dial,
     required this.flag,
   });
+  String get iso3 {
+    switch (code.toUpperCase()) {
+      case 'US': return 'USA';
+      case 'GH': return 'GHA';
+      case 'ZA': return 'ZAF';
+      case 'NG': return 'NGA';
+      case 'IN': return 'IND';
+      case 'GB': return 'GBR';
+      case 'CA': return 'CAN';
+      case 'AU': return 'AUS';
+      case 'AE': return 'ARE';
+      case 'KE': return 'KEN';
+      case 'DE': return 'DEU';
+      case 'FR': return 'FRA';
+      case 'SG': return 'SGP';
+      case 'JP': return 'JPN';
+      default: return code.toUpperCase();
+    }
+  }
 }
 
 class CountriesData {
@@ -116,6 +135,62 @@ class CountriesData {
       if (cleaned.startsWith(c.dial)) {
         return c;
       }
+    }
+    return defaultCountry;
+  }
+
+  static Country findByCode(String code) {
+    final upper = code.trim().toUpperCase();
+    if (upper.isEmpty) return defaultCountry;
+
+    // Check 2-letter exact match
+    for (final c in allCountries) {
+      if (c.code.toUpperCase() == upper) return c;
+    }
+
+    // Check 3-letter iso3 match
+    for (final c in allCountries) {
+      if (c.iso3 == upper) return c;
+    }
+
+    // Common aliases
+    final aliasMap = {
+      'USA': 'US',
+      'GHA': 'GH',
+      'ZAF': 'ZA',
+      'NGA': 'NG',
+      'IND': 'IN',
+      'GBR': 'GB',
+      'UK': 'GB',
+      'CAN': 'CA',
+      'AUS': 'AU',
+      'ARE': 'AE',
+      'UAE': 'AE',
+      'KEN': 'KE',
+      'DEU': 'DE',
+      'FRA': 'FR',
+      'SGP': 'SG',
+      'JPN': 'JP',
+    };
+
+    if (aliasMap.containsKey(upper)) {
+      final iso2 = aliasMap[upper]!;
+      for (final c in allCountries) {
+        if (c.code.toUpperCase() == iso2) return c;
+      }
+    }
+
+    for (final c in allCountries) {
+      if (c.name.toUpperCase() == upper) return c;
+    }
+
+    return defaultCountry;
+  }
+
+  static Country findByName(String name) {
+    final upper = name.trim().toUpperCase();
+    for (final c in allCountries) {
+      if (c.name.toUpperCase() == upper) return c;
     }
     return defaultCountry;
   }

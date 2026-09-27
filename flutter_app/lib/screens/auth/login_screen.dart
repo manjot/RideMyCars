@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/countries_data.dart';
 import '../../core/storage/token_storage.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/country_provider.dart';
 import '../../widgets/country_picker_modal.dart';
 import '../rider/rider_home_screen.dart';
 import 'register_screen.dart';
@@ -48,6 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loadSavedCredentials() async {
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final detectedCountry = CountriesData.findByCode(countryProv.selectedCountryCode);
+    _selectedCountry = detectedCountry;
+
     final savedEmail = await TokenStorage.getUserEmail();
     final savedPass = await TokenStorage.getSavedPassword();
     if (savedEmail != null && savedEmail.isNotEmpty) {
@@ -676,7 +681,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     showCountryPickerModal(
                                       context: context,
                                       selectedCountry: _selectedCountry,
-                                      onSelect: (c) => setState(() => _selectedCountry = c),
+                                      onSelect: (c) {
+                                        setState(() => _selectedCountry = c);
+                                        final countryProv = Provider.of<CountryProvider>(context, listen: false);
+                                        countryProv.setCountry(c.code, isManual: true);
+                                      },
                                     );
                                   },
                             borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),

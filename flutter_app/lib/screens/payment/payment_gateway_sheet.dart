@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/country_provider.dart';
 import '../../services/wallet_service.dart';
 
 class PaymentSelectionResult {
@@ -49,6 +50,10 @@ class PaymentGatewaySheet extends StatefulWidget {
     String currencyCode = 'USD',
     String? initialMethod,
   }) {
+    final country = Provider.of<CountryProvider>(context, listen: false);
+    final resolvedSymbol = (currencySymbol != '\$') ? currencySymbol : country.currencySymbol;
+    final resolvedCode = (currencyCode != 'USD') ? currencyCode : country.currencyCode;
+
     return showModalBottomSheet<PaymentSelectionResult>(
       context: context,
       isScrollControlled: true,
@@ -57,8 +62,8 @@ class PaymentGatewaySheet extends StatefulWidget {
         serviceType: serviceType,
         totalAmount: totalAmount,
         payNowAmount: payNowAmount,
-        currencySymbol: currencySymbol,
-        currencyCode: currencyCode,
+        currencySymbol: resolvedSymbol,
+        currencyCode: resolvedCode,
         initialMethod: initialMethod,
       ),
     );

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/countries_data.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/country_provider.dart';
 import '../../widgets/country_picker_modal.dart';
 import '../rider/rider_home_screen.dart';
 
@@ -37,7 +38,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           : initial;
       _mobileNumberController = TextEditingController(text: raw);
     } else {
-      _selectedCountry = CountriesData.defaultCountry;
+      final countryProv = Provider.of<CountryProvider>(context, listen: false);
+      _selectedCountry = CountriesData.findByCode(countryProv.selectedCountryCode);
       _mobileNumberController = TextEditingController();
     }
   }
@@ -496,6 +498,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               selectedCountry: _selectedCountry,
                               onSelect: (c) {
                                 setState(() => _selectedCountry = c);
+                                final countryProv = Provider.of<CountryProvider>(context, listen: false);
+                                countryProv.setCountry(c.code, isManual: true);
                               },
                             );
                           },

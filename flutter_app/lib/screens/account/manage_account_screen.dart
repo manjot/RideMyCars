@@ -6,6 +6,9 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/country_provider.dart';
+import '../../core/constants/countries_data.dart';
+import '../../widgets/country_picker_modal.dart';
 import 'receipts_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
@@ -47,6 +50,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final countryProv = Provider.of<CountryProvider>(context);
     final name = _userProfile?['name'] ?? auth.userName ?? 'Rider Account';
     final email = _userProfile?['email'] ?? auth.userEmail ?? '';
     final phone = _userProfile?['phone'] ?? '+1 (555) 019-2834';
@@ -327,6 +331,37 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                      );
+                    },
+                  ),
+                  // Country & Currency Preferences
+                  const Text(
+                    'Country & Currency Preferences',
+                    style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildActionTile(
+                    Icons.public_rounded,
+                    '${countryProv.flag} ${countryProv.selectedCountryName}',
+                    'Currency: ${countryProv.currencyCode} (${countryProv.currencySymbol}) · Tap to change',
+                    badge: countryProv.selectedCountryCode,
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      showCountryPickerModal(
+                        context: context,
+                        selectedCountry: CountriesData.findByCode(countryProv.selectedCountryCode),
+                        onSelect: (c) async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await countryProv.setCountry(c.code, isManual: true);
+                          if (mounted) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Country set to ${c.name} (${countryProv.currencySymbol})'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        },
                       );
                     },
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/country_provider.dart';
 import '../../services/wallet_service.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -13,7 +15,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
   bool _isLoading = true;
   double _balance = 215.95;
   double _pendingWithdrawals = 0.0;
-  String _currency = '₹';
+  String _currency = '\$';
   double _minWithdrawal = 50.0;
   double _maxWithdrawal = 10000.0;
   String _withdrawalFeeType = 'fixed';
@@ -36,13 +38,15 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
 
   Future<void> _loadWalletData() async {
     setState(() => _isLoading = true);
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    _currency = countryProv.currencySymbol;
     try {
       final balanceData = await WalletService.getBalance();
       if (balanceData != null) {
         setState(() {
           _balance = (balanceData['wallet_balance'] as num?)?.toDouble() ?? 215.95;
           _pendingWithdrawals = (balanceData['pending_withdrawals_sum'] as num?)?.toDouble() ?? 0.0;
-          _currency = balanceData['currency']?.toString() ?? '₹';
+          _currency = balanceData['currency']?.toString() ?? countryProv.currencySymbol;
           final settings = balanceData['settings'] as Map<String, dynamic>?;
           if (settings != null) {
             _minWithdrawal = (settings['min_withdrawal'] as num?)?.toDouble() ?? 50.0;

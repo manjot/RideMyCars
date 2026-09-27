@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/countries_data.dart';
 import '../../models/vehicle_model.dart';
 import '../../providers/country_provider.dart';
 import '../../services/rental_service.dart';
+import '../../widgets/country_picker_modal.dart';
 import 'rental_detail_screen.dart';
 
 class RentalCatalogScreen extends StatefulWidget {
@@ -125,6 +127,27 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
         centerTitle: true,
         elevation: 0,
         actions: [
+          Consumer<CountryProvider>(
+            builder: (context, countryProv, _) {
+              return TextButton.icon(
+                onPressed: () {
+                  showCountryPickerModal(
+                    context: context,
+                    selectedCountry: CountriesData.findByCode(countryProv.selectedCountryCode),
+                    onSelect: (c) async {
+                      await countryProv.setCountry(c.code, isManual: true);
+                      _fetchVehicles();
+                    },
+                  );
+                },
+                icon: Text(countryProv.flag, style: const TextStyle(fontSize: 18)),
+                label: Text(
+                  countryProv.currencySymbol,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh',

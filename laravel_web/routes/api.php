@@ -100,6 +100,32 @@ Route::get('/country-pricing', function (Request $request) {
         'data' => $pricing,
     ]);
 });
+Route::post('/country/set', function (\Illuminate\Http\Request $request) {
+    $country = $request->input('country') ?? $request->input('country_code');
+    $code = \App\Services\CountryService::normalizeToCode($country) ?? 'USA';
+    $isManual = $request->boolean('manual', true);
+    \App\Services\CountryService::persistCountry($code, $isManual);
+
+    $user = auth('sanctum')->user() ?? $request->user();
+    if ($user) {
+        $user->country = $code;
+        $user->save();
+        if ($user->driverProfile) {
+            $user->driverProfile->country = $code;
+            $user->driverProfile->save();
+        }
+    }
+
+    $pricing = \App\Models\CountryPricing::forCountry($code);
+    return response()->json([
+        'status' => 'success',
+        'country_code' => $code,
+        'country_name' => $pricing->country_name,
+        'currency_code' => $pricing->currency_code,
+        'currency_symbol' => $pricing->currency_symbol,
+        'pricing' => $pricing,
+    ]);
+});
 Route::post('/drivers/calculate-price', [DriverApiController::class, 'calculatePrice']);
 Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
 Route::post('/hire-driver/book', [DriverApiController::class, 'bookDriver']);

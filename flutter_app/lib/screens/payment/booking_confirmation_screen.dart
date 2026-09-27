@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/country_provider.dart';
 import '../rider/rider_home_screen.dart';
 import '../rides/my_rides_screen.dart';
 
@@ -64,6 +66,8 @@ class BookingConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final country = Provider.of<CountryProvider>(context, listen: false);
+    final effectiveSymbol = currencySymbol != '\$' ? currencySymbol : country.currencySymbol;
 
     return WillPopScope(
       onWillPop: () async {
@@ -324,10 +328,10 @@ class BookingConfirmationScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _buildReceiptRow('Payment Method', paymentMethod.toUpperCase(), isDark),
-                    _buildReceiptRow('Total Amount', '$currencySymbol${totalAmount.toStringAsFixed(2)}', isDark),
-                    _buildReceiptRow('Paid / Authorized Now', '$currencySymbol${paidAmount.toStringAsFixed(2)}', isDark, isHighlight: true),
+                    _buildReceiptRow('Total Amount', '$effectiveSymbol${totalAmount.toStringAsFixed(2)}', isDark),
+                    _buildReceiptRow('Paid / Authorized Now', '$effectiveSymbol${paidAmount.toStringAsFixed(2)}', isDark, isHighlight: true),
                     if (remainingBalance > 0)
-                      _buildReceiptRow('Remaining on Drop-off', '$currencySymbol${remainingBalance.toStringAsFixed(2)}', isDark),
+                      _buildReceiptRow('Remaining on Drop-off', '$effectiveSymbol${remainingBalance.toStringAsFixed(2)}', isDark),
                     _buildReceiptRow('Receipt Status', 'ISSUED & VERIFIED', isDark, isGreen: true),
                   ],
                 ),
