@@ -6,17 +6,120 @@
         <!-- Category Banner Component -->
         <x-category-banner category="Delivery" />
 
-        <!-- Page Header -->
-        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <span class="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider border border-amber-200 dark:border-amber-800/30">RideMyCars Parcel Dispatch</span>
-                <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mt-1 tracking-tight">On-Demand & Scheduled Parcel Delivery</h1>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Fast, secure door-to-door courier delivery for documents, electronics, supplies & personal items.</p>
+        <!-- Page Header & Official Accra-Tema Campaign Banner -->
+        <div class="mb-10 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <span class="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider border border-amber-200 dark:border-amber-800/30">RideMyCars Parcel Dispatch</span>
+                    <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mt-1 tracking-tight">On-Demand & Scheduled Parcel Delivery</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Fast, secure door-to-door courier delivery for documents, electronics, supplies & personal items.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="tel:0559776761" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all shrink-0">
+                        <span>📞</span>
+                        <span>Call Dispatch: 0559776761</span>
+                    </a>
+                    <a href="/admin/package-delivery-tracker" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all shrink-0">
+                        <span>🚚</span>
+                        <span>Live Courier Tracker</span>
+                    </a>
+                </div>
             </div>
-            <a href="/admin/package-delivery-tracker" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all shrink-0">
-                <span>🚚</span>
-                <span>Live Courier Tracker (Ops Dashboard)</span>
-            </a>
+
+            <!-- Official Accra & Tema Delivery Showcase Banner -->
+            <div class="rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-purple-500/10 border-2 border-amber-300/80 dark:border-amber-500/30 p-6 sm:p-8 shadow-xl relative overflow-hidden"
+                 x-data="{ showDeliveryPosterModal: false }">
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Left: Promo Copy & Highlights -->
+                    <div class="lg:col-span-8 space-y-4">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-white/10 text-gray-900 dark:text-white font-bold text-xs shadow-xs border border-gray-200 dark:border-white/10">
+                            <span class="text-base">🇬🇭</span>
+                            <span>Official Service: Accra & Tema Metropolitan Zone</span>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-950 dark:text-white tracking-tight leading-tight">
+                            Same Day Express Delivery across <span class="text-amber-600 dark:text-amber-400">Accra & Tema</span>
+                        </h2>
+
+                        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                            Motorcycle couriers and branded delivery vans ready 24/7. Trusted by thousands across Greater Accra for business logistics, retail parcels, documents, and personal deliveries.
+                        </p>
+
+                        <!-- Key Pillars Grid from Flyer -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-amber-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-xl block mb-1">⚡</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Same Day</span>
+                                <span class="text-[10px] text-gray-500">Fast pickup</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-amber-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-xl block mb-1">📍</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">GPS Tracked</span>
+                                <span class="text-[10px] text-gray-500">Live turn-by-turn</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-amber-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-xl block mb-1">👛</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Smart Wallet</span>
+                                <span class="text-[10px] text-gray-500">Seamless credit</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-amber-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-xl block mb-1">📱</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Instant MoMo</span>
+                                <span class="text-[10px] text-gray-500">MTN & Telecel</span>
+                            </div>
+                        </div>
+
+                        <!-- CTA row -->
+                        <div class="flex flex-wrap items-center gap-3 pt-3">
+                            <a href="tel:0559776761" class="inline-flex items-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl shadow-md transition-all">
+                                <span>📞 Direct Line: 0559776761</span>
+                            </a>
+                            <button type="button" 
+                                    @click="showDeliveryPosterModal = true"
+                                    class="inline-flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/10 hover:bg-gray-100 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-xs rounded-xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
+                                <span>🔍 View Official Campaign Poster</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Poster Visual -->
+                    <div class="lg:col-span-4 flex justify-center">
+                        <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-400 dark:border-amber-500/40"
+                             @click="showDeliveryPosterModal = true">
+                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" 
+                                 alt="Fast Package Delivery Accra & Tema Flyer" 
+                                 class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg">
+                                    🔍 Click to Enlarge
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Poster Modal Lightbox -->
+                <template x-teleport="body">
+                    <div x-show="showDeliveryPosterModal" 
+                         style="display: none;"
+                         class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+                         @click.self="showDeliveryPosterModal = false"
+                         @keydown.escape.window="showDeliveryPosterModal = false">
+                        <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-4 shadow-2xl border border-amber-300">
+                            <button type="button" 
+                                    @click="showDeliveryPosterModal = false"
+                                    class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                ✕
+                            </button>
+                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" 
+                                 alt="Fast Package Delivery Accra & Tema" 
+                                 class="w-full h-auto rounded-2xl object-contain max-h-[85vh]">
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
 
         @if($isUnsupportedRegion ?? false)

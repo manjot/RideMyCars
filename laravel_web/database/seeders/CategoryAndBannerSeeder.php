@@ -35,17 +35,17 @@ class CategoryAndBannerSeeder extends Seeder
         $banners = [
             [
                 'category_id' => $createdCategories['Ride']->id,
-                'title' => '20% Off Your First Ride',
-                'description' => 'Use code RIDEFIRST at checkout for instant 20% discount on city rides.',
-                'image' => 'images/hero-ride.png',
+                'title' => 'Ride More, Pay Less — 50% Off First 3 Rides',
+                'description' => 'Download ridemycars.com app and get 50% off your first 3 rides with vetted drivers.',
+                'image' => 'images/promo-ride-payless.jpg',
                 'link' => '/ride',
                 'status' => 'active',
             ],
             [
                 'category_id' => $createdCategories['Ride']->id,
-                'title' => 'Executive Sedan Comfort',
-                'description' => 'Travel in style with premium executive sedans and top-rated drivers.',
-                'image' => 'images/hero-ride.png',
+                'title' => 'Executive Sedan Comfort & Low Fares',
+                'description' => 'Travel in style with premium executive sedans, 24/7 availability, and transparent pricing.',
+                'image' => 'images/promo-ride-payless.jpg',
                 'link' => '/ride',
                 'status' => 'active',
             ],
@@ -59,24 +59,24 @@ class CategoryAndBannerSeeder extends Seeder
             ],
             [
                 'category_id' => $createdCategories['Hire a Driver']->id,
-                'title' => 'Professional Chauffeurs on Demand',
-                'description' => 'Hire background-verified personal drivers for hourly or daily trips.',
-                'image' => 'images/hero-hire.png',
+                'title' => 'Become a RideMyCars Chauffeur — Earn 85%',
+                'description' => 'Drive luxury executive sedans. Keep 85% from Trip #1 with weekly bank transfers & MoMo.',
+                'image' => 'images/promo-chauffeur-earn85.jpg',
                 'link' => '/hire-driver',
                 'status' => 'active',
             ],
             [
                 'category_id' => $createdCategories['Delivery']->id,
-                'title' => 'Express Door-to-Door Parcel Dispatch',
-                'description' => 'Fast & secure parcel delivery with real-time GPS tracking and 4-digit PIN verification.',
-                'image' => 'images/hero-delivery.png',
+                'title' => 'Fast Package Delivery — Accra & Tema',
+                'description' => 'Same Day Delivery across Greater Accra & Tema. Real-time GPS tracked with Instant MoMo & Hotline 0559776761.',
+                'image' => 'images/promo-delivery-accra.jpg',
                 'link' => '/delivery',
                 'status' => 'active',
             ],
         ];
 
         foreach ($banners as $b) {
-            Banner::firstOrCreate(
+            Banner::updateOrCreate(
                 ['title' => $b['title'], 'category_id' => $b['category_id']],
                 $b
             );

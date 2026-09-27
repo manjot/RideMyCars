@@ -29,8 +29,76 @@
     </x-slot>
 
     <main class="w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-[1500px]" x-data="rideBooking()">
-        <!-- Category Banner Component -->
+        <!-- Category Banner Component & Official Ride Promo Spotlight -->
         <x-category-banner category="Ride" />
+
+        <!-- Official 50% Off Promo Flyer Banner -->
+        <div class="mb-6 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border-2 border-amber-300 dark:border-amber-500/30 p-4 sm:p-5 shadow-lg relative overflow-hidden"
+             x-data="{ showRideFlyerModal: false }">
+            <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
+                    <!-- Flyer Thumbnail with Zoom -->
+                    <div class="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden shadow-md border-2 border-amber-400 dark:border-amber-500/40 shrink-0 cursor-pointer group bg-gray-950"
+                         @click="showRideFlyerModal = true">
+                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] uppercase tracking-wider shadow-xs">
+                                50% OFF
+                            </span>
+                            <span class="text-xs font-bold text-amber-700 dark:text-amber-400">First 3 Rides Welcome Deal</span>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-black text-gray-950 dark:text-white leading-tight">
+                            Ride More, Pay Less with RideMyCars
+                        </h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                            Fast rides • 24/7 available • Low fares. Use code <code class="font-mono bg-amber-200 dark:bg-amber-950 px-1.5 py-0.5 rounded font-black text-amber-900 dark:text-amber-300">RIDE50</code> or download the app.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
+                    <button type="button" 
+                            @click="showRideFlyerModal = true"
+                            class="px-4 py-2.5 bg-white dark:bg-white/10 hover:bg-gray-100 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-xs rounded-xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
+                        <span>🔍 View Flyer</span>
+                    </button>
+                    <a href="/apps#rider-app" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl shadow-md transition-all">
+                        <span>Get App →</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Modal Lightbox -->
+            <template x-teleport="body">
+                <div x-show="showRideFlyerModal" 
+                     style="display: none;"
+                     class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                     @click.self="showRideFlyerModal = false"
+                     @keydown.escape.window="showRideFlyerModal = false">
+                    <div class="relative max-w-lg w-full bg-white dark:bg-[#181818] rounded-3xl p-4 shadow-2xl border border-amber-300 flex flex-col items-center">
+                        <button type="button" 
+                                @click="showRideFlyerModal = false"
+                                class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                            ✕
+                        </button>
+                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" 
+                             alt="Ride More, Pay Less - 50% Off First 3 Rides Flyer" 
+                             class="w-full max-h-[80vh] rounded-2xl object-contain shadow-md mb-3">
+                        <div class="w-full flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/10">
+                            <div>
+                                <h4 class="text-xs font-black text-gray-900 dark:text-white">Ride More, Pay Less</h4>
+                                <span class="text-[11px] text-amber-600 dark:text-amber-400 font-bold">50% off your first 3 rides</span>
+                            </div>
+                            <a href="/apps#rider-app" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl">
+                                Download App Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
         
         @if(session('success'))
             <div class="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-200 font-semibold flex items-center gap-3 shadow-sm">

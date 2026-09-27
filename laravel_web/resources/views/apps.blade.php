@@ -132,9 +132,39 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: Card Preview & QR Code -->
-                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center">
-                        <div class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-white/10 shadow-xl max-w-xs w-full">
+                    <!-- Right Column: Official Flyer & Scannable QR Code -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center" x-data="{ tab: 'flyer' }">
+                        <!-- Switcher Tabs -->
+                        <div class="inline-flex items-center p-1 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 mb-4 text-xs font-bold gap-1">
+                            <button type="button" 
+                                    @click="tab = 'flyer'" 
+                                    :class="tab === 'flyer' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>📄</span> Official Flyer
+                            </button>
+                            <button type="button" 
+                                    @click="tab = 'qr'" 
+                                    :class="tab === 'qr' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>📱</span> Scan QR Code
+                            </button>
+                        </div>
+
+                        <!-- Flyer View -->
+                        <div x-show="tab === 'flyer'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-amber-300 dark:border-amber-500/30 shadow-2xl max-w-[280px] w-full group">
+                            <div class="rounded-2xl overflow-hidden aspect-[3/4] bg-gray-950 shadow-md">
+                                <img src="{{ asset('images/promo-ride-payless.jpg') }}" 
+                                     alt="Ride More, Pay Less - Rider App Official Flyer" 
+                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            </div>
+                            <div class="mt-3 px-1 text-center">
+                                <span class="text-xs font-black text-amber-600 dark:text-amber-400 block">50% Off First 3 Rides</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Scan QR on flyer or app store</span>
+                            </div>
+                        </div>
+
+                        <!-- QR Code View -->
+                        <div x-show="tab === 'qr'" style="display: none;" class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-white/10 shadow-xl max-w-xs w-full">
                             <div class="p-4 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
                                 <!-- Real Scannable QR Code Generator -->
                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ urlencode($riderDownloadTargetUrl) }}" 
@@ -241,9 +271,39 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: Card Preview & QR Code -->
-                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center">
-                        <div class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-amber-500/20 shadow-xl max-w-xs w-full">
+                    <!-- Right Column: Official Flyer & Scannable QR Code -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center" x-data="{ tab: 'flyer' }">
+                        <!-- Switcher Tabs -->
+                        <div class="inline-flex items-center p-1 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 mb-4 text-xs font-bold gap-1">
+                            <button type="button" 
+                                    @click="tab = 'flyer'" 
+                                    :class="tab === 'flyer' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>📄</span> Official Flyer
+                            </button>
+                            <button type="button" 
+                                    @click="tab = 'qr'" 
+                                    :class="tab === 'qr' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>📱</span> Scan QR Code
+                            </button>
+                        </div>
+
+                        <!-- Flyer View -->
+                        <div x-show="tab === 'flyer'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-emerald-300 dark:border-emerald-500/30 shadow-2xl max-w-[280px] w-full group">
+                            <div class="rounded-2xl overflow-hidden aspect-[3/4] bg-gray-950 shadow-md">
+                                <img src="{{ asset('images/promo-driver-earn90.jpg') }}" 
+                                     alt="Drive With Us, Earn 90% - Driver App Official Flyer" 
+                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            </div>
+                            <div class="mt-3 px-1 text-center">
+                                <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 block">Keep 90% from Trip #1</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Only 10% Platform Commission</span>
+                            </div>
+                        </div>
+
+                        <!-- QR Code View -->
+                        <div x-show="tab === 'qr'" style="display: none;" class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-amber-500/20 shadow-xl max-w-xs w-full">
                             <div class="p-4 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
                                 <!-- Real Scannable QR Code Generator -->
                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ urlencode($driverDownloadTargetUrl) }}" 

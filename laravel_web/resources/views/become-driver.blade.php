@@ -61,9 +61,42 @@
                         </div>
                     </div>
 
-                    <!-- Right Hero Real Driver Photo -->
-                    <div class="lg:col-span-5 relative">
-                        <div class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-300 dark:border-amber-500/30 group">
+                    <!-- Right Hero Real Driver Photo & Official Campaign Flyer -->
+                    <div class="lg:col-span-5 relative" x-data="{ viewMode: 'flyer' }">
+                        <!-- Toggle Pills -->
+                        <div class="flex items-center justify-center gap-2 mb-3">
+                            <button type="button" 
+                                    @click="viewMode = 'flyer'"
+                                    :class="viewMode === 'flyer' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
+                                    class="px-4 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5">
+                                <span>📄</span> Official 90% Flyer
+                            </button>
+                            <button type="button" 
+                                    @click="viewMode = 'photo'"
+                                    :class="viewMode === 'photo' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
+                                    class="px-4 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5">
+                                <span>👤</span> Verified Partner
+                            </button>
+                        </div>
+
+                        <!-- Flyer View -->
+                        <div x-show="viewMode === 'flyer'" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-300 dark:border-emerald-500/40 group bg-gray-950">
+                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% - Official Flyer" class="w-full h-[450px] sm:h-[520px] object-contain transition-transform duration-700 group-hover:scale-[1.02]">
+                            
+                            <!-- Floating Glass Badge -->
+                            <div class="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/95 dark:bg-[#141414]/95 backdrop-blur-md border border-gray-200 dark:border-white/10 shadow-xl flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">Keep 90% From Trip #1</div>
+                                    <div class="text-[11px] text-gray-600 dark:text-gray-400 font-semibold">Weekly Bank + 24/7 MoMo Cashouts</div>
+                                </div>
+                                <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-black rounded-lg border border-emerald-300">
+                                    Only 10% Fee
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Photo View -->
+                        <div x-show="viewMode === 'photo'" style="display: none;" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-300 dark:border-amber-500/30 group">
                             <img src="{{ asset('images/driver-hero.jpg') }}" alt="Proud RideMyCars Verified Driver Partner" class="w-full h-[450px] sm:h-[520px] object-cover transition-transform duration-700 group-hover:scale-[1.02]">
                             
                             <!-- Floating Glass Badge -->
@@ -271,6 +304,99 @@
                         <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2">Go Online & Keep 90%</h3>
                         <p class="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed">Accept on-demand rides, chauffeur bookings, or parcel dispatches and withdraw earnings anytime.</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Official Driver & Chauffeur Programs Comparison -->
+        <section class="py-20 bg-gradient-to-b from-[#f8fafc] via-white to-gray-50 dark:from-[#0c0c0c] dark:via-[#111] dark:to-[#0c0c0c] border-t border-gray-200 dark:border-white/10">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <span class="px-4 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-extrabold text-xs uppercase tracking-wider border border-amber-300 dark:border-amber-800/40 inline-block mb-3">
+                        Two Flexible Partner Pathways
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight mb-4">
+                        Drive Everyday Trips or <span class="text-amber-600 dark:text-amber-400">Executive Chauffeur</span>
+                    </h2>
+                    <p class="text-base sm:text-lg text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                        Whether you operate a compact daily vehicle or command a luxury executive sedan, RideMyCars offers the highest take-home earnings in the industry.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                    
+                    <!-- Tier 1: City Driver (Keep 90%) -->
+                    <div class="bg-white dark:bg-[#151515] rounded-3xl border-2 border-emerald-300 dark:border-emerald-500/30 p-8 shadow-xl hover:shadow-2xl transition-all flex flex-col justify-between group">
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-black rounded-full border border-emerald-300">
+                                    Standard Tier • 10% Fee
+                                </span>
+                                <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400">90% Payout</span>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row items-center gap-6">
+                                <div class="w-full sm:w-44 shrink-0 rounded-2xl overflow-hidden shadow-md border border-emerald-200 dark:border-emerald-700/40 bg-gray-950">
+                                    <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                                <div class="space-y-2">
+                                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">City Driver Partner</h3>
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
+                                        Ideal for owners of sedans and hatchbacks. Pick up daily riders across the city and complete parcel dispatches.
+                                    </p>
+                                    <ul class="text-xs text-gray-700 dark:text-gray-300 space-y-1.5 pt-1 font-semibold">
+                                        <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Keep 90% from your very first trip</li>
+                                        <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Weekly Friday bank deposits</li>
+                                        <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Instant 24/7 Mobile Money cash out</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row gap-3">
+                            <a href="/driver-signup" class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-lg transition-all">
+                                <span>Join Standard Driver (Keep 90%)</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tier 2: Executive Chauffeur (Keep 85%) -->
+                    <div class="bg-white dark:bg-[#151515] rounded-3xl border-2 border-blue-300 dark:border-blue-500/30 p-8 shadow-xl hover:shadow-2xl transition-all flex flex-col justify-between group">
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-black rounded-full border border-blue-300">
+                                    Executive Tier • 15% Fee
+                                </span>
+                                <span class="text-2xl font-black text-blue-600 dark:text-blue-400">85% Payout</span>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row items-center gap-6">
+                                <div class="w-full sm:w-44 shrink-0 rounded-2xl overflow-hidden shadow-md border border-blue-200 dark:border-blue-700/40 bg-gray-950">
+                                    <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" alt="Become a RideMyCars Chauffeur" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300">
+                                </div>
+                                <div class="space-y-2">
+                                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Executive Chauffeur</h3>
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
+                                        Reserved for executive luxury sedans (Mercedes, BMW, Audi, Lexus). Drive verified corporate travelers and VIP clients.
+                                    </p>
+                                    <ul class="text-xs text-gray-700 dark:text-gray-300 space-y-1.5 pt-1 font-semibold">
+                                        <li class="flex items-center gap-2"><span class="text-blue-500 font-bold">✓</span> Guaranteed 85% payout on premium fares</li>
+                                        <li class="flex items-center gap-2"><span class="text-blue-500 font-bold">✓</span> Verified riders & executive concierge</li>
+                                        <li class="flex items-center gap-2"><span class="text-blue-500 font-bold">✓</span> 24/7 dedicated partner priority support</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row gap-3">
+                            <a href="/driver-signup" class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-xl shadow-lg transition-all">
+                                <span>Register as Chauffeur (Earn 85%)</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>

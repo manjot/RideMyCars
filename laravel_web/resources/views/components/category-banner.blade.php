@@ -56,10 +56,10 @@
                                     $imageUrl = asset($img);
                                 }
                             @endphp
-                            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border border-amber-200/80 dark:border-amber-800/40 shrink-0 shadow-md">
+                            <div class="w-24 h-28 sm:w-28 sm:h-36 rounded-2xl overflow-hidden border border-amber-200/80 dark:border-amber-800/40 shrink-0 shadow-md bg-gray-950">
                                 <img src="{{ $imageUrl }}" 
                                      alt="{{ $banner->title }}"
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                     class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                                      onError="this.onerror=null;this.src='{{ asset('images/hero-delivery.png') }}';">
                             </div>
                         @endif

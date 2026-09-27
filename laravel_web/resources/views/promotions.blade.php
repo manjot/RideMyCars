@@ -128,6 +128,161 @@
             </div>
             @endauth
 
+            <!-- Official Campaign Flyers Showcase Section -->
+            <div class="space-y-6" x-data="{ activeFlyerModal: null }">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <span class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-xs uppercase tracking-wider border border-amber-300 dark:border-amber-700/60 inline-block mb-2">
+                            ⭐ Official Campaign Materials
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                            Live Promotional Campaigns & Program Posters
+                        </h2>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Click any flyer to view high-resolution details, scannable QR codes, and instant redeem links.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- Flyer 1: 50% Off First 3 Rides -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-amber-300 dark:border-amber-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Ride More, Pay Less — 50% Off First 3 Rides', img: '{{ asset('images/promo-ride-payless.jpg') }}', link: '/ride', cta: 'Book Ride (50% Off)' }">
+                            <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                    🔍 Click to Enlarge
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300">
+                                    New Riders
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">50% Off First 3 Rides</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Download app to redeem 50% off automatically on your first 3 trips.</p>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/ride" class="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-600 text-gray-950 text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Book Now →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flyer 2: Drive with Us, Earn 90% -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-emerald-300 dark:border-emerald-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Drive With Us, Earn 90% — Only 10% Platform Fee', img: '{{ asset('images/promo-driver-earn90.jpg') }}', link: '/become-driver', cta: 'Join as Driver Partner' }">
+                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                    🔍 Click to Enlarge
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300">
+                                    Drivers • 10% Fee
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Drive & Earn 90%</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Keep 90% from Trip #1 with weekly bank transfers and instant MoMo payouts.</p>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/become-driver" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Join Partner →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flyer 3: Become a Chauffeur, Earn 85% -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Become a RideMyCars Chauffeur — Earn 85%', img: '{{ asset('images/promo-chauffeur-earn85.jpg') }}', link: '/driver-signup', cta: 'Register as Chauffeur' }">
+                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" alt="Become a RideMyCars Chauffeur" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                    🔍 Click to Enlarge
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300">
+                                    Executive Tier
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Executive Chauffeur 85%</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Drive VIP & corporate clients in luxury vehicles with guaranteed 85% payout.</p>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/driver-signup" class="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Apply Now →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flyer 4: Accra & Tema Package Delivery -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-purple-300 dark:border-purple-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                        <div class="relative cursor-pointer aspect-[3/4] bg-gray-950 overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Fast Package Delivery — Accra & Tema', img: '{{ asset('images/promo-delivery-accra.jpg') }}', link: '/delivery', cta: 'Send a Package' }">
+                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" alt="Fast Package Delivery Accra & Tema" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                    🔍 Click to Enlarge
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-300">
+                                    Accra & Tema
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Express Courier Dispatch</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Same day parcel delivery with live GPS tracking, smart wallet, and MoMo.</p>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/delivery" class="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Dispatch Parcel →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Flyer Lightbox Modal -->
+                <template x-teleport="body">
+                    <div x-show="activeFlyerModal" 
+                         style="display: none;"
+                         class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                         @click.self="activeFlyerModal = null"
+                         @keydown.escape.window="activeFlyerModal = null">
+                        <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-white/20 flex flex-col items-center">
+                            <button type="button" 
+                                    @click="activeFlyerModal = null"
+                                    class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                ✕
+                            </button>
+                            <img :src="activeFlyerModal?.img" 
+                                 :alt="activeFlyerModal?.title"
+                                 class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-4">
+                            <div class="w-full flex items-center justify-between gap-4 pt-2 border-t border-gray-100 dark:border-white/10">
+                                <h4 class="text-sm font-black text-gray-900 dark:text-white" x-text="activeFlyerModal?.title"></h4>
+                                <a :href="activeFlyerModal?.link" 
+                                   class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl shrink-0 transition"
+                                   x-text="activeFlyerModal?.cta"></a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
             <!-- Filter Categories Pills -->
             <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
                 <button type="button" @click="activeFilter = 'all'" 

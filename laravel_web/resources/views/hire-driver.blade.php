@@ -132,10 +132,114 @@
               }
           }">
         
-        <!-- Header Text -->
-        <div class="mb-6">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Hire a Professional Driver</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced drivers for Private & Commercial hiring worldwide.</p>
+        <!-- Header Text & Executive Chauffeur Program Spotlight -->
+        <div class="mb-8 space-y-6" x-data="{ showChauffeurModal: false }">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Hire a Professional Driver</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-lg">Verified, experienced chauffeurs for private & corporate travel worldwide.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/driver-signup" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all shrink-0">
+                        <span>⭐</span>
+                        <span>Become a Chauffeur (Earn 85%)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Executive Chauffeur Official Banner -->
+            <div class="rounded-3xl bg-gradient-to-r from-blue-900/10 via-indigo-900/5 to-amber-500/10 border-2 border-blue-300 dark:border-blue-500/30 p-6 sm:p-8 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-20 -top-20 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Left: Details -->
+                    <div class="lg:col-span-8 space-y-4">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-black text-xs uppercase tracking-wider border border-blue-300 dark:border-blue-800/40">
+                            <span>⭐ Executive Mobility Standard</span>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl font-black text-gray-950 dark:text-white tracking-tight leading-tight">
+                            RideMyCars <span class="text-blue-600 dark:text-blue-400">Executive Chauffeur</span> Program
+                        </h2>
+
+                        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                            Every chauffeur in our network undergoes rigorous background checks and vehicle roadworthiness inspection. Chauffeurs command guaranteed 85% payouts on luxury assignments, with flexible weekly bank deposits and instant MoMo cashouts.
+                        </p>
+
+                        <!-- Key Pillars Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-lg block mb-1">🛡️</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">85% Payout</span>
+                                <span class="text-[10px] text-gray-500">From trip #1</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-lg block mb-1">👔</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">VIP Clients</span>
+                                <span class="text-[10px] text-gray-500">Verified riders</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-lg block mb-1">🏦</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Bank + MoMo</span>
+                                <span class="text-[10px] text-gray-500">Fast cashouts</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
+                                <span class="text-lg block mb-1">🤝</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">24/7 Support</span>
+                                <span class="text-[10px] text-gray-500">Partner concierge</span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex flex-wrap items-center gap-3 pt-3">
+                            <a href="/driver-signup" class="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all">
+                                <span>Apply as Chauffeur (Earn 85%)</span>
+                                <span>→</span>
+                            </a>
+                            <button type="button" 
+                                    @click="showChauffeurModal = true"
+                                    class="inline-flex items-center gap-2 px-4 py-3 bg-white dark:bg-white/10 hover:bg-gray-100 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-xs rounded-xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
+                                <span>🔍 View Official Chauffeur Flyer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Poster Visual -->
+                    <div class="lg:col-span-4 flex justify-center">
+                        <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-blue-400 dark:border-blue-500/40"
+                             @click="showChauffeurModal = true">
+                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" 
+                                 alt="Become a RideMyCars Chauffeur Flyer" 
+                                 class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg">
+                                    🔍 Click to Enlarge
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Poster Modal Lightbox -->
+                <template x-teleport="body">
+                    <div x-show="showChauffeurModal" 
+                         style="display: none;"
+                         class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+                         @click.self="showChauffeurModal = false"
+                         @keydown.escape.window="showChauffeurModal = false">
+                        <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-4 shadow-2xl border border-blue-300">
+                            <button type="button" 
+                                    @click="showChauffeurModal = false"
+                                    class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                ✕
+                            </button>
+                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" 
+                                 alt="Become a RideMyCars Chauffeur" 
+                                 class="w-full h-auto rounded-2xl object-contain max-h-[85vh]">
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
 
         @if($isUnsupportedRegion ?? false)
