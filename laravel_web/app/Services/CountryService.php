@@ -419,6 +419,15 @@ class CountryService
     }
 
     /**
+     * Get the active country array/meta for the current user session/request.
+     */
+    public static function getCurrentCountry(?Request $request = null): array
+    {
+        $code = static::getCurrentCountryCode($request);
+        return static::get($code);
+    }
+
+    /**
      * Persist country choice in session and set cookie.
      */
     public static function persistCountry(string $countryCode, bool $isManual = false): void
