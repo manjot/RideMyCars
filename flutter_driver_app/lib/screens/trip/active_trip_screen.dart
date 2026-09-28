@@ -169,6 +169,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             child: SosFloatingButton(
               rideId: _ride['id'] as int?,
               role: 'driver',
+              assignedPhone: (hasPoc && pocPhone != null ? pocPhone : customerPhone)?.toString(),
+              assignedName: (hasPoc && pocName != null ? pocName : customerName)?.toString() ?? 'Passenger',
             ),
           ),
 

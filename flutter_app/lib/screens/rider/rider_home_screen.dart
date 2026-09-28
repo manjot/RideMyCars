@@ -1389,10 +1389,26 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           ),
 
           // Map Corner SOS Emergency Button
-          const Positioned(
-            right: 16,
-            top: 76,
-            child: SosFloatingButton(role: 'rider'),
+          Builder(
+            builder: (ctx) {
+              final rideProv = Provider.of<RideProvider>(ctx);
+              final activeRide = rideProv.activeRide;
+              final driver = activeRide?['driver'] as Map<String, dynamic>?;
+              final driverPhone = driver?['phone']?.toString();
+              final driverName = driver?['name']?.toString() ?? 'Assigned Driver';
+              final rideId = activeRide?['id'] as int?;
+
+              return Positioned(
+                right: 16,
+                top: 76,
+                child: SosFloatingButton(
+                  role: 'rider',
+                  rideId: rideId,
+                  assignedPhone: driverPhone,
+                  assignedName: driverName,
+                ),
+              );
+            },
           ),
 
           // Top App Bar Floating Header
@@ -2375,7 +2391,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   Widget _buildRideCategoriesList(RideProvider rideProv) {
     if (rideProv.isLoadingCategories && rideProv.rideCategories.isEmpty) {
       return const SizedBox(
-        height: 108,
+        height: 124,
         child: Center(
           child: SizedBox(
             width: 24,
@@ -2435,9 +2451,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             ),
           ),
 
-        // Horizontal Category Cards Carousel (all 6 categories for Ghana or country tiers)
+        // Horizontal Category Cards Carousel (all categories dynamically styled)
         SizedBox(
-          height: 108,
+          height: 124,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -2448,17 +2464,18 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   selected?.name.toLowerCase() == cat.name.toLowerCase();
 
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: 10),
                 child: GestureDetector(
                   onTap: () {
                     setState(() => _selectedTierId = cat.slug);
                     rideProv.selectCategory(cat);
                   },
-                  child: Container(
-                    width: 128,
-                    padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 142,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.backgroundDark,
+                      color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.surfaceDark,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected ? _serviceColor : Colors.white.withOpacity(0.08),
@@ -2467,73 +2484,113 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: _serviceColor.withOpacity(0.25),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                                color: _serviceColor.withOpacity(0.28),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               )
                             ]
                           : null,
                     ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              cat.icon.isNotEmpty ? cat.icon : '🚗',
-                              style: const TextStyle(fontSize: 18),
-                            ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              width: 32,
+                              height: 32,
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? _serviceColor.withOpacity(0.2)
-                                    : Colors.white.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(6),
+                                    : Colors.white.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text(
-                                '${cat.etaMinutes}m',
-                                style: TextStyle(
-                                  color: isSelected ? _serviceColor : AppColors.textMuted,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
+                              child: Center(
+                                child: Icon(
+                                  cat.displayIcon,
+                                  color: isSelected ? _serviceColor : Colors.white70,
+                                  size: 18,
                                 ),
                               ),
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? _serviceColor.withOpacity(0.22)
+                                    : Colors.white.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected ? _serviceColor.withOpacity(0.4) : Colors.transparent,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time_filled_rounded,
+                                    size: 9.5,
+                                    color: isSelected ? _serviceColor : AppColors.textMuted,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${cat.etaMinutes}m',
+                                    style: TextStyle(
+                                      color: isSelected ? _serviceColor : AppColors.textMuted,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const Spacer(),
+                        Text(
+                          cat.name,
+                          style: TextStyle(
+                            color: isSelected ? AppColors.textLight : Colors.white70,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
                           children: [
-                            Text(
-                              cat.name,
-                              style: TextStyle(
-                                color: isSelected ? AppColors.textLight : AppColors.textMuted,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Icon(
+                              Icons.person_rounded,
+                              size: 11,
+                              color: AppColors.textMuted.withOpacity(0.8),
                             ),
-                            Text(
-                              cat.capacity,
-                              style: TextStyle(
-                                color: AppColors.textMuted.withOpacity(0.8),
-                                fontSize: 9.5,
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                cat.capacity,
+                                style: TextStyle(
+                                  color: AppColors.textMuted.withOpacity(0.8),
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
+                        const Spacer(),
                         Text(
                           cat.fareFormatted,
                           style: TextStyle(
                             color: isSelected ? _serviceColor : const Color(0xFF34D399),
                             fontWeight: FontWeight.w900,
-                            fontSize: 12.5,
+                            fontSize: 13,
+                            letterSpacing: 0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -2553,7 +2610,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   Widget _buildDeliveryTiersList() {
     final tiers = _deliverTierOptions;
     return SizedBox(
-      height: 108,
+      height: 124,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -2562,14 +2619,15 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           final opt = tiers[index];
           final isSelected = _selectedTierId == opt['id'];
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 10),
             child: GestureDetector(
               onTap: () => setState(() => _selectedTierId = opt['id']),
-              child: Container(
-                width: 128,
-                padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 142,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.backgroundDark,
+                  color: isSelected ? _serviceColor.withOpacity(0.18) : AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected ? _serviceColor : Colors.white.withOpacity(0.08),
@@ -2578,74 +2636,101 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: _serviceColor.withOpacity(0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: _serviceColor.withOpacity(0.28),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           )
                         ]
                       : null,
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          opt['icon'] as IconData,
-                          color: isSelected ? _serviceColor : AppColors.textMuted,
-                          size: 18,
-                        ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          width: 32,
+                          height: 32,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? _serviceColor.withOpacity(0.2)
-                                : Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(6),
+                                : Colors.white.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(
-                            opt['eta'],
-                            style: TextStyle(
-                              color: isSelected ? _serviceColor : AppColors.textMuted,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
+                          child: Center(
+                            child: Icon(
+                              opt['icon'] as IconData,
+                              color: isSelected ? _serviceColor : Colors.white70,
+                              size: 18,
                             ),
                           ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? _serviceColor.withOpacity(0.22)
+                                : Colors.white.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected ? _serviceColor.withOpacity(0.4) : Colors.transparent,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.access_time_filled_rounded,
+                                size: 9.5,
+                                color: isSelected ? _serviceColor : AppColors.textMuted,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                opt['eta'],
+                                style: TextStyle(
+                                  color: isSelected ? _serviceColor : AppColors.textMuted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          opt['label'],
-                          style: TextStyle(
-                            color: isSelected ? AppColors.textLight : AppColors.textMuted,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          opt['desc'] ?? '',
-                          style: TextStyle(
-                            color: AppColors.textMuted.withOpacity(0.8),
-                            fontSize: 9.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    const Spacer(),
+                    Text(
+                      opt['label'],
+                      style: TextStyle(
+                        color: isSelected ? AppColors.textLight : Colors.white70,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        letterSpacing: 0.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      opt['desc'] ?? '',
+                      style: TextStyle(
+                        color: AppColors.textMuted.withOpacity(0.8),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
                     Text(
                       opt['price'],
                       style: TextStyle(
                         color: isSelected ? _serviceColor : const Color(0xFF34D399),
                         fontWeight: FontWeight.w900,
-                        fontSize: 12.5,
+                        fontSize: 13,
+                        letterSpacing: 0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

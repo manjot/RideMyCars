@@ -8,12 +8,16 @@ import '../sos_contacts_screen.dart';
 class SosFloatingButton extends StatelessWidget {
   final int? rideId;
   final String role;
+  final String? assignedPhone;
+  final String? assignedName;
   final VoidCallback? onTriggered;
 
   const SosFloatingButton({
     super.key,
     this.rideId,
     this.role = 'driver',
+    this.assignedPhone,
+    this.assignedName,
     this.onTriggered,
   });
 
@@ -25,6 +29,8 @@ class SosFloatingButton extends StatelessWidget {
       builder: (ctx) => _DriverEmergencyActionSheet(
         rideId: rideId,
         role: role,
+        assignedPhone: assignedPhone,
+        assignedName: assignedName,
         onTriggered: onTriggered,
       ),
     );
@@ -32,50 +38,65 @@ class SosFloatingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasAssignedContact = assignedPhone != null && assignedPhone!.trim().isNotEmpty;
+
     return Material(
       color: Colors.transparent,
-      elevation: 8,
-      shadowColor: Colors.red.withOpacity(0.5),
+      elevation: 5,
+      shadowColor: Colors.red.withOpacity(0.4),
       shape: const CircleBorder(),
       child: InkWell(
         onTap: () => _openEmergencySheet(context),
         customBorder: const CircleBorder(),
-        child: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.red.withOpacity(0.4),
-                blurRadius: 10,
-                spreadRadius: 2,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: Colors.white, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFDC2626).withOpacity(0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.warning_rounded, color: Colors.white, size: 16),
-                Text(
+              child: const Center(
+                child: Text(
                   'SOS',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+            if (hasAssignedContact)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -85,11 +106,15 @@ class SosFloatingButton extends StatelessWidget {
 class _DriverEmergencyActionSheet extends StatefulWidget {
   final int? rideId;
   final String role;
+  final String? assignedPhone;
+  final String? assignedName;
   final VoidCallback? onTriggered;
 
   const _DriverEmergencyActionSheet({
     this.rideId,
     required this.role,
+    this.assignedPhone,
+    this.assignedName,
     this.onTriggered,
   });
 
@@ -262,7 +287,124 @@ class _DriverEmergencyActionSheetState extends State<_DriverEmergencyActionSheet
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
+          // 0. Assigned Contact Hotline (Direct Call)
+          if (widget.assignedPhone != null && widget.assignedPhone!.trim().isNotEmpty) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4), width: 1.2),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _makeCall(widget.assignedPhone!),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Call Assigned Passenger',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'ACTIVE',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${widget.assignedName ?? 'Passenger'} • ${widget.assignedPhone}',
+                                style: const TextStyle(
+                                  color: Color(0xFF34D399),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'CALL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.shield_outlined, color: AppColors.primary, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Emergency SOS Active • Assigned passenger contact will connect here during trips.',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 10.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
 
           ElevatedButton(
             onPressed: _isBroadcasting ? null : _broadcastSos,

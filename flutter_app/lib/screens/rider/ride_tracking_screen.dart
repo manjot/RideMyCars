@@ -174,6 +174,8 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             child: SosFloatingButton(
               rideId: currentRide['id'] as int?,
               role: 'rider',
+              assignedPhone: driver?['phone']?.toString() ?? currentRide['driver_phone']?.toString(),
+              assignedName: driver?['name']?.toString() ?? currentRide['driver_name']?.toString() ?? 'Assigned Driver',
             ),
           ),
 

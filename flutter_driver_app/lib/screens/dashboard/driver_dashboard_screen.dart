@@ -103,7 +103,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       drawer: _buildDrawer(context, auth),
-      floatingActionButton: const SosFloatingButton(role: 'driver'),
+      floatingActionButton: Builder(
+        builder: (ctx) {
+          final activeRide = driver.activeRides.isNotEmpty ? driver.activeRides.first : null;
+          final custPhone = activeRide?['customer_phone'] ??
+              activeRide?['rider']?['phone'] ??
+              activeRide?['rider_phone'] ??
+              activeRide?['passenger_phone'];
+          final custName = activeRide?['customer_name'] ??
+              activeRide?['rider']?['name'] ??
+              activeRide?['rider_name'] ??
+              activeRide?['passenger_name'] ??
+              'Passenger';
+          final rideId = activeRide?['id'] as int?;
+
+          return SosFloatingButton(
+            role: 'driver',
+            rideId: rideId,
+            assignedPhone: custPhone?.toString(),
+            assignedName: custName.toString(),
+          );
+        },
+      ),
       appBar: AppBar(
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
