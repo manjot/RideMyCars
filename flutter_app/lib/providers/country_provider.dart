@@ -297,9 +297,9 @@ class CountryProvider extends ChangeNotifier {
 
   /// Automatically detect user's country on launch using:
   /// 1. Saved manual preference (if user previously made a manual choice).
-  /// 2. GPS Location (Geolocator coordinate bounding box).
-  /// 3. Device System Locale / SIM Region.
-  /// 4. Backend GeoIP / Visitor Location (GET /api/countries).
+  /// 2. Backend GeoIP / Visitor Location (GET /countries).
+  /// 3. GPS Location (Geolocator coordinate bounding box).
+  /// 4. Device System Locale / SIM Region.
   Future<void> autoDetectCountry() async {
     // 1. If user previously manually picked a country, respect their manual preference!
     final savedCode = await TokenStorage.getSelectedCountryCode();
@@ -312,23 +312,42 @@ class CountryProvider extends ChangeNotifier {
 
     String? detectedCode;
 
-    // 2. GPS Device Location Check (Bounding Boxes)
+    // 2. Backend GeoIP API Check (GET /countries)
     try {
-      final hasPermission = await Geolocator.checkPermission();
-      if (hasPermission == LocationPermission.always || hasPermission == LocationPermission.whileInUse) {
-        Position? pos = await Geolocator.getLastKnownPosition();
-        pos ??= await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.low,
-          timeLimit: const Duration(seconds: 3),
-        );
-        detectedCode = _detectFromCoordinates(pos.latitude, pos.longitude);
-        debugPrint('CountryProvider detected from GPS: $detectedCode');
+      final res = await _dio.get('/countries');
+      if (res.statusCode == 200 && res.data != null) {
+        final visitor = res.data['visitor_location'];
+        if (visitor != null && visitor['code'] != null) {
+          final vCode = normalizeCountryCode(visitor['code'].toString());
+          if (vCode != null) {
+            detectedCode = vCode;
+            debugPrint('CountryProvider detected from Backend GeoIP: $detectedCode');
+          }
+        }
       }
     } catch (e) {
-      debugPrint('CountryProvider GPS check skipped: $e');
+      debugPrint('CountryProvider backend GeoIP check error: $e');
     }
 
-    // 3. System Locale / SIM Region Check
+    // 3. GPS Device Location Check (Bounding Boxes)
+    if (detectedCode == null) {
+      try {
+        final hasPermission = await Geolocator.checkPermission();
+        if (hasPermission == LocationPermission.always || hasPermission == LocationPermission.whileInUse) {
+          Position? pos = await Geolocator.getLastKnownPosition();
+          pos ??= await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.low,
+            timeLimit: const Duration(seconds: 3),
+          );
+          detectedCode = _detectFromCoordinates(pos.latitude, pos.longitude);
+          debugPrint('CountryProvider detected from GPS: $detectedCode');
+        }
+      } catch (e) {
+        debugPrint('CountryProvider GPS check skipped: $e');
+      }
+    }
+
+    // 4. System Locale / SIM Region Check
     if (detectedCode == null) {
       try {
         final deviceCountry = PlatformDispatcher.instance.locale.countryCode;
@@ -338,25 +357,6 @@ class CountryProvider extends ChangeNotifier {
         }
       } catch (e) {
         debugPrint('CountryProvider locale check error: $e');
-      }
-    }
-
-    // 4. Backend GeoIP API Check (GET /api/countries)
-    if (detectedCode == null || detectedCode == 'USA') {
-      try {
-        final res = await _dio.get('${ApiConstants.baseUrl}/api/countries');
-        if (res.statusCode == 200 && res.data != null) {
-          final visitor = res.data['visitor_location'];
-          if (visitor != null && visitor['code'] != null) {
-            final vCode = normalizeCountryCode(visitor['code'].toString());
-            if (vCode != null) {
-              detectedCode = vCode;
-              debugPrint('CountryProvider detected from Backend GeoIP: $detectedCode');
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('CountryProvider backend GeoIP check error: $e');
       }
     }
 
@@ -410,7 +410,7 @@ class CountryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _dio.get('${ApiConstants.baseUrl}/api/country-pricing', queryParameters: {
+      final res = await _dio.get('/country-pricing', queryParameters: {
         'country': countryCode,
       });
 
@@ -437,7 +437,7 @@ class CountryProvider extends ChangeNotifier {
   Future<void> _syncCountryToBackend(String code, bool isManual) async {
     try {
       await _dio.post(
-        '${ApiConstants.baseUrl}/api/country/set',
+        '/country/set',
         data: {
           'country': code,
           'country_code': code,

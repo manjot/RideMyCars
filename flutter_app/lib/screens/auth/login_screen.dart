@@ -48,6 +48,16 @@ class _LoginScreenState extends State<LoginScreen> {
     _loadSavedCredentials();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final countryProv = Provider.of<CountryProvider>(context);
+    final detectedCountry = CountriesData.findByCode(countryProv.selectedCountryCode);
+    if (!countryProv.isManual && _selectedCountry.code != detectedCountry.code && !_phoneOtpSent) {
+      _selectedCountry = detectedCountry;
+    }
+  }
+
   Future<void> _loadSavedCredentials() async {
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     final detectedCountry = CountriesData.findByCode(countryProv.selectedCountryCode);
