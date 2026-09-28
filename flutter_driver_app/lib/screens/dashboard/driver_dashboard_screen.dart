@@ -128,21 +128,26 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
+        titleSpacing: 10,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.local_taxi_rounded, color: AppColors.backgroundDark, size: 22),
+              child: const Icon(Icons.local_taxi_rounded, color: AppColors.backgroundDark, size: 20),
             ),
-            const SizedBox(width: 10),
-            const Text(
-              'Driver Console',
-              style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w900, fontSize: 18),
+            const SizedBox(width: 8),
+            const Flexible(
+              child: Text(
+                'Driver Console',
+                style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w900, fontSize: 16.5),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -244,26 +249,31 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Active Trip (${driver.activeRides.length})',
-                          style: const TextStyle(
-                            color: AppColors.textLight,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Active Trip (${driver.activeRides.length})',
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh_rounded, color: AppColors.success, size: 20),
@@ -282,26 +292,31 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.amber,
-                            shape: BoxShape.circle,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Colors.amber,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Pending Verifications (${driver.pendingVerifications.length})',
-                          style: const TextStyle(
-                            color: AppColors.textLight,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Pending Verifications (${driver.pendingVerifications.length})',
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh_rounded, color: Colors.amber, size: 20),
@@ -320,27 +335,33 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Available Jobs (${driver.pendingRequests.length})',
-                          style: const TextStyle(
-                            color: AppColors.textLight,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Available Jobs (${driver.pendingRequests.length})',
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     const Text(
                       'Live Dispatch',
                       style: TextStyle(
@@ -504,7 +525,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     return GestureDetector(
       onTap: driver.isLoading ? null : () => driver.toggleOnline(),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: driver.isOnline
@@ -513,7 +534,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: driver.isOnline ? AppColors.success : Colors.white10,
             width: 1.5,
@@ -521,8 +542,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           boxShadow: [
             BoxShadow(
               color: driver.isOnline ? AppColors.success.withOpacity(0.2) : Colors.black26,
-              blurRadius: 20,
-              offset: const Offset(0, 6),
+              blurRadius: 18,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -531,24 +552,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             Row(
               children: [
                 Container(
-                  width: 14,
-                  height: 14,
+                  width: 12,
+                  height: 12,
                   decoration: BoxDecoration(
                     color: driver.isOnline ? AppColors.success : AppColors.textMuted,
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  driver.isOnline ? 'ONLINE & ACCEPTING JOBS' : 'YOU ARE OFFLINE',
-                  style: TextStyle(
-                    color: driver.isOnline ? Colors.white : AppColors.textMuted,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    driver.isOnline ? 'ONLINE & ACCEPTING JOBS' : 'YOU ARE OFFLINE',
+                    style: TextStyle(
+                      color: driver.isOnline ? Colors.white : AppColors.textMuted,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12.5,
+                      letterSpacing: 0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 6),
                 driver.isLoading
                     ? const SizedBox(
                         width: 24,
@@ -558,25 +583,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                           color: AppColors.primary,
                         ),
                       )
-                    : Switch(
-                        value: driver.isOnline,
-                        activeColor: AppColors.success,
-                        activeTrackColor: AppColors.success.withOpacity(0.3),
-                        inactiveThumbColor: AppColors.textMuted,
-                        inactiveTrackColor: Colors.white10,
-                        onChanged: (val) => driver.toggleOnline(),
+                    : Transform.scale(
+                        scale: 0.88,
+                        child: Switch(
+                          value: driver.isOnline,
+                          activeColor: AppColors.success,
+                          activeTrackColor: AppColors.success.withOpacity(0.3),
+                          inactiveThumbColor: AppColors.textMuted,
+                          inactiveTrackColor: Colors.white10,
+                          onChanged: (val) => driver.toggleOnline(),
+                        ),
                       ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               driver.isOnline
                   ? 'Your GPS is transmitting live. Nearby ride & delivery orders will ring with a loud ringtone.'
                   : 'Turn your status online to start receiving ride and delivery orders.',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.8),
-                fontSize: 13,
-                height: 1.4,
+                fontSize: 12.5,
+                height: 1.35,
               ),
             ),
           ],
