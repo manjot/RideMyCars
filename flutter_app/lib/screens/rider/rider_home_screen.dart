@@ -2375,7 +2375,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   Widget _buildRideCategoriesList(RideProvider rideProv) {
     if (rideProv.isLoadingCategories && rideProv.rideCategories.isEmpty) {
       return const SizedBox(
-        height: 92,
+        height: 108,
         child: Center(
           child: SizedBox(
             width: 24,
@@ -2437,7 +2437,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
         // Horizontal Category Cards Carousel (all 6 categories for Ghana or country tiers)
         SizedBox(
-          height: 92,
+          height: 108,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -2553,7 +2553,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   Widget _buildDeliveryTiersList() {
     final tiers = _deliverTierOptions;
     return SizedBox(
-      height: 92,
+      height: 108,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 14),
