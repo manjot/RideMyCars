@@ -105,7 +105,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
   // --- Phone SMS OTP Handlers ---
   Future<void> _handleSendPhoneOtp() async {
-    final localNum = _mobileNumberController.text.trim();
+    final localNum = _mobileNumberController.text.replaceAll(RegExp(r'[^\d]'), '').trim();
     if (localNum.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -115,7 +115,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
       );
       return;
     }
-    final phone = '${_selectedCountry.dial} $localNum';
+    final phone = '${_selectedCountry.dial.trim()} $localNum';
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final res = await auth.sendPhoneOtp(phone: phone, action: 'login');
@@ -156,8 +156,10 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   }
 
   Future<void> _handleVerifyPhoneOtp() async {
-    final phone = '${_selectedCountry.dial} ${_mobileNumberController.text.trim()}';
-    final otp = _phoneOtpController.text.trim();
+    final dial = _selectedCountry.dial.trim();
+    final localNum = _mobileNumberController.text.replaceAll(RegExp(r'[^\d]'), '').trim();
+    final phone = '$dial $localNum';
+    final otp = _phoneOtpController.text.replaceAll(RegExp(r'[^\d]'), '').trim();
     if (otp.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -184,6 +186,14 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
         SnackBar(
           content: Text(auth.errorMessage ?? 'Invalid verification code'),
           backgroundColor: AppColors.danger,
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: Colors.white,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              _handleVerifyPhoneOtp();
+            },
+          ),
         ),
       );
     }

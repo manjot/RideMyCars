@@ -543,6 +543,7 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
             $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
                       ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $rawCleanPhone)
                       ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone)
+                      ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . trim($phone))
                       ?? $emailOtp
                       ?? $sessionOtp;
 
@@ -550,6 +551,7 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
                 \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $formattedPhone);
                 \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $rawCleanPhone);
                 \Illuminate\Support\Facades\Cache::forget('otp_phone_' . $phone);
+                \Illuminate\Support\Facades\Cache::forget('otp_phone_' . trim($phone));
                 if ($cleanEmail) {
                     \Illuminate\Support\Facades\Cache::forget('otp_' . $cleanEmail);
                     $request->session()->forget(['otp_' . $cleanEmail, 'otp_expires_' . $cleanEmail]);
@@ -560,6 +562,7 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
                 $user = \App\Models\User::where('phone', $formattedPhone)
                     ->orWhere('phone', $phone)
                     ->orWhere('phone', $rawCleanPhone)
+                    ->orWhere('phone', 'like', '%' . substr($rawCleanPhone, -10))
                     ->first();
 
                 $isNewUser = false;
@@ -712,17 +715,28 @@ Route::post('/api/otp/verify', function (\Illuminate\Http\Request $request) {
 
                 $redirectUrl = session()->pull('url.intended', $user->role === 'driver' ? '/driver/dashboard' : '/');
 
+                $driverProfile = null;
+                try {
+                    if ($user->role === 'driver' || $user->driverProfile) {
+                        $driverProfile = $user->driverProfile;
+                    }
+                } catch (\Throwable $e) {}
+
                 return response()->json([
                     'success' => true,
                     'message' => $isNewUser ? 'Account registered successfully! Welcome to RideMyCars.' : 'Login successful!',
                     'is_new_user' => $isNewUser,
                     'token' => $token,
+                    'role' => $user->role,
+                    'driver_profile' => $driverProfile,
                     'user' => [
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
                         'phone' => $user->phone,
                         'role' => $user->role,
+                        'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                        'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
                     ],
                     'redirect' => $redirectUrl,
                 ]);

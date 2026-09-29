@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import '../constants/api_constants.dart';
 import '../storage/token_storage.dart';
 
@@ -8,20 +10,38 @@ class ApiClient {
 
   late final Dio dio;
 
+  static const String _defaultUserAgent =
+      'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 RideMyCarsDriver/1.0';
+
   ApiClient._internal() {
     dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 35),
+        receiveTimeout: const Duration(seconds: 35),
+        sendTimeout: const Duration(seconds: 35),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'User-Agent': _defaultUserAgent,
         },
         followRedirects: true,
         maxRedirects: 5,
       ),
     );
+
+    // Configure low-level HttpClient to avoid stale socket reuse and handle SSL renegotiation
+    try {
+      if (dio.httpClientAdapter is IOHttpClientAdapter) {
+        (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+          final client = HttpClient();
+          client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+          client.idleTimeout = const Duration(seconds: 10);
+          client.connectionTimeout = const Duration(seconds: 35);
+          return client;
+        };
+      }
+    } catch (_) {}
 
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -30,11 +50,15 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          if (!options.headers.containsKey('User-Agent') || options.headers['User-Agent'] == null) {
+            options.headers['User-Agent'] = _defaultUserAgent;
+          }
           return handler.next(options);
         },
         onError: (DioException error, handler) async {
-          // 1. Transparently retry canonical www URL on any 301/302/307/308 redirect
           final statusCode = error.response?.statusCode;
+
+          // 1. Transparently retry canonical www URL on any 301/302/307/308 redirect
           if (statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308) {
             final location = error.response?.headers.value('location');
             String targetUri = location ?? error.requestOptions.uri.toString();
@@ -65,7 +89,26 @@ class ApiClient {
             }
           }
 
-          // 2. Handle 401 unauthenticated by automatically re-logging in with saved credentials
+          // 2. Transparently retry once on transient network/socket/timeout errors (e.g. stale keepalive socket closed by server after user entered OTP)
+          final isNetworkError = error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.sendTimeout ||
+              error.type == DioExceptionType.receiveTimeout;
+          if (isNetworkError) {
+            final retries = (error.requestOptions.extra['retry_count'] as int?) ?? 0;
+            if (retries < 2) {
+              error.requestOptions.extra['retry_count'] = retries + 1;
+              try {
+                await Future.delayed(const Duration(milliseconds: 600));
+                final retryRes = await dio.fetch(error.requestOptions);
+                return handler.resolve(retryRes);
+              } catch (_) {
+                // If retry also failed, continue to next handler
+              }
+            }
+          }
+
+          // 3. Handle 401 unauthenticated by automatically re-logging in with saved credentials
           if (statusCode == 401) {
             final email = await TokenStorage.getUserEmail();
             final password = await TokenStorage.getSavedPassword();
@@ -75,9 +118,12 @@ class ApiClient {
                 final authDio = Dio(
                   BaseOptions(
                     baseUrl: ApiConstants.baseUrl,
+                    connectTimeout: const Duration(seconds: 35),
+                    receiveTimeout: const Duration(seconds: 35),
                     headers: {
                       'Accept': 'application/json',
                       'Content-Type': 'application/json',
+                      'User-Agent': _defaultUserAgent,
                     },
                   ),
                 );

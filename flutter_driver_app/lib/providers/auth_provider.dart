@@ -97,8 +97,15 @@ class AuthProvider extends ChangeNotifier {
           return firstVal.toString();
         }
       }
-    } else if (data is String && data.isNotEmpty && !data.contains('<!DOCTYPE html>')) {
-      return data;
+    } else if (data is String && data.isNotEmpty) {
+      final trimmed = data.trim();
+      if (!trimmed.startsWith('<') &&
+          !trimmed.contains('<!DOCTYPE html>') &&
+          !trimmed.contains('<html') &&
+          !trimmed.contains('<head') &&
+          !trimmed.contains('Mod_Security')) {
+        return trimmed;
+      }
     }
     return fallback;
   }
@@ -272,10 +279,13 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final cleanPhone = phone.trim();
+    final cleanOtp = otp.replaceAll(RegExp(r'\s+'), '').trim();
+
     try {
       final payload = <String, dynamic>{
-        'phone': phone.trim(),
-        'otp': otp.trim(),
+        'phone': cleanPhone,
+        'otp': cleanOtp,
         'role': role,
       };
       if (name != null && name.isNotEmpty) payload['name'] = name.trim();
@@ -283,25 +293,39 @@ class AuthProvider extends ChangeNotifier {
       if (password != null && password.isNotEmpty) payload['password'] = password;
       if (driverDetails != null) payload.addAll(driverDetails);
 
-      final res = await _dio.post(ApiConstants.verifyOtp, data: payload);
+      Response res;
+      try {
+        res = await _dio.post(ApiConstants.verifyOtp, data: payload);
+      } on DioException catch (dioErr) {
+        // Transparent retry on connection or timeout error
+        if (dioErr.type == DioExceptionType.connectionError ||
+            dioErr.type == DioExceptionType.connectionTimeout ||
+            dioErr.type == DioExceptionType.receiveTimeout) {
+          debugPrint('verifyPhoneOtp connection glitch (${dioErr.type}), retrying immediately with fresh socket...');
+          await Future.delayed(const Duration(milliseconds: 500));
+          res = await _dio.post(ApiConstants.verifyOtp, data: payload);
+        } else {
+          rethrow;
+        }
+      }
 
       if (res.statusCode == 200 && res.data is Map && res.data['success'] == true) {
-        _token = res.data['token'];
+        _token = res.data['token']?.toString();
         final u = res.data['user'];
-        if (u != null) {
-          _userId = u['id'];
-          _userName = u['name'];
-          _userEmail = u['email'];
+        if (u != null && u is Map) {
+          _userId = u['id'] is int ? u['id'] : int.tryParse(u['id']?.toString() ?? '');
+          _userName = u['name']?.toString();
+          _userEmail = u['email']?.toString();
         }
         _isAuthenticated = true;
 
-        if (_token != null) {
+        if (_token != null && _token!.isNotEmpty) {
           await TokenStorage.saveToken(_token!);
         }
         await TokenStorage.saveUserData(
           role: 'driver',
           name: _userName ?? (name ?? 'Driver'),
-          email: _userEmail ?? (email ?? phone),
+          email: _userEmail ?? (email ?? cleanPhone),
           password: password ?? '',
         );
 
@@ -312,13 +336,17 @@ class AuthProvider extends ChangeNotifier {
         _errorMessage = _extractErrorMessage(res.data, 'Verification failed. Please check the code.');
       }
     } on DioException catch (e) {
+      debugPrint('verifyPhoneOtp DioException: ${e.type} | ${e.message} | ${e.response?.statusCode} | ${e.response?.data}');
       if (e.response?.data != null) {
         _errorMessage = _extractErrorMessage(e.response!.data, 'Invalid OTP code.');
+      } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        _errorMessage = 'Connection timed out. Please check your internet connection and try again.';
       } else {
-        _errorMessage = 'Unable to connect to server. Please try again.';
+        _errorMessage = 'Unable to connect to server. Please check your network and try again.';
       }
     } catch (e) {
-      _errorMessage = 'An unexpected error occurred during verification.';
+      debugPrint('verifyPhoneOtp catch: $e');
+      _errorMessage = 'An unexpected error occurred during verification. Please try again.';
     }
 
     _isLoading = false;
