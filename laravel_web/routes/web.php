@@ -3945,6 +3945,29 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 $output['apple_key_id_saved'] = $appleKeyVal;
             }
 
+            // Support setting Google OAuth settings dynamically
+            if ($request->has('google_client_id') && !empty($request->query('google_client_id'))) {
+                $googleIdVal = trim($request->query('google_client_id'));
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.google_client_id'],
+                    ['value' => $googleIdVal, 'group' => 'Social Logins', 'label' => 'Google Client ID', 'type' => 'text']
+                );
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.google_enabled'],
+                    ['value' => '1', 'group' => 'Social Logins', 'label' => 'Google Login Enabled', 'type' => 'text']
+                );
+                $output['google_client_id_saved'] = $googleIdVal;
+            }
+
+            if ($request->has('google_client_secret') && !empty($request->query('google_client_secret'))) {
+                $googleSecretVal = trim($request->query('google_client_secret'));
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'oauth.google_client_secret'],
+                    ['value' => $googleSecretVal, 'group' => 'Social Logins', 'label' => 'Google Client Secret', 'type' => 'password']
+                );
+                $output['google_client_secret_saved'] = true;
+            }
+
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;
             $output['stripe_settings_synced'] = true;
