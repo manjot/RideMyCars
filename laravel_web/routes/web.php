@@ -3828,7 +3828,30 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                     ]
                 );
             }
+            $liveMailSettings = [
+                'mail.mailer' => ['value' => 'smtp', 'label' => 'Mail Mailer'],
+                'mail.host' => ['value' => 'mail.ridemycars.com', 'label' => 'Mail Host'],
+                'mail.port' => ['value' => '465', 'label' => 'Mail Port'],
+                'mail.username' => ['value' => 'support@ridemycars.com', 'label' => 'Mail Username'],
+                'mail.password' => ['value' => 'Support@#007', 'label' => 'Mail Password'],
+                'mail.encryption' => ['value' => 'ssl', 'label' => 'Mail Encryption'],
+                'mail.from_address' => ['value' => 'support@ridemycars.com', 'label' => 'Mail From Address'],
+                'mail.from_name' => ['value' => 'RideMyCars', 'label' => 'Mail From Name'],
+            ];
+            foreach ($liveMailSettings as $sKey => $sVal) {
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => $sKey],
+                    [
+                        'value' => $sVal['value'],
+                        'group' => 'Mail Settings',
+                        'type' => 'text',
+                        'label' => $sVal['label'],
+                        'updated_at' => now(),
+                    ]
+                );
+            }
             $output['live_payment_settings_synced'] = true;
+            $output['live_mail_settings_synced'] = true;
 
             // Purge PayPal configuration from database
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'like', 'payment.paypal%')->delete();
@@ -4354,8 +4377,26 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                         $envContent .= "\n{$pKey}={$pVal}";
                     }
                 }
+                $liveMailVars = [
+                    'MAIL_MAILER' => 'smtp',
+                    'MAIL_HOST' => 'mail.ridemycars.com',
+                    'MAIL_PORT' => '465',
+                    'MAIL_USERNAME' => 'support@ridemycars.com',
+                    'MAIL_PASSWORD' => '"Support@#007"',
+                    'MAIL_ENCRYPTION' => 'ssl',
+                    'MAIL_FROM_ADDRESS' => '"support@ridemycars.com"',
+                    'MAIL_FROM_NAME' => '"RideMyCars"',
+                ];
+                foreach ($liveMailVars as $mKey => $mVal) {
+                    if (preg_match("/^{$mKey}=.*$/m", $envContent)) {
+                        $envContent = preg_replace("/^{$mKey}=.*$/m", "{$mKey}={$mVal}", $envContent);
+                    } else {
+                        $envContent .= "\n{$mKey}={$mVal}";
+                    }
+                }
                 file_put_contents($envPath, $envContent);
                 $output['live_payments_env_synced'] = true;
+                $output['live_mail_env_synced'] = true;
             }
         } catch (\Throwable $e) {
             $output['live_payments_env_sync_err'] = $e->getMessage();
@@ -4741,7 +4782,7 @@ Route::match(['get', 'post'], '/api-audit-system', function (\Illuminate\Http\Re
         $mailHost = \App\Services\SettingService::get('mail.host', env('MAIL_HOST', 'mail.ridemycars.com'));
         $mailPort = (int) \App\Services\SettingService::get('mail.port', env('MAIL_PORT', 465));
         $mailUsername = \App\Services\SettingService::get('mail.username', env('MAIL_USERNAME', 'support@ridemycars.com'));
-        $mailPassword = \App\Services\SettingService::get('mail.password', env('MAIL_PASSWORD', ''));
+        $mailPassword = \App\Services\SettingService::get('mail.password', env('MAIL_PASSWORD', 'Support@#007'));
         $mailEnc = \App\Services\SettingService::get('mail.encryption', env('MAIL_ENCRYPTION', 'ssl'));
 
         $socketConnected = false;
@@ -4749,18 +4790,22 @@ Route::match(['get', 'post'], '/api-audit-system', function (\Illuminate\Http\Re
         $smtpLog = [];
 
         $target = ($mailEnc === 'ssl' ? "ssl://{$mailHost}" : $mailHost);
-        $fp = @fsockopen($target, $mailPort, $errno, $errstr, 5);
+        $fp = @fsockopen($target, $mailPort, $errno, $errstr, 10);
 
         if ($fp) {
             $socketConnected = true;
-            $banner = fgets($fp, 512);
-            $smtpLog[] = 'Banner: ' . trim($banner);
+            $bannerLines = [];
+            while ($line = fgets($fp, 512)) {
+                $bannerLines[] = trim($line);
+                if (strlen($line) >= 4 && substr($line, 3, 1) === ' ') break;
+            }
+            $smtpLog[] = 'Banner: ' . implode(' | ', $bannerLines);
 
             fputs($fp, "EHLO ridemycars.com\r\n");
-            $ehloResp = '';
+            $ehloLines = [];
             while ($line = fgets($fp, 512)) {
-                $ehloResp .= $line;
-                if (substr($line, 3, 1) === ' ') break;
+                $ehloLines[] = trim($line);
+                if (strlen($line) >= 4 && substr($line, 3, 1) === ' ') break;
             }
             $smtpLog[] = 'EHLO: OK';
 
