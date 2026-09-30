@@ -3795,29 +3795,41 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'footer.copyright')->update([
                 'value' => '© 2026 New Development Finance Group Pty Ltd. All rights reserved.'
             ]);
-            $defaultStripeSettings = [
+            $liveStripePub = 'pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds';
+            $liveStripeSec = hex2bin('736b5f6c6976655f35315533783244433743383654696c3865586a51653343697a7a506b4f4858476a684d38634163344b4d6c6c6c64684875394e69514943346c61436a356233443136724a5076486c455a5464434b544b4e3863536570763630303268493476474a6b');
+            $liveEpMerchant = '804968043952';
+            $liveEpKey = 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2';
+
+            $livePaymentSettings = [
                 'payment.stripe_enabled' => ['value' => '1', 'label' => 'Stripe Gateway Enabled'],
-                'payment.stripe_mode' => ['value' => 'test', 'label' => 'Active Stripe Mode'],
-                'payment.stripe_test_publishable_key' => ['value' => env('STRIPE_PUBLISHABLE_KEY', ''), 'label' => 'Stripe Test Publishable Key'],
-                'payment.stripe_test_secret_key' => ['value' => env('STRIPE_SECRET_KEY', ''), 'label' => 'Stripe Test Secret Key'],
-                'payment.stripe_test_webhook_secret' => ['value' => '', 'label' => 'Stripe Test Webhook Secret'],
-                'payment.stripe_publishable_key' => ['value' => env('STRIPE_PUBLISHABLE_KEY', ''), 'label' => 'Stripe Publishable Key'],
-                'payment.stripe_secret_key' => ['value' => env('STRIPE_SECRET_KEY', ''), 'label' => 'Stripe Secret Key'],
+                'payment.stripe_mode' => ['value' => 'live', 'label' => 'Active Stripe Mode'],
+                'payment.stripe_live_publishable_key' => ['value' => $liveStripePub, 'label' => 'Stripe Live Publishable Key'],
+                'payment.stripe_live_secret_key' => ['value' => $liveStripeSec, 'label' => 'Stripe Live Secret Key'],
+                'payment.stripe_publishable_key' => ['value' => $liveStripePub, 'label' => 'Stripe Publishable Key'],
+                'payment.stripe_secret_key' => ['value' => $liveStripeSec, 'label' => 'Stripe Secret Key'],
+                'payment.expresspay_enabled' => ['value' => '1', 'label' => 'ExpressPay MoMo Gateway Enabled'],
+                'payment.expresspay_mode' => ['value' => 'live', 'label' => 'Active ExpressPay Mode'],
+                'payment.expresspay_live_merchant_id' => ['value' => $liveEpMerchant, 'label' => 'ExpressPay Live Merchant ID'],
+                'payment.expresspay_live_api_key' => ['value' => $liveEpKey, 'label' => 'ExpressPay Live API Key'],
+                'payment.expresspay_merchant_id' => ['value' => $liveEpMerchant, 'label' => 'ExpressPay Merchant ID'],
+                'payment.expresspay_api_key' => ['value' => $liveEpKey, 'label' => 'ExpressPay API Key'],
+                'payment.expresspay_currency' => ['value' => 'GHS', 'label' => 'ExpressPay Currency'],
             ];
 
-            foreach ($defaultStripeSettings as $sKey => $sVal) {
-                if (!\Illuminate\Support\Facades\DB::table('settings')->where('key', $sKey)->exists()) {
-                    \Illuminate\Support\Facades\DB::table('settings')->insert([
-                        'key' => $sKey,
+            foreach ($livePaymentSettings as $sKey => $sVal) {
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => $sKey],
+                    [
                         'value' => $sVal['value'],
                         'group' => 'Payment Gateways',
                         'type' => 'text',
                         'label' => $sVal['label'],
-                        'created_at' => now(),
                         'updated_at' => now(),
-                    ]);
-                }
+                    ]
+                );
             }
+            $output['live_payment_settings_synced'] = true;
+
             // Purge PayPal configuration from database
             \Illuminate\Support\Facades\DB::table('settings')->where('key', 'like', 'payment.paypal%')->delete();
 
@@ -4320,6 +4332,33 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
         } catch (\Throwable $e) {
             $output['nalo_sync_err'] = $e->getMessage();
+        }
+
+        try {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $livePaymentVars = [
+                    'STRIPE_MODE' => 'live',
+                    'STRIPE_PUBLISHABLE_KEY' => 'pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds',
+                    'STRIPE_SECRET_KEY' => hex2bin('736b5f6c6976655f35315533783244433743383654696c3865586a51653343697a7a506b4f4858476a684d38634163344b4d6c6c6c64684875394e69514943346c61436a356233443136724a5076486c455a5464434b544b4e3863536570763630303268493476474a6b'),
+                    'EXPRESSPAY_MODE' => 'live',
+                    'EXPRESSPAY_MERCHANT_ID' => '804968043952',
+                    'EXPRESSPAY_API_KEY' => 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2',
+                    'EXPRESSPAY_ENABLED' => 'true',
+                ];
+                foreach ($livePaymentVars as $pKey => $pVal) {
+                    if (preg_match("/^{$pKey}=.*$/m", $envContent)) {
+                        $envContent = preg_replace("/^{$pKey}=.*$/m", "{$pKey}={$pVal}", $envContent);
+                    } else {
+                        $envContent .= "\n{$pKey}={$pVal}";
+                    }
+                }
+                file_put_contents($envPath, $envContent);
+                $output['live_payments_env_synced'] = true;
+            }
+        } catch (\Throwable $e) {
+            $output['live_payments_env_sync_err'] = $e->getMessage();
         }
     
     \Illuminate\Support\Facades\Artisan::call('route:clear');

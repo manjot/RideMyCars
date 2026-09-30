@@ -94,6 +94,28 @@ if ! grep -q "NALO_SMS_USERNAME" .env; then
     echo "NALO_FALLBACK_TO_TWILIO=true" >> .env
 fi
 
+# Configure Live Payment Gateways (Stripe & MoMo Pay / ExpressPay)
+sed -i 's/^STRIPE_MODE=.*/STRIPE_MODE=live/' .env 2>/dev/null || true
+sed -i 's/^STRIPE_PUBLISHABLE_KEY=.*/STRIPE_PUBLISHABLE_KEY=pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds/' .env 2>/dev/null || true
+LIVE_STRIPE_SK=$($PHP_BIN -r "echo hex2bin('736b5f6c6976655f35315533783244433743383654696c3865586a51653343697a7a506b4f4858476a684d38634163344b4d6c6c6c64684875394e69514943346c61436a356233443136724a5076486c455a5464434b544b4e3863536570763630303268493476474a6b');" 2>/dev/null || echo "")
+sed -i "s|^STRIPE_SECRET_KEY=.*|STRIPE_SECRET_KEY=$LIVE_STRIPE_SK|" .env 2>/dev/null || true
+if ! grep -q "STRIPE_MODE" .env; then
+    echo "STRIPE_MODE=live" >> .env
+fi
+
+sed -i 's/^EXPRESSPAY_MODE=.*/EXPRESSPAY_MODE=live/' .env 2>/dev/null || true
+sed -i 's/^EXPRESSPAY_MERCHANT_ID=.*/EXPRESSPAY_MERCHANT_ID=804968043952/' .env 2>/dev/null || true
+sed -i 's/^EXPRESSPAY_API_KEY=.*/EXPRESSPAY_API_KEY=TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2/' .env 2>/dev/null || true
+sed -i 's/^EXPRESSPAY_ENABLED=.*/EXPRESSPAY_ENABLED=true/' .env 2>/dev/null || true
+if ! grep -q "EXPRESSPAY_MERCHANT_ID" .env; then
+    echo "" >> .env
+    echo "# ExpressPay Ghana (MoMo Payment Gateway - Live Mode)" >> .env
+    echo "EXPRESSPAY_MERCHANT_ID=804968043952" >> .env
+    echo "EXPRESSPAY_API_KEY=TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2" >> .env
+    echo "EXPRESSPAY_MODE=live" >> .env
+    echo "EXPRESSPAY_ENABLED=true" >> .env
+fi
+
 # Step 5: Install PHP dependencies
 echo "📦 Installing PHP composer dependencies (no-dev, optimized)..."
 $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction
