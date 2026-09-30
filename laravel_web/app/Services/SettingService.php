@@ -335,11 +335,11 @@ class SettingService
      */
     public static function getActiveStripePublishableKey(): string
     {
-        $mode = static::get('payment.stripe_mode', 'test');
+        $mode = trim((string) static::get('payment.stripe_mode', 'test'));
         if ($mode === 'live') {
-            return (string) (static::get('payment.stripe_live_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', '')));
+            return trim((string) (static::get('payment.stripe_live_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', ''))));
         }
-        return (string) (static::get('payment.stripe_test_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', '')));
+        return trim((string) (static::get('payment.stripe_test_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', ''))));
     }
 
     /**
@@ -347,11 +347,11 @@ class SettingService
      */
     public static function getActiveStripeSecretKey(): string
     {
-        $mode = static::get('payment.stripe_mode', 'test');
+        $mode = trim((string) static::get('payment.stripe_mode', 'test'));
         if ($mode === 'live') {
-            return (string) (static::get('payment.stripe_live_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', '')));
+            return trim((string) (static::get('payment.stripe_live_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', ''))));
         }
-        return (string) (static::get('payment.stripe_test_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', '')));
+        return trim((string) (static::get('payment.stripe_test_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', ''))));
     }
 
     /**
