@@ -50,11 +50,16 @@ class DriverProvider extends ChangeNotifier {
         final profile = res.data['driver_profile'];
         if (profile != null) {
           _isLive = profile['is_live'] == true || profile['is_live'] == 1 || profile['is_live'] == '1';
-          if (_isLive && profile['is_available'] == true) {
+          final available = profile['is_available'] == true || profile['is_available'] == 1 || profile['is_available'] == '1';
+          if (_isLive && available) {
             _isOnline = true;
             _startDispatchLoop();
             notifyListeners();
             return;
+          } else {
+            _isOnline = false;
+            _stopDispatchLoop();
+            notifyListeners();
           }
         }
       }
@@ -70,43 +75,55 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleOnline() async {
+  Future<bool> toggleOnline() async {
     final previousState = _isOnline;
-    _isOnline = !previousState;
+    final targetState = !previousState;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final res = await _dio.post(ApiConstants.driverToggleAvailability, data: {
-        'is_available': _isOnline,
+        'is_available': targetState,
       });
 
       if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'success')) {
         final val = res.data['is_available'];
         _isOnline = val == true || val == 1 || val == '1';
+        if (res.data['is_live'] != null) {
+          final liveVal = res.data['is_live'];
+          _isLive = liveVal == true || liveVal == 1 || liveVal == '1';
+        } else {
+          _isLive = true;
+        }
 
         if (_isOnline) {
           _startDispatchLoop();
         } else {
           _stopDispatchLoop();
         }
+        _isLoading = false;
+        notifyListeners();
+        return true;
       } else {
         _isOnline = previousState;
-        _errorMessage = res.data['message'] ?? 'Failed to update status.';
+        _errorMessage = res.data['message']?.toString() ?? 'Failed to update status.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
       }
     } catch (e) {
       _isOnline = previousState;
-      if (e is DioException && e.response?.data != null && e.response?.data['message'] != null) {
+      if (e is DioException && e.response?.data != null && e.response?.data is Map && e.response?.data['message'] != null) {
         _errorMessage = e.response?.data['message'].toString();
       } else {
         _errorMessage = 'Network connection error. Please try again.';
       }
       debugPrint('Error toggling availability: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   void _startDispatchLoop() {

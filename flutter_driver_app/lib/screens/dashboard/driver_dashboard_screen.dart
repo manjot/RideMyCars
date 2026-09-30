@@ -35,6 +35,38 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     }
   }
 
+  Future<void> _handleToggleOnline(DriverProvider driver) async {
+    final success = await driver.toggleOnline();
+    if (!mounted) return;
+    if (!success && driver.errorMessage != null && driver.errorMessage!.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  driver.errorMessage!,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -523,7 +555,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   Widget _buildOnlineStatusCard(DriverProvider driver) {
     return GestureDetector(
-      onTap: driver.isLoading ? null : () => driver.toggleOnline(),
+      onTap: driver.isLoading ? null : () => _handleToggleOnline(driver),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
@@ -591,7 +623,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                           activeTrackColor: AppColors.success.withOpacity(0.3),
                           inactiveThumbColor: AppColors.textMuted,
                           inactiveTrackColor: Colors.white10,
-                          onChanged: (val) => driver.toggleOnline(),
+                          onChanged: driver.isLoading ? null : (_) => _handleToggleOnline(driver),
                         ),
                       ),
               ],

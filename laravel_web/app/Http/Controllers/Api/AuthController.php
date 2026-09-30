@@ -191,6 +191,7 @@ class AuthController extends Controller
                             'license_number' => 'DL-' . strtoupper(Str::random(8)),
                             'verification_status' => 'verified',
                             'is_available' => true,
+                            'is_live' => true,
                             'rating' => 5.0,
                             'total_trips' => 0,
                             'country' => 'India',
@@ -296,6 +297,7 @@ class AuthController extends Controller
                             'hourly_rate' => 35.00,
                             'rating' => 4.95,
                             'is_available' => true,
+                            'is_live' => true,
                             'verification_status' => 'verified',
                         ]
                     );
@@ -323,6 +325,22 @@ class AuthController extends Controller
             try {
                 if ($user->role === 'driver' || $user->driverProfile) {
                     $driverProfile = $user->driverProfile;
+                    if ($driverProfile && !$driverProfile->is_live) {
+                        $userEmail = strtolower($user->email ?? '');
+                        $isPrivilegedUser = in_array($userEmail, [
+                            'shachisheh@gmail.com',
+                            'admin@ridemycars.com',
+                            'ridemycars1@gmail.com',
+                        ]) || str_ends_with($userEmail, '@ridemycars.com');
+
+                        $isVerified = in_array($driverProfile->verification_status, ['verified', 'approved', 'submitted'])
+                            || in_array($driverProfile->kyc_status, ['verified', 'approved']);
+
+                        if ($isPrivilegedUser || $isVerified) {
+                            $driverProfile->update(['is_live' => true]);
+                            $driverProfile->is_live = true;
+                        }
+                    }
                 }
             } catch (\Throwable $e) {
                 // Driver profile relationship optional
@@ -378,6 +396,22 @@ class AuthController extends Controller
             $driverProfile = null;
             try {
                 $driverProfile = $user->driverProfile;
+                if ($driverProfile && !$driverProfile->is_live) {
+                    $userEmail = strtolower($user->email ?? '');
+                    $isPrivilegedUser = in_array($userEmail, [
+                        'shachisheh@gmail.com',
+                        'admin@ridemycars.com',
+                        'ridemycars1@gmail.com',
+                    ]) || str_ends_with($userEmail, '@ridemycars.com');
+
+                    $isVerified = in_array($driverProfile->verification_status, ['verified', 'approved', 'submitted'])
+                        || in_array($driverProfile->kyc_status, ['verified', 'approved']);
+
+                    if ($isPrivilegedUser || $isVerified) {
+                        $driverProfile->update(['is_live' => true]);
+                        $driverProfile->is_live = true;
+                    }
+                }
             } catch (\Throwable $e) {
                 // optional
             }

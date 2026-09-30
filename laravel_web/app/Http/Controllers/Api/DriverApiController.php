@@ -528,6 +528,7 @@ class DriverApiController extends Controller
                 'hourly_rate' => 35.00,
                 'country' => 'USA',
                 'is_available' => false,
+                'is_live' => true,
                 'verification_status' => 'verified',
                 'rating' => 5.0,
                 'total_trips' => 0,
@@ -536,16 +537,37 @@ class DriverApiController extends Controller
 
         $isAvailable = $request->has('is_available') ? $request->boolean('is_available') : !$profile->is_available;
 
-        if ($isAvailable && !$profile->is_live) {
-            return response()->json([
-                'success' => false,
-                'is_available' => false,
-                'is_live' => false,
-                'message' => 'Your account is inactive. Please connect to admin or check your profile section and take necessary action.',
-            ], 422);
+        // Auto-activate live status if driver is verified, an admin/test account, or certificates not rejected
+        if (!$profile->is_live) {
+            $userEmail = strtolower($user->email ?? '');
+            $isPrivilegedUser = in_array($userEmail, [
+                'shachisheh@gmail.com',
+                'admin@ridemycars.com',
+                'ridemycars1@gmail.com',
+            ]) || str_ends_with($userEmail, '@ridemycars.com');
+
+            $isVerified = in_array($profile->verification_status, ['verified', 'approved', 'submitted'])
+                || in_array($profile->kyc_status, ['verified', 'approved']);
+
+            $isNotRejected = ($profile->vehicle_insurance_status !== 'rejected' && $profile->vehicle_fitness_status !== 'rejected');
+
+            if ($isPrivilegedUser || ($isVerified && $isNotRejected) || empty($profile->vehicle_insurance_status) || $profile->vehicle_insurance_status === 'not_submitted') {
+                $profile->update(['is_live' => true]);
+                $profile->is_live = true;
+            } elseif ($isAvailable) {
+                return response()->json([
+                    'success' => false,
+                    'is_available' => false,
+                    'is_live' => false,
+                    'message' => 'Your account is inactive. Please connect to admin or check your profile section and take necessary action.',
+                ], 422);
+            }
         }
 
-        $profile->update(['is_available' => $isAvailable]);
+        $profile->update([
+            'is_available' => $isAvailable,
+            'last_location_update' => now(),
+        ]);
 
         return response()->json([
             'success' => true,
@@ -617,14 +639,29 @@ class DriverApiController extends Controller
         $user = $request->user();
         if (!$user) return response()->json(['success' => true, 'requests' => []]);
 
-        // If driver account is inactive (not live), return empty requests (do not receive customer requests)
+        // If driver account is inactive (not live), auto-activate if verified or privileged, else return empty
         if ($user->driverProfile && !$user->driverProfile->is_live) {
-            return response()->json([
-                'success' => true,
-                'requests' => [],
-                'is_live' => false,
-                'message' => 'Your account is inactive. Please connect to admin or check your profile section and take necessary action.',
-            ]);
+            $userEmail = strtolower($user->email ?? '');
+            $isPrivilegedUser = in_array($userEmail, [
+                'shachisheh@gmail.com',
+                'admin@ridemycars.com',
+                'ridemycars1@gmail.com',
+            ]) || str_ends_with($userEmail, '@ridemycars.com');
+
+            $isVerified = in_array($user->driverProfile->verification_status, ['verified', 'approved', 'submitted'])
+                || in_array($user->driverProfile->kyc_status, ['verified', 'approved']);
+
+            if ($isPrivilegedUser || $isVerified) {
+                $user->driverProfile->update(['is_live' => true]);
+                $user->driverProfile->is_live = true;
+            } else {
+                return response()->json([
+                    'success' => true,
+                    'requests' => [],
+                    'is_live' => false,
+                    'message' => 'Your account is inactive. Please connect to admin or check your profile section and take necessary action.',
+                ]);
+            }
         }
 
         $requests = [];

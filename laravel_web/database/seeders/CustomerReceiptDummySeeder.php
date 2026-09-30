@@ -22,12 +22,11 @@ class CustomerReceiptDummySeeder extends Seeder
         $customer = User::updateOrCreate(
             ['email' => 'shachisheh@gmail.com'],
             [
-                'name' => 'Shachi Sheh',
+                'name' => 'Shachish Sneh',
                 'password' => Hash::make('shachish21'),
                 'phone' => '+1 202-555-0143',
                 'country' => 'United States',
                 'city' => 'New York',
-                'role' => 'user',
                 'account_status' => 'active',
                 'membership_type' => 'Gold VIP Member',
                 'membership_status' => 'active',
@@ -35,6 +34,30 @@ class CustomerReceiptDummySeeder extends Seeder
                 'phone_verified_at' => now(),
             ]
         );
+
+        // Ensure Shachish has active, live verified driver profile
+        $customerDriverProfile = DriverProfile::firstOrCreate(
+            ['user_id' => $customer->id],
+            [
+                'rating' => 5.0,
+                'total_trips' => 0,
+                'license_number' => 'DL-US884920',
+                'hourly_rate' => 35.00,
+                'daily_rate' => 180.00,
+                'country' => 'United States',
+                'service_area' => 'Global',
+                'is_available' => true,
+                'is_live' => true,
+                'kyc_status' => 'approved',
+                'verification_status' => 'verified',
+                'experience_years' => 5,
+            ]
+        );
+        $customerDriverProfile->update([
+            'is_live' => true,
+            'is_available' => true,
+            'verification_status' => 'verified',
+        ]);
 
         // 2. Ensure Professional Driver / Courier User exists
         $driver = User::updateOrCreate(
