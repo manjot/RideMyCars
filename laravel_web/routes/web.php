@@ -4610,7 +4610,8 @@ Route::match(['get', 'post'], '/api-audit-system', function (\Illuminate\Http\Re
                 'sender_id' => config('nalo.sender_id', 'RIDEMYCARS'),
                 'prefix' => config('nalo.prefix', 'Resl_Nalo'),
                 'base_url' => config('nalo.base_url'),
-                'auth_key_set' => !empty(config('nalo.auth_key')),
+                'auth_mode' => !empty(config('nalo.auth_key')) ? 'auth_key' : 'username_and_password',
+                'credentials_configured' => !empty(config('nalo.auth_key')) || (!empty(config('nalo.username')) && !empty(config('nalo.password'))),
                 'country_handled' => 'Ghana (+233)',
                 'last_live_delivery' => 'VERIFIED (Job ID api.0319509...)',
             ],
@@ -4672,11 +4673,41 @@ Route::match(['get', 'post'], '/api-audit-system', function (\Illuminate\Http\Re
         $epUrl = \App\Services\SettingService::getExpressPaySubmitUrl();
 
         $epStatus = 'NOT_CONFIGURED';
+        $epLiveWorking = false;
+        $epApiMessage = '';
+
         if (!empty($epMerchant) && !empty($epKey)) {
             if ($epMode === 'live') {
                 $epStatus = 'LIVE_MODE_CONFIGURED';
             } else {
                 $epStatus = 'SANDBOX_TEST_MODE';
+            }
+
+            try {
+                $resp = \Illuminate\Support\Facades\Http::asForm()->timeout(6)->post($epUrl, [
+                    'merchant-id' => $epMerchant,
+                    'api-key' => $epKey,
+                    'firstname' => 'Gateway',
+                    'lastname' => 'Check',
+                    'email' => 'support@ridemycars.com',
+                    'phonenumber' => '0559776761',
+                    'username' => 'support@ridemycars.com',
+                    'currency' => 'GHS',
+                    'amount' => '1.00',
+                    'order-id' => 'PING-' . time(),
+                    'order-desc' => 'RideMyCars Diagnostic Ping',
+                    'redirect-url' => url('/payment/expresspay/callback'),
+                    'post-url' => url('/api/payment/expresspay/ipn'),
+                ]);
+                $respData = $resp->json();
+                if ($resp->successful() && isset($respData['status']) && (int)$respData['status'] === 1) {
+                    $epLiveWorking = true;
+                    $epApiMessage = 'Connected to ExpressPay API successfully (Merchant: ' . ($respData['merchant-name'] ?? 'Ride My Cars') . ', Service: ' . ($respData['merchantservice-name'] ?? 'RIDEMYCARS') . ').';
+                } else {
+                    $epApiMessage = 'ExpressPay response: ' . ($respData['message'] ?? $resp->body());
+                }
+            } catch (\Throwable $mte) {
+                $epApiMessage = 'Ping exception: ' . $mte->getMessage();
             }
         }
 
@@ -4697,6 +4728,8 @@ Route::match(['get', 'post'], '/api-audit-system', function (\Illuminate\Http\Re
                 'api_key_set' => !empty($epKey),
                 'submit_endpoint' => $epUrl,
                 'is_live' => $epMode === 'live',
+                'api_connection' => $epLiveWorking ? 'CONNECTED' : 'FAILED',
+                'api_message' => $epApiMessage,
             ],
         ];
     } catch (\Throwable $e) {
