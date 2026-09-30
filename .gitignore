@@ -44,3 +44,7 @@ login_google_pwd.py
 apple_login_test.py
 google_oauth_automator.py
 google_stealth.py
+check_*.py
+do_*.py
+open_*.py
+complete_*.py
