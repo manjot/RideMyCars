@@ -3991,65 +3991,74 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['receipts_explicit_migrate_err'] = $e->getMessage();
     }
 
-    try {
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
-        $output['seed'] = \Illuminate\Support\Facades\Artisan::output();
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'VehicleSeeder', '--force' => true]);
-        $output['vehicle_seed'] = \Illuminate\Support\Facades\Artisan::output();
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
-        $output['ride_categories_seeded'] = true;
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'HireDriverSeeder', '--force' => true]);
-        $output['hire_driver_seed'] = \Illuminate\Support\Facades\Artisan::output();
+    $quickSync = $request->boolean('quick_sync');
 
-        // Seed Daily, Weekly, Monthly Incentive Programs
+    if (!$quickSync) {
         try {
-            \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
-            $output['incentive_programs_seeded'] = \App\Models\Incentive::count();
-        } catch (\Throwable $e) {
-            $output['incentive_programs_seed_err'] = $e->getMessage();
-        }
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
+            $output['seed'] = \Illuminate\Support\Facades\Artisan::output();
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'VehicleSeeder', '--force' => true]);
+            $output['vehicle_seed'] = \Illuminate\Support\Facades\Artisan::output();
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
+            $output['ride_categories_seeded'] = true;
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'HireDriverSeeder', '--force' => true]);
+            $output['hire_driver_seed'] = \Illuminate\Support\Facades\Artisan::output();
 
-        // Seed Investor Portal plans, rules, and demo accounts
-        try {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'InvestorPortalSeeder', '--force' => true]);
-            $output['investor_portal_seeded'] = true;
-        } catch (\Throwable $e) {
-            $output['investor_portal_seed_err'] = $e->getMessage();
-        }
+            // Seed Daily, Weekly, Monthly Incentive Programs
+            try {
+                \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
+                $output['incentive_programs_seeded'] = \App\Models\Incentive::count();
+            } catch (\Throwable $e) {
+                $output['incentive_programs_seed_err'] = $e->getMessage();
+            }
 
-        // Seed Customer Dummy Data for Receipts (shachisheh@gmail.com)
-        try {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CustomerReceiptDummySeeder', '--force' => true]);
-            $output['customer_receipt_dummy_seed'] = 'Seeded successfully for shachisheh@gmail.com';
-            
-            $testCust = \App\Models\User::where('email', 'shachisheh@gmail.com')->first();
-            if ($testCust) {
-                $output['customer_info'] = [
-                    'id' => $testCust->id,
-                    'email' => $testCust->email,
-                    'rides_count' => \App\Models\Ride::where('rider_id', $testCust->id)->where('ride_type', 'ride')->count(),
-                    'rentals_count' => \App\Models\Ride::where('rider_id', $testCust->id)->where('ride_type', 'rental')->count(),
-                    'chauffeurs_count' => \App\Models\DriverBooking::where('client_id', $testCust->id)->count(),
-                    'deliveries_count' => \App\Models\PackageDelivery::where('customer_id', $testCust->id)->count(),
-                    'receipts_count' => \App\Models\Receipt::where('user_id', $testCust->id)->count(),
-                    'receipt_tokens' => \App\Models\Receipt::where('user_id', $testCust->id)->pluck('verification_token', 'booking_type')->toArray(),
-                ];
+            // Seed Investor Portal plans, rules, and demo accounts
+            try {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'InvestorPortalSeeder', '--force' => true]);
+                $output['investor_portal_seeded'] = true;
+            } catch (\Throwable $e) {
+                $output['investor_portal_seed_err'] = $e->getMessage();
+            }
+
+            // Seed Customer Dummy Data for Receipts (shachisheh@gmail.com)
+            try {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CustomerReceiptDummySeeder', '--force' => true]);
+                $output['customer_receipt_dummy_seed'] = 'Seeded successfully for shachisheh@gmail.com';
+                
+                $testCust = \App\Models\User::where('email', 'shachisheh@gmail.com')->first();
+                if ($testCust) {
+                    $output['customer_info'] = [
+                        'id' => $testCust->id,
+                        'email' => $testCust->email,
+                        'rides_count' => \App\Models\Ride::where('rider_id', $testCust->id)->where('ride_type', 'ride')->count(),
+                        'rentals_count' => \App\Models\Ride::where('rider_id', $testCust->id)->where('ride_type', 'rental')->count(),
+                        'chauffeurs_count' => \App\Models\DriverBooking::where('client_id', $testCust->id)->count(),
+                        'deliveries_count' => \App\Models\PackageDelivery::where('customer_id', $testCust->id)->count(),
+                        'receipts_count' => \App\Models\Receipt::where('user_id', $testCust->id)->count(),
+                        'receipt_tokens' => \App\Models\Receipt::where('user_id', $testCust->id)->pluck('verification_token', 'booking_type')->toArray(),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $output['customer_receipt_dummy_seed_err'] = $e->getMessage() . ' on line ' . $e->getLine();
+            }
+
+            // Regenerate all receipt PDFs only if requested (avoids 180s timeout)
+            if ($request->has('regenerate_receipts')) {
+                try {
+                    $allReceipts = \App\Models\Receipt::all();
+                    foreach ($allReceipts as $rec) {
+                        \App\Services\ReceiptService::generatePdf($rec, true);
+                    }
+                    $output['regenerated_receipt_pdfs'] = $allReceipts->count();
+                } catch (\Throwable $e) {
+                    $output['regenerate_receipt_pdfs_err'] = $e->getMessage();
+                }
             }
         } catch (\Throwable $e) {
-            $output['customer_receipt_dummy_seed_err'] = $e->getMessage() . ' on line ' . $e->getLine();
+            $output['seeding_err'] = $e->getMessage();
         }
-
-        // Regenerate all receipt PDFs with new logo
-        try {
-            $allReceipts = \App\Models\Receipt::all();
-            foreach ($allReceipts as $rec) {
-                \App\Services\ReceiptService::generatePdf($rec, true);
-            }
-            $output['regenerated_receipt_pdfs'] = $allReceipts->count();
-        } catch (\Throwable $e) {
-            $output['regenerate_receipt_pdfs_err'] = $e->getMessage();
-        }
+    }
 
         // Ensure all verified and active drivers are marked Live so they can go online
         try {
@@ -4164,8 +4173,9 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['optimize_clear'] = \Illuminate\Support\Facades\Artisan::output();
         } catch (\Throwable $e) {}
 
-        // Directly update all vehicle records with relevant high-definition landscape images & categories
-        $vehicleImagesMap = [
+        try {
+            // Directly update all vehicle records with relevant high-definition landscape images & categories
+            $vehicleImagesMap = [
             'TSL-9901' => ['image_url' => 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sedan'],
             'BMW-4001' => ['image_url' => 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Coupe'],
             'RNG-7007' => ['image_url' => 'https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
