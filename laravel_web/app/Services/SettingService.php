@@ -12,6 +12,8 @@ class SettingService
     const CACHE_KEY = 'site_settings_all';
     const CACHE_TTL = 86400; // 24 hours
 
+    protected static ?array $memoryCache = null;
+
     /**
      * Get a setting value by key with caching and fallback.
      */
@@ -27,12 +29,16 @@ class SettingService
     }
 
     /**
-     * Get all settings as key => value array (cached).
+     * Get all settings as key => value array (cached in memory and store).
      */
     public static function getAll(): array
     {
+        if (static::$memoryCache !== null) {
+            return static::$memoryCache;
+        }
+
         try {
-            return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+            static::$memoryCache = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
                 if (!Schema::hasTable('settings')) {
                     return [];
                 }
@@ -45,8 +51,11 @@ class SettingService
                     return [$item->key => $val];
                 })->toArray();
             });
+
+            return static::$memoryCache ?? [];
         } catch (\Throwable $e) {
-            return [];
+            static::$memoryCache = [];
+            return static::$memoryCache;
         }
     }
 
@@ -94,6 +103,7 @@ class SettingService
      */
     public static function flushCache(): void
     {
+        static::$memoryCache = null;
         Cache::forget(self::CACHE_KEY);
         Cache::forget('site_settings');
     }
@@ -178,6 +188,40 @@ class SettingService
             $twilioEnabled = static::get('sms.twilio_enabled');
             if ($twilioEnabled !== null) {
                 Config::set('twilio.enabled', filter_var($twilioEnabled, FILTER_VALIDATE_BOOLEAN));
+            }
+
+            // 2b. SMS Gateway (Nalo Solutions Ghana)
+            $naloUsername = static::get('sms.nalo_username');
+            if ($naloUsername) {
+                Config::set('nalo.username', $naloUsername);
+            }
+            $naloPassword = static::get('sms.nalo_password');
+            if ($naloPassword) {
+                Config::set('nalo.password', $naloPassword);
+            }
+            $naloAuthKey = static::get('sms.nalo_auth_key');
+            if ($naloAuthKey) {
+                Config::set('nalo.auth_key', $naloAuthKey);
+            }
+            $naloSenderId = static::get('sms.nalo_sender_id');
+            if ($naloSenderId) {
+                Config::set('nalo.sender_id', $naloSenderId);
+            }
+            $naloPrefix = static::get('sms.nalo_prefix');
+            if ($naloPrefix) {
+                Config::set('nalo.prefix', $naloPrefix);
+            }
+            $naloBaseUrl = static::get('sms.nalo_base_url');
+            if ($naloBaseUrl) {
+                Config::set('nalo.base_url', $naloBaseUrl);
+            }
+            $naloEnabled = static::get('sms.nalo_enabled');
+            if ($naloEnabled !== null) {
+                Config::set('nalo.enabled', filter_var($naloEnabled, FILTER_VALIDATE_BOOLEAN));
+            }
+            $naloFallback = static::get('sms.nalo_fallback_to_twilio');
+            if ($naloFallback !== null) {
+                Config::set('nalo.fallback_to_twilio', filter_var($naloFallback, FILTER_VALIDATE_BOOLEAN));
             }
 
             // 3. Mail & SMTP

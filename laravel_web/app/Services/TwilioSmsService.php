@@ -38,13 +38,53 @@ class TwilioSmsService
     }
 
     /**
-     * Send an SMS message worldwide with smart sender selection and pre-validation.
+     * Send an SMS message with automatic country routing.
+     * Ghana (+233) -> Nalo Solutions SMS Gateway
+     * All other countries -> Twilio Worldwide SMS Gateway
      *
      * @param string $to Recipient phone number (E.164 format or standard local format)
      * @param string $message The text content of the SMS
-     * @return array [success => bool, message_sid => string|null, error => string|null, code => int|null, friendly_error => string|null]
+     * @return array [success => bool, message_sid => string|null, error => string|null, code => int|string|null]
      */
     public function sendSms(string $to, string $message): array
+    {
+        $formattedTo = $this->formatE164($to);
+
+        // Automatic Country Routing:
+        // Ghana mobile numbers (+233) route to Nalo Solutions SMS Gateway
+        if ($this->isGhanaNumber($formattedTo)) {
+            Log::info("TwilioSmsService: Detected Ghana recipient {$formattedTo}. Automatically delegating to Nalo Solutions SMS Gateway.");
+            try {
+                $naloService = app(\App\Services\NaloSmsService::class);
+                $result = $naloService->sendSms($formattedTo, $message);
+                if ($result['success']) {
+                    return $result;
+                }
+
+                // Resilient Fallback: If Nalo fails and fallback is enabled, attempt Twilio direct
+                if (config('nalo.fallback_to_twilio', true)) {
+                    Log::warning("Nalo SMS failed for {$formattedTo} ({$result['error']}). Attempting secondary delivery via Twilio direct...");
+                    $directResult = $this->sendSmsDirect($formattedTo, $message);
+                    if ($directResult['success']) {
+                        return $directResult;
+                    }
+                }
+
+                return $result;
+            } catch (\Throwable $e) {
+                Log::error("TwilioSmsService delegation to Nalo failed with exception: " . $e->getMessage());
+                return $this->sendSmsDirect($formattedTo, $message);
+            }
+        }
+
+        // All other international numbers route directly to Twilio Worldwide Gateway
+        return $this->sendSmsDirect($formattedTo, $message);
+    }
+
+    /**
+     * Send SMS directly via Twilio without country routing.
+     */
+    public function sendSmsDirect(string $to, string $message): array
     {
         if (!$this->enabled) {
             Log::info("Twilio SMS disabled by config. Message to {$to}: {$message}");
@@ -109,7 +149,8 @@ class TwilioSmsService
         $url = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json";
 
         try {
-            $response = Http::withBasicAuth($this->accountSid, $this->authToken)
+            $response = Http::withoutVerifying()
+                ->withBasicAuth($this->accountSid, $this->authToken)
                 ->timeout($this->timeout)
                 ->asForm()
                 ->post($url, $payload);
@@ -128,7 +169,8 @@ class TwilioSmsService
                 if (!$isNorthAmerica && in_array($status, ['accepted', 'queued', 'sending'])) {
                     usleep(700000); // 700ms
                     try {
-                        $checkRes = Http::withBasicAuth($this->accountSid, $this->authToken)
+                        $checkRes = Http::withoutVerifying()
+                            ->withBasicAuth($this->accountSid, $this->authToken)
                             ->timeout(5)
                             ->get("https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages/{$sid}.json");
                         if ($checkRes->successful()) {
@@ -192,7 +234,8 @@ class TwilioSmsService
                 }
 
                 if ($retryPayload) {
-                    $retryResponse = Http::withBasicAuth($this->accountSid, $this->authToken)
+                    $retryResponse = Http::withoutVerifying()
+                        ->withBasicAuth($this->accountSid, $this->authToken)
                         ->timeout($this->timeout)
                         ->asForm()
                         ->post($url, $retryPayload);
@@ -257,7 +300,8 @@ class TwilioSmsService
         $url = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}.json";
 
         try {
-            $response = Http::withBasicAuth($this->accountSid, $this->authToken)
+            $response = Http::withoutVerifying()
+                ->withBasicAuth($this->accountSid, $this->authToken)
                 ->timeout(10)
                 ->get($url);
 
@@ -416,5 +460,28 @@ class TwilioSmsService
             default => $rawMessage,
         };
     }
+
+    /**
+     * Check if a given phone number belongs to Ghana (+233).
+     */
+    public function isGhanaNumber(string $phone): bool
+    {
+        $formatted = $this->formatE164($phone);
+        if (str_starts_with($formatted, '+233')) {
+            return true;
+        }
+
+        $cleaned = preg_replace('/[^\d]/', '', $phone);
+        if (str_starts_with($cleaned, '233')) {
+            return true;
+        }
+
+        if (preg_match('/^0(20|23|24|25|26|27|28|50|53|54|55|56|57|59)\d{7}$/', $cleaned)) {
+            return true;
+        }
+
+        return false;
+    }
 }
+
 

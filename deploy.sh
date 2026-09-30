@@ -72,6 +72,28 @@ if ! grep -q "ADMIN_INQUIRY_EMAIL" .env; then
     echo "ADMIN_INQUIRY_EMAIL=info@ridemycars.com" >> .env
 fi
 
+# Configure Nalo Solutions SMS Gateway for Ghana
+sed -i 's/^NALO_SMS_ENABLED=.*/NALO_SMS_ENABLED=true/' .env 2>/dev/null || true
+sed -i 's/^NALO_SMS_USERNAME=.*/NALO_SMS_USERNAME=Ridemycars/' .env 2>/dev/null || true
+sed -i 's/^NALO_SMS_PASSWORD=.*/NALO_SMS_PASSWORD="wEST123456#"/' .env 2>/dev/null || true
+sed -i 's/^NALO_SMS_SENDER_ID=.*/NALO_SMS_SENDER_ID=RIDEMYCARS/' .env 2>/dev/null || true
+sed -i 's/^NALO_SMS_PREFIX=.*/NALO_SMS_PREFIX=Resl_Nalo/' .env 2>/dev/null || true
+sed -i 's|^NALO_SMS_BASE_URL=.*|NALO_SMS_BASE_URL=https://sms.nalosolutions.com/smsbackend|' .env 2>/dev/null || true
+sed -i 's/^NALO_FALLBACK_TO_TWILIO=.*/NALO_FALLBACK_TO_TWILIO=true/' .env 2>/dev/null || true
+if ! grep -q "NALO_SMS_USERNAME" .env; then
+    echo "" >> .env
+    echo "# Nalo Solutions Local SMS Gateway (Ghana +233 Numbers)" >> .env
+    echo "NALO_SMS_ENABLED=true" >> .env
+    echo "NALO_SMS_USERNAME=Ridemycars" >> .env
+    echo "NALO_SMS_PASSWORD=\"wEST123456#\"" >> .env
+    echo "NALO_SMS_AUTH_KEY=" >> .env
+    echo "NALO_SMS_SENDER_ID=RIDEMYCARS" >> .env
+    echo "NALO_SMS_PREFIX=Resl_Nalo" >> .env
+    echo "NALO_SMS_BASE_URL=https://sms.nalosolutions.com/smsbackend" >> .env
+    echo "NALO_SMS_TIMEOUT=15" >> .env
+    echo "NALO_FALLBACK_TO_TWILIO=true" >> .env
+fi
+
 # Step 5: Install PHP dependencies
 echo "📦 Installing PHP composer dependencies (no-dev, optimized)..."
 $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction

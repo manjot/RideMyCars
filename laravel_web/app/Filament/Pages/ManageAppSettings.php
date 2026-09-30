@@ -60,13 +60,22 @@ class ManageAppSettings extends Page implements HasForms
             'payment_expresspay_api_key' => $all['payment.expresspay_api_key'] ?? 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm',
             'payment_expresspay_currency' => $all['payment.expresspay_currency'] ?? 'GHS',
 
-            // SMS Gateway
+            // SMS Gateway (Twilio Worldwide)
             'sms_twilio_enabled' => (bool) ($all['sms.twilio_enabled'] ?? true),
             'sms_twilio_account_sid' => $all['sms.twilio_account_sid'] ?? '',
             'sms_twilio_auth_token' => $all['sms.twilio_auth_token'] ?? '',
             'sms_twilio_phone_number' => $all['sms.twilio_phone_number'] ?? '',
             'sms_twilio_messaging_service_sid' => $all['sms.twilio_messaging_service_sid'] ?? '',
             'sms_twilio_alphanumeric_sender' => $all['sms.twilio_alphanumeric_sender'] ?? 'RideMyCars',
+
+            // SMS Gateway (Nalo Solutions Ghana Local)
+            'sms_nalo_enabled' => (bool) ($all['sms.nalo_enabled'] ?? config('nalo.enabled', true)),
+            'sms_nalo_username' => $all['sms.nalo_username'] ?? config('nalo.username', 'Ridemycars'),
+            'sms_nalo_password' => $all['sms.nalo_password'] ?? config('nalo.password', 'wEST123456#'),
+            'sms_nalo_auth_key' => $all['sms.nalo_auth_key'] ?? config('nalo.auth_key', ''),
+            'sms_nalo_sender_id' => $all['sms.nalo_sender_id'] ?? config('nalo.sender_id', 'RIDEMYCARS'),
+            'sms_nalo_prefix' => $all['sms.nalo_prefix'] ?? config('nalo.prefix', 'Resl_Nalo'),
+            'sms_nalo_fallback_to_twilio' => (bool) ($all['sms.nalo_fallback_to_twilio'] ?? config('nalo.fallback_to_twilio', true)),
 
             // Mail & SMTP
             'mail_mailer' => $all['mail.mailer'] ?? 'smtp',
@@ -269,16 +278,61 @@ class ManageAppSettings extends Page implements HasForms
                                     ]),
                             ]),
 
-                        // TAB 2: SMS Gateway (Twilio)
+                        // TAB 2: SMS Gateway (Nalo Solutions Ghana & Twilio Worldwide)
                         Forms\Components\Tabs\Tab::make('SMS Gateway')
                             ->icon('heroicon-o-chat-bubble-left-right')
                             ->schema([
-                                Forms\Components\Section::make('Twilio Worldwide SMS')
-                                    ->description('Configure Twilio credentials for phone OTP verification & live ride alerts.')
+                                Forms\Components\Section::make('Nalo Solutions Ghana Gateway (Local Ghana SMS)')
+                                    ->description('Local Ghana SMS delivery for all Ghanaian phone numbers (+233) ensuring 100% reliable OTP delivery where international gateways fail.')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('sms_nalo_enabled')
+                                                ->label('Enable Nalo SMS Gateway')
+                                                ->helperText('Routes all Ghana (+233) mobile OTPs & alerts via Nalo Solutions.')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('sms_nalo_fallback_to_twilio')
+                                                ->label('Twilio Fallback')
+                                                ->helperText('If Nalo delivery encounters an upstream error or credit depletion, retry via Twilio.')
+                                                ->default(true),
+                                        ]),
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\TextInput::make('sms_nalo_username')
+                                                ->label('Nalo Username')
+                                                ->placeholder('Ridemycars')
+                                                ->default('Ridemycars'),
+                                            Forms\Components\TextInput::make('sms_nalo_password')
+                                                ->label('Nalo Password')
+                                                ->password()
+                                                ->revealable()
+                                                ->placeholder('Nalo Password'),
+                                        ]),
+                                        Forms\Components\Grid::make(3)->schema([
+                                            Forms\Components\TextInput::make('sms_nalo_sender_id')
+                                                ->label('Approved Sender ID (Ghana)')
+                                                ->placeholder('RIDEMYCARS')
+                                                ->default('RIDEMYCARS')
+                                                ->maxLength(11)
+                                                ->helperText('Registered & approved Sender ID in Nalo portal (e.g. RIDEMYCARS).'),
+                                            Forms\Components\TextInput::make('sms_nalo_prefix')
+                                                ->label('Nalo Routing Prefix')
+                                                ->placeholder('Resl_Nalo')
+                                                ->default('Resl_Nalo')
+                                                ->helperText('Routing prefix (default: Resl_Nalo).'),
+                                            Forms\Components\TextInput::make('sms_nalo_auth_key')
+                                                ->label('API Auth Key (Optional)')
+                                                ->password()
+                                                ->revealable()
+                                                ->placeholder('Optional Auth Key')
+                                                ->helperText('Leave empty to use username & password.'),
+                                        ]),
+                                    ]),
+
+                                Forms\Components\Section::make('Twilio Worldwide SMS (International Numbers)')
+                                    ->description('Configure Twilio credentials for international phone OTP verification & live ride alerts.')
                                     ->schema([
                                         Forms\Components\Toggle::make('sms_twilio_enabled')
-                                            ->label('Enable SMS Sending')
-                                            ->helperText('If disabled, OTPs will be simulated in server logs for testing.')
+                                            ->label('Enable Twilio Worldwide SMS')
+                                            ->helperText('If disabled, non-Ghana OTPs will be simulated in server logs for testing.')
                                             ->default(true),
                                         Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('sms_twilio_account_sid')
@@ -300,11 +354,11 @@ class ManageAppSettings extends Page implements HasForms
                                                 ->placeholder('MG52...2c4e')
                                                 ->helperText('Recommended for high throughput and smart carrier sender pools.'),
                                             Forms\Components\TextInput::make('sms_twilio_alphanumeric_sender')
-                                                ->label('Alphanumeric Sender ID (Ghana/Intl)')
+                                                ->label('Alphanumeric Sender ID (International)')
                                                 ->placeholder('RideMyCars')
                                                 ->maxLength(11)
                                                 ->default('RideMyCars')
-                                                ->helperText('Used for Ghana (+233) and overseas where US Toll-Free numbers cannot route. Up to 11 alphanumeric characters.'),
+                                                ->helperText('Used for overseas destinations where US Toll-Free numbers cannot route. Up to 11 alphanumeric characters.'),
                                         ]),
                                     ]),
                             ]),
@@ -602,13 +656,22 @@ class ManageAppSettings extends Page implements HasForms
             'payment_expresspay_live_api_key' => ['key' => 'payment.expresspay_live_api_key', 'group' => 'Payment Gateways'],
             'payment_expresspay_currency' => ['key' => 'payment.expresspay_currency', 'group' => 'Payment Gateways'],
 
-            // SMS
+            // SMS - Twilio
             'sms_twilio_enabled' => ['key' => 'sms.twilio_enabled', 'group' => 'SMS Gateway'],
             'sms_twilio_account_sid' => ['key' => 'sms.twilio_account_sid', 'group' => 'SMS Gateway'],
             'sms_twilio_auth_token' => ['key' => 'sms.twilio_auth_token', 'group' => 'SMS Gateway'],
             'sms_twilio_phone_number' => ['key' => 'sms.twilio_phone_number', 'group' => 'SMS Gateway'],
             'sms_twilio_messaging_service_sid' => ['key' => 'sms.twilio_messaging_service_sid', 'group' => 'SMS Gateway'],
             'sms_twilio_alphanumeric_sender' => ['key' => 'sms.twilio_alphanumeric_sender', 'group' => 'SMS Gateway'],
+
+            // SMS - Nalo Solutions Ghana
+            'sms_nalo_enabled' => ['key' => 'sms.nalo_enabled', 'group' => 'SMS Gateway'],
+            'sms_nalo_username' => ['key' => 'sms.nalo_username', 'group' => 'SMS Gateway'],
+            'sms_nalo_password' => ['key' => 'sms.nalo_password', 'group' => 'SMS Gateway'],
+            'sms_nalo_auth_key' => ['key' => 'sms.nalo_auth_key', 'group' => 'SMS Gateway'],
+            'sms_nalo_sender_id' => ['key' => 'sms.nalo_sender_id', 'group' => 'SMS Gateway'],
+            'sms_nalo_prefix' => ['key' => 'sms.nalo_prefix', 'group' => 'SMS Gateway'],
+            'sms_nalo_fallback_to_twilio' => ['key' => 'sms.nalo_fallback_to_twilio', 'group' => 'SMS Gateway'],
 
             // Mail
             'mail_mailer' => ['key' => 'mail.mailer', 'group' => 'Mail & SMTP'],
@@ -854,14 +917,23 @@ class ManageAppSettings extends Page implements HasForms
                 ->label('Send Test SMS')
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->color('gray')
-                ->modalHeading('Send Test SMS via Twilio')
-                ->modalDescription('Verify your Twilio credentials by sending a live test SMS. E.164 country code is required (e.g. +233 55 977 6761 for Ghana, +1 305 368 8734 for USA).')
+                ->modalHeading('Send Live Test SMS (Nalo Solutions / Twilio)')
+                ->modalDescription('Verify SMS Gateway connectivity. Ghana numbers (+233) automatically route to Nalo Solutions, and all other international destinations route to Twilio.')
                 ->form([
                     Forms\Components\TextInput::make('test_phone')
                         ->label('Recipient Phone Number')
                         ->required()
                         ->placeholder('+233559776761 or +13053688734')
-                        ->helperText('Include country code (e.g., +233 for Ghana, +1 for USA). If you enter a local number starting with 0, +233 will be applied automatically.'),
+                        ->helperText('Include country code (e.g., +233 for Ghana, +1 for USA). If you enter a Ghana local number starting with 0 (e.g. 055...), +233 will be applied automatically.'),
+                    Forms\Components\Select::make('gateway_override')
+                        ->label('Gateway Selection')
+                        ->options([
+                            'auto' => 'Auto-Detect (Ghana -> Nalo Solutions, International -> Twilio)',
+                            'nalo' => 'Force Nalo Solutions (Ghana Gateway)',
+                            'twilio' => 'Force Twilio (Worldwide Gateway)',
+                        ])
+                        ->default('auto')
+                        ->required(),
                 ])
                 ->action(function (array $data): void {
                     try {
@@ -879,28 +951,45 @@ class ManageAppSettings extends Page implements HasForms
                             return;
                         }
 
-                        $result = $smsService->sendSms(
-                            $formattedPhone,
-                            "RideMyCars SMS Gateway Test: Twilio credentials are functioning! (Sent: " . now()->format('H:i:s') . ")"
-                        );
+                        $override = $data['gateway_override'] ?? 'auto';
+                        $testMessage = "RideMyCars SMS Gateway Test: Verification active! (Sent: " . now()->format('H:i:s') . ")";
+
+                        if ($override === 'nalo') {
+                            $naloService = app(\App\Services\NaloSmsService::class);
+                            $result = $naloService->sendSms($formattedPhone, $testMessage);
+                        } elseif ($override === 'twilio') {
+                            $result = $smsService->sendSmsDirect($formattedPhone, $testMessage);
+                            $result['provider'] = 'twilio';
+                        } else {
+                            $manager = app(\App\Services\SmsGatewayManager::class);
+                            $result = $manager->sendSms($formattedPhone, $testMessage);
+                        }
+
+                        $providerName = match ($result['provider'] ?? '') {
+                            'nalo' => 'Nalo Solutions (Ghana Local)',
+                            'twilio' => 'Twilio Worldwide',
+                            'twilio_fallback' => 'Twilio (Nalo Fallback)',
+                            default => strtoupper($result['provider'] ?? 'SMS Gateway'),
+                        };
 
                         if ($result['success']) {
+                            $refId = $result['message_sid'] ?? $result['message_id'] ?? 'simulated';
                             Notification::make()
-                                ->title('Test SMS Sent Successfully!')
-                                ->body("Dispatched to {$formattedPhone}. SID: " . ($result['message_sid'] ?? 'simulated') . " (Status: " . ($result['status'] ?? 'queued') . ")")
+                                ->title("Test SMS Sent via {$providerName}!")
+                                ->body("Dispatched successfully to {$formattedPhone}. Reference ID: {$refId}")
                                 ->success()
                                 ->send();
                         } else {
                             Notification::make()
-                                ->title('SMS Sending Failed')
-                                ->body($result['error'] ?? 'Unknown error from Twilio gateway.')
+                                ->title("SMS Sending Failed ({$providerName})")
+                                ->body($result['error'] ?? 'Unknown error from SMS gateway.')
                                 ->danger()
                                 ->persistent()
                                 ->send();
                         }
                     } catch (\Throwable $e) {
                         Notification::make()
-                            ->title('Twilio Test Failed')
+                            ->title('SMS Gateway Test Failed')
                             ->body($e->getMessage())
                             ->danger()
                             ->persistent()
