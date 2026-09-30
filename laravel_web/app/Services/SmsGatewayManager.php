@@ -128,6 +128,27 @@ class SmsGatewayManager
     }
 
     /**
+     * Detect country from phone number.
+     */
+    public function detectCountry(string $phone): string
+    {
+        $formatted = $this->formatE164($phone);
+        if ($this->isGhanaNumber($formatted)) {
+            return 'Ghana (+233)';
+        }
+        if (str_starts_with($formatted, '+1')) {
+            return 'USA / Canada (+1)';
+        }
+        if (str_starts_with($formatted, '+44')) {
+            return 'United Kingdom (+44)';
+        }
+        if (str_starts_with($formatted, '+234')) {
+            return 'Nigeria (+234)';
+        }
+        return 'International';
+    }
+
+    /**
      * Standardize international phone number into E.164 format.
      */
     public function formatE164(string $phone, string $defaultDialCode = '+233'): string

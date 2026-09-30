@@ -199,7 +199,7 @@ class SettingService
             if ($naloPassword) {
                 Config::set('nalo.password', $naloPassword);
             }
-            $naloAuthKey = static::get('sms.nalo_auth_key');
+            $naloAuthKey = static::get('sms.nalo_auth_key') ?: static::get('sms.nalo_api_key');
             if ($naloAuthKey) {
                 Config::set('nalo.auth_key', $naloAuthKey);
             }

@@ -70,11 +70,12 @@ class ManageAppSettings extends Page implements HasForms
 
             // SMS Gateway (Nalo Solutions Ghana Local)
             'sms_nalo_enabled' => (bool) ($all['sms.nalo_enabled'] ?? config('nalo.enabled', true)),
-            'sms_nalo_username' => $all['sms.nalo_username'] ?? config('nalo.username', 'Ridemycars'),
-            'sms_nalo_password' => $all['sms.nalo_password'] ?? config('nalo.password', 'wEST123456#'),
             'sms_nalo_auth_key' => $all['sms.nalo_auth_key'] ?? config('nalo.auth_key', ''),
             'sms_nalo_sender_id' => $all['sms.nalo_sender_id'] ?? config('nalo.sender_id', 'RIDEMYCARS'),
+            'sms_nalo_username' => $all['sms.nalo_username'] ?? config('nalo.username', 'Ridemycars'),
+            'sms_nalo_password' => $all['sms.nalo_password'] ?? config('nalo.password', 'wEST123456#'),
             'sms_nalo_prefix' => $all['sms.nalo_prefix'] ?? config('nalo.prefix', 'Resl_Nalo'),
+            'sms_nalo_base_url' => $all['sms.nalo_base_url'] ?? config('nalo.base_url', 'https://sms.nalosolutions.com/smsbackend'),
             'sms_nalo_fallback_to_twilio' => (bool) ($all['sms.nalo_fallback_to_twilio'] ?? config('nalo.fallback_to_twilio', true)),
 
             // Mail & SMTP
@@ -296,34 +297,43 @@ class ManageAppSettings extends Page implements HasForms
                                                 ->default(true),
                                         ]),
                                         Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\TextInput::make('sms_nalo_username')
-                                                ->label('Nalo Username')
-                                                ->placeholder('Ridemycars')
-                                                ->default('Ridemycars'),
-                                            Forms\Components\TextInput::make('sms_nalo_password')
-                                                ->label('Nalo Password')
+                                            Forms\Components\TextInput::make('sms_nalo_auth_key')
+                                                ->label('Nalo API Key / Auth Key')
                                                 ->password()
                                                 ->revealable()
-                                                ->placeholder('Nalo Password'),
-                                        ]),
-                                        Forms\Components\Grid::make(3)->schema([
+                                                ->placeholder('Enter Nalo API Key / Auth Key')
+                                                ->helperText('API Key from the Nalo developer portal. Can be used for authentication.'),
                                             Forms\Components\TextInput::make('sms_nalo_sender_id')
                                                 ->label('Approved Sender ID (Ghana)')
                                                 ->placeholder('RIDEMYCARS')
                                                 ->default('RIDEMYCARS')
                                                 ->maxLength(11)
-                                                ->helperText('Registered & approved Sender ID in Nalo portal (e.g. RIDEMYCARS).'),
+                                                ->helperText('Must be registered & approved in Nalo portal (e.g. RIDEMYCARS).'),
+                                        ]),
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\TextInput::make('sms_nalo_username')
+                                                ->label('Nalo Portal Username')
+                                                ->placeholder('Ridemycars')
+                                                ->default('Ridemycars')
+                                                ->helperText('Your Nalo Solutions portal login username.'),
+                                            Forms\Components\TextInput::make('sms_nalo_password')
+                                                ->label('Nalo Portal Password')
+                                                ->password()
+                                                ->revealable()
+                                                ->placeholder('Nalo Password')
+                                                ->helperText('Your Nalo Solutions portal login password.'),
+                                        ]),
+                                        Forms\Components\Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('sms_nalo_prefix')
                                                 ->label('Nalo Routing Prefix')
                                                 ->placeholder('Resl_Nalo')
                                                 ->default('Resl_Nalo')
                                                 ->helperText('Routing prefix (default: Resl_Nalo).'),
-                                            Forms\Components\TextInput::make('sms_nalo_auth_key')
-                                                ->label('API Auth Key (Optional)')
-                                                ->password()
-                                                ->revealable()
-                                                ->placeholder('Optional Auth Key')
-                                                ->helperText('Leave empty to use username & password.'),
+                                            Forms\Components\TextInput::make('sms_nalo_base_url')
+                                                ->label('Nalo Base API URL')
+                                                ->placeholder('https://sms.nalosolutions.com/smsbackend')
+                                                ->default('https://sms.nalosolutions.com/smsbackend')
+                                                ->helperText('Base endpoint URL for Nalo SMS Gateway.'),
                                         ]),
                                     ]),
 
@@ -666,11 +676,12 @@ class ManageAppSettings extends Page implements HasForms
 
             // SMS - Nalo Solutions Ghana
             'sms_nalo_enabled' => ['key' => 'sms.nalo_enabled', 'group' => 'SMS Gateway'],
-            'sms_nalo_username' => ['key' => 'sms.nalo_username', 'group' => 'SMS Gateway'],
-            'sms_nalo_password' => ['key' => 'sms.nalo_password', 'group' => 'SMS Gateway'],
             'sms_nalo_auth_key' => ['key' => 'sms.nalo_auth_key', 'group' => 'SMS Gateway'],
             'sms_nalo_sender_id' => ['key' => 'sms.nalo_sender_id', 'group' => 'SMS Gateway'],
+            'sms_nalo_username' => ['key' => 'sms.nalo_username', 'group' => 'SMS Gateway'],
+            'sms_nalo_password' => ['key' => 'sms.nalo_password', 'group' => 'SMS Gateway'],
             'sms_nalo_prefix' => ['key' => 'sms.nalo_prefix', 'group' => 'SMS Gateway'],
+            'sms_nalo_base_url' => ['key' => 'sms.nalo_base_url', 'group' => 'SMS Gateway'],
             'sms_nalo_fallback_to_twilio' => ['key' => 'sms.nalo_fallback_to_twilio', 'group' => 'SMS Gateway'],
 
             // Mail
@@ -758,6 +769,37 @@ class ManageAppSettings extends Page implements HasForms
             SettingService::set('payment.expresspay_merchant_id', $state['payment_expresspay_sandbox_merchant_id'] ?? '', 'Payment Gateways');
             SettingService::set('payment.expresspay_api_key', $state['payment_expresspay_sandbox_api_key'] ?? '', 'Payment Gateways');
         }
+
+        // Synchronize Nalo and Twilio keys to .env if writable
+        try {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $smsEnvVars = [
+                    'NALO_SMS_ENABLED' => ($state['sms_nalo_enabled'] ?? true) ? 'true' : 'false',
+                    'NALO_SMS_USERNAME' => $state['sms_nalo_username'] ?? 'Ridemycars',
+                    'NALO_SMS_PASSWORD' => '"' . addcslashes($state['sms_nalo_password'] ?? '', '"') . '"',
+                    'NALO_SMS_AUTH_KEY' => '"' . addcslashes($state['sms_nalo_auth_key'] ?? '', '"') . '"',
+                    'NALO_SMS_SENDER_ID' => $state['sms_nalo_sender_id'] ?? 'RIDEMYCARS',
+                    'NALO_SMS_PREFIX' => $state['sms_nalo_prefix'] ?? 'Resl_Nalo',
+                    'NALO_SMS_BASE_URL' => $state['sms_nalo_base_url'] ?? 'https://sms.nalosolutions.com/smsbackend',
+                    'NALO_FALLBACK_TO_TWILIO' => ($state['sms_nalo_fallback_to_twilio'] ?? true) ? 'true' : 'false',
+                    'TWILIO_ACCOUNT_SID' => $state['sms_twilio_account_sid'] ?? '',
+                    'TWILIO_AUTH_TOKEN' => $state['sms_twilio_auth_token'] ?? '',
+                    'TWILIO_PHONE_NUMBER' => $state['sms_twilio_phone_number'] ?? '',
+                    'TWILIO_MESSAGING_SERVICE_SID' => $state['sms_twilio_messaging_service_sid'] ?? '',
+                    'TWILIO_SMS_ENABLED' => ($state['sms_twilio_enabled'] ?? true) ? 'true' : 'false',
+                ];
+                foreach ($smsEnvVars as $k => $v) {
+                    if (preg_match("/^{$k}=.*$/m", $envContent)) {
+                        $envContent = preg_replace("/^{$k}=.*$/m", "{$k}={$v}", $envContent);
+                    } else {
+                        $envContent .= "\n{$k}={$v}";
+                    }
+                }
+                @file_put_contents($envPath, $envContent);
+            }
+        } catch (\Throwable $e) {}
 
         // Re-sync to runtime config
         SettingService::syncToConfig();
@@ -923,6 +965,7 @@ class ManageAppSettings extends Page implements HasForms
                     Forms\Components\TextInput::make('test_phone')
                         ->label('Recipient Phone Number')
                         ->required()
+                        ->default('+233559776761')
                         ->placeholder('+233559776761 or +13053688734')
                         ->helperText('Include country code (e.g., +233 for Ghana, +1 for USA). If you enter a Ghana local number starting with 0 (e.g. 055...), +233 will be applied automatically.'),
                     Forms\Components\Select::make('gateway_override')

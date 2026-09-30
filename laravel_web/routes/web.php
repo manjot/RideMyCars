@@ -4362,6 +4362,12 @@ Route::get('/test-live-sms', function (\Illuminate\Http\Request $request) {
     try {
         $phone = $request->query('phone', '+233559776761');
         $otp = $request->query('otp', '123456');
+        if ($request->has('nalo_auth_key')) {
+            config(['nalo.auth_key' => $request->query('nalo_auth_key')]);
+        }
+        if ($request->has('nalo_sender_id')) {
+            config(['nalo.sender_id' => $request->query('nalo_sender_id')]);
+        }
         $manager = app(\App\Services\SmsGatewayManager::class);
         $result = $manager->sendOtp($phone, $otp);
         return response()->json([
