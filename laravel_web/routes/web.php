@@ -4269,6 +4269,58 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         } catch (\Throwable $e) {
             $output['twilio_sync_err'] = $e->getMessage();
         }
+
+        try {
+            // Ensure Nalo SMS Gateway settings in MySQL settings table
+            $naloSettings = [
+                'sms.nalo_enabled' => ['value' => '1', 'label' => 'Nalo Solutions SMS Gateway Enabled'],
+                'sms.nalo_username' => ['value' => 'Ridemycars', 'label' => 'Nalo Username'],
+                'sms.nalo_password' => ['value' => 'wEST123456#', 'label' => 'Nalo Password'],
+                'sms.nalo_sender_id' => ['value' => 'RIDEMYCARS', 'label' => 'Nalo Sender ID'],
+                'sms.nalo_prefix' => ['value' => 'Resl_Nalo', 'label' => 'Nalo Prefix'],
+                'sms.nalo_base_url' => ['value' => 'https://sms.nalosolutions.com/smsbackend', 'label' => 'Nalo Base URL'],
+                'sms.nalo_timeout' => ['value' => '15', 'label' => 'Nalo Request Timeout (sec)'],
+                'sms.nalo_fallback_to_twilio' => ['value' => '1', 'label' => 'Fallback to Twilio on Failure'],
+            ];
+            foreach ($naloSettings as $sKey => $sData) {
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => $sKey],
+                    [
+                        'value' => $sData['value'],
+                        'label' => $sData['label'],
+                        'group' => 'SMS Gateway',
+                        'type' => 'text',
+                    ]
+                );
+            }
+            $output['nalo_settings_synced'] = true;
+
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $naloEnvVars = [
+                    'NALO_SMS_ENABLED' => 'true',
+                    'NALO_SMS_USERNAME' => 'Ridemycars',
+                    'NALO_SMS_PASSWORD' => '"wEST123456#"',
+                    'NALO_SMS_SENDER_ID' => 'RIDEMYCARS',
+                    'NALO_SMS_PREFIX' => 'Resl_Nalo',
+                    'NALO_SMS_BASE_URL' => 'https://sms.nalosolutions.com/smsbackend',
+                    'NALO_SMS_TIMEOUT' => '15',
+                    'NALO_FALLBACK_TO_TWILIO' => 'true',
+                ];
+                foreach ($naloEnvVars as $nKey => $nVal) {
+                    if (preg_match("/^{$nKey}=.*$/m", $envContent)) {
+                        $envContent = preg_replace("/^{$nKey}=.*$/m", "{$nKey}={$nVal}", $envContent);
+                    } else {
+                        $envContent .= "\n{$nKey}={$nVal}";
+                    }
+                }
+                file_put_contents($envPath, $envContent);
+                $output['nalo_env_synced'] = true;
+            }
+        } catch (\Throwable $e) {
+            $output['nalo_sync_err'] = $e->getMessage();
+        }
     
     \Illuminate\Support\Facades\Artisan::call('route:clear');
     \Illuminate\Support\Facades\Artisan::call('config:clear');
@@ -4301,6 +4353,35 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         'status' => 'success',
         'details' => $output,
     ]);
+});
+
+Route::get('/test-live-sms', function (\Illuminate\Http\Request $request) {
+    if ($request->query('key') !== 'rmc2026') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+    try {
+        $phone = $request->query('phone', '+233559776761');
+        $otp = $request->query('otp', '123456');
+        $manager = app(\App\Services\SmsGatewayManager::class);
+        $result = $manager->sendOtp($phone, $otp);
+        return response()->json([
+            'phone' => $phone,
+            'country' => $manager->detectCountry($phone),
+            'result' => $result,
+            'nalo_config' => [
+                'enabled' => config('nalo.enabled'),
+                'username' => config('nalo.username'),
+                'sender_id' => config('nalo.sender_id'),
+                'prefix' => config('nalo.prefix'),
+            ],
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'exception' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], 500);
+    }
 });
 
 Route::get('/test-live-email-otp', function (\Illuminate\Http\Request $request) {
