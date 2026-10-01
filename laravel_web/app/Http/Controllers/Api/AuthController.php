@@ -778,6 +778,10 @@ class AuthController extends Controller
 
                 $cleanEmail = !empty($email) ? strtolower(trim($email)) : null;
                 $emailOtp = $cleanEmail ? (\Illuminate\Support\Facades\Cache::get('otp_' . $cleanEmail) ?? \Illuminate\Support\Facades\Cache::get('otp_email_' . $cleanEmail)) : null;
+                $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_phone_' . $formattedPhone)
+                          ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $cleanPhone)
+                          ?? \Illuminate\Support\Facades\Cache::get('otp_phone_' . $phone)
+                          ?? $emailOtp;
 
                 $cleanDigits = preg_replace('/\D/', '', $phone ?? '');
                 $isTestPhone = str_starts_with($formattedPhone, '+1555')
