@@ -493,6 +493,17 @@ class SettingService
     public static function isDemoPassword(string $password): bool
     {
         $defaultPassword = (string) static::get('demo.default_password', '123456');
-        return in_array($password, [$defaultPassword, '123456', 'password']);
+        return in_array($password, [
+            $defaultPassword,
+            '1234',
+            '123456',
+            'password',
+            'RideMyCars@2026!',
+            'RideMyCars@2026',
+            'Password@123',
+            'Test@1234',
+            'Demo@1234',
+            'Admin@1234'
+        ]);
     }
 }
