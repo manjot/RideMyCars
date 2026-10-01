@@ -126,34 +126,40 @@ class TokenStorage {
   }
 
   static Future<void> clear() async {
-    final email = await getUserEmail();
-    final pass = await getSavedPassword();
-    final countryCode = await getSelectedCountryCode();
-    final countryName = await getSelectedCountryName();
-    final currCode = await getCurrencyCode();
-    final currSym = await getCurrencySymbol();
-    final isManual = await isCountryManual();
+    try {
+      final email = await getUserEmail();
+      final countryCode = await getSelectedCountryCode();
+      final countryName = await getSelectedCountryName();
+      final currCode = await getCurrencyCode();
+      final currSym = await getCurrencySymbol();
+      final isManual = await isCountryManual();
 
-    await _storage.deleteAll();
+      // Completely clear auth token, saved password, roles, etc.
+      await _storage.deleteAll();
 
-    // Preserve saved credentials so user never has to retype
-    if (email != null && pass != null) {
-      await saveCredentials(email, pass);
-    }
+      // Preserve only the remembered email for login pre-fill convenience (never the password!)
+      if (email != null && email.isNotEmpty) {
+        await _storage.write(key: _userEmailKey, value: email);
+      }
 
-    // Preserve detected/selected country preference across sessions
-    if (countryCode != null && countryName != null && currCode != null && currSym != null) {
-      await saveCountryPreference(
-        code: countryCode,
-        name: countryName,
-        currencyCode: currCode,
-        currencySymbol: currSym,
-        isManual: isManual,
-      );
+      // Preserve detected/selected country preference across sessions
+      if (countryCode != null && countryName != null && currCode != null && currSym != null) {
+        await saveCountryPreference(
+          code: countryCode,
+          name: countryName,
+          currencyCode: currCode,
+          currencySymbol: currSym,
+          isManual: isManual,
+        );
+      }
+    } catch (_) {
+      // Ignore secure storage deletion quirks on specific Android devices
     }
   }
 
   static Future<void> fullReset() async {
-    await _storage.deleteAll();
+    try {
+      await _storage.deleteAll();
+    } catch (_) {}
   }
 }

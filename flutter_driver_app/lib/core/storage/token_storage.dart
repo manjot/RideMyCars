@@ -71,16 +71,20 @@ class TokenStorage {
   }
 
   static Future<void> clear() async {
-    final email = await getUserEmail();
-    final pass = await getSavedPassword();
-    await _storage.deleteAll();
-    // Keep saved credentials so user never has to retype
-    if (email != null && pass != null) {
-      await saveCredentials(email, pass);
-    }
+    try {
+      final email = await getUserEmail();
+      // Completely clear auth token, saved password, roles, etc.
+      await _storage.deleteAll();
+      // Keep only remembered email for login convenience (never the password!)
+      if (email != null && email.isNotEmpty) {
+        await _storage.write(key: _userEmailKey, value: email);
+      }
+    } catch (_) {}
   }
 
   static Future<void> fullReset() async {
-    await _storage.deleteAll();
+    try {
+      await _storage.deleteAll();
+    } catch (_) {}
   }
 }

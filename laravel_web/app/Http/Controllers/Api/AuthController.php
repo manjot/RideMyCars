@@ -1131,8 +1131,20 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         try {
-            if ($request->user() && $request->user()->currentAccessToken()) {
-                $request->user()->currentAccessToken()->delete();
+            $user = $request->user() ?? $request->user('sanctum');
+            if ($user && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            } else {
+                $bearer = $request->bearerToken();
+                if ($bearer && \Illuminate\Support\Facades\Schema::hasTable('personal_access_tokens')) {
+                    $parts = explode('|', $bearer, 2);
+                    $tokenId = $parts[0] ?? null;
+                    if ($tokenId && is_numeric($tokenId)) {
+                        \Illuminate\Support\Facades\DB::table('personal_access_tokens')
+                            ->where('id', (int)$tokenId)
+                            ->delete();
+                    }
+                }
             }
         } catch (\Throwable $e) {
             // Ignore logout token deletion issues

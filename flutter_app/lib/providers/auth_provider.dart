@@ -629,11 +629,9 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    try {
-      await _dio.post(ApiConstants.logout);
-    } catch (_) {}
+    final tokenToRevoke = _token;
 
-    await TokenStorage.clear();
+    // Immediately clear in-memory authentication state
     _token = null;
     _userId = null;
     _userName = null;
@@ -642,6 +640,23 @@ class AuthProvider extends ChangeNotifier {
     _referredBy = null;
     _avatarUrl = null;
     _isAuthenticated = false;
+    _isLoading = false;
+
+    // Wipe token and saved password from persistent storage
+    try {
+      await TokenStorage.clear();
+    } catch (_) {}
+
     notifyListeners();
+
+    // Revoke token on server with a 3-second timeout so logout never hangs
+    if (tokenToRevoke != null && tokenToRevoke.isNotEmpty) {
+      try {
+        await _dio.post(
+          ApiConstants.logout,
+          options: Options(headers: {'Authorization': 'Bearer $tokenToRevoke'}),
+        ).timeout(const Duration(seconds: 3));
+      } catch (_) {}
+    }
   }
 }

@@ -33,6 +33,7 @@ Route::get('/receipts/{token}/download', [\App\Http\Controllers\ReceiptControlle
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout']);
 Route::post('/otp/send', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');
 Route::post('/otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:15,1');
 Route::post('/auth/phone/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');

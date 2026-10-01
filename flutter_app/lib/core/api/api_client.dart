@@ -118,7 +118,13 @@ class ApiClient {
           }
 
           // 3. Handle 401 unauthenticated by automatically re-logging in with saved credentials
+          // Never attempt re-login if the request itself was /logout or /login
           if (statusCode == 401) {
+            final path = error.requestOptions.path;
+            if (path.contains('/logout') || path.contains('/login')) {
+              return handler.next(error);
+            }
+
             final email = await TokenStorage.getUserEmail();
             final password = await TokenStorage.getSavedPassword();
 

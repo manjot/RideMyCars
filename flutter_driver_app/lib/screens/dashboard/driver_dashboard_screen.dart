@@ -1842,16 +1842,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
               title: const Text('Log Out', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
-              onTap: () async {
-                await auth.logout();
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
-                    (route) => false,
-                  );
-                }
-              },
+              onTap: () => _handleLogout(context, auth),
             ),
             const SizedBox(height: 8),
           ],
@@ -1878,6 +1869,57 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext drawerContext, AuthProvider auth) async {
+    final confirm = await showDialog<bool>(
+      context: drawerContext,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: AppColors.danger, size: 24),
+            SizedBox(width: 10),
+            Text('Log Out', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out of your driver account?',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textLight)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      Navigator.of(context).pop();
+    } catch (_) {}
+
+    await auth.logout();
+
+    if (!mounted) return;
+
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
+      (route) => false,
     );
   }
 }
