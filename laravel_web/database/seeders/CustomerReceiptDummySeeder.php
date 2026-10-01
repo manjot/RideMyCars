@@ -18,6 +18,62 @@ class CustomerReceiptDummySeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Ensure App Store Review / Demo Credentials Exist
+        $demoCustomer = User::updateOrCreate(
+            ['email' => 'customer@ridemycars.com'],
+            [
+                'name' => 'John Client (Demo)',
+                'password' => Hash::make('123456'),
+                'phone' => '+19876543210',
+                'country' => 'United States',
+                'city' => 'New York',
+                'role' => 'customer',
+                'account_status' => 'active',
+                'membership_type' => 'Gold VIP Member',
+                'membership_status' => 'active',
+                'email_verified_at' => now(),
+                'phone_verified_at' => now(),
+            ]
+        );
+
+        $demoDriver = User::updateOrCreate(
+            ['email' => 'michael.driver@ridemycars.com'],
+            [
+                'name' => 'Michael Driver (Demo)',
+                'password' => Hash::make('123456'),
+                'phone' => '+19876543211',
+                'country' => 'United States',
+                'city' => 'New York',
+                'role' => 'driver',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
+                'phone_verified_at' => now(),
+            ]
+        );
+
+        $demoDriverProfile = DriverProfile::firstOrCreate(
+            ['user_id' => $demoDriver->id],
+            [
+                'rating' => 4.95,
+                'total_trips' => 128,
+                'license_number' => 'DL-US998811',
+                'hourly_rate' => 35.00,
+                'daily_rate' => 180.00,
+                'country' => 'United States',
+                'service_area' => 'Global',
+                'is_available' => true,
+                'is_live' => true,
+                'kyc_status' => 'approved',
+                'verification_status' => 'verified',
+                'experience_years' => 6,
+            ]
+        );
+        $demoDriverProfile->update([
+            'is_live' => true,
+            'is_available' => true,
+            'verification_status' => 'verified',
+        ]);
+
         // 1. Ensure Target Customer User exists with specified password
         $customer = User::updateOrCreate(
             ['email' => 'shachisheh@gmail.com'],
