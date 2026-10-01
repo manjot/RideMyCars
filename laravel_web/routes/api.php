@@ -145,7 +145,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Auth & User Profile
     Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
 
     // Rides Lifecycle
     Route::get('/rides/active', [RideController::class, 'active']);
