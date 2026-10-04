@@ -57,7 +57,8 @@
                           || (sel === 'GBR' && (driverCountry === 'UNITED KINGDOM' || driverCountry === 'UK' || driverCountry === 'GB'))
                           || (sel === 'EUR' && (driverCountry === 'EUROPE' || driverCountry === 'EU' || driverCountry === 'GERMANY' || driverCountry === 'FRANCE'))
                           || (sel === 'ARE' && (driverCountry === 'UNITED ARAB EMIRATES' || driverCountry === 'UAE' || driverCountry === 'AE'))
-                          || (sel === 'KEN' && (driverCountry === 'KENYA' || driverCountry === 'KE'));
+                          || (sel === 'KEN' && (driverCountry === 'KENYA' || driverCountry === 'KE'))
+                          || (sel === 'MWI' && (driverCountry === 'MALAWI' || driverCountry === 'MW'));
 
                       const matchesAvail = !this.availability || (this.availability === 'available' ? (d.is_available == 1 || d.is_available === true) : true);
                       const matchesRating = !this.minRating || (parseFloat(d.rating || 0) >= parseFloat(this.minRating));
@@ -76,6 +77,7 @@
                       'EUR': '€', 'EUROPE': '€',
                       'ARE': 'AED', 'UNITED ARAB EMIRATES': 'AED', 'UAE': 'AED',
                       'KEN': 'KSh', 'KENYA': 'KSh',
+                      'MWI': 'MK', 'MALAWI': 'MK', 'MW': 'MK',
                   };
                   const dc = (driver.country || '').toUpperCase();
                   const sym = symbolMap[dc] || this.currencySymbol || '$';

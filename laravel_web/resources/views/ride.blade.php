@@ -2511,6 +2511,7 @@
                     'CAN': [43.6532, -79.3832], // Toronto / Canada
                     'ARE': [25.2048, 55.2708],  // Dubai / UAE
                     'KEN': [-1.2921, 36.8219],  // Nairobi / Kenya
+                    'MWI': [-13.9626, 33.7741], // Lilongwe / Malawi
                     'AUS': [-33.8688, 151.2093] // Sydney / Australia
                 };
                 const activeCountry = @json($currentCountryCode ?? 'USA');

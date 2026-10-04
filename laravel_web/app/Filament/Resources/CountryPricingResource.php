@@ -34,18 +34,18 @@ class CountryPricingResource extends Resource
                                 Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\TextInput::make('country_name')
                                         ->label('Country Name')
-                                        ->placeholder('e.g. United States, Ghana, South Africa')
+                                        ->placeholder('e.g. United States, Ghana, Malawi, South Africa, India')
                                         ->required()
                                         ->maxLength(100),
                                     Forms\Components\TextInput::make('country_code')
                                         ->label('Country Code (ISO-3 / Code)')
-                                        ->placeholder('e.g. USA, GHA, ZAF, NGA, GBR')
+                                        ->placeholder('e.g. USA, GHA, MWI, ZAF, NGA, IND')
                                         ->required()
                                         ->maxLength(10)
                                         ->dehydrateStateUsing(fn ($state) => strtoupper(trim($state))),
                                     Forms\Components\TextInput::make('currency_code')
                                         ->label('Currency Code')
-                                        ->placeholder('e.g. USD, GHS, ZAR, NGN, GBP')
+                                        ->placeholder('e.g. USD, GHS, MWK, ZAR, NGN, INR')
                                         ->required()
                                         ->maxLength(10)
                                         ->dehydrateStateUsing(fn ($state) => strtoupper(trim($state))),
@@ -54,7 +54,7 @@ class CountryPricingResource extends Resource
                                 Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\TextInput::make('currency_symbol')
                                         ->label('Currency Symbol')
-                                        ->placeholder('e.g. $, GH₵, R, ₦, £')
+                                        ->placeholder('e.g. $, GH₵, MK, R, ₦, ₹, £')
                                         ->required()
                                         ->maxLength(10),
                                     Forms\Components\TextInput::make('exchange_rate')

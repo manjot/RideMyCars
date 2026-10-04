@@ -92,6 +92,10 @@ class CountryService
                 if ($lat >= -35.0 && $lat <= -22.0 && $lng >= 16.0 && $lng <= 33.0) {
                     return 'ZAF';
                 }
+                // Malawi bounds: lat -17.1 to -9.3, lng 32.6 to 35.9
+                if ($lat >= -17.1 && $lat <= -9.3 && $lng >= 32.6 && $lng <= 35.9) {
+                    return 'MWI';
+                }
             }
         }
 
@@ -239,6 +243,8 @@ class CountryService
                 $iso = 'ZA';
             } elseif (str_contains($acceptLang, 'en-ng') || str_contains($acceptLang, 'yo') || str_contains($acceptLang, 'ig') || str_contains($acceptLang, 'ha')) {
                 $iso = 'NG';
+            } elseif (str_contains($acceptLang, 'en-mw') || str_contains($acceptLang, 'ny')) {
+                $iso = 'MW';
             } elseif (str_contains($acceptLang, 'en-gb')) {
                 $iso = 'GB';
             } elseif (preg_match('/[a-z]{2}-([a-z]{2})/i', $acceptLang, $matches)) {
@@ -297,6 +303,9 @@ class CountryService
         }
         if (str_contains($tzLower, 'lagos')) {
             return 'NG';
+        }
+        if (str_contains($tzLower, 'blantyre') || str_contains($tzLower, 'lilongwe') || str_contains($tzLower, 'malawi')) {
+            return 'MW';
         }
         if (str_contains($tzLower, 'london')) {
             return 'GB';
@@ -362,6 +371,7 @@ class CountryService
             'AE' => ['code_3' => 'ARE', 'name' => 'United Arab Emirates'],
             'KE' => ['code_3' => 'KEN', 'name' => 'Kenya'],
             'IN' => ['code_3' => 'IND', 'name' => 'India'],
+            'MW' => ['code_3' => 'MWI', 'name' => 'Malawi'],
             'AU' => ['code_3' => 'AUS', 'name' => 'Australia'],
             'DE' => ['code_3' => 'DEU', 'name' => 'Germany'],
             'FR' => ['code_3' => 'FRA', 'name' => 'France'],
@@ -483,6 +493,9 @@ class CountryService
             'KENYA' => 'KEN',
             'IN' => 'IND',
             'INDIA' => 'IND',
+            'MW' => 'MWI',
+            'MWI' => 'MWI',
+            'MALAWI' => 'MWI',
         ];
 
         if (isset($aliasMap[$upper])) {
@@ -710,6 +723,7 @@ class CountryService
             'ARE' => '+971',
             'KEN' => '+254',
             'IND' => '+91',
+            'MWI', 'MW' => '+265',
             default => '+1',
         };
     }
@@ -728,6 +742,9 @@ class CountryService
             'CAN' => 'ca',
             'ARE' => 'ae',
             'KEN' => 'ke',
+            'IND', 'IN' => 'in',
+            'EUR', 'EU' => 'eu',
+            'MWI', 'MW' => 'mw',
             default => strtolower(substr($countryCode, 0, 2)),
         };
 

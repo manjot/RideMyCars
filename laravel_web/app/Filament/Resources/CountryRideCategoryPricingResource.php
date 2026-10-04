@@ -139,31 +139,26 @@ class CountryRideCategoryPricingResource extends Resource
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('minimum_fare')
                     ->label('Min Fare')
-                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2))
+                    ->formatStateUsing(fn ($state, $record) => ($record?->countryPricing?->currency_symbol ?? \App\Services\CountryService::getCurrencySymbol($record?->country_code) ?? '$') . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('base_fare')
                     ->label('Base Fare')
-                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2))
+                    ->formatStateUsing(fn ($state, $record) => ($record?->countryPricing?->currency_symbol ?? \App\Services\CountryService::getCurrencySymbol($record?->country_code) ?? '$') . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('per_km_rate')
                     ->label('Per KM')
-                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2))
+                    ->formatStateUsing(fn ($state, $record) => ($record?->countryPricing?->currency_symbol ?? \App\Services\CountryService::getCurrencySymbol($record?->country_code) ?? '$') . number_format((float) ($state ?? 0), 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('per_minute_rate')
                     ->label('Per Min')
-                    ->formatStateUsing(fn ($state, $record) => (($record?->country_code === 'GHA') ? 'GH₵' : '$') . number_format((float) ($state ?? 0), 2)),
+                    ->formatStateUsing(fn ($state, $record) => ($record?->countryPricing?->currency_symbol ?? \App\Services\CountryService::getCurrencySymbol($record?->country_code) ?? '$') . number_format((float) ($state ?? 0), 2)),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Active'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('country_code')
                     ->label('Filter by Country')
-                    ->options([
-                        'GHA' => 'Ghana (GHA)',
-                        'USA' => 'United States (USA)',
-                        'NGA' => 'Nigeria (NGA)',
-                        'ZAF' => 'South Africa (ZAF)',
-                    ]),
+                    ->options(fn () => CountryPricing::query()->orderBy('country_name')->pluck('country_name', 'country_code')->toArray()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

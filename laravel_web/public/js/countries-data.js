@@ -73,6 +73,15 @@ window.WORLD_COUNTRIES = [
     "flagUrl": "https://flagcdn.com/w40/ke.png"
   },
   {
+    "name": "Malawi",
+    "code": "MW",
+    "cca3": "MWI",
+    "dial": "+265",
+    "currency": "MWK",
+    "symbol": "MK",
+    "flagUrl": "https://flagcdn.com/w40/mw.png"
+  },
+  {
     "name": "United Arab Emirates",
     "code": "AE",
     "cca3": "ARE",

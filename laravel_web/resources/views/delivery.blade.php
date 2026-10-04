@@ -628,6 +628,7 @@
                 'CAN': { lat: 43.6532, lng: -79.3832 }, // Toronto / Canada
                 'ARE': { lat: 25.2048, lng: 55.2708 },  // Dubai / UAE
                 'KEN': { lat: -1.2921, lng: 36.8219 },  // Nairobi / Kenya
+                'MWI': { lat: -13.9626, lng: 33.7741 }, // Lilongwe / Malawi
                 'AUS': { lat: -33.8688, lng: 151.2093 } // Sydney / Australia
             };
             const currentCountry = @json($currentCountryCode ?? 'USA');

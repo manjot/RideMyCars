@@ -168,6 +168,19 @@ class CountryProvider extends ChangeNotifier {
       defaultGpsRate: 650.0,
     ),
     SupportedCountry(
+      name: 'Malawi',
+      code: 'MWI',
+      symbol: 'MK',
+      currency: 'MWK',
+      flag: '🇲🇼',
+      phonePrefix: '+265',
+      defaultMultiplier: 1735.0,
+      defaultProtectionRate: 20000.0,
+      defaultExtraDriverRate: 15000.0,
+      defaultChildSeatRate: 12000.0,
+      defaultGpsRate: 8000.0,
+    ),
+    SupportedCountry(
       name: 'Germany',
       code: 'DEU',
       symbol: '€',
@@ -486,6 +499,9 @@ class CountryProvider extends ChangeNotifier {
       'KE': 'KEN',
       'KEN': 'KEN',
       'KENYA': 'KEN',
+      'MW': 'MWI',
+      'MWI': 'MWI',
+      'MALAWI': 'MWI',
       'DE': 'DEU',
       'DEU': 'DEU',
       'GERMANY': 'DEU',
@@ -517,6 +533,8 @@ class CountryProvider extends ChangeNotifier {
     if (lat >= 22.5 && lat <= 26.2 && lng >= 51.0 && lng <= 56.5) return 'ARE';
     // Kenya: lat -4.7 to 5.5, lng 33.9 to 41.9
     if (lat >= -4.7 && lat <= 5.5 && lng >= 33.9 && lng <= 41.9) return 'KEN';
+    // Malawi: lat -17.1 to -9.3, lng 32.6 to 35.9
+    if (lat >= -17.1 && lat <= -9.3 && lng >= 32.6 && lng <= 35.9) return 'MWI';
     // Canada: lat 42.0 to 83.0, lng -141.0 to -52.0
     if (lat >= 42.0 && lat <= 83.0 && lng >= -141.0 && lng <= -52.0) return 'CAN';
     // USA: lat 24.5 to 49.4, lng -125.0 to -66.9

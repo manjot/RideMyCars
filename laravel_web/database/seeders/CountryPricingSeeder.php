@@ -310,6 +310,39 @@ class CountryPricingSeeder extends Seeder
                 'rental_child_seat_rate' => 1040.00,
                 'rental_gps_rate' => 650.00,
             ],
+            [
+                'country_code' => 'MWI',
+                'country_name' => 'Malawi',
+                'currency_code' => 'MWK',
+                'currency_symbol' => 'MK',
+                'exchange_rate' => 1735.0000,
+                'is_default' => false,
+                'is_active' => true,
+                // Ride
+                'ride_base_fare' => 2500.00,
+                'ride_per_km_rate' => 850.00,
+                'ride_per_minute_rate' => 150.00,
+                'ride_minimum_fare' => 4000.00,
+                'ride_additional_stop_fee' => 1500.00,
+                // Delivery
+                'delivery_base_fare' => 4500.00,
+                'delivery_per_km_rate' => 800.00,
+                'delivery_instant_addon' => 3000.00,
+                'delivery_express_addon' => 2000.00,
+                'delivery_same_day_addon' => 1200.00,
+                'delivery_scheduled_addon' => 800.00,
+                'delivery_per_kg_rate' => 400.00,
+                // Driver
+                'driver_hourly_rate' => 8500.00,
+                'driver_daily_rate' => 55000.00,
+                'driver_weekly_rate' => 320000.00,
+                // Rental
+                'rental_price_multiplier' => 1735.0000,
+                'rental_protection_daily_rate' => 20000.00,
+                'rental_additional_driver_rate' => 15000.00,
+                'rental_child_seat_rate' => 12000.00,
+                'rental_gps_rate' => 8000.00,
+            ],
         ];
 
         foreach ($presets as $data) {

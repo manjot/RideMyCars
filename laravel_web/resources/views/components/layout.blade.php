@@ -84,6 +84,8 @@
                     detectedCode = 'ARE';
                 } else if (tz === 'Africa/Nairobi') {
                     detectedCode = 'KEN';
+                } else if (tz === 'Africa/Blantyre' || (tz && (tz.indexOf('Blantyre') !== -1 || tz.indexOf('Lilongwe') !== -1 || tz.indexOf('Malawi') !== -1))) {
+                    detectedCode = 'MWI';
                 } else if (tz && (tz.indexOf('New_York') !== -1 || tz.indexOf('Chicago') !== -1 || tz.indexOf('Los_Angeles') !== -1 || tz.indexOf('Denver') !== -1)) {
                     detectedCode = 'USA';
                 } else if (tz && (tz.indexOf('Toronto') !== -1 || tz.indexOf('Vancouver') !== -1)) {
@@ -127,7 +129,7 @@
                             if (data && data.country) {
                                 var iso = data.country.toUpperCase();
                                 document.cookie = "user_detected_country=" + iso + "; path=/; max-age=" + (86400 * 30);
-                                var map = { 'IN': 'IND', 'GH': 'GHA', 'ZA': 'ZAF', 'NG': 'NGA', 'GB': 'GBR', 'US': 'USA', 'CA': 'CAN', 'AE': 'ARE', 'KE': 'KEN' };
+                                var map = { 'IN': 'IND', 'GH': 'GHA', 'ZA': 'ZAF', 'NG': 'NGA', 'GB': 'GBR', 'US': 'USA', 'CA': 'CAN', 'AE': 'ARE', 'KE': 'KEN', 'MW': 'MWI' };
                                 var target = map[iso] || iso;
                                 if (target && target !== serverCountry && !localStorage.getItem('rmc_manual_country')) {
                                     document.cookie = "user_country=" + target + "; path=/; max-age=" + (86400 * 30);
