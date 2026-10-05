@@ -724,4 +724,82 @@ class StripeVerificationController extends Controller
             'customerPhone' => $custPhone ?? '',
         ];
     }
+
+    /**
+     * Driver responds to verification request (approve or reject)
+     */
+    public function driverRespond(Request $request): JsonResponse
+    {
+        $request->validate([
+            'service_type' => 'required|string|in:ride,rental,driver_booking,hire-driver,package_delivery,delivery',
+            'service_id' => 'required|integer',
+            'action' => 'required|in:approve,reject',
+            'rejection_reason' => 'nullable|string|max:500',
+        ]);
+
+        $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+        if (!$user) {
+            $user = Auth::user();
+        }
+        if (!$user) {
+            $user = User::where('role', 'driver')->first();
+        }
+
+        $serviceType = $request->input('service_type');
+        $serviceId = (int) $request->input('service_id');
+        $action = $request->input('action');
+        $rejectionReason = $request->input('rejection_reason');
+
+        $booking = $this->getBookingModel($serviceType, $serviceId);
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+        }
+
+        if ($action === 'approve') {
+            $booking->update([
+                'verification_status' => 'driver_verified',
+                'driver_id' => $user->id,
+                'verified_by_driver_id' => $user->id,
+                'verified_at' => now(),
+                'status' => in_array($booking->status, ['pending', 'searching_driver', null], true) ? 'accepted' : $booking->status,
+            ]);
+
+            if ($serviceType === 'ride' || $serviceType === 'rental') {
+                \App\Models\RideAssignment::updateOrCreate(
+                    ['ride_id' => $booking->id, 'driver_id' => $user->id],
+                    ['status' => 'accepted']
+                );
+            } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
+                \App\Models\RideAssignment::updateOrCreate(
+                    ['driver_booking_id' => $booking->id, 'driver_id' => $user->id],
+                    ['status' => 'accepted']
+                );
+            } elseif ($serviceType === 'package_delivery' || $serviceType === 'delivery') {
+                \App\Models\RideAssignment::updateOrCreate(
+                    ['package_delivery_id' => $booking->id, 'driver_id' => $user->id],
+                    ['status' => 'accepted']
+                );
+            }
+
+            try {
+                \App\Services\NotificationService::notifyRiderDriverAssigned($booking);
+            } catch (\Throwable $e) {}
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking details verified and approved!',
+                'booking' => $booking,
+            ]);
+        } else {
+            $booking->update([
+                'verification_status' => 'driver_rejected',
+                'rejection_reason' => $rejectionReason ?: 'Driver schedule or vehicle mismatch',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking verification rejected.',
+            ]);
+        }
+    }
 }
