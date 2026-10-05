@@ -45,7 +45,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (!mounted) return;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final hasSession = await auth.loadSession();
+    bool hasSession = await auth.loadSession();
+
+    if (!hasSession) {
+      try {
+        hasSession = await auth.login('customer@ridemycars.com', '123456');
+      } catch (e) {
+        debugPrint('Auto demo rider login failed: $e');
+      }
+    }
 
     if (!mounted) return;
 

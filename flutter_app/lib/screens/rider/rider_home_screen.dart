@@ -51,6 +51,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   GoogleMapController? _mapController;
   final _pickupController = TextEditingController();
   final _dropoffController = TextEditingController();
+  final _pickupFocusNode = FocusNode();
+  final _dropoffFocusNode = FocusNode();
 
   ServiceType _selectedService = ServiceType.ride;
   String _selectedTierId = 'Standard';
@@ -88,6 +90,18 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _pickupFocusNode.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _dropoffFocusNode.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _pickupController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _dropoffController.addListener(() {
+      if (mounted) setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rideProv = Provider.of<RideProvider>(context, listen: false);
       final countryProv = Provider.of<CountryProvider>(context, listen: false);
@@ -104,6 +118,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _pickupFocusNode.dispose();
+    _dropoffFocusNode.dispose();
     _pickupController.dispose();
     _dropoffController.dispose();
     super.dispose();
@@ -621,6 +637,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     _updateMapMarkers();
     _recalculateDynamicPrices();
     if (!mounted) return;
+    _pickupFocusNode.unfocus();
+    _dropoffFocusNode.unfocus();
     FocusScope.of(context).unfocus();
   }
 
@@ -1371,6 +1389,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       _userLng ?? defaultCenterForCountry(countryProv.selectedCountryCode).longitude,
     );
 
+    final isTypingAddress = _pickupFocusNode.hasFocus || _dropoffFocusNode.hasFocus;
+    final isKeyboardOpen = isTypingAddress || MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       drawer: _buildDrawer(context, auth),
@@ -1381,11 +1402,16 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             initialCameraPosition: CameraPosition(target: initialCenter, zoom: 14.0),
             markers: _markers,
             polylines: _polylines,
-            padding: const EdgeInsets.only(top: 80, bottom: 360),
+            padding: EdgeInsets.only(top: 80, bottom: isKeyboardOpen ? 160 : 360),
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             onMapCreated: (c) => _mapController = c,
+            onTap: (_) {
+              _pickupFocusNode.unfocus();
+              _dropoffFocusNode.unfocus();
+              FocusScope.of(context).unfocus();
+            },
           ),
 
           // Map Corner SOS Emergency Button
@@ -1582,190 +1608,224 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 ),
                 child: SafeArea(
                   top: false,
-                  bottom: true,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header Badge Chip & Assurance
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
-                              decoration: BoxDecoration(
-                                color: _serviceColor.withOpacity(0.16),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: _serviceColor.withOpacity(0.4), width: 1),
-                              ),
-                              child: Text(
-                                _serviceBadge,
-                                style: TextStyle(
-                                  color: _serviceColor,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 10,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                const Icon(Icons.verified_user_rounded, color: AppColors.success, size: 14),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Guaranteed & Insured',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.65),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Mode-Specific Body (Rent Catalog, Driver Catalog, Ride, Deliver)
-                      if (_selectedService == ServiceType.rent)
-                        _buildRentSection()
-                      else if (_selectedService == ServiceType.driver)
-                        _buildDriverSection()
-                      else
-                        _buildStandardRideOrDeliverSection(),
-
-                      // Backup Chauffeur Switch Option
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.backgroundDark,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: _enableBackupChauffeur
-                                  ? AppColors.primary.withOpacity(0.4)
-                                  : Colors.white.withOpacity(0.08),
-                            ),
-                          ),
+                  bottom: !isKeyboardOpen,
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header Badge Chip & Assurance
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(10),
+                                  color: _serviceColor.withOpacity(0.16),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: _serviceColor.withOpacity(0.4), width: 1),
                                 ),
-                                child: const Icon(Icons.shield_outlined, color: AppColors.primary, size: 20),
+                                child: Text(
+                                  _serviceBadge,
+                                  style: TextStyle(
+                                    color: _serviceColor,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Enable Backup Chauffeur',
-                                      style: TextStyle(
-                                        color: AppColors.textLight,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
+                              if (isKeyboardOpen)
+                                GestureDetector(
+                                  onTap: () {
+                                    _pickupFocusNode.unfocus();
+                                    _dropoffFocusNode.unfocus();
+                                    FocusScope.of(context).unfocus();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.white.withOpacity(0.1)),
                                     ),
-                                    const SizedBox(height: 2),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Text(
+                                          'Done',
+                                          style: TextStyle(color: AppColors.textLight, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(width: 3),
+                                        Icon(Icons.keyboard_hide_rounded, color: AppColors.textLight, size: 14),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                Row(
+                                  children: [
+                                    const Icon(Icons.verified_user_rounded, color: AppColors.success, size: 14),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      "If your assigned chauffeur is unavailable, we'll automatically find another nearby chauffeur.",
+                                      'Guaranteed & Insured',
                                       style: TextStyle(
-                                        color: AppColors.textMuted,
+                                        color: Colors.white.withOpacity(0.65),
                                         fontSize: 11,
-                                        height: 1.2,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              Switch.adaptive(
-                                value: _enableBackupChauffeur,
-                                activeColor: AppColors.primary,
-                                onChanged: (val) {
-                                  setState(() => _enableBackupChauffeur = val);
-                                },
-                              ),
                             ],
                           ),
                         ),
-                      ),
 
-                      // CTA Action Button
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: rideProv.isBooking ? null : _handleBookService,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _serviceColor,
-                              foregroundColor: AppColors.backgroundDark,
-                              shape: RoundedRectangleBorder(
+                        // Mode-Specific Body (Rent Catalog, Driver Catalog, Ride, Deliver)
+                        if (_selectedService == ServiceType.rent)
+                          _buildRentSection()
+                        else if (_selectedService == ServiceType.driver)
+                          _buildDriverSection()
+                        else
+                          _buildStandardRideOrDeliverSection(isKeyboardOpen),
+
+                        // Backup Chauffeur Switch Option (Hidden when typing to keep top screen & address visible)
+                        if (!isKeyboardOpen && (_selectedService == ServiceType.ride || _selectedService == ServiceType.driver))
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.backgroundDark,
                                 borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _enableBackupChauffeur
+                                      ? AppColors.primary.withOpacity(0.4)
+                                      : Colors.white.withOpacity(0.08),
+                                ),
                               ),
-                              elevation: 4,
-                            ),
-                            child: rideProv.isBooking
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.backgroundDark),
-                                  )
-                                : Text(
-                                    _ctaButtonText,
-                                    style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.shield_outlined, color: AppColors.primary, size: 20),
                                   ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Enable Backup Chauffeur',
+                                          style: TextStyle(
+                                            color: AppColors.textLight,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          "If your assigned chauffeur is unavailable, we'll automatically find another nearby chauffeur.",
+                                          style: TextStyle(
+                                            color: AppColors.textMuted,
+                                            fontSize: 11,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch.adaptive(
+                                    value: _enableBackupChauffeur,
+                                    activeColor: AppColors.primary,
+                                    onChanged: (val) {
+                                      setState(() => _enableBackupChauffeur = val);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
 
-                      // Bottom Navigation Tab Bar (Ride, Rent, Driver, Deliver)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
-                          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08), width: 1)),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildBottomTabItem(
-                              type: ServiceType.ride,
-                              label: 'Ride',
-                              icon: Icons.directions_car_rounded,
-                              activeColor: AppColors.primary,
+                        // CTA Action Button (Hidden when typing)
+                        if (!isKeyboardOpen)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: rideProv.isBooking ? null : _handleBookService,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _serviceColor,
+                                  foregroundColor: AppColors.backgroundDark,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 4,
+                                ),
+                                child: rideProv.isBooking
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.backgroundDark),
+                                      )
+                                    : Text(
+                                        _ctaButtonText,
+                                        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                              ),
                             ),
-                            _buildBottomTabItem(
-                              type: ServiceType.rent,
-                              label: 'Rent',
-                              icon: Icons.vpn_key_rounded,
-                              activeColor: const Color(0xFF3B82F6),
+                          ),
+
+                        // Bottom Navigation Tab Bar (Ride, Rent, Driver, Deliver) (Hidden when keyboard open)
+                        if (!isKeyboardOpen)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08), width: 1)),
                             ),
-                            _buildBottomTabItem(
-                              type: ServiceType.driver,
-                              label: 'Driver',
-                              icon: Icons.person_pin_circle_rounded,
-                              activeColor: const Color(0xFF10B981),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildBottomTabItem(
+                                  type: ServiceType.ride,
+                                  label: 'Ride',
+                                  icon: Icons.directions_car_rounded,
+                                  activeColor: AppColors.primary,
+                                ),
+                                _buildBottomTabItem(
+                                  type: ServiceType.rent,
+                                  label: 'Rent',
+                                  icon: Icons.vpn_key_rounded,
+                                  activeColor: const Color(0xFF3B82F6),
+                                ),
+                                _buildBottomTabItem(
+                                  type: ServiceType.driver,
+                                  label: 'Driver',
+                                  icon: Icons.person_pin_circle_rounded,
+                                  activeColor: const Color(0xFF10B981),
+                                ),
+                                _buildBottomTabItem(
+                                  type: ServiceType.deliver,
+                                  label: 'Deliver',
+                                  icon: Icons.inventory_2_rounded,
+                                  activeColor: const Color(0xFFA855F7),
+                                ),
+                              ],
                             ),
-                            _buildBottomTabItem(
-                              type: ServiceType.deliver,
-                              label: 'Deliver',
-                              icon: Icons.inventory_2_rounded,
-                              activeColor: const Color(0xFFA855F7),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -2251,74 +2311,143 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 
   // --- STANDARD RIDE & DELIVER SECTIONS ---
-  Widget _buildStandardRideOrDeliverSection() {
+  Widget _buildStandardRideOrDeliverSection(bool isKeyboardOpen) {
     final rideProv = Provider.of<RideProvider>(context);
+    final hasFocus = _pickupFocusNode.hasFocus || _dropoffFocusNode.hasFocus;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Input Fields Card
+        // Input Fields Card - Cleanly spaced & balanced height
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.backgroundDark,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withOpacity(0.06)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: hasFocus ? _serviceColor.withOpacity(0.4) : Colors.white.withOpacity(0.08),
+                width: 1.2,
+              ),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Pickup Field
-                TextField(
-                  controller: _pickupController,
-                  onChanged: (val) => _onQueryChanged(val, isPickup: true),
-                  onSubmitted: (_) => _recalculateDynamicPrices(),
-                  style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.circle, color: _serviceColor, size: 13),
-                    hintText: _pickupHint,
-                    hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
-                    border: InputBorder.none,
-                    isDense: true,
-                    suffixIcon: _pickupController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
-                            onPressed: () {
-                              _pickupController.clear();
-                              _userLat = null;
-                              _userLng = null;
-                              setState(() => _predictions = []);
-                              _updateMapMarkers();
-                            },
-                          )
-                        : null,
+                SizedBox(
+                  height: 44,
+                  child: TextField(
+                    controller: _pickupController,
+                    focusNode: _pickupFocusNode,
+                    textInputAction: TextInputAction.next,
+                    onTap: () {
+                      setState(() => _isSearchingPickup = true);
+                      if (_pickupController.text.isNotEmpty) {
+                        _onQueryChanged(_pickupController.text, isPickup: true);
+                      }
+                    },
+                    onChanged: (val) => _onQueryChanged(val, isPickup: true),
+                    onSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_dropoffFocusNode);
+                    },
+                    style: const TextStyle(color: AppColors.textLight, fontSize: 13.5, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 36, maxWidth: 36, minHeight: 44, maxHeight: 44),
+                      prefixIcon: Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: _serviceColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: _serviceColor.withOpacity(0.5),
+                                blurRadius: 4,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      hintText: _pickupHint,
+                      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
+                      border: InputBorder.none,
+                      suffixIconConstraints: const BoxConstraints(minWidth: 34, maxWidth: 34, minHeight: 44, maxHeight: 44),
+                      suffixIcon: _pickupController.text.isNotEmpty
+                          ? Center(
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  _pickupController.clear();
+                                  _userLat = null;
+                                  _userLng = null;
+                                  setState(() => _predictions = []);
+                                  _updateMapMarkers();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  child: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
                 ),
-                const Divider(color: Colors.white10, height: 1),
+                Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 34, endIndent: 12),
                 // Dropoff Field
-                TextField(
-                  controller: _dropoffController,
-                  onChanged: (val) => _onQueryChanged(val, isPickup: false),
-                  onSubmitted: (_) => _recalculateDynamicPrices(),
-                  style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger, size: 15),
-                    hintText: _dropoffHint,
-                    hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
-                    border: InputBorder.none,
-                    isDense: true,
-                    suffixIcon: _dropoffController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
-                            onPressed: () {
-                              _dropoffController.clear();
-                              _dropoffLat = null;
-                              _dropoffLng = null;
-                              setState(() => _predictions = []);
-                              _updateMapMarkers();
-                            },
-                          )
-                        : null,
+                SizedBox(
+                  height: 44,
+                  child: TextField(
+                    controller: _dropoffController,
+                    focusNode: _dropoffFocusNode,
+                    textInputAction: TextInputAction.search,
+                    onTap: () {
+                      setState(() => _isSearchingPickup = false);
+                      if (_dropoffController.text.isNotEmpty) {
+                        _onQueryChanged(_dropoffController.text, isPickup: false);
+                      }
+                    },
+                    onChanged: (val) => _onQueryChanged(val, isPickup: false),
+                    onSubmitted: (_) {
+                      _pickupFocusNode.unfocus();
+                      _dropoffFocusNode.unfocus();
+                      FocusScope.of(context).unfocus();
+                      _recalculateDynamicPrices();
+                    },
+                    style: const TextStyle(color: AppColors.textLight, fontSize: 13.5, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 36, maxWidth: 36, minHeight: 44, maxHeight: 44),
+                      prefixIcon: const Center(
+                        child: Icon(Icons.location_on_rounded, color: AppColors.danger, size: 16),
+                      ),
+                      hintText: _dropoffHint,
+                      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
+                      border: InputBorder.none,
+                      suffixIconConstraints: const BoxConstraints(minWidth: 34, maxWidth: 34, minHeight: 44, maxHeight: 44),
+                      suffixIcon: _dropoffController.text.isNotEmpty
+                          ? Center(
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  _dropoffController.clear();
+                                  _dropoffLat = null;
+                                  _dropoffLng = null;
+                                  setState(() => _predictions = []);
+                                  _updateMapMarkers();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  child: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
                 ),
               ],
@@ -2330,11 +2459,18 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         if (_isSearchingPlaces || _predictions.isNotEmpty)
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            constraints: const BoxConstraints(maxHeight: 160),
+            constraints: BoxConstraints(maxHeight: isKeyboardOpen ? 150 : 200),
             decoration: BoxDecoration(
               color: AppColors.backgroundDark,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _serviceColor.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.35),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: _isSearchingPlaces
                 ? const Padding(
@@ -2378,12 +2514,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           ),
 
         // Multi-tier Dynamic Categories or Delivery Options Carousel
-        Padding(
-          padding: const EdgeInsets.only(top: 4, bottom: 4),
-          child: _selectedService == ServiceType.deliver
-              ? _buildDeliveryTiersList()
-              : _buildRideCategoriesList(rideProv),
-        ),
+        // Hidden when keyboard is open so top screen & address stay fully visible
+        if (!isKeyboardOpen)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 4),
+            child: _selectedService == ServiceType.deliver
+                ? _buildDeliveryTiersList()
+                : _buildRideCategoriesList(rideProv),
+          ),
       ],
     );
   }
