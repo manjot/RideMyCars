@@ -697,6 +697,7 @@ class DriverApiController extends Controller
             ->where(function ($q) use ($rejectedDeliveryIds) {
                 $q->whereNull('package_delivery_id')->orWhereNotIn('package_delivery_id', $rejectedDeliveryIds);
             })
+            ->latest()
             ->get();
 
         foreach ($assignments as $a) {

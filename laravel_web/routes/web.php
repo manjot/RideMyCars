@@ -1770,7 +1770,8 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
                   ->orWhere('payment_status', 'pending')
                   ->orWhere('payment_status', 'pending_cash');
             })
-            ->take(5)
+            ->latest()
+            ->take(10)
             ->get();
 
         foreach ($pendingRides as $pRide) {
@@ -1856,6 +1857,7 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
         ->where('status', 'pending')
         ->where('expires_at', '>', now())
         ->with(['ride.rider', 'driverBooking.client', 'packageDelivery'])
+        ->latest()
         ->get()
         ->filter(function ($a) {
             if ($a->ride) {
