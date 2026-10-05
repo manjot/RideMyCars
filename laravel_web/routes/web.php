@@ -3296,6 +3296,22 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     
     $output = [];
     
+    // Ensure sqlite fallback file exists
+    try {
+        $sqliteFile = database_path('database.sqlite');
+        if (!file_exists($sqliteFile)) {
+            @touch($sqliteFile);
+            $output['sqlite_file_created'] = true;
+        } else {
+            $output['sqlite_file_exists'] = true;
+        }
+    } catch (\Throwable $e) {
+        $output['sqlite_file_err'] = $e->getMessage();
+    }
+
+    $output['default_db_conn'] = config('database.default');
+    $output['env_db_conn'] = env('DB_CONNECTION');
+    
     // Ensure personal_access_tokens table
     try {
         if (!\Illuminate\Support\Facades\Schema::hasTable('personal_access_tokens')) {
