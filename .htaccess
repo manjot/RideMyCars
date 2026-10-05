@@ -33,7 +33,13 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)/$ /$1 [L,R=301]
 
+    # Pass Authorization Header to FastCGI/PHP
+    SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
     # 5. Route requests to Laravel public front controller
     RewriteCond %{REQUEST_URI} !^/laravel_web/public/
-    RewriteRule ^(.*)$ laravel_web/public/$1 [L]
+    RewriteRule ^(.*)$ laravel_web/public/$1 [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},QSA,L]
 </IfModule>

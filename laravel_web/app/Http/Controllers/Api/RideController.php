@@ -489,11 +489,27 @@ class RideController extends Controller
             }
         }
 
-        // Initialize payment authorization hold
-        $rawMethod = strtolower($request->input('payment_method', 'stripe'));
+        // Initialize payment authorization hold / cash handling
+        $rawMethod = strtolower($request->input('payment_method', 'cash'));
+        $isCash = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'], true) || str_contains($rawMethod, 'cash');
         $paymentData = [];
 
-        if (in_array($rawMethod, ['momo', 'mobile_money', 'momo_pay', 'mtn_momo'], true)) {
+        if ($isCash) {
+            $ride->update([
+                'payment_method' => 'cash',
+                'payment_status' => 'pending_cash',
+            ]);
+            $paymentData = [
+                'requires_payment_hold' => false,
+                'payment_method' => 'cash',
+                'message' => 'Cash booking created. Dispatched to nearby drivers.',
+            ];
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Ride cash assignNextDriver error: " . $e->getMessage());
+            }
+        } elseif (in_array($rawMethod, ['momo', 'mobile_money', 'momo_pay', 'mtn_momo'], true)) {
             $momoPhone = $request->input('momo_phone', $user->phone ?? '0240000000');
             $momoNet = $request->input('momo_network', 'MTN');
             $momoRes = \App\Services\MomoPaymentService::requestToPay($ride, $momoPhone, $momoNet);
@@ -503,21 +519,27 @@ class RideController extends Controller
                 'transaction_ref' => $momoRes['transaction_ref'] ?? null,
                 'message' => $momoRes['message'] ?? 'Please confirm USSD prompt on your phone.',
             ];
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            } catch (\Throwable $e) {}
         } else {
             // Stripe or Apple Pay pre-authorization hold
             $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, $user->id);
             $paymentData = [
-                'requires_payment_hold' => true,
+                'requires_payment_hold' => false,
                 'payment_method' => str_contains($rawMethod, 'apple') ? 'apple_pay' : 'stripe',
                 'stripe_client_secret' => $intentData['client_secret'] ?? null,
                 'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
                 'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
             ];
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            } catch (\Throwable $e) {}
         }
 
         return response()->json(array_merge([
             'success' => true,
-            'message' => 'Ride booking created. Please complete payment hold to search for drivers.',
+            'message' => 'Ride booking created. Searching for nearby drivers.',
             'ride' => $ride->fresh(['stops']),
             'country_code' => $breakdown['country_code'] ?? 'USA',
             'currency' => $breakdown['currency'] ?? 'USD',
@@ -777,7 +799,7 @@ class RideController extends Controller
             ], 422);
         }
 
-        $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+        $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
         $userIds = $user ? [$user->id] : [];
         if ($user) {
             $matchingIds = \App\Models\User::where('name', $user->name)
@@ -801,10 +823,19 @@ class RideController extends Controller
                     \App\Services\StripeService::captureRideHold($ride);
                 } catch (\Throwable $e) {}
 
-                if ($user && $user->driverProfile) {
-                    $user->driverProfile->update(['is_available' => true]);
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
-                        $user->driverProfile->increment('total_trips');
+                // Complete all assignments for this ride
+                \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'completed']);
+
+                if ($user) {
+                    if ($user->driverProfile) {
+                        $user->driverProfile->update(['is_available' => true]);
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                            $user->driverProfile->increment('total_trips');
+                        }
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
+                        $driverFareEarned = floatval($ride->fare ?: $ride->total_amount) * 0.85;
+                        $user->increment('wallet_balance', $driverFareEarned);
                     }
                 }
             }

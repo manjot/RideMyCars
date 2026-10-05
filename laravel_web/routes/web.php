@@ -1741,9 +1741,9 @@ Route::post('/api/driver/respond', $driverRespondHandler);
 Route::post('/driver/respond', $driverRespondHandler);
 
 // Polling endpoint for Driver to get incoming requests
-Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) {
-    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
-    if (!$user) return response()->json([]);
+$driverRequestsClosure = function (\Illuminate\Http\Request $request) {
+    $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+    if (!$user) return response()->json(['success' => true, 'requests' => [], 'data' => []]);
 
     // If driver account is inactive (not live), return empty requests (do not receive customer requests)
     if ($user->driverProfile && !$user->driverProfile->is_live) {
@@ -1932,11 +1932,13 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
         'requests' => $pending,
         'data' => $pending,
     ]);
-});
+};
+Route::get('/api/driver/requests', $driverRequestsClosure);
+Route::get('/driver/requests', $driverRequestsClosure);
 
 // Endpoint for Driver to Accept/Decline
 Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Request $request, $id) {
-    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+    $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
     if (!$user) return response()->json(['error' => 'Unauthenticated.'], 401);
 
     $userIds = [$user->id];
@@ -3317,6 +3319,12 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['latest_rides'] = \App\Models\Ride::latest()->take(4)->get(['id', 'status', 'rider_id', 'driver_id', 'payment_status', 'payment_method', 'pickup_location', 'dropoff_location', 'created_at']);
         $output['latest_assignments'] = \App\Models\RideAssignment::latest()->take(6)->get(['id', 'ride_id', 'driver_id', 'status', 'assignment_type', 'expires_at', 'created_at']);
         $output['active_driver_profiles'] = \App\Models\DriverProfile::where('is_available', true)->take(5)->get(['id', 'user_id', 'is_available', 'is_live', 'last_location_update']);
+        $pendingRides = \App\Models\Ride::where('status', 'pending')->whereNull('driver_id')->get();
+        foreach ($pendingRides as $pr) {
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($pr);
+            } catch (\Throwable $e) {}
+        }
     } catch (\Throwable $e) {
         $output['diag_err'] = $e->getMessage();
     }

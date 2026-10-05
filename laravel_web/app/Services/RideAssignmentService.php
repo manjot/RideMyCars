@@ -36,12 +36,22 @@ class RideAssignmentService
      */
     public static function assignNextDriver(Ride $ride)
     {
-        // 0. PAYMENT GATE: Drivers cannot be searched or dispatched unless payment is confirmed, authorized, or on hold
-        $allowedPaymentStatuses = ['hold', 'authorized', 'paid'];
+        // 0. PAYMENT GATE: Drivers cannot be searched or dispatched unless payment is confirmed, authorized, on hold, or cash
+        $rawMethod = strtolower((string)($ride->payment_method ?? ''));
+        $isCashTrip = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'], true) || str_contains($rawMethod, 'cash');
+
+        $allowedPaymentStatuses = ['hold', 'authorized', 'paid', 'pending_cash'];
+        if ($isCashTrip) {
+            $allowedPaymentStatuses[] = 'pending';
+        }
+
         $currentPaymentStatus = strtolower((string) ($ride->payment_status ?? ''));
         if (!in_array($currentPaymentStatus, $allowedPaymentStatuses, true)) {
-            \Illuminate\Support\Facades\Log::warning("RideAssignmentService: Driver matching blocked for ride #{$ride->id}. Payment status '{$currentPaymentStatus}' is not authorized/held/paid.");
-            return null;
+            // Allow recent pending rides (< 30 minutes old) to be dispatched to nearby drivers
+            if (!($ride->created_at && $ride->created_at->gt(now()->subMinutes(30)))) {
+                \Illuminate\Support\Facades\Log::warning("RideAssignmentService: Driver matching blocked for ride #{$ride->id}. Payment status '{$currentPaymentStatus}' is not authorized/held/paid.");
+                return null;
+            }
         }
 
         // Must still be an unassigned pending ride

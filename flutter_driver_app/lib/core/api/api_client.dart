@@ -50,6 +50,11 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          options.headers['X-User-Role'] = 'driver';
+          final email = await TokenStorage.getUserEmail();
+          if (email != null && email.isNotEmpty) {
+            options.headers['X-Driver-Email'] = email;
+          }
           if (!options.headers.containsKey('User-Agent') || options.headers['User-Agent'] == null) {
             options.headers['User-Agent'] = _defaultUserAgent;
           }

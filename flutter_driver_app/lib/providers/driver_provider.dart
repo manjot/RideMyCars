@@ -232,7 +232,14 @@ class DriverProvider extends ChangeNotifier {
         final activeRes = await _dio.get(ApiConstants.driverActiveRides);
         if (activeRes.statusCode == 200) {
           final List list = (activeRes.data is Map ? (activeRes.data['rides'] ?? activeRes.data['data']) : (activeRes.data is List ? activeRes.data : [])) ?? [];
-          _activeRides = list.map((e) => Map<String, dynamic>.from(e)).toList();
+          final mapped = list.map((e) => Map<String, dynamic>.from(e)).toList();
+          if (mapped.isNotEmpty) {
+            _activeRides = mapped;
+          } else if (_lastAcceptedRide != null && _lastAcceptedRide!['status'] != 'completed' && _lastAcceptedRide!['status'] != 'cancelled') {
+            _activeRides = [_lastAcceptedRide!];
+          } else {
+            _activeRides = [];
+          }
         }
       } catch (e) {
         debugPrint('Error polling active rides: $e');
@@ -408,9 +415,16 @@ class DriverProvider extends ChangeNotifier {
   Future<void> fetchActiveRides() async {
     try {
       final res = await _dio.get(ApiConstants.driverActiveRides);
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        final List list = (res.data['rides'] ?? res.data['data'] ?? (res.data is List ? res.data : [])) ?? [];
-        _activeRides = list.map((e) => Map<String, dynamic>.from(e)).toList();
+      if (res.statusCode == 200 && (res.data['success'] == true || res.data is List || res.data['rides'] != null)) {
+        final List list = (res.data is Map ? (res.data['rides'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
+        final mapped = list.map((e) => Map<String, dynamic>.from(e)).toList();
+        if (mapped.isNotEmpty) {
+          _activeRides = mapped;
+        } else if (_lastAcceptedRide != null && _lastAcceptedRide!['status'] != 'completed' && _lastAcceptedRide!['status'] != 'cancelled') {
+          _activeRides = [_lastAcceptedRide!];
+        } else {
+          _activeRides = [];
+        }
         notifyListeners();
       }
     } catch (e) {
@@ -436,7 +450,7 @@ class DriverProvider extends ChangeNotifier {
         } catch (_) {}
       }
 
-      if (res != null && res.statusCode == 200 && res.data['success'] == true) {
+      if (res != null && (res.statusCode == 200 || res.statusCode == 201) && (res.data['success'] == true || res.data['status'] != null)) {
         if (newStatus == 'completed') {
           _activeRides.removeWhere((r) => int.tryParse(r['id']?.toString() ?? '0') == rideId);
           if (_lastAcceptedRide != null && int.tryParse(_lastAcceptedRide!['id']?.toString() ?? '0') == rideId) {
@@ -444,6 +458,16 @@ class DriverProvider extends ChangeNotifier {
           }
           _isOnline = true;
           await fetchEarnings();
+        } else {
+          // Immediately reflect state on active list
+          for (var r in _activeRides) {
+            if (int.tryParse(r['id']?.toString() ?? '0') == rideId) {
+              r['status'] = newStatus;
+            }
+          }
+          if (_lastAcceptedRide != null && int.tryParse(_lastAcceptedRide!['id']?.toString() ?? '0') == rideId) {
+            _lastAcceptedRide!['status'] = newStatus;
+          }
         }
         await fetchActiveRides();
         notifyListeners();
