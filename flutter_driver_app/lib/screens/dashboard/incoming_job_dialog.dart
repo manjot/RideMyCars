@@ -67,11 +67,19 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
     }
   }
 
-  void _handleAccept() {
+  Future<void> _handleAccept() async {
     if (_isAccepting) return;
     setState(() => _isAccepting = true);
     SoundService.instance.stopRingtone();
-    widget.onAccept();
+    try {
+      await widget.onAccept();
+    } catch (e) {
+      debugPrint('Error in _handleAccept: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isAccepting = false);
+      }
+    }
   }
 
   void _handleDecline() {

@@ -93,19 +93,24 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       builder: (dialogCtx) => IncomingJobDialog(
         request: job,
         onAccept: () async {
-          final ok = await driver.respondToRequest(
-            assignmentId,
-            'accept',
-            rideId: rideId,
-            deliveryId: deliveryId,
-            bookingId: bookingId,
-            jobData: job,
-          );
-
-          if (dialogCtx.mounted) {
-            Navigator.of(dialogCtx, rootNavigator: true).pop();
+          bool ok = false;
+          try {
+            ok = await driver.respondToRequest(
+              assignmentId,
+              'accept',
+              rideId: rideId,
+              deliveryId: deliveryId,
+              bookingId: bookingId,
+              jobData: job,
+            );
+          } catch (e) {
+            debugPrint('Error responding to assignment: $e');
+          } finally {
+            if (dialogCtx.mounted) {
+              Navigator.of(dialogCtx, rootNavigator: true).pop();
+            }
+            _dialogOpen = false;
           }
-          _dialogOpen = false;
 
           if (!mounted) return;
 
