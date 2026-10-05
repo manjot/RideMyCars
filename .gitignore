@@ -19,6 +19,8 @@ scratch/
 chrome_*_profile/
 native_chrome_profile/
 *.png
+!flutter_app/assets/**
+!laravel_web/public/images/**
 *.html
 *.pyc
 __pycache__/

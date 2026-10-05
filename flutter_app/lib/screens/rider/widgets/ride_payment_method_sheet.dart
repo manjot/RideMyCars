@@ -96,20 +96,24 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
     super.dispose();
   }
 
-  Widget _buildBrandChip(String text, {Color? bg, Color? fg}) {
+  Widget _buildBrandIcon(String assetName, {double height = 23}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: bg ?? Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white12),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: fg ?? Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w900,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          'assets/images/payment-icons/$assetName',
+          height: height,
+          fit: BoxFit.contain,
         ),
       ),
     );
@@ -181,10 +185,11 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
             ),
             const SizedBox(height: 16),
 
-            // 1. Stripe (Cards & Apple Pay) - Screenshot 3 Style
+            // 1. Stripe (Cards & Apple Pay)
             GestureDetector(
               onTap: () => setState(() => _selectedMethod = 'stripe'),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _selectedMethod == 'stripe'
@@ -204,11 +209,18 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                     Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 42,
+                          height: 42,
                           decoration: BoxDecoration(
                             color: const Color(0xFF6366F1),
                             borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF6366F1).withOpacity(0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: const Center(
                             child: Text(
@@ -223,7 +235,10 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Row(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
                             children: [
                               const Text(
                                 'Stripe',
@@ -233,12 +248,12 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                   fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF6366F1).withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.35)),
                                 ),
                                 child: const Text(
                                   '💳 CARDS & APPLE PAY',
@@ -246,6 +261,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                     color: Color(0xFF818CF8),
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.3,
                                   ),
                                 ),
                               ),
@@ -253,20 +269,23 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                           ),
                         ),
                         if (_selectedMethod == 'stripe')
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22),
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                        else
+                          const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    // Badges row: VISA, Mastercard, Discover, Amex, Apple Pay
+                    const SizedBox(height: 12),
+                    // Crisp Brand Icons: VISA, Mastercard, Discover, Amex, Apple Pay
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
+                      spacing: 7,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        _buildBrandChip('VISA', bg: const Color(0xFF1E3A8A), fg: Colors.white),
-                        _buildBrandChip('Mastercard', bg: const Color(0xFFDC2626).withOpacity(0.3), fg: const Color(0xFFF97316)),
-                        _buildBrandChip('DISCOVER', bg: const Color(0xFFEA580C).withOpacity(0.3), fg: const Color(0xFFFB923C)),
-                        _buildBrandChip('AMEX', bg: const Color(0xFF0284C7).withOpacity(0.3), fg: const Color(0xFF38BDF8)),
-                        _buildBrandChip(' Pay', bg: Colors.black45, fg: Colors.white),
+                        _buildBrandIcon('visa.png'),
+                        _buildBrandIcon('mastercard.png'),
+                        _buildBrandIcon('discover.png'),
+                        _buildBrandIcon('amex.png'),
+                        _buildBrandIcon('apple_pay.png'),
                       ],
                     ),
                   ],
@@ -275,10 +294,11 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
             ),
             const SizedBox(height: 12),
 
-            // 2. MoMo Pay (Mobile Money) - Screenshot 3 Style
+            // 2. MoMo Pay (Mobile Money)
             GestureDetector(
               onTap: () => setState(() => _selectedMethod = 'momo'),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _selectedMethod == 'momo'
@@ -298,11 +318,18 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                     Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 42,
+                          height: 42,
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFDC00),
-                            borderRadius: BorderRadius.circular(12),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFDC00).withOpacity(0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: const Center(
                             child: Text(
@@ -317,7 +344,10 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Row(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
                             children: [
                               const Text(
                                 'MoMo Pay',
@@ -327,12 +357,12 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                   fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFFDC00).withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFFFDC00).withOpacity(0.35)),
                                 ),
                                 child: const Text(
                                   '📱 MOBILE MONEY',
@@ -340,6 +370,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                     color: Color(0xFFFFDC00),
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.3,
                                   ),
                                 ),
                               ),
@@ -349,23 +380,24 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                         if (_selectedMethod == 'momo')
                           const Icon(Icons.check_circle_rounded, color: Color(0xFFFFDC00), size: 22)
                         else
-                          const Icon(Icons.chevron_right, color: Colors.white38, size: 20),
+                          const Icon(Icons.chevron_right_rounded, color: Colors.white38, size: 20),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    // Badges: MTN MoMo, Telecel, AirtelTigo
+                    const SizedBox(height: 12),
+                    // Crisp Brand Icons: MTN MoMo, Telecel, AirtelTigo
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
+                      spacing: 7,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        _buildBrandChip('⚡ MTN MoMo', bg: const Color(0xFFFFDC00).withOpacity(0.2), fg: const Color(0xFFFFDC00)),
-                        _buildBrandChip('🔴 Telecel Cash', bg: const Color(0xFFEF4444).withOpacity(0.2), fg: const Color(0xFFFCA5A5)),
-                        _buildBrandChip('🔵 AirtelTigo', bg: const Color(0xFF3B82F6).withOpacity(0.2), fg: const Color(0xFF93C5FD)),
+                        _buildBrandIcon('mtn_momo.png'),
+                        _buildBrandIcon('telecel.png'),
+                        _buildBrandIcon('airteltigo.png'),
                       ],
                     ),
 
                     if (_selectedMethod == 'momo') ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Row(
                         children: [
                           Expanded(
@@ -422,10 +454,11 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
             ),
             const SizedBox(height: 12),
 
-            // 3. Cash Direct Pay - Screenshot 3 Style
+            // 3. Cash Direct Pay - Clean design, zero overflow
             GestureDetector(
               onTap: () => setState(() => _selectedMethod = 'cash'),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _selectedMethod == 'cash'
@@ -443,14 +476,15 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withOpacity(0.2),
+                        color: const Color(0xFF10B981).withOpacity(0.18),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
                       ),
                       child: const Center(
-                        child: Text('💵', style: TextStyle(fontSize: 20)),
+                        child: Icon(Icons.payments_rounded, color: Color(0xFF10B981), size: 24),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -458,7 +492,10 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
                             children: [
                               const Text(
                                 'Cash Direct Pay',
@@ -468,12 +505,12 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                   fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.2),
+                                  color: const Color(0xFF10B981).withOpacity(0.18),
                                   borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
                                 ),
                                 child: const Text(
                                   'PAY ON DROP-OFF',
@@ -481,24 +518,29 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                     color: Color(0xFF34D399),
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.3,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           const Text(
                             'Pay driver physical cash upon reaching destination (No upfront hold)',
                             style: TextStyle(
                               color: AppColors.textMuted,
                               fontSize: 11.5,
+                              height: 1.3,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     if (_selectedMethod == 'cash')
-                      const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22),
+                      const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                    else
+                      const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
                   ],
                 ),
               ),
