@@ -1788,24 +1788,13 @@ $driverRequestsClosure = function (\Illuminate\Http\Request $request) {
                     ->exists();
 
                 if (!$rejected) {
-                    $otherDriverOffer = \App\Models\RideAssignment::where('ride_id', $pRide->id)
-                        ->whereNotIn('driver_id', $userIds)
-                        ->where('status', 'pending')
-                        ->where('expires_at', '>', now())
-                        ->first();
-
-                    if (!$otherDriverOffer || !$otherDriverOffer->driver || !$otherDriverOffer->driver->driverProfile || !$otherDriverOffer->driver->driverProfile->last_location_update || $otherDriverOffer->driver->driverProfile->last_location_update->lt(now()->subMinutes(3))) {
-                        if ($otherDriverOffer) {
-                            $otherDriverOffer->update(['status' => 'expired']);
-                        }
-                        \App\Models\RideAssignment::create([
-                            'ride_id' => $pRide->id,
-                            'driver_id' => $user->id,
-                            'status' => 'pending',
-                            'expires_at' => now()->addSeconds(120),
-                        ]);
+                    \App\Models\RideAssignment::firstOrCreate(
+                        ['ride_id' => $pRide->id, 'driver_id' => $user->id],
+                        ['status' => 'pending', 'expires_at' => now()->addSeconds(300)]
+                    );
+                    try {
                         \App\Services\NotificationService::notifyDriverRideAssigned($pRide, $user->id);
-                    }
+                    } catch (\Throwable $e) {}
                 }
             }
         }
@@ -1829,25 +1818,13 @@ $driverRequestsClosure = function (\Illuminate\Http\Request $request) {
                     ->exists();
 
                 if (!$rejected) {
-                    $otherDriverOffer = \App\Models\RideAssignment::where('driver_booking_id', $pBooking->id)
-                        ->whereNotIn('driver_id', $userIds)
-                        ->where('status', 'pending')
-                        ->where('expires_at', '>', now())
-                        ->first();
-
-                    if (!$otherDriverOffer || !$otherDriverOffer->driver || !$otherDriverOffer->driver->driverProfile || !$otherDriverOffer->driver->driverProfile->last_location_update || $otherDriverOffer->driver->driverProfile->last_location_update->lt(now()->subMinutes(3))) {
-                        if ($otherDriverOffer) {
-                            $otherDriverOffer->update(['status' => 'expired']);
-                        }
-                        \App\Models\RideAssignment::create([
-                            'driver_booking_id' => $pBooking->id,
-                            'ride_id' => null,
-                            'driver_id' => $user->id,
-                            'status' => 'pending',
-                            'expires_at' => now()->addSeconds(120),
-                        ]);
+                    \App\Models\RideAssignment::firstOrCreate(
+                        ['driver_booking_id' => $pBooking->id, 'driver_id' => $user->id],
+                        ['status' => 'pending', 'expires_at' => now()->addSeconds(300)]
+                    );
+                    try {
                         \App\Services\NotificationService::notifyDriverHiringAssigned($pBooking, $user->id);
-                    }
+                    } catch (\Throwable $e) {}
                 }
             }
         }
