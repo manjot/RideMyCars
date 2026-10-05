@@ -6,8 +6,8 @@ import '../../core/services/sound_service.dart';
 
 class IncomingJobDialog extends StatefulWidget {
   final Map<String, dynamic> request;
-  final VoidCallback onAccept;
-  final VoidCallback onDecline;
+  final FutureOr<void> Function() onAccept;
+  final FutureOr<void> Function() onDecline;
 
   const IncomingJobDialog({
     super.key,
