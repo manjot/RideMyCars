@@ -23,6 +23,7 @@ class IncomingJobDialog extends StatefulWidget {
 class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  bool _isAccepting = false;
 
   @override
   void initState() {
@@ -58,12 +59,23 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
     }
   }
 
+  Future<void> _previewMap(String location) async {
+    if (location.isEmpty) return;
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(location)}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   void _handleAccept() {
+    if (_isAccepting) return;
+    setState(() => _isAccepting = true);
     SoundService.instance.stopRingtone();
     widget.onAccept();
   }
 
   void _handleDecline() {
+    if (_isAccepting) return;
     SoundService.instance.stopRingtone();
     widget.onDecline();
   }
@@ -121,25 +133,29 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
-        padding: const EdgeInsets.all(22),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.surfaceDark,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: themeColor, width: 2),
+          border: Border.all(color: themeColor, width: 2.2),
           boxShadow: [
             BoxShadow(
-              color: themeColor.withOpacity(0.3),
+              color: themeColor.withOpacity(0.35),
               blurRadius: 36,
               offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Sound Alert Top Banner with Mute / Unmute Control
             ValueListenableBuilder<bool>(
               valueListenable: SoundService.instance.isMutedNotifier,
@@ -415,15 +431,41 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isDelivery ? 'Pickup: $pickup' : pickup,
-                        style: const TextStyle(
-                          color: AppColors.textLight,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isDelivery ? 'Pickup: $pickup' : pickup,
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          InkWell(
+                            onTap: () => _previewMap(pickup),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.map_rounded, color: AppColors.success, size: 12),
+                                  SizedBox(width: 4),
+                                  Text('Map', style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 14),
                       Text(
@@ -449,21 +491,21 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 Expanded(
                   flex: 2,
                   child: SizedBox(
-                    height: 50,
+                    height: 52,
                     child: OutlinedButton(
-                      onPressed: _handleDecline,
+                      onPressed: _isAccepting ? null : _handleDecline,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textMuted,
+                        foregroundColor: AppColors.danger,
                         padding: const EdgeInsets.symmetric(horizontal: 4),
-                        side: BorderSide(color: Colors.white.withOpacity(0.15)),
+                        side: BorderSide(color: AppColors.danger.withOpacity(0.4), width: 1.2),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: const FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          'Decline',
+                          '✕ Decline',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                       ),
@@ -474,25 +516,41 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 Expanded(
                   flex: 3,
                   child: SizedBox(
-                    height: 50,
+                    height: 52,
                     child: ElevatedButton(
-                      onPressed: _handleAccept,
+                      onPressed: _isAccepting ? null : _handleAccept,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.success,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 6,
                       ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          acceptButtonText,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-                        ),
-                      ),
+                      child: _isAccepting
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Accepting...',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            )
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                acceptButtonText,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -501,6 +559,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }

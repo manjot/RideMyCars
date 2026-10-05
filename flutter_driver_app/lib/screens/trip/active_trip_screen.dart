@@ -87,6 +87,180 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     }
   }
 
+  Future<void> _showCancelDialog() async {
+    final rideId = int.tryParse(_ride['id']?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return;
+
+    String selectedReason = 'Passenger no-show';
+    final reasons = [
+      'Passenger no-show',
+      'Vehicle breakdown / Flat tire',
+      'Passenger requested cancellation',
+      'Wrong pickup location / Unreachable',
+      'Emergency',
+      'Other',
+    ];
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surfaceDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(sheetCtx).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Cancel This Trip',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Select a reason to cancel',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              ...reasons.map((r) => InkWell(
+                    onTap: () => setSheetState(() => selectedReason = r),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: selectedReason == r ? AppColors.danger.withOpacity(0.12) : AppColors.backgroundDark,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selectedReason == r ? AppColors.danger : Colors.white10,
+                          width: selectedReason == r ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selectedReason == r ? Icons.radio_button_checked : Icons.radio_button_off,
+                            color: selectedReason == r ? AppColors.danger : AppColors.textMuted,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              r,
+                              style: TextStyle(
+                                color: selectedReason == r ? Colors.white : AppColors.textLight,
+                                fontWeight: selectedReason == r ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetCtx, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textMuted,
+                          side: const BorderSide(color: Colors.white24),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('Keep Trip', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(sheetCtx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.danger,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 4,
+                        ),
+                        child: const Text('Confirm Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      setState(() => _isUpdating = true);
+      final driver = Provider.of<DriverProvider>(context, listen: false);
+      final ok = await driver.cancelRide(rideId, reason: selectedReason);
+
+      if (!mounted) return;
+      setState(() => _isUpdating = false);
+
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ Trip #$rideId has been cancelled.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to cancel trip. Please check your network connection.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = _ride['status'] ?? 'accepted';
@@ -148,13 +322,33 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       elevation: 6,
                     ),
                     icon: const Icon(Icons.navigation_rounded, size: 18),
                     label: const Text(
-                      'Navigate in Maps',
+                      'Maps',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Top Quick Cancel Button
+                  ElevatedButton.icon(
+                    onPressed: _isUpdating ? null : _showCancelDialog,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.surfaceDark,
+                      foregroundColor: AppColors.danger,
+                      side: BorderSide(color: AppColors.danger.withOpacity(0.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      elevation: 4,
+                    ),
+                    icon: const Icon(Icons.cancel_outlined, size: 16),
+                    label: const Text(
+                      'Cancel',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 ],
@@ -371,6 +565,24 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       SizedBox(
                         height: 54,
                         child: _buildActionButton(status),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Driver Cancel Button
+                      SizedBox(
+                        height: 42,
+                        child: TextButton.icon(
+                          onPressed: _isUpdating ? null : _showCancelDialog,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.danger,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          icon: const Icon(Icons.cancel_outlined, size: 16),
+                          label: const Text(
+                            'Cancel This Ride',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
                       ),
                     ],
                   ),

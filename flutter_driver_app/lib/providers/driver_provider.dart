@@ -21,6 +21,7 @@ class DriverProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _activeRides = [];
   Map<String, dynamic> _earnings = {'today': 0.0, 'week': 0.0, 'month': 0.0, 'total_trips': 0};
   Map<String, dynamic>? _lastAssignmentResponse;
+  Map<String, dynamic>? _lastAcceptedRide;
 
   Timer? _pollingTimer;
   Timer? _locationTimer;
@@ -36,6 +37,7 @@ class DriverProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get activeRides => _activeRides;
   Map<String, dynamic> get earnings => _earnings;
   Map<String, dynamic>? get lastAssignmentResponse => _lastAssignmentResponse;
+  Map<String, dynamic>? get lastAcceptedRide => _lastAcceptedRide;
 
   void init() {
     checkAvailabilityAndInit();
@@ -276,32 +278,116 @@ class DriverProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<bool> respondToRequest(int? assignmentId, String action, {int? rideId}) async {
+  Future<bool> respondToRequest(
+    int? assignmentId,
+    String action, {
+    int? rideId,
+    int? deliveryId,
+    int? bookingId,
+    Map<String, dynamic>? jobData,
+  }) async {
     // Driver responded (Accept or Reject) -> Immediately silence the incoming order ringtone!
     await SoundService.instance.stopRingtone();
 
     try {
-      final res = await _dio.post(ApiConstants.driverRespond, data: {
-        if (assignmentId != null) 'assignment_id': assignmentId,
-        if (rideId != null) 'ride_id': rideId,
-        'action': action,
-      });
-
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        _lastAssignmentResponse = Map<String, dynamic>.from(res.data);
+      Response? res;
+      try {
+        res = await _dio.post(ApiConstants.driverRespond, data: {
+          if (assignmentId != null) 'assignment_id': assignmentId,
+          if (rideId != null) 'ride_id': rideId,
+          if (deliveryId != null) 'delivery_id': deliveryId,
+          if (bookingId != null) 'driver_booking_id': bookingId,
+          'action': action,
+        });
+      } catch (e) {
+        // Fallback to /api/driver/requests/{id}/respond if driverRespond fails
         if (assignmentId != null) {
-          _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId);
+          try {
+            res = await _dio.post('/driver/requests/$assignmentId/respond', data: {
+              'status': action == 'accept' ? 'accepted' : 'rejected',
+            });
+          } catch (_) {}
+        }
+      }
+
+      if (res != null &&
+          (res.statusCode == 200 || res.statusCode == 201) &&
+          (res.data['success'] == true || res.data['status'] == 'accepted')) {
+        _lastAssignmentResponse = Map<String, dynamic>.from(res.data);
+
+        // Remove from pending list
+        if (assignmentId != null) {
+          _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId || r['id'] == assignmentId);
         }
         if (rideId != null) {
           _pendingRequests.removeWhere((r) => r['ride_id'] == rideId);
         }
-        await fetchActiveRides();
-        await fetchEarnings();
+
+        if (action == 'accept') {
+          // Resolve accepted ride object
+          Map<String, dynamic>? acceptedRide;
+          if (res.data['ride'] is Map) {
+            acceptedRide = Map<String, dynamic>.from(res.data['ride']);
+          } else if (res.data['delivery'] is Map) {
+            acceptedRide = Map<String, dynamic>.from(res.data['delivery']);
+          } else if (res.data['booking'] is Map) {
+            acceptedRide = Map<String, dynamic>.from(res.data['booking']);
+          } else if (jobData != null) {
+            acceptedRide = Map<String, dynamic>.from(jobData);
+          }
+
+          if (acceptedRide != null) {
+            acceptedRide['status'] = 'accepted';
+            if (rideId != null && acceptedRide['id'] == null) {
+              acceptedRide['id'] = rideId;
+            }
+            _lastAcceptedRide = acceptedRide;
+            // Prepend immediately to _activeRides
+            _activeRides.removeWhere((r) => r['id']?.toString() == acceptedRide!['id']?.toString());
+            _activeRides.insert(0, acceptedRide);
+          }
+
+          // Background sync
+          fetchActiveRides();
+          fetchEarnings();
+        }
+
         notifyListeners();
         return true;
       }
     } catch (e) {
       debugPrint('Error responding to assignment: $e');
+    }
+    return false;
+  }
+
+  Future<bool> cancelRide(int rideId, {String? reason}) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final res = await _dio.post(ApiConstants.rideCancel(rideId), data: {
+        'reason': reason ?? 'Cancelled by driver',
+      });
+
+      if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'cancelled')) {
+        _activeRides.removeWhere((r) => (r['id']?.toString() == rideId.toString()));
+        if (_lastAcceptedRide != null && _lastAcceptedRide!['id']?.toString() == rideId.toString()) {
+          _lastAcceptedRide = null;
+        }
+        _isOnline = true;
+        await fetchActiveRides();
+        await fetchEarnings();
+        await pollPendingRequests();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error cancelling ride: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
     return false;
   }

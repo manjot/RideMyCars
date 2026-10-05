@@ -77,49 +77,105 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     });
   }
 
+  void _openJobDialog(Map<String, dynamic> job, DriverProvider driver) {
+    if (_dialogOpen) return;
+    _dialogOpen = true;
+
+    final assignmentId = (job['assignment_id'] ?? job['id']) as int?;
+    final rideId = (job['ride_id'] ?? job['ride']?['id']) as int?;
+    final deliveryId = (job['package_delivery_id'] ?? job['delivery_id']) as int?;
+    final bookingId = (job['driver_booking_id'] ?? job['booking_id']) as int?;
+    final isBackup = job['is_backup'] == true || job['assignment_type'] == 'backup';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => IncomingJobDialog(
+        request: job,
+        onAccept: () async {
+          final ok = await driver.respondToRequest(
+            assignmentId,
+            'accept',
+            rideId: rideId,
+            deliveryId: deliveryId,
+            bookingId: bookingId,
+            jobData: job,
+          );
+
+          if (dialogCtx.mounted) {
+            Navigator.of(dialogCtx, rootNavigator: true).pop();
+          }
+          _dialogOpen = false;
+
+          if (!mounted) return;
+
+          if (ok) {
+            if (isBackup || driver.lastAssignmentResponse?['reserved'] == true) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✓ Reserved as Backup Chauffeur! Awaiting customer confirmation.'),
+                  backgroundColor: Colors.amber,
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            } else {
+              final acceptedRide = driver.lastAcceptedRide ??
+                  driver.lastAssignmentResponse?['ride'] ??
+                  driver.lastAssignmentResponse?['delivery'] ??
+                  (driver.activeRides.isNotEmpty ? driver.activeRides.first : job);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ActiveTripScreen(ride: Map<String, dynamic>.from(acceptedRide)),
+                ),
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✓ Ride Accepted! Opening navigation.'),
+                  backgroundColor: AppColors.success,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(driver.errorMessage ?? 'Could not accept ride. It may have expired or been assigned.'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+        },
+        onDecline: () async {
+          if (dialogCtx.mounted) {
+            Navigator.of(dialogCtx, rootNavigator: true).pop();
+          }
+          _dialogOpen = false;
+          await driver.respondToRequest(
+            assignmentId,
+            'reject',
+            rideId: rideId,
+            deliveryId: deliveryId,
+            bookingId: bookingId,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Job declined.'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+      ),
+    ).then((_) => _dialogOpen = false);
+  }
+
   void _checkIncomingJobs(DriverProvider driver) {
     if (driver.pendingRequests.isNotEmpty && !_dialogOpen) {
-      _dialogOpen = true;
-      final job = driver.pendingRequests.first;
-      final assignmentId = (job['assignment_id'] ?? job['id']) as int?;
-      final rideId = (job['ride_id'] ?? job['ride']?['id']) as int?;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => IncomingJobDialog(
-          request: job,
-          onAccept: () async {
-            Navigator.pop(context);
-            _dialogOpen = false;
-            final isBackup = job['is_backup'] == true || job['assignment_type'] == 'backup';
-            final ok = await driver.respondToRequest(assignmentId, 'accept', rideId: rideId);
-            if (ok && mounted) {
-              if (isBackup || driver.lastAssignmentResponse?['reserved'] == true) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✓ Reserved as Backup Chauffeur! Awaiting customer confirmation.'),
-                    backgroundColor: Colors.amber,
-                    duration: Duration(seconds: 5),
-                  ),
-                );
-              } else if (driver.activeRides.isNotEmpty) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
-                  ),
-                );
-              }
-            }
-          },
-          onDecline: () async {
-            Navigator.pop(context);
-            _dialogOpen = false;
-            await driver.respondToRequest(assignmentId, 'reject', rideId: rideId);
-          },
-        ),
-      ).then((_) => _dialogOpen = false);
+      _openJobDialog(driver.pendingRequests.first, driver);
     }
   }
 
@@ -268,6 +324,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Sticky High-Visibility Banner for Incoming Jobs (always visible when ringtone/order arrives)
+              _buildIncomingJobStickyBanner(driver),
+
               // Online / Offline Toggle Banner
               _buildOnlineStatusCard(driver),
               const SizedBox(height: 14),
@@ -551,6 +610,315 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildIncomingJobStickyBanner(DriverProvider driver) {
+    if (driver.pendingRequests.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final hasRequests = driver.pendingRequests.isNotEmpty;
+    final firstJob = hasRequests ? driver.pendingRequests.first : null;
+    final rawFare = firstJob?['fare'] ?? firstJob?['total_price'] ?? 0.0;
+    final fare = double.tryParse(rawFare.toString()) ?? 0.0;
+    final pickup = (firstJob?['pickup_location'] ?? 'Pickup available').toString();
+    final count = driver.pendingRequests.length;
+    final bannerTitle = count == 1 ? '1 INCOMING ORDER' : '$count INCOMING ORDERS';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF991B1B), Color(0xFFDC2626)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.amberAccent, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () {
+            if (hasRequests && firstJob != null) {
+              _openJobDialog(firstJob, driver);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.campaign_rounded, color: Colors.red, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white24,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              bannerTitle,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          if (fare > 0) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              '+\$${fare.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Color(0xFFFDE047),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pickup: $pickup',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    if (hasRequests && firstJob != null) {
+                      _openJobDialog(firstJob, driver);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.red.shade900,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 4,
+                  ),
+                  child: const Text('VIEW', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCancelTripDialog(BuildContext context, Map<String, dynamic> ride, DriverProvider driver) async {
+    final rideId = int.tryParse(ride['id']?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return;
+
+    String selectedReason = 'Passenger no-show';
+    final reasons = [
+      'Passenger no-show',
+      'Vehicle issue / Flat tire',
+      'Passenger requested cancellation',
+      'Wrong pickup location',
+      'Emergency',
+      'Other',
+    ];
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surfaceDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(sheetCtx).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Cancel Active Trip',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Select a reason to cancel',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...reasons.map((r) => InkWell(
+                    onTap: () => setSheetState(() => selectedReason = r),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: selectedReason == r ? AppColors.danger.withOpacity(0.12) : AppColors.backgroundDark,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selectedReason == r ? AppColors.danger : Colors.white10,
+                          width: selectedReason == r ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selectedReason == r ? Icons.radio_button_checked : Icons.radio_button_off,
+                            color: selectedReason == r ? AppColors.danger : AppColors.textMuted,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              r,
+                              style: TextStyle(
+                                color: selectedReason == r ? Colors.white : AppColors.textLight,
+                                fontWeight: selectedReason == r ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetCtx, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textMuted,
+                          side: const BorderSide(color: Colors.white24),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('Keep Trip', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(sheetCtx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.danger,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 4,
+                        ),
+                        child: const Text('Confirm Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+              SizedBox(width: 12),
+              Text('Cancelling trip...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      final ok = await driver.cancelRide(rideId, reason: selectedReason);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        if (ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✓ Trip #$rideId has been cancelled. You are now available for new rides.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to cancel trip. Please check your network connection.'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildOnlineStatusCard(DriverProvider driver) {
@@ -961,22 +1329,44 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               ),
             ],
 
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: ride)),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              icon: const Icon(Icons.navigation_rounded, size: 18),
-              label: const Text('Open Live Navigation & Map', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: ride)),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.navigation_rounded, size: 18),
+                    label: const Text('Live Navigation', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showCancelTripDialog(context, ride, driver),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: BorderSide(color: AppColors.danger.withOpacity(0.6), width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.cancel_outlined, size: 16),
+                    label: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1304,11 +1694,16 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () => _openJobDialog(job, driver),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             // Header Row: Type Badge & Fare
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1549,6 +1944,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ),
             const SizedBox(height: 14),
 
+            // Tap hint
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.touch_app_rounded, color: AppColors.textMuted, size: 14),
+                  SizedBox(width: 6),
+                  Text(
+                    'Tap card for full details & route preview',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+
             // Action Buttons Row: Accept & Decline
             Row(
               children: [
@@ -1560,6 +1976,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         job['assignment_id'],
                         'accept',
                         rideId: job['ride_id'],
+                        deliveryId: job['package_delivery_id'] ?? job['delivery_id'],
+                        bookingId: job['driver_booking_id'] ?? job['booking_id'],
+                        jobData: job,
                       );
                       if (ok && context.mounted) {
                         if (isBackup || driver.lastAssignmentResponse?['reserved'] == true) {
@@ -1570,14 +1989,33 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                               duration: Duration(seconds: 5),
                             ),
                           );
-                        } else if (driver.activeRides.isNotEmpty) {
+                        } else {
+                          final acceptedRide = driver.lastAcceptedRide ??
+                              driver.lastAssignmentResponse?['ride'] ??
+                              driver.lastAssignmentResponse?['delivery'] ??
+                              (driver.activeRides.isNotEmpty ? driver.activeRides.first : job);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ActiveTripScreen(ride: driver.activeRides.first),
+                              builder: (_) => ActiveTripScreen(ride: Map<String, dynamic>.from(acceptedRide)),
+                            ),
+                          );
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✓ Ride Accepted! Opening navigation.'),
+                              backgroundColor: AppColors.success,
                             ),
                           );
                         }
+                      } else if (!ok && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(driver.errorMessage ?? 'Could not accept ride. It may have expired or been assigned.'),
+                            backgroundColor: AppColors.danger,
+                          ),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -1602,15 +2040,25 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         job['assignment_id'],
                         'reject',
                         rideId: job['ride_id'],
+                        deliveryId: job['package_delivery_id'] ?? job['delivery_id'],
+                        bookingId: job['driver_booking_id'] ?? job['booking_id'],
                       );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Job declined.'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textMuted,
-                      side: const BorderSide(color: Colors.white24),
+                      foregroundColor: AppColors.danger,
+                      side: BorderSide(color: AppColors.danger.withOpacity(0.4)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                    child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
                   ),
                 ),
               ],
@@ -1618,7 +2066,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildEarningTile(String label, String value, Color color) {

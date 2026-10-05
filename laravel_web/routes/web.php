@@ -680,6 +680,14 @@ $unifiedCancelRideHandler = function ($id, \Illuminate\Http\Request $request) {
         ->whereNotIn('status', ['completed'])
         ->update(['status' => 'cancelled']);
 
+    // If a driver was assigned to this ride, reset their status back to available
+    if ($ride->driver_id) {
+        $driverUser = \App\Models\User::find($ride->driver_id);
+        if ($driverUser && $driverUser->driverProfile) {
+            $driverUser->driverProfile->update(['is_available' => true]);
+        }
+    }
+
     // Release any payment pre-authorization holds (Stripe, etc.)
     try {
         if (class_exists(\App\Services\StripeService::class)) {

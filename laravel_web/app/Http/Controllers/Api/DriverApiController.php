@@ -904,10 +904,15 @@ class DriverApiController extends Controller
             'assignment_id' => 'nullable|integer',
             'ride_id' => 'nullable|integer',
             'delivery_id' => 'nullable|integer',
+            'driver_booking_id' => 'nullable|integer',
             'action' => 'required|in:accept,reject',
         ]);
 
-        $user = $request->user();
+        $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated driver.'], 401);
+        }
+
         $assignment = null;
 
         if ($request->assignment_id) {
@@ -928,8 +933,15 @@ class DriverApiController extends Controller
             );
         }
 
+        if (!$assignment && $request->driver_booking_id) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['driver_booking_id' => $request->driver_booking_id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+        }
+
         if (!$assignment) {
-            return response()->json(['success' => false, 'message' => 'Assignment not found'], 404);
+            return response()->json(['success' => false, 'message' => 'Assignment not found or expired.'], 404);
         }
 
         if ($request->action === 'accept') {
@@ -946,6 +958,7 @@ class DriverApiController extends Controller
                     'message' => 'Backup ride reserved. Customer waiting for confirmation.',
                     'is_backup' => true,
                     'status' => 'waiting_confirmation',
+                    'ride' => $assignment->ride->fresh(['rider', 'stops']),
                 ]);
             }
 
@@ -980,6 +993,7 @@ class DriverApiController extends Controller
                 $delivery = $assignment->packageDelivery;
                 $delivery->update([
                     'courier_id' => $user->id,
+                    'courier_profile_id' => $user->driverProfile?->id,
                     'delivery_status' => 'courier_assigned',
                 ]);
 
@@ -996,9 +1010,50 @@ class DriverApiController extends Controller
                     'success' => true,
                     'message' => 'Package delivery accepted successfully.',
                     'delivery' => $delivery->fresh(['customer']),
+                    'ride' => [
+                        'id' => $delivery->id,
+                        'status' => 'accepted',
+                        'type' => 'package_delivery',
+                        'fare' => floatval($delivery->total_price),
+                        'pickup_location' => $delivery->pickup_address,
+                        'dropoff_location' => $delivery->delivery_address,
+                        'customer_name' => $delivery->sender_name ?: ($delivery->customer?->name ?? 'Sender'),
+                        'customer_phone' => $delivery->sender_phone ?: $delivery->customer?->phone,
+                    ],
+                ]);
+            } elseif ($assignment->driverBooking) {
+                $booking = $assignment->driverBooking;
+                $booking->update([
+                    'driver_id' => $user->id,
+                    'booking_status' => 'accepted',
+                ]);
+
+                \App\Models\RideAssignment::where('driver_booking_id', $booking->id)
+                    ->where('id', '!=', $assignment->id)
+                    ->update(['status' => 'expired']);
+
+                if ($user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => false]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Driver booking accepted successfully.',
+                    'booking' => $booking->fresh(['client']),
+                    'ride' => [
+                        'id' => $booking->id,
+                        'status' => 'accepted',
+                        'type' => 'driver_booking',
+                        'fare' => floatval($booking->total_price),
+                        'pickup_location' => $booking->pickup_location,
+                        'dropoff_location' => $booking->dropoff_location,
+                        'customer_name' => $booking->client?->name ?? 'Client',
+                        'customer_phone' => $booking->client?->phone,
+                    ],
                 ]);
             }
         } else {
+            // Reject action
             if ($assignment->assignment_type === 'backup') {
                 \App\Services\BackupChauffeurService::handleDriverDeclinedBackup($assignment);
                 return response()->json(['success' => true, 'message' => 'Backup job declined.']);
@@ -1027,7 +1082,7 @@ class DriverApiController extends Controller
                 }
             }
 
-            return response()->json(['success' => true, 'message' => 'Job declined.']);
+            return response()->json(['success' => true, 'message' => 'Job declined successfully.']);
         }
 
         return response()->json(['success' => true]);
