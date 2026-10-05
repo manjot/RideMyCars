@@ -3313,6 +3313,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
 
     $output['default_db_conn'] = config('database.default');
     $output['env_db_conn'] = env('DB_CONNECTION');
+    try {
+        $output['latest_rides'] = \App\Models\Ride::latest()->take(4)->get(['id', 'status', 'rider_id', 'driver_id', 'payment_status', 'payment_method', 'pickup_location', 'dropoff_location', 'created_at']);
+        $output['latest_assignments'] = \App\Models\RideAssignment::latest()->take(6)->get(['id', 'ride_id', 'driver_id', 'status', 'assignment_type', 'expires_at', 'created_at']);
+        $output['active_driver_profiles'] = \App\Models\DriverProfile::where('is_available', true)->take(5)->get(['id', 'user_id', 'is_available', 'is_live', 'last_location_update']);
+    } catch (\Throwable $e) {
+        $output['diag_err'] = $e->getMessage();
+    }
     
     // Ensure personal_access_tokens table
     try {
