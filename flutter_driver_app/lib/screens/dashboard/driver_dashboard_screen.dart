@@ -81,10 +81,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     if (_dialogOpen) return;
     _dialogOpen = true;
 
-    final assignmentId = (job['assignment_id'] ?? job['id']) as int?;
-    final rideId = (job['ride_id'] ?? job['ride']?['id']) as int?;
-    final deliveryId = (job['package_delivery_id'] ?? job['delivery_id']) as int?;
-    final bookingId = (job['driver_booking_id'] ?? job['booking_id']) as int?;
+    final assignmentId = int.tryParse((job['assignment_id'] ?? job['id'] ?? '').toString());
+    final rideId = int.tryParse((job['ride_id'] ?? job['ride']?['id'] ?? '').toString());
+    final deliveryId = int.tryParse((job['package_delivery_id'] ?? job['delivery_id'] ?? '').toString());
+    final bookingId = int.tryParse((job['driver_booking_id'] ?? job['booking_id'] ?? '').toString());
     final isBackup = job['is_backup'] == true || job['assignment_type'] == 'backup';
 
     showDialog(
@@ -738,6 +738,55 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
+  Future<void> _confirmEndTrip(BuildContext context, int rideId, double fare, DriverProvider driver) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+            SizedBox(width: 10),
+            Text('End Ride?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to end this trip and collect the fare of \$${fare.toStringAsFixed(2)}?',
+          style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Continue Trip', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('✓ End Trip Now', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final ok = await driver.updateRideStatus(rideId, 'completed');
+      if (ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎉 Trip Completed! Fare added to your earnings.'),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _showCancelTripDialog(BuildContext context, Map<String, dynamic> ride, DriverProvider driver) async {
     final rideId = int.tryParse(ride['id']?.toString() ?? '0') ?? 0;
     if (rideId <= 0) return;
@@ -1225,7 +1274,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             const SizedBox(height: 16),
 
             // Direct Status Update Buttons right on the card!
-            if (rawStatus == 'accepted') ...[
+            if (rawStatus == 'accepted' || rawStatus == 'driver_assigned' || rawStatus == 'confirmed') ...[
               Row(
                 children: [
                   Expanded(
@@ -1271,60 +1320,113 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ),
                 ],
               ),
-            ] else if (rawStatus == 'en_route') ...[
+              const SizedBox(height: 8),
               SizedBox(
-                height: 48,
+                height: 46,
                 child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await driver.updateRideStatus(rideId, 'arrived');
-                  },
+                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  icon: const Icon(Icons.location_on_rounded, size: 20),
-                  label: const Text('📍 Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  icon: const Icon(Icons.check_circle_rounded, size: 18),
+                  label: const Text('✓ End / Complete Ride Now', style: TextStyle(fontWeight: FontWeight.w900)),
                 ),
+              ),
+            ] else if (rawStatus == 'en_route') ...[
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await driver.updateRideStatus(rideId, 'arrived');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.location_on_rounded, size: 18),
+                        label: const Text('📍 Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.check_circle_rounded, size: 16),
+                        label: const Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ] else if (rawStatus == 'arrived') ...[
-              SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await driver.updateRideStatus(rideId, 'in_progress');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                  label: const Text('▶ Start Trip / Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-              ),
-            ] else if (rawStatus == 'in_progress') ...[
-              SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final ok = await driver.updateRideStatus(rideId, 'completed');
-                    if (ok && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🎉 Trip Completed! Fare added to your earnings.'),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await driver.updateRideStatus(rideId, 'in_progress');
+                        },
+                        style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.success,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                      );
-                    }
-                  },
+                        icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                        label: const Text('▶ Start Trip / Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.check_circle_rounded, size: 16),
+                        label: const Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 4,
                   ),
-                  icon: const Icon(Icons.check_circle_rounded, size: 20),
-                  label: const Text('✓ Complete Trip & Collect Fare', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  icon: const Icon(Icons.check_circle_rounded, size: 22),
+                  label: const Text('✓ Complete Trip & Collect Fare', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 ),
               ),
             ],
@@ -1649,7 +1751,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Widget _buildAvailableJobCard(BuildContext context, Map<String, dynamic> job, DriverProvider driver) {
-    final fare = (job['fare'] ?? job['total_price'] ?? 0.0) as num;
+    final fare = double.tryParse((job['fare'] ?? job['total_price'] ?? '0').toString()) ?? 0.0;
     final pickup = job['pickup_location'] ?? 'Pickup location';
     final dropoff = job['dropoff_location'] ?? 'Destination';
     final customerName = (job['customer_name'] ?? job['rider_name'] ?? job['client_name'] ?? 'Customer').toString();

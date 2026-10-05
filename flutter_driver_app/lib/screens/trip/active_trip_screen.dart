@@ -63,9 +63,50 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   }
 
   Future<void> _advanceStatus(String newStatus) async {
+    final rideId = int.tryParse(_ride['id']?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return;
+
+    if (newStatus == 'completed') {
+      final fareAmount = double.tryParse((_ride['fare'] ?? _ride['total_price'] ?? '0').toString()) ?? 0.0;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+              SizedBox(width: 10),
+              Text('End Trip?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to end this trip and collect your fare of \$${fareAmount.toStringAsFixed(2)}?',
+            style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Continue Trip', style: TextStyle(color: AppColors.textMuted)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('✓ End Trip Now', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
     setState(() => _isUpdating = true);
     final driver = Provider.of<DriverProvider>(context, listen: false);
-    final success = await driver.updateRideStatus(_ride['id'], newStatus);
+    final success = await driver.updateRideStatus(rideId, newStatus);
 
     if (!mounted) return;
     setState(() => _isUpdating = false);
@@ -80,10 +121,18 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           const SnackBar(
             content: Text('🎉 Trip Completed! Fare has been added to your earnings.'),
             backgroundColor: AppColors.success,
+            duration: Duration(seconds: 4),
           ),
         );
         Navigator.pop(context);
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not update trip status. Please check your connection.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
@@ -361,7 +410,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             right: 16,
             top: 76,
             child: SosFloatingButton(
-              rideId: _ride['id'] as int?,
+              rideId: int.tryParse(_ride['id']?.toString() ?? '0'),
               role: 'driver',
               assignedPhone: (hasPoc && pocPhone != null ? pocPhone : customerPhone)?.toString(),
               assignedName: (hasPoc && pocName != null ? pocName : customerName)?.toString() ?? 'Passenger',
@@ -600,52 +649,156 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
-    if (status == 'accepted') {
-      return ElevatedButton.icon(
-        onPressed: () => _advanceStatus('en_route'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.info,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        icon: const Icon(Icons.directions_car_rounded),
-        label: const Text('🚗 En Route to Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+    final normalized = status.toLowerCase();
+
+    if (normalized == 'accepted' || normalized == 'driver_assigned' || normalized == 'confirmed') {
+      return Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _advanceStatus('en_route'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.info,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.directions_car_rounded, size: 18),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('🚗 En Route to Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _advanceStatus('completed'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.check_circle_rounded, size: 16),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                ),
+              ),
+            ),
+          ),
+        ],
       );
-    } else if (status == 'en_route') {
-      return ElevatedButton.icon(
-        onPressed: () => _advanceStatus('arrived'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.warning,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        icon: const Icon(Icons.location_on_rounded),
-        label: const Text('📍 Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+    } else if (normalized == 'en_route') {
+      return Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _advanceStatus('arrived'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.warning,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.location_on_rounded, size: 18),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('📍 Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _advanceStatus('completed'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.check_circle_rounded, size: 16),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                ),
+              ),
+            ),
+          ),
+        ],
       );
-    } else if (status == 'arrived') {
-      return ElevatedButton.icon(
-        onPressed: () => _advanceStatus('in_progress'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.success,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        icon: const Icon(Icons.play_arrow_rounded),
-        label: const Text('▶ Start Trip', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+    } else if (normalized == 'arrived') {
+      return Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _advanceStatus('in_progress'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('▶ Start Trip', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => _advanceStatus('completed'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.check_circle_rounded, size: 16),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                ),
+              ),
+            ),
+          ),
+        ],
       );
-    } else if (status == 'in_progress') {
-      return ElevatedButton.icon(
-        onPressed: () => _advanceStatus('completed'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.success,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    } else {
+      // in_progress / started / or any other active status
+      return SizedBox(
+        height: 54,
+        child: ElevatedButton.icon(
+          onPressed: () => _advanceStatus('completed'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.success,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 4,
+          ),
+          icon: const Icon(Icons.check_circle_rounded, size: 22),
+          label: const Text('✓ Complete & End Trip', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
-        icon: const Icon(Icons.check_circle_rounded),
-        label: const Text('✓ Complete Trip', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
       );
     }
-
-    return const SizedBox.shrink();
   }
 }

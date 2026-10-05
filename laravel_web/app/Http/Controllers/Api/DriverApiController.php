@@ -1089,7 +1089,7 @@ class DriverApiController extends Controller
     }
 
     /**
-     * Get active rides for driver.
+     * Get active rides, deliveries, and bookings for driver.
      */
     public function activeRides(Request $request)
     {
@@ -1102,17 +1102,157 @@ class DriverApiController extends Controller
             ->pluck('id')
             ->toArray();
         $userIds = array_unique(array_merge($userIds, $matchingIds));
+        $driverProfileId = $user->driverProfile?->id;
 
-        $rides = \App\Models\Ride::with(['rider', 'stops'])
-            ->whereIn('driver_id', $userIds)
-            ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
+        $items = [];
+
+        // 1. Fetch active Rides
+        $rides = \App\Models\Ride::with(['rider', 'driver.driverProfile'])
+            ->where(function ($q) use ($userIds) {
+                $q->whereIn('driver_id', $userIds)
+                  ->orWhereIn('verified_by_driver_id', $userIds);
+            })
+            ->whereIn('status', ['accepted', 'driver_assigned', 'en_route', 'arrived', 'in_progress', 'started', 'confirmed'])
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Check if there are active RideAssignments for this driver
+        $assignedRideIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+            ->where('status', 'accepted')
+            ->pluck('ride_id')
+            ->filter()
+            ->toArray();
+        if (!empty($assignedRideIds)) {
+            $extraRides = \App\Models\Ride::with(['rider', 'driver.driverProfile'])
+                ->whereIn('id', $assignedRideIds)
+                ->whereNotIn('status', ['completed', 'cancelled'])
+                ->get();
+            $rides = $rides->merge($extraRides)->unique('id');
+        }
+
+        foreach ($rides as $r) {
+            $custName = $r->rider?->name ?? $r->passenger_name ?? 'Rider';
+            $custPhone = $r->rider?->phone ?? $r->passenger_phone;
+            $pocName = $r->poc_name;
+            $pocPhone = $r->poc_phone;
+
+            $items[] = [
+                'id' => $r->id,
+                'type' => $r->ride_type ?: 'ride',
+                'status' => in_array($r->status, ['driver_assigned', 'confirmed']) ? 'accepted' : $r->status,
+                'raw_status' => $r->status,
+                'pickup_location' => $r->pickup_location ?: 'Pickup location',
+                'dropoff_location' => $r->dropoff_location ?: 'Dropoff destination',
+                'pickup_lat' => $r->pickup_lat ? floatval($r->pickup_lat) : null,
+                'pickup_lng' => $r->pickup_lng ? floatval($r->pickup_lng) : null,
+                'dropoff_lat' => $r->dropoff_lat ? floatval($r->dropoff_lat) : null,
+                'dropoff_lng' => $r->dropoff_lng ? floatval($r->dropoff_lng) : null,
+                'fare' => floatval($r->fare ?: $r->total_amount),
+                'total_price' => floatval($r->fare ?: $r->total_amount),
+                'customer_name' => $custName,
+                'customer_phone' => $custPhone,
+                'rider_name' => $custName,
+                'rider_phone' => $custPhone,
+                'passenger_name' => $r->passenger_name ?: $custName,
+                'passenger_phone' => $r->passenger_phone ?: $custPhone,
+                'poc_name' => $pocName,
+                'poc_phone' => $pocPhone,
+                'vehicle_type' => $r->vehicle_type ?: 'Standard',
+                'payment_method' => $r->payment_method ?: 'cash',
+                'payment_status' => $r->payment_status ?: 'pending',
+                'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
+            ];
+        }
+
+        // 2. Fetch active Package Deliveries
+        $deliveries = \App\Models\PackageDelivery::with(['customer'])
+            ->where(function ($q) use ($userIds, $driverProfileId) {
+                $q->whereIn('courier_id', $userIds);
+                if ($driverProfileId) {
+                    $q->orWhere('courier_profile_id', $driverProfileId);
+                }
+            })
+            ->whereIn('delivery_status', ['courier_assigned', 'accepted', 'picked_up', 'in_transit'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($deliveries as $del) {
+            $custName = $del->sender_name ?: ($del->customer?->name ?? 'Sender');
+            $custPhone = $del->sender_phone ?: $del->customer?->phone;
+            $status = in_array($del->delivery_status, ['courier_assigned', 'accepted']) ? 'accepted' : 'in_progress';
+
+            $items[] = [
+                'id' => $del->id,
+                'type' => 'package_delivery',
+                'package_delivery_id' => $del->id,
+                'status' => $status,
+                'raw_status' => $del->delivery_status,
+                'pickup_location' => $del->pickup_address ?: 'Pickup address',
+                'dropoff_location' => $del->delivery_address ?: 'Delivery address',
+                'pickup_lat' => $del->pickup_lat ? floatval($del->pickup_lat) : null,
+                'pickup_lng' => $del->pickup_lng ? floatval($del->pickup_lng) : null,
+                'dropoff_lat' => $del->dropoff_lat ? floatval($del->dropoff_lat) : null,
+                'dropoff_lng' => $del->dropoff_lng ? floatval($del->dropoff_lng) : null,
+                'fare' => floatval($del->total_price),
+                'total_price' => floatval($del->total_price),
+                'customer_name' => $custName,
+                'customer_phone' => $custPhone,
+                'rider_name' => $custName,
+                'rider_phone' => $custPhone,
+                'poc_name' => $del->recipient_name,
+                'poc_phone' => $del->recipient_phone,
+                'vehicle_type' => 'Delivery Courier',
+                'payment_method' => $del->payment_method ?: 'cash',
+                'created_at' => $del->created_at ? $del->created_at->toIso8601String() : null,
+            ];
+        }
+
+        // 3. Fetch active Chauffeur / Driver Bookings
+        $bookings = \App\Models\DriverBooking::with(['client'])
+            ->where(function ($q) use ($userIds, $driverProfileId) {
+                $q->whereIn('driver_id', $userIds);
+                if ($driverProfileId) {
+                    $q->orWhere('driver_profile_id', $driverProfileId);
+                }
+            })
+            ->whereIn('booking_status', ['accepted', 'in_progress', 'started', 'confirmed'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($bookings as $bk) {
+            $custName = $bk->client?->name ?? 'Client';
+            $custPhone = $bk->client?->phone;
+
+            $items[] = [
+                'id' => $bk->id,
+                'type' => 'driver_booking',
+                'driver_booking_id' => $bk->id,
+                'status' => in_array($bk->booking_status, ['accepted', 'confirmed']) ? 'accepted' : 'in_progress',
+                'raw_status' => $bk->booking_status,
+                'pickup_location' => $bk->pickup_location ?: 'Pickup location',
+                'dropoff_location' => $bk->dropoff_location ?: 'Dropoff location',
+                'pickup_lat' => $bk->pickup_lat ? floatval($bk->pickup_lat) : null,
+                'pickup_lng' => $bk->pickup_lng ? floatval($bk->pickup_lng) : null,
+                'dropoff_lat' => $bk->dropoff_lat ? floatval($bk->dropoff_lat) : null,
+                'dropoff_lng' => $bk->dropoff_lng ? floatval($bk->dropoff_lng) : null,
+                'fare' => floatval($bk->total_price),
+                'total_price' => floatval($bk->total_price),
+                'customer_name' => $custName,
+                'customer_phone' => $custPhone,
+                'rider_name' => $custName,
+                'rider_phone' => $custPhone,
+                'poc_name' => $bk->contact_person_name,
+                'poc_phone' => $bk->contact_phone,
+                'vehicle_type' => 'Personal Driver',
+                'payment_method' => $bk->payment_method ?: 'cash',
+                'created_at' => $bk->created_at ? $bk->created_at->toIso8601String() : null,
+            ];
+        }
+
         return response()->json([
             'success' => true,
-            'rides' => $rides,
-            'data' => $rides,
+            'rides' => $items,
+            'data' => $items,
         ]);
     }
 

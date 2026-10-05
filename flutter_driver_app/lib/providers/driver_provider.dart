@@ -361,7 +361,10 @@ class DriverProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<bool> cancelRide(int rideId, {String? reason}) async {
+  Future<bool> cancelRide(dynamic rawRideId, {String? reason}) async {
+    final rideId = int.tryParse(rawRideId?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return false;
+
     try {
       _isLoading = true;
       notifyListeners();
@@ -371,8 +374,8 @@ class DriverProvider extends ChangeNotifier {
       });
 
       if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'cancelled')) {
-        _activeRides.removeWhere((r) => (r['id']?.toString() == rideId.toString()));
-        if (_lastAcceptedRide != null && _lastAcceptedRide!['id']?.toString() == rideId.toString()) {
+        _activeRides.removeWhere((r) => int.tryParse(r['id']?.toString() ?? '0') == rideId);
+        if (_lastAcceptedRide != null && int.tryParse(_lastAcceptedRide!['id']?.toString() ?? '0') == rideId) {
           _lastAcceptedRide = null;
         }
         _isOnline = true;
@@ -396,7 +399,7 @@ class DriverProvider extends ChangeNotifier {
     try {
       final res = await _dio.get(ApiConstants.driverActiveRides);
       if (res.statusCode == 200 && res.data['success'] == true) {
-        final List list = res.data['rides'] ?? [];
+        final List list = (res.data['rides'] ?? res.data['data'] ?? (res.data is List ? res.data : [])) ?? [];
         _activeRides = list.map((e) => Map<String, dynamic>.from(e)).toList();
         notifyListeners();
       }
@@ -405,17 +408,35 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRideStatus(int rideId, String newStatus) async {
-    try {
-      final res = await _dio.post(ApiConstants.rideStatus(rideId), data: {
-        'status': newStatus,
-      });
+  Future<bool> updateRideStatus(dynamic rawRideId, String newStatus) async {
+    final rideId = int.tryParse(rawRideId?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return false;
 
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        fetchActiveRides();
+    try {
+      Response? res;
+      try {
+        res = await _dio.post(ApiConstants.rideStatus(rideId), data: {
+          'status': newStatus,
+        });
+      } catch (e) {
+        try {
+          res = await _dio.post('/driver/rides/$rideId/status', data: {
+            'status': newStatus,
+          });
+        } catch (_) {}
+      }
+
+      if (res != null && res.statusCode == 200 && res.data['success'] == true) {
         if (newStatus == 'completed') {
-          fetchEarnings();
+          _activeRides.removeWhere((r) => int.tryParse(r['id']?.toString() ?? '0') == rideId);
+          if (_lastAcceptedRide != null && int.tryParse(_lastAcceptedRide!['id']?.toString() ?? '0') == rideId) {
+            _lastAcceptedRide = null;
+          }
+          _isOnline = true;
+          await fetchEarnings();
         }
+        await fetchActiveRides();
+        notifyListeners();
         return true;
       }
     } catch (e) {

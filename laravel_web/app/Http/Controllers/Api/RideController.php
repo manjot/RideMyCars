@@ -759,85 +759,170 @@ class RideController extends Controller
      */
     public function updateStatus(Request $request, $id): JsonResponse
     {
-        $request->validate([
-            'status' => 'required|string|in:en_route,arrived,in_progress,completed,cancelled',
-        ]);
+        $rawStatus = (string) $request->input('status');
+        $newStatus = strtolower(trim($rawStatus));
 
-        $user = $request->user();
+        // Normalize status aliases
+        if ($newStatus === 'started' || $newStatus === 'start' || $newStatus === 'picked_up') {
+            $newStatus = 'in_progress';
+        } elseif ($newStatus === 'finished' || $newStatus === 'end' || $newStatus === 'ended' || $newStatus === 'delivered') {
+            $newStatus = 'completed';
+        }
+
+        $allowedStatuses = ['accepted', 'en_route', 'arrived', 'in_progress', 'completed', 'cancelled'];
+        if (!in_array($newStatus, $allowedStatuses)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Invalid status: {$rawStatus}. Allowed: " . implode(', ', $allowedStatuses),
+            ], 422);
+        }
+
+        $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+        $userIds = $user ? [$user->id] : [];
+        if ($user) {
+            $matchingIds = \App\Models\User::where('name', $user->name)
+                ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+                ->pluck('id')
+                ->toArray();
+            $userIds = array_unique(array_merge($userIds, $matchingIds));
+        }
+
+        // 1. Check Ride model
         $ride = Ride::find($id);
+        if ($ride) {
+            $updates = ['status' => $newStatus];
+            if ($newStatus === 'en_route') $updates['en_route_at'] = now();
+            if ($newStatus === 'arrived') $updates['arrived_at'] = now();
+            if ($newStatus === 'in_progress') $updates['started_at'] = now();
+            if ($newStatus === 'completed') {
+                $updates['completed_at'] = now();
+                $updates['payment_status'] = 'paid';
+                try {
+                    \App\Services\StripeService::captureRideHold($ride);
+                } catch (\Throwable $e) {}
 
-        if (!$ride) {
-            return response()->json(['success' => false, 'message' => 'Ride not found'], 404);
-        }
-
-        $userIds = [$user->id];
-        $matchingIds = \App\Models\User::where('name', $user->name)
-            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-            ->pluck('id')
-            ->toArray();
-        $userIds = array_unique(array_merge($userIds, $matchingIds));
-
-        // Must be the assigned driver or admin
-        if (!in_array((int)$ride->driver_id, $userIds) && $user->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $newStatus = $request->input('status');
-        $updates = ['status' => $newStatus];
-
-        if ($newStatus === 'en_route') $updates['en_route_at'] = now();
-        if ($newStatus === 'arrived') $updates['arrived_at'] = now();
-        if ($newStatus === 'in_progress') $updates['started_at'] = now();
-        if ($newStatus === 'completed') {
-            $updates['completed_at'] = now();
-            \App\Services\StripeService::captureRideHold($ride);
-            $updates['payment_status'] = 'paid';
-
-            if ($user->driverProfile) {
-                $user->driverProfile->update(['is_available' => true]);
-                if (\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
-                    $user->driverProfile->increment('total_trips');
+                if ($user && $user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => true]);
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                        $user->driverProfile->increment('total_trips');
+                    }
                 }
             }
-        }
-        if ($newStatus === 'cancelled') {
-            $updates['cancelled_at'] = now();
-            \App\Services\StripeService::releaseRideHold($ride);
-            $updates['payment_status'] = 'released';
-        }
+            if ($newStatus === 'cancelled') {
+                $updates['cancelled_at'] = now();
+                $updates['payment_status'] = 'released';
+                try {
+                    \App\Services\StripeService::releaseRideHold($ride);
+                } catch (\Throwable $e) {}
 
-        $ride->update($updates);
+                if ($user && $user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => true]);
+                }
+            }
 
-        if ($newStatus === 'completed') {
+            $ride->update($updates);
+
+            if ($newStatus === 'completed') {
+                try {
+                    \App\Services\IncentiveService::handleRideCompleted($ride);
+                } catch (\Throwable $e) {}
+
+                try {
+                    \App\Services\ReceiptService::generateReceiptForRide($ride, true);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Auto receipt generation for ride error: ' . $e->getMessage());
+                }
+            }
+
+            // Notifications
             try {
-                \App\Services\IncentiveService::handleRideCompleted($ride);
+                if ($newStatus === 'en_route') {
+                    NotificationService::notifyEnRoute($ride);
+                } elseif ($newStatus === 'arrived') {
+                    NotificationService::notifyArrived($ride);
+                } elseif ($newStatus === 'in_progress') {
+                    NotificationService::notifyTripStarted($ride);
+                } elseif ($newStatus === 'completed') {
+                    NotificationService::notifyTripCompleted($ride);
+                }
             } catch (\Throwable $e) {}
 
-            try {
-                \App\Services\ReceiptService::generateReceiptForRide($ride, true);
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Auto receipt generation for ride error: ' . $e->getMessage());
-            }
+            return response()->json([
+                'success' => true,
+                'message' => "Ride status updated to {$newStatus}",
+                'ride' => $ride->fresh(['rider', 'stops']),
+            ]);
         }
 
-        // Notifications
-        try {
-            if ($newStatus === 'en_route') {
-                NotificationService::notifyEnRoute($ride);
-            } elseif ($newStatus === 'arrived') {
-                NotificationService::notifyArrived($ride);
-            } elseif ($newStatus === 'in_progress') {
-                NotificationService::notifyTripStarted($ride);
-            } elseif ($newStatus === 'completed') {
-                NotificationService::notifyTripCompleted($ride);
-            }
-        } catch (\Throwable $e) {}
+        // 2. Check PackageDelivery model
+        $delivery = \App\Models\PackageDelivery::find($id);
+        if ($delivery) {
+            $delStatus = $newStatus;
+            if ($newStatus === 'completed') $delStatus = 'delivered';
+            if ($newStatus === 'in_progress') $delStatus = 'in_transit';
 
-        return response()->json([
-            'success' => true,
-            'message' => "Ride status updated to {$newStatus}",
-            'ride' => $ride->fresh(),
-        ]);
+            $delivery->update([
+                'delivery_status' => $delStatus,
+                'courier_id' => $user ? $user->id : $delivery->courier_id,
+            ]);
+
+            if ($newStatus === 'completed' || $newStatus === 'cancelled') {
+                if ($user && $user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => true]);
+                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                        $user->driverProfile->increment('total_trips');
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Package delivery status updated to {$newStatus}",
+                'ride' => [
+                    'id' => $delivery->id,
+                    'status' => $newStatus,
+                    'type' => 'package_delivery',
+                    'fare' => floatval($delivery->total_price),
+                ],
+            ]);
+        }
+
+        // 3. Check DriverBooking model
+        $booking = \App\Models\DriverBooking::find($id);
+        if ($booking) {
+            $bookStatus = $newStatus;
+            if ($newStatus === 'completed') {
+                $bookStatus = 'completed';
+                $booking->update([
+                    'booking_status' => 'completed',
+                    'payment_status' => 'paid',
+                ]);
+            } else {
+                $booking->update(['booking_status' => $bookStatus]);
+            }
+
+            if ($newStatus === 'completed' || $newStatus === 'cancelled') {
+                if ($user && $user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => true]);
+                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                        $user->driverProfile->increment('total_trips');
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Driver booking status updated to {$newStatus}",
+                'ride' => [
+                    'id' => $booking->id,
+                    'status' => $newStatus,
+                    'type' => 'driver_booking',
+                    'fare' => floatval($booking->total_price),
+                ],
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Ride or order not found.'], 404);
     }
 
 

@@ -1719,49 +1719,19 @@ Route::post('/api/ride/{id}/boost-fare', function (\Illuminate\Http\Request $req
 
 // Get active rides for driver
 $driverActiveRidesHandler = function (\Illuminate\Http\Request $request) {
-    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
-    if (!$user) return response()->json(['success' => false, 'rides' => [], 'data' => []]);
-
-    $userIds = [$user->id];
-    $matchingIds = \App\Models\User::where('name', $user->name)
-        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-        ->pluck('id')
-        ->toArray();
-    $userIds = array_unique(array_merge($userIds, $matchingIds));
-
-    $rides = \App\Models\Ride::whereIn('driver_id', $userIds)
-        ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
-        ->with(['rider', 'driverReview'])
-        ->orderBy('created_at', 'desc')
-        ->get()
-        ->map(function ($ride) {
-            return [
-                'id' => $ride->id,
-                'status' => $ride->status,
-                'pickup_location' => $ride->pickup_location,
-                'dropoff_location' => $ride->dropoff_location,
-                'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
-                'pickup_lng' => $ride->pickup_lng ? floatval($ride->pickup_lng) : null,
-                'dropoff_lat' => $ride->dropoff_lat ? floatval($ride->dropoff_lat) : null,
-                'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
-                'fare' => floatval($ride->fare ?: $ride->total_amount),
-                'vehicle_type' => $ride->vehicle_type ?? 'Standard',
-                'payment_method' => $ride->payment_method ?? 'stripe',
-                'rider_name' => $ride->rider?->name ?? $ride->passenger_name ?? 'Rider',
-                'rider_phone' => $ride->passenger_phone ?? $ride->rider?->phone,
-                'hasReview' => $ride->driverReview !== null,
-                'created_at' => $ride->created_at->toIso8601String(),
-            ];
-        });
-
-    return response()->json([
-        'success' => true,
-        'rides' => $rides,
-        'data' => $rides,
-    ]);
+    return app(\App\Http\Controllers\Api\DriverApiController::class)->activeRides($request);
 };
 Route::get('/api/driver/active-rides', $driverActiveRidesHandler);
 Route::get('/driver/active-rides-data', $driverActiveRidesHandler);
+
+// Driver updates status of active ride/delivery/booking
+$driverRideStatusHandler = function (\Illuminate\Http\Request $request, $id) {
+    return app(\App\Http\Controllers\Api\RideController::class)->updateStatus($request, $id);
+};
+Route::post('/api/driver/rides/{id}/status', $driverRideStatusHandler);
+Route::post('/driver/rides/{id}/status', $driverRideStatusHandler);
+Route::post('/api/rides/{id}/status', $driverRideStatusHandler);
+Route::post('/rides/{id}/status', $driverRideStatusHandler);
 
 // Polling endpoint for Driver to get incoming requests
 Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) {
