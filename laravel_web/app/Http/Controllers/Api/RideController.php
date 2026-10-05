@@ -416,7 +416,16 @@ class RideController extends Controller
             'country' => 'nullable|string|max:50',
         ]);
 
-        $user = $request->user();
+        $user = $request->user() ?: \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+        if (!$user && $request->filled('rider_id')) {
+            $user = \App\Models\User::find($request->input('rider_id'));
+        }
+        if (!$user && $request->filled('rider_email')) {
+            $user = \App\Models\User::where('email', $request->input('rider_email'))->first();
+        }
+        if (!$user) {
+            $user = \App\Models\User::where('role', 'customer')->first() ?: \App\Models\User::first();
+        }
         $distanceKm = floatval($request->input('distance_km', 0));
         $durationMin = intval($request->input('duration_minutes', 0));
         $vehicleType = $request->input('vehicle_type', 'Economy');

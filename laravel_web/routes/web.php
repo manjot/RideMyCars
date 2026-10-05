@@ -1740,6 +1740,13 @@ $driverRespondHandler = function (\Illuminate\Http\Request $request) {
 Route::post('/api/driver/respond', $driverRespondHandler);
 Route::post('/driver/respond', $driverRespondHandler);
 
+// Create / store ride
+$rideStoreHandler = function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\Api\RideController::class)->store($request);
+};
+Route::post('/api/rides', $rideStoreHandler);
+Route::post('/rides', $rideStoreHandler);
+
 // Polling endpoint for Driver to get incoming requests
 $driverRequestsClosure = function (\Illuminate\Http\Request $request) {
     $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
