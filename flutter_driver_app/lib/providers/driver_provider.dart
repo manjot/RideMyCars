@@ -279,13 +279,21 @@ class DriverProvider extends ChangeNotifier {
   }
 
   Future<bool> respondToRequest(
-    int? assignmentId,
+    dynamic rawAssignmentId,
     String action, {
+    dynamic rawRideId,
+    dynamic rawDeliveryId,
+    dynamic rawBookingId,
     int? rideId,
     int? deliveryId,
     int? bookingId,
     Map<String, dynamic>? jobData,
   }) async {
+    final assignmentId = int.tryParse(rawAssignmentId?.toString() ?? '');
+    final effectiveRideId = rideId ?? int.tryParse(rawRideId?.toString() ?? '');
+    final effectiveDeliveryId = deliveryId ?? int.tryParse(rawDeliveryId?.toString() ?? '');
+    final effectiveBookingId = bookingId ?? int.tryParse(rawBookingId?.toString() ?? '');
+
     // Driver responded (Accept or Reject) -> Immediately silence the incoming order ringtone!
     await SoundService.instance.stopRingtone();
 
@@ -293,17 +301,18 @@ class DriverProvider extends ChangeNotifier {
       Response? res;
       try {
         res = await _dio.post(ApiConstants.driverRespond, data: {
-          if (assignmentId != null) 'assignment_id': assignmentId,
-          if (rideId != null) 'ride_id': rideId,
-          if (deliveryId != null) 'delivery_id': deliveryId,
-          if (bookingId != null) 'driver_booking_id': bookingId,
+          if (assignmentId != null && assignmentId > 0) 'assignment_id': assignmentId,
+          if (effectiveRideId != null && effectiveRideId > 0) 'ride_id': effectiveRideId,
+          if (effectiveDeliveryId != null && effectiveDeliveryId > 0) 'delivery_id': effectiveDeliveryId,
+          if (effectiveBookingId != null && effectiveBookingId > 0) 'driver_booking_id': effectiveBookingId,
           'action': action,
         });
       } catch (e) {
         // Fallback to /api/driver/requests/{id}/respond if driverRespond fails
-        if (assignmentId != null) {
+        final targetId = assignmentId ?? effectiveRideId ?? effectiveDeliveryId ?? effectiveBookingId;
+        if (targetId != null && targetId > 0) {
           try {
-            res = await _dio.post('/driver/requests/$assignmentId/respond', data: {
+            res = await _dio.post('/driver/requests/$targetId/respond', data: {
               'status': action == 'accept' ? 'accepted' : 'rejected',
             });
           } catch (_) {}
@@ -319,8 +328,8 @@ class DriverProvider extends ChangeNotifier {
         if (assignmentId != null) {
           _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId || r['id'] == assignmentId);
         }
-        if (rideId != null) {
-          _pendingRequests.removeWhere((r) => r['ride_id'] == rideId);
+        if (effectiveRideId != null) {
+          _pendingRequests.removeWhere((r) => r['ride_id'] == effectiveRideId || r['id'] == effectiveRideId);
         }
 
         if (action == 'accept') {
@@ -338,8 +347,8 @@ class DriverProvider extends ChangeNotifier {
 
           if (acceptedRide != null) {
             acceptedRide['status'] = 'accepted';
-            if (rideId != null && acceptedRide['id'] == null) {
-              acceptedRide['id'] = rideId;
+            if (effectiveRideId != null && (acceptedRide['id'] == null || acceptedRide['id'] == 0)) {
+              acceptedRide['id'] = effectiveRideId;
             }
             _lastAcceptedRide = acceptedRide;
             // Prepend immediately to _activeRides
@@ -347,6 +356,7 @@ class DriverProvider extends ChangeNotifier {
             _activeRides.insert(0, acceptedRide);
           }
 
+          _isOnline = true;
           // Background sync
           fetchActiveRides();
           fetchEarnings();

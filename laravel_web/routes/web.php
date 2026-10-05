@@ -1733,6 +1733,13 @@ Route::post('/driver/rides/{id}/status', $driverRideStatusHandler);
 Route::post('/api/rides/{id}/status', $driverRideStatusHandler);
 Route::post('/rides/{id}/status', $driverRideStatusHandler);
 
+// Driver responds to assignment/request (Accept / Reject)
+$driverRespondHandler = function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\Api\DriverApiController::class)->respondToAssignment($request);
+};
+Route::post('/api/driver/respond', $driverRespondHandler);
+Route::post('/driver/respond', $driverRespondHandler);
+
 // Polling endpoint for Driver to get incoming requests
 Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) {
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
@@ -1756,7 +1763,13 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
 
         $pendingRides = \App\Models\Ride::where('status', 'pending')
             ->whereNull('driver_id')
-            ->whereIn('payment_status', ['hold', 'authorized', 'paid'])
+            ->where(function($q) {
+                $q->whereIn('payment_status', ['hold', 'authorized', 'paid'])
+                  ->orWhere('payment_method', 'cash')
+                  ->orWhereNull('payment_status')
+                  ->orWhere('payment_status', 'pending')
+                  ->orWhere('payment_status', 'pending_cash');
+            })
             ->take(5)
             ->get();
 
@@ -1846,7 +1859,7 @@ Route::get('/api/driver/requests', function (\Illuminate\Http\Request $request) 
         ->get()
         ->filter(function ($a) {
             if ($a->ride) {
-                return in_array(strtolower($a->ride->payment_status ?? ''), ['hold', 'authorized', 'paid'], true);
+                return $a->ride->status === 'pending';
             }
             return true;
         })
@@ -1932,8 +1945,23 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
     $userIds = array_unique(array_merge($userIds, $matchingIds));
 
     $assignment = \App\Models\RideAssignment::find($id);
-    if (!$assignment || !in_array((int)$assignment->driver_id, $userIds)) {
-        return response()->json(['error' => 'Unauthorized or request not found.'], 403);
+    if (!$assignment) {
+        $assignment = \App\Models\RideAssignment::where('ride_id', $id)
+            ->whereIn('driver_id', $userIds)
+            ->first();
+    }
+    if (!$assignment) {
+        $rideFallback = \App\Models\Ride::where('id', $id)->first();
+        if ($rideFallback) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['ride_id' => $rideFallback->id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+        }
+    }
+
+    if (!$assignment) {
+        return response()->json(['error' => 'Request assignment not found.'], 404);
     }
 
     $status = $request->input('status'); // 'accepted' or 'rejected'
@@ -1962,7 +1990,20 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                     ->where('status', 'pending')
                     ->update(['status' => 'expired']);
 
-                return response()->json(['success' => true]);
+                return response()->json([
+                    'success' => true,
+                    'status' => 'accepted',
+                    'ride' => [
+                        'id' => $delivery->id,
+                        'type' => 'package_delivery',
+                        'package_delivery_id' => $delivery->id,
+                        'fare' => floatval($delivery->total_price),
+                        'pickup_location' => $delivery->pickup_address,
+                        'dropoff_location' => $delivery->delivery_address,
+                        'customer_name' => $delivery->sender_name ?: ($delivery->customer?->name ?? 'Sender'),
+                        'status' => 'accepted',
+                    ],
+                ]);
             }
 
             if ($assignment->driver_booking_id) {
@@ -1986,7 +2027,20 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                     ->where('status', 'pending')
                     ->update(['status' => 'expired']);
 
-                return response()->json(['success' => true]);
+                return response()->json([
+                    'success' => true,
+                    'status' => 'accepted',
+                    'ride' => [
+                        'id' => $booking->id,
+                        'type' => 'driver_booking',
+                        'driver_booking_id' => $booking->id,
+                        'fare' => floatval($booking->total_price),
+                        'pickup_location' => $booking->pickup_location,
+                        'dropoff_location' => $booking->dropoff_location,
+                        'customer_name' => $booking->client?->name ?? 'Client',
+                        'status' => 'accepted',
+                    ],
+                ]);
             }
 
             $ride = \App\Models\Ride::where('id', $assignment->ride_id)->lockForUpdate()->first();
@@ -1994,7 +2048,7 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                 return response()->json(['error' => 'Associated ride not found.'], 404);
             }
 
-            $assignment->update(['status' => 'accepted']);
+            $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
 
             // Assign the ride to the driver and set status
             $ride->update([
@@ -2018,7 +2072,29 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                 \App\Services\NotificationService::notifyRideAccepted($ride);
             } catch (\Throwable $e) {}
 
-            return response()->json(['success' => true]);
+            $custName = $ride->rider?->name ?? $ride->passenger_name ?? 'Rider';
+            return response()->json([
+                'success' => true,
+                'status' => 'accepted',
+                'ride' => [
+                    'id' => $ride->id,
+                    'type' => $ride->ride_type ?: 'ride',
+                    'status' => 'accepted',
+                    'pickup_location' => $ride->pickup_location ?: 'Pickup location',
+                    'dropoff_location' => $ride->dropoff_location ?: 'Destination',
+                    'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
+                    'pickup_lng' => $ride->pickup_lng ? floatval($ride->pickup_lng) : null,
+                    'dropoff_lat' => $ride->dropoff_lat ? floatval($ride->dropoff_lat) : null,
+                    'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
+                    'fare' => floatval($ride->fare ?: $ride->total_amount),
+                    'total_price' => floatval($ride->fare ?: $ride->total_amount),
+                    'customer_name' => $custName,
+                    'rider_name' => $custName,
+                    'passenger_name' => $ride->passenger_name ?: $custName,
+                    'payment_method' => $ride->payment_method ?: 'cash',
+                    'payment_status' => $ride->payment_status ?: 'pending',
+                ],
+            ]);
         });
     } elseif ($status === 'rejected') {
         $assignment->update(['status' => 'rejected']);

@@ -700,7 +700,7 @@ class DriverApiController extends Controller
             ->get();
 
         foreach ($assignments as $a) {
-            if ($a->ride && $a->ride->status === 'pending' && in_array(strtolower($a->ride->payment_status ?? ''), ['hold', 'authorized', 'paid'], true)) {
+            if ($a->ride && $a->ride->status === 'pending') {
                 $processedRideIds[] = $a->ride->id;
 
                 $customerName = $a->ride->rider?->name ?? 'Customer';
@@ -786,11 +786,17 @@ class DriverApiController extends Controller
             }
         }
 
-        // 2. Also populate all available pending unassigned rides in the system that have valid payment holds/authorization
+        // 2. Also populate all available pending unassigned rides in the system
         $openPendingRides = \App\Models\Ride::with('rider')
             ->where('status', 'pending')
             ->whereNull('driver_id')
-            ->whereIn('payment_status', ['hold', 'authorized', 'paid'])
+            ->where(function($q) {
+                $q->whereIn('payment_status', ['hold', 'authorized', 'paid'])
+                  ->orWhere('payment_method', 'cash')
+                  ->orWhereNull('payment_status')
+                  ->orWhere('payment_status', 'pending')
+                  ->orWhere('payment_status', 'pending_cash');
+            })
             ->whereNotIn('id', array_unique(array_merge($processedRideIds, $rejectedRideIds)))
             ->latest()
             ->take(15)
@@ -964,8 +970,8 @@ class DriverApiController extends Controller
 
             $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
 
-            if ($assignment->ride) {
-                $ride = $assignment->ride;
+            $ride = $assignment->ride ?? ($assignment->ride_id ? \App\Models\Ride::find($assignment->ride_id) : ($request->ride_id ? \App\Models\Ride::find($request->ride_id) : null));
+            if ($ride) {
                 $ride->update([
                     'driver_id' => $user->id,
                     'status' => 'accepted',
@@ -984,10 +990,25 @@ class DriverApiController extends Controller
                     \App\Services\NotificationService::notifyRideAccepted($ride);
                 } catch (\Throwable $e) {}
 
+                $freshRide = $ride->fresh(['rider', 'stops']);
+                $custName = $freshRide->rider?->name ?? $freshRide->passenger_name ?? 'Rider';
+                $rideData = array_merge($freshRide->toArray(), [
+                    'id' => $freshRide->id,
+                    'status' => 'accepted',
+                    'type' => $freshRide->ride_type ?: 'ride',
+                    'fare' => floatval($freshRide->fare ?: $freshRide->total_amount),
+                    'total_price' => floatval($freshRide->fare ?: $freshRide->total_amount),
+                    'pickup_location' => $freshRide->pickup_location ?: 'Pickup location',
+                    'dropoff_location' => $freshRide->dropoff_location ?: 'Dropoff destination',
+                    'customer_name' => $custName,
+                    'rider_name' => $custName,
+                    'passenger_name' => $freshRide->passenger_name ?: $custName,
+                ]);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Ride accepted successfully.',
-                    'ride' => $ride->fresh(['rider', 'stops']),
+                    'ride' => $rideData,
                 ]);
             } elseif ($assignment->packageDelivery) {
                 $delivery = $assignment->packageDelivery;

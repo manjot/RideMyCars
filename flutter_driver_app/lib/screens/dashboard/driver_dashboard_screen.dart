@@ -2075,11 +2075,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       final ok = await driver.respondToRequest(
-                        job['assignment_id'],
+                        job['assignment_id'] ?? job['id'],
                         'accept',
-                        rideId: job['ride_id'],
-                        deliveryId: job['package_delivery_id'] ?? job['delivery_id'],
-                        bookingId: job['driver_booking_id'] ?? job['booking_id'],
+                        rideId: int.tryParse(job['ride_id']?.toString() ?? job['id']?.toString() ?? '0'),
+                        deliveryId: int.tryParse(job['package_delivery_id']?.toString() ?? job['delivery_id']?.toString() ?? '0'),
+                        bookingId: int.tryParse(job['driver_booking_id']?.toString() ?? job['booking_id']?.toString() ?? '0'),
                         jobData: job,
                       );
                       if (ok && context.mounted) {
@@ -2139,11 +2139,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   child: OutlinedButton(
                     onPressed: () async {
                       await driver.respondToRequest(
-                        job['assignment_id'],
+                        job['assignment_id'] ?? job['id'],
                         'reject',
-                        rideId: job['ride_id'],
-                        deliveryId: job['package_delivery_id'] ?? job['delivery_id'],
-                        bookingId: job['driver_booking_id'] ?? job['booking_id'],
+                        rideId: int.tryParse(job['ride_id']?.toString() ?? job['id']?.toString() ?? '0'),
+                        deliveryId: int.tryParse(job['package_delivery_id']?.toString() ?? job['delivery_id']?.toString() ?? '0'),
+                        bookingId: int.tryParse(job['driver_booking_id']?.toString() ?? job['booking_id']?.toString() ?? '0'),
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
