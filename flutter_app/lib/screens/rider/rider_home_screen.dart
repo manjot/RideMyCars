@@ -2313,12 +2313,55 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     ),
                   ],
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(color: Colors.white.withOpacity(0.08), height: 1),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: _paymentMethod == 'stripe'
+                            ? const Color(0xFF6366F1).withOpacity(0.2)
+                            : _paymentMethod == 'momo'
+                                ? const Color(0xFFFFDC00).withOpacity(0.2)
+                                : const Color(0xFF10B981).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      alignment: Alignment.center,
+                      child: _paymentMethod == 'stripe'
+                          ? const Text('S', style: TextStyle(color: Color(0xFF818CF8), fontWeight: FontWeight.w900, fontSize: 13))
+                          : _paymentMethod == 'momo'
+                              ? const Text('M', style: TextStyle(color: Color(0xFFFFDC00), fontWeight: FontWeight.w900, fontSize: 13))
+                              : const Icon(Icons.payments_rounded, color: Color(0xFF34D399), size: 15),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('PAYMENT METHOD', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.bold)),
+                          Text(
+                            _paymentMethod == 'stripe'
+                                ? 'Stripe (Cards & Apple Pay)'
+                                : _paymentMethod == 'momo'
+                                    ? 'MoMo Pay ($_momoNetwork)'
+                                    : 'Cash Direct Pay',
+                            style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          // 3. Backup Chauffeur Card (Recommended)
+          // 3. Backup Chauffeur Card (Recommended) - Responsive layout, no overflow
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -2338,18 +2381,20 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   ),
                   child: const Icon(Icons.shield_outlined, color: Color(0xFFFFDC00), size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 3,
                         children: [
                           const Text(
                             'Backup Chauffeur',
                             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
                           ),
-                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                             decoration: BoxDecoration(
@@ -2371,51 +2416,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     ],
                   ),
                 ),
-                Switch.adaptive(
-                  value: _enableBackupChauffeur,
-                  activeColor: const Color(0xFFFFDC00),
-                  onChanged: (val) => setState(() => _enableBackupChauffeur = val),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // 4. Guest Ongoing Ride Tracking Notice Card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E2433).withOpacity(0.7),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.06)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.radar_rounded, color: Color(0xFFF59E0B), size: 18),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Guest Ongoing Ride Tracking',
-                        style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'No account or login required. As soon as you confirm, you will be provided a direct ongoing ride tracking link to follow your driver live on GPS and share with friends.',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5, height: 1.25),
-                      ),
-                    ],
+                const SizedBox(width: 4),
+                Transform.scale(
+                  scale: 0.85,
+                  child: Switch.adaptive(
+                    value: _enableBackupChauffeur,
+                    activeColor: const Color(0xFFFFDC00),
+                    onChanged: (val) => setState(() => _enableBackupChauffeur = val),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // 5. Yellow CTA Button: Confirm & Authorize Ride →
+          // 4. Yellow CTA Button: Confirm & Authorize Ride →
           SizedBox(
             height: 50,
             child: ElevatedButton(
