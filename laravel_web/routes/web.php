@@ -1740,6 +1740,13 @@ $driverRespondHandler = function (\Illuminate\Http\Request $request) {
 Route::post('/api/driver/respond', $driverRespondHandler);
 Route::post('/driver/respond', $driverRespondHandler);
 
+// Driver responds to booking verification (Approve / Reject)
+$driverVerifyBookingHandler = function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\StripeVerificationController::class)->driverRespond($request);
+};
+Route::post('/api/driver/verify-booking', $driverVerifyBookingHandler);
+Route::post('/driver/verify-booking', $driverVerifyBookingHandler);
+
 // Create / store ride
 $rideStoreHandler = function (\Illuminate\Http\Request $request) {
     return app(\App\Http\Controllers\Api\RideController::class)->store($request);

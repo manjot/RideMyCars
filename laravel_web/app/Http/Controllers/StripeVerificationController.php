@@ -90,7 +90,13 @@ class StripeVerificationController extends Controller
             $serviceId = (int) $request->input('service_id');
             $action = $request->input('action');
             $reason = $request->input('rejection_reason');
-            $driverUser = Auth::user() ?? (auth('sanctum')->check() ? auth('sanctum')->user() : null);
+            $driverUser = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+            if (!$driverUser) {
+                $driverUser = Auth::user() ?? (auth('sanctum')->check() ? auth('sanctum')->user() : null);
+            }
+            if (!$driverUser) {
+                $driverUser = \App\Models\User::where('role', 'driver')->first();
+            }
             $driverId = $driverUser ? $driverUser->id : null;
 
             $booking = $this->getBookingModel($serviceType, $serviceId);
@@ -107,12 +113,39 @@ class StripeVerificationController extends Controller
 
                 if ($driverId) {
                     $updateData['verified_by_driver_id'] = $driverId;
-                    if (empty($booking->driver_id)) {
+                    if (empty($booking->driver_id) || $booking->driver_id != $driverId) {
                         $updateData['driver_id'] = $driverId;
                     }
                 }
 
+                if (in_array($booking->status, ['pending', 'searching_driver', null], true)) {
+                    $updateData['status'] = 'accepted';
+                }
+
                 $booking->update($updateData);
+
+                if ($driverId) {
+                    if ($serviceType === 'ride' || $serviceType === 'rental') {
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['ride_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'accepted']
+                        );
+                    } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['driver_booking_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'accepted']
+                        );
+                    } elseif ($serviceType === 'package_delivery' || $serviceType === 'delivery') {
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['package_delivery_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'accepted']
+                        );
+                    }
+                }
+
+                try {
+                    \App\Services\NotificationService::notifyRiderDriverAssigned($booking);
+                } catch (\Throwable $e) {}
 
                 try {
                     ActivityLogService::log(
@@ -724,82 +757,5 @@ class StripeVerificationController extends Controller
             'customerPhone' => $custPhone ?? '',
         ];
     }
-
-    /**
-     * Driver responds to verification request (approve or reject)
-     */
-    public function driverRespond(Request $request): JsonResponse
-    {
-        $request->validate([
-            'service_type' => 'required|string|in:ride,rental,driver_booking,hire-driver,package_delivery,delivery',
-            'service_id' => 'required|integer',
-            'action' => 'required|in:approve,reject',
-            'rejection_reason' => 'nullable|string|max:500',
-        ]);
-
-        $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
-        if (!$user) {
-            $user = Auth::user();
-        }
-        if (!$user) {
-            $user = User::where('role', 'driver')->first();
-        }
-
-        $serviceType = $request->input('service_type');
-        $serviceId = (int) $request->input('service_id');
-        $action = $request->input('action');
-        $rejectionReason = $request->input('rejection_reason');
-
-        $booking = $this->getBookingModel($serviceType, $serviceId);
-        if (!$booking) {
-            return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
-        }
-
-        if ($action === 'approve') {
-            $booking->update([
-                'verification_status' => 'driver_verified',
-                'driver_id' => $user->id,
-                'verified_by_driver_id' => $user->id,
-                'verified_at' => now(),
-                'status' => in_array($booking->status, ['pending', 'searching_driver', null], true) ? 'accepted' : $booking->status,
-            ]);
-
-            if ($serviceType === 'ride' || $serviceType === 'rental') {
-                \App\Models\RideAssignment::updateOrCreate(
-                    ['ride_id' => $booking->id, 'driver_id' => $user->id],
-                    ['status' => 'accepted']
-                );
-            } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
-                \App\Models\RideAssignment::updateOrCreate(
-                    ['driver_booking_id' => $booking->id, 'driver_id' => $user->id],
-                    ['status' => 'accepted']
-                );
-            } elseif ($serviceType === 'package_delivery' || $serviceType === 'delivery') {
-                \App\Models\RideAssignment::updateOrCreate(
-                    ['package_delivery_id' => $booking->id, 'driver_id' => $user->id],
-                    ['status' => 'accepted']
-                );
-            }
-
-            try {
-                \App\Services\NotificationService::notifyRiderDriverAssigned($booking);
-            } catch (\Throwable $e) {}
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Booking details verified and approved!',
-                'booking' => $booking,
-            ]);
-        } else {
-            $booking->update([
-                'verification_status' => 'driver_rejected',
-                'rejection_reason' => $rejectionReason ?: 'Driver schedule or vehicle mismatch',
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Booking verification rejected.',
-            ]);
-        }
-    }
 }
+
