@@ -707,10 +707,11 @@ class DriverApiController extends Controller
 
         $userEmail = strtolower($user->email ?? '');
         $isPrivilegedUser = in_array($userEmail, [
+            'shachish@ajath.com',
             'shachisheh@gmail.com',
             'admin@ridemycars.com',
             'ridemycars1@gmail.com',
-        ]) || str_ends_with($userEmail, '@ridemycars.com');
+        ]) || str_ends_with($userEmail, '@ridemycars.com') || (int)$user->id === 259;
 
         // If driver account is inactive (not live), auto-activate if verified or privileged, else return empty
         if ($user->driverProfile && !$user->driverProfile->is_live) {
