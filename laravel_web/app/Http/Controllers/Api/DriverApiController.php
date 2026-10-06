@@ -757,17 +757,26 @@ class DriverApiController extends Controller
         $maxRadiusKm = (float)($driverPricing->dispatch_radius_km ?? 10.0);
         if ($maxRadiusKm <= 0.0) $maxRadiusKm = 10.0;
 
-        $rejectedRideIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+        $userIds = [$user->id];
+        if (!empty($user->name) || !empty($user->email)) {
+            $matchingIds = \App\Models\User::where('name', $user->name)
+                ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+                ->pluck('id')
+                ->toArray();
+            $userIds = array_unique(array_merge($userIds, $matchingIds));
+        }
+
+        $rejectedRideIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'rejected')
             ->whereNotNull('ride_id')
             ->pluck('ride_id')
             ->toArray();
-        $rejectedBookingIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+        $rejectedBookingIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'rejected')
             ->whereNotNull('driver_booking_id')
             ->pluck('driver_booking_id')
             ->toArray();
-        $rejectedDeliveryIds = \App\Models\RideAssignment::where('driver_id', $user->id)
+        $rejectedDeliveryIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'rejected')
             ->whereNotNull('package_delivery_id')
             ->pluck('package_delivery_id')
@@ -775,7 +784,7 @@ class DriverApiController extends Controller
 
         // 1. Direct assignments assigned to this driver
         $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client', 'packageDelivery.customer'])
-            ->where('driver_id', $user->id)
+            ->whereIn('driver_id', $userIds)
             ->where('status', 'pending')
             ->where(function ($q) use ($isPrivilegedUser) {
                 $q->where('expires_at', '>', now());
