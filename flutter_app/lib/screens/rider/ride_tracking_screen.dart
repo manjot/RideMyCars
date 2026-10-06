@@ -199,7 +199,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
               child: SafeArea(
                 top: false,
                 bottom: true,
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -403,7 +403,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                       const SizedBox(height: 16),
 
                       // Cancel Button
-                      if (status == 'pending' || status == 'accepted')
+                      if (status == 'pending' || status == 'accepted' || status == 'en_route')
                         OutlinedButton(
                           onPressed: () async {
                             final ok = await showDialog<bool>(

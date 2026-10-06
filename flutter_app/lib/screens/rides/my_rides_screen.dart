@@ -390,9 +390,13 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            date,
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                          Flexible(
+                            child: Text(
+                              date,
+                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
