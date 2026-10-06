@@ -705,15 +705,15 @@ class DriverApiController extends Controller
         $user = self::resolveUser($request);
         if (!$user) return response()->json(['success' => true, 'requests' => []]);
 
+        $userEmail = strtolower($user->email ?? '');
+        $isPrivilegedUser = in_array($userEmail, [
+            'shachisheh@gmail.com',
+            'admin@ridemycars.com',
+            'ridemycars1@gmail.com',
+        ]) || str_ends_with($userEmail, '@ridemycars.com');
+
         // If driver account is inactive (not live), auto-activate if verified or privileged, else return empty
         if ($user->driverProfile && !$user->driverProfile->is_live) {
-            $userEmail = strtolower($user->email ?? '');
-            $isPrivilegedUser = in_array($userEmail, [
-                'shachisheh@gmail.com',
-                'admin@ridemycars.com',
-                'ridemycars1@gmail.com',
-            ]) || str_ends_with($userEmail, '@ridemycars.com');
-
             $isVerified = in_array($user->driverProfile->verification_status, ['verified', 'approved', 'submitted'])
                 || in_array($user->driverProfile->kyc_status, ['verified', 'approved']);
 
@@ -777,7 +777,12 @@ class DriverApiController extends Controller
         $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client', 'packageDelivery.customer'])
             ->where('driver_id', $user->id)
             ->where('status', 'pending')
-            ->where('expires_at', '>', now())
+            ->where(function ($q) use ($isPrivilegedUser) {
+                $q->where('expires_at', '>', now());
+                if ($isPrivilegedUser) {
+                    $q->orWhere('status', 'pending');
+                }
+            })
             ->where(function ($q) use ($rejectedRideIds) {
                 $q->whereNull('ride_id')->orWhereNotIn('ride_id', $rejectedRideIds);
             })
@@ -791,7 +796,7 @@ class DriverApiController extends Controller
             ->get();
 
         // Filter direct assignments by country and maximum radius
-        $assignments = $assignments->filter(function($a) use ($driverCountry, $driverPricing, $driverLat, $driverLng, $maxRadiusKm) {
+        $assignments = $assignments->filter(function($a) use ($driverCountry, $driverPricing, $driverLat, $driverLng, $maxRadiusKm, $isPrivilegedUser) {
             $driverCurrency = $driverPricing->currency_code ?: 'INR';
             if ($a->ride) {
                 $rCountry = strtoupper($a->ride->driver_country ?? $a->ride->country ?? '');
@@ -810,7 +815,7 @@ class DriverApiController extends Controller
                         (float)$driverLat, (float)$driverLng,
                         (float)$a->ride->pickup_lat, (float)$a->ride->pickup_lng
                     );
-                    if ($dist > $maxRadiusKm) return false;
+                    if ($dist > $maxRadiusKm && !$isPrivilegedUser) return false;
                 }
             }
             if ($a->packageDelivery) {
@@ -838,7 +843,7 @@ class DriverApiController extends Controller
                         (float)$driverLat, (float)$driverLng,
                         (float)$a->packageDelivery->pickup_lat, (float)$a->packageDelivery->pickup_lng
                     );
-                    if ($dist > $maxRadiusKm) return false;
+                    if ($dist > $maxRadiusKm && !$isPrivilegedUser) return false;
                 }
             }
             return true;
@@ -1078,7 +1083,8 @@ class DriverApiController extends Controller
             ->get();
 
         if ($driverLat && $driverLng) {
-            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng, $maxRadiusKm) {
+            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng, $maxRadiusKm, $isPrivilegedUser) {
+                if ($isPrivilegedUser) return true;
                 if ($pd->pickup_lat && $pd->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
                         (float)$driverLat, (float)$driverLng,
@@ -1428,15 +1434,28 @@ class DriverApiController extends Controller
                     $q->orWhere('courier_profile_id', $driverProfileId);
                 }
             })
-            ->whereIn('delivery_status', ['courier_assigned', 'accepted', 'picked_up', 'in_transit'])
+            ->whereIn('delivery_status', ['courier_assigned', 'courier_accepted', 'accepted', 'picked_up', 'in_transit', 'arrived_at_pickup', 'going_to_pickup'])
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $assignedDeliveryIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+            ->where('status', 'accepted')
+            ->pluck('package_delivery_id')
+            ->filter()
+            ->toArray();
+        if (!empty($assignedDeliveryIds)) {
+            $extraDeliveries = \App\Models\PackageDelivery::with(['customer'])
+                ->whereIn('id', $assignedDeliveryIds)
+                ->whereNotIn('delivery_status', ['delivered', 'cancelled', 'failed'])
+                ->get();
+            $deliveries = $deliveries->merge($extraDeliveries)->unique('id');
+        }
 
         foreach ($deliveries as $del) {
             $delPricing = \App\Models\CountryPricing::forCountry($del->country ?? 'IND');
             $custName = $del->sender_name ?: ($del->customer?->name ?? 'Sender');
             $custPhone = $del->sender_phone ?: $del->customer?->phone;
-            $status = in_array($del->delivery_status, ['courier_assigned', 'accepted']) ? 'accepted' : 'in_progress';
+            $status = in_array($del->delivery_status, ['courier_assigned', 'courier_accepted', 'accepted']) ? 'accepted' : 'in_progress';
 
             $items[] = [
                 'id' => $del->id,
@@ -1444,8 +1463,8 @@ class DriverApiController extends Controller
                 'package_delivery_id' => $del->id,
                 'status' => $status,
                 'raw_status' => $del->delivery_status,
-                'pickup_location' => $del->pickup_address ?: 'Pickup address',
-                'dropoff_location' => $del->delivery_address ?: 'Delivery address',
+                'pickup_location' => $del->pickup_location ?: ($del->pickup_address ?: 'Pickup address'),
+                'dropoff_location' => $del->dropoff_location ?: ($del->delivery_address ?: 'Delivery address'),
                 'pickup_lat' => $del->pickup_lat ? floatval($del->pickup_lat) : null,
                 'pickup_lng' => $del->pickup_lng ? floatval($del->pickup_lng) : null,
                 'dropoff_lat' => $del->dropoff_lat ? floatval($del->dropoff_lat) : null,

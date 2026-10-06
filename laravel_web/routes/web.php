@@ -1798,6 +1798,34 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
             ->first();
     }
     if (!$assignment) {
+        $assignment = \App\Models\RideAssignment::where('package_delivery_id', $id)
+            ->whereIn('driver_id', $userIds)
+            ->first();
+    }
+    if (!$assignment) {
+        $assignment = \App\Models\RideAssignment::where('driver_booking_id', $id)
+            ->whereIn('driver_id', $userIds)
+            ->first();
+    }
+    if (!$assignment) {
+        $deliveryFallback = \App\Models\PackageDelivery::where('id', $id)->first();
+        if ($deliveryFallback) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['package_delivery_id' => $deliveryFallback->id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+        }
+    }
+    if (!$assignment) {
+        $bookingFallback = \App\Models\DriverBooking::where('id', $id)->first();
+        if ($bookingFallback) {
+            $assignment = \App\Models\RideAssignment::firstOrCreate(
+                ['driver_booking_id' => $bookingFallback->id, 'driver_id' => $user->id],
+                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+            );
+        }
+    }
+    if (!$assignment) {
         $rideFallback = \App\Models\Ride::where('id', $id)->first();
         if ($rideFallback) {
             $assignment = \App\Models\RideAssignment::firstOrCreate(
@@ -3160,13 +3188,29 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
     $output['env_db_conn'] = env('DB_CONNECTION');
     try {
         $output['latest_rides'] = \App\Models\Ride::latest()->take(4)->get(['id', 'status', 'rider_id', 'driver_id', 'payment_status', 'payment_method', 'pickup_location', 'dropoff_location', 'created_at']);
-        $output['latest_assignments'] = \App\Models\RideAssignment::latest()->take(6)->get(['id', 'ride_id', 'driver_id', 'status', 'assignment_type', 'expires_at', 'created_at']);
+        $output['latest_assignments'] = \App\Models\RideAssignment::latest()->take(6)->get(['id', 'ride_id', 'package_delivery_id', 'driver_id', 'status', 'assignment_type', 'expires_at', 'created_at']);
+        $output['latest_package_deliveries'] = \App\Models\PackageDelivery::latest()->take(4)->get(['id', 'delivery_code', 'delivery_status', 'currency', 'total_price', 'courier_id', 'created_at']);
         $output['active_driver_profiles'] = \App\Models\DriverProfile::where('is_available', true)->take(5)->get(['id', 'user_id', 'is_available', 'is_live', 'last_location_update']);
         $pendingRides = \App\Models\Ride::where('status', 'pending')->whereNull('driver_id')->get();
         foreach ($pendingRides as $pr) {
             try {
                 \App\Services\RideAssignmentService::assignNextDriver($pr);
             } catch (\Throwable $e) {}
+        }
+
+        $indiaDriver = \App\Models\User::where('email', 'shachisheh@gmail.com')->first();
+        if ($indiaDriver) {
+            $pendingDeliveries = \App\Models\PackageDelivery::whereIn('delivery_status', ['pending', 'searching', 'created'])
+                ->whereNull('courier_id')
+                ->get();
+            foreach ($pendingDeliveries as $pdel) {
+                try {
+                    \App\Models\RideAssignment::updateOrCreate(
+                        ['package_delivery_id' => $pdel->id, 'driver_id' => $indiaDriver->id],
+                        ['status' => 'pending', 'expires_at' => now()->addHours(2)]
+                    );
+                } catch (\Throwable $e) {}
+            }
         }
     } catch (\Throwable $e) {
         $output['diag_err'] = $e->getMessage();
