@@ -1754,6 +1754,24 @@ $rideStoreHandler = function (\Illuminate\Http\Request $request) {
 Route::post('/api/rides', $rideStoreHandler);
 Route::post('/rides', $rideStoreHandler);
 
+// Driver trips / rides history list
+$ridesIndexHandler = function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\Api\RideController::class)->index($request);
+};
+Route::get('/api/rides', $ridesIndexHandler);
+Route::get('/rides', $ridesIndexHandler);
+Route::get('/api/driver/trips', $ridesIndexHandler);
+Route::get('/driver/trips', $ridesIndexHandler);
+Route::get('/api/driver/rides', $ridesIndexHandler);
+Route::get('/driver/rides', $ridesIndexHandler);
+
+// Driver Earnings summary
+$driverEarningsHandler = function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\Api\DriverApiController::class)->earnings($request);
+};
+Route::get('/api/driver/earnings', $driverEarningsHandler);
+Route::get('/driver/earnings', $driverEarningsHandler);
+
 // Polling endpoint for Driver to get incoming requests
 $driverRequestsClosure = function (\Illuminate\Http\Request $request) {
     $user = \App\Http\Controllers\Api\DriverApiController::resolveUser($request);

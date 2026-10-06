@@ -23,11 +23,18 @@ class RideController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $request->user() ?: \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+        if (!$user) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'rides' => [],
+            ]);
+        }
 
         // Include all driver IDs associated with this driver's identity
         $driverUserIds = [$user->id];
-        if ($user->role === 'driver') {
+        if ($user->role === 'driver' || $user->driverProfile) {
             $matchingIds = \App\Models\User::where('name', $user->name)
                 ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
                 ->pluck('id')
@@ -35,7 +42,7 @@ class RideController extends Controller
             $driverUserIds = array_unique(array_merge($driverUserIds, $matchingIds));
         }
 
-        $rides = Ride::with(['driver.driverProfile', 'rider', 'vehicle'])
+        $rides = Ride::with(['driver.driverProfile', 'rider', 'vehicle', 'receipt'])
             ->where(function ($q) use ($user, $driverUserIds) {
                 $q->where('rider_id', $user->id)
                   ->orWhereIn('driver_id', $driverUserIds)
