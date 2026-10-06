@@ -94,6 +94,8 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
         return s == 'pending' ||
             s == 'confirmed' ||
             s == 'accepted' ||
+            s == 'courier_accepted' ||
+            s == 'courier_assigned' ||
             s == 'en_route' ||
             s == 'arrived' ||
             s == 'in_progress' ||
@@ -130,6 +132,8 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
       case 'en_route':
       case 'arrived':
       case 'accepted':
+      case 'courier_accepted':
+      case 'courier_assigned':
       case 'dispatched':
       case 'in_transit':
         return const Color(0xFF3B82F6); // Blue
@@ -144,17 +148,27 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
   String _getStatusDisplay(String? status, String type) {
     final s = (status ?? 'pending').toLowerCase();
     if (type == 'rental') {
-      if (s == 'pending') return 'RESERVED (CONFIRMED)';
-      if (s == 'completed') return 'RETURNED (PAID)';
-      if (s == 'in_progress') return 'ACTIVE ON ROAD';
-      return s.toUpperCase();
+      if (s == 'pending') return 'RESERVED';
+      if (s == 'completed') return 'RETURNED';
+      if (s == 'in_progress') return 'ACTIVE';
+      return s.replaceAll('_', ' ').toUpperCase();
     }
     if (type == 'delivery') {
       if (s == 'pending') return 'DISPATCHED';
-      if (s == 'completed') return 'DELIVERED';
-      return s.toUpperCase();
+      if (s == 'courier_accepted' || s == 'accepted') return 'ACCEPTED';
+      if (s == 'courier_assigned') return 'ASSIGNED';
+      if (s == 'in_transit' || s == 'in_progress') return 'IN TRANSIT';
+      if (s == 'completed' || s == 'delivered') return 'DELIVERED';
+      return s.replaceAll('_', ' ').toUpperCase();
     }
-    return s.toUpperCase();
+    if (type == 'chauffeur') {
+      if (s == 'pending') return 'REQUESTED';
+      if (s == 'accepted' || s == 'confirmed') return 'CONFIRMED';
+      if (s == 'in_progress') return 'ACTIVE';
+      if (s == 'completed') return 'COMPLETED';
+      return s.replaceAll('_', ' ').toUpperCase();
+    }
+    return s.replaceAll('_', ' ').toUpperCase();
   }
 
   @override
@@ -788,7 +802,10 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
               ],
             ),
             const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: Colors.white12, height: 1)),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -799,7 +816,6 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   ),
                   child: Text('TRACK: $trackingCode', style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 10.5, fontWeight: FontWeight.w800)),
                 ),
-                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
