@@ -182,9 +182,15 @@ class DriverProvider extends ChangeNotifier {
 
   Future<void> pollPendingRequests() async {
     try {
-      // 1. Fetch direct incoming dispatch requests
+      // 1. Fetch direct incoming dispatch requests (with current GPS for proximity matching)
       try {
-        final res = await _dio.get(ApiConstants.driverRequests);
+        final res = await _dio.get(
+          ApiConstants.driverRequests,
+          queryParameters: {
+            if (_currentLat != null) 'lat': _currentLat,
+            if (_currentLng != null) 'lng': _currentLng,
+          },
+        );
         if (res.statusCode == 200) {
           final List newReqs = (res.data is Map ? (res.data['requests'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
           final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -285,6 +291,23 @@ class DriverProvider extends ChangeNotifier {
     return false;
   }
 
+  void removePendingRequestLocally({int? assignmentId, int? rideId, int? deliveryId, int? bookingId}) {
+    _pendingRequests.removeWhere((r) {
+      final aId = int.tryParse((r['assignment_id'] ?? r['id'] ?? '').toString());
+      final rId = int.tryParse((r['ride_id'] ?? '').toString());
+      final dId = int.tryParse((r['package_delivery_id'] ?? r['delivery_id'] ?? '').toString());
+      final bId = int.tryParse((r['driver_booking_id'] ?? r['booking_id'] ?? '').toString());
+      return (assignmentId != null && aId == assignmentId) ||
+             (rideId != null && rId == rideId) ||
+             (deliveryId != null && dId == deliveryId) ||
+             (bookingId != null && bId == bookingId);
+    });
+    if (_pendingRequests.isEmpty) {
+      SoundService.instance.stopRingtone();
+    }
+    notifyListeners();
+  }
+
   Future<bool> respondToRequest(
     dynamic rawAssignmentId,
     String action, {
@@ -301,8 +324,14 @@ class DriverProvider extends ChangeNotifier {
     final effectiveDeliveryId = deliveryId ?? int.tryParse(rawDeliveryId?.toString() ?? '');
     final effectiveBookingId = bookingId ?? int.tryParse(rawBookingId?.toString() ?? '');
 
-    // Driver responded (Accept or Reject) -> Immediately silence the incoming order ringtone!
+    // Driver responded (Accept or Reject) -> Immediately silence ringtone and optimistically remove from pending list!
     await SoundService.instance.stopRingtone();
+    removePendingRequestLocally(
+      assignmentId: assignmentId,
+      rideId: effectiveRideId,
+      deliveryId: effectiveDeliveryId,
+      bookingId: effectiveBookingId,
+    );
 
     try {
       Response? res;
@@ -313,31 +342,30 @@ class DriverProvider extends ChangeNotifier {
           if (effectiveDeliveryId != null && effectiveDeliveryId > 0) 'delivery_id': effectiveDeliveryId,
           if (effectiveBookingId != null && effectiveBookingId > 0) 'driver_booking_id': effectiveBookingId,
           'action': action,
-        });
+        }).timeout(const Duration(seconds: 8));
       } catch (e) {
+        debugPrint('driverRespond failed: $e');
         // Fallback to /api/driver/requests/{id}/respond if driverRespond fails
         final targetId = assignmentId ?? effectiveRideId ?? effectiveDeliveryId ?? effectiveBookingId;
         if (targetId != null && targetId > 0) {
           try {
             res = await _dio.post('/driver/requests/$targetId/respond', data: {
               'status': action == 'accept' ? 'accepted' : 'rejected',
-            });
+            }).timeout(const Duration(seconds: 6));
           } catch (_) {}
         }
+      }
+
+      if (action == 'reject') {
+        // Declined locally & network attempted -> guaranteed clean state
+        notifyListeners();
+        return true;
       }
 
       if (res != null &&
           (res.statusCode == 200 || res.statusCode == 201) &&
           (res.data['success'] == true || res.data['status'] == 'accepted')) {
         _lastAssignmentResponse = Map<String, dynamic>.from(res.data);
-
-        // Remove from pending list
-        if (assignmentId != null) {
-          _pendingRequests.removeWhere((r) => r['assignment_id'] == assignmentId || r['id'] == assignmentId);
-        }
-        if (effectiveRideId != null) {
-          _pendingRequests.removeWhere((r) => r['ride_id'] == effectiveRideId || r['id'] == effectiveRideId);
-        }
 
         if (action == 'accept') {
           // Resolve accepted ride object
@@ -375,7 +403,7 @@ class DriverProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error responding to assignment: $e');
     }
-    return false;
+    return action == 'reject';
   }
 
   Future<bool> cancelRide(dynamic rawRideId, {String? reason}) async {

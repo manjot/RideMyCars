@@ -57,8 +57,8 @@ class SoundService {
   Future<void> startIncomingOrderRingtone({String? orderType, dynamic orderId}) async {
     final newKey = '${orderType ?? "order"}_${orderId ?? "new"}';
 
-    // If already ringing for this exact order and not muted, keep ringing
-    if (isRinging && _currentOrderKey == newKey && !isMuted) {
+    // If already ringing (or user intentionally muted) for this exact order, keep state
+    if (isRinging && _currentOrderKey == newKey) {
       return;
     }
 

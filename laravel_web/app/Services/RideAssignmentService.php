@@ -129,29 +129,19 @@ class RideAssignmentService
             return $driver;
         })->sortBy('distance_km');
 
-        // 4. Expanding radius matching (3km -> 5km -> 10km -> 20km)
-        $radii = config('ride.matching_radii', [3, 5, 10, 20]);
-        $chosenDriver = null;
+        // 4. Proximity matching based on country-configured dispatch_radius_km (default 10km)
+        $rideCountry = strtoupper($ride->driver_country ?? $ride->country ?? 'IND');
+        $countryPricing = \App\Models\CountryPricing::forCountry($rideCountry);
+        $maxRadius = (float)($countryPricing->dispatch_radius_km ?? 10.0);
+        if ($maxRadius <= 0.0) $maxRadius = 10.0;
 
-        foreach ($radii as $radius) {
-            $candidate = $driversWithDistance->first(fn($d) => $d->distance_km <= $radius);
-            if ($candidate) {
-                $chosenDriver = $candidate;
-                break;
+        $chosenDriver = $driversWithDistance->first(function($d) use ($maxRadius, $rideCountry) {
+            $driverCountry = strtoupper($d->country ?? '');
+            if ($rideCountry && $driverCountry && $driverCountry !== $rideCountry) {
+                return false;
             }
-        }
-
-        // Fallback to nearest driver if within reasonable proximity (100km) or same operating country
-        if (!$chosenDriver) {
-            $rideCountry = strtoupper($ride->driver_country ?? $ride->country ?? '');
-            $nearest = $driversWithDistance->first();
-            if ($nearest) {
-                $driverCountry = strtoupper($nearest->country ?? '');
-                if ($nearest->distance_km <= 100 || ($rideCountry && $driverCountry === $rideCountry)) {
-                    $chosenDriver = $nearest;
-                }
-            }
-        }
+            return $d->distance_km <= $maxRadius;
+        });
 
         if (!$chosenDriver) {
             return null;

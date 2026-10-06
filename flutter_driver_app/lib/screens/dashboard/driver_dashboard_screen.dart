@@ -27,6 +27,7 @@ class DriverDashboardScreen extends StatefulWidget {
 
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   bool _dialogOpen = false;
+  final Set<String> _handledJobKeys = {};
 
   Future<void> _callPhone(String? phone) async {
     if (phone == null || phone.isEmpty) return;
@@ -82,7 +83,6 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   void _openJobDialog(Map<String, dynamic> job, DriverProvider driver) {
     if (_dialogOpen) return;
-    _dialogOpen = true;
 
     final assignmentId = int.tryParse((job['assignment_id'] ?? job['id'] ?? '').toString());
     final rideId = int.tryParse((job['ride_id'] ?? job['ride']?['id'] ?? '').toString());
@@ -90,12 +90,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final bookingId = int.tryParse((job['driver_booking_id'] ?? job['booking_id'] ?? '').toString());
     final isBackup = job['is_backup'] == true || job['assignment_type'] == 'backup';
 
+    final jobKey = '${assignmentId ?? 0}_${rideId ?? 0}_${deliveryId ?? 0}_${bookingId ?? 0}';
+    if (_handledJobKeys.contains(jobKey)) return;
+
+    _dialogOpen = true;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogCtx) => IncomingJobDialog(
         request: job,
         onAccept: () async {
+          _handledJobKeys.add(jobKey);
+          SoundService.instance.stopRingtone();
           bool ok = false;
           try {
             ok = await driver.respondToRequest(
@@ -157,10 +164,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           }
         },
         onDecline: () async {
+          _handledJobKeys.add(jobKey);
+          SoundService.instance.stopRingtone();
+          driver.removePendingRequestLocally(
+            assignmentId: assignmentId,
+            rideId: rideId,
+            deliveryId: deliveryId,
+            bookingId: bookingId,
+          );
+
           if (dialogCtx.mounted) {
             Navigator.of(dialogCtx, rootNavigator: true).pop();
           }
           _dialogOpen = false;
+
           await driver.respondToRequest(
             assignmentId,
             'reject',
@@ -182,8 +199,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   void _checkIncomingJobs(DriverProvider driver) {
-    if (driver.pendingRequests.isNotEmpty && !_dialogOpen) {
-      _openJobDialog(driver.pendingRequests.first, driver);
+    if (_dialogOpen) return;
+    final unhandled = driver.pendingRequests.where((j) {
+      final aId = int.tryParse((j['assignment_id'] ?? j['id'] ?? '').toString());
+      final rId = int.tryParse((j['ride_id'] ?? '').toString());
+      final dId = int.tryParse((j['package_delivery_id'] ?? j['delivery_id'] ?? '').toString());
+      final bId = int.tryParse((j['driver_booking_id'] ?? j['booking_id'] ?? '').toString());
+      final key = '${aId ?? 0}_${rId ?? 0}_${dId ?? 0}_${bId ?? 0}';
+      return !_handledJobKeys.contains(key);
+    }).toList();
+
+    if (unhandled.isNotEmpty) {
+      _openJobDialog(unhandled.first, driver);
     }
   }
 

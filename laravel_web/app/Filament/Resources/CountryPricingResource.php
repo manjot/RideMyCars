@@ -69,9 +69,21 @@ class CountryPricingResource extends Resource
                                         ->default(false),
                                 ]),
 
-                                Forms\Components\Toggle::make('is_active')
-                                    ->label('Active in Country Selector & Detection')
-                                    ->default(true),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\TextInput::make('dispatch_radius_km')
+                                        ->label('Nearby Driver Dispatch Radius (KM)')
+                                        ->helperText('Maximum search distance (in km) to send requests to nearby available drivers in this country. Default is 10.00 km.')
+                                        ->suffix('km')
+                                        ->numeric()
+                                        ->step(0.5)
+                                        ->minValue(1.0)
+                                        ->maxValue(500.0)
+                                        ->default(10.00)
+                                        ->required(),
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Active in Country Selector & Detection')
+                                        ->default(true),
+                                ]),
                             ]),
 
                         // Tab 2: Ride Hailing
@@ -284,6 +296,12 @@ class CountryPricingResource extends Resource
                 Tables\Columns\TextColumn::make('rental_price_multiplier')
                     ->label('Rental Mult.')
                     ->suffix('x'),
+                Tables\Columns\TextColumn::make('dispatch_radius_km')
+                    ->label('Radius')
+                    ->suffix(' km')
+                    ->sortable()
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\IconColumn::make('is_default')
                     ->label('Default')
                     ->boolean(),

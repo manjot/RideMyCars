@@ -20,6 +20,7 @@ class CountryPricing extends Model
         'exchange_rate',
         'is_default',
         'is_active',
+        'dispatch_radius_km',
         // Ride
         'ride_base_fare',
         'ride_per_km_rate',
@@ -49,6 +50,7 @@ class CountryPricing extends Model
     protected $casts = [
         'is_default' => 'boolean',
         'is_active' => 'boolean',
+        'dispatch_radius_km' => 'float',
         'exchange_rate' => 'float',
         'ride_base_fare' => 'float',
         'ride_per_km_rate' => 'float',

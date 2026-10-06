@@ -505,7 +505,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                   child: SizedBox(
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: _isAccepting ? null : _handleDecline,
+                      onPressed: _handleDecline,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.danger,
                         padding: const EdgeInsets.symmetric(horizontal: 4),

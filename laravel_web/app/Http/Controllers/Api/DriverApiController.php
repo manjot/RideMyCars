@@ -754,6 +754,8 @@ class DriverApiController extends Controller
         }
         $driverCountry = strtoupper(trim($driverCountry));
         $driverPricing = \App\Models\CountryPricing::forCountry($driverCountry);
+        $maxRadiusKm = (float)($driverPricing->dispatch_radius_km ?? 10.0);
+        if ($maxRadiusKm <= 0.0) $maxRadiusKm = 10.0;
 
         $rejectedRideIds = \App\Models\RideAssignment::where('driver_id', $user->id)
             ->where('status', 'rejected')
@@ -787,6 +789,33 @@ class DriverApiController extends Controller
             })
             ->latest()
             ->get();
+
+        // Filter direct assignments by country and maximum radius
+        $assignments = $assignments->filter(function($a) use ($driverCountry, $driverLat, $driverLng, $maxRadiusKm) {
+            if ($a->ride) {
+                $rCountry = strtoupper($a->ride->driver_country ?? $a->ride->country ?? '');
+                if ($rCountry && $rCountry !== $driverCountry) {
+                    return false;
+                }
+                if ($driverLat && $driverLng && $a->ride->pickup_lat && $a->ride->pickup_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$driverLat, (float)$driverLng,
+                        (float)$a->ride->pickup_lat, (float)$a->ride->pickup_lng
+                    );
+                    if ($dist > $maxRadiusKm) return false;
+                }
+            }
+            if ($a->packageDelivery) {
+                if ($driverLat && $driverLng && $a->packageDelivery->pickup_lat && $a->packageDelivery->pickup_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$driverLat, (float)$driverLng,
+                        (float)$a->packageDelivery->pickup_lat, (float)$a->packageDelivery->pickup_lng
+                    );
+                    if ($dist > $maxRadiusKm) return false;
+                }
+            }
+            return true;
+        });
 
         foreach ($assignments as $a) {
             if ($a->ride && $a->ride->status === 'pending') {
@@ -906,7 +935,11 @@ class DriverApiController extends Controller
             ->where(function($q) use ($driverCountry) {
                 $q->where('driver_country', $driverCountry);
                 if ($driverCountry === 'IND') {
-                    $q->orWhereNull('driver_country');
+                    $q->orWhere(function($sub) {
+                        $sub->whereNull('driver_country')
+                            ->whereBetween('pickup_lat', [6.0, 38.0])
+                            ->whereBetween('pickup_lng', [68.0, 98.0]);
+                    });
                 }
             })
             ->whereNotIn('id', array_unique(array_merge($processedRideIds, $rejectedRideIds)))
@@ -915,15 +948,15 @@ class DriverApiController extends Controller
             ->get();
 
         if ($driverLat && $driverLng) {
-            $openPendingRides = $openPendingRides->filter(function($pr) use ($driverLat, $driverLng) {
+            $openPendingRides = $openPendingRides->filter(function($pr) use ($driverLat, $driverLng, $maxRadiusKm) {
                 if ($pr->pickup_lat && $pr->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
                         (float)$driverLat, (float)$driverLng,
                         (float)$pr->pickup_lat, (float)$pr->pickup_lng
                     );
-                    return $dist <= 150.0;
+                    return $dist <= $maxRadiusKm;
                 }
-                return true;
+                return false;
             });
         }
 
@@ -978,7 +1011,7 @@ class DriverApiController extends Controller
             ];
         }
 
-        // 3. Also populate unassigned pending package deliveries matching country
+        // 3. Also populate unassigned pending package deliveries matching country & radius
         $processedDeliveryIds = [];
         foreach ($assignments as $a) {
             if ($a->package_delivery_id) {
@@ -994,7 +1027,11 @@ class DriverApiController extends Controller
             ->where(function($q) use ($driverCurrency, $driverCountry) {
                 $q->where('currency', $driverCurrency);
                 if ($driverCountry === 'IND') {
-                    $q->orWhereNull('currency');
+                    $q->orWhere(function($sub) {
+                        $sub->whereNull('currency')
+                            ->whereBetween('pickup_lat', [6.0, 38.0])
+                            ->whereBetween('pickup_lng', [68.0, 98.0]);
+                    });
                 }
             })
             ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
@@ -1003,15 +1040,15 @@ class DriverApiController extends Controller
             ->get();
 
         if ($driverLat && $driverLng) {
-            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng) {
+            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng, $maxRadiusKm) {
                 if ($pd->pickup_lat && $pd->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
                         (float)$driverLat, (float)$driverLng,
                         (float)$pd->pickup_lat, (float)$pd->pickup_lng
                     );
-                    return $dist <= 150.0;
+                    return $dist <= $maxRadiusKm;
                 }
-                return true;
+                return false;
             });
         }
 
