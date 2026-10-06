@@ -1164,17 +1164,26 @@ class DriverApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated driver.'], 401);
         }
 
-        $assignment = null;
-
-        $assignmentId = $request->assignment_id ?? $request->input('id');
-        if ($assignmentId) {
-            $assignment = \App\Models\RideAssignment::where('id', $assignmentId)->first();
+        $userIds = [$user->id];
+        if (!empty($user->name) || !empty($user->email)) {
+            $matchingIds = \App\Models\User::where('name', $user->name)
+                ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+                ->pluck('id')
+                ->toArray();
+            $userIds = array_unique(array_merge($userIds, $matchingIds));
         }
 
-        $deliveryId = $request->delivery_id ?? $request->package_delivery_id;
+        $assignment = null;
+
+        $assignmentId = $request->input('assignment_id') ?? $request->assignment_id ?? $request->input('id') ?? $request->id;
+        if ($assignmentId) {
+            $assignment = \App\Models\RideAssignment::find($assignmentId);
+        }
+
+        $deliveryId = $request->input('delivery_id') ?? $request->delivery_id ?? $request->input('package_delivery_id') ?? $request->package_delivery_id;
         if (!$assignment && $deliveryId) {
             $assignment = \App\Models\RideAssignment::where('package_delivery_id', $deliveryId)
-                ->where('driver_id', $user->id)
+                ->whereIn('driver_id', $userIds)
                 ->first();
             if (!$assignment) {
                 $assignment = \App\Models\RideAssignment::firstOrCreate(
@@ -1184,18 +1193,38 @@ class DriverApiController extends Controller
             }
         }
 
-        if (!$assignment && $request->ride_id) {
-            $assignment = \App\Models\RideAssignment::firstOrCreate(
-                ['ride_id' => $request->ride_id, 'driver_id' => $user->id],
-                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
-            );
+        $rideId = $request->input('ride_id') ?? $request->ride_id;
+        if (!$assignment && $rideId) {
+            $assignment = \App\Models\RideAssignment::where('ride_id', $rideId)
+                ->whereIn('driver_id', $userIds)
+                ->first();
+            if (!$assignment) {
+                $assignment = \App\Models\RideAssignment::firstOrCreate(
+                    ['ride_id' => $rideId, 'driver_id' => $user->id],
+                    ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+                );
+            }
         }
 
-        if (!$assignment && $request->driver_booking_id) {
-            $assignment = \App\Models\RideAssignment::firstOrCreate(
-                ['driver_booking_id' => $request->driver_booking_id, 'driver_id' => $user->id],
-                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
-            );
+        $bookingId = $request->input('driver_booking_id') ?? $request->driver_booking_id;
+        if (!$assignment && $bookingId) {
+            $assignment = \App\Models\RideAssignment::where('driver_booking_id', $bookingId)
+                ->whereIn('driver_id', $userIds)
+                ->first();
+            if (!$assignment) {
+                $assignment = \App\Models\RideAssignment::firstOrCreate(
+                    ['driver_booking_id' => $bookingId, 'driver_id' => $user->id],
+                    ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+                );
+            }
+        }
+
+        if (!$assignment) {
+            // Find latest pending assignment for this driver
+            $assignment = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
         }
 
         if (!$assignment) {
