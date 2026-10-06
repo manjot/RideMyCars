@@ -213,7 +213,8 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                 indicatorWeight: 3,
                 labelColor: const Color(0xFFF59E0B),
                 unselectedLabelColor: const Color(0xFF94A3B8),
-                labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
                 tabs: const [
                   Tab(text: 'All'),
                   Tab(text: 'Active'),
@@ -363,20 +364,23 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3B82F6).withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.4)),
                   ),
-                  child: const Icon(Icons.vpn_key_rounded, color: Color(0xFF3B82F6), size: 22),
+                  child: const Icon(Icons.vpn_key_rounded, color: Color(0xFF3B82F6), size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -389,14 +393,11 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                               style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              date,
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          Text(
+                            date,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -469,7 +470,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '📅 $pickupDate ($pickupTime)  ➔  $returnDate',
+                          '$pickupDate ($pickupTime)  ➔  $returnDate',
                           style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11.5, fontWeight: FontWeight.w700),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -589,19 +590,22 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.person_pin_circle_rounded, color: Color(0xFF10B981), size: 22),
+                  child: const Icon(Icons.person_pin_circle_rounded, color: Color(0xFF10B981), size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -611,8 +615,12 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                             ),
                             child: const Text('CHAUFFEUR', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
                           ),
-                          const SizedBox(width: 6),
-                          Text(date, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                          Text(
+                            date,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -712,19 +720,22 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFA855F7).withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.inventory_2_rounded, color: Color(0xFFA855F7), size: 22),
+                  child: const Icon(Icons.inventory_2_rounded, color: Color(0xFFA855F7), size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -734,8 +745,12 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                             ),
                             child: const Text('DELIVERY', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
                           ),
-                          const SizedBox(width: 6),
-                          Text(date, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                          Text(
+                            date,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -847,19 +862,22 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.local_taxi_rounded, color: AppColors.primary, size: 22),
+                  child: const Icon(Icons.local_taxi_rounded, color: AppColors.primary, size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -869,8 +887,12 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                             ),
                             child: const Text('RIDE', style: TextStyle(color: Colors.black, fontSize: 9.5, fontWeight: FontWeight.w900)),
                           ),
-                          const SizedBox(width: 6),
-                          Text(date, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                          Text(
+                            date,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
