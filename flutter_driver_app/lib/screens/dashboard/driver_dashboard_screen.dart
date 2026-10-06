@@ -806,13 +806,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                             ),
                           ),
                           if (fare > 0) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              '+$bannerCurrSym${fare.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: Color(0xFFFDE047),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                '+$bannerCurrSym${fare.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: Color(0xFFFDE047),
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
