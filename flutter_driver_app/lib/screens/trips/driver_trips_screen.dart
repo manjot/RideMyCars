@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -36,56 +37,89 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
   }
 
   Future<void> _fetchTrips() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
+
     try {
       Response? res;
       try {
-        res = await _dio.get(
-          ApiConstants.rides,
-          options: Options(
-            sendTimeout: const Duration(seconds: 12),
-            receiveTimeout: const Duration(seconds: 12),
-          ),
-        );
+        res = await _dio.get('/driver/trips').timeout(const Duration(seconds: 8));
       } catch (e) {
-        debugPrint('Primary rides endpoint failed, trying fallback: $e');
+        debugPrint('Primary /driver/trips failed, trying fallback: $e');
         try {
-          res = await _dio.get(
-            '/driver/trips',
-            options: Options(
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-            ),
-          );
-        } catch (_) {}
+          res = await _dio.get('/driver/rides').timeout(const Duration(seconds: 6));
+        } catch (_) {
+          try {
+            res = await _dio.get(ApiConstants.rides).timeout(const Duration(seconds: 6));
+          } catch (_) {}
+        }
       }
 
-      if (res != null && res.statusCode == 200) {
-        final dynamic raw = res.data is Map ? (res.data['data'] ?? res.data['rides'] ?? res.data) : res.data;
+      if (res != null && res.statusCode == 200 && res.data != null) {
+        dynamic data = res.data;
+        if (data is String) {
+          try {
+            data = jsonDecode(data);
+          } catch (_) {}
+        }
+
+        final dynamic raw = data is Map ? (data['data'] ?? data['rides'] ?? data['items'] ?? data) : data;
         List rawList = [];
         if (raw is Map && raw['data'] is List) {
           rawList = raw['data'];
         } else if (raw is List) {
           rawList = raw;
         }
-        setState(() {
-          _trips = rawList.map((e) => Map<String, dynamic>.from(e)).toList();
-        });
-      } else {
-        if (_trips.isEmpty) {
-          _errorMessage = 'Unable to load trips at this time.';
+
+        final List<Map<String, dynamic>> mapped = [];
+        for (final item in rawList) {
+          if (item is Map) {
+            mapped.add(Map<String, dynamic>.from(item));
+          }
         }
+
+        // Also merge any currently active ride from DriverProvider
+        try {
+          final driverProvider = Provider.of<DriverProvider>(context, listen: false);
+          for (final ar in driverProvider.activeRides) {
+            if (!mapped.any((m) => m['id']?.toString() == ar['id']?.toString())) {
+              mapped.insert(0, Map<String, dynamic>.from(ar));
+            }
+          }
+        } catch (_) {}
+
+        if (mounted) {
+          setState(() {
+            _trips = mapped;
+            _errorMessage = null;
+          });
+        }
+      } else {
+        // If API returned without 200 or empty, check active rides fallback
+        try {
+          final driverProvider = Provider.of<DriverProvider>(context, listen: false);
+          if (driverProvider.activeRides.isNotEmpty && mounted) {
+            setState(() {
+              _trips = List<Map<String, dynamic>>.from(driverProvider.activeRides);
+              _errorMessage = null;
+            });
+          }
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('Error fetching driver trips: $e');
-      if (_trips.isEmpty) {
-        _errorMessage = 'Network connection issue. Pull down to refresh.';
+      if (_trips.isEmpty && mounted) {
+        setState(() {
+          _errorMessage = 'Unable to connect to server. Pull down to refresh.';
+        });
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
