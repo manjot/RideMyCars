@@ -16,6 +16,7 @@ import '../safety/sos_contacts_screen.dart';
 import '../safety/widgets/sos_floating_button.dart';
 import '../trip/active_trip_screen.dart';
 import '../trips/driver_trips_screen.dart';
+import '../../core/services/sound_service.dart';
 import 'incoming_job_dialog.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
