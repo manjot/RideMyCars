@@ -10,6 +10,50 @@ class TokenStorage {
   static const _userEmailKey = 'user_email';
   static const _savedPasswordKey = 'saved_password';
   static const _avatarUrlKey = 'avatar_url';
+  static const _countryCodeKey = 'selected_country_code';
+  static const _countryNameKey = 'selected_country_name';
+  static const _currencyCodeKey = 'selected_currency_code';
+  static const _currencySymbolKey = 'selected_currency_symbol';
+  static const _isCountryManualKey = 'is_country_manual';
+
+  static Future<void> saveCountryPreference({
+    required String code,
+    required String name,
+    required String currencyCode,
+    required String currencySymbol,
+    bool isManual = true,
+  }) async {
+    await _storage.write(key: _countryCodeKey, value: code.toUpperCase());
+    await _storage.write(key: _countryNameKey, value: name);
+    await _storage.write(key: _currencyCodeKey, value: currencyCode.toUpperCase());
+    await _storage.write(key: _currencySymbolKey, value: currencySymbol);
+    await _storage.write(key: _isCountryManualKey, value: isManual ? 'true' : 'false');
+  }
+
+  static Future<String?> getSelectedCountryCode() async {
+    return await _storage.read(key: _countryCodeKey);
+  }
+
+  static Future<String?> getSelectedCountryName() async {
+    return await _storage.read(key: _countryNameKey);
+  }
+
+  static Future<String?> getCurrencyCode() async {
+    return await _storage.read(key: _currencyCodeKey);
+  }
+
+  static Future<String?> getCurrencySymbol() async {
+    return await _storage.read(key: _currencySymbolKey);
+  }
+
+  static Future<bool> isCountryManual() async {
+    final val = await _storage.read(key: _isCountryManualKey);
+    return val == 'true';
+  }
+
+  static Future<void> setCountryManual(bool isManual) async {
+    await _storage.write(key: _isCountryManualKey, value: isManual ? 'true' : 'false');
+  }
 
   static Future<void> saveToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
@@ -73,11 +117,26 @@ class TokenStorage {
   static Future<void> clear() async {
     try {
       final email = await getUserEmail();
+      final countryCode = await getSelectedCountryCode();
+      final countryName = await getSelectedCountryName();
+      final currCode = await getCurrencyCode();
+      final currSym = await getCurrencySymbol();
+      final isManual = await isCountryManual();
+
       // Completely clear auth token, saved password, roles, etc.
       await _storage.deleteAll();
       // Keep only remembered email for login convenience (never the password!)
       if (email != null && email.isNotEmpty) {
         await _storage.write(key: _userEmailKey, value: email);
+      }
+      if (countryCode != null) {
+        await saveCountryPreference(
+          code: countryCode,
+          name: countryName ?? 'United States',
+          currencyCode: currCode ?? 'USD',
+          currencySymbol: currSym ?? '\$',
+          isManual: isManual,
+        );
       }
     } catch (_) {}
   }

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/country_provider.dart';
 import '../../providers/driver_provider.dart';
 
 class DriverTripsScreen extends StatefulWidget {
@@ -246,6 +247,8 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
       itemBuilder: (context, index) {
         final t = trips[index];
         final fare = double.tryParse((t['fare'] ?? t['total_amount'] ?? '0').toString()) ?? 0.0;
+        final countryProv = Provider.of<CountryProvider>(context, listen: false);
+        final currSym = (t['currency_symbol'] ?? countryProv.currencySymbol).toString();
         final rawStatus = (t['status'] ?? 'completed').toString().toLowerCase();
         final isCompleted = rawStatus == 'completed' || rawStatus == 'paid' || rawStatus == 'finished';
         final isCancelled = rawStatus == 'cancelled';
@@ -345,7 +348,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          fare > 0 ? '+\$${fare.toStringAsFixed(2)}' : '\$0.00',
+                          fare > 0 ? '+$currSym${fare.toStringAsFixed(2)}' : '$currSym 0.00',
                           style: TextStyle(
                             color: isCancelled ? AppColors.textMuted : AppColors.success,
                             fontWeight: FontWeight.w900,

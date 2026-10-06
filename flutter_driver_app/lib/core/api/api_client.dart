@@ -55,6 +55,11 @@ class ApiClient {
           if (email != null && email.isNotEmpty) {
             options.headers['X-Driver-Email'] = email;
           }
+          final countryCode = await TokenStorage.getSelectedCountryCode();
+          if (countryCode != null && countryCode.isNotEmpty) {
+            options.headers['X-Country'] = countryCode;
+            options.headers['X-Country-Code'] = countryCode;
+          }
           if (!options.headers.containsKey('User-Agent') || options.headers['User-Agent'] == null) {
             options.headers['User-Agent'] = _defaultUserAgent;
           }

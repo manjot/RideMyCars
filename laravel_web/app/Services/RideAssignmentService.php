@@ -141,9 +141,16 @@ class RideAssignmentService
             }
         }
 
-        // Fallback to nearest driver overall if none within fixed radius steps
+        // Fallback to nearest driver if within reasonable proximity (100km) or same operating country
         if (!$chosenDriver) {
-            $chosenDriver = $driversWithDistance->first();
+            $rideCountry = strtoupper($ride->driver_country ?? $ride->country ?? '');
+            $nearest = $driversWithDistance->first();
+            if ($nearest) {
+                $driverCountry = strtoupper($nearest->country ?? '');
+                if ($nearest->distance_km <= 100 || ($rideCountry && $driverCountry === $rideCountry)) {
+                    $chosenDriver = $nearest;
+                }
+            }
         }
 
         if (!$chosenDriver) {

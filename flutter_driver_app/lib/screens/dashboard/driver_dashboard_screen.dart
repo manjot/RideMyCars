@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/country_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../account/manage_account_screen.dart';
@@ -71,6 +72,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final country = Provider.of<CountryProvider>(context, listen: false);
+      country.autoDetectCountry();
       final driver = Provider.of<DriverProvider>(context, listen: false);
       driver.init();
       Provider.of<NotificationProvider>(context, listen: false).startPolling();
@@ -184,11 +187,87 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     }
   }
 
+  void _showCountrySelector(CountryProvider countryProv) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        top: false,
+        bottom: true,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).padding.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Select Currency & Country',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white60, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: CountryProvider.supportedCountries.length,
+                  itemBuilder: (_, idx) {
+                    final item = CountryProvider.supportedCountries[idx];
+                    final isSelected = item.code == countryProv.selectedCountryCode;
+                    return ListTile(
+                      leading: Text(item.flag, style: const TextStyle(fontSize: 24)),
+                      title: Text(item.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5)),
+                      subtitle: Text('${item.currency} (${item.symbol})', style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle_rounded, color: Color(0xFF3B82F6), size: 22)
+                          : null,
+                      onTap: () async {
+                        final code = item.code;
+                        Navigator.pop(ctx);
+                        final driver = Provider.of<DriverProvider>(context, listen: false);
+                        await countryProv.setCountry(code);
+                        await driver.fetchEarnings();
+                        await driver.fetchActiveRides();
+                        await driver.pollPendingRequests();
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final driver = Provider.of<DriverProvider>(context);
     final notifs = Provider.of<NotificationProvider>(context);
+    final countryProv = Provider.of<CountryProvider>(context);
 
     // Watch for incoming jobs
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkIncomingJobs(driver));
@@ -245,6 +324,38 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           ],
         ),
         actions: [
+          // Country & Currency Selector Pill (Matches Rider App UI: 🇮🇳 IND ₹ ▾)
+          GestureDetector(
+            onTap: () => _showCountrySelector(countryProv),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              margin: const EdgeInsets.symmetric(vertical: 9),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceDark,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${countryProv.flag} ${countryProv.selectedCountryCode} ${countryProv.currencySymbol}',
+                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_drop_down_rounded, color: AppColors.primary, size: 18),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           // Notification Bell with Badge
           Stack(
             alignment: Alignment.center,
@@ -525,11 +636,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildEarningTile('TODAY', '\$${(driver.earnings['today'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.success),
+                    child: _buildEarningTile('TODAY', '${countryProv.currencySymbol}${(driver.earnings['today'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.success),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildEarningTile('THIS WEEK', '\$${(driver.earnings['week'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.info),
+                    child: _buildEarningTile('THIS WEEK', '${countryProv.currencySymbol}${(driver.earnings['week'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.info),
                   ),
                 ],
               ),
@@ -537,7 +648,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildEarningTile('THIS MONTH', '\$${(driver.earnings['month'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.purple),
+                    child: _buildEarningTile('THIS MONTH', '${countryProv.currencySymbol}${(driver.earnings['month'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.purple),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -626,6 +737,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final firstJob = hasRequests ? driver.pendingRequests.first : null;
     final rawFare = firstJob?['fare'] ?? firstJob?['total_price'] ?? 0.0;
     final fare = double.tryParse(rawFare.toString()) ?? 0.0;
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final bannerCurrSym = (firstJob?['currency_symbol'] ?? countryProv.currencySymbol).toString();
     final pickup = (firstJob?['pickup_location'] ?? 'Pickup available').toString();
     final count = driver.pendingRequests.length;
     final bannerTitle = count == 1 ? '1 INCOMING ORDER' : '$count INCOMING ORDERS';
@@ -695,7 +808,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                           if (fare > 0) ...[
                             const SizedBox(width: 8),
                             Text(
-                              '+\$${fare.toStringAsFixed(2)}',
+                              '+$bannerCurrSym${fare.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 color: Color(0xFFFDE047),
                                 fontWeight: FontWeight.w900,
@@ -743,7 +856,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
-  Future<void> _confirmEndTrip(BuildContext context, int rideId, double fare, DriverProvider driver) async {
+  Future<void> _confirmEndTrip(BuildContext context, int rideId, double fare, DriverProvider driver, {String currencySymbol = '\$'}) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -757,7 +870,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           ],
         ),
         content: Text(
-          'Are you sure you want to end this trip and collect the fare of \$${fare.toStringAsFixed(2)}?',
+          'Are you sure you want to end this trip and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?',
           style: const TextStyle(color: AppColors.textLight, fontSize: 14),
         ),
         actions: [
@@ -1157,6 +1270,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   Widget _buildActiveRideCard(BuildContext context, Map<String, dynamic> ride, DriverProvider driver) {
     final fare = ride['fare'] != null ? double.tryParse(ride['fare'].toString()) ?? 0.0 : 0.0;
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final currSym = (ride['currency_symbol'] ?? countryProv.currencySymbol).toString();
     final rawStatus = (ride['status'] ?? 'accepted').toString();
     final status = rawStatus.replaceAll('_', ' ').toUpperCase();
     final riderName = (ride['rider_name'] ?? ride['rider']?['name'] ?? ride['passenger_name'] ?? 'Passenger').toString();
@@ -1212,7 +1327,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ],
                 ),
                 Text(
-                  '\$${fare.toStringAsFixed(2)}',
+                  '$currSym${fare.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontWeight: FontWeight.w900,
@@ -1329,7 +1444,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               SizedBox(
                 height: 46,
                 child: ElevatedButton.icon(
-                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
+                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,
@@ -1366,7 +1481,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
+                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.success,
                           foregroundColor: Colors.white,
@@ -1406,7 +1521,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
+                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.success,
                           foregroundColor: Colors.white,
@@ -1423,7 +1538,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver),
+                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,
@@ -1492,6 +1607,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final dropoff = item['dropoff'] ?? 'N/A';
     final schedule = item['schedule'] ?? 'Immediate';
     final vehicle = item['vehicle'] ?? 'Standard';
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final currSym = (item['currency_symbol'] ?? countryProv.currencySymbol).toString();
 
     Color typeColor = Colors.amber;
     if (type == 'driver_booking') {
@@ -1565,7 +1682,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${amount.toStringAsFixed(2)} $currency',
+                      '$currSym${amount.toStringAsFixed(2)} $currency',
                       style: const TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.w900,
@@ -1757,6 +1874,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   Widget _buildAvailableJobCard(BuildContext context, Map<String, dynamic> job, DriverProvider driver) {
     final fare = double.tryParse((job['fare'] ?? job['total_price'] ?? '0').toString()) ?? 0.0;
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final currSym = (job['currency_symbol'] ?? countryProv.currencySymbol).toString();
     final pickup = job['pickup_location'] ?? 'Pickup location';
     final dropoff = job['dropoff_location'] ?? 'Destination';
     final customerName = (job['customer_name'] ?? job['rider_name'] ?? job['client_name'] ?? 'Customer').toString();
@@ -1847,7 +1966,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ),
                 ),
                 Text(
-                  '\$${fare.toStringAsFixed(2)}',
+                  '$currSym${fare.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontSize: 22,
@@ -2133,7 +2252,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     ),
                     icon: Icon(isBackup ? Icons.shield_rounded : Icons.check_circle_rounded, size: 18),
                     label: Text(
-                      isBackup ? 'Reserve as Backup (\$${fare.toStringAsFixed(2)})' : 'Accept & Earn \$${fare.toStringAsFixed(2)}',
+                      isBackup ? 'Reserve as Backup ($currSym${fare.toStringAsFixed(2)})' : 'Accept & Earn $currSym${fare.toStringAsFixed(2)}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),

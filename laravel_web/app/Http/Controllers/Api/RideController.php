@@ -96,6 +96,9 @@ class RideController extends Controller
                 $cleanVehicleType = preg_replace('/^DELIVERY_/', '', $rawVehicleType);
             }
 
+            $rCountry = $r->driver_country ?? $r->country ?? 'IND';
+            $rPricing = CountryPricing::forCountry($rCountry);
+
             $items[] = [
                 'id' => $r->id,
                 'type' => $type,
@@ -109,6 +112,9 @@ class RideController extends Controller
                 'fare' => (float)($r->total_amount ?? $r->fare ?? 0),
                 'paid_amount' => (float)($r->paid_amount ?? 0),
                 'remaining_balance' => (float)($r->remaining_balance ?? 0),
+                'currency_symbol' => $rPricing->currency_symbol,
+                'currency_code' => $rPricing->currency_code,
+                'country' => $rPricing->country_code,
                 'payment_status' => $r->payment_status ?? ($r->status === 'completed' ? 'paid' : 'pending'),
                 'pickup_location' => $r->pickup_location,
                 'dropoff_location' => $r->dropoff_location,
@@ -145,6 +151,8 @@ class RideController extends Controller
         }
 
         foreach ($driverBookings as $db) {
+            $dbCountry = $db->country ?? 'IND';
+            $dbPricing = CountryPricing::forCountry($dbCountry);
             $cleanName = $db->driver ? $db->driver->name : ($db->car_make_model ?? 'Executive Chauffeur');
             $items[] = [
                 'id' => $db->id,
@@ -155,6 +163,9 @@ class RideController extends Controller
                 'receipt_url' => $db->receipt ? $db->receipt->view_url : ($db->receipt_id ? url('/receipts/' . $db->receipt_id) : null),
                 'receipt_download_url' => $db->receipt ? $db->receipt->download_url : ($db->receipt_id ? url('/receipts/' . $db->receipt_id . '/download') : null),
                 'fare' => (float)($db->total_price ?? 0),
+                'currency_symbol' => $dbPricing->currency_symbol,
+                'currency_code' => $dbPricing->currency_code,
+                'country' => $dbPricing->country_code,
                 'pickup_location' => $db->pickup_location,
                 'dropoff_location' => $db->dropoff_location ?? 'As Directed',
                 'vehicle_type' => 'Chauffeur: ' . $cleanName,
@@ -174,6 +185,8 @@ class RideController extends Controller
         }
 
         foreach ($deliveries as $del) {
+            $delCountry = $del->country ?? 'IND';
+            $delPricing = CountryPricing::forCountry($delCountry);
             $items[] = [
                 'id' => $del->id,
                 'type' => 'delivery',
@@ -183,6 +196,9 @@ class RideController extends Controller
                 'receipt_url' => $del->receipt ? $del->receipt->view_url : ($del->receipt_id ? url('/receipts/' . $del->receipt_id) : null),
                 'receipt_download_url' => $del->receipt ? $del->receipt->download_url : ($del->receipt_id ? url('/receipts/' . $del->receipt_id . '/download') : null),
                 'fare' => (float)($del->total_price ?? 0),
+                'currency_symbol' => $delPricing->currency_symbol,
+                'currency_code' => $delPricing->currency_code,
+                'country' => $delPricing->country_code,
                 'pickup_location' => $del->pickup_location,
                 'dropoff_location' => $del->dropoff_location,
                 'vehicle_type' => ($del->package_category ?: 'Parcel') . ' (' . ($del->delivery_type ?: 'Standard') . ')',
@@ -477,6 +493,8 @@ class RideController extends Controller
             'duration_minutes' => $durationMin,
             'fare' => $amount,
             'total_amount' => $amount,
+            'country' => $country,
+            'driver_country' => $country,
             'vehicle_type' => $vehicleType,
             'payment_method' => $request->input('payment_method', 'stripe'),
             'passenger_name' => $user->name,
@@ -677,6 +695,8 @@ class RideController extends Controller
             ];
         }
 
+        $activePricing = CountryPricing::forCountry($ride->driver_country ?? $ride->country ?? 'IND');
+
         return response()->json([
             'success' => true,
             'ride' => [
@@ -690,6 +710,9 @@ class RideController extends Controller
                 'dropoff_lat' => $ride->dropoff_lat ? floatval($ride->dropoff_lat) : null,
                 'dropoff_lng' => $ride->dropoff_lng ? floatval($ride->dropoff_lng) : null,
                 'fare' => floatval($ride->fare ?: $ride->total_amount),
+                'currency_symbol' => $activePricing->currency_symbol,
+                'currency_code' => $activePricing->currency_code,
+                'country' => $activePricing->country_code,
                 'vehicle_type' => $ride->vehicle_type ?? 'Standard',
                 'payment_method' => $ride->payment_method ?? 'stripe',
                 'distance_km' => $ride->distance_km ? floatval($ride->distance_km) : null,

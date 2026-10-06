@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/sound_service.dart';
+import '../../providers/country_provider.dart';
 
 class IncomingJobDialog extends StatefulWidget {
   final Map<String, dynamic> request;
@@ -96,6 +98,8 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
 
     final rawFare = request['fare'] ?? request['total_price'] ?? ride?['fare'] ?? ride?['total_amount'] ?? booking?['total_price'] ?? 0.0;
     final fare = double.tryParse(rawFare.toString()) ?? 0.0;
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final currSym = (request['currency_symbol'] ?? ride?['currency_symbol'] ?? booking?['currency_symbol'] ?? countryProv.currencySymbol).toString();
 
     final type = request['type']?.toString();
     final isChauffeur = type == 'driver_booking' || (request['ride_id'] == null && (request['driver_booking_id'] != null || booking != null));
@@ -403,7 +407,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${fare.toStringAsFixed(2)}',
+                    '$currSym${fare.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.success,
                       fontSize: 32,

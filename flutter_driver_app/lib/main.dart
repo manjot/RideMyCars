@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'providers/auth_provider.dart';
+import 'providers/country_provider.dart';
 import 'providers/driver_provider.dart';
 import 'providers/notification_provider.dart';
 import 'screens/splash_screen.dart';
@@ -24,6 +25,7 @@ class RideMyCarsDriverApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => CountryProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DriverProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),

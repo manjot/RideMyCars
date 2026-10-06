@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/country_provider.dart';
 import 'auth/driver_login_screen.dart';
 import 'dashboard/driver_dashboard_screen.dart';
 
@@ -32,7 +33,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _initApp() async {
-    await Future.delayed(const Duration(milliseconds: 1200));
+    // Detect country from device location, SIM, or IP address
+    final country = Provider.of<CountryProvider>(context, listen: false);
+    try {
+      await country.autoDetectCountry();
+    } catch (e) {
+      debugPrint('Country detection error on driver splash: $e');
+    }
+
+    await Future.delayed(const Duration(milliseconds: 1000));
     if (!mounted) return;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);

@@ -733,6 +733,28 @@ class DriverApiController extends Controller
         $requests = [];
         $processedRideIds = [];
 
+        // Determine driver operating country & coordinates
+        $driverCountry = $request->header('X-Country-Code') 
+            ?? $request->header('X-Country') 
+            ?? $request->input('country') 
+            ?? $user->driverProfile?->country;
+
+        $driverLat = $request->input('lat') ?? $request->input('latitude') ?? $user->driverProfile?->current_lat;
+        $driverLng = $request->input('lng') ?? $request->input('longitude') ?? $user->driverProfile?->current_lng;
+
+        if (!$driverCountry && $driverLat && $driverLng) {
+            $dLat = (float)$driverLat;
+            $dLng = (float)$driverLng;
+            if ($dLat >= 6.0 && $dLat <= 38.0 && $dLng >= 68.0 && $dLng <= 98.0) {
+                $driverCountry = 'IND';
+            }
+        }
+        if (!$driverCountry) {
+            $driverCountry = CountryService::getCurrentCountryCode($request) ?: 'IND';
+        }
+        $driverCountry = strtoupper(trim($driverCountry));
+        $driverPricing = \App\Models\CountryPricing::forCountry($driverCountry);
+
         $rejectedRideIds = \App\Models\RideAssignment::where('driver_id', $user->id)
             ->where('status', 'rejected')
             ->whereNotNull('ride_id')
@@ -770,6 +792,7 @@ class DriverApiController extends Controller
             if ($a->ride && $a->ride->status === 'pending') {
                 $processedRideIds[] = $a->ride->id;
 
+                $rPricing = \App\Models\CountryPricing::forCountry($a->ride->driver_country ?? $a->ride->country ?? $driverCountry);
                 $customerName = $a->ride->rider?->name ?? 'Customer';
                 $customerPhone = $a->ride->rider?->phone;
                 $pocName = $a->ride->passenger_name;
@@ -787,6 +810,10 @@ class DriverApiController extends Controller
                     'dropoff_lat' => $a->ride->dropoff_lat,
                     'dropoff_lng' => $a->ride->dropoff_lng,
                     'fare' => floatval($a->ride->fare ?: $a->ride->total_amount),
+                    'total_price' => floatval($a->ride->fare ?: $a->ride->total_amount),
+                    'currency_symbol' => $rPricing->currency_symbol,
+                    'currency_code' => $rPricing->currency_code,
+                    'country' => $rPricing->country_code,
                     'vehicle_type' => $a->ride->vehicle_type ?? 'Standard',
                     'customer_name' => $customerName,
                     'customer_phone' => $customerPhone,
@@ -807,6 +834,7 @@ class DriverApiController extends Controller
                     'pickup_time' => $a->ride->pickup_time ?? null,
                 ];
             } elseif ($a->driverBooking && $a->driverBooking->booking_status === 'pending') {
+                $bPricing = \App\Models\CountryPricing::forCountry($a->driverBooking->country ?? $driverCountry);
                 $clientName = $a->driverBooking->client?->name ?? 'Client';
                 $clientPhone = $a->driverBooking->client?->phone;
 
@@ -814,11 +842,17 @@ class DriverApiController extends Controller
                     'assignment_id' => $a->id,
                     'type' => 'driver_booking',
                     'booking_id' => $a->driverBooking->id,
+                    'driver_booking_id' => $a->driverBooking->id,
                     'pickup_location' => $a->driverBooking->pickup_location,
+                    'dropoff_location' => $a->driverBooking->dropoff_location ?? 'As Directed',
                     'service_category' => $a->driverBooking->service_category,
                     'duration_type' => $a->driverBooking->duration_type,
                     'duration_count' => $a->driverBooking->duration_count,
                     'total_price' => floatval($a->driverBooking->total_price),
+                    'fare' => floatval($a->driverBooking->total_price),
+                    'currency_symbol' => $bPricing->currency_symbol,
+                    'currency_code' => $bPricing->currency_code,
+                    'country' => $bPricing->country_code,
                     'customer_name' => $clientName,
                     'customer_phone' => $clientPhone,
                     'client_name' => $clientName,
@@ -829,6 +863,7 @@ class DriverApiController extends Controller
                     'expires_at' => $a->expires_at->toIso8601String(),
                 ];
             } elseif ($a->packageDelivery && $a->packageDelivery->delivery_status === 'pending') {
+                $pPricing = \App\Models\CountryPricing::forCountry($a->packageDelivery->country ?? $driverCountry);
                 $custName = $a->packageDelivery->customer?->name ?? $a->packageDelivery->sender_name ?? 'Sender';
                 $custPhone = $a->packageDelivery->customer?->phone ?? $a->packageDelivery->sender_phone;
                 $pocName = $a->packageDelivery->recipient_name;
@@ -838,10 +873,14 @@ class DriverApiController extends Controller
                     'assignment_id' => $a->id,
                     'type' => 'package_delivery',
                     'delivery_id' => $a->packageDelivery->id,
+                    'package_delivery_id' => $a->packageDelivery->id,
                     'pickup_location' => $a->packageDelivery->pickup_location,
                     'dropoff_location' => $a->packageDelivery->dropoff_location,
                     'total_price' => floatval($a->packageDelivery->total_price),
                     'fare' => floatval($a->packageDelivery->total_price),
+                    'currency_symbol' => $pPricing->currency_symbol,
+                    'currency_code' => $pPricing->currency_code,
+                    'country' => $pPricing->country_code,
                     'customer_name' => $custName,
                     'customer_phone' => $custPhone,
                     'poc_name' => $pocName,
@@ -853,7 +892,7 @@ class DriverApiController extends Controller
             }
         }
 
-        // 2. Also populate all available pending unassigned rides in the system
+        // 2. Also populate available pending unassigned rides in driver's country & vicinity
         $openPendingRides = \App\Models\Ride::with('rider')
             ->where('status', 'pending')
             ->whereNull('driver_id')
@@ -864,10 +903,30 @@ class DriverApiController extends Controller
                   ->orWhere('payment_status', 'pending')
                   ->orWhere('payment_status', 'pending_cash');
             })
+            ->where(function($q) use ($driverCountry) {
+                $q->where('driver_country', $driverCountry)
+                  ->orWhere('country', $driverCountry);
+                if ($driverCountry === 'IND') {
+                    $q->orWhereNull('driver_country');
+                }
+            })
             ->whereNotIn('id', array_unique(array_merge($processedRideIds, $rejectedRideIds)))
             ->latest()
             ->take(15)
             ->get();
+
+        if ($driverLat && $driverLng) {
+            $openPendingRides = $openPendingRides->filter(function($pr) use ($driverLat, $driverLng) {
+                if ($pr->pickup_lat && $pr->pickup_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$driverLat, (float)$driverLng,
+                        (float)$pr->pickup_lat, (float)$pr->pickup_lng
+                    );
+                    return $dist <= 150.0;
+                }
+                return true;
+            });
+        }
 
         foreach ($openPendingRides as $pr) {
             $assignment = \App\Models\RideAssignment::firstOrCreate(
@@ -879,6 +938,7 @@ class DriverApiController extends Controller
                 continue;
             }
 
+            $prPricing = \App\Models\CountryPricing::forCountry($pr->driver_country ?? $pr->country ?? $driverCountry);
             $customerName = $pr->rider?->name ?? 'Customer';
             $customerPhone = $pr->rider?->phone;
             $pocName = $pr->passenger_name;
@@ -896,6 +956,10 @@ class DriverApiController extends Controller
                 'dropoff_lat' => $pr->dropoff_lat,
                 'dropoff_lng' => $pr->dropoff_lng,
                 'fare' => floatval($pr->fare ?: $pr->total_amount),
+                'total_price' => floatval($pr->fare ?: $pr->total_amount),
+                'currency_symbol' => $prPricing->currency_symbol,
+                'currency_code' => $prPricing->currency_code,
+                'country' => $prPricing->country_code,
                 'vehicle_type' => $pr->vehicle_type ?? 'Standard',
                 'customer_name' => $customerName,
                 'customer_phone' => $customerPhone,
@@ -915,7 +979,7 @@ class DriverApiController extends Controller
             ];
         }
 
-        // 3. Also populate unassigned pending package deliveries in the system
+        // 3. Also populate unassigned pending package deliveries matching country
         $processedDeliveryIds = [];
         foreach ($assignments as $a) {
             if ($a->package_delivery_id) {
@@ -926,6 +990,12 @@ class DriverApiController extends Controller
         $openPendingDeliveries = \App\Models\PackageDelivery::with('customer')
             ->whereIn('delivery_status', ['pending', 'created', 'searching'])
             ->whereNull('courier_id')
+            ->where(function($q) use ($driverCountry) {
+                $q->where('country', $driverCountry);
+                if ($driverCountry === 'IND') {
+                    $q->orWhereNull('country');
+                }
+            })
             ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
             ->latest()
             ->take(10)
@@ -941,6 +1011,7 @@ class DriverApiController extends Controller
                 continue;
             }
 
+            $pdPricing = \App\Models\CountryPricing::forCountry($pd->country ?? $driverCountry);
             $custName = $pd->customer?->name ?? $pd->sender_name ?? 'Sender';
             $custPhone = $pd->customer?->phone ?? $pd->sender_phone;
             $pocName = $pd->recipient_name;
@@ -955,6 +1026,9 @@ class DriverApiController extends Controller
                 'dropoff_location' => $pd->dropoff_location,
                 'total_price' => floatval($pd->total_price),
                 'fare' => floatval($pd->total_price),
+                'currency_symbol' => $pdPricing->currency_symbol,
+                'currency_code' => $pdPricing->currency_code,
+                'country' => $pdPricing->country_code,
                 'customer_name' => $custName,
                 'customer_phone' => $custPhone,
                 'poc_name' => $pocName,
@@ -965,7 +1039,7 @@ class DriverApiController extends Controller
             ];
         }
 
-        return response()->json(['success' => true, 'requests' => $requests]);
+        return response()->json(['success' => true, 'requests' => $requests, 'data' => $requests]);
     }
 
     /**
@@ -1220,6 +1294,7 @@ class DriverApiController extends Controller
         }
 
         foreach ($rides as $r) {
+            $rPricing = \App\Models\CountryPricing::forCountry($r->driver_country ?? $r->country ?? 'IND');
             $custName = $r->rider?->name ?? $r->passenger_name ?? 'Rider';
             $custPhone = $r->rider?->phone ?? $r->passenger_phone;
             $pocName = $r->poc_name;
@@ -1238,6 +1313,9 @@ class DriverApiController extends Controller
                 'dropoff_lng' => $r->dropoff_lng ? floatval($r->dropoff_lng) : null,
                 'fare' => floatval($r->fare ?: $r->total_amount),
                 'total_price' => floatval($r->fare ?: $r->total_amount),
+                'currency_symbol' => $rPricing->currency_symbol,
+                'currency_code' => $rPricing->currency_code,
+                'country' => $rPricing->country_code,
                 'customer_name' => $custName,
                 'customer_phone' => $custPhone,
                 'rider_name' => $custName,
@@ -1266,6 +1344,7 @@ class DriverApiController extends Controller
             ->get();
 
         foreach ($deliveries as $del) {
+            $delPricing = \App\Models\CountryPricing::forCountry($del->country ?? 'IND');
             $custName = $del->sender_name ?: ($del->customer?->name ?? 'Sender');
             $custPhone = $del->sender_phone ?: $del->customer?->phone;
             $status = in_array($del->delivery_status, ['courier_assigned', 'accepted']) ? 'accepted' : 'in_progress';
@@ -1284,6 +1363,9 @@ class DriverApiController extends Controller
                 'dropoff_lng' => $del->dropoff_lng ? floatval($del->dropoff_lng) : null,
                 'fare' => floatval($del->total_price),
                 'total_price' => floatval($del->total_price),
+                'currency_symbol' => $delPricing->currency_symbol,
+                'currency_code' => $delPricing->currency_code,
+                'country' => $delPricing->country_code,
                 'customer_name' => $custName,
                 'customer_phone' => $custPhone,
                 'rider_name' => $custName,
@@ -1309,6 +1391,7 @@ class DriverApiController extends Controller
             ->get();
 
         foreach ($bookings as $bk) {
+            $bkPricing = \App\Models\CountryPricing::forCountry($bk->country ?? 'IND');
             $custName = $bk->client?->name ?? 'Client';
             $custPhone = $bk->client?->phone;
 
@@ -1326,6 +1409,9 @@ class DriverApiController extends Controller
                 'dropoff_lng' => $bk->dropoff_lng ? floatval($bk->dropoff_lng) : null,
                 'fare' => floatval($bk->total_price),
                 'total_price' => floatval($bk->total_price),
+                'currency_symbol' => $bkPricing->currency_symbol,
+                'currency_code' => $bkPricing->currency_code,
+                'country' => $bkPricing->country_code,
                 'customer_name' => $custName,
                 'customer_phone' => $custPhone,
                 'rider_name' => $custName,
@@ -1351,6 +1437,9 @@ class DriverApiController extends Controller
     public function earnings(Request $request)
     {
         $user = self::resolveUser($request);
+        $driverCountry = $request->header('X-Country-Code') ?? $request->header('X-Country') ?? $request->input('country') ?? $user?->driverProfile?->country ?? CountryService::getCurrentCountryCode($request) ?? 'IND';
+        $driverPricing = \App\Models\CountryPricing::forCountry($driverCountry);
+
         if (!$user) {
             return response()->json([
                 'success' => true,
@@ -1358,6 +1447,8 @@ class DriverApiController extends Controller
                 'week' => 0.0,
                 'month' => 0.0,
                 'total_trips' => 0,
+                'currency_symbol' => $driverPricing->currency_symbol,
+                'currency_code' => $driverPricing->currency_code,
             ]);
         }
         $completedRides = \App\Models\Ride::where('driver_id', $user->id)->where('status', 'completed');
@@ -1372,6 +1463,8 @@ class DriverApiController extends Controller
             'week' => floatval($week),
             'month' => floatval($month),
             'total_trips' => $completedRides->count(),
+            'currency_symbol' => $driverPricing->currency_symbol,
+            'currency_code' => $driverPricing->currency_code,
         ]);
     }
 }
