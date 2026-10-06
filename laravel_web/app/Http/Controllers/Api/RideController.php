@@ -848,8 +848,13 @@ class RideController extends Controller
             $userIds = array_unique(array_merge($userIds, $matchingIds));
         }
 
+        // Clean up ID prefix if any (e.g. #RIDE-8, #DEL-8, #8)
+        $rawId = trim((string)$id);
+        $cleanId = ltrim($rawId, '#');
+        $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
+
         // 1. Check Ride model
-        $ride = Ride::find($id);
+        $ride = Ride::where('id', $id)->orWhere('id', $cleanId)->orWhere('ride_code', $rawId)->first();
         if ($ride) {
             $updates = ['status' => $newStatus];
             if ($newStatus === 'en_route') $updates['en_route_at'] = now();
@@ -925,7 +930,11 @@ class RideController extends Controller
         }
 
         // 2. Check PackageDelivery model
-        $delivery = \App\Models\PackageDelivery::find($id);
+        $delivery = \App\Models\PackageDelivery::where('id', $id)
+            ->orWhere('id', $cleanId)
+            ->orWhere('delivery_code', $rawId)
+            ->orWhere('tracking_number', $rawId)
+            ->first();
         if ($delivery) {
             $delStatus = $newStatus;
             if ($newStatus === 'completed') $delStatus = 'delivered';
@@ -933,14 +942,21 @@ class RideController extends Controller
 
             $delivery->update([
                 'delivery_status' => $delStatus,
-                'courier_id' => $user ? $user->id : $delivery->courier_id,
+                'courier_id' => $user ? $user->id : ($delivery->courier_id ?: 259),
             ]);
 
             if ($newStatus === 'completed' || $newStatus === 'cancelled') {
-                if ($user && $user->driverProfile) {
-                    $user->driverProfile->update(['is_available' => true]);
-                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
-                        $user->driverProfile->increment('total_trips');
+                \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)->update(['status' => $newStatus]);
+                if ($user) {
+                    if ($user->driverProfile) {
+                        $user->driverProfile->update(['is_available' => true]);
+                        if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                            $user->driverProfile->increment('total_trips');
+                        }
+                    }
+                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
+                        $courierFareEarned = floatval($delivery->total_price) * 0.85;
+                        $user->increment('wallet_balance', $courierFareEarned);
                     }
                 }
             }
@@ -958,7 +974,10 @@ class RideController extends Controller
         }
 
         // 3. Check DriverBooking model
-        $booking = \App\Models\DriverBooking::find($id);
+        $booking = \App\Models\DriverBooking::where('id', $id)
+            ->orWhere('id', $cleanId)
+            ->orWhere('booking_reference', $rawId)
+            ->first();
         if ($booking) {
             $bookStatus = $newStatus;
             if ($newStatus === 'completed') {
@@ -967,15 +986,22 @@ class RideController extends Controller
                     'booking_status' => 'completed',
                     'payment_status' => 'paid',
                 ]);
+                \App\Models\RideAssignment::where('driver_booking_id', $booking->id)->update(['status' => 'completed']);
             } else {
                 $booking->update(['booking_status' => $bookStatus]);
             }
 
             if ($newStatus === 'completed' || $newStatus === 'cancelled') {
-                if ($user && $user->driverProfile) {
-                    $user->driverProfile->update(['is_available' => true]);
-                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
-                        $user->driverProfile->increment('total_trips');
+                if ($user) {
+                    if ($user->driverProfile) {
+                        $user->driverProfile->update(['is_available' => true]);
+                        if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                            $user->driverProfile->increment('total_trips');
+                        }
+                    }
+                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
+                        $driverFareEarned = floatval($booking->total_amount ?: $booking->estimated_cost) * 0.85;
+                        $user->increment('wallet_balance', $driverFareEarned);
                     }
                 }
             }
@@ -985,9 +1011,9 @@ class RideController extends Controller
                 'message' => "Driver booking status updated to {$newStatus}",
                 'ride' => [
                     'id' => $booking->id,
-                    'status' => $newStatus,
+                    'status' => $bookStatus,
                     'type' => 'driver_booking',
-                    'fare' => floatval($booking->total_price),
+                    'fare' => floatval($booking->total_amount ?: $booking->estimated_cost),
                 ],
             ]);
         }
