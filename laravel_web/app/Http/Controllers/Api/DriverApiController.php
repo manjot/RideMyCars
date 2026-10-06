@@ -1152,13 +1152,12 @@ class DriverApiController extends Controller
      */
     public function respondToAssignment(Request $request)
     {
-        $request->validate([
-            'assignment_id' => 'nullable|integer',
-            'ride_id' => 'nullable|integer',
-            'delivery_id' => 'nullable|integer',
-            'driver_booking_id' => 'nullable|integer',
-            'action' => 'required|in:accept,reject',
-        ]);
+        $rawAction = strtolower(trim((string)($request->input('action') ?? $request->input('status') ?? 'accept')));
+        if (in_array($rawAction, ['accept', 'accepted', 'confirm', 'approve'])) {
+            $action = 'accept';
+        } else {
+            $action = 'reject';
+        }
 
         $user = self::resolveUser($request);
         if (!$user) {
@@ -1167,20 +1166,27 @@ class DriverApiController extends Controller
 
         $assignment = null;
 
-        if ($request->assignment_id) {
-            $assignment = \App\Models\RideAssignment::where('id', $request->assignment_id)->first();
+        $assignmentId = $request->assignment_id ?? $request->input('id');
+        if ($assignmentId) {
+            $assignment = \App\Models\RideAssignment::where('id', $assignmentId)->first();
+        }
+
+        $deliveryId = $request->delivery_id ?? $request->package_delivery_id;
+        if (!$assignment && $deliveryId) {
+            $assignment = \App\Models\RideAssignment::where('package_delivery_id', $deliveryId)
+                ->where('driver_id', $user->id)
+                ->first();
+            if (!$assignment) {
+                $assignment = \App\Models\RideAssignment::firstOrCreate(
+                    ['package_delivery_id' => $deliveryId, 'driver_id' => $user->id],
+                    ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+                );
+            }
         }
 
         if (!$assignment && $request->ride_id) {
             $assignment = \App\Models\RideAssignment::firstOrCreate(
                 ['ride_id' => $request->ride_id, 'driver_id' => $user->id],
-                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
-            );
-        }
-
-        if (!$assignment && $request->delivery_id) {
-            $assignment = \App\Models\RideAssignment::firstOrCreate(
-                ['package_delivery_id' => $request->delivery_id, 'driver_id' => $user->id],
                 ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
             );
         }
@@ -1196,7 +1202,7 @@ class DriverApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Assignment not found or expired.'], 404);
         }
 
-        if ($request->action === 'accept') {
+        if ($action === 'accept') {
             if ($assignment->assignment_type === 'backup' && $assignment->ride) {
                 $reserved = \App\Services\BackupChauffeurService::reserveBackupDriver($assignment);
                 if (!$reserved) {
@@ -1207,9 +1213,9 @@ class DriverApiController extends Controller
                 }
                 return response()->json([
                     'success' => true,
+                    'status' => 'accepted',
                     'message' => 'Backup ride reserved. Customer waiting for confirmation.',
                     'is_backup' => true,
-                    'status' => 'waiting_confirmation',
                     'ride' => $assignment->ride->fresh(['rider', 'stops']),
                 ]);
             }
@@ -1257,38 +1263,43 @@ class DriverApiController extends Controller
                     'message' => 'Ride accepted successfully.',
                     'ride' => $rideData,
                 ]);
-            } elseif ($assignment->packageDelivery) {
-                $delivery = $assignment->packageDelivery;
-                $delivery->update([
-                    'courier_id' => $user->id,
-                    'courier_profile_id' => $user->driverProfile?->id,
-                    'delivery_status' => 'courier_assigned',
-                ]);
+            } elseif ($assignment->packageDelivery || $assignment->package_delivery_id) {
+                $delivery = $assignment->packageDelivery ?: \App\Models\PackageDelivery::find($assignment->package_delivery_id);
+                if ($delivery) {
+                    $delivery->update([
+                        'courier_id' => $user->id,
+                        'courier_profile_id' => $user->driverProfile?->id,
+                        'delivery_status' => 'courier_accepted',
+                    ]);
 
-                // Expire competing assignments
-                \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)
-                    ->where('id', '!=', $assignment->id)
-                    ->update(['status' => 'expired']);
+                    // Expire competing assignments
+                    \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)
+                        ->where('id', '!=', $assignment->id)
+                        ->update(['status' => 'expired']);
 
-                if ($user->driverProfile) {
-                    $user->driverProfile->update(['is_available' => false]);
-                }
+                    if ($user->driverProfile) {
+                        $user->driverProfile->update(['is_available' => false]);
+                    }
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Package delivery accepted successfully.',
-                    'delivery' => $delivery->fresh(['customer']),
-                    'ride' => [
-                        'id' => $delivery->id,
+                    return response()->json([
+                        'success' => true,
                         'status' => 'accepted',
-                        'type' => 'package_delivery',
-                        'fare' => floatval($delivery->total_price),
-                        'pickup_location' => $delivery->pickup_address,
-                        'dropoff_location' => $delivery->delivery_address,
-                        'customer_name' => $delivery->sender_name ?: ($delivery->customer?->name ?? 'Sender'),
-                        'customer_phone' => $delivery->sender_phone ?: $delivery->customer?->phone,
-                    ],
-                ]);
+                        'message' => 'Package delivery accepted successfully.',
+                        'delivery' => $delivery->fresh(['customer']),
+                        'ride' => [
+                            'id' => $delivery->id,
+                            'status' => 'accepted',
+                            'type' => 'package_delivery',
+                            'package_delivery_id' => $delivery->id,
+                            'fare' => floatval($delivery->total_price),
+                            'total_price' => floatval($delivery->total_price),
+                            'pickup_location' => $delivery->pickup_location ?: $delivery->pickup_address,
+                            'dropoff_location' => $delivery->dropoff_location ?: $delivery->delivery_address,
+                            'customer_name' => $delivery->sender_name ?: ($delivery->customer?->name ?? 'Sender'),
+                            'customer_phone' => $delivery->sender_phone ?: $delivery->customer?->phone,
+                        ],
+                    ]);
+                }
             } elseif ($assignment->driverBooking) {
                 $booking = $assignment->driverBooking;
                 $booking->update([
