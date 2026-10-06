@@ -3198,16 +3198,18 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             } catch (\Throwable $e) {}
         }
 
-        $indiaDriver = \App\Models\User::where('email', 'shachisheh@gmail.com')->first();
-        if ($indiaDriver) {
-            $pendingDeliveries = \App\Models\PackageDelivery::whereIn('delivery_status', ['pending', 'searching', 'created'])
-                ->whereNull('courier_id')
-                ->get();
-            foreach ($pendingDeliveries as $pdel) {
+        $output['driver_259'] = \App\Models\User::find(259);
+        $output['driver_22'] = \App\Models\User::find(22);
+
+        $pendingDeliveries = \App\Models\PackageDelivery::whereIn('delivery_status', ['pending', 'searching', 'created'])
+            ->whereNull('courier_id')
+            ->get();
+        foreach ($pendingDeliveries as $pdel) {
+            foreach ([259, 22, 258] as $targetDId) {
                 try {
                     \App\Models\RideAssignment::updateOrCreate(
-                        ['package_delivery_id' => $pdel->id, 'driver_id' => $indiaDriver->id],
-                        ['status' => 'pending', 'expires_at' => now()->addHours(2)]
+                        ['package_delivery_id' => $pdel->id, 'driver_id' => $targetDId],
+                        ['status' => 'pending', 'assignment_type' => 'primary', 'expires_at' => now()->addHours(2)]
                     );
                 } catch (\Throwable $e) {}
             }
