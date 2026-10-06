@@ -904,8 +904,7 @@ class DriverApiController extends Controller
                   ->orWhere('payment_status', 'pending_cash');
             })
             ->where(function($q) use ($driverCountry) {
-                $q->where('driver_country', $driverCountry)
-                  ->orWhere('country', $driverCountry);
+                $q->where('driver_country', $driverCountry);
                 if ($driverCountry === 'IND') {
                     $q->orWhereNull('driver_country');
                 }
