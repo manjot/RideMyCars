@@ -184,6 +184,16 @@ class DriverProvider extends ChangeNotifier {
     try {
       // 1. Fetch direct incoming dispatch requests (with current GPS for proximity matching)
       try {
+        if (_currentLat == null || _currentLng == null) {
+          try {
+            final lastPos = await Geolocator.getLastKnownPosition();
+            if (lastPos != null) {
+              _currentLat = lastPos.latitude;
+              _currentLng = lastPos.longitude;
+            }
+          } catch (_) {}
+        }
+
         final res = await _dio.get(
           ApiConstants.driverRequests,
           queryParameters: {

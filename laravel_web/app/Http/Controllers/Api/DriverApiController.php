@@ -791,11 +791,19 @@ class DriverApiController extends Controller
             ->get();
 
         // Filter direct assignments by country and maximum radius
-        $assignments = $assignments->filter(function($a) use ($driverCountry, $driverLat, $driverLng, $maxRadiusKm) {
+        $assignments = $assignments->filter(function($a) use ($driverCountry, $driverPricing, $driverLat, $driverLng, $maxRadiusKm) {
+            $driverCurrency = $driverPricing->currency_code ?: 'INR';
             if ($a->ride) {
                 $rCountry = strtoupper($a->ride->driver_country ?? $a->ride->country ?? '');
                 if ($rCountry && $rCountry !== $driverCountry) {
                     return false;
+                }
+                if ($driverCountry === 'IND' && $a->ride->pickup_lat && $a->ride->pickup_lng) {
+                    $pLat = (float)$a->ride->pickup_lat;
+                    $pLng = (float)$a->ride->pickup_lng;
+                    if ($pLat < 6.0 || $pLat > 38.0 || $pLng < 68.0 || $pLng > 98.0) {
+                        return false;
+                    }
                 }
                 if ($driverLat && $driverLng && $a->ride->pickup_lat && $a->ride->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
@@ -806,6 +814,25 @@ class DriverApiController extends Controller
                 }
             }
             if ($a->packageDelivery) {
+                $pdCurrency = strtoupper($a->packageDelivery->currency ?? '');
+                if ($pdCurrency && $pdCurrency !== $driverCurrency) {
+                    return false;
+                }
+                $pickupText = strtolower($a->packageDelivery->pickup_location ?? '');
+                $dropText = strtolower($a->packageDelivery->dropoff_location ?? '');
+                if ($driverCountry === 'IND') {
+                    if (str_contains($pickupText, 'ghana') || str_contains($pickupText, 'mallam') || str_contains($pickupText, 'weija') || str_contains($pickupText, 'kb lodge') ||
+                        str_contains($dropText, 'ghana') || str_contains($dropText, 'mallam') || str_contains($dropText, 'west hills') || str_contains($dropText, 'accra')) {
+                        return false;
+                    }
+                    if ($a->packageDelivery->pickup_lat && $a->packageDelivery->pickup_lng) {
+                        $pLat = (float)$a->packageDelivery->pickup_lat;
+                        $pLng = (float)$a->packageDelivery->pickup_lng;
+                        if ($pLat < 6.0 || $pLat > 38.0 || $pLng < 68.0 || $pLng > 98.0) {
+                            return false;
+                        }
+                    }
+                }
                 if ($driverLat && $driverLng && $a->packageDelivery->pickup_lat && $a->packageDelivery->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
                         (float)$driverLat, (float)$driverLng,
@@ -892,7 +919,8 @@ class DriverApiController extends Controller
                     'expires_at' => $a->expires_at->toIso8601String(),
                 ];
             } elseif ($a->packageDelivery && $a->packageDelivery->delivery_status === 'pending') {
-                $pPricing = \App\Models\CountryPricing::forCountry($a->packageDelivery->country ?? $driverCountry);
+                $pdCountry = $a->packageDelivery->currency === 'GHS' ? 'GHA' : ($a->packageDelivery->currency === 'INR' ? 'IND' : ($a->packageDelivery->country ?? $driverCountry));
+                $pPricing = \App\Models\CountryPricing::forCountry($pdCountry);
                 $custName = $a->packageDelivery->customer?->name ?? $a->packageDelivery->sender_name ?? 'Sender';
                 $custPhone = $a->packageDelivery->customer?->phone ?? $a->packageDelivery->sender_phone;
                 $pocName = $a->packageDelivery->recipient_name;
@@ -1032,6 +1060,16 @@ class DriverApiController extends Controller
                             ->whereBetween('pickup_lat', [6.0, 38.0])
                             ->whereBetween('pickup_lng', [68.0, 98.0]);
                     });
+                }
+            })
+            ->where(function($q) use ($driverCountry) {
+                if ($driverCountry === 'IND') {
+                    $q->where('pickup_location', 'not like', '%Ghana%')
+                      ->where('pickup_location', 'not like', '%mallam%')
+                      ->where('pickup_location', 'not like', '%Weija%')
+                      ->where('pickup_location', 'not like', '%KB Lodge%')
+                      ->where('dropoff_location', 'not like', '%Ghana%')
+                      ->where('dropoff_location', 'not like', '%West Hills%');
                 }
             })
             ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
