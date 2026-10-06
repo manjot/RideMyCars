@@ -986,19 +986,34 @@ class DriverApiController extends Controller
             }
         }
 
+        $driverCurrency = $driverPricing->currency_code ?: 'INR';
+
         $openPendingDeliveries = \App\Models\PackageDelivery::with('customer')
             ->whereIn('delivery_status', ['pending', 'created', 'searching'])
             ->whereNull('courier_id')
-            ->where(function($q) use ($driverCountry) {
-                $q->where('country', $driverCountry);
+            ->where(function($q) use ($driverCurrency, $driverCountry) {
+                $q->where('currency', $driverCurrency);
                 if ($driverCountry === 'IND') {
-                    $q->orWhereNull('country');
+                    $q->orWhereNull('currency');
                 }
             })
             ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
             ->latest()
             ->take(10)
             ->get();
+
+        if ($driverLat && $driverLng) {
+            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng) {
+                if ($pd->pickup_lat && $pd->pickup_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$driverLat, (float)$driverLng,
+                        (float)$pd->pickup_lat, (float)$pd->pickup_lng
+                    );
+                    return $dist <= 150.0;
+                }
+                return true;
+            });
+        }
 
         foreach ($openPendingDeliveries as $pd) {
             $assignment = \App\Models\RideAssignment::firstOrCreate(
@@ -1010,7 +1025,7 @@ class DriverApiController extends Controller
                 continue;
             }
 
-            $pdPricing = \App\Models\CountryPricing::forCountry($pd->country ?? $driverCountry);
+            $pdPricing = \App\Models\CountryPricing::forCountry($driverCountry);
             $custName = $pd->customer?->name ?? $pd->sender_name ?? 'Sender';
             $custPhone = $pd->customer?->phone ?? $pd->sender_phone;
             $pocName = $pd->recipient_name;
