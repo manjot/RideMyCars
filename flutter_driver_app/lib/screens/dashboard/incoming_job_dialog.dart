@@ -74,7 +74,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
     setState(() => _isAccepting = true);
     SoundService.instance.stopRingtone();
     try {
-      await widget.onAccept().timeout(const Duration(seconds: 10));
+      await Future.value(widget.onAccept()).timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('Error in _handleAccept: $e');
     } finally {
