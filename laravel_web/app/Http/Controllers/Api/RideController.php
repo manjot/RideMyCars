@@ -600,6 +600,34 @@ class RideController extends Controller
             ->first();
 
         if (!$ride) {
+            $recentCancelled = Ride::with(['driver.driverProfile', 'rider'])
+                ->where('rider_id', $user->id)
+                ->where('status', 'cancelled')
+                ->where('updated_at', '>=', now()->subSeconds(90))
+                ->latest('updated_at')
+                ->first();
+
+            if ($recentCancelled) {
+                $reason = $recentCancelled->cancellation_reason ?: 'Driver was unable to take your ride request or declined the offer.';
+                return response()->json([
+                    'success' => true,
+                    'ride' => [
+                        'id' => $recentCancelled->id,
+                        'status' => 'cancelled',
+                        'cancellation_reason' => $reason,
+                        'pickup_location' => $recentCancelled->pickup_location,
+                        'dropoff_location' => $recentCancelled->dropoff_location,
+                        'fare' => floatval($recentCancelled->fare ?: $recentCancelled->total_amount),
+                        'updated_at' => $recentCancelled->updated_at->toIso8601String(),
+                    ],
+                    'notification' => [
+                        'type' => 'ride_cancelled',
+                        'title' => 'Ride Request Cancelled',
+                        'message' => $reason,
+                    ],
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'ride' => null,

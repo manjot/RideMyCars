@@ -18,6 +18,7 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic> _data = {};
+  final Map<String, int> _selectedCampaignIndices = {'daily': 0, 'weekly': 0, 'monthly': 0};
 
   @override
   void initState() {
@@ -253,32 +254,90 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
       );
     }
 
-    final title = currentTab['title']?.toString() ?? "Today's Incentive";
-    final heroReward = currentTab['hero_reward_text']?.toString() ?? 'Earn ₹500';
-    final heroTarget = currentTab['hero_target_text']?.toString() ?? 'Complete 20 Rides';
-    final progressFraction = currentTab['progress_fraction']?.toString() ?? '0 / 20';
-    final remainingText = currentTab['remaining_text']?.toString() ?? 'Rides Remaining';
-    final int progressPercentage = (currentTab['progress_percentage'] as num?)?.toInt() ?? 0;
-    final bool isCompleted = currentTab['is_completed'] == true;
-    final milestones = (currentTab['milestones'] as List?) ?? [];
+    final campaigns = (currentTab['campaigns'] as List?) ?? [];
+    final selectedIdx = _selectedCampaignIndices[tabKey] ?? 0;
+    final activeCampaign = campaigns.isNotEmpty && selectedIdx < campaigns.length
+        ? (campaigns[selectedIdx] as Map)
+        : currentTab;
+
+    final title = activeCampaign['title']?.toString() ?? "Today's Incentive";
+    final name = activeCampaign['name']?.toString() ?? '';
+    final description = activeCampaign['description']?.toString() ?? '';
+    final heroReward = activeCampaign['hero_reward_text']?.toString() ?? 'Earn ₹500';
+    final heroTarget = activeCampaign['hero_target_text']?.toString() ?? 'Complete 20 Rides';
+    final progressFraction = activeCampaign['progress_fraction']?.toString() ?? '0 / 20';
+    final remainingText = activeCampaign['remaining_text']?.toString() ?? 'Rides Remaining';
+    final int progressPercentage = (activeCampaign['progress_percentage'] as num?)?.toInt() ?? 0;
+    final bool isCompleted = activeCampaign['is_completed'] == true;
+    final milestones = (activeCampaign['milestones'] as List?) ?? [];
+    final bool isDubai = activeCampaign['is_special_campaign'] == true ||
+        name.toLowerCase().contains('dubai') ||
+        description.toLowerCase().contains('dubai');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Multi-Campaign Selector Tabs (if multiple incentives active, e.g. Standard + Holiday in Dubai)
+        if (campaigns.length > 1) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(campaigns.length, (idx) {
+                final c = campaigns[idx] as Map;
+                final isSel = idx == selectedIdx;
+                final cName = c['name']?.toString() ?? 'Campaign ${idx + 1}';
+                final isSpecial = c['is_special_campaign'] == true || cName.toLowerCase().contains('dubai');
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8, bottom: 12),
+                  child: FilterChip(
+                    label: Text(
+                      isSpecial ? '✈️ $cName' : cName,
+                      style: TextStyle(
+                        color: isSel ? Colors.black : (isSpecial ? Colors.amber : AppColors.textLight),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                    selected: isSel,
+                    selectedColor: isSpecial ? Colors.amber : AppColors.primary,
+                    backgroundColor: AppColors.surfaceDark,
+                    side: BorderSide(
+                      color: isSpecial ? Colors.amber.withOpacity(0.6) : (isSel ? AppColors.primary : Colors.white12),
+                      width: isSpecial ? 1.5 : 1.0,
+                    ),
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedCampaignIndices[tabKey] = idx;
+                      });
+                    },
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
+
         // Hero Incentive Card
         Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+            gradient: LinearGradient(
+              colors: isDubai
+                  ? [const Color(0xFF2D1600), const Color(0xFF0F172A)]
+                  : [const Color(0xFF0F172A), const Color(0xFF1E293B)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.primary.withOpacity(0.4), width: 1.5),
+            border: Border.all(
+              color: isDubai ? Colors.amber.withOpacity(0.7) : AppColors.primary.withOpacity(0.4),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.12),
+                color: (isDubai ? Colors.amber : AppColors.primary).withOpacity(0.15),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -293,14 +352,14 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.15),
+                      color: (isDubai ? Colors.amber : AppColors.primary).withOpacity(0.18),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                      border: Border.all(color: (isDubai ? Colors.amber : AppColors.primary).withOpacity(0.4)),
                     ),
                     child: Text(
-                      title.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      isDubai ? '✈️ LUXURY PROMOTION • HOLIDAY IN DUBAI' : (name.isNotEmpty ? name.toUpperCase() : title.toUpperCase()),
+                      style: TextStyle(
+                        color: isDubai ? Colors.amber : AppColors.primary,
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
@@ -310,7 +369,7 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
                   Text(
                     remainingText,
                     style: TextStyle(
-                      color: isCompleted ? AppColors.success : AppColors.primary,
+                      color: isCompleted ? AppColors.success : (isDubai ? Colors.amber : AppColors.primary),
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -338,6 +397,17 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (description.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  description,
+                  style: TextStyle(
+                    color: isDubai ? Colors.amber.withOpacity(0.9) : AppColors.textMuted,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
 
               // Progress row
@@ -355,8 +425,8 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
                   ),
                   Text(
                     progressFraction,
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: isDubai ? Colors.amber : AppColors.primary,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -372,7 +442,7 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
                   value: progressPercentage / 100.0,
                   minHeight: 12,
                   backgroundColor: Colors.white.withOpacity(0.08),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(isDubai ? Colors.amber : AppColors.primary),
                 ),
               ),
               const SizedBox(height: 8),
@@ -391,7 +461,7 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
         // Completed Celebration Green Card
         if (isCompleted) ...[
           const SizedBox(height: 14),
-          _buildCompletedCard(currentTab['completed_card'] as Map?),
+          _buildCompletedCard(activeCampaign['completed_card'] as Map?),
         ],
 
         const SizedBox(height: 20),

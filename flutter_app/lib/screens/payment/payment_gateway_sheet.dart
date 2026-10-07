@@ -186,9 +186,11 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20;
+
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        bottom: bottomPadding,
         top: 16,
         left: 20,
         right: 20,
@@ -347,14 +349,19 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
               onPressed: _confirmSelection,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 4,
               ),
               child: Text(
                 'Authorize & Pay ${widget.currencySymbol}${widget.payNowAmount.toStringAsFixed(2)} →',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.3,
+                ),
               ),
             ),
           ],

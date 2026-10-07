@@ -10,6 +10,7 @@ class RideProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
 
   Map<String, dynamic>? _activeRide;
+  Map<String, dynamic>? _cancellationNotification;
   bool _isBooking = false;
   String? _errorMessage;
   String _selectedVehicle = 'standard';
@@ -28,6 +29,11 @@ class RideProvider extends ChangeNotifier {
   bool _isLoadingCategories = false;
 
   Map<String, dynamic>? get activeRide => _activeRide;
+  Map<String, dynamic>? get cancellationNotification => _cancellationNotification;
+  void clearCancellationNotification() {
+    _cancellationNotification = null;
+    notifyListeners();
+  }
   bool get isBooking => _isBooking;
   String? get errorMessage => _errorMessage;
   String get selectedVehicle => _selectedVehicle;
@@ -159,7 +165,30 @@ class RideProvider extends ChangeNotifier {
       final res = await _dio.get(ApiConstants.activeRide);
       if (res.statusCode == 200 && res.data['success'] == true) {
         final r = res.data['ride'];
-        _activeRide = r != null ? Map<String, dynamic>.from(r) : null;
+
+        if (r != null && r['status'] == 'cancelled') {
+          _cancellationNotification = res.data['notification'] is Map
+              ? Map<String, dynamic>.from(res.data['notification'])
+              : {
+                  'title': 'Ride Request Cancelled',
+                  'message': r['cancellation_reason']?.toString() ?? 'Driver was unable to accept your request or cancelled.',
+                };
+          _activeRide = null;
+          stopActiveRidePolling();
+          notifyListeners();
+          return;
+        }
+
+        final newRide = r != null ? Map<String, dynamic>.from(r) : null;
+        if (_activeRide != null && newRide == null) {
+          _cancellationNotification = {
+            'title': 'Ride Cancelled',
+            'message': 'Your ride request has been cancelled or completed.',
+          };
+          stopActiveRidePolling();
+        }
+
+        _activeRide = newRide;
         notifyListeners();
       }
     } catch (e) {

@@ -190,6 +190,23 @@ class IncentiveService
                     ['rides' => 300, 'reward' => 2200],
                 ],
             ],
+            // Special Global Promotional Campaign - Holiday in Dubai
+            [
+                'name' => 'HOLIDAY IN DUBAI',
+                'description' => 'Complete monthly ride targets to qualify for an all-expenses-paid luxury Holiday in Dubai plus cash milestone bonuses!',
+                'type' => 'monthly',
+                'country' => 'All Locations',
+                'vehicle_type' => 'All Vehicles',
+                'currency' => '₹',
+                'status' => 'active',
+                'notify_on_start' => true,
+                'notify_on_reward' => true,
+                'targets' => [
+                    ['rides' => 100, 'reward' => 5000],
+                    ['rides' => 200, 'reward' => 15000],
+                    ['rides' => 350, 'reward' => 35000],
+                ],
+            ],
         ];
 
         foreach ($defaultPrograms as $prog) {
@@ -231,10 +248,21 @@ class IncentiveService
         // If no specific country incentive matched, fallback to 'All Locations' / 'Global'
         if (empty($applicable)) {
             foreach ($allActive as $inc) {
-                $incCountry = strtolower(trim($inc->country));
-                if (in_array($incCountry, ['all', 'all locations', 'all countries', 'global']) && $inc->isScheduleActive($d)) {
+                $incCountry = strtolower(trim($inc->country ?? ''));
+                if (in_array($incCountry, ['all', 'all locations', 'all countries', 'global', '']) && $inc->isScheduleActive($d)) {
                     $applicable[] = $inc;
                 }
+            }
+        }
+
+        // Always include promotional incentives like 'Holiday in Dubai' if not already present
+        foreach ($allActive as $inc) {
+            $nameLower = strtolower($inc->name ?? '');
+            $descLower = strtolower($inc->description ?? '');
+            if ((str_contains($nameLower, 'dubai') || str_contains($nameLower, 'holiday') || str_contains($descLower, 'dubai'))
+                && $inc->isScheduleActive($d)
+                && !collect($applicable)->contains('id', $inc->id)) {
+                $applicable[] = $inc;
             }
         }
 
@@ -628,10 +656,25 @@ class IncentiveService
                 'is_missed' => $isMissed,
                 'missed_message' => "Today's incentive expired. Better luck tomorrow.",
                 'incentive' => null,
+                'campaigns' => [],
             ];
         }
 
-        $incentive = $applicableIncentives[0]; // Primary matching incentive
+        $campaigns = [];
+        foreach ($applicableIncentives as $inc) {
+            $campaigns[] = self::formatIncentiveData($inc, $driver, $now);
+        }
+
+        $primary = $campaigns[0];
+        $primary['campaigns'] = $campaigns;
+        return $primary;
+    }
+
+    /**
+     * Format a single incentive into a rich UI payload with milestones & progress.
+     */
+    public static function formatIncentiveData(Incentive $incentive, User $driver, Carbon $now): array
+    {
         $progress = self::getOrCreateProgress($incentive, $driver, $now);
 
         $completedCount = self::countCompletedRides($incentive, $driver, $now);
@@ -697,6 +740,8 @@ class IncentiveService
         $isFullyCompleted = ($maxRides > 0 && $completedCount >= $maxRides);
         $totalRewardEarned = (float)($progress->total_reward_earned ?? 0.00);
 
+        $isDubaiSpecial = stripos($incentive->name, 'dubai') !== false || stripos($incentive->description ?? '', 'dubai') !== false;
+
         return [
             'has_incentive' => true,
             'id' => $incentive->id,
@@ -705,6 +750,7 @@ class IncentiveService
                 'daily' => "Today's Incentive",
                 'weekly' => "This Week's Incentive",
                 'monthly' => "This Month's Incentive",
+                default => "Special Incentive",
             },
             'name' => $incentive->name,
             'description' => $incentive->description,
@@ -712,6 +758,8 @@ class IncentiveService
             'city' => $incentive->city,
             'vehicle_type' => $incentive->vehicle_type,
             'currency' => $currency,
+            'is_special_campaign' => $isDubaiSpecial,
+            'special_badge' => $isDubaiSpecial ? '✈️ LUXURY PROMOTION' : null,
             
             // Hero Card Specs
             'hero_reward_text' => "Earn {$currency}" . number_format($activeTargetReward, 0),
@@ -740,7 +788,6 @@ class IncentiveService
 
             // Milestone cards
             'milestones' => $milestoneCards,
-            'total_reward_earned' => $totalRewardEarned,
         ];
     }
 }

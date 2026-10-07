@@ -1032,8 +1032,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         else
                           _buildDeliverySection(isKeyboardOpen),
 
-                        // Bottom Navigation Tab Bar (Ride, Rent, Driver, Deliver) (Hidden when keyboard open)
-                        if (!isKeyboardOpen)
+                        // Bottom Navigation Tab Bar (Ride, Rent, Driver, Deliver) (Hidden when keyboard open or in checkout funnel)
+                        if (!isKeyboardOpen && (_selectedService != ServiceType.ride || _rideBookingStep == RideBookingStep.findTrip))
                           Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFF0F172A),
@@ -1556,211 +1556,22 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           ),
           const SizedBox(height: 8),
 
-          // 3. GPS Accuracy & Map Adjust Note
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'GPS Accurate (±187m)',
-                    style: TextStyle(
-                      color: Color(0xFF10B981),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const Text(
-                'Drag pin on map to adjust',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // 4. Quick Action Chips: [+ Add stop] [🏠 Home ✏️] [🏢 Office ✏️]
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _additionalStops.add({
-                        'controller': TextEditingController(),
-                        'address': '',
-                        'lat': null,
-                        'lng': null,
-                      });
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E2433),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.add, size: 14, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text('Add stop', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (_homeAddress != null) {
-                      _dropoffController.text = _homeAddress!;
-                      _dropoffLat = _homeLat;
-                      _dropoffLng = _homeLng;
-                      _updateMapMarkers();
-                    } else {
-                      _openSavedLocationModal('home');
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E2433),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('🏠', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 5),
-                        Text(
-                          _homeAddress != null ? 'Home' : 'Add Home',
-                          style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 5),
-                        GestureDetector(
-                          onTap: () => _openSavedLocationModal('home'),
-                          child: const Icon(Icons.edit, size: 12, color: Color(0xFFE2E8F0)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (_officeAddress != null) {
-                      _dropoffController.text = _officeAddress!;
-                      _dropoffLat = _officeLat;
-                      _dropoffLng = _officeLng;
-                      _updateMapMarkers();
-                    } else {
-                      _openSavedLocationModal('office');
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E2433),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('🏢', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 5),
-                        Text(
-                          _officeAddress != null ? 'Office' : 'Add Office',
-                          style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 5),
-                        GestureDetector(
-                          onTap: () => _openSavedLocationModal('office'),
-                          child: const Icon(Icons.edit, size: 12, color: Color(0xFFE2E8F0)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // 5. Contact Number (Required) Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF161C28),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEC4899).withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.phone_in_talk_rounded, color: Color(0xFFEC4899), size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'CONTACT NUMBER (REQUIRED)',
-                        style: TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      TextField(
-                        controller: _contactPhoneController,
-                        keyboardType: TextInputType.phone,
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                        decoration: InputDecoration(
-                          hintText: 'Enter mobile phone number...',
-                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12.5),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 6. Places Autocomplete Suggestions (if typing)
-          if (_isSearchingPlaces || _predictions.isNotEmpty)
+          // Places Autocomplete Suggestions (Positioned directly beneath search inputs for full visibility)
+          if (_isSearchingPlaces || _predictions.isNotEmpty) ...[
             Container(
-              margin: const EdgeInsets.only(top: 8),
-              constraints: const BoxConstraints(maxHeight: 180),
+              margin: const EdgeInsets.only(bottom: 10),
+              constraints: const BoxConstraints(maxHeight: 220),
               decoration: BoxDecoration(
                 color: const Color(0xFF161C28),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFFDC00).withOpacity(0.4)),
+                border: Border.all(color: const Color(0xFFFFDC00).withOpacity(0.5), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: ListView.separated(
                 shrinkWrap: true,
@@ -1774,14 +1585,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     leading: const Icon(Icons.location_on_outlined, color: Color(0xFFFFDC00), size: 18),
                     title: Text(
                       p.mainText,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: p.secondaryText.isNotEmpty
                         ? Text(
                             p.secondaryText,
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           )
@@ -1791,6 +1602,205 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 },
               ),
             ),
+          ],
+
+          // 3. GPS Accuracy & Map Adjust Note (Hidden while searching to keep dropdown elevated)
+          if (!_isSearchingPlaces && _predictions.isEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'GPS Accurate (±187m)',
+                      style: TextStyle(
+                        color: Color(0xFF10B981),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Drag pin on map to adjust',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // 4. Quick Action Chips: [+ Add stop] [🏠 Home ✏️] [🏢 Office ✏️]
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _additionalStops.add({
+                          'controller': TextEditingController(),
+                          'address': '',
+                          'lat': null,
+                          'lng': null,
+                        });
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E2433),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.add, size: 14, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text('Add stop', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      if (_homeAddress != null) {
+                        _dropoffController.text = _homeAddress!;
+                        _dropoffLat = _homeLat;
+                        _dropoffLng = _homeLng;
+                        _updateMapMarkers();
+                      } else {
+                        _openSavedLocationModal('home');
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E2433),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🏠', style: TextStyle(fontSize: 12)),
+                          const SizedBox(width: 5),
+                          Text(
+                            _homeAddress != null ? 'Home' : 'Add Home',
+                            style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 5),
+                          GestureDetector(
+                            onTap: () => _openSavedLocationModal('home'),
+                            child: const Icon(Icons.edit, size: 12, color: Color(0xFFE2E8F0)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      if (_officeAddress != null) {
+                        _dropoffController.text = _officeAddress!;
+                        _dropoffLat = _officeLat;
+                        _dropoffLng = _officeLng;
+                        _updateMapMarkers();
+                      } else {
+                        _openSavedLocationModal('office');
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E2433),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🏢', style: TextStyle(fontSize: 12)),
+                          const SizedBox(width: 5),
+                          Text(
+                            _officeAddress != null ? 'Office' : 'Add Office',
+                            style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 5),
+                          GestureDetector(
+                            onTap: () => _openSavedLocationModal('office'),
+                            child: const Icon(Icons.edit, size: 12, color: Color(0xFFE2E8F0)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // 5. Contact Number (Required) Card
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF161C28),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEC4899).withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.phone_in_talk_rounded, color: Color(0xFFEC4899), size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'CONTACT NUMBER (REQUIRED)',
+                          style: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        TextField(
+                          controller: _contactPhoneController,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                          decoration: InputDecoration(
+                            hintText: 'Enter mobile phone number...',
+                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12.5),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
 
           // 7. Yellow CTA Button: Search Rides →
@@ -1903,22 +1913,38 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.16),
+                  color: const Color(0xFF3B82F6).withOpacity(0.16),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                  border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.4)),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.check, size: 12, color: Color(0xFF10B981)),
-                    SizedBox(width: 4),
-                    Text('Route Ready', style: TextStyle(color: Color(0xFF10B981), fontSize: 10.5, fontWeight: FontWeight.w900)),
-                  ],
-                ),
+                child: const Text('Step 2 of 3', style: TextStyle(color: Color(0xFF60A5FA), fontSize: 10.5, fontWeight: FontWeight.w900)),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+
+          // Informational Notice: Ride Not Yet Ordered
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 13, color: Color(0xFF94A3B8)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Ride not yet ordered • Compare vehicle options & estimated arrival times below',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
 
           // 2. Fare Summary Card
           Container(
@@ -2430,9 +2456,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           ),
           const SizedBox(height: 12),
 
-          // 4. Yellow CTA Button: Confirm & Authorize Ride →
+          // 4. Yellow CTA Button: Confirm & Dispatch Ride →
           SizedBox(
-            height: 50,
+            height: 52,
             child: ElevatedButton(
               onPressed: _isFinalSubmittingRide ? null : _handleFinalRideBooking,
               style: ElevatedButton.styleFrom(
@@ -2453,7 +2479,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
                         Text(
-                          'Confirm & Authorize Ride',
+                          'Confirm & Dispatch Ride',
                           style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.w900,
@@ -2467,6 +2493,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     ),
             ),
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );

@@ -18,6 +18,48 @@ class ActiveTripScreen extends StatefulWidget {
 class _ActiveTripScreenState extends State<ActiveTripScreen> {
   late Map<String, dynamic> _ride;
   bool _isUpdating = false;
+  GoogleMapController? _mapController;
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  void _fitRouteBounds(double? pLat, double? pLng, double? dLat, double? dLng) {
+    if (_mapController == null) return;
+    final points = <LatLng>[
+      if (pLat != null && pLng != null) LatLng(pLat, pLng),
+      if (dLat != null && dLng != null) LatLng(dLat, dLng),
+    ];
+    if (points.isEmpty) return;
+    if (points.length == 1) {
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(points.first, 15));
+      return;
+    }
+
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final p in points) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        ),
+        80.0,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -322,14 +364,30 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
 
     final pickupLat = _ride['pickup_lat'] != null ? double.tryParse(_ride['pickup_lat'].toString()) : null;
     final pickupLng = _ride['pickup_lng'] != null ? double.tryParse(_ride['pickup_lng'].toString()) : null;
+    final dropoffLat = _ride['dropoff_lat'] != null ? double.tryParse(_ride['dropoff_lat'].toString()) : null;
+    final dropoffLng = _ride['dropoff_lng'] != null ? double.tryParse(_ride['dropoff_lng'].toString()) : null;
 
     final initialPos = LatLng(pickupLat ?? 28.6448, pickupLng ?? 77.2167);
+
+    // In-app live connected route polyline
+    final polylines = <Polyline>{
+      if (pickupLat != null && pickupLng != null && dropoffLat != null && dropoffLng != null)
+        Polyline(
+          polylineId: const PolylineId('driver_trip_route'),
+          points: [
+            LatLng(pickupLat, pickupLng),
+            LatLng(dropoffLat, dropoffLng),
+          ],
+          color: AppColors.primary,
+          width: 5,
+        ),
+    };
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: Stack(
         children: [
-          // Google Map Background
+          // Google Map Background with connected in-app route polyline
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: initialPos,
@@ -338,12 +396,25 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
+            polylines: polylines,
+            onMapCreated: (controller) {
+              _mapController = controller;
+              _fitRouteBounds(pickupLat, pickupLng, dropoffLat, dropoffLng);
+            },
             markers: {
               if (pickupLat != null && pickupLng != null)
                 Marker(
                   markerId: const MarkerId('pickup'),
                   position: initialPos,
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
                   infoWindow: InfoWindow(title: 'Pickup: ${_ride['pickup_location']}'),
+                ),
+              if (dropoffLat != null && dropoffLng != null)
+                Marker(
+                  markerId: const MarkerId('dropoff'),
+                  position: LatLng(dropoffLat, dropoffLng),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                  infoWindow: InfoWindow(title: 'Destination: ${_ride['dropoff_location']}'),
                 ),
             },
           ),

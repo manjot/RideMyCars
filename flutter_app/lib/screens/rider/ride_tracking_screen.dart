@@ -89,11 +89,141 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     );
   }
 
+  bool _showingCancelNotif = false;
+
+  void _checkCancellationNotification(RideProvider rideProv) {
+    final notif = rideProv.cancellationNotification;
+    if (notif != null && !_showingCancelNotif) {
+      _showingCancelNotif = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppColors.surfaceDark,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 28),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    notif['title']?.toString() ?? 'Ride Notice',
+                    style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 17),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              notif['message']?.toString() ?? 'The driver was unable to accept your request or cancelled.',
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 14, height: 1.4),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                onPressed: () {
+                  rideProv.clearCancellationNotification();
+                  Navigator.pop(context); // dismiss dialog
+                  Navigator.pop(context); // back to home screen
+                },
+                child: const Text('Back to Home', style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+  }
+
+  Future<void> _confirmAndCancelRide(BuildContext context, dynamic rawRideId) async {
+    final rideId = int.tryParse(rawRideId?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Cancel Ride Request?', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Are you sure you want to cancel this ride request? Drivers will be notified immediately.',
+          style: TextStyle(color: AppColors.textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep Ride', style: TextStyle(color: AppColors.textLight)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && context.mounted) {
+      final rideProv = Provider.of<RideProvider>(context, listen: false);
+      await rideProv.cancelRide(rideId);
+      if (context.mounted) {
+        Navigator.pop(context); // back to home
+      }
+    }
+  }
+
+  void _fitRouteBounds(double? pLat, double? pLng, double? dLat, double? dLng, double? drvLat, double? drvLng) {
+    if (_mapController == null) return;
+    final points = <LatLng>[
+      if (pLat != null && pLng != null) LatLng(pLat, pLng),
+      if (dLat != null && dLng != null) LatLng(dLat, dLng),
+      if (drvLat != null && drvLng != null) LatLng(drvLat, drvLng),
+    ];
+    if (points.isEmpty) return;
+    if (points.length == 1) {
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(points.first, 15));
+      return;
+    }
+
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final p in points) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        ),
+        80.0,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rideProv = Provider.of<RideProvider>(context);
     final currentRide = rideProv.activeRide ?? widget.ride;
 
+    _checkCancellationNotification(rideProv);
     _checkAndShowBackupModal(currentRide);
 
     final status = currentRide['status'] ?? 'pending';
@@ -104,28 +234,67 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
     final pickupLat = currentRide['pickup_lat'] != null ? double.tryParse(currentRide['pickup_lat'].toString()) : null;
     final pickupLng = currentRide['pickup_lng'] != null ? double.tryParse(currentRide['pickup_lng'].toString()) : null;
+    final dropoffLat = currentRide['dropoff_lat'] != null ? double.tryParse(currentRide['dropoff_lat'].toString()) : null;
+    final dropoffLng = currentRide['dropoff_lng'] != null ? double.tryParse(currentRide['dropoff_lng'].toString()) : null;
     final driverLat = driver?['current_lat'] != null ? double.tryParse(driver['current_lat'].toString()) : null;
     final driverLng = driver?['current_lng'] != null ? double.tryParse(driver['current_lng'].toString()) : null;
 
     final initialPos = LatLng(pickupLat ?? 28.6448, pickupLng ?? 77.2167);
 
+    // In-app live connected route polyline
+    final polylines = <Polyline>{
+      if (driverLat != null && driverLng != null && pickupLat != null && pickupLng != null && (status == 'accepted' || status == 'en_route'))
+        Polyline(
+          polylineId: const PolylineId('driver_to_pickup'),
+          points: [LatLng(driverLat, driverLng), LatLng(pickupLat, pickupLng)],
+          color: AppColors.primary,
+          width: 5,
+          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+        ),
+      if (pickupLat != null && pickupLng != null && dropoffLat != null && dropoffLng != null)
+        Polyline(
+          polylineId: const PolylineId('trip_route'),
+          points: [
+            if (status == 'in_progress' && driverLat != null && driverLng != null)
+              LatLng(driverLat, driverLng)
+            else
+              LatLng(pickupLat, pickupLng),
+            LatLng(dropoffLat, dropoffLng),
+          ],
+          color: AppColors.primary,
+          width: 5,
+        ),
+    };
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: Stack(
         children: [
-          // Google Map
+          // Google Map with connected in-app live navigation
           GoogleMap(
             initialCameraPosition: CameraPosition(target: initialPos, zoom: 14.0),
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
-            onMapCreated: (controller) => _mapController = controller,
+            polylines: polylines,
+            onMapCreated: (controller) {
+              _mapController = controller;
+              _fitRouteBounds(pickupLat, pickupLng, dropoffLat, dropoffLng, driverLat, driverLng);
+            },
             markers: {
               if (pickupLat != null && pickupLng != null)
                 Marker(
                   markerId: const MarkerId('pickup'),
                   position: LatLng(pickupLat, pickupLng),
-                  infoWindow: InfoWindow(title: 'Pickup', snippet: pickup),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+                  infoWindow: InfoWindow(title: 'Pickup Location', snippet: pickup),
+                ),
+              if (dropoffLat != null && dropoffLng != null)
+                Marker(
+                  markerId: const MarkerId('dropoff'),
+                  position: LatLng(dropoffLat, dropoffLng),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                  infoWindow: InfoWindow(title: 'Dropoff Destination', snippet: dropoff),
                 ),
               if (driverLat != null && driverLng != null)
                 Marker(
@@ -137,20 +306,56 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             },
           ),
 
-          // Header
+          // Header Overlay with prominent Home Navigation & Quick Cancel
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: AppColors.surfaceDark,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textLight, size: 18),
-                      onPressed: () => Navigator.pop(context),
+                  // Prominent Home Button
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white24),
+                        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6)],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.home_rounded, color: AppColors.primary, size: 20),
+                          SizedBox(width: 6),
+                          Text(
+                            'Home',
+                            style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const Spacer(),
+                  // Prominent Cancel Button in Header (always visible during booking / pending / en_route)
+                  if (status == 'pending' || status == 'accepted' || status == 'en_route')
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ElevatedButton.icon(
+                        onPressed: () => _confirmAndCancelRide(context, currentRide['id']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surfaceDark,
+                          foregroundColor: AppColors.danger,
+                          side: const BorderSide(color: AppColors.danger),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          elevation: 2,
+                        ),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text('Cancel Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ),
                   ElevatedButton.icon(
                     onPressed: _launchGoogleMaps,
                     style: ElevatedButton.styleFrom(
@@ -404,37 +609,17 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
 
                       // Cancel Button
                       if (status == 'pending' || status == 'accepted' || status == 'en_route')
-                        OutlinedButton(
-                          onPressed: () async {
-                            final ok = await showDialog<bool>(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                backgroundColor: AppColors.surfaceDark,
-                                title: const Text('Cancel Ride?', style: TextStyle(color: AppColors.textLight)),
-                                content: const Text('Are you sure you want to cancel this ride request?', style: TextStyle(color: AppColors.textMuted)),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                                    onPressed: () => Navigator.pop(context, true),
-                                    child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (ok == true && context.mounted) {
-                              await rideProv.cancelRide(currentRide['id']);
-                              if (context.mounted) Navigator.pop(context);
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.danger,
-                            side: const BorderSide(color: AppColors.danger),
+                        ElevatedButton.icon(
+                          onPressed: () => _confirmAndCancelRide(context, currentRide['id']),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.danger,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 4,
                           ),
-                          child: const Text('✕ Cancel Ride Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          icon: const Icon(Icons.cancel_rounded, size: 18),
+                          label: const Text('✕ Cancel Ride Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                         ),
                     ],
                   ),

@@ -175,18 +175,23 @@ class Incentive extends Model
         $driverZone = trim($profile?->zone ?? '');
         $driverVehicle = trim($profile?->vehicle_type ?? '');
 
-        // 1. Country match (Required)
-        if (empty($this->country)) {
-            return false;
-        }
-
-        $c = strtolower(trim($this->country));
+        // 1. Country match
+        $c = strtolower(trim($this->country ?? ''));
         $dc = strtolower(trim($driverCountry));
+        $nameLower = strtolower(trim($this->name ?? ''));
+        $descLower = strtolower(trim($this->description ?? ''));
 
-        // If incentive is global / all locations
-        if (in_array($c, ['all', 'all locations', 'all countries', 'global'])) {
-            // Matches any driver
-        } else {
+        // Check if this is a global / promotional campaign (e.g. Holiday in Dubai, special contests, or all locations)
+        $isGlobalOrPromo = empty($c)
+            || in_array($c, ['all', 'all locations', 'all countries', 'global', 'worldwide', 'any', 'uae', 'dubai'])
+            || str_contains($nameLower, 'holiday')
+            || str_contains($nameLower, 'dubai')
+            || str_contains($nameLower, 'contest')
+            || str_contains($nameLower, 'special')
+            || str_contains($descLower, 'dubai')
+            || str_contains($descLower, 'holiday');
+
+        if (!$isGlobalOrPromo) {
             if (!empty($dc)) {
                 $isMatch = (strcasecmp($this->country, $driverCountry) === 0)
                     || str_contains($dc, $c)
@@ -203,21 +208,21 @@ class Incentive extends Model
         }
 
         // 2. State match (Optional)
-        if (!empty($this->state) && strcasecmp($this->state, 'All') !== 0) {
+        if (!$isGlobalOrPromo && !empty($this->state) && strcasecmp($this->state, 'All') !== 0) {
             if (empty($driverState) || strcasecmp($this->state, $driverState) !== 0) {
                 return false;
             }
         }
 
         // 3. City match (Optional)
-        if (!empty($this->city) && strcasecmp($this->city, 'All') !== 0) {
+        if (!$isGlobalOrPromo && !empty($this->city) && strcasecmp($this->city, 'All') !== 0) {
             if (empty($driverCity) || (strcasecmp($this->city, $driverCity) !== 0 && !str_contains(strtolower($driverCity), strtolower($this->city)))) {
                 return false;
             }
         }
 
         // 4. Zone match (Optional)
-        if (!empty($this->zone) && strcasecmp($this->zone, 'All') !== 0) {
+        if (!$isGlobalOrPromo && !empty($this->zone) && strcasecmp($this->zone, 'All') !== 0) {
             if (empty($driverZone) || strcasecmp($this->zone, $driverZone) !== 0) {
                 return false;
             }
