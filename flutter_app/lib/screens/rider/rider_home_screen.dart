@@ -140,7 +140,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
   List<PlacePrediction> _predictions = [];
   bool _isSearchingPlaces = false;
-  bool _isSearchingPickup = true;
   Timer? _debounceTimer;
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
@@ -763,7 +762,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             ),
           ),
           const Divider(color: Colors.white10, height: 1),
-          Flexible(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 175),
             child: _isSearchingPlaces && _predictions.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 18),
