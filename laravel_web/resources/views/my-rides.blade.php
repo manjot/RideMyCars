@@ -219,7 +219,7 @@
                                                 $rideReceipt = $ride->receipt ?? \App\Models\Receipt::where('booking_type', $isRental ? 'rental' : 'ride')->where('booking_id', $ride->id)->first();
                                             @endphp
                                             @if($rideReceipt || in_array($ride->status, ['completed', 'finished']))
-                                                <a href="{{ $rideReceipt ? $rideReceipt->view_url : ('/receipts/CRN' . date('ymd') . str_pad((string)$ride->id, 5, '0', STR_PAD_LEFT)) }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                <a href="{{ $rideReceipt ? $rideReceipt->view_url : ('/receipts/' . ($ride->digital_receipt_code ?: $ride->id)) }}" target="_blank" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
                                                     <span>🧾 Receipt</span>
                                                 </a>
                                                 @if($rideReceipt)
@@ -535,7 +535,7 @@
                                                 $chfReceipt = $booking->receipt ?? \App\Models\Receipt::where('booking_type', 'driver_booking')->where('booking_id', $booking->id)->first();
                                             @endphp
                                             @if($chfReceipt || $isBookingPaid || in_array($booking->booking_status, ['completed', 'confirmed']))
-                                                <a href="{{ $chfReceipt ? $chfReceipt->view_url : ('/driver-hire/confirmation/' . $booking->id) }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                <a href="{{ $chfReceipt ? $chfReceipt->view_url : ('/receipts/' . ($booking->booking_code ?: ('BK-' . $booking->id))) }}" target="_blank" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
                                                     <span>🧾 Receipt</span>
                                                 </a>
                                                 @if($chfReceipt)
@@ -711,7 +711,7 @@
                                                 $delReceipt = $delivery->receipt ?? \App\Models\Receipt::where('booking_type', 'delivery')->where('booking_id', $delivery->id)->first();
                                             @endphp
                                             @if($delReceipt || in_array($delivery->delivery_status, ['completed', 'delivered']))
-                                                <a href="{{ $delReceipt ? $delReceipt->view_url : ('/delivery/tracker?tracking_code=' . $delivery->delivery_code) }}" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                <a href="{{ $delReceipt ? $delReceipt->view_url : ('/receipts/' . ($delivery->delivery_code ?: ('DEL-' . $delivery->id))) }}" target="_blank" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black rounded-lg font-black text-xs shadow-sm transition-colors flex items-center gap-1 cursor-pointer">
                                                     <span>🧾 Receipt</span>
                                                 </a>
                                                 @if($delReceipt)

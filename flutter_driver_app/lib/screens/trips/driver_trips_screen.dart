@@ -159,10 +159,313 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
     return _trips;
   }
 
-  Future<void> _openReceiptUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  Future<void> _openReceiptUrl(String url, [Map<String, dynamic>? trip]) async {
+    if (trip != null && mounted) {
+      _showTripReceiptModal(trip, url);
+      return;
+    }
+    await _launchReceiptExternally(url);
+  }
+
+  void _showTripReceiptModal(Map<String, dynamic> t, String receiptUrl) {
+    try {
+      final currencySymbol = (t['currency_symbol'] ?? '\$').toString();
+      final fare = double.tryParse((t['fare'] ?? t['total_amount'] ?? '0').toString()) ?? 0.0;
+      final bookingCode = (t['booking_code'] ?? t['digital_receipt_code'] ?? 'REC-${t['id']}').toString();
+      final requestedTime = (t['request_time_formatted'] ?? _formatDateTime(t['created_at'])).toString();
+      final rider = t['rider'] is Map ? t['rider'] : null;
+      final customerName = (t['passenger_name'] ?? rider?['name'] ?? 'Valued Customer').toString();
+      final customerPhone = rider?['phone'] ?? t['passenger_phone'] ?? t['customer_phone'];
+      final vehicleType = (t['vehicle_type'] ?? t['car_make_model'] ?? 'Standard').toString();
+      final pickup = (t['pickup_location'] ?? 'Pickup point').toString();
+      final dropoff = (t['dropoff_location'] ?? 'Destination').toString();
+      final paymentMethod = (t['payment_method'] ?? 'CARD').toString().toUpperCase();
+      final downloadUrl = (t['receipt_download_url'] != null && t['receipt_download_url'].toString().isNotEmpty)
+          ? t['receipt_download_url'].toString()
+          : '$receiptUrl/download';
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.82,
+        minChildSize: 0.45,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E293B),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Pull Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  children: [
+                    // Header Bar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.18),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'DIGITAL RECEIPT',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'COMPLETED',
+                            style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Amount Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'TOTAL FARE PAID',
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$currencySymbol${fare.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.credit_card_rounded, color: AppColors.primary, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Method: $paymentMethod',
+                                style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                              const Spacer(),
+                              Text(
+                                bookingCode,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontFamily: 'monospace',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Trip Details Box
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Trip Information',
+                            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildReceiptDetailRow('Date & Time', requestedTime),
+                          _buildReceiptDetailRow('Customer', customerName),
+                          if (customerPhone != null && customerPhone.toString().isNotEmpty)
+                            _buildReceiptDetailRow('Phone', customerPhone.toString()),
+                          _buildReceiptDetailRow('Vehicle Service', vehicleType),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Colors.white10, height: 1),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Icon(Icons.circle, color: AppColors.success, size: 8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  pickup,
+                                  style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Icon(Icons.location_on_rounded, color: AppColors.danger, size: 10),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  dropoff,
+                                  style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+
+              // Bottom Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await _launchReceiptExternally(receiptUrl);
+                        },
+                        icon: const Icon(Icons.open_in_browser_rounded, size: 16),
+                        label: const Text('Open Browser'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white24),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await _launchReceiptExternally(downloadUrl);
+                        },
+                        icon: const Icon(Icons.file_download_rounded, size: 16),
+                        label: const Text('Download PDF'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.backgroundDark,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  } catch (e) {
+      debugPrint('Error showing receipt modal: $e');
+      _launchReceiptExternally(receiptUrl);
+    }
+  }
+
+  Widget _buildReceiptDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchReceiptExternally(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        final fallback = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (!fallback) {
+          await launchUrl(uri, mode: LaunchMode.inAppWebView);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launching receipt url: $e');
+      try {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.inAppWebView);
+      } catch (_) {}
     }
   }
 
@@ -334,7 +637,9 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
         final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
             (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
 
-        final receiptUrl = t['receipt_url'] ?? (t['receipt_id'] != null ? 'https://www.ridemycars.com/receipts/${t['receipt_id']}' : null);
+        final receiptUrl = (t['receipt_url'] != null && t['receipt_url'].toString().isNotEmpty)
+            ? t['receipt_url'].toString()
+            : 'https://www.ridemycars.com/receipts/${t['receipt_id'] ?? t['digital_receipt_code'] ?? bookingCode}';
 
         Color statusColor = AppColors.success;
         if (isCancelled) {
@@ -536,33 +841,35 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                     ),
                   ],
                 ),
-                if (receiptUrl != null && isCompleted) ...[
+                if (isCompleted) ...[
                   const SizedBox(height: 10),
-                  InkWell(
-                    onTap: () => _openReceiptUrl(receiptUrl),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42,
+                    child: ElevatedButton(
+                      onPressed: () => _openReceiptUrl(receiptUrl, t),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.backgroundDark,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 0,
                       ),
                       child: const Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 14),
-                          SizedBox(width: 6),
-                          Text(
-                            'View Digital Receipt',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                          Icon(Icons.receipt_long_rounded, color: AppColors.backgroundDark, size: 16),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'View Digital Receipt',
+                              style: TextStyle(
+                                color: AppColors.backgroundDark,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
-                          Spacer(),
-                          Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textMuted, size: 10),
+                          Icon(Icons.arrow_forward_ios_rounded, color: AppColors.backgroundDark, size: 12),
                         ],
                       ),
                     ),

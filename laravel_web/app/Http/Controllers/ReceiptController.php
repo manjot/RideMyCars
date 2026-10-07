@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Receipt;
+use App\Models\Ride;
+use App\Models\DriverBooking;
+use App\Models\PackageDelivery;
 use App\Services\ReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,14 +15,117 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class ReceiptController extends Controller
 {
     /**
+     * Resolve a Receipt model from various identifiers:
+     * - verification_token (e.g. 32-char hex string)
+     * - receipt_number (e.g. CRN26092400001, RNT26092400002)
+     * - numeric receipt ID (e.g. 1, 2)
+     * - digital_receipt_code (e.g. REC-XXXXXXXX, RNT-XXXX)
+     * - booking codes (e.g. RIDE-12, RNT-12, DEL-12, CHF-12)
+     * - numeric booking/ride ID (e.g. if passed /receipts/12)
+     */
+    public static function resolveReceipt(string $token): ?Receipt
+    {
+        $token = trim($token);
+        if (empty($token)) {
+            return null;
+        }
+
+        // 1. Direct search by verification_token, receipt_number
+        $receipt = Receipt::with(['user', 'driver', 'ride', 'driverBooking', 'packageDelivery'])
+            ->where('verification_token', $token)
+            ->orWhere('receipt_number', $token)
+            ->first();
+
+        if ($receipt) {
+            return $receipt;
+        }
+
+        // 2. Direct search by numeric receipt primary ID
+        if (is_numeric($token)) {
+            $receipt = Receipt::with(['user', 'driver', 'ride', 'driverBooking', 'packageDelivery'])->find((int)$token);
+            if ($receipt) {
+                return $receipt;
+            }
+        }
+
+        // 3. Search by Ride digital_receipt_code (e.g. REC-XXXXXXXX, RNT-XXXX)
+        $ride = Ride::where('digital_receipt_code', $token)->first();
+        if ($ride) {
+            return ReceiptService::generateReceiptForRide($ride, false);
+        }
+
+        // 4. Search by booking codes:
+        // RIDE-123 or RNT-123
+        if (preg_match('/^(?:RIDE|RNT|RENT)-(\d+)$/i', $token, $m)) {
+            $ride = Ride::find((int)$m[1]);
+            if ($ride) {
+                return ReceiptService::generateReceiptForRide($ride, false);
+            }
+        }
+
+        // DEL-123 or delivery_code
+        if (preg_match('/^DEL-(\d+)$/i', $token, $m)) {
+            $del = PackageDelivery::find((int)$m[1]);
+            if ($del) {
+                return ReceiptService::generateReceiptForPackageDelivery($del, false);
+            }
+        }
+        $del = PackageDelivery::where('delivery_code', $token)->first();
+        if ($del) {
+            return ReceiptService::generateReceiptForPackageDelivery($del, false);
+        }
+
+        // CHF-123 or booking_code
+        if (preg_match('/^(?:CHF|BK)-(\d+)$/i', $token, $m)) {
+            $bk = DriverBooking::find((int)$m[1]);
+            if ($bk) {
+                return ReceiptService::generateReceiptForDriverBooking($bk, false);
+            }
+        }
+        $bk = DriverBooking::where('booking_code', $token)->first();
+        if ($bk) {
+            return ReceiptService::generateReceiptForDriverBooking($bk, false);
+        }
+
+        // 5. CRN / RNT date-stamped receipt numbers (e.g. CRN26100700012)
+        if (preg_match('/^(?:CRN|RNT)\d{6}(\d{5})$/i', $token, $m)) {
+            $rideId = (int)ltrim($m[1], '0');
+            $ride = Ride::find($rideId);
+            if ($ride) {
+                return ReceiptService::generateReceiptForRide($ride, false);
+            }
+        }
+
+        // 6. If token is numeric, try Ride, DriverBooking, or PackageDelivery by ID
+        if (is_numeric($token)) {
+            $numId = (int)$token;
+            $ride = Ride::find($numId);
+            if ($ride) {
+                return ReceiptService::generateReceiptForRide($ride, false);
+            }
+            $bk = DriverBooking::find($numId);
+            if ($bk) {
+                return ReceiptService::generateReceiptForDriverBooking($bk, false);
+            }
+            $del = PackageDelivery::find($numId);
+            if ($del) {
+                return ReceiptService::generateReceiptForPackageDelivery($del, false);
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Display the receipt online.
      */
     public function show(string $token)
     {
-        $receipt = Receipt::with(['user', 'driver', 'ride', 'driverBooking', 'packageDelivery'])
-            ->where('verification_token', $token)
-            ->orWhere('receipt_number', $token)
-            ->firstOrFail();
+        $receipt = static::resolveReceipt($token);
+
+        if (!$receipt) {
+            abort(404, 'Digital receipt could not be found.');
+        }
 
         return view('receipt', [
             'receipt' => $receipt,
@@ -32,9 +138,11 @@ class ReceiptController extends Controller
      */
     public function download(string $token)
     {
-        $receipt = Receipt::where('verification_token', $token)
-            ->orWhere('receipt_number', $token)
-            ->firstOrFail();
+        $receipt = static::resolveReceipt($token);
+
+        if (!$receipt) {
+            abort(404, 'Digital receipt could not be found.');
+        }
 
         // Ensure PDF exists on disk
         $path = $receipt->getPdfAbsolutePath();
@@ -137,12 +245,14 @@ class ReceiptController extends Controller
     public function apiShow(Request $request, $id)
     {
         $user = $request->user();
-        $receipt = Receipt::where('id', $id)
-            ->orWhere('verification_token', $id)
-            ->orWhere('receipt_number', $id)
-            ->firstOrFail();
+        $receipt = static::resolveReceipt((string)$id);
 
-        if ($user && $user->id !== $receipt->user_id && $user->role !== 'admin') {
+        if (!$receipt) {
+            return response()->json(['success' => false, 'message' => 'Receipt not found.'], 404);
+        }
+
+        // Allow owner, driver, or admin to access
+        if ($user && $user->id !== $receipt->user_id && $user->id !== $receipt->driver_id && $user->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
         }
 

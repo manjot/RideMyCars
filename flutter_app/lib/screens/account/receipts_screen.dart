@@ -64,17 +64,28 @@ class _ReceiptsScreenState extends State<ReceiptsScreen> {
   }
 
   Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not open link: $url'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+    try {
+      final uri = Uri.parse(url);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        final fallback = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (!fallback) {
+          await launchUrl(uri, mode: LaunchMode.inAppWebView);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launching receipt url: $e');
+      try {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.inAppWebView);
+      } catch (e2) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open link: $url'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
     }
   }

@@ -504,8 +504,22 @@
                     <!-- Digital Receipt -->
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-xs">
                         <span class="text-gray-400">Digital Receipt:</span>
-                        <span class="font-mono font-bold text-gray-700 dark:text-gray-300">{{ $ride->digital_receipt_code ?? 'REC-' . $ride->id }}</span>
+                        <a href="/receipts/{{ $ride->digital_receipt_code ?? $ride->id }}" target="_blank"
+                           class="font-mono font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer">
+                            <span>{{ $ride->digital_receipt_code ?? 'REC-' . $ride->id }}</span>
+                            <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
                     </div>
+
+                    <template x-if="['completed', 'finished'].includes(ride.status)">
+                        <div class="pt-2">
+                            <a href="/receipts/{{ $ride->digital_receipt_code ?? $ride->id }}" target="_blank"
+                               class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                <span>🧾 View Digital Receipt</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </a>
+                        </div>
+                    </template>
 
                     <!-- Cancel Button -->
                     <template x-if="['pending', 'accepted'].includes(ride.status)">

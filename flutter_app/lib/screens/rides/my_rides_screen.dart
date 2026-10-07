@@ -762,6 +762,29 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                 ),
               ],
             ),
+            if (status == 'completed' || status == 'confirmed' || status == 'paid') ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_rounded, size: 15, color: Colors.white),
+                  label: const Text(
+                    'View Digital Receipt',
+                    style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -931,6 +954,29 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                 ),
               ],
             ),
+            if (status == 'completed' || status == 'delivered' || status == 'paid') ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_rounded, size: 15, color: Colors.white),
+                  label: const Text(
+                    'View Digital Receipt',
+                    style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFA855F7),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -1082,6 +1128,29 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                 ],
               ),
             ],
+            if (status == 'completed' || status == 'finished' || status == 'paid') ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_rounded, size: 15, color: Colors.black),
+                  label: const Text(
+                    'View Digital Receipt',
+                    style: TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -1192,17 +1261,39 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
 
               const SizedBox(height: 18),
 
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.receipt_long_rounded, size: 16, color: Colors.white),
+                      label: const Text('View Receipt', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
                   ),
-                  child: const Text('Done & Return', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 14)),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Done & Return', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
