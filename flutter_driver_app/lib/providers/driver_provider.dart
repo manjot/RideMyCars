@@ -148,10 +148,34 @@ class DriverProvider extends ChangeNotifier {
 
   void _stopDispatchLoop() {
     _pollingTimer?.cancel();
+    _pollingTimer = null;
     _locationTimer?.cancel();
+    _locationTimer = null;
     _pendingRequests.clear();
     SoundService.instance.stopRingtone();
     notifyListeners();
+  }
+
+  void stopDispatch() {
+    _stopDispatchLoop();
+    _activeRides.clear();
+    _lastAcceptedRide = null;
+    _lastAssignmentResponse = null;
+    _isOnline = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshDashboard() async {
+    try {
+      await Future.wait([
+        pollPendingRequests(),
+        fetchEarnings(),
+      ]).timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('refreshDashboard notice: $e');
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<void> _getCurrentLocationAndSend() async {
@@ -172,7 +196,7 @@ class DriverProvider extends ChangeNotifier {
         await _dio.post(ApiConstants.driverLocation, data: {
           'lat': _currentLat,
           'lng': _currentLng,
-        });
+        }).timeout(const Duration(seconds: 4));
 
         notifyListeners();
       }
@@ -187,7 +211,10 @@ class DriverProvider extends ChangeNotifier {
       try {
         if (_currentLat == null || _currentLng == null) {
           try {
-            final lastPos = await Geolocator.getLastKnownPosition();
+            final lastPos = await Geolocator.getLastKnownPosition().timeout(
+              const Duration(seconds: 1),
+              onTimeout: () => null,
+            );
             if (lastPos != null) {
               _currentLat = lastPos.latitude;
               _currentLng = lastPos.longitude;
@@ -201,7 +228,7 @@ class DriverProvider extends ChangeNotifier {
             if (_currentLat != null) 'lat': _currentLat,
             if (_currentLng != null) 'lng': _currentLng,
           },
-        );
+        ).timeout(const Duration(seconds: 4));
         if (res.statusCode == 200) {
           final List newReqs = (res.data is Map ? (res.data['requests'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
           final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -224,7 +251,7 @@ class DriverProvider extends ChangeNotifier {
 
       // 2. Fetch pending payment & booking verification requests (parity with web dashboard!)
       try {
-        final verifRes = await _dio.get(ApiConstants.driverPendingVerifications);
+        final verifRes = await _dio.get(ApiConstants.driverPendingVerifications).timeout(const Duration(seconds: 4));
         if (verifRes.statusCode == 200 && (verifRes.data['success'] == true || verifRes.data['items'] != null)) {
           final List items = verifRes.data['items'] ?? [];
           final mapped = items.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -246,16 +273,23 @@ class DriverProvider extends ChangeNotifier {
 
       // 3. Fetch active rides continuously
       try {
-        final activeRes = await _dio.get(ApiConstants.driverActiveRides);
+        final activeRes = await _dio.get(ApiConstants.driverActiveRides).timeout(const Duration(seconds: 4));
         if (activeRes.statusCode == 200) {
           final List list = (activeRes.data is Map ? (activeRes.data['rides'] ?? activeRes.data['data']) : (activeRes.data is List ? activeRes.data : [])) ?? [];
-          final mapped = list.map((e) => Map<String, dynamic>.from(e)).toList();
+          final mapped = list
+              .map((e) => Map<String, dynamic>.from(e))
+              .where((r) => r['status'] != 'completed' && r['status'] != 'delivered' && r['status'] != 'cancelled')
+              .toList();
           if (mapped.isNotEmpty) {
             _activeRides = mapped;
-          } else if (_lastAcceptedRide != null && _lastAcceptedRide!['status'] != 'completed' && _lastAcceptedRide!['status'] != 'cancelled') {
+          } else if (_lastAcceptedRide != null &&
+              _lastAcceptedRide!['status'] != 'completed' &&
+              _lastAcceptedRide!['status'] != 'delivered' &&
+              _lastAcceptedRide!['status'] != 'cancelled') {
             _activeRides = [_lastAcceptedRide!];
           } else {
             _activeRides = [];
+            _lastAcceptedRide = null;
           }
         }
       } catch (e) {
@@ -510,7 +544,7 @@ class DriverProvider extends ChangeNotifier {
 
   Future<void> fetchActiveRides() async {
     try {
-      final res = await _dio.get(ApiConstants.driverActiveRides);
+      final res = await _dio.get(ApiConstants.driverActiveRides).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200 && (res.data['success'] == true || res.data is List || res.data['rides'] != null)) {
         final List list = (res.data is Map ? (res.data['rides'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
         final mapped = list
@@ -547,10 +581,10 @@ class DriverProvider extends ChangeNotifier {
     try {
       Response? res;
       try {
-        res = await _dio.post(ApiConstants.rideStatus(rideId), data: postData);
+        res = await _dio.post(ApiConstants.rideStatus(rideId), data: postData).timeout(const Duration(seconds: 5));
       } catch (e) {
         try {
-          res = await _dio.post('/driver/rides/$rideId/status', data: postData);
+          res = await _dio.post('/driver/rides/$rideId/status', data: postData).timeout(const Duration(seconds: 5));
         } catch (_) {}
       }
 
@@ -585,7 +619,7 @@ class DriverProvider extends ChangeNotifier {
 
   Future<void> fetchEarnings() async {
     try {
-      final res = await _dio.get(ApiConstants.driverEarnings);
+      final res = await _dio.get(ApiConstants.driverEarnings).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200 && res.data['success'] == true) {
         _earnings = Map<String, dynamic>.from(res.data);
         notifyListeners();

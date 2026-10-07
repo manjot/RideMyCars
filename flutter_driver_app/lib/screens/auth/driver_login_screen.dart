@@ -1011,6 +1011,7 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
   Widget _buildTabButton({required String title, required bool isSelected, required VoidCallback onTap}) {
     return Expanded(
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 9),

@@ -596,23 +596,24 @@ class AuthProvider extends ChangeNotifier {
     _userId = null;
     _userName = null;
     _userEmail = null;
+    _avatarUrl = null;
     _isAuthenticated = false;
     _isLoading = false;
 
-    // Wipe token and saved password from persistent storage
-    try {
-      await TokenStorage.clear();
-    } catch (_) {}
-
     notifyListeners();
 
-    // Revoke token on server with a 3-second timeout so logout never hangs
+    // Wipe token and saved password from persistent storage with 2-second safety timeout
+    try {
+      await TokenStorage.clear().timeout(const Duration(seconds: 2));
+    } catch (_) {}
+
+    // Revoke token on server with a 2-second timeout so logout never hangs
     if (tokenToRevoke != null && tokenToRevoke.isNotEmpty) {
       try {
         await _dio.post(
           ApiConstants.logout,
           options: Options(headers: {'Authorization': 'Bearer $tokenToRevoke'}),
-        ).timeout(const Duration(seconds: 3));
+        ).timeout(const Duration(seconds: 2));
       } catch (_) {}
     }
   }

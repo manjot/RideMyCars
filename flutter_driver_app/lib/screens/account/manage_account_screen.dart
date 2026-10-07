@@ -5,6 +5,10 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/driver_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../core/services/sound_service.dart';
+import '../auth/driver_login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
 
@@ -480,6 +484,14 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                       }
                     },
                   ),
+                  _buildActionTile(
+                    Icons.logout_rounded,
+                    'Log Out',
+                    'Sign out of your driver account session',
+                    iconColor: AppColors.danger,
+                    isDestructive: true,
+                    onTap: _showLogoutDialog,
+                  ),
                   const SizedBox(height: 10),
                   _buildActionTile(
                     Icons.delete_forever_rounded,
@@ -493,6 +505,60 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
               ),
             ),
             ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: AppColors.danger, size: 24),
+            SizedBox(width: 10),
+            Text('Log Out', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out of your driver account?',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textLight)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              try {
+                Provider.of<DriverProvider>(context, listen: false).stopDispatch();
+              } catch (_) {}
+              try {
+                Provider.of<NotificationProvider>(context, listen: false).stopPolling();
+              } catch (_) {}
+              SoundService.instance.stopRingtone();
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              auth.logout();
+              if (mounted) {
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -521,10 +587,20 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              try {
+                Provider.of<DriverProvider>(context, listen: false).stopDispatch();
+              } catch (_) {}
+              try {
+                Provider.of<NotificationProvider>(context, listen: false).stopPolling();
+              } catch (_) {}
+              SoundService.instance.stopRingtone();
               final auth = Provider.of<AuthProvider>(context, listen: false);
-              await auth.logout();
+              auth.logout();
               if (mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
+                  (route) => false,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Your driver account deletion request has been processed.'),

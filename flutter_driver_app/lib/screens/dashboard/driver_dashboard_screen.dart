@@ -459,9 +459,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
-          await driver.pollPendingRequests();
-          await driver.fetchActiveRides();
-          await driver.fetchEarnings();
+          await driver.refreshDashboard();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -2760,6 +2758,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Future<void> _handleLogout(BuildContext drawerContext, AuthProvider auth) async {
     final confirm = await showDialog<bool>(
       context: drawerContext,
+      barrierDismissible: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surfaceDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -2794,17 +2793,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
     if (confirm != true || !mounted) return;
 
+    // 1. Immediately cancel all driver polling, background loops, and ringtones
     try {
-      Navigator.of(context).pop();
+      final driver = Provider.of<DriverProvider>(context, listen: false);
+      driver.stopDispatch();
     } catch (_) {}
 
-    await auth.logout();
+    try {
+      final notifs = Provider.of<NotificationProvider>(context, listen: false);
+      notifs.stopPolling();
+    } catch (_) {}
 
-    if (!mounted) return;
+    SoundService.instance.stopRingtone();
 
-    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
-      (route) => false,
-    );
+    // 2. Perform logout in background so credentials and server token are cleanly invalidated
+    auth.logout();
+
+    // 3. Immediately transition to DriverLoginScreen and completely clear route stack
+    if (mounted) {
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const DriverLoginScreen()),
+        (route) => false,
+      );
+    }
   }
 }

@@ -216,74 +216,78 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                 ],
               ),
             )
-          : RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: _fetchTrips,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildTripsList(_filterTrips('all')),
-                  _buildTripsList(_filterTrips('completed')),
-                  _buildTripsList(_filterTrips('active')),
-                ],
-              ),
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTripsList(_filterTrips('all')),
+                _buildTripsList(_filterTrips('completed')),
+                _buildTripsList(_filterTrips('active')),
+              ],
             ),
     );
   }
 
   Widget _buildTripsList(List<Map<String, dynamic>> trips) {
     if (trips.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const SizedBox(height: 100),
-          Center(
-            child: Column(
-              children: [
-                Icon(
-                  _errorMessage != null ? Icons.wifi_off_rounded : Icons.directions_car_outlined,
-                  size: 64,
-                  color: Colors.white24,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _errorMessage ?? 'No trips found',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textLight, fontSize: 17, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _errorMessage != null
-                      ? 'Please check your connection and tap below to try again.'
-                      : 'Your trip history will appear here once you take rides.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                ),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: _fetchTrips,
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Try Again'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.backgroundDark,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _fetchTrips,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 100),
+            Center(
+              child: Column(
+                children: [
+                  Icon(
+                    _errorMessage != null ? Icons.wifi_off_rounded : Icons.directions_car_outlined,
+                    size: 64,
+                    color: Colors.white24,
                   ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage ?? 'No trips found',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.textLight, fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _errorMessage != null
+                        ? 'Please check your connection and tap below to try again.'
+                        : 'Your trip history will appear here once you take rides.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: _fetchTrips,
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('Try Again'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.backgroundDark,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: trips.length,
-      itemBuilder: (context, index) {
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: _fetchTrips,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: trips.length,
+        itemBuilder: (context, index) {
         final t = trips[index];
         final fare = double.tryParse((t['fare'] ?? t['total_amount'] ?? '0').toString()) ?? 0.0;
         final countryProv = Provider.of<CountryProvider>(context, listen: false);
@@ -499,6 +503,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
           ),
         );
       },
+    ),
     );
   }
 }
