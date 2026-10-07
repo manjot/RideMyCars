@@ -676,25 +676,10 @@
             }
 
             window.gm_authFailure = function() {
-                triggerLeafletFallback();
+                console.error("Google Maps API auth notice received.");
             };
 
-            const gmapsObserver = new MutationObserver(function() {
-                if (!fallbackActive) {
-                    const mapEl = document.getElementById('map');
-                    if (mapEl && (
-                        mapEl.querySelector('.gm-err-container') ||
-                        document.querySelector('.gm-style-moc') ||
-                        document.body.innerText.includes("This page can't load Google Maps correctly") ||
-                        document.body.innerText.includes("Do you own this website?")
-                    )) {
-                        triggerLeafletFallback();
-                    }
-                } else {
-                    dismissGoogleErrorDialogs();
-                }
-            });
-            gmapsObserver.observe(document.body, { childList: true, subtree: true });
+
 
             // Custom Google Maps Icons
             const createGoogleMapIcon = (emoji, bg) => ({

@@ -2563,26 +2563,10 @@
 
         // Standard Google Maps auth failure hook
         window.gm_authFailure = function() {
-            triggerLeafletFallback();
+            console.error("Google Maps API auth notice received.");
         };
 
-        // DOM Observer to catch Google Maps development watermark / alert modal
-        const gmapsObserver = new MutationObserver(function() {
-            if (!fallbackActive) {
-                const mapEl = document.getElementById('map');
-                if (mapEl && (
-                    mapEl.querySelector('.gm-err-container') ||
-                    document.querySelector('.gm-style-moc') ||
-                    document.body.innerText.includes("This page can't load Google Maps correctly") ||
-                    document.body.innerText.includes("Do you own this website?")
-                )) {
-                    triggerLeafletFallback();
-                }
-            } else {
-                dismissGoogleErrorDialogs();
-            }
-        });
-        gmapsObserver.observe(document.body, { childList: true, subtree: true });
+
 
         const countryCoords = {
             'IND': [28.6139, 77.2090], // New Delhi / India
