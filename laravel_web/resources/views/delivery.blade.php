@@ -589,7 +589,10 @@
         </form>
     </main>
 
-    <!-- Google Maps & Places Integration -->
+    <!-- Maps Integration with Resilient Auto-Fallback -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     @php
         $gmapsKey = config('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
     @endphp
@@ -605,11 +608,20 @@
             const dLatInput = document.getElementById("dropoff_lat_input");
             const dLngInput = document.getElementById("dropoff_lng_input");
 
-            let mapInstance = null;
-            let pickupMarker = null;
-            let dropoffMarker = null;
-            let routeLine = null;
-            let courierMarkers = [];
+            let currentMapEngine = 'google'; // 'google' | 'leaflet'
+            let gMapInstance = null;
+            let lMapInstance = null;
+            let fallbackActive = false;
+
+            let gPickupMarker = null;
+            let gDropoffMarker = null;
+            let gRouteLine = null;
+            let gCourierMarkers = [];
+
+            let lPickupMarker = null;
+            let lDropoffMarker = null;
+            let lRouteLine = null;
+            let lCourierMarkers = [];
 
             const countryCoordinates = {
                 'IND': { lat: 28.6139, lng: 77.2090 }, // New Delhi / India
@@ -629,8 +641,57 @@
             let defaultLat = defaultCenter.lat;
             let defaultLng = defaultCenter.lng;
 
+            function dismissGoogleErrorDialogs() {
+                document.querySelectorAll('div').forEach(el => {
+                    if (el.innerText && (
+                        el.innerText.includes("This page can't load Google Maps correctly") ||
+                        el.innerText.includes("Do you own this website?")
+                    )) {
+                        el.remove();
+                    }
+                });
+            }
+
+            function triggerLeafletFallback() {
+                if (fallbackActive) return;
+                fallbackActive = true;
+                currentMapEngine = 'leaflet';
+                console.warn("Google Maps notice detected on delivery page. Switching to OpenStreetMap fallback.");
+
+                dismissGoogleErrorDialogs();
+                setTimeout(dismissGoogleErrorDialogs, 100);
+                setTimeout(dismissGoogleErrorDialogs, 500);
+
+                const mapEl = document.getElementById('map');
+                if (!mapEl) return;
+                mapEl.innerHTML = '';
+
+                initLeafletMap();
+            }
+
+            window.gm_authFailure = function() {
+                triggerLeafletFallback();
+            };
+
+            const gmapsObserver = new MutationObserver(function() {
+                if (!fallbackActive) {
+                    const mapEl = document.getElementById('map');
+                    if (mapEl && (
+                        mapEl.querySelector('.gm-err-container') ||
+                        document.querySelector('.gm-style-moc') ||
+                        document.body.innerText.includes("This page can't load Google Maps correctly") ||
+                        document.body.innerText.includes("Do you own this website?")
+                    )) {
+                        triggerLeafletFallback();
+                    }
+                } else {
+                    dismissGoogleErrorDialogs();
+                }
+            });
+            gmapsObserver.observe(document.body, { childList: true, subtree: true });
+
             // Custom Google Maps Icons
-            const createMapIcon = (emoji, bg) => ({
+            const createGoogleMapIcon = (emoji, bg) => ({
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
                     <svg xmlns="http://www.w3.org/2000/svg" width="36" height="42" viewBox="0 0 36 42">
                         <path d="M18 0C8.06 0 0 8.06 0 18c0 12.6 18 24 18 24s18-11.4 18-24c0-9.94-8.06-18-18-18z" fill="${bg}"/>
@@ -642,7 +703,7 @@
                 anchor: new google.maps.Point(17, 40)
             });
 
-            const courierIcon = () => ({
+            const googleCourierIcon = () => ({
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
                     <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
                         <circle cx="17" cy="17" r="16" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
@@ -653,42 +714,64 @@
                 anchor: new google.maps.Point(17, 17)
             });
 
-            function updateNearbyCouriers(centerLat, centerLng) {
-                if (!mapInstance || typeof google === 'undefined') return;
-                courierMarkers.forEach(m => m.setMap(null));
-                courierMarkers = [];
+            // Custom Leaflet Icons
+            const createLeafletIcon = (emoji, bg) => L.divIcon({
+                className: 'custom-map-marker',
+                html: `<div style="background: ${bg}; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid white;">${emoji}</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
 
-                const offsets = [
-                    [0.008, 0.006],
-                    [-0.007, 0.009],
-                    [0.005, -0.008],
-                    [-0.006, -0.005]
-                ];
-                offsets.forEach((off, i) => {
-                    const marker = new google.maps.Marker({
-                        position: { lat: centerLat + off[0], lng: centerLng + off[1] },
-                        map: mapInstance,
-                        icon: courierIcon(),
-                        title: `Active Courier #${i+1}`
+            const courierOffsets = [
+                [0.008, 0.006],
+                [-0.007, 0.009],
+                [0.005, -0.008],
+                [-0.006, -0.005]
+            ];
+
+            function updateNearbyCouriers(centerLat, centerLng) {
+                if (currentMapEngine === 'leaflet') {
+                    if (!lMapInstance) return;
+                    lCourierMarkers.forEach(m => {
+                        try { lMapInstance.removeLayer(m); } catch (e) {}
                     });
-                    const infoWindow = new google.maps.InfoWindow({
-                        content: `<div style="font-weight:700;padding:4px;">🛵 Active Courier #${i+1}<br><span style="color:#10b981;font-size:12px;">● Available (2-4 mins away)</span></div>`
+                    lCourierMarkers = [];
+                    const cIcon = createLeafletIcon('🛵', '#10b981');
+                    courierOffsets.forEach((off, i) => {
+                        const m = L.marker([centerLat + off[0], centerLng + off[1]], { icon: cIcon }).addTo(lMapInstance)
+                            .bindPopup(`<b>🛵 Active Courier #${i+1}</b><br><span style="color:#10b981;font-size:12px;">● Available (2-4 mins away)</span>`);
+                        lCourierMarkers.push(m);
                     });
-                    marker.addListener('click', () => infoWindow.open(mapInstance, marker));
-                    courierMarkers.push(marker);
-                });
+                } else {
+                    if (!gMapInstance || typeof google === 'undefined') return;
+                    gCourierMarkers.forEach(m => m.setMap(null));
+                    gCourierMarkers = [];
+                    courierOffsets.forEach((off, i) => {
+                        const marker = new google.maps.Marker({
+                            position: { lat: centerLat + off[0], lng: centerLng + off[1] },
+                            map: gMapInstance,
+                            icon: googleCourierIcon(),
+                            title: `Active Courier #${i+1}`
+                        });
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `<div style="font-weight:700;padding:4px;">🛵 Active Courier #${i+1}<br><span style="color:#10b981;font-size:12px;">● Available (2-4 mins away)</span></div>`
+                        });
+                        marker.addListener('click', () => infoWindow.open(gMapInstance, marker));
+                        gCourierMarkers.push(marker);
+                    });
+                }
             }
 
-            function initMap() {
+            function initGoogleMap() {
                 const mapEl = document.getElementById('map');
                 if (!mapEl) return;
                 if (typeof google === 'undefined' || !google.maps) {
-                    setTimeout(initMap, 150);
+                    setTimeout(initGoogleMap, 150);
                     return;
                 }
 
                 try {
-                    mapInstance = new google.maps.Map(mapEl, {
+                    gMapInstance = new google.maps.Map(mapEl, {
                         center: { lat: defaultLat, lng: defaultLng },
                         zoom: 13,
                         mapTypeControl: false,
@@ -700,25 +783,22 @@
                         ]
                     });
 
-                    // Add initial pickup area marker
-                    pickupMarker = new google.maps.Marker({
+                    gPickupMarker = new google.maps.Marker({
                         position: { lat: defaultLat, lng: defaultLng },
-                        map: mapInstance,
+                        map: gMapInstance,
                         draggable: true,
-                        icon: createMapIcon('📍', '#f59e0b'),
+                        icon: createGoogleMapIcon('📍', '#f59e0b'),
                         title: 'Pickup Location'
                     });
 
-                    pickupMarker.addListener('dragend', function() {
-                        const pos = pickupMarker.getPosition();
+                    gPickupMarker.addListener('dragend', function() {
+                        const pos = gPickupMarker.getPosition();
                         setPickup(pos.lat(), pos.lng(), true);
                     });
 
-                    // Add active couriers near initial center
                     updateNearbyCouriers(defaultLat, defaultLng);
 
-                    // Map Click Handler: alternates setting pickup / dropoff
-                    mapInstance.addListener('click', function(e) {
+                    gMapInstance.addListener('click', function(e) {
                         const lat = e.latLng.lat();
                         const lng = e.latLng.lng();
                         if (!pLatInput.value || (pLatInput.value && dLatInput.value)) {
@@ -728,7 +808,57 @@
                         }
                     });
                 } catch (e) {
-                    console.warn("Map initialization error:", e);
+                    console.warn("Google Maps init error, falling back to Leaflet:", e);
+                    triggerLeafletFallback();
+                }
+            }
+
+            function initLeafletMap() {
+                const mapEl = document.getElementById('map');
+                if (!mapEl || typeof L === 'undefined') return;
+
+                try {
+                    lMapInstance = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(lMapInstance);
+
+                    const pickupIcon = createLeafletIcon('📍', '#f59e0b');
+                    lPickupMarker = L.marker([defaultLat, defaultLng], { icon: pickupIcon, draggable: true }).addTo(lMapInstance)
+                        .bindPopup('<b>📍 Pickup Location</b><br><span style="font-size:11px;color:#666;">Drag to refine location</span>');
+
+                    lPickupMarker.on('dragend', function(e) {
+                        const pos = e.target.getLatLng();
+                        setPickup(pos.lat, pos.lng, true);
+                    });
+
+                    updateNearbyCouriers(defaultLat, defaultLng);
+
+                    lMapInstance.on('click', function(e) {
+                        const { lat, lng } = e.latlng;
+                        if (!pLatInput.value || (pLatInput.value && dLatInput.value)) {
+                            setPickup(lat, lng, true);
+                        } else {
+                            setDropoff(lat, lng, true);
+                        }
+                    });
+
+                    // If coordinates were already filled, reflect on Leaflet
+                    const curPLat = parseFloat(pLatInput?.value);
+                    const curPLng = parseFloat(pLngInput?.value);
+                    if (!isNaN(curPLat) && !isNaN(curPLng)) {
+                        setPickup(curPLat, curPLng, false);
+                    }
+                    const curDLat = parseFloat(dLatInput?.value);
+                    const curDLng = parseFloat(dLngInput?.value);
+                    if (!isNaN(curDLat) && !isNaN(curDLng)) {
+                        setDropoff(curDLat, curDLng, false);
+                    }
+
+                    setTimeout(() => lMapInstance.invalidateSize(), 300);
+                } catch (e) {
+                    console.warn("Leaflet map initialization error:", e);
                 }
             }
 
@@ -736,20 +866,32 @@
                 if (pLatInput) { pLatInput.value = lat; pLatInput.dispatchEvent(new Event('input')); }
                 if (pLngInput) { pLngInput.value = lng; pLngInput.dispatchEvent(new Event('input')); }
 
-                if (pickupMarker) {
-                    pickupMarker.setPosition({ lat, lng });
-                } else if (mapInstance && typeof google !== 'undefined') {
-                    pickupMarker = new google.maps.Marker({
-                        position: { lat, lng },
-                        map: mapInstance,
-                        draggable: true,
-                        icon: createMapIcon('📍', '#f59e0b'),
-                        title: 'Pickup Location'
-                    });
-                    pickupMarker.addListener('dragend', function() {
-                        const pos = pickupMarker.getPosition();
-                        setPickup(pos.lat(), pos.lng(), true);
-                    });
+                if (currentMapEngine === 'leaflet') {
+                    if (lPickupMarker) {
+                        lPickupMarker.setLatLng([lat, lng]);
+                    } else if (lMapInstance) {
+                        lPickupMarker = L.marker([lat, lng], { icon: createLeafletIcon('📍', '#f59e0b'), draggable: true }).addTo(lMapInstance);
+                        lPickupMarker.on('dragend', function(e) {
+                            const pos = e.target.getLatLng();
+                            setPickup(pos.lat, pos.lng, true);
+                        });
+                    }
+                } else {
+                    if (gPickupMarker) {
+                        gPickupMarker.setPosition({ lat, lng });
+                    } else if (gMapInstance && typeof google !== 'undefined') {
+                        gPickupMarker = new google.maps.Marker({
+                            position: { lat, lng },
+                            map: gMapInstance,
+                            draggable: true,
+                            icon: createGoogleMapIcon('📍', '#f59e0b'),
+                            title: 'Pickup Location'
+                        });
+                        gPickupMarker.addListener('dragend', function() {
+                            const pos = gPickupMarker.getPosition();
+                            setPickup(pos.lat(), pos.lng(), true);
+                        });
+                    }
                 }
 
                 updateNearbyCouriers(lat, lng);
@@ -773,20 +915,32 @@
                 if (dLatInput) { dLatInput.value = lat; dLatInput.dispatchEvent(new Event('input')); }
                 if (dLngInput) { dLngInput.value = lng; dLngInput.dispatchEvent(new Event('input')); }
 
-                if (dropoffMarker) {
-                    dropoffMarker.setPosition({ lat, lng });
-                } else if (mapInstance && typeof google !== 'undefined') {
-                    dropoffMarker = new google.maps.Marker({
-                        position: { lat, lng },
-                        map: mapInstance,
-                        draggable: true,
-                        icon: createMapIcon('🏁', '#ef4444'),
-                        title: 'Dropoff Location'
-                    });
-                    dropoffMarker.addListener('dragend', function() {
-                        const pos = dropoffMarker.getPosition();
-                        setDropoff(pos.lat(), pos.lng(), true);
-                    });
+                if (currentMapEngine === 'leaflet') {
+                    if (lDropoffMarker) {
+                        lDropoffMarker.setLatLng([lat, lng]);
+                    } else if (lMapInstance) {
+                        lDropoffMarker = L.marker([lat, lng], { icon: createLeafletIcon('🏁', '#ef4444'), draggable: true }).addTo(lMapInstance);
+                        lDropoffMarker.on('dragend', function(e) {
+                            const pos = e.target.getLatLng();
+                            setDropoff(pos.lat, pos.lng, true);
+                        });
+                    }
+                } else {
+                    if (gDropoffMarker) {
+                        gDropoffMarker.setPosition({ lat, lng });
+                    } else if (gMapInstance && typeof google !== 'undefined') {
+                        gDropoffMarker = new google.maps.Marker({
+                            position: { lat, lng },
+                            map: gMapInstance,
+                            draggable: true,
+                            icon: createGoogleMapIcon('🏁', '#ef4444'),
+                            title: 'Dropoff Location'
+                        });
+                        gDropoffMarker.addListener('dragend', function() {
+                            const pos = gDropoffMarker.getPosition();
+                            setDropoff(pos.lat(), pos.lng(), true);
+                        });
+                    }
                 }
 
                 if (reverseGeocode && dInput) {
@@ -805,39 +959,57 @@
             }
 
             function updateRouteAndBounds() {
-                if (!mapInstance || typeof google === 'undefined') return;
                 const pLat = parseFloat(pLatInput?.value);
                 const pLng = parseFloat(pLngInput?.value);
                 const dLat = parseFloat(dLatInput?.value);
                 const dLng = parseFloat(dLngInput?.value);
 
-                if (!isNaN(pLat) && !isNaN(pLng) && !isNaN(dLat) && !isNaN(dLng)) {
-                    if (routeLine) routeLine.setMap(null);
+                if (currentMapEngine === 'leaflet') {
+                    if (!lMapInstance) return;
+                    if (!isNaN(pLat) && !isNaN(pLng) && !isNaN(dLat) && !isNaN(dLng)) {
+                        if (lRouteLine) lMapInstance.removeLayer(lRouteLine);
+                        lRouteLine = L.polyline([[pLat, pLng], [dLat, dLng]], {
+                            color: '#f59e0b',
+                            weight: 4,
+                            opacity: 0.85,
+                            dashArray: '8, 8',
+                            lineCap: 'round'
+                        }).addTo(lMapInstance);
 
-                    // Draw delivery dispatch route
-                    routeLine = new google.maps.Polyline({
-                        path: [
-                            { lat: pLat, lng: pLng },
-                            { lat: dLat, lng: dLng }
-                        ],
-                        geodesic: true,
-                        strokeColor: '#f59e0b',
-                        strokeOpacity: 0.85,
-                        strokeWeight: 4,
-                        map: mapInstance
-                    });
+                        const bounds = L.latLngBounds([[pLat, pLng], [dLat, dLng]]);
+                        lMapInstance.fitBounds(bounds, { padding: [40, 40] });
+                    } else if (!isNaN(pLat) && !isNaN(pLng)) {
+                        lMapInstance.setView([pLat, pLng], 14);
+                    }
+                } else {
+                    if (!gMapInstance || typeof google === 'undefined') return;
+                    if (!isNaN(pLat) && !isNaN(pLng) && !isNaN(dLat) && !isNaN(dLng)) {
+                        if (gRouteLine) gRouteLine.setMap(null);
 
-                    const bounds = new google.maps.LatLngBounds();
-                    bounds.extend({ lat: pLat, lng: pLng });
-                    bounds.extend({ lat: dLat, lng: dLng });
-                    mapInstance.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
-                } else if (!isNaN(pLat) && !isNaN(pLng)) {
-                    mapInstance.panTo({ lat: pLat, lng: pLng });
-                    mapInstance.setZoom(14);
+                        gRouteLine = new google.maps.Polyline({
+                            path: [
+                                { lat: pLat, lng: pLng },
+                                { lat: dLat, lng: dLng }
+                            ],
+                            geodesic: true,
+                            strokeColor: '#f59e0b',
+                            strokeOpacity: 0.85,
+                            strokeWeight: 4,
+                            map: gMapInstance
+                        });
+
+                        const bounds = new google.maps.LatLngBounds();
+                        bounds.extend({ lat: pLat, lng: pLng });
+                        bounds.extend({ lat: dLat, lng: dLng });
+                        gMapInstance.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+                    } else if (!isNaN(pLat) && !isNaN(pLng)) {
+                        gMapInstance.panTo({ lat: pLat, lng: pLng });
+                        gMapInstance.setZoom(14);
+                    }
                 }
             }
 
-            initMap();
+            initGoogleMap();
 
             // Auto-detect user current location on load (GPS with fast IP fallback)
             let autoLocationResolved = false;

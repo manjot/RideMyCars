@@ -398,6 +398,8 @@
         </div>
     </main>
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @php
         $gmapsKey = config('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
     @endphp
@@ -515,7 +517,7 @@
                     const defaultLat = this.selectedOrder ? this.selectedOrder.current_lat : fallbackCenter[0];
                     const defaultLng = this.selectedOrder ? this.selectedOrder.current_lng : fallbackCenter[1];
 
-                    if (typeof google !== 'undefined' && google.maps) {
+                    if (!window.liveTrackerGoogleFailed && typeof google !== 'undefined' && google.maps) {
                         try {
                             this.map = new google.maps.Map(mapEl, {
                                 center: { lat: defaultLat, lng: defaultLng },
@@ -523,7 +525,25 @@
                                 mapTypeControl: false,
                                 streetViewControl: false,
                             });
-                        } catch (e) {}
+                        } catch (e) {
+                            window.liveTrackerGoogleFailed = true;
+                        }
+                    }
+
+                    if (window.liveTrackerGoogleFailed || !this.map) {
+                        if (typeof L !== 'undefined') {
+                            try {
+                                if (this.map && typeof this.map.remove === 'function') {
+                                    this.map.remove();
+                                }
+                                mapEl.innerHTML = '';
+                                this.map = L.map(mapEl).setView([defaultLat, defaultLng], 13);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    maxZoom: 19,
+                                    attribution: '© OpenStreetMap'
+                                }).addTo(this.map);
+                            } catch (e) {}
+                        }
                     }
 
                     this.updateMapMarkers();
@@ -539,7 +559,7 @@
                     const cLat = this.selectedOrder.current_lat;
                     const cLng = this.selectedOrder.current_lng;
 
-                    if (typeof google !== 'undefined' && google.maps) {
+                    if (typeof google !== 'undefined' && google.maps && this.map instanceof google.maps.Map) {
                         if (this.pickupMarker) this.pickupMarker.setMap(null);
                         if (this.driverMarker) this.driverMarker.setMap(null);
                         if (this.dropoffMarker) this.dropoffMarker.setMap(null);
@@ -579,6 +599,25 @@
                         });
                         this.routePolyline.setMap(this.map);
                         this.map.setCenter({ lat: cLat, lng: cLng });
+                    } else if (typeof L !== 'undefined') {
+                        try {
+                            if (this.pickupMarker && typeof this.pickupMarker.remove === 'function') this.pickupMarker.remove();
+                            if (this.driverMarker && typeof this.driverMarker.remove === 'function') this.driverMarker.remove();
+                            if (this.dropoffMarker && typeof this.dropoffMarker.remove === 'function') this.dropoffMarker.remove();
+                            if (this.routePolyline && typeof this.routePolyline.remove === 'function') this.routePolyline.remove();
+
+                            this.pickupMarker = L.marker([pLat, pLng]).addTo(this.map).bindPopup("🟢 Pickup: " + this.selectedOrder.pickup_location);
+                            this.driverMarker = L.marker([cLat, cLng]).addTo(this.map).bindPopup("🚚 Driver: " + (this.selectedOrder.driver ? this.selectedOrder.driver.name : 'Courier'));
+                            this.dropoffMarker = L.marker([dLat, dLng]).addTo(this.map).bindPopup("🔴 Dropoff: " + this.selectedOrder.dropoff_location);
+
+                            this.routePolyline = L.polyline([
+                                [pLat, pLng],
+                                [cLat, cLng],
+                                [dLat, dLng]
+                            ], { color: '#F59E0B', weight: 4, opacity: 0.8 }).addTo(this.map);
+
+                            this.map.setView([cLat, cLng], 13);
+                        } catch (e) {}
                     }
                 },
 
@@ -590,9 +629,14 @@
                         const lat = parseFloat(this.selectedOrder.current_lat) || parseFloat(this.selectedOrder.pickup_lat) || 5.6037;
                         const lng = parseFloat(this.selectedOrder.current_lng) || parseFloat(this.selectedOrder.pickup_lng) || -0.1870;
 
-                        if (this.map && typeof this.map.setCenter === 'function') {
-                            this.map.setCenter({ lat, lng });
-                            this.map.setZoom(15);
+                        if (this.map) {
+                            if (typeof google !== 'undefined' && google.maps && this.map instanceof google.maps.Map) {
+                                this.map.setCenter({ lat, lng });
+                                this.map.setZoom(15);
+                            } else if (typeof L !== 'undefined' && typeof this.map.setView === 'function') {
+                                try { this.map.invalidateSize(); } catch(e){}
+                                this.map.setView([lat, lng], 15);
+                            }
                         }
 
                         const mapEl = document.getElementById("live_tracker_map_standalone");
