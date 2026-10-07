@@ -235,23 +235,39 @@ class BookingConfirmationScreen extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    if (dateTimeText != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.schedule, size: 14, color: isDark ? Colors.white54 : Colors.black54),
-                          const SizedBox(width: 6),
-                          Text(
-                            dateTimeText!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : Colors.black87,
+                    Builder(builder: (_) {
+                      String timeLabel = dateTimeText ?? '';
+                      if (timeLabel.isEmpty) {
+                        final now = DateTime.now();
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        final m = months[now.month - 1];
+                        final d = now.day.toString().padLeft(2, '0');
+                        final y = now.year;
+                        final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+                        final min = now.minute.toString().padLeft(2, '0');
+                        final ampm = now.hour >= 12 ? 'PM' : 'AM';
+                        timeLabel = 'Requested: $d $m $y • $hour:$min $ampm';
+                      } else if (!timeLabel.toLowerCase().startsWith('requested') && !timeLabel.toLowerCase().startsWith('schedule')) {
+                        timeLabel = 'Requested: $timeLabel';
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Icon(Icons.schedule, size: 14, color: isDark ? Colors.white54 : Colors.black54),
+                            const SizedBox(width: 6),
+                            Text(
+                              timeLabel,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      );
+                    }),
                     const Divider(height: 24),
 
                     // Pickup / Dropoff Timeline

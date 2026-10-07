@@ -62,6 +62,32 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
     }
   }
 
+  String _formatDateTime(dynamic raw) {
+    if (raw == null) return 'Recent';
+    final str = raw.toString().trim();
+    if (str.isEmpty || str == 'null') return 'Recent';
+    try {
+      DateTime dt = DateTime.parse(str).toLocal();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final m = months[dt.month - 1];
+      final d = dt.day.toString().padLeft(2, '0');
+      final y = dt.year;
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final min = dt.minute.toString().padLeft(2, '0');
+      final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$d $m $y • $hour:$min $ampm';
+    } catch (_) {
+      try {
+        final parts = str.split('T');
+        if (parts.length >= 2) {
+          final timePart = parts[1].split('.').first;
+          return '${parts[0]} • $timePart';
+        }
+      } catch (_) {}
+      return str;
+    }
+  }
+
   String _getItemType(Map<String, dynamic> r) {
     final type = (r['type'] ?? 'ride').toString().toLowerCase();
     final rawType = (r['raw_vehicle_type'] ?? r['vehicle_type'] ?? '').toString();
@@ -353,8 +379,8 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
     final remainingBalance = (r['remaining_balance'] as num? ?? (totalFare - paidAmount)).toDouble();
     final vehicleTitle = (r['vehicle_type'] ?? 'Rented Vehicle').toString().replaceAll(RegExp(r'^RENTAL_\d+_'), '');
     final bookingCode = (r['booking_code'] ?? 'RNT-${r['id']}').toString();
-    final date = r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent';
-    final pickupDate = r['pickup_date']?.toString() ?? date;
+    final requestedTime = r['request_time_formatted'] ?? _formatDateTime(r['created_at']);
+    final pickupDate = r['pickup_date']?.toString() ?? (r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent');
     final returnDate = r['return_date']?.toString() ?? '3 Days Return';
     final pickupTime = r['pickup_time']?.toString() ?? '10:00 AM';
 
@@ -391,29 +417,16 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 6,
-                        runSpacing: 2,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'RENTED FLEET',
-                              style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                          Text(
-                            date,
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'RENTED FLEET',
+                          style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -463,8 +476,33 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
               ],
             ),
 
+            // Dedicated Requested Date & Time Badge
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, color: Color(0xFF60A5FA), size: 13),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Requested: $requestedTime',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: EdgeInsets.symmetric(vertical: 10),
               child: Divider(color: Colors.white12, height: 1),
             ),
 
@@ -586,7 +624,11 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
     final fare = (r['fare'] ?? r['total_amount'] as num? ?? 0.0).toDouble();
     final driverName = r['driver'] is Map ? (r['driver']['name'] ?? 'Chauffeur') : (r['driver_name'] ?? 'Chauffeur');
     final vehicleTitle = (r['vehicle_type'] ?? 'Chauffeur Hire').toString().replaceAll(RegExp(r'^CHAUFFEUR_\d+_'), '');
-    final date = r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent';
+    final requestedTime = r['request_time_formatted'] ?? _formatDateTime(r['created_at']);
+    final pickupDate = r['pickup_date']?.toString();
+    final pickupTime = r['pickup_time']?.toString();
+    final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+        (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -616,26 +658,13 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 6,
-                        runSpacing: 2,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text('CHAUFFEUR', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
-                          ),
-                          Text(
-                            date,
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('CHAUFFEUR', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -670,6 +699,38 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   ],
                 ),
               ],
+            ),
+
+            // Dedicated Requested Date & Time Badge
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, color: Color(0xFF10B981), size: 13),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Requested: $requestedTime',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasScheduled) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                      style: const TextStyle(color: Colors.amber, fontSize: 10.5, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: Colors.white12, height: 1)),
             Row(
@@ -716,7 +777,11 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
     final vehicleTitle = (r['vehicle_type'] ?? 'Parcel Delivery').toString().replaceAll(RegExp(r'^DELIVERY_'), '');
     final trackingCode = (r['booking_code'] ?? 'DEL-${r['id']}').toString();
     final pin = r['delivery_otp']?.toString() ?? '7682';
-    final date = r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent';
+    final requestedTime = r['request_time_formatted'] ?? _formatDateTime(r['created_at']);
+    final pickupDate = r['pickup_date']?.toString();
+    final pickupTime = r['pickup_time']?.toString();
+    final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+        (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -746,26 +811,13 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 6,
-                        runSpacing: 2,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFA855F7),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text('DELIVERY', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
-                          ),
-                          Text(
-                            date,
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFA855F7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('DELIVERY', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -800,6 +852,38 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   ],
                 ),
               ],
+            ),
+
+            // Dedicated Requested Date & Time Badge
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, color: Color(0xFFA855F7), size: 13),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Requested: $requestedTime',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasScheduled) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                      style: const TextStyle(color: Colors.amber, fontSize: 10.5, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: Colors.white12, height: 1)),
             Wrap(
@@ -860,7 +944,11 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
     final fare = (r['fare'] ?? r['total_amount'] as num? ?? 0.0).toDouble();
     final driverName = r['driver'] is Map ? (r['driver']['name'] ?? 'Assigned Driver') : (r['driver_name'] ?? 'Assigned Driver');
     final vehicleType = (r['vehicle_type'] ?? 'Standard').toString();
-    final date = r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent';
+    final requestedTime = r['request_time_formatted'] ?? _formatDateTime(r['created_at']);
+    final pickupDate = r['pickup_date']?.toString();
+    final pickupTime = r['pickup_time']?.toString();
+    final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+        (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -890,30 +978,17 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 6,
-                        runSpacing: 2,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text('RIDE', style: TextStyle(color: Colors.black, fontSize: 9.5, fontWeight: FontWeight.w900)),
-                          ),
-                          Text(
-                            date,
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('RIDE', style: TextStyle(color: Colors.black, fontSize: 9.5, fontWeight: FontWeight.w900)),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$vehicleType Ride',
+                        vehicleType.toLowerCase().contains('ride') ? vehicleType : '$vehicleType Ride',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -944,6 +1019,38 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   ],
                 ),
               ],
+            ),
+
+            // Dedicated Requested Date & Time Badge
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 13),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Requested: $requestedTime',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasScheduled) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                      style: const TextStyle(color: Colors.amber, fontSize: 10.5, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: Colors.white12, height: 1)),
             Row(

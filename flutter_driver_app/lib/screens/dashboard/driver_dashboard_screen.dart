@@ -1465,6 +1465,76 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
               );
             }),
+
+            // Requested Date & Time Badge
+            Builder(builder: (_) {
+              final rawCreated = ride['created_at'];
+              final reqFormatted = ride['request_time_formatted'];
+              final reqHuman = ride['request_time_human'];
+              String displayTime = 'Recent';
+              if (reqFormatted != null && reqFormatted.toString().isNotEmpty) {
+                displayTime = reqFormatted.toString();
+              } else if (rawCreated != null && rawCreated.toString().isNotEmpty) {
+                try {
+                  final dt = DateTime.parse(rawCreated.toString()).toLocal();
+                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  final m = months[dt.month - 1];
+                  final d = dt.day.toString().padLeft(2, '0');
+                  final y = dt.year;
+                  final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+                  final min = dt.minute.toString().padLeft(2, '0');
+                  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+                  displayTime = '$d $m $y • $hour:$min $ampm';
+                } catch (_) {
+                  displayTime = rawCreated.toString();
+                }
+              }
+
+              final pickupDate = ride['pickup_date']?.toString();
+              final pickupTime = ride['pickup_time']?.toString();
+              final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+                  (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
+
+              return Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 14),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Requested: $displayTime${reqHuman != null ? ' ($reqHuman)' : ''}',
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (hasScheduled) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+
             const SizedBox(height: 12),
             Row(
               children: [
@@ -2182,6 +2252,76 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
               );
             }),
+
+            // Requested Date & Time Badge
+            Builder(builder: (_) {
+              final rawCreated = job['created_at'];
+              final reqFormatted = job['request_time_formatted'];
+              final reqHuman = job['request_time_human'];
+              String displayTime = 'Recent';
+              if (reqFormatted != null && reqFormatted.toString().isNotEmpty) {
+                displayTime = reqFormatted.toString();
+              } else if (rawCreated != null && rawCreated.toString().isNotEmpty) {
+                try {
+                  final dt = DateTime.parse(rawCreated.toString()).toLocal();
+                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  final m = months[dt.month - 1];
+                  final d = dt.day.toString().padLeft(2, '0');
+                  final y = dt.year;
+                  final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+                  final min = dt.minute.toString().padLeft(2, '0');
+                  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+                  displayTime = '$d $m $y • $hour:$min $ampm';
+                } catch (_) {
+                  displayTime = rawCreated.toString();
+                }
+              }
+
+              final pickupDate = job['pickup_date']?.toString();
+              final pickupTime = job['pickup_time']?.toString();
+              final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+                  (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
+
+              return Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 14),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Requested: $displayTime${reqHuman != null ? ' ($reqHuman)' : ''}',
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (hasScheduled) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+
             const SizedBox(height: 12),
 
             // Customer Details Row

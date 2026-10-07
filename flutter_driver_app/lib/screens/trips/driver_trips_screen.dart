@@ -227,6 +227,32 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
     );
   }
 
+  String _formatDateTime(dynamic raw) {
+    if (raw == null) return 'Recent';
+    final str = raw.toString().trim();
+    if (str.isEmpty || str == 'null') return 'Recent';
+    try {
+      DateTime dt = DateTime.parse(str).toLocal();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final m = months[dt.month - 1];
+      final d = dt.day.toString().padLeft(2, '0');
+      final y = dt.year;
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final min = dt.minute.toString().padLeft(2, '0');
+      final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$d $m $y • $hour:$min $ampm';
+    } catch (_) {
+      try {
+        final parts = str.split('T');
+        if (parts.length >= 2) {
+          final timePart = parts[1].split('.').first;
+          return '${parts[0]} • $timePart';
+        }
+      } catch (_) {}
+      return str;
+    }
+  }
+
   Widget _buildTripsList(List<Map<String, dynamic>> trips) {
     if (trips.isEmpty) {
       return RefreshIndicator(
@@ -302,8 +328,11 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
             ? (t['rider']['name'] ?? 'Passenger')
             : (t['passenger_name'] ?? t['customer_name'] ?? 'Passenger');
         final vehicleType = (t['vehicle_type'] ?? t['car_make_model'] ?? 'Standard').toString();
-        final rawDate = (t['created_at'] ?? t['pickup_date'])?.toString();
-        final date = rawDate != null ? rawDate.split('T').first : 'Recent';
+        final requestedTime = t['request_time_formatted'] ?? _formatDateTime(t['created_at']);
+        final pickupDate = t['pickup_date']?.toString();
+        final pickupTime = t['pickup_time']?.toString();
+        final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+            (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
 
         final receiptUrl = t['receipt_url'] ?? (t['receipt_id'] != null ? 'https://www.ridemycars.com/receipts/${t['receipt_id']}' : null);
 
@@ -355,7 +384,9 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        '$vehicleType Ride',
+                                        vehicleType.toLowerCase().contains('ride') || vehicleType.toLowerCase().contains('delivery') || vehicleType.toLowerCase().contains('chauffeur')
+                                            ? vehicleType
+                                            : '$vehicleType Ride',
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           color: AppColors.textLight,
@@ -376,7 +407,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Passenger: $riderName · $date',
+                                  '${t['type'] == 'delivery' ? 'Sender' : 'Passenger'}: $riderName',
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                                 ),
@@ -417,6 +448,45 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                       ],
                     ),
                   ],
+                ),
+                // Dedicated Requested Date & Time Row
+                Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 13),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Requested: $requestedTime',
+                          style: const TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (hasScheduled) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 10),

@@ -467,6 +467,20 @@
                         </div>
                     </div>
 
+                    <!-- Requested Date & Time Info -->
+                    <div class="pt-3 border-t border-gray-100 dark:border-white/10 space-y-1 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400 font-medium">Requested:</span>
+                            <span class="font-bold text-gray-900 dark:text-white">{{ $ride->created_at ? $ride->created_at->format('M d, Y • h:i A') : 'Recent' }}</span>
+                        </div>
+                        @if($ride->pickup_date || $ride->pickup_time)
+                            <div class="flex justify-between items-center text-amber-600 dark:text-amber-400">
+                                <span class="font-medium">Scheduled Pickup:</span>
+                                <span class="font-bold">{{ trim(($ride->pickup_date ? \Carbon\Carbon::parse($ride->pickup_date)->format('M d, Y') : '') . ' ' . ($ride->pickup_time ? 'at ' . $ride->pickup_time : '')) }}</span>
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- Customer & Contact Person Info -->
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 space-y-1 text-xs">
                         <div class="flex justify-between">

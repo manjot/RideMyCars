@@ -148,6 +148,8 @@ class RideController extends Controller
                     'daily_rate' => (float)$r->vehicle->daily_rate,
                 ] : null,
                 'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
+                'request_time_formatted' => $r->created_at ? $r->created_at->format('M d, Y • h:i A') : null,
+                'request_time_human' => $r->created_at ? $r->created_at->diffForHumans() : null,
                 'driver' => $r->driver ? [
                     'id' => $r->driver->id,
                     'name' => $r->driver->name,
@@ -181,7 +183,11 @@ class RideController extends Controller
                 'pickup_location' => $db->pickup_location,
                 'dropoff_location' => $db->dropoff_location ?? 'As Directed',
                 'vehicle_type' => 'Chauffeur: ' . $cleanName,
+                'pickup_date' => $db->start_date ? \Carbon\Carbon::parse($db->start_date)->format('Y-m-d') : null,
+                'pickup_time' => $db->start_time ?? null,
                 'created_at' => $db->created_at ? $db->created_at->toIso8601String() : null,
+                'request_time_formatted' => $db->created_at ? $db->created_at->format('M d, Y • h:i A') : null,
+                'request_time_human' => $db->created_at ? $db->created_at->diffForHumans() : null,
                 'driver' => $db->driver ? [
                     'id' => $db->driver->id,
                     'name' => $db->driver->name,
@@ -219,7 +225,11 @@ class RideController extends Controller
                 'recipient_name' => $del->recipient_name,
                 'package_size' => $del->package_size,
                 'package_weight_kg' => $del->package_weight_kg,
+                'pickup_date' => $del->pickup_date ? \Carbon\Carbon::parse($del->pickup_date)->format('Y-m-d') : null,
+                'pickup_time' => $del->pickup_time ?? null,
                 'created_at' => $del->created_at ? $del->created_at->toIso8601String() : null,
+                'request_time_formatted' => $del->created_at ? $del->created_at->format('M d, Y • h:i A') : null,
+                'request_time_human' => $del->created_at ? $del->created_at->diffForHumans() : null,
                 'courier' => $del->courier ? [
                     'id' => $del->courier->id,
                     'name' => $del->courier->name,

@@ -118,6 +118,17 @@
 
                             <!-- Ride Details -->
                             <div class="p-5">
+                                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3 pb-2.5 border-b border-gray-100 dark:border-white/10 flex-wrap gap-2">
+                                    <span class="flex items-center gap-1.5 font-bold text-gray-700 dark:text-gray-300">
+                                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        Requested: {{ $ride->created_at ? $ride->created_at->timezone(config('app.timezone', 'Asia/Kolkata'))->format('M d, Y • h:i A') : 'Recent' }}
+                                    </span>
+                                    @if($ride->pickup_date || $ride->pickup_time)
+                                        <span class="text-amber-600 dark:text-amber-400 font-semibold">
+                                            Scheduled: {{ $ride->pickup_date ? \Carbon\Carbon::parse($ride->pickup_date)->format('M d, Y') : '' }} {{ $ride->pickup_time ? 'at ' . $ride->pickup_time : '' }}
+                                        </span>
+                                    @endif
+                                </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
                                     <!-- Locations -->
                                     <div class="min-w-0">
@@ -403,6 +414,12 @@
                                     <h3 class="text-base font-bold text-gray-900 dark:text-white mt-1">
                                         {{ ucfirst($booking->service_type ?? 'Dedicated Chauffeur') }} ({{ ucfirst($booking->duration_type ?? 'Daily') }})
                                     </h3>
+                                    @if($booking->created_at)
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1 font-semibold">
+                                            <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            Requested: {{ $booking->created_at->format('M d, Y • h:i A') }}
+                                        </p>
+                                    @endif
                                 </div>
                                 <div class="text-right">
                                     <p class="text-2xl font-black text-gray-900 dark:text-white">${{ number_format($booking->total_price ?? 0, 2) }}</p>
@@ -579,6 +596,12 @@
                                     <h3 class="text-base font-bold text-gray-900 dark:text-white mt-1">
                                         {{ ucfirst($delivery->package_category ?? 'General Parcel') }} • {{ ucfirst($delivery->delivery_type ?? 'Express') }}
                                     </h3>
+                                    @if($delivery->created_at)
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1 font-semibold">
+                                            <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            Requested: {{ $delivery->created_at->format('M d, Y • h:i A') }}
+                                        </p>
+                                    @endif
                                 </div>
                                 <div class="text-right">
                                     <p class="text-2xl font-black text-gray-900 dark:text-white">${{ number_format($delivery->total_price ?? 0, 2) }}</p>

@@ -561,6 +561,75 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         const SizedBox(height: 12),
                       ],
 
+                      // Requested Date & Time Badge
+                      Builder(builder: (_) {
+                        final rawCreated = currentRide['created_at'];
+                        final reqFormatted = currentRide['request_time_formatted'];
+                        final reqHuman = currentRide['request_time_human'];
+                        String displayTime = 'Recent';
+                        if (reqFormatted != null && reqFormatted.toString().isNotEmpty) {
+                          displayTime = reqFormatted.toString();
+                        } else if (rawCreated != null && rawCreated.toString().isNotEmpty) {
+                          try {
+                            final dt = DateTime.parse(rawCreated.toString()).toLocal();
+                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            final m = months[dt.month - 1];
+                            final d = dt.day.toString().padLeft(2, '0');
+                            final y = dt.year;
+                            final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+                            final min = dt.minute.toString().padLeft(2, '0');
+                            final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+                            displayTime = '$d $m $y • $hour:$min $ampm';
+                          } catch (_) {
+                            displayTime = rawCreated.toString();
+                          }
+                        }
+
+                        final pickupDate = currentRide['pickup_date']?.toString();
+                        final pickupTime = currentRide['pickup_time']?.toString();
+                        final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+                            (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.04),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 15),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Requested: $displayTime${reqHuman != null ? ' ($reqHuman)' : ''}',
+                                  style: const TextStyle(
+                                    color: AppColors.textLight,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (hasScheduled) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  '• Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                                  style: const TextStyle(
+                                    color: Colors.amber,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }),
+
                       // Route Information
                       Container(
                         padding: const EdgeInsets.all(14),

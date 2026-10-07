@@ -208,13 +208,39 @@ class _ReceiptsScreenState extends State<ReceiptsScreen> {
     );
   }
 
+  String _formatDateTime(dynamic raw) {
+    if (raw == null) return 'Recent';
+    final str = raw.toString().trim();
+    if (str.isEmpty || str == 'null') return 'Recent';
+    try {
+      DateTime dt = DateTime.parse(str).toLocal();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final m = months[dt.month - 1];
+      final d = dt.day.toString().padLeft(2, '0');
+      final y = dt.year;
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final min = dt.minute.toString().padLeft(2, '0');
+      final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$d $m $y • $hour:$min $ampm';
+    } catch (_) {
+      try {
+        final parts = str.split('T');
+        if (parts.length >= 2) {
+          final timePart = parts[1].split('.').first;
+          return '${parts[0]} • $timePart';
+        }
+      } catch (_) {}
+      return str;
+    }
+  }
+
   Widget _buildReceiptCard(Map<String, dynamic> r) {
     final type = (r['booking_type'] ?? 'ride').toString().toLowerCase();
     final receiptNum = r['receipt_number'] ?? 'CRN-${r['id']}';
     final amount = (r['total_amount'] as num? ?? 0.0).toDouble();
     final currency = r['currency'] ?? 'USD';
     final currencySymbol = _getCurrencySymbol(currency);
-    final date = r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent';
+    final date = r['request_time_formatted'] ?? _formatDateTime(r['created_at']);
     final paymentMethod = (r['payment_method'] ?? 'card').toString().toUpperCase();
     final downloadUrl = r['download_url'] ?? ApiConstants.receiptDownloadWeb(r['verification_token'] ?? '');
 
@@ -431,7 +457,7 @@ class _ReceiptsScreenState extends State<ReceiptsScreen> {
     final currency = r['currency'] ?? 'USD';
     final currencySymbol = _getCurrencySymbol(currency);
     final receiptNum = r['receipt_number'] ?? 'CRN-${r['id']}';
-    final date = r['created_at'] != null ? r['created_at'].toString().split('T').first : 'Recent';
+    final date = r['request_time_formatted'] ?? _formatDateTime(r['created_at']);
     final customerName = snap['customer_name'] ?? 'Valued Customer';
     final driverName = snap['driver_name'] ?? snap['courier_name'];
     final vehicleDetails = snap['vehicle_details'] ?? snap['vehicle_name'];

@@ -43,6 +43,8 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   String _paymentStatus = 'pending';
   Map<String, dynamic>? _courierData;
   late String _otp;
+  String? _requestedTime;
+  String? _scheduledPickup;
 
   final List<String> _stages = [
     'Order Confirmed',
@@ -80,6 +82,28 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
             }
             if (data['courier'] != null && data['courier'] is Map) {
               _courierData = Map<String, dynamic>.from(data['courier']);
+            }
+            if (data['request_time_formatted'] != null && data['request_time_formatted'].toString().isNotEmpty) {
+              _requestedTime = data['request_time_formatted'].toString();
+            } else if (data['created_at'] != null && data['created_at'].toString().isNotEmpty) {
+              try {
+                final dt = DateTime.parse(data['created_at'].toString()).toLocal();
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                final m = months[dt.month - 1];
+                final d = dt.day.toString().padLeft(2, '0');
+                final y = dt.year;
+                final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+                final min = dt.minute.toString().padLeft(2, '0');
+                final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+                _requestedTime = '$d $m $y • $hour:$min $ampm';
+              } catch (_) {
+                _requestedTime = data['created_at'].toString();
+              }
+            }
+            final pDate = data['pickup_date']?.toString();
+            final pTime = data['pickup_time']?.toString();
+            if ((pDate != null && pDate.isNotEmpty && pDate != 'null') || (pTime != null && pTime.isNotEmpty && pTime != 'null')) {
+              _scheduledPickup = '${pDate ?? ''} ${pTime ?? ''}'.trim();
             }
           });
         }
@@ -421,6 +445,10 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 12),
+                    if (_requestedTime != null)
+                      _buildInfoRow('Requested', _requestedTime!, isDark),
+                    if (_scheduledPickup != null)
+                      _buildInfoRow('Scheduled Pickup', _scheduledPickup!, isDark),
                     _buildInfoRow('Category', widget.packageCategory, isDark),
                     _buildInfoRow('Recipient', '${widget.recipientName} (${widget.recipientPhone})', isDark),
                     _buildInfoRow('Pickup', widget.pickupLocation, isDark),

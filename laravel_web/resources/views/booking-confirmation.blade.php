@@ -227,6 +227,7 @@
                     <h3 class="font-extrabold text-sm text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/10 pb-2">Booking Details</h3>
 
                     <div class="space-y-2 text-gray-600 dark:text-gray-400">
+                        <p><strong class="text-gray-900 dark:text-white">Requested:</strong> {{ $booking->created_at ? $booking->created_at->format('M d, Y • h:i A') : 'Recent' }}</p>
                         <p><strong class="text-gray-900 dark:text-white">Service Type:</strong> {{ $booking->service_type ?? 'Hire Driver' }}</p>
                         <p><strong class="text-gray-900 dark:text-white">Pickup Location:</strong> {{ $booking->pickup_location }}</p>
                         @if($booking->dropoff_location)

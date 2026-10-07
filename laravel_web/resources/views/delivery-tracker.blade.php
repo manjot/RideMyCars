@@ -273,6 +273,10 @@
                     <h3 class="font-extrabold text-sm text-gray-900 dark:text-white border-b border-gray-100 dark:border-white/10 pb-2">Parcel & Contact Summary</h3>
 
                     <div class="space-y-2 text-gray-600 dark:text-gray-400">
+                        <p><strong class="text-gray-900 dark:text-white">Requested:</strong> {{ $delivery->created_at ? $delivery->created_at->format('M d, Y • h:i A') : 'Recent' }}</p>
+                        @if($delivery->pickup_date || $delivery->pickup_time)
+                            <p class="text-amber-600 dark:text-amber-400 font-semibold"><strong>Scheduled Pickup:</strong> {{ trim(($delivery->pickup_date ? \Carbon\Carbon::parse($delivery->pickup_date)->format('M d, Y') : '') . ' ' . ($delivery->pickup_time ? 'at ' . $delivery->pickup_time : '')) }}</p>
+                        @endif
                         <p><strong class="text-gray-900 dark:text-white">Sender:</strong> {{ $delivery->sender_name }} ({{ $delivery->sender_phone }})</p>
                         <p><strong class="text-gray-900 dark:text-white">Recipient:</strong> {{ $delivery->recipient_name }} ({{ $delivery->recipient_phone }})</p>
                         <p><strong class="text-gray-900 dark:text-white">Pickup:</strong> {{ $delivery->pickup_location }}</p>

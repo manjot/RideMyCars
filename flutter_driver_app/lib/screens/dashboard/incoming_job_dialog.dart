@@ -383,7 +383,82 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 ),
               ),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
+
+            // Requested Date & Time Badge
+            Builder(builder: (_) {
+              final rawCreated = request['created_at'] ?? ride?['created_at'] ?? booking?['created_at'];
+              final reqFormatted = request['request_time_formatted'] ?? ride?['request_time_formatted'] ?? booking?['request_time_formatted'];
+              final reqHuman = request['request_time_human'] ?? ride?['request_time_human'] ?? booking?['request_time_human'];
+              String displayTime = 'Just now';
+              if (reqFormatted != null && reqFormatted.toString().isNotEmpty) {
+                displayTime = reqFormatted.toString();
+              } else if (rawCreated != null && rawCreated.toString().isNotEmpty) {
+                try {
+                  final dt = DateTime.parse(rawCreated.toString()).toLocal();
+                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  final m = months[dt.month - 1];
+                  final d = dt.day.toString().padLeft(2, '0');
+                  final y = dt.year;
+                  final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+                  final min = dt.minute.toString().padLeft(2, '0');
+                  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+                  displayTime = '$d $m $y • $hour:$min $ampm';
+                } catch (_) {
+                  displayTime = rawCreated.toString();
+                }
+              }
+
+              final pickupDate = (request['pickup_date'] ?? ride?['pickup_date'] ?? booking?['pickup_date'])?.toString();
+              final pickupTime = (request['pickup_time'] ?? ride?['pickup_time'] ?? booking?['pickup_time'])?.toString();
+              final hasScheduled = (pickupDate != null && pickupDate.isNotEmpty && pickupDate != 'null') ||
+                  (pickupTime != null && pickupTime.isNotEmpty && pickupTime != 'null');
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Requested: ',
+                                style: TextStyle(color: AppColors.textMuted, fontSize: 11.5, fontWeight: FontWeight.bold),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  displayTime + (reqHuman != null ? ' ($reqHuman)' : ''),
+                                  style: const TextStyle(color: AppColors.textLight, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (hasScheduled) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              '📅 Scheduled Pickup: ${pickupDate ?? ''} ${pickupTime ?? ''}'.trim(),
+                              style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
 
             // Huge Fare Badge
             Container(

@@ -589,11 +589,12 @@
                                                         {{ ucfirst($trip->payment_method ?? 'Stripe') }}
                                                     </span>
                                                 </div>
-                                            </div>
-                                            
-                                            <!-- Footer: Date + Rider -->
+                                                      <!-- Footer: Date + Rider -->
                                             <div class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-white/10 text-xs text-gray-400">
-                                                <span>{{ $trip->updated_at->format('M d, Y · h:i A') }}</span>
+                                                <span class="flex items-center gap-1 font-semibold text-gray-600 dark:text-gray-300">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                    Requested: {{ $trip->created_at ? $trip->created_at->format('M d, Y • h:i A') : $trip->updated_at->format('M d, Y • h:i A') }}
+                                                </span>
                                                 @if($trip->rider)
                                                     <span>· Rider: <span class="text-gray-600 dark:text-gray-300 font-medium">{{ $trip->rider->name }}</span></span>
                                                 @endif
@@ -610,7 +611,8 @@
                                         <div class="flex-1 min-w-0">
                                             <p class="font-bold text-sm text-gray-900 dark:text-white">Hire: {{ $bk->client->name ?? 'Client' }}</p>
                                             <p class="text-xs text-gray-500">{{ $bk->start_date }} — {{ $bk->duration_days ?? 1 }} day(s)</p>
-                                            <span class="text-xs text-gray-400">{{ $bk->updated_at->format('M d, h:i A') }}</span>
+                                            <span class="text-xs text-gray-500 font-semibold block">Requested: {{ $bk->created_at ? $bk->created_at->format('M d, Y • h:i A') : $bk->updated_at->format('M d, h:i A') }}</span>
+                                        </div>>updated_at->format('M d, h:i A') }}</span>
                                         </div>
                                         <div class="text-right shrink-0">
                                             <p class="font-extrabold text-base text-green-600 dark:text-green-400">${{ number_format($bk->total_price, 2) }}</p>

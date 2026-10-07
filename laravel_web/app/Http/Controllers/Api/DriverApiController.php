@@ -931,6 +931,11 @@ class DriverApiController extends Controller
                     'poc_name' => null,
                     'poc_phone' => null,
                     'start_date' => $a->driverBooking->start_date,
+                    'pickup_date' => $a->driverBooking->start_date ? \Carbon\Carbon::parse($a->driverBooking->start_date)->format('M d, Y') : null,
+                    'pickup_time' => $a->driverBooking->start_time ?? null,
+                    'created_at' => ($a->driverBooking->created_at ?? $a->created_at)?->toIso8601String(),
+                    'request_time_formatted' => ($a->driverBooking->created_at ?? $a->created_at)?->format('M d, Y • h:i A'),
+                    'request_time_human' => ($a->driverBooking->created_at ?? $a->created_at)?->diffForHumans(),
                     'expires_at' => $a->expires_at->toIso8601String(),
                 ];
             } elseif ($a->packageDelivery && $a->packageDelivery->delivery_status === 'pending') {
@@ -940,6 +945,8 @@ class DriverApiController extends Controller
                 $custPhone = $a->packageDelivery->customer?->phone ?? $a->packageDelivery->sender_phone;
                 $pocName = $a->packageDelivery->recipient_name;
                 $pocPhone = $a->packageDelivery->recipient_phone;
+
+                $pCreatedAt = $a->packageDelivery->created_at ?? $a->created_at;
 
                 $requests[] = [
                     'assignment_id' => $a->id,
@@ -959,6 +966,11 @@ class DriverApiController extends Controller
                     'poc_phone' => $pocPhone,
                     'rider_name' => $pocName ?: $custName,
                     'rider_phone' => $pocPhone ?: $custPhone,
+                    'pickup_date' => $a->packageDelivery->pickup_date ? \Carbon\Carbon::parse($a->packageDelivery->pickup_date)->format('M d, Y') : null,
+                    'pickup_time' => $a->packageDelivery->pickup_time ?? null,
+                    'created_at' => $pCreatedAt ? $pCreatedAt->toIso8601String() : null,
+                    'request_time_formatted' => $pCreatedAt ? $pCreatedAt->format('M d, Y • h:i A') : null,
+                    'request_time_human' => $pCreatedAt ? $pCreatedAt->diffForHumans() : null,
                     'expires_at' => $a->expires_at->toIso8601String(),
                 ];
             }
@@ -1121,6 +1133,7 @@ class DriverApiController extends Controller
             $custPhone = $pd->customer?->phone ?? $pd->sender_phone;
             $pocName = $pd->recipient_name;
             $pocPhone = $pd->recipient_phone;
+            $pdCreatedAt = $pd->created_at ?? now();
 
             $requests[] = [
                 'assignment_id' => $assignment->id,
@@ -1140,6 +1153,11 @@ class DriverApiController extends Controller
                 'poc_phone' => $pocPhone,
                 'rider_name' => $pocName ?: $custName,
                 'rider_phone' => $pocPhone ?: $custPhone,
+                'pickup_date' => $pd->pickup_date ? \Carbon\Carbon::parse($pd->pickup_date)->format('M d, Y') : null,
+                'pickup_time' => $pd->pickup_time ?? null,
+                'created_at' => $pdCreatedAt ? $pdCreatedAt->toIso8601String() : null,
+                'request_time_formatted' => $pdCreatedAt ? $pdCreatedAt->format('M d, Y • h:i A') : null,
+                'request_time_human' => $pdCreatedAt ? $pdCreatedAt->diffForHumans() : null,
                 'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),
             ];
         }
@@ -1472,7 +1490,11 @@ class DriverApiController extends Controller
                 'vehicle_type' => $r->vehicle_type ?: 'Standard',
                 'payment_method' => $r->payment_method ?: 'cash',
                 'payment_status' => $r->payment_status ?: 'pending',
+                'pickup_date' => $r->pickup_date ? \Carbon\Carbon::parse($r->pickup_date)->format('M d, Y') : null,
+                'pickup_time' => $r->pickup_time ?? null,
                 'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
+                'request_time_formatted' => $r->created_at ? $r->created_at->format('M d, Y • h:i A') : null,
+                'request_time_human' => $r->created_at ? $r->created_at->diffForHumans() : null,
             ];
         }
 
@@ -1540,7 +1562,11 @@ class DriverApiController extends Controller
                 'poc_phone' => $del->recipient_phone,
                 'vehicle_type' => 'Delivery Courier',
                 'payment_method' => $del->payment_method ?: 'cash',
+                'pickup_date' => $del->pickup_date ? \Carbon\Carbon::parse($del->pickup_date)->format('M d, Y') : null,
+                'pickup_time' => $del->pickup_time ?? null,
                 'created_at' => $del->created_at ? $del->created_at->toIso8601String() : null,
+                'request_time_formatted' => $del->created_at ? $del->created_at->format('M d, Y • h:i A') : null,
+                'request_time_human' => $del->created_at ? $del->created_at->diffForHumans() : null,
             ];
         }
 
@@ -1586,7 +1612,11 @@ class DriverApiController extends Controller
                 'poc_phone' => $bk->contact_phone,
                 'vehicle_type' => 'Personal Driver',
                 'payment_method' => $bk->payment_method ?: 'cash',
+                'pickup_date' => $bk->start_date ? \Carbon\Carbon::parse($bk->start_date)->format('M d, Y') : null,
+                'pickup_time' => $bk->start_time ?? null,
                 'created_at' => $bk->created_at ? $bk->created_at->toIso8601String() : null,
+                'request_time_formatted' => $bk->created_at ? $bk->created_at->format('M d, Y • h:i A') : null,
+                'request_time_human' => $bk->created_at ? $bk->created_at->diffForHumans() : null,
             ];
         }
 
