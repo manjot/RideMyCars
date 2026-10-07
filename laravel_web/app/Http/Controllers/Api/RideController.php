@@ -927,11 +927,16 @@ class RideController extends Controller
 
         // 1. If type is package_delivery, prioritize PackageDelivery
         if (in_array($type, ['package_delivery', 'delivery'])) {
-            $delivery = \App\Models\PackageDelivery::where('id', $id)
-                ->orWhere('id', $cleanId)
-                ->orWhere('delivery_code', $rawId)
-                ->orWhere('tracking_number', $rawId)
-                ->first();
+            $delivery = null;
+            if (is_numeric($cleanId)) {
+                $delivery = \App\Models\PackageDelivery::find($cleanId);
+            }
+            if (!$delivery && is_numeric($id)) {
+                $delivery = \App\Models\PackageDelivery::find($id);
+            }
+            if (!$delivery) {
+                $delivery = \App\Models\PackageDelivery::where('delivery_code', $rawId)->first();
+            }
             if ($delivery) {
                 return $this->handlePackageDeliveryUpdate($delivery, $newStatus, $user);
             }
@@ -939,10 +944,16 @@ class RideController extends Controller
 
         // 2. If type is driver_booking, prioritize DriverBooking
         if (in_array($type, ['driver_booking', 'booking', 'chauffeur'])) {
-            $booking = \App\Models\DriverBooking::where('id', $id)
-                ->orWhere('id', $cleanId)
-                ->orWhere('booking_reference', $rawId)
-                ->first();
+            $booking = null;
+            if (is_numeric($cleanId)) {
+                $booking = \App\Models\DriverBooking::find($cleanId);
+            }
+            if (!$booking && is_numeric($id)) {
+                $booking = \App\Models\DriverBooking::find($id);
+            }
+            if (!$booking) {
+                $booking = \App\Models\DriverBooking::where('booking_code', $rawId)->first();
+            }
             if ($booking) {
                 return $this->handleDriverBookingUpdate($booking, $newStatus, $user);
             }
@@ -962,19 +973,24 @@ class RideController extends Controller
 
         // If a Ride was found, but does NOT belong to the active driver and driver has active delivery/booking, check those
         if ($ride && $type !== 'ride' && $user && !in_array($ride->driver_id, $userIds) && !in_array($ride->verified_by_driver_id, $userIds)) {
-            $delivery = \App\Models\PackageDelivery::where('id', $id)
-                ->orWhere('id', $cleanId)
-                ->orWhere('delivery_code', $rawId)
-                ->orWhere('tracking_number', $rawId)
-                ->first();
+            $delivery = is_numeric($cleanId) ? \App\Models\PackageDelivery::find($cleanId) : null;
+            if (!$delivery && is_numeric($id)) {
+                $delivery = \App\Models\PackageDelivery::find($id);
+            }
+            if (!$delivery) {
+                $delivery = \App\Models\PackageDelivery::where('delivery_code', $rawId)->first();
+            }
             if ($delivery && (in_array($delivery->courier_id, $userIds) || \App\Models\RideAssignment::whereIn('driver_id', $userIds)->where('package_delivery_id', $delivery->id)->exists())) {
                 return $this->handlePackageDeliveryUpdate($delivery, $newStatus, $user);
             }
 
-            $booking = \App\Models\DriverBooking::where('id', $id)
-                ->orWhere('id', $cleanId)
-                ->orWhere('booking_reference', $rawId)
-                ->first();
+            $booking = is_numeric($cleanId) ? \App\Models\DriverBooking::find($cleanId) : null;
+            if (!$booking && is_numeric($id)) {
+                $booking = \App\Models\DriverBooking::find($id);
+            }
+            if (!$booking) {
+                $booking = \App\Models\DriverBooking::where('booking_code', $rawId)->first();
+            }
             if ($booking && (in_array($booking->driver_id, $userIds) || \App\Models\RideAssignment::whereIn('driver_id', $userIds)->where('driver_booking_id', $booking->id)->exists())) {
                 return $this->handleDriverBookingUpdate($booking, $newStatus, $user);
             }
@@ -1057,20 +1073,25 @@ class RideController extends Controller
         }
 
         // 4. Fallback check PackageDelivery model
-        $delivery = \App\Models\PackageDelivery::where('id', $id)
-            ->orWhere('id', $cleanId)
-            ->orWhere('delivery_code', $rawId)
-            ->orWhere('tracking_number', $rawId)
-            ->first();
+        $delivery = is_numeric($cleanId) ? \App\Models\PackageDelivery::find($cleanId) : null;
+        if (!$delivery && is_numeric($id)) {
+            $delivery = \App\Models\PackageDelivery::find($id);
+        }
+        if (!$delivery) {
+            $delivery = \App\Models\PackageDelivery::where('delivery_code', $rawId)->first();
+        }
         if ($delivery) {
             return $this->handlePackageDeliveryUpdate($delivery, $newStatus, $user);
         }
 
         // 5. Fallback check DriverBooking model
-        $booking = \App\Models\DriverBooking::where('id', $id)
-            ->orWhere('id', $cleanId)
-            ->orWhere('booking_reference', $rawId)
-            ->first();
+        $booking = is_numeric($cleanId) ? \App\Models\DriverBooking::find($cleanId) : null;
+        if (!$booking && is_numeric($id)) {
+            $booking = \App\Models\DriverBooking::find($id);
+        }
+        if (!$booking) {
+            $booking = \App\Models\DriverBooking::where('booking_code', $rawId)->first();
+        }
         if ($booking) {
             return $this->handleDriverBookingUpdate($booking, $newStatus, $user);
         }
