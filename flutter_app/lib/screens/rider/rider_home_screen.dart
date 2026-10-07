@@ -140,6 +140,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
   List<PlacePrediction> _predictions = [];
   bool _isSearchingPlaces = false;
+  bool _isSearchingPickup = true;
   Timer? _debounceTimer;
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
