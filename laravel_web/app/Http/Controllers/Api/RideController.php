@@ -891,9 +891,64 @@ class RideController extends Controller
         // Clean up ID prefix if any (e.g. #RIDE-8, #DEL-8, #8)
         $rawId = trim((string)$id);
         $cleanId = ltrim($rawId, '#');
-        $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
+        $cleanId = preg_replace('/^(RIDE|DEL|DRV|BK)-?/i', '', $cleanId);
 
-        // 1. Check Ride model
+        $type = strtolower(trim((string)$request->input('type', '')));
+        if (!$type) {
+            if (stripos($rawId, 'DEL') !== false || stripos($rawId, 'PACKAGE') !== false) {
+                $type = 'package_delivery';
+            } elseif (stripos($rawId, 'DRV') !== false || stripos($rawId, 'BK') !== false || stripos($rawId, 'CHAUFFEUR') !== false) {
+                $type = 'driver_booking';
+            } elseif (stripos($rawId, 'RIDE') !== false) {
+                $type = 'ride';
+            }
+        }
+
+        // Intelligently infer type from driver's active assignments if numeric ID is ambiguous
+        if (!$type && $user && is_numeric($cleanId)) {
+            $hasActiveDelivery = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+                ->where('package_delivery_id', $cleanId)
+                ->whereNotIn('status', ['completed', 'cancelled', 'expired'])
+                ->exists();
+            if ($hasActiveDelivery || \App\Models\PackageDelivery::where('id', $cleanId)->whereIn('courier_id', $userIds)->whereNotIn('delivery_status', ['delivered', 'cancelled', 'completed'])->exists()) {
+                $type = 'package_delivery';
+            } elseif (\App\Models\RideAssignment::whereIn('driver_id', $userIds)
+                ->where('driver_booking_id', $cleanId)
+                ->whereNotIn('status', ['completed', 'cancelled', 'expired'])
+                ->exists() || \App\Models\DriverBooking::where('id', $cleanId)->whereIn('driver_id', $userIds)->whereNotIn('booking_status', ['completed', 'cancelled'])->exists()) {
+                $type = 'driver_booking';
+            } elseif (\App\Models\RideAssignment::whereIn('driver_id', $userIds)
+                ->where('ride_id', $cleanId)
+                ->whereNotIn('status', ['completed', 'cancelled', 'expired'])
+                ->exists() || \App\Models\Ride::where('id', $cleanId)->whereIn('driver_id', $userIds)->whereNotIn('status', ['completed', 'cancelled'])->exists()) {
+                $type = 'ride';
+            }
+        }
+
+        // 1. If type is package_delivery, prioritize PackageDelivery
+        if (in_array($type, ['package_delivery', 'delivery'])) {
+            $delivery = \App\Models\PackageDelivery::where('id', $id)
+                ->orWhere('id', $cleanId)
+                ->orWhere('delivery_code', $rawId)
+                ->orWhere('tracking_number', $rawId)
+                ->first();
+            if ($delivery) {
+                return $this->handlePackageDeliveryUpdate($delivery, $newStatus, $user);
+            }
+        }
+
+        // 2. If type is driver_booking, prioritize DriverBooking
+        if (in_array($type, ['driver_booking', 'booking', 'chauffeur'])) {
+            $booking = \App\Models\DriverBooking::where('id', $id)
+                ->orWhere('id', $cleanId)
+                ->orWhere('booking_reference', $rawId)
+                ->first();
+            if ($booking) {
+                return $this->handleDriverBookingUpdate($booking, $newStatus, $user);
+            }
+        }
+
+        // 3. Check Ride model
         $ride = null;
         if (is_numeric($cleanId)) {
             $ride = Ride::find($cleanId);
@@ -904,6 +959,27 @@ class RideController extends Controller
         if (!$ride) {
             $ride = Ride::where('digital_receipt_code', $rawId)->first();
         }
+
+        // If a Ride was found, but does NOT belong to the active driver and driver has active delivery/booking, check those
+        if ($ride && $type !== 'ride' && $user && !in_array($ride->driver_id, $userIds) && !in_array($ride->verified_by_driver_id, $userIds)) {
+            $delivery = \App\Models\PackageDelivery::where('id', $id)
+                ->orWhere('id', $cleanId)
+                ->orWhere('delivery_code', $rawId)
+                ->orWhere('tracking_number', $rawId)
+                ->first();
+            if ($delivery && (in_array($delivery->courier_id, $userIds) || \App\Models\RideAssignment::whereIn('driver_id', $userIds)->where('package_delivery_id', $delivery->id)->exists())) {
+                return $this->handlePackageDeliveryUpdate($delivery, $newStatus, $user);
+            }
+
+            $booking = \App\Models\DriverBooking::where('id', $id)
+                ->orWhere('id', $cleanId)
+                ->orWhere('booking_reference', $rawId)
+                ->first();
+            if ($booking && (in_array($booking->driver_id, $userIds) || \App\Models\RideAssignment::whereIn('driver_id', $userIds)->where('driver_booking_id', $booking->id)->exists())) {
+                return $this->handleDriverBookingUpdate($booking, $newStatus, $user);
+            }
+        }
+
         if ($ride) {
             $updates = ['status' => $newStatus];
             if ($newStatus === 'en_route') $updates['en_route_at'] = now();
@@ -938,6 +1014,8 @@ class RideController extends Controller
                 try {
                     \App\Services\StripeService::releaseRideHold($ride);
                 } catch (\Throwable $e) {}
+
+                \App\Models\RideAssignment::where('ride_id', $ride->id)->update(['status' => 'cancelled']);
 
                 if ($user && $user->driverProfile) {
                     $user->driverProfile->update(['is_available' => true]);
@@ -978,98 +1056,129 @@ class RideController extends Controller
             ]);
         }
 
-        // 2. Check PackageDelivery model
+        // 4. Fallback check PackageDelivery model
         $delivery = \App\Models\PackageDelivery::where('id', $id)
             ->orWhere('id', $cleanId)
             ->orWhere('delivery_code', $rawId)
             ->orWhere('tracking_number', $rawId)
             ->first();
         if ($delivery) {
-            $delStatus = $newStatus;
-            if ($newStatus === 'completed') $delStatus = 'delivered';
-            if ($newStatus === 'in_progress') $delStatus = 'in_transit';
-
-            $delivery->update([
-                'delivery_status' => $delStatus,
-                'courier_id' => $user ? $user->id : ($delivery->courier_id ?: 259),
-            ]);
-
-            if ($newStatus === 'completed' || $newStatus === 'cancelled') {
-                \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)->update(['status' => $newStatus]);
-                if ($user) {
-                    if ($user->driverProfile) {
-                        $user->driverProfile->update(['is_available' => true]);
-                        if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
-                            $user->driverProfile->increment('total_trips');
-                        }
-                    }
-                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
-                        $courierFareEarned = floatval($delivery->total_price) * 0.85;
-                        $user->increment('wallet_balance', $courierFareEarned);
-                    }
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => "Package delivery status updated to {$newStatus}",
-                'ride' => [
-                    'id' => $delivery->id,
-                    'status' => $newStatus,
-                    'type' => 'package_delivery',
-                    'fare' => floatval($delivery->total_price),
-                ],
-            ]);
+            return $this->handlePackageDeliveryUpdate($delivery, $newStatus, $user);
         }
 
-        // 3. Check DriverBooking model
+        // 5. Fallback check DriverBooking model
         $booking = \App\Models\DriverBooking::where('id', $id)
             ->orWhere('id', $cleanId)
             ->orWhere('booking_reference', $rawId)
             ->first();
         if ($booking) {
-            $bookStatus = $newStatus;
-            if ($newStatus === 'completed') {
-                $bookStatus = 'completed';
-                $booking->update([
-                    'booking_status' => 'completed',
-                    'payment_status' => 'paid',
-                ]);
-                \App\Models\RideAssignment::where('driver_booking_id', $booking->id)->update(['status' => 'completed']);
-            } else {
-                $booking->update(['booking_status' => $bookStatus]);
-            }
-
-            if ($newStatus === 'completed' || $newStatus === 'cancelled') {
-                if ($user) {
-                    if ($user->driverProfile) {
-                        $user->driverProfile->update(['is_available' => true]);
-                        if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
-                            $user->driverProfile->increment('total_trips');
-                        }
-                    }
-                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
-                        $driverFareEarned = floatval($booking->total_amount ?: $booking->estimated_cost) * 0.85;
-                        $user->increment('wallet_balance', $driverFareEarned);
-                    }
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => "Driver booking status updated to {$newStatus}",
-                'ride' => [
-                    'id' => $booking->id,
-                    'status' => $bookStatus,
-                    'type' => 'driver_booking',
-                    'fare' => floatval($booking->total_amount ?: $booking->estimated_cost),
-                ],
-            ]);
+            return $this->handleDriverBookingUpdate($booking, $newStatus, $user);
         }
 
         return response()->json(['success' => false, 'message' => 'Ride or order not found.'], 404);
     }
 
+    /**
+     * Handle status updates for PackageDelivery models
+     */
+    protected function handlePackageDeliveryUpdate($delivery, string $newStatus, $user)
+    {
+        $delStatus = $newStatus;
+        if ($newStatus === 'completed' || $newStatus === 'delivered') $delStatus = 'delivered';
+        if ($newStatus === 'in_progress') $delStatus = 'in_transit';
+        if ($newStatus === 'en_route') $delStatus = 'going_to_pickup';
+        if ($newStatus === 'arrived') $delStatus = 'arrived_at_pickup';
+        if ($newStatus === 'cancelled') $delStatus = 'cancelled';
+
+        $delivery->update([
+            'delivery_status' => $delStatus,
+            'courier_id' => $user ? $user->id : ($delivery->courier_id ?: 259),
+        ]);
+
+        if (in_array($newStatus, ['completed', 'delivered', 'cancelled'])) {
+            \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)->update([
+                'status' => ($newStatus === 'cancelled' ? 'cancelled' : 'completed')
+            ]);
+            if ($user) {
+                if ($user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => true]);
+                    if ($newStatus !== 'cancelled' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                        $user->driverProfile->increment('total_trips');
+                    }
+                }
+                if ($newStatus !== 'cancelled' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
+                    $courierFareEarned = floatval($delivery->total_price) * 0.85;
+                    $user->increment('wallet_balance', $courierFareEarned);
+                }
+            }
+        } else {
+            \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)
+                ->whereNotIn('status', ['completed', 'cancelled', 'expired'])
+                ->update(['status' => 'accepted']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Package delivery status updated to {$newStatus}",
+            'status' => $newStatus,
+            'ride' => [
+                'id' => $delivery->id,
+                'status' => $newStatus,
+                'raw_status' => $delStatus,
+                'type' => 'package_delivery',
+                'fare' => floatval($delivery->total_price),
+            ],
+        ]);
+    }
+
+    /**
+     * Handle status updates for DriverBooking models
+     */
+    protected function handleDriverBookingUpdate($booking, string $newStatus, $user)
+    {
+        $bookStatus = $newStatus;
+        if ($newStatus === 'completed') {
+            $booking->update([
+                'booking_status' => 'completed',
+                'payment_status' => 'paid',
+            ]);
+            \App\Models\RideAssignment::where('driver_booking_id', $booking->id)->update(['status' => 'completed']);
+        } elseif ($newStatus === 'cancelled') {
+            $booking->update([
+                'booking_status' => 'cancelled',
+            ]);
+            \App\Models\RideAssignment::where('driver_booking_id', $booking->id)->update(['status' => 'cancelled']);
+        } else {
+            $booking->update(['booking_status' => $bookStatus]);
+        }
+
+        if (in_array($newStatus, ['completed', 'cancelled'])) {
+            if ($user) {
+                if ($user->driverProfile) {
+                    $user->driverProfile->update(['is_available' => true]);
+                    if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'total_trips')) {
+                        $user->driverProfile->increment('total_trips');
+                    }
+                }
+                if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
+                    $driverFareEarned = floatval($booking->total_amount ?: $booking->estimated_cost) * 0.85;
+                    $user->increment('wallet_balance', $driverFareEarned);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Driver booking status updated to {$newStatus}",
+            'status' => $newStatus,
+            'ride' => [
+                'id' => $booking->id,
+                'status' => $bookStatus,
+                'type' => 'driver_booking',
+                'fare' => floatval($booking->total_amount ?: $booking->estimated_cost),
+            ],
+        ]);
+    }
 
     /**
      * Enable or disable Backup Chauffeur option for a ride

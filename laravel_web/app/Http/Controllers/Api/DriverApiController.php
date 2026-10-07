@@ -1484,7 +1484,7 @@ class DriverApiController extends Controller
                     $q->orWhere('courier_profile_id', $driverProfileId);
                 }
             })
-            ->whereIn('delivery_status', ['courier_assigned', 'courier_accepted', 'accepted', 'picked_up', 'in_transit', 'arrived_at_pickup', 'going_to_pickup'])
+            ->whereIn('delivery_status', ['courier_assigned', 'courier_accepted', 'accepted', 'picked_up', 'in_transit', 'arrived_at_pickup', 'going_to_pickup', 'en_route', 'arrived', 'in_progress'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -1496,7 +1496,7 @@ class DriverApiController extends Controller
         if (!empty($assignedDeliveryIds)) {
             $extraDeliveries = \App\Models\PackageDelivery::with(['customer'])
                 ->whereIn('id', $assignedDeliveryIds)
-                ->whereNotIn('delivery_status', ['delivered', 'cancelled', 'failed'])
+                ->whereNotIn('delivery_status', ['delivered', 'completed', 'cancelled', 'failed'])
                 ->get();
             $deliveries = $deliveries->merge($extraDeliveries)->unique('id');
         }
@@ -1505,7 +1505,15 @@ class DriverApiController extends Controller
             $delPricing = \App\Models\CountryPricing::forCountry($del->country ?? 'IND');
             $custName = $del->sender_name ?: ($del->customer?->name ?? 'Sender');
             $custPhone = $del->sender_phone ?: $del->customer?->phone;
-            $status = in_array($del->delivery_status, ['courier_assigned', 'courier_accepted', 'accepted']) ? 'accepted' : 'in_progress';
+            
+            $status = 'accepted';
+            if (in_array($del->delivery_status, ['en_route', 'going_to_pickup'])) {
+                $status = 'en_route';
+            } elseif (in_array($del->delivery_status, ['arrived', 'arrived_at_pickup'])) {
+                $status = 'arrived';
+            } elseif (in_array($del->delivery_status, ['in_transit', 'picked_up', 'in_progress'])) {
+                $status = 'in_progress';
+            }
 
             $items[] = [
                 'id' => $del->id,

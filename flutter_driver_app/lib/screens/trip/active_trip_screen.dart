@@ -157,7 +157,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
 
     setState(() => _isUpdating = true);
     final driver = Provider.of<DriverProvider>(context, listen: false);
-    final success = await driver.updateRideStatus(rideId, newStatus);
+    final success = await driver.updateRideStatus(rideId, newStatus, type: _ride['type']?.toString());
 
     if (!mounted) return;
     setState(() => _isUpdating = false);

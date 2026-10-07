@@ -427,14 +427,19 @@ class DriverProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      final String? type = fallbackRide?['type']?.toString();
+      final cancelData = <String, dynamic>{
+        'status': 'cancelled',
+        'reason': reason ?? 'Cancelled by driver',
+        if (type != null && type.isNotEmpty) 'type': type,
+      };
+
       bool backendSuccess = false;
 
       if (rideId > 0) {
         // 1. Try dedicated ride cancel endpoint
         try {
-          final res = await _dio.post(ApiConstants.rideCancel(rideId), data: {
-            'reason': reason ?? 'Cancelled by driver',
-          });
+          final res = await _dio.post(ApiConstants.rideCancel(rideId), data: cancelData);
           dynamic data = res.data;
           if (data is String) {
             try { data = jsonDecode(data); } catch (_) {}
@@ -449,10 +454,7 @@ class DriverProvider extends ChangeNotifier {
         // 2. Fallback to status update endpoint with 'cancelled'
         if (!backendSuccess) {
           try {
-            final res = await _dio.post(ApiConstants.rideStatus(rideId), data: {
-              'status': 'cancelled',
-              'reason': reason ?? 'Cancelled by driver',
-            });
+            final res = await _dio.post(ApiConstants.rideStatus(rideId), data: cancelData);
             dynamic data = res.data;
             if (data is String) {
               try { data = jsonDecode(data); } catch (_) {}
@@ -511,13 +513,20 @@ class DriverProvider extends ChangeNotifier {
       final res = await _dio.get(ApiConstants.driverActiveRides);
       if (res.statusCode == 200 && (res.data['success'] == true || res.data is List || res.data['rides'] != null)) {
         final List list = (res.data is Map ? (res.data['rides'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
-        final mapped = list.map((e) => Map<String, dynamic>.from(e)).toList();
+        final mapped = list
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((r) => r['status'] != 'completed' && r['status'] != 'delivered' && r['status'] != 'cancelled')
+            .toList();
         if (mapped.isNotEmpty) {
           _activeRides = mapped;
-        } else if (_lastAcceptedRide != null && _lastAcceptedRide!['status'] != 'completed' && _lastAcceptedRide!['status'] != 'cancelled') {
+        } else if (_lastAcceptedRide != null &&
+            _lastAcceptedRide!['status'] != 'completed' &&
+            _lastAcceptedRide!['status'] != 'delivered' &&
+            _lastAcceptedRide!['status'] != 'cancelled') {
           _activeRides = [_lastAcceptedRide!];
         } else {
           _activeRides = [];
+          _lastAcceptedRide = null;
         }
         notifyListeners();
       }
@@ -526,26 +535,27 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRideStatus(dynamic rawRideId, String newStatus) async {
+  Future<bool> updateRideStatus(dynamic rawRideId, String newStatus, {String? type}) async {
     final rideId = int.tryParse(rawRideId?.toString() ?? '0') ?? 0;
     if (rideId <= 0) return false;
+
+    final postData = <String, dynamic>{
+      'status': newStatus,
+      if (type != null && type.isNotEmpty) 'type': type,
+    };
 
     try {
       Response? res;
       try {
-        res = await _dio.post(ApiConstants.rideStatus(rideId), data: {
-          'status': newStatus,
-        });
+        res = await _dio.post(ApiConstants.rideStatus(rideId), data: postData);
       } catch (e) {
         try {
-          res = await _dio.post('/driver/rides/$rideId/status', data: {
-            'status': newStatus,
-          });
+          res = await _dio.post('/driver/rides/$rideId/status', data: postData);
         } catch (_) {}
       }
 
       if (res != null && (res.statusCode == 200 || res.statusCode == 201) && (res.data['success'] == true || res.data['status'] != null)) {
-        if (newStatus == 'completed') {
+        if (newStatus == 'completed' || newStatus == 'delivered' || newStatus == 'cancelled') {
           _activeRides.removeWhere((r) => int.tryParse(r['id']?.toString() ?? '0') == rideId);
           if (_lastAcceptedRide != null && int.tryParse(_lastAcceptedRide!['id']?.toString() ?? '0') == rideId) {
             _lastAcceptedRide = null;
