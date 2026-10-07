@@ -54,7 +54,7 @@ class AppConfigApiController extends Controller
         $data = [
             'app_name' => 'RideMyCars',
             'maps' => [
-                'google_maps_api_key' => SettingService::get('geo.google_maps_api_key', config('services.google_maps.api_key', '')),
+                'google_maps_api_key' => SettingService::get('geo.google_maps_api_key') ?: (config('services.google_maps.api_key') ?: 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0'),
                 'distance_unit' => SettingService::get('geo.distance_unit', 'km'),
             ],
             'payment_gateways' => [

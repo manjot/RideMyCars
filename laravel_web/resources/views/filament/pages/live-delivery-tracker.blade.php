@@ -416,7 +416,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @php
-        $gmapsKey = config('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
+        $gmapsKey = trim((string) config('services.google_maps.api_key'));
+        if (empty($gmapsKey)) {
+            $gmapsKey = trim((string) env('GOOGLE_MAPS_API_KEY'));
+        }
+        if (empty($gmapsKey)) {
+            $gmapsKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
+        }
     @endphp
     <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
 

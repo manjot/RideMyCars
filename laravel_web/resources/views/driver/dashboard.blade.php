@@ -193,7 +193,13 @@
                 <!-- Main Content (Driver Hiring Jobs & Rides) -->
                 <div class="lg:col-span-2 space-y-8">
                     @php
-                        $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
+                        $mapKey = trim((string) config('services.google_maps.api_key'));
+                        if (empty($mapKey)) {
+                            $mapKey = trim((string) env('GOOGLE_MAPS_API_KEY'));
+                        }
+                        if (empty($mapKey)) {
+                            $mapKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
+                        }
                     @endphp
 
                     <!-- Pending Payment & Booking Verification Requests -->

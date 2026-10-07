@@ -1623,7 +1623,7 @@ Route::get('/ride/track/{id?}', function ($id = null) {
             ->first();
     }
 
-    $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
+    $mapKey = trim((string) config('services.google_maps.api_key')) ?: (trim((string) env('GOOGLE_MAPS_API_KEY')) ?: 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
 
     $driverData = null;
     $isPaymentConfirmed = in_array(strtolower($ride?->payment_status ?? ''), ['paid', 'hold', 'authorized']);
@@ -3983,10 +3983,25 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                         $envContent .= "\n{$mKey}={$mVal}";
                     }
                 }
+                $googleMapsApiKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
+                if (preg_match("/^GOOGLE_MAPS_API_KEY=.*$/m", $envContent)) {
+                    $envContent = preg_replace("/^GOOGLE_MAPS_API_KEY=.*$/m", "GOOGLE_MAPS_API_KEY={$googleMapsApiKey}", $envContent);
+                } else {
+                    $envContent .= "\nGOOGLE_MAPS_API_KEY={$googleMapsApiKey}";
+                }
                 file_put_contents($envPath, $envContent);
                 $output['live_payments_env_synced'] = true;
                 $output['live_mail_env_synced'] = true;
+                $output['google_maps_env_synced'] = true;
             }
+
+            try {
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => 'geo.google_maps_api_key'],
+                    ['value' => 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0', 'group' => 'Maps', 'label' => 'Google Maps API Key', 'type' => 'password', 'updated_at' => now()]
+                );
+                $output['google_maps_settings_synced'] = true;
+            } catch (\Throwable $e) {}
         } catch (\Throwable $e) {
             $output['live_payments_env_sync_err'] = $e->getMessage();
         }

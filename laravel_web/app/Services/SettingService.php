@@ -287,8 +287,10 @@ class SettingService
 
             // 5. Maps & Geolocation
             $gmapsKey = static::get('geo.google_maps_api_key');
-            if ($gmapsKey) {
+            if (!empty($gmapsKey)) {
                 Config::set('services.google_maps.api_key', $gmapsKey);
+            } elseif (empty(Config::get('services.google_maps.api_key'))) {
+                Config::set('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
             }
 
             // 6. Firebase & Push Notifications

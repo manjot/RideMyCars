@@ -456,7 +456,13 @@
 
     <!-- Google Places Autocomplete Script for Hire Driver Page -->
     @php
-        $gmapsKey = config('services.google_maps.api_key');
+        $gmapsKey = trim((string) config('services.google_maps.api_key'));
+        if (empty($gmapsKey)) {
+            $gmapsKey = trim((string) env('GOOGLE_MAPS_API_KEY'));
+        }
+        if (empty($gmapsKey)) {
+            $gmapsKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
+        }
         $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
     @endphp
 

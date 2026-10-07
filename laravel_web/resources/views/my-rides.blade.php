@@ -72,8 +72,13 @@
                             $serviceType = $isRental ? 'car_rental' : 'ride';
                             $paymentStatus = strtolower($ride->payment_status ?? 'pending');
                             $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
-                            $isDriverConfirmed = $ride->driver && in_array(strtolower($ride->status), ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']);
-                            $mapKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY'));
+                            $mapKey = trim((string) config('services.google_maps.api_key'));
+                            if (empty($mapKey)) {
+                                $mapKey = trim((string) env('GOOGLE_MAPS_API_KEY'));
+                            }
+                            if (empty($mapKey)) {
+                                $mapKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
+                            }
                             $pickup = urlencode($ride->pickup_location);
                             $dropoff = urlencode($ride->dropoff_location);
                             $mapUrl = "https://maps.googleapis.com/maps/api/staticmap?size=800x220&scale=2&maptype=roadmap&markers=color:green%7Clabel:A%7C{$pickup}&markers=color:red%7Clabel:B%7C{$dropoff}&path=color:0x4f46e5%7Cweight:5%7Cgeodesic:true%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
