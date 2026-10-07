@@ -36,6 +36,17 @@ class VehicleResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('license_plate')
                     ->required(),
+                Forms\Components\Select::make('category')
+                    ->options([
+                        'Economy' => 'Economy',
+                        'Compact' => 'Compact',
+                        'Sedan' => 'Sedan',
+                        'SUV' => 'SUV',
+                        'Luxury' => 'Luxury',
+                        'Van' => 'Van',
+                    ])
+                    ->required()
+                    ->default('Sedan'),
                 Forms\Components\Select::make('type')
                     ->options([
                         'Economy' => 'Economy',
@@ -163,6 +174,11 @@ class VehicleResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('model')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('category')
+                    ->badge()
+                    ->color('info')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('license_plate')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('assignedDriver.name')

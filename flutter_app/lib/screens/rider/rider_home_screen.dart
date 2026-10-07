@@ -115,6 +115,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
   // Rental Vehicles API Data
   List<VehicleModel> _rentalVehicles = [];
+  List<VehicleModel> _allRentalVehicles = [];
   VehicleModel? _selectedRentalVehicle;
   bool _isLoadingVehicles = false;
   String _selectedRentalCategory = 'All';
@@ -261,18 +262,44 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   Future<void> _fetchRentalVehicles({String? category, String? country}) async {
     setState(() => _isLoadingVehicles = true);
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final targetCat = category ?? _selectedRentalCategory;
     final vehicles = await RentalService.getAvailableVehicles(
-      category: category ?? (_selectedRentalCategory == 'All' ? null : _selectedRentalCategory),
+      category: targetCat == 'All' ? null : targetCat,
       country: country ?? countryProv.selectedCountryCode,
     );
     if (mounted) {
       setState(() {
-        _rentalVehicles = vehicles;
-        if (_rentalVehicles.isNotEmpty) {
-          _selectedRentalVehicle = _rentalVehicles.first;
+        if (targetCat == 'All' || _allRentalVehicles.isEmpty) {
+          _allRentalVehicles = vehicles;
         }
+        _rentalVehicles = vehicles;
+        _updateSelectedRentalVehicle();
         _isLoadingVehicles = false;
       });
+    }
+  }
+
+  List<VehicleModel> get _displayedRentalVehicles {
+    final source = _allRentalVehicles.isNotEmpty ? _allRentalVehicles : _rentalVehicles;
+    if (_selectedRentalCategory == 'All') return source;
+    final cat = _selectedRentalCategory.toLowerCase();
+    return source.where((v) {
+      final vCat = v.category.toLowerCase();
+      final vType = v.type.toLowerCase();
+      if (vCat == cat || vCat.contains(cat)) return true;
+      if (vType == cat || vType.contains(cat)) return true;
+      if (cat == 'economy' && (vCat.contains('compact') || vType.contains('compact') || vType.contains('economy'))) return true;
+      if (cat == 'compact' && (vCat.contains('economy') || vType.contains('compact') || vType.contains('hatchback'))) return true;
+      return false;
+    }).toList();
+  }
+
+  void _updateSelectedRentalVehicle() {
+    final list = _displayedRentalVehicles;
+    if (list.isEmpty) {
+      _selectedRentalVehicle = null;
+    } else if (_selectedRentalVehicle == null || !list.any((v) => v.id == _selectedRentalVehicle!.id)) {
+      _selectedRentalVehicle = list.first;
     }
   }
 
@@ -2708,7 +2735,13 @@ Widget _buildRentSection() {
               children: ['All', 'Economy', 'Compact', 'Sedan', 'SUV', 'Luxury', 'Van'].map((cat) {
                 final isSelected = _selectedRentalCategory == cat;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedRentalCategory = cat),
+                  onTap: () {
+                    setState(() {
+                      _selectedRentalCategory = cat;
+                      _updateSelectedRentalVehicle();
+                    });
+                    _fetchRentalVehicles(category: cat);
+                  },
                   child: Container(
                     margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -2733,90 +2766,101 @@ Widget _buildRentSection() {
           const SizedBox(height: 8),
 
           // Redesigned Compact Selection Boxes (Vehicles List)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 180),
-            child: _isLoadingVehicles
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)))
-                : _rentalVehicles.isEmpty
-                    ? Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161C28),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.car_rental, color: Color(0xFF3B82F6), size: 24),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text('Explore Rental Fleet', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                  Text('Sedans, SUVs, and luxury cars available on catalog.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
-                                ],
-                              ),
+          Builder(
+            builder: (ctx) {
+              final displayed = _displayedRentalVehicles;
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 180),
+                child: _isLoadingVehicles && displayed.isEmpty
+                    ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)))
+                    : displayed.isEmpty
+                        ? Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF161C28),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _rentalVehicles.length.clamp(0, 4),
-                        itemBuilder: (context, idx) {
-                          final v = _rentalVehicles[idx];
-                          final isSelected = _selectedRentalVehicle?.id == v.id;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedRentalVehicle = v),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.08) : const Color(0xFF161C28),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSelected ? const Color(0xFF60A5FA) : Colors.white.withOpacity(0.08),
-                                  width: isSelected ? 2 : 1,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.car_rental, color: Color(0xFF3B82F6), size: 24),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _selectedRentalCategory == 'All' ? 'Explore Rental Fleet' : 'No $_selectedRentalCategory Cars Available',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                      Text(
+                                        _selectedRentalCategory == 'All' ? 'Sedans, SUVs, and luxury cars available on catalog.' : 'Please select another category or check the catalog.',
+                                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF1E2433),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Center(child: Icon(Icons.directions_car, color: Color(0xFF3B82F6))),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(v.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                        Text(
-                                          '${v.seats} seats • ${v.transmission} • 20% deposit ($sym${(v.dailyRate * 0.2).toStringAsFixed(0)})',
-                                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    '$sym${v.dailyRate.toStringAsFixed(0)}/day',
-                                    style: TextStyle(
-                                      color: isSelected ? const Color(0xFF60A5FA) : Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: displayed.length.clamp(0, 4),
+                            itemBuilder: (context, idx) {
+                              final v = displayed[idx];
+                              final isSelected = _selectedRentalVehicle?.id == v.id;
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedRentalVehicle = v),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.08) : const Color(0xFF161C28),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isSelected ? const Color(0xFF60A5FA) : Colors.white.withOpacity(0.08),
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1E2433),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: const Center(child: Icon(Icons.directions_car, color: Color(0xFF3B82F6))),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(v.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                            Text(
+                                              '${v.seats} seats • ${v.transmission} • 20% deposit ($sym${(v.dailyRate * 0.2).toStringAsFixed(0)})',
+                                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        '$sym${v.dailyRate.toStringAsFixed(0)}/day',
+                                        style: TextStyle(
+                                          color: isSelected ? const Color(0xFF60A5FA) : Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+              );
+            },
           ),
           const SizedBox(height: 8),
 

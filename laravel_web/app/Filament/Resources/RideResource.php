@@ -281,6 +281,46 @@ class RideResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('approve_rental')
+                        ->label('Approve Request')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->visible(fn (\App\Models\Ride $record): bool => $record->status === 'pending')
+                        ->requiresConfirmation()
+                        ->modalHeading('Approve Rental Booking')
+                        ->modalDescription(fn (\App\Models\Ride $record) => "Approve booking #{$record->id} for {$record->rider?->name} ({$record->vehicle_type})?")
+                        ->action(function (\App\Models\Ride $record) {
+                            $record->update(['status' => 'confirmed']);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Rental Booking Approved')
+                                ->body("Booking #{$record->id} is now confirmed.")
+                                ->success()
+                                ->send();
+                        }),
+
+                    Tables\Actions\Action::make('reject_rental')
+                        ->label('Reject Request')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(fn (\App\Models\Ride $record): bool => $record->status === 'pending')
+                        ->form([
+                            Forms\Components\Textarea::make('reason')
+                                ->label('Rejection Reason')
+                                ->required()
+                                ->default('Declined by administrator'),
+                        ])
+                        ->action(function (\App\Models\Ride $record, array $data) {
+                            $record->update([
+                                'status' => 'rejected',
+                                'cancellation_reason' => $data['reason'] ?? 'Declined by administrator',
+                            ]);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Rental Booking Rejected')
+                                ->body("Booking #{$record->id} has been marked as rejected.")
+                                ->warning()
+                                ->send();
+                        }),
+
                     Tables\Actions\Action::make('view_receipt')
                         ->label('View Receipt')
                         ->icon('heroicon-o-document-text')

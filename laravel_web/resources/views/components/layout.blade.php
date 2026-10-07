@@ -288,7 +288,11 @@
                 <!-- Desktop Navigation Menu (Perfect Alignment) -->
                 <div class="hidden lg:flex items-center gap-0.5 xl:gap-1.5 2xl:gap-2">
                     @auth
-                        @if(auth()->user()->role === 'driver')
+                        @if(auth()->user()->role === 'owner')
+                            <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('/') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
+                            <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('owner/dashboard*') ? 'text-blue-600 dark:text-blue-400 bg-blue-500/15 font-bold shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/owner/dashboard">🔑 Owner Portal</a>
+                            <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('rent*') ? 'text-blue-600 dark:text-blue-400 bg-blue-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/rent">Rent Fleet</a>
+                        @elseif(auth()->user()->role === 'driver')
                             <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('/') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/">Home</a>
                             <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('driver/dashboard*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/driver/dashboard">Dashboard</a>
                             <a class="text-xs xl:text-sm font-semibold transition-all whitespace-nowrap px-2.5 xl:px-3 py-2 rounded-full {{ request()->is('ride*') ? 'text-amber-800 dark:text-brand-400 bg-brand-500/15 font-bold' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10' }}" href="/ride">Ride</a>
@@ -1341,7 +1345,35 @@
                                 @endif
                             </div>
 
-                            @if(auth()->user()->role === 'driver')
+                            @if(auth()->user()->role === 'owner')
+                            <!-- Owner Action Buttons -->
+                            <div class="flex items-stretch gap-2 mb-4">
+                                <a href="/owner/dashboard" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                                    <span class="text-xl">🔑</span>
+                                    <span class="text-xs font-bold text-blue-600 dark:text-blue-400">Owner Portal</span>
+                                </a>
+                                <a href="/owner/dashboard" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                    <span class="text-xl">🚗</span>
+                                    <span class="text-xs font-bold text-black dark:text-white">My Fleet</span>
+                                </a>
+                                <a href="/rent" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                    <span class="text-xl">🔍</span>
+                                    <span class="text-xs font-bold text-black dark:text-white">Rent Fleet</span>
+                                </a>
+                            </div>
+
+                            <div class="flex flex-col mb-4">
+                                <a href="/owner/dashboard" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                    <span class="text-lg">📊</span>
+                                    <span class="font-medium text-black dark:text-white text-[15px]">Fleet & Bookings</span>
+                                </a>
+                                <a href="/account" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                    <span class="text-lg">⚙️</span>
+                                    <span class="font-medium text-black dark:text-white text-[15px]">Manage Account</span>
+                                </a>
+                            </div>
+
+                            @elseif(auth()->user()->role === 'driver')
                             <!-- Driver Action Buttons -->
                             <div class="flex items-stretch gap-2 mb-4">
                                 <a href="/driver/dashboard" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">

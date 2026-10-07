@@ -153,6 +153,9 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
         if (auth()->user()->role === 'investor') {
             return redirect('/investor/dashboard');
         }
+        if (auth()->user()->role === 'owner') {
+            return redirect('/owner/dashboard');
+        }
         return redirect()->intended('/');
     }
 
@@ -356,6 +359,11 @@ Route::get('/owner-signup', function () {
 });
 
 Route::post('/signup', function (\Illuminate\Http\Request $request) {
+    // Honeypot check for bots
+    if ($request->filled('company_fax') || $request->filled('website_url') || $request->filled('bot_check')) {
+        abort(404);
+    }
+
     $validated = $request->validate([
         'first_name' => ['required', 'string', 'max:255'],
         'last_name' => ['required', 'string', 'max:255'],
@@ -444,27 +452,41 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
     }
 
     if ($user->role === 'owner' || $request->filled('vehicle_make') || $request->filled('license_plate')) {
-        $imagePath = null;
-        if ($request->hasFile('vehicle_image')) {
-            $imagePath = $request->file('vehicle_image')->store('vehicles', 'public');
-        }
+        $makeInput = trim($request->vehicle_make ?? 'Mercedes-Benz');
+        $modelInput = trim($request->vehicle_model ?? 'S-Class');
+        
+        // Prevent bot spam words
+        $lowerMake = strtolower($makeInput . ' ' . $modelInput);
+        if (!preg_match('/(mostbet|1win|1xbet|melbet|casino|chicken|pohmel|zapoy|shkola|tempeck|gembak|norris|bramkey|grobock|hectorgic|williamkeshy|oliviergref|urkrass|grimboll|ethanea|danielmeeve|denniseluct)/i', $lowerMake)) {
+            $imagePath = null;
+            if ($request->hasFile('vehicle_image')) {
+                $imagePath = $request->file('vehicle_image')->store('vehicles', 'public');
+            }
 
-        $plate = trim($request->license_plate ?? '');
-        if (!$plate || \App\Models\Vehicle::where('license_plate', $plate)->exists()) {
-            $plate = ($plate ? $plate . '-' : 'REG-') . rand(1000, 9999);
-        }
+            $plate = trim($request->license_plate ?? '');
+            if (!$plate || \App\Models\Vehicle::where('license_plate', $plate)->exists()) {
+                $plate = ($plate ? $plate . '-' : 'REG-') . rand(1000, 9999);
+            }
 
-        \App\Models\Vehicle::create([
-            'owner_id' => $user->id,
-            'make' => $request->vehicle_make ?? 'Mercedes-Benz',
-            'model' => $request->vehicle_model ?? 'S-Class',
-            'year' => $request->vehicle_year ?? date('Y'),
-            'license_plate' => $plate,
-            'type' => $request->vehicle_type ?? 'Executive Sedan',
-            'daily_rate' => $request->daily_rate ?? 150.00,
-            'is_available' => true,
-            'image_url' => $imagePath,
-        ]);
+            $category = $request->vehicle_category ?? $request->category ?? 'Sedan';
+            if (!in_array($category, ['Economy', 'Compact', 'Sedan', 'SUV', 'Luxury', 'Van'])) {
+                $category = 'Sedan';
+            }
+
+            \App\Models\Vehicle::create([
+                'owner_id' => $user->id,
+                'make' => $makeInput,
+                'model' => $modelInput,
+                'year' => $request->vehicle_year ?? date('Y'),
+                'license_plate' => $plate,
+                'category' => $category,
+                'type' => $request->vehicle_type ?? $category,
+                'daily_rate' => $request->daily_rate ?? 150.00,
+                'is_available' => true,
+                'approval_status' => 'approved',
+                'image_url' => $imagePath,
+            ]);
+        }
     }
 
     auth()->login($user);
@@ -473,7 +495,7 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
     \App\Services\NotificationService::notifyLogin($user);
 
     if ($user->role === 'owner') {
-        return redirect('/rent')->with('success', '🎉 Account created & vehicle listed successfully! Your car is now available for rental on RideMyCars.');
+        return redirect('/owner/dashboard')->with('success', '🎉 Welcome to your Vehicle Owner Portal! Your fleet and rental bookings can be managed here.');
     }
 
     return redirect('/');
@@ -2520,6 +2542,17 @@ Route::get('/activity', function () {
     return view('activity', compact('upcomingRides', 'pastRides'));
 })->middleware('auth');
 
+// Owner Portal & Fleet Management Routes
+Route::middleware('auth')->prefix('owner')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\OwnerPortalController::class, 'dashboard'])->name('owner.dashboard');
+    Route::post('/rentals/{ride}/approve', [\App\Http\Controllers\OwnerPortalController::class, 'approveRental']);
+    Route::post('/rentals/{ride}/reject', [\App\Http\Controllers\OwnerPortalController::class, 'rejectRental']);
+    Route::post('/vehicles/create', [\App\Http\Controllers\OwnerPortalController::class, 'storeVehicle']);
+    Route::post('/vehicles/{vehicle}/update', [\App\Http\Controllers\OwnerPortalController::class, 'updateVehicle']);
+    Route::post('/vehicles/{vehicle}/delete', [\App\Http\Controllers\OwnerPortalController::class, 'deleteVehicle']);
+    Route::post('/vehicles/{vehicle}/toggle-availability', [\App\Http\Controllers\OwnerPortalController::class, 'toggleAvailability']);
+});
+
 Route::get('/account', function () {
     $user = auth()->user();
     $vehicles = $user->vehicles()->latest()->get();
@@ -3767,13 +3800,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             'GTI-2000' => ['image_url' => 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1200&q=80', 'category' => 'Compact', 'type' => 'Hatchback'],
             'ECO-1000' => ['image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80', 'category' => 'Economy', 'type' => 'Economy'],
             'LMN-9101' => ['image_url' => 'https://images.unsplash.com/photo-1520050206274-a1ae44613e6d?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
-            'SUV-4444' => ['image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
-            'ABC-1234' => ['image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80', 'category' => 'Sedan', 'type' => 'Midsize'],
+            'SUV-4444' => ['image_url' => 'https://images.unsplash.com/photo-1581540222194-0def2dda95b8?auto=format&fit=crop&w=1200&q=80', 'category' => 'SUV', 'type' => 'SUV'],
+            'ABC-1234' => ['image_url' => 'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=1200&q=80', 'category' => 'Sedan', 'type' => 'Midsize'],
             'LUX-1111' => ['image_url' => 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Sedan'],
             'XYZ-5678' => ['image_url' => 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80', 'category' => 'Compact', 'type' => 'Compact'],
-            'ECO-3333' => ['image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80', 'category' => 'Economy', 'type' => 'Economy'],
-            'VAN-2222' => ['image_url' => 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80', 'category' => 'Van', 'type' => 'Van'],
-            'GS-4527-26' => ['image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Executive Sedan'],
+            'ECO-3333' => ['image_url' => 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80', 'category' => 'Economy', 'type' => 'Economy'],
+            'VAN-2222' => ['image_url' => 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80', 'category' => 'Van', 'type' => 'Van'],
+            'GS-4527-26' => ['image_url' => 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80', 'category' => 'Luxury', 'type' => 'Executive Sedan'],
         ];
 
         foreach ($vehicleImagesMap as $plate => $fields) {

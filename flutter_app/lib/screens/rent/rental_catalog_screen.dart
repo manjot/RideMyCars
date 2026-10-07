@@ -79,8 +79,13 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
       }
 
       if (_selectedCategory != 'All') {
-        final cat = (v.type.isNotEmpty ? v.type : v.category).toLowerCase();
-        if (!cat.contains(_selectedCategory.toLowerCase())) return false;
+        final selected = _selectedCategory.toLowerCase();
+        final vCat = v.category.toLowerCase();
+        final vType = v.type.toLowerCase();
+        final matches = vCat == selected || vCat.contains(selected) || vType.contains(selected) ||
+            (selected == 'economy' && (vCat.contains('compact') || vType.contains('compact') || vType.contains('economy'))) ||
+            (selected == 'compact' && (vCat.contains('economy') || vType.contains('compact') || vType.contains('hatchback')));
+        if (!matches) return false;
       }
 
       if (_selectedTransmission != 'All') {

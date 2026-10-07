@@ -484,6 +484,12 @@ class SettingService
             ];
         }
 
+        // Fleet Owner Account
+        $list['owner@ridemycars.com'] = [
+            'name' => 'Elite Car Rentals (Fleet Owner)',
+            'role' => 'owner',
+        ];
+
         return $list;
     }
 

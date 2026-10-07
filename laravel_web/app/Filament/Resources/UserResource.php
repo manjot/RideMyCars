@@ -223,6 +223,12 @@ class UserResource extends Resource
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('vehicles_count')
+                    ->counts('vehicles')
+                    ->label('Vehicles')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('corporate_company_name')
                     ->label('Company')
                     ->toggleable(),
@@ -236,7 +242,19 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('role')
+                    ->options([
+                        'customer' => 'Customer',
+                        'driver' => 'Driver',
+                        'owner' => 'Vehicle Owner',
+                        'admin' => 'Admin',
+                    ]),
+                Tables\Filters\SelectFilter::make('account_status')
+                    ->options([
+                        'active' => 'Active',
+                        'suspended' => 'Suspended',
+                        'deactivated' => 'Deactivated',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -154,12 +154,25 @@ class Vehicle extends Model
             return 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80';
         }
 
-        // General SUV fallback
-        if (str_contains(strtolower($this->type ?? ''), 'suv') || str_contains(strtolower($this->category ?? ''), 'suv')) {
-            return 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80';
+        // Distinct Fallbacks by Category & Type
+        $cat = strtolower($this->category ?? $this->type ?? '');
+        if (str_contains($cat, 'van') || str_contains($cat, 'minivan')) {
+            return 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80';
+        }
+        if (str_contains($cat, 'suv')) {
+            return 'https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=1200&q=80';
+        }
+        if (str_contains($cat, 'luxury')) {
+            return 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80';
+        }
+        if (str_contains($cat, 'compact') || str_contains($cat, 'hatchback')) {
+            return 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?auto=format&fit=crop&w=1200&q=80';
+        }
+        if (str_contains($cat, 'economy')) {
+            return 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80';
         }
 
-        // General Luxury fallback
+        // Standard Premium Sedan Fallback
         return 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80';
     }
 

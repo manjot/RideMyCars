@@ -16,6 +16,72 @@ class VehicleSeeder extends Seeder
             ->whereIn('status', ['confirmed', 'accepted', 'in_progress'])
             ->update(['status' => 'completed']);
 
+        // Create or find default Owner account for rental management
+        $defaultOwner = \App\Models\User::firstOrCreate(
+            ['email' => 'owner@ridemycars.com'],
+            [
+                'name' => 'Elite Car Rentals (Fleet Owner)',
+                'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+                'role' => 'owner',
+                'account_status' => 'active',
+                'phone' => '+1 (555) 321-7890',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        if ($defaultOwner->role !== 'owner') {
+            $defaultOwner->update(['role' => 'owner']);
+        }
+
+        // 1. PURGE ALL BOT SPAM VEHICLES & FAKE BOT RECORDS
+        $cleanPlates = [
+            'TSL-9901', 'BMW-4001', 'RNG-7007', 'MBZ-5800', 'POR-9110', 'AUD-8800',
+            'TOY-2024', 'HND-5500', 'FRD-5000', 'CAD-9900', 'HYU-7700', 'VAN-8800',
+            'TOY-4400', 'VET-3300', 'GTI-2000', 'ECO-1000', 'LMN-9101', 'SUV-4444',
+            'ABC-1234', 'LUX-1111', 'XYZ-5678', 'ECO-3333', 'VAN-2222', 'GS-4527-26'
+        ];
+
+        DB::table('vehicles')
+            ->whereNotIn('license_plate', $cleanPlates)
+            ->where(function ($q) {
+                $q->where('make', 'like', '%mostbet%')
+                  ->orWhere('make', 'like', '%1win%')
+                  ->orWhere('make', 'like', '%1xbet%')
+                  ->orWhere('make', 'like', '%melbet%')
+                  ->orWhere('make', 'like', '%pinco%')
+                  ->orWhere('make', 'like', '%pinup%')
+                  ->orWhere('make', 'like', '%olymp%')
+                  ->orWhere('make', 'like', '%chicken-road%')
+                  ->orWhere('make', 'like', '%RealCar%')
+                  ->orWhere('make', 'like', '%casino%')
+                  ->orWhere('make', 'like', '%klinika%')
+                  ->orWhere('make', 'like', '%pohmelya%')
+                  ->orWhere('make', 'like', '%zapoya%')
+                  ->orWhere('make', 'like', '%shkola%')
+                  ->orWhere('make', 'like', '%Tempeck%')
+                  ->orWhere('make', 'like', '%Gembak%')
+                  ->orWhere('make', 'like', '%Norris%')
+                  ->orWhere('make', 'like', '%BramKey%')
+                  ->orWhere('make', 'like', '%Grobock%')
+                  ->orWhere('make', 'like', '%Hectorgic%')
+                  ->orWhere('make', 'like', '%Williamkeshy%')
+                  ->orWhere('make', 'like', '%Oliviergref%')
+                  ->orWhere('make', 'like', '%Urkrass%')
+                  ->orWhere('make', 'like', '%Grimboll%')
+                  ->orWhere('make', 'like', '%Ethanea%')
+                  ->orWhere('make', 'like', '%DanielMeeve%')
+                  ->orWhere('make', 'like', '%DennisEluct%')
+                  ->orWhere('model', 'like', '%mostbet%')
+                  ->orWhere('model', 'like', '%1win%')
+                  ->orWhere('model', 'like', '%1xbet%')
+                  ->orWhere('model', 'like', '%melbet%')
+                  ->orWhere('model', 'like', '%DennisEluct%')
+                  ->orWhere('model', 'like', '%chicken-road%')
+                  ->orWhereNull('category')
+                  ->orWhere('category', '');
+            })
+            ->delete();
+
         $vehicles = [
             // 1. Tesla Model S Plaid
             [
@@ -379,7 +445,7 @@ class VehicleSeeder extends Seeder
             // 18. Toyota RAV4 (SUV-4444)
             [
                 'make' => 'Toyota',
-                'model' => 'RAV4',
+                'model' => 'RAV4 Adventure',
                 'year' => '2024',
                 'license_plate' => 'SUV-4444',
                 'category' => 'SUV',
@@ -394,7 +460,7 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 200.00,
                 'daily_mileage_limit' => 350,
-                'image_url' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1581540222194-0def2dda95b8?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
             // 19. Toyota Camry (ABC-1234)
@@ -415,7 +481,7 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 150.00,
                 'daily_mileage_limit' => 350,
-                'image_url' => 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
             // 20. Mercedes-Benz E-Class (LUX-1111)
@@ -478,7 +544,7 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 18,
                 'security_deposit_amount' => 100.00,
                 'daily_mileage_limit' => 400,
-                'image_url' => 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
             // 23. Chevrolet Express (VAN-2222)
@@ -499,7 +565,7 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 21,
                 'security_deposit_amount' => 350.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
             // 24. Mercedes-Benz CLA 250 (GS-4527-26)
@@ -520,18 +586,20 @@ class VehicleSeeder extends Seeder
                 'min_driver_age' => 21,
                 'security_deposit_amount' => 350.00,
                 'daily_mileage_limit' => 300,
-                'image_url' => 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
+                'image_url' => 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80',
                 'approval_status' => 'approved',
             ],
         ];
 
         foreach ($vehicles as $vehicle) {
+            $vehicle['owner_id'] = $defaultOwner->id;
             Vehicle::updateOrCreate(['license_plate' => $vehicle['license_plate']], $vehicle);
 
-            // Also ensure DB record is directly updated with image_url and category
+            // Also ensure DB record is directly updated with image_url, category, and owner_id
             DB::table('vehicles')
                 ->where('license_plate', $vehicle['license_plate'])
                 ->update([
+                    'owner_id' => $defaultOwner->id,
                     'image_url' => $vehicle['image_url'],
                     'category' => $vehicle['category'],
                     'type' => $vehicle['type'],
