@@ -417,6 +417,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -426,10 +427,14 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
         ),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 10.0),
-            child: Form(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Center(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 10.0),
+              child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -786,6 +791,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
               ),
             ),
           ),
+        ),
         ),
       ),
     );

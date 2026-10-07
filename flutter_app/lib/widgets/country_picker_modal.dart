@@ -26,65 +26,77 @@ void showCountryPickerModal({
                 c.code.toLowerCase().contains(q);
           }).toList();
 
-          return SizedBox(
-            height: MediaQuery.of(context).size.height * 0.75,
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+          final bottomInset = MediaQuery.of(ctx).viewInsets.bottom;
+          final availableHeight = MediaQuery.of(ctx).size.height - MediaQuery.of(ctx).padding.top - 40;
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: SizedBox(
+              height: (availableHeight - bottomInset).clamp(320.0, availableHeight * 0.75),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Select Country',
-                        style: TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Select Country',
+                          style: TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: TextField(
+                      autofocus: false,
+                      style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+                      onChanged: (val) => setModalState(() => query = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search country name or code (+1, US)...',
+                        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
+                        suffixIcon: query.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18, color: AppColors.textMuted),
+                                onPressed: () => setModalState(() => query = ''),
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: AppColors.backgroundDark,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: TextField(
-                    autofocus: false,
-                    style: const TextStyle(color: AppColors.textLight, fontSize: 14),
-                    onChanged: (val) => setModalState(() => query = val),
-                    decoration: InputDecoration(
-                      hintText: 'Search country name or code (+1, US)...',
-                      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
-                      filled: true,
-                      fillColor: AppColors.backgroundDark,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: filtered.length,
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.separated(
+                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      itemCount: filtered.length,
                     separatorBuilder: (_, __) => Divider(
                       color: Colors.white.withOpacity( 0.05),
                       height: 1,
@@ -138,6 +150,7 @@ void showCountryPickerModal({
                 ),
               ],
             ),
+          ),
           );
         },
       );

@@ -795,8 +795,12 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
         right: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      child: SingleChildScrollView(
-        child: Column(
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -977,6 +981,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

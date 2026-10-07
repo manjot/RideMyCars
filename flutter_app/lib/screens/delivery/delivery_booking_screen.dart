@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../../services/delivery_service.dart';
+import '../../services/places_service.dart';
 import 'delivery_tracker_screen.dart';
 
 class DeliveryBookingScreen extends StatefulWidget {
@@ -28,6 +30,14 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   int _currentStep = 1; // 1 to 5 (Step 6 is confirmation modal)
   bool _isSubmitting = false;
   bool _isCalculating = false;
+
+  // Autocomplete & Keyboard handling
+  Timer? _placesDebounce;
+  List<PlacePrediction> _placesPredictions = [];
+  bool _isLoadingPlaces = false;
+  String? _activePlacesField; // 'pickup' or 'dropoff'
+  final FocusNode _pickupFocusNode = FocusNode();
+  final FocusNode _dropoffFocusNode = FocusNode();
 
   // Controllers - Step 1: Pickup & Drop
   late TextEditingController _pickupController;
@@ -89,6 +99,17 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   @override
   void initState() {
     super.initState();
+    _pickupFocusNode.addListener(() {
+      if (_pickupFocusNode.hasFocus) {
+        setState(() => _activePlacesField = 'pickup');
+      }
+    });
+    _dropoffFocusNode.addListener(() {
+      if (_dropoffFocusNode.hasFocus) {
+        setState(() => _activePlacesField = 'dropoff');
+      }
+    });
+
     _pickupController = TextEditingController(
       text: widget.initialPickup ?? 'T8, Gali Gopal Wali, Ratan Nagar, Karol Bagh, New Delhi, Delhi, 110005, India',
     );
@@ -111,6 +132,9 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
   @override
   void dispose() {
+    _placesDebounce?.cancel();
+    _pickupFocusNode.dispose();
+    _dropoffFocusNode.dispose();
     _pickupController.dispose();
     _dropoffController.dispose();
     _senderNameController.dispose();
@@ -126,6 +150,147 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     _cardCvcController.dispose();
     _cardZipController.dispose();
     super.dispose();
+  }
+
+  void _onPlacesQueryChanged(String query, {required String field}) {
+    _placesDebounce?.cancel();
+    setState(() => _activePlacesField = field);
+    if (query.trim().length < 2) {
+      setState(() {
+        _placesPredictions = [];
+        _isLoadingPlaces = false;
+      });
+      return;
+    }
+    setState(() => _isLoadingPlaces = true);
+    _placesDebounce = Timer(const Duration(milliseconds: 350), () async {
+      final results = await PlacesService.getAutocomplete(query);
+      if (!mounted) return;
+      setState(() {
+        _placesPredictions = results;
+        _isLoadingPlaces = false;
+      });
+    });
+  }
+
+  void _selectPlace(PlacePrediction prediction, {required String field}) async {
+    final address = prediction.description;
+    setState(() {
+      if (field == 'pickup') {
+        _pickupController.text = address;
+        if (prediction.lat != null && prediction.lng != null) {
+          _pickupLat = prediction.lat!;
+          _pickupLng = prediction.lng!;
+        }
+      } else {
+        _dropoffController.text = address;
+        if (prediction.lat != null && prediction.lng != null) {
+          _dropoffLat = prediction.lat!;
+          _dropoffLng = prediction.lng!;
+        }
+      }
+      _placesPredictions = [];
+      _activePlacesField = null;
+    });
+    FocusScope.of(context).unfocus();
+    _calculatePrice();
+  }
+
+  Widget _buildPlacesSuggestionsDropdown(String field) {
+    if (_activePlacesField != field) return const SizedBox.shrink();
+    if (!_isLoadingPlaces && _placesPredictions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6, bottom: 10),
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search_rounded, size: 14, color: Color(0xFFF59E0B)),
+                const SizedBox(width: 6),
+                Text(
+                  _isLoadingPlaces ? 'Searching locations...' : 'Matching Addresses',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _placesPredictions = [];
+                      _activePlacesField = null;
+                    });
+                    FocusScope.of(context).unfocus();
+                  },
+                  child: const Text('Close', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+          if (_isLoadingPlaces)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF59E0B)),
+                ),
+              ),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: _placesPredictions.length,
+                separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity(0.07), height: 1),
+                itemBuilder: (context, index) {
+                  final item = _placesPredictions[index];
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.location_on_outlined, color: Color(0xFFF59E0B), size: 18),
+                    title: Text(
+                      item.mainText.isNotEmpty ? item.mainText : item.description,
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: item.secondaryText.isNotEmpty
+                        ? Text(
+                            item.secondaryText,
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : null,
+                    onTap: () => _selectPlace(item, field: field),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   void _calculatePrice() async {
@@ -536,6 +701,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
@@ -576,34 +742,39 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Stepper Header
-          _buildStepperHeader(),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
+          children: [
+            // Stepper Header
+            _buildStepperHeader(),
 
-          // Main Step Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_currentStep == 1) _buildStep1PickupDrop(),
-                  if (_currentStep == 2) _buildStep2SpeedSchedule(countryProv),
-                  if (_currentStep == 3) _buildStep3SenderRecipient(),
-                  if (_currentStep == 4) _buildStep4PackageSpecs(),
-                  if (_currentStep == 5) _buildStep5Payment(countryProv),
+            // Main Step Content
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_currentStep == 1) _buildStep1PickupDrop(),
+                    if (_currentStep == 2) _buildStep2SpeedSchedule(countryProv),
+                    if (_currentStep == 3) _buildStep3SenderRecipient(),
+                    if (_currentStep == 4) _buildStep4PackageSpecs(),
+                    if (_currentStep == 5) _buildStep5Payment(countryProv),
 
-                  const SizedBox(height: 20),
-                  // Price Estimate Card (Matches web sidebar)
-                  _buildPriceEstimateCard(countryProv),
-                ],
+                    const SizedBox(height: 20),
+                    // Price Estimate Card (Matches web sidebar)
+                    _buildPriceEstimateCard(countryProv),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      bottomSheet: _buildBottomActionBar(countryProv),
+      bottomSheet: MediaQuery.of(context).viewInsets.bottom > 0 ? null : _buildBottomActionBar(countryProv),
     );
   }
 
@@ -702,11 +873,21 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
               style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
             ),
             GestureDetector(
-              onTap: () {
-                setState(() {
-                  _pickupController.text = 'T/23, Ratan Nagar, Karol Bagh, New Delhi';
-                });
-                _calculatePrice();
+              onTap: () async {
+                final addr = await PlacesService.getAddressFromCoordinates(28.6517, 77.1906);
+                if (addr != null && mounted) {
+                  setState(() {
+                    _pickupController.text = addr;
+                    _placesPredictions = [];
+                  });
+                  _calculatePrice();
+                } else {
+                  setState(() {
+                    _pickupController.text = 'T/23, Ratan Nagar, Karol Bagh, New Delhi';
+                    _placesPredictions = [];
+                  });
+                  _calculatePrice();
+                }
               },
               child: Row(
                 children: const [
@@ -721,16 +902,32 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         const SizedBox(height: 6),
         TextField(
           controller: _pickupController,
+          focusNode: _pickupFocusNode,
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.circle, color: Color(0xFFF59E0B), size: 14),
+            suffixIcon: _pickupController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.white54, size: 16),
+                    onPressed: () {
+                      setState(() {
+                        _pickupController.clear();
+                        _placesPredictions = [];
+                      });
+                    },
+                  )
+                : null,
             filled: true,
             fillColor: const Color(0xFF1E293B),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
-          onChanged: (_) => _calculatePrice(),
+          onChanged: (val) {
+            _onPlacesQueryChanged(val, field: 'pickup');
+            _calculatePrice();
+          },
         ),
+        _buildPlacesSuggestionsDropdown('pickup'),
 
         const SizedBox(height: 14),
 
@@ -742,18 +939,34 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         const SizedBox(height: 6),
         TextField(
           controller: _dropoffController,
+          focusNode: _dropoffFocusNode,
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFFEF4444), size: 18),
             hintText: 'Enter recipient delivery address...',
             hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+            suffixIcon: _dropoffController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.white54, size: 16),
+                    onPressed: () {
+                      setState(() {
+                        _dropoffController.clear();
+                        _placesPredictions = [];
+                      });
+                    },
+                  )
+                : null,
             filled: true,
             fillColor: const Color(0xFF1E293B),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
-          onChanged: (_) => _calculatePrice(),
+          onChanged: (val) {
+            _onPlacesQueryChanged(val, field: 'dropoff');
+            _calculatePrice();
+          },
         ),
+        _buildPlacesSuggestionsDropdown('dropoff'),
 
         const SizedBox(height: 16),
 

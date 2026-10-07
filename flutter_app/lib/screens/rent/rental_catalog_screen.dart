@@ -124,6 +124,7 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0D1117) : const Color(0xFFF8FAFC),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text(
           'Rent a Car',
@@ -160,7 +161,10 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
         children: [
           // Dates & Search Header
           Container(
@@ -220,6 +224,14 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search by make, model, type...',
                           prefixIcon: const Icon(Icons.search, size: 20),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    setState(() => _searchController.clear());
+                                  },
+                                )
+                              : null,
                           isDense: true,
                           filled: true,
                           fillColor: isDark ? Colors.black26 : Colors.grey.shade100,
@@ -347,6 +359,7 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
                     : RefreshIndicator(
                         onRefresh: _fetchVehicles,
                         child: ListView.separated(
+                          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.all(16),
                           itemCount: vehicles.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 16),
@@ -357,6 +370,7 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
                       ),
           ),
         ],
+      ),
       ),
     );
   }

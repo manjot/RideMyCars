@@ -302,6 +302,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
+      resizeToAvoidBottomInset: true,
       drawer: _buildDrawer(context, auth),
       floatingActionButton: Builder(
         builder: (ctx) {

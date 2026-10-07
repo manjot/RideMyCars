@@ -110,7 +110,10 @@ class _SavedLocationModalState extends State<SavedLocationModal> {
     final title = isHome ? 'Save Home Address' : 'Save Office Address';
     final emoji = isHome ? '🏠' : '🏢';
 
-    return Container(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         top: 18,
@@ -239,6 +242,7 @@ class _SavedLocationModalState extends State<SavedLocationModal> {
                 border: Border.all(color: Colors.white10),
               ),
               child: ListView.separated(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 shrinkWrap: true,
                 itemCount: _predictions.length,
                 separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
@@ -313,6 +317,7 @@ class _SavedLocationModalState extends State<SavedLocationModal> {
           const SizedBox(height: 10),
         ],
       ),
+    ),
     );
   }
 }

@@ -62,6 +62,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   final _dropoffController = TextEditingController();
   final _pickupFocusNode = FocusNode();
   final _dropoffFocusNode = FocusNode();
+  final _rentPickupFocusNode = FocusNode();
+  final _rentDropoffFocusNode = FocusNode();
+  final _driverPickupFocusNode = FocusNode();
+  final _driverDropoffFocusNode = FocusNode();
+  final _deliveryPickupFocusNode = FocusNode();
+  final _deliveryDropoffFocusNode = FocusNode();
+  String _activeSearchField = 'ride_dropoff';
 
   ServiceType _selectedService = ServiceType.ride;
   String _selectedTierId = 'Standard';
@@ -144,18 +151,32 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _pickupFocusNode.addListener(() {
-      if (mounted) setState(() {});
-    });
-    _dropoffFocusNode.addListener(() {
-      if (mounted) setState(() {});
-    });
-    _pickupController.addListener(() {
-      if (mounted) setState(() {});
-    });
-    _dropoffController.addListener(() {
-      if (mounted) setState(() {});
-    });
+    for (final node in [
+      _pickupFocusNode,
+      _dropoffFocusNode,
+      _rentPickupFocusNode,
+      _rentDropoffFocusNode,
+      _driverPickupFocusNode,
+      _driverDropoffFocusNode,
+      _deliveryPickupFocusNode,
+      _deliveryDropoffFocusNode,
+    ]) {
+      node.addListener(() {
+        if (mounted) setState(() {});
+      });
+    }
+    for (final c in [
+      _pickupController,
+      _dropoffController,
+      _rentPickupController,
+      _rentDropoffController,
+      _driverPickupController,
+      _driverDropoffController,
+    ]) {
+      c.addListener(() {
+        if (mounted) setState(() {});
+      });
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rideProv = Provider.of<RideProvider>(context, listen: false);
       final countryProv = Provider.of<CountryProvider>(context, listen: false);
@@ -174,6 +195,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     _debounceTimer?.cancel();
     _pickupFocusNode.dispose();
     _dropoffFocusNode.dispose();
+    _rentPickupFocusNode.dispose();
+    _rentDropoffFocusNode.dispose();
+    _driverPickupFocusNode.dispose();
+    _driverDropoffFocusNode.dispose();
+    _deliveryPickupFocusNode.dispose();
+    _deliveryDropoffFocusNode.dispose();
     _pickupController.dispose();
     _dropoffController.dispose();
     _contactPhoneController.dispose();
@@ -567,9 +594,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     } catch (_) {}
   }
 
-  void _onQueryChanged(String query, {required bool isPickup}) {
+  void _onQueryChanged(String query, {String? field, bool? isPickup}) {
+    final resolvedField = field ?? (isPickup == true ? 'ride_pickup' : 'ride_dropoff');
+    _activeSearchField = resolvedField;
+    _isSearchingPickup = resolvedField.contains('pickup');
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () async {
       if (query.trim().isEmpty) {
         setState(() {
           _predictions = [];
@@ -580,7 +610,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
       setState(() {
         _isSearchingPlaces = true;
-        _isSearchingPickup = isPickup;
       });
 
       final results = await PlacesService.getAutocomplete(
@@ -599,31 +628,194 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 
   Future<void> _selectPlace(PlacePrediction prediction) async {
-    final details = await PlacesService.getPlaceDetails(prediction.placeId);
+    final details = await PlacesService.getPlaceDetails(prediction.placeId, prediction: prediction);
+    final chosenText = prediction.mainText.isNotEmpty ? prediction.mainText : prediction.description;
+    final fullAddress = details?.formattedAddress.isNotEmpty == true ? details!.formattedAddress : chosenText;
 
     setState(() {
-      if (_isSearchingPickup) {
-        _pickupController.text = prediction.mainText.isNotEmpty ? prediction.mainText : prediction.description;
-        if (details != null) {
-          _userLat = details.lat;
-          _userLng = details.lng;
-        }
-      } else {
-        _dropoffController.text = prediction.mainText.isNotEmpty ? prediction.mainText : prediction.description;
-        if (details != null) {
-          _dropoffLat = details.lat;
-          _dropoffLng = details.lng;
-        }
+      switch (_activeSearchField) {
+        case 'rent_pickup':
+          _rentPickupController.text = fullAddress;
+          break;
+        case 'rent_dropoff':
+          _rentDropoffController.text = fullAddress;
+          break;
+        case 'driver_pickup':
+          _driverPickupController.text = fullAddress;
+          break;
+        case 'driver_dropoff':
+          _driverDropoffController.text = fullAddress;
+          break;
+        case 'delivery_pickup':
+          _pickupController.text = fullAddress;
+          if (details != null) {
+            _userLat = details.lat;
+            _userLng = details.lng;
+          }
+          _calculateDynamicDeliveryPrice();
+          break;
+        case 'delivery_dropoff':
+          _dropoffController.text = fullAddress;
+          if (details != null) {
+            _dropoffLat = details.lat;
+            _dropoffLng = details.lng;
+          }
+          _calculateDynamicDeliveryPrice();
+          break;
+        case 'ride_pickup':
+          _pickupController.text = chosenText;
+          if (details != null) {
+            _userLat = details.lat;
+            _userLng = details.lng;
+          }
+          _updateMapMarkers();
+          if (_dropoffLat != null && _dropoffLng != null) {
+            _recalculateDynamicPrices();
+          }
+          break;
+        case 'ride_dropoff':
+        default:
+          _dropoffController.text = chosenText;
+          if (details != null) {
+            _dropoffLat = details.lat;
+            _dropoffLng = details.lng;
+          }
+          _updateMapMarkers();
+          if (_userLat != null && _userLng != null) {
+            _recalculateDynamicPrices();
+          }
+          break;
       }
       _predictions = [];
+      _isSearchingPlaces = false;
     });
 
-    _updateMapMarkers();
-    _recalculateDynamicPrices();
     if (!mounted) return;
     _pickupFocusNode.unfocus();
     _dropoffFocusNode.unfocus();
+    _rentPickupFocusNode.unfocus();
+    _rentDropoffFocusNode.unfocus();
+    _driverPickupFocusNode.unfocus();
+    _driverDropoffFocusNode.unfocus();
+    _deliveryPickupFocusNode.unfocus();
+    _deliveryDropoffFocusNode.unfocus();
     FocusScope.of(context).unfocus();
+  }
+
+  Widget _buildPlacesSuggestionsList() {
+    if (!_isSearchingPlaces && _predictions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161C28),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _serviceColor.withOpacity(0.55), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.55),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header with Quick Close
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 8, 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _isSearchingPlaces ? 'Searching locations...' : 'Select Address',
+                  style: TextStyle(color: _serviceColor, fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    setState(() {
+                      _predictions = [];
+                      _isSearchingPlaces = false;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.close_rounded, size: 13, color: Colors.white70),
+                        SizedBox(width: 4),
+                        Text('Close', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: Colors.white10, height: 1),
+          Flexible(
+            child: _isSearchingPlaces && _predictions.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _serviceColor),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('Searching matching places...', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: _predictions.length,
+                    separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                    itemBuilder: (context, index) {
+                      final p = _predictions[index];
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(Icons.location_on_rounded, color: _serviceColor, size: 20),
+                        title: Text(
+                          p.mainText,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: p.secondaryText.isNotEmpty
+                            ? Text(
+                                p.secondaryText,
+                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            : null,
+                        trailing: const Icon(Icons.north_west_rounded, size: 14, color: Colors.white30),
+                        onTap: () => _selectPlace(p),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _updateMapMarkers() {
@@ -819,30 +1011,57 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       _userLng ?? defaultCenterForCountry(countryProv.selectedCountryCode).longitude,
     );
 
-    final isTypingAddress = _pickupFocusNode.hasFocus || _dropoffFocusNode.hasFocus;
+    final isTypingAddress = _pickupFocusNode.hasFocus ||
+        _dropoffFocusNode.hasFocus ||
+        _rentPickupFocusNode.hasFocus ||
+        _rentDropoffFocusNode.hasFocus ||
+        _driverPickupFocusNode.hasFocus ||
+        _driverDropoffFocusNode.hasFocus ||
+        _deliveryPickupFocusNode.hasFocus ||
+        _deliveryDropoffFocusNode.hasFocus;
     final isKeyboardOpen = isTypingAddress || MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.backgroundDark,
       drawer: _buildDrawer(context, auth),
-      body: Stack(
-        children: [
-          // Google Map Background
-          GoogleMap(
-            initialCameraPosition: CameraPosition(target: initialCenter, zoom: 14.0),
-            markers: _markers,
-            polylines: _polylines,
-            padding: EdgeInsets.only(top: 80, bottom: isKeyboardOpen ? 160 : 360),
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            onMapCreated: (c) => _mapController = c,
-            onTap: (_) {
-              _pickupFocusNode.unfocus();
-              _dropoffFocusNode.unfocus();
-              FocusScope.of(context).unfocus();
-            },
-          ),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          _pickupFocusNode.unfocus();
+          _dropoffFocusNode.unfocus();
+          _rentPickupFocusNode.unfocus();
+          _rentDropoffFocusNode.unfocus();
+          _driverPickupFocusNode.unfocus();
+          _driverDropoffFocusNode.unfocus();
+          _deliveryPickupFocusNode.unfocus();
+          _deliveryDropoffFocusNode.unfocus();
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            // Google Map Background
+            GoogleMap(
+              initialCameraPosition: CameraPosition(target: initialCenter, zoom: 14.0),
+              markers: _markers,
+              polylines: _polylines,
+              padding: EdgeInsets.only(top: 80, bottom: isKeyboardOpen ? 160 : 360),
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              onMapCreated: (c) => _mapController = c,
+              onTap: (_) {
+                _pickupFocusNode.unfocus();
+                _dropoffFocusNode.unfocus();
+                _rentPickupFocusNode.unfocus();
+                _rentDropoffFocusNode.unfocus();
+                _driverPickupFocusNode.unfocus();
+                _driverDropoffFocusNode.unfocus();
+                _deliveryPickupFocusNode.unfocus();
+                _deliveryDropoffFocusNode.unfocus();
+                FocusScope.of(context).unfocus();
+              },
+            ),
 
           // Map Corner SOS Emergency Button
           Builder(
@@ -1025,6 +1244,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               right: 0,
               bottom: 0,
               child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).viewInsets.bottom -
+                      MediaQuery.of(context).padding.top -
+                      (isKeyboardOpen ? 12 : 70),
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceDark,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -1040,6 +1265,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   top: false,
                   bottom: !isKeyboardOpen,
                   child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     physics: const ClampingScrollPhysics(),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -1053,9 +1279,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                           else
                             _buildRideConfirmRideStep(),
                         ] else if (_selectedService == ServiceType.rent)
-                          _buildRentSection()
+                          _buildRentSection(isKeyboardOpen)
                         else if (_selectedService == ServiceType.driver)
-                          _buildDriverSection()
+                          _buildDriverSection(isKeyboardOpen)
                         else
                           _buildDeliverySection(isKeyboardOpen),
 
@@ -1119,8 +1345,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ==========================================
   // RIDE FLOW MODALS & HELPERS
@@ -2529,9 +2756,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   // ==========================================
   // RENT SECTION: Live Vehicles Catalog from Backend API
   // ==========================================
-Widget _buildRentSection() {
+  Widget _buildRentSection(bool isKeyboardOpen) {
     final countryProv = Provider.of<CountryProvider>(context);
     final sym = countryProv.currencySymbol;
+    final isSearchingRent = _rentPickupFocusNode.hasFocus ||
+        _rentDropoffFocusNode.hasFocus ||
+        ((_activeSearchField == 'rent_pickup' || _activeSearchField == 'rent_dropoff') &&
+            (_predictions.isNotEmpty || _isSearchingPlaces));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -2566,7 +2797,10 @@ Widget _buildRentSection() {
             decoration: BoxDecoration(
               color: const Color(0xFF161C28),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(
+                color: isSearchingRent ? const Color(0xFF3B82F6).withOpacity(0.7) : Colors.white.withOpacity(0.08),
+                width: isSearchingRent ? 1.5 : 1.0,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2595,12 +2829,14 @@ Widget _buildRentSection() {
                 // Pickup Field
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: Color(0xFF3B82F6), size: 16),
+                    const Icon(Icons.location_on, color: Color(0xFF3B82F6), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _rentPickupController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                        focusNode: _rentPickupFocusNode,
+                        onChanged: (val) => _onQueryChanged(val, field: 'rent_pickup'),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           hintText: 'Pick-up Location (City, Airport, Address)...',
                           hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
@@ -2609,9 +2845,36 @@ Widget _buildRentSection() {
                         ),
                       ),
                     ),
+                    if (_rentPickupController.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          _rentPickupController.clear();
+                          setState(() {
+                            _predictions = [];
+                            _isSearchingPlaces = false;
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+                        ),
+                      ),
                     GestureDetector(
-                      onTap: _getCurrentLocation,
-                      child: const Icon(Icons.my_location_rounded, size: 17, color: Color(0xFF94A3B8)),
+                      onTap: () async {
+                        await _getCurrentLocation();
+                        if (_userLat != null && _userLng != null) {
+                          final addr = await PlacesService.getAddressFromCoordinates(_userLat!, _userLng!);
+                          if (mounted && addr != null && addr.isNotEmpty) {
+                            setState(() {
+                              _rentPickupController.text = addr;
+                            });
+                          }
+                        }
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.my_location_rounded, size: 18, color: Color(0xFF3B82F6)),
+                      ),
                     ),
                   ],
                 ),
@@ -2620,20 +2883,36 @@ Widget _buildRentSection() {
                   Divider(color: Colors.white.withOpacity(0.08), height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.pin_drop, color: Color(0xFFF59E0B), size: 16),
+                      const Icon(Icons.pin_drop, color: Color(0xFFF59E0B), size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _rentDropoffController,
-                          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                          focusNode: _rentDropoffFocusNode,
+                          onChanged: (val) => _onQueryChanged(val, field: 'rent_dropoff'),
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                           decoration: InputDecoration(
-                            hintText: 'Drop-off Location (Return city)...',
+                            hintText: 'Drop-off Location (Return city/address)...',
                             hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
                             border: InputBorder.none,
                             isDense: true,
                           ),
                         ),
                       ),
+                      if (_rentDropoffController.text.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            _rentDropoffController.clear();
+                            setState(() {
+                              _predictions = [];
+                              _isSearchingPlaces = false;
+                            });
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -2727,196 +3006,248 @@ Widget _buildRentSection() {
           ),
           const SizedBox(height: 8),
 
-          // Category Pills
-          SizedBox(
-            height: 32,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: ['All', 'Economy', 'Compact', 'Sedan', 'SUV', 'Luxury', 'Van'].map((cat) {
-                final isSelected = _selectedRentalCategory == cat;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedRentalCategory = cat;
-                      _updateSelectedRentalVehicle();
-                    });
-                    _fetchRentalVehicles(category: cat);
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF1E2433),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isSelected ? const Color(0xFF60A5FA) : Colors.white.withOpacity(0.08)),
-                    ),
-                    child: Text(
-                      cat,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.textMuted,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
+          // Autocomplete Suggestions List for Rent
+          if (_activeSearchField == 'rent_pickup' || _activeSearchField == 'rent_dropoff')
+            _buildPlacesSuggestionsList(),
 
-          // Redesigned Compact Selection Boxes (Vehicles List)
-          Builder(
-            builder: (ctx) {
-              final displayed = _displayedRentalVehicles;
-              return ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 180),
-                child: _isLoadingVehicles && displayed.isEmpty
-                    ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)))
-                    : displayed.isEmpty
-                        ? Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF161C28),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.car_rental, color: Color(0xFF3B82F6), size: 24),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _selectedRentalCategory == 'All' ? 'Explore Rental Fleet' : 'No $_selectedRentalCategory Cars Available',
-                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                      ),
-                                      Text(
-                                        _selectedRentalCategory == 'All' ? 'Sedans, SUVs, and luxury cars available on catalog.' : 'Please select another category or check the catalog.',
-                                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: displayed.length.clamp(0, 4),
-                            itemBuilder: (context, idx) {
-                              final v = displayed[idx];
-                              final isSelected = _selectedRentalVehicle?.id == v.id;
-                              return GestureDetector(
-                                onTap: () => setState(() => _selectedRentalVehicle = v),
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 6),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.08) : const Color(0xFF161C28),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: isSelected ? const Color(0xFF60A5FA) : Colors.white.withOpacity(0.08),
-                                      width: isSelected ? 2 : 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF1E2433),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: const Center(child: Icon(Icons.directions_car, color: Color(0xFF3B82F6))),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(v.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                            Text(
-                                              '${v.seats} seats • ${v.transmission} • 20% deposit ($sym${(v.dailyRate * 0.2).toStringAsFixed(0)})',
-                                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Text(
-                                        '$sym${v.dailyRate.toStringAsFixed(0)}/day',
-                                        style: TextStyle(
-                                          color: isSelected ? const Color(0xFF60A5FA) : Colors.white,
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-
-          // Yellow CTA Button
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                final pickup = _rentPickupController.text.trim();
-                final dropoff = _rentDifferentDropoff ? _rentDropoffController.text.trim() : pickup;
-                if (_selectedRentalVehicle != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RentalDetailScreen(
-                        vehicle: _selectedRentalVehicle!,
-                        initialPickupLocation: pickup.isNotEmpty ? pickup : null,
-                        initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
-                      ),
-                    ),
-                  );
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RentalCatalogScreen(
-                        initialPickupLocation: pickup.isNotEmpty ? pickup : null,
-                        initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
-                      ),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
-                foregroundColor: Colors.white,
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          // If searching or keyboard open, show a clean "Done" bar instead of bulky vehicle cards
+          if (isSearchingRent) ...[
+            Container(
+              margin: const EdgeInsets.only(top: 4, bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF161C28),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Flexible(
-                    child: Text(
-                      _selectedRentalVehicle != null
-                          ? 'Rent ${_selectedRentalVehicle!.fullName} →'
-                          : 'Search Available Rentals →',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  const Text(
+                    'Select an address above or tap Done',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _rentPickupFocusNode.unfocus();
+                      _rentDropoffFocusNode.unfocus();
+                      FocusScope.of(context).unfocus();
+                      setState(() {
+                        _predictions = [];
+                        _isSearchingPlaces = false;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.check_rounded, size: 14, color: Color(0xFF3B82F6)),
+                          SizedBox(width: 4),
+                          Text('Done', style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+          ] else ...[
+            // Category Pills
+            SizedBox(
+              height: 32,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: ['All', 'Economy', 'Compact', 'Sedan', 'SUV', 'Luxury', 'Van'].map((cat) {
+                  final isSelected = _selectedRentalCategory == cat;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedRentalCategory = cat;
+                        _updateSelectedRentalVehicle();
+                      });
+                      _fetchRentalVehicles(category: cat);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF1E2433),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: isSelected ? const Color(0xFF60A5FA) : Colors.white.withOpacity(0.08)),
+                      ),
+                      child: Text(
+                        cat,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : AppColors.textMuted,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Compact Selection Boxes (Vehicles List)
+            Builder(
+              builder: (ctx) {
+                final displayed = _displayedRentalVehicles;
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: _isLoadingVehicles && displayed.isEmpty
+                      ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)))
+                      : displayed.isEmpty
+                          ? Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF161C28),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.car_rental, color: Color(0xFF3B82F6), size: 24),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _selectedRentalCategory == 'All' ? 'Explore Rental Fleet' : 'No $_selectedRentalCategory Cars Available',
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                        Text(
+                                          _selectedRentalCategory == 'All' ? 'Sedans, SUVs, and luxury cars available on catalog.' : 'Please select another category or check the catalog.',
+                                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: displayed.length.clamp(0, 4),
+                              itemBuilder: (context, idx) {
+                                final v = displayed[idx];
+                                final isSelected = _selectedRentalVehicle?.id == v.id;
+                                return GestureDetector(
+                                  onTap: () => setState(() => _selectedRentalVehicle = v),
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 6),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.08) : const Color(0xFF161C28),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: isSelected ? const Color(0xFF60A5FA) : Colors.white.withOpacity(0.08),
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF1E2433),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Center(child: Icon(Icons.directions_car, color: Color(0xFF3B82F6))),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(v.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                              Text(
+                                                '${v.seats} seats • ${v.transmission} • 20% deposit ($sym${(v.dailyRate * 0.2).toStringAsFixed(0)})',
+                                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Text(
+                                          '$sym${v.dailyRate.toStringAsFixed(0)}/day',
+                                          style: TextStyle(
+                                            color: isSelected ? const Color(0xFF60A5FA) : Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+
+            // Rental CTA Button
+            SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  final pickup = _rentPickupController.text.trim();
+                  final dropoff = _rentDifferentDropoff ? _rentDropoffController.text.trim() : pickup;
+                  if (_selectedRentalVehicle != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RentalDetailScreen(
+                          vehicle: _selectedRentalVehicle!,
+                          initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+                          initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RentalCatalogScreen(
+                          initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+                          initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _selectedRentalVehicle != null
+                            ? 'Rent ${_selectedRentalVehicle!.fullName} →'
+                            : 'Search Available Rentals →',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -2928,9 +3259,13 @@ Widget _buildRentSection() {
 
   
 
-Widget _buildDriverSection() {
+  Widget _buildDriverSection(bool isKeyboardOpen) {
     final countryProv = Provider.of<CountryProvider>(context);
     final sym = countryProv.currencySymbol;
+    final isSearchingDriver = _driverPickupFocusNode.hasFocus ||
+        _driverDropoffFocusNode.hasFocus ||
+        ((_activeSearchField == 'driver_pickup' || _activeSearchField == 'driver_dropoff') &&
+            (_predictions.isNotEmpty || _isSearchingPlaces));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -2997,7 +3332,10 @@ Widget _buildDriverSection() {
             decoration: BoxDecoration(
               color: const Color(0xFF161C28),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(
+                color: isSearchingDriver ? const Color(0xFF10B981).withOpacity(0.7) : Colors.white.withOpacity(0.08),
+                width: isSearchingDriver ? 1.5 : 1.0,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3005,12 +3343,14 @@ Widget _buildDriverSection() {
                 // Pickup
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: Color(0xFF10B981), size: 16),
+                    const Icon(Icons.location_on, color: Color(0xFF10B981), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _driverPickupController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                        focusNode: _driverPickupFocusNode,
+                        onChanged: (val) => _onQueryChanged(val, field: 'driver_pickup'),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           hintText: 'Pickup Address (Where driver meets you)...',
                           hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
@@ -3019,9 +3359,36 @@ Widget _buildDriverSection() {
                         ),
                       ),
                     ),
+                    if (_driverPickupController.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          _driverPickupController.clear();
+                          setState(() {
+                            _predictions = [];
+                            _isSearchingPlaces = false;
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+                        ),
+                      ),
                     GestureDetector(
-                      onTap: _getCurrentLocation,
-                      child: const Icon(Icons.my_location_rounded, size: 17, color: Color(0xFF94A3B8)),
+                      onTap: () async {
+                        await _getCurrentLocation();
+                        if (_userLat != null && _userLng != null) {
+                          final addr = await PlacesService.getAddressFromCoordinates(_userLat!, _userLng!);
+                          if (mounted && addr != null && addr.isNotEmpty) {
+                            setState(() {
+                              _driverPickupController.text = addr;
+                            });
+                          }
+                        }
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.my_location_rounded, size: 18, color: Color(0xFF10B981)),
+                      ),
                     ),
                   ],
                 ),
@@ -3029,12 +3396,14 @@ Widget _buildDriverSection() {
                 // Dropoff / Destination
                 Row(
                   children: [
-                    const Icon(Icons.pin_drop, color: Color(0xFF3B82F6), size: 16),
+                    const Icon(Icons.pin_drop, color: Color(0xFF3B82F6), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _driverDropoffController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                        focusNode: _driverDropoffFocusNode,
+                        onChanged: (val) => _onQueryChanged(val, field: 'driver_dropoff'),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           hintText: 'Destination (Optional if hourly)...',
                           hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
@@ -3043,6 +3412,20 @@ Widget _buildDriverSection() {
                         ),
                       ),
                     ),
+                    if (_driverDropoffController.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          _driverDropoffController.clear();
+                          setState(() {
+                            _predictions = [];
+                            _isSearchingPlaces = false;
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+                        ),
+                      ),
                   ],
                 ),
                 Divider(color: Colors.white.withOpacity(0.08), height: 12),
@@ -3095,143 +3478,195 @@ Widget _buildDriverSection() {
           ),
           const SizedBox(height: 8),
 
-          // Redesigned Compact Selection Boxes (Drivers List)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 180),
-            child: _isLoadingDrivers
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-                : _drivers.isEmpty
-                    ? Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161C28),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.person_pin_circle_rounded, color: Color(0xFF10B981), size: 24),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text('Hire Verified Chauffeur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                  Text('Licensed, vetted personal drivers for your car.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _drivers.length.clamp(0, 4),
-                        itemBuilder: (context, idx) {
-                          final d = _drivers[idx];
-                          final isSelected = _selectedDriver?.id == d.id;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedDriver = d),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFF10B981).withOpacity(0.08) : const Color(0xFF161C28),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSelected ? const Color(0xFF34D399) : Colors.white.withOpacity(0.08),
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: const Color(0xFF10B981),
-                                    backgroundImage: d.avatarUrl != null && d.avatarUrl!.isNotEmpty
-                                        ? NetworkImage(d.avatarUrl!)
-                                        : null,
-                                    child: (d.avatarUrl == null || d.avatarUrl!.isEmpty)
-                                        ? Text(d.name.isNotEmpty ? d.name[0] : 'D', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(d.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                        Text('⭐ ${d.rating.toStringAsFixed(1)} • ${d.totalTrips} trips • Professional', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5)),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    '$sym${d.hourlyRate.toStringAsFixed(0)}/hr',
-                                    style: TextStyle(
-                                      color: isSelected ? const Color(0xFF34D399) : Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-          ),
-          const SizedBox(height: 8),
+          // Autocomplete Suggestions List for Driver
+          if (_activeSearchField == 'driver_pickup' || _activeSearchField == 'driver_dropoff')
+            _buildPlacesSuggestionsList(),
 
-          // Yellow CTA Button
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                final pickup = _driverPickupController.text.trim();
-                final dropoff = _driverDropoffController.text.trim();
-                if (_selectedDriver != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DriverDetailScreen(
-                        driver: _selectedDriver,
-                        initialPickupLocation: pickup.isNotEmpty ? pickup : null,
-                        initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
-                      ),
-                    ),
-                  );
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HireDriverCatalogScreen(
-                        initialPickupLocation: pickup.isNotEmpty ? pickup : null,
-                        initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
-                      ),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          // If searching or keyboard open, show a clean "Done" bar instead of bulky driver cards
+          if (isSearchingDriver) ...[
+            Container(
+              margin: const EdgeInsets.only(top: 4, bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF161C28),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Flexible(
-                    child: Text(
-                      _selectedDriver != null ? 'Hire ${_selectedDriver!.name} →' : 'Book Personal Chauffeur →',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  const Text(
+                    'Select an address above or tap Done',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _driverPickupFocusNode.unfocus();
+                      _driverDropoffFocusNode.unfocus();
+                      FocusScope.of(context).unfocus();
+                      setState(() {
+                        _predictions = [];
+                        _isSearchingPlaces = false;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.check_rounded, size: 14, color: Color(0xFF10B981)),
+                          SizedBox(width: 4),
+                          Text('Done', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+          ] else ...[
+            // Compact Selection Boxes (Drivers List)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 180),
+              child: _isLoadingDrivers
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+                  : _drivers.isEmpty
+                      ? Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF161C28),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person_pin_circle_rounded, color: Color(0xFF10B981), size: 24),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text('Hire Verified Chauffeur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                    Text('Licensed, vetted personal drivers for your car.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _drivers.length.clamp(0, 4),
+                          itemBuilder: (context, idx) {
+                            final d = _drivers[idx];
+                            final isSelected = _selectedDriver?.id == d.id;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedDriver = d),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF10B981).withOpacity(0.08) : const Color(0xFF161C28),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF34D399) : Colors.white.withOpacity(0.08),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: const Color(0xFF10B981),
+                                      backgroundImage: d.avatarUrl != null && d.avatarUrl!.isNotEmpty
+                                          ? NetworkImage(d.avatarUrl!)
+                                          : null,
+                                      child: (d.avatarUrl == null || d.avatarUrl!.isEmpty)
+                                          ? Text(d.name.isNotEmpty ? d.name[0] : 'D', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(d.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                          Text('⭐ ${d.rating.toStringAsFixed(1)} • ${d.totalTrips} trips • Professional', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5)),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      '$sym${d.hourlyRate.toStringAsFixed(0)}/hr',
+                                      style: TextStyle(
+                                        color: isSelected ? const Color(0xFF34D399) : Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+            const SizedBox(height: 8),
+
+            // Driver CTA Button
+            SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  final pickup = _driverPickupController.text.trim();
+                  final dropoff = _driverDropoffController.text.trim();
+                  if (_selectedDriver != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DriverDetailScreen(
+                          driver: _selectedDriver,
+                          initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+                          initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+                        ),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HireDriverCatalogScreen(
+                          initialPickupLocation: pickup.isNotEmpty ? pickup : null,
+                          initialDropoffLocation: dropoff.isNotEmpty ? dropoff : null,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _selectedDriver != null ? 'Hire ${_selectedDriver!.name} →' : 'Book Personal Chauffeur →',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -3243,9 +3678,13 @@ Widget _buildDriverSection() {
 
   
 
-Widget _buildDeliverySection(bool isKeyboardOpen) {
+  Widget _buildDeliverySection(bool isKeyboardOpen) {
     final countryProv = Provider.of<CountryProvider>(context);
     final sym = countryProv.currencySymbol;
+    final isSearchingDelivery = _deliveryPickupFocusNode.hasFocus ||
+        _deliveryDropoffFocusNode.hasFocus ||
+        ((_activeSearchField == 'delivery_pickup' || _activeSearchField == 'delivery_dropoff') &&
+            (_predictions.isNotEmpty || _isSearchingPlaces));
 
     final deliveryTiers = [
       {'id': 'Envelope', 'title': 'Envelope / Docs', 'icon': '✉️', 'weight': '< 1 kg', 'base': 8.0},
@@ -3337,18 +3776,23 @@ Widget _buildDeliverySection(bool isKeyboardOpen) {
             decoration: BoxDecoration(
               color: const Color(0xFF161C28),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(
+                color: isSearchingDelivery ? const Color(0xFFA855F7).withOpacity(0.7) : Colors.white.withOpacity(0.08),
+                width: isSearchingDelivery ? 1.5 : 1.0,
+              ),
             ),
             child: Column(
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.outbox_rounded, color: Color(0xFFA855F7), size: 16),
+                    const Icon(Icons.outbox_rounded, color: Color(0xFFA855F7), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _pickupController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                        focusNode: _deliveryPickupFocusNode,
+                        onChanged: (val) => _onQueryChanged(val, field: 'delivery_pickup'),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           hintText: 'Pickup address (Sender location)...',
                           hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
@@ -3357,17 +3801,50 @@ Widget _buildDeliverySection(bool isKeyboardOpen) {
                         ),
                       ),
                     ),
+                    if (_pickupController.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          _pickupController.clear();
+                          setState(() {
+                            _predictions = [];
+                            _isSearchingPlaces = false;
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+                        ),
+                      ),
+                    GestureDetector(
+                      onTap: () async {
+                        await _getCurrentLocation();
+                        if (_userLat != null && _userLng != null) {
+                          final addr = await PlacesService.getAddressFromCoordinates(_userLat!, _userLng!);
+                          if (mounted && addr != null && addr.isNotEmpty) {
+                            setState(() {
+                              _pickupController.text = addr;
+                            });
+                          }
+                        }
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.my_location_rounded, size: 18, color: Color(0xFFA855F7)),
+                      ),
+                    ),
                   ],
                 ),
                 Divider(color: Colors.white.withOpacity(0.08), height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.move_to_inbox_rounded, color: Color(0xFF10B981), size: 16),
+                    const Icon(Icons.move_to_inbox_rounded, color: Color(0xFF10B981), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _dropoffController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                        focusNode: _deliveryDropoffFocusNode,
+                        onChanged: (val) => _onQueryChanged(val, field: 'delivery_dropoff'),
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           hintText: 'Delivery address (Recipient location)...',
                           hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
@@ -3376,6 +3853,20 @@ Widget _buildDeliverySection(bool isKeyboardOpen) {
                         ),
                       ),
                     ),
+                    if (_dropoffController.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          _dropoffController.clear();
+                          setState(() {
+                            _predictions = [];
+                            _isSearchingPlaces = false;
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+                        ),
+                      ),
                   ],
                 ),
                 Divider(color: Colors.white.withOpacity(0.08), height: 12),
@@ -3414,94 +3905,146 @@ Widget _buildDeliverySection(bool isKeyboardOpen) {
           ),
           const SizedBox(height: 8),
 
-          // Redesigned Compact Selection Boxes (Delivery Tiers)
-          Row(
-            children: deliveryTiers.map((tier) {
-              final isSelected = _selectedTierId == tier['id'];
-              final price = (tier['base'] as double) * (_deliverySpeed == 'express' ? 1.3 : 1.0);
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedTierId = tier['id'] as String),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFA855F7).withOpacity(0.08) : const Color(0xFF161C28),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFFC084FC) : Colors.white.withOpacity(0.08),
-                        width: isSelected ? 2.0 : 1.0,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(tier['icon'] as String, style: const TextStyle(fontSize: 18)),
-                        const SizedBox(height: 2),
-                        Text(
-                          tier['id'] as String,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                        ),
-                        Text(
-                          tier['weight'] as String,
-                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9.5),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$sym${price.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            color: isSelected ? const Color(0xFFC084FC) : Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
+          // Autocomplete Suggestions List for Delivery
+          if (_activeSearchField == 'delivery_pickup' || _activeSearchField == 'delivery_dropoff')
+            _buildPlacesSuggestionsList(),
 
-          // Yellow CTA Button
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                final pickup = _pickupController.text.trim();
-                final dropoff = _dropoffController.text.trim();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DeliveryBookingScreen(
-                      initialPickup: pickup.isNotEmpty ? pickup : null,
-                      initialDropoff: dropoff.isNotEmpty ? dropoff : null,
-                      initialTier: _selectedTierId,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFA855F7),
-                foregroundColor: Colors.white,
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          // If searching or keyboard open, show a clean "Done" bar instead of bulky tier cards
+          if (isSearchingDelivery) ...[
+            Container(
+              margin: const EdgeInsets.only(top: 4, bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF161C28),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Flexible(
-                    child: Text(
-                      'Continue to Package Details →',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Select an address above or tap Done',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _deliveryPickupFocusNode.unfocus();
+                      _deliveryDropoffFocusNode.unfocus();
+                      FocusScope.of(context).unfocus();
+                      setState(() {
+                        _predictions = [];
+                        _isSearchingPlaces = false;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFA855F7).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.check_rounded, size: 14, color: Color(0xFFA855F7)),
+                          SizedBox(width: 4),
+                          Text('Done', style: TextStyle(color: Color(0xFFA855F7), fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+          ] else ...[
+            // Compact Selection Boxes (Delivery Tiers)
+            Row(
+              children: deliveryTiers.map((tier) {
+                final isSelected = _selectedTierId == tier['id'];
+                final price = (tier['base'] as double) * (_deliverySpeed == 'express' ? 1.3 : 1.0);
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedTierId = tier['id'] as String),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFA855F7).withOpacity(0.08) : const Color(0xFF161C28),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFFC084FC) : Colors.white.withOpacity(0.08),
+                          width: isSelected ? 2.0 : 1.0,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(tier['icon'] as String, style: const TextStyle(fontSize: 18)),
+                          const SizedBox(height: 2),
+                          Text(
+                            tier['id'] as String,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                          ),
+                          Text(
+                            tier['weight'] as String,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9.5),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$sym${price.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              color: isSelected ? const Color(0xFFC084FC) : Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+
+            // Parcel CTA Button
+            SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  final pickup = _pickupController.text.trim();
+                  final dropoff = _dropoffController.text.trim();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DeliveryBookingScreen(
+                        initialPickup: pickup.isNotEmpty ? pickup : null,
+                        initialDropoff: dropoff.isNotEmpty ? dropoff : null,
+                        initialTier: _selectedTierId,
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFA855F7),
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Flexible(
+                      child: Text(
+                        'Continue to Package Details →',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

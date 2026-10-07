@@ -90,8 +90,12 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
             top: 20,
             bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
           ),
-          child: SingleChildScrollView(
-            child: Column(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusScope.of(sheetContext).unfocus(),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -245,6 +249,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
               ],
             ),
           ),
+          ),
         ),
       ),
     );
@@ -268,6 +273,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppColors.surfaceDark,
         elevation: 0,
@@ -282,9 +288,13 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+          : GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.all(20),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Profile Avatar Banner
@@ -481,6 +491,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   const SizedBox(height: 32),
                 ],
               ),
+            ),
             ),
     );
   }

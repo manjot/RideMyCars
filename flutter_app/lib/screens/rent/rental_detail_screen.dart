@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/vehicle_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/country_provider.dart';
+import '../../services/places_service.dart';
 import '../../services/rental_service.dart';
 import '../payment/booking_confirmation_screen.dart';
 import '../rides/my_rides_screen.dart';
@@ -37,6 +39,14 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
 
+  // Autocomplete & Focus nodes
+  Timer? _placesDebounce;
+  List<PlacePrediction> _placesPredictions = [];
+  bool _isLoadingPlaces = false;
+  String? _activePlacesField; // 'pickup' or 'dropoff'
+  final FocusNode _pickupFocusNode = FocusNode();
+  final FocusNode _dropoffFocusNode = FocusNode();
+
   bool _differentDropoff = false;
   int _driverAge = 25;
   String _protectionOption = 'basic'; // 'basic' or 'full_cover'
@@ -57,6 +67,17 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     _pickupTime = const TimeOfDay(hour: 10, minute: 0);
     _returnDate = DateTime.now().add(const Duration(days: 3));
     _returnTime = const TimeOfDay(hour: 10, minute: 0);
+
+    _pickupFocusNode.addListener(() {
+      if (_pickupFocusNode.hasFocus) {
+        setState(() => _activePlacesField = 'pickup');
+      }
+    });
+    _dropoffFocusNode.addListener(() {
+      if (_dropoffFocusNode.hasFocus) {
+        setState(() => _activePlacesField = 'dropoff');
+      }
+    });
 
     // If vehicle was already passed with a rate, record it
     _baseUsdRate = widget.vehicle.dailyRate > 0 ? widget.vehicle.dailyRate : 75.0;
@@ -80,12 +101,150 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
 
   @override
   void dispose() {
+    _placesDebounce?.cancel();
+    _pickupFocusNode.dispose();
+    _dropoffFocusNode.dispose();
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
     _licenseController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  void _onPlacesQueryChanged(String query, {required String field}) {
+    _placesDebounce?.cancel();
+    setState(() => _activePlacesField = field);
+    if (query.trim().length < 2) {
+      setState(() {
+        _placesPredictions = [];
+        _isLoadingPlaces = false;
+      });
+      return;
+    }
+    setState(() => _isLoadingPlaces = true);
+    _placesDebounce = Timer(const Duration(milliseconds: 350), () async {
+      final results = await PlacesService.getAutocomplete(query);
+      if (!mounted) return;
+      setState(() {
+        _placesPredictions = results;
+        _isLoadingPlaces = false;
+      });
+    });
+  }
+
+  void _selectPlace(PlacePrediction prediction, {required String field}) {
+    final address = prediction.description;
+    setState(() {
+      if (field == 'pickup') {
+        _pickupLocationController.text = address;
+        if (!_differentDropoff) {
+          _dropoffLocationController.text = address;
+        }
+      } else {
+        _dropoffLocationController.text = address;
+      }
+      _placesPredictions = [];
+      _activePlacesField = null;
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  Widget _buildPlacesSuggestionsDropdown(String field) {
+    if (_activePlacesField != field) return const SizedBox.shrink();
+    if (!_isLoadingPlaces && _placesPredictions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6, bottom: 10),
+      constraints: const BoxConstraints(maxHeight: 200),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.5), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search_rounded, size: 14, color: Color(0xFF3B82F6)),
+                const SizedBox(width: 6),
+                Text(
+                  _isLoadingPlaces ? 'Searching locations...' : 'Matching Addresses',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _placesPredictions = [];
+                      _activePlacesField = null;
+                    });
+                    FocusScope.of(context).unfocus();
+                  },
+                  child: const Text('Close', style: TextStyle(color: Color(0xFF60A5FA), fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+          if (_isLoadingPlaces)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3B82F6)),
+                ),
+              ),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: _placesPredictions.length,
+                separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity(0.07), height: 1),
+                itemBuilder: (context, index) {
+                  final item = _placesPredictions[index];
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.location_on_outlined, color: Color(0xFF3B82F6), size: 18),
+                    title: Text(
+                      item.mainText.isNotEmpty ? item.mainText : item.description,
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: item.secondaryText.isNotEmpty
+                        ? Text(
+                            item.secondaryText,
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : null,
+                    onTap: () => _selectPlace(item, field: field),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   int get _daysCount {
@@ -530,6 +689,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF090D16),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F172A),
         elevation: 0,
@@ -583,47 +743,54 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Vehicle Hero Showcase Card
-            _buildVehicleHeroCard(countryProv),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Vehicle Hero Showcase Card
+              _buildVehicleHeroCard(countryProv),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Date & Location Selection Card
-            _buildDateAndLocationCard(),
+              // Date & Location Selection Card
+              _buildDateAndLocationCard(),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Protection & Insurance Selection (Web Parity)
-            _buildProtectionSection(countryProv),
+              // Protection & Insurance Selection (Web Parity)
+              _buildProtectionSection(countryProv),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Optional Extras Section
-            _buildOptionalExtrasSection(countryProv),
+              // Optional Extras Section
+              _buildOptionalExtrasSection(countryProv),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Driver Information Form
-            _buildDriverInfoSection(countryProv),
+              // Driver Information Form
+              _buildDriverInfoSection(countryProv),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Rental Summary & Payment Breakdown Card
-            _buildRentalSummaryCard(countryProv),
+              // Rental Summary & Payment Breakdown Card
+              _buildRentalSummaryCard(countryProv),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Terms Agreement Checkbox
-            _buildTermsCheckbox(),
-          ],
+              // Terms Agreement Checkbox
+              _buildTermsCheckbox(),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: _buildStickyBottomCTA(countryProv),
+      bottomNavigationBar: MediaQuery.of(context).viewInsets.bottom > 0
+          ? const SizedBox.shrink()
+          : _buildStickyBottomCTA(countryProv),
     );
   }
 
@@ -874,17 +1041,31 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
           const SizedBox(height: 4),
           TextField(
             controller: _pickupLocationController,
+            focusNode: _pickupFocusNode,
             style: const TextStyle(color: Colors.white, fontSize: 12.5),
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color(0xFF0F172A),
               prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFF3B82F6), size: 18),
+              suffixIcon: _pickupLocationController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.white54, size: 16),
+                      onPressed: () {
+                        setState(() {
+                          _pickupLocationController.clear();
+                          _placesPredictions = [];
+                        });
+                      },
+                    )
+                  : null,
               hintText: 'Enter airport, hub or address...',
               hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
               contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
+            onChanged: (val) => _onPlacesQueryChanged(val, field: 'pickup'),
           ),
+          _buildPlacesSuggestionsDropdown('pickup'),
 
           const SizedBox(height: 10),
 
@@ -917,17 +1098,31 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
             const SizedBox(height: 4),
             TextField(
               controller: _dropoffLocationController,
+              focusNode: _dropoffFocusNode,
               style: const TextStyle(color: Colors.white, fontSize: 12.5),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFF0F172A),
                 prefixIcon: const Icon(Icons.pin_drop_rounded, color: AppColors.danger, size: 18),
+                suffixIcon: _dropoffLocationController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white54, size: 16),
+                        onPressed: () {
+                          setState(() {
+                            _dropoffLocationController.clear();
+                            _placesPredictions = [];
+                          });
+                        },
+                      )
+                    : null,
                 hintText: 'Enter drop-off hub or city...',
                 hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
                 contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
+              onChanged: (val) => _onPlacesQueryChanged(val, field: 'dropoff'),
             ),
+            _buildPlacesSuggestionsDropdown('dropoff'),
           ],
         ],
       ),
