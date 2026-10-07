@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/country_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../safety/widgets/sos_floating_button.dart';
 
@@ -110,6 +111,14 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
 
     if (newStatus == 'completed') {
       final fareAmount = double.tryParse((_ride['fare'] ?? _ride['total_price'] ?? '0').toString()) ?? 0.0;
+      final countryProv = Provider.of<CountryProvider>(context, listen: false);
+      final currSym = (_ride['currency_symbol'] ?? countryProv.currencySymbol).toString();
+      final rawMethod = (_ride['payment_method'] ?? 'cash').toString().toLowerCase();
+      final isCash = rawMethod.contains('cash');
+      final confirmMsg = isCash
+          ? 'Are you sure you want to end this trip and collect $currSym${fareAmount.toStringAsFixed(2)} cash from rider?'
+          : 'Are you sure you want to end this trip? Fare of $currSym${fareAmount.toStringAsFixed(2)} was prepaid digitally and will be credited to your earnings.';
+
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -123,7 +132,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             ],
           ),
           content: Text(
-            'Are you sure you want to end this trip and collect your fare of \$${fareAmount.toStringAsFixed(2)}?',
+            confirmMsg,
             style: const TextStyle(color: AppColors.textLight, fontSize: 14),
           ),
           actions: [
@@ -355,6 +364,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   @override
   Widget build(BuildContext context) {
     final status = _ride['status'] ?? 'accepted';
+    final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final currSym = (_ride['currency_symbol'] ?? countryProv.currencySymbol).toString();
     final fare = _ride['fare'] != null ? double.tryParse(_ride['fare'].toString()) ?? 0.0 : 0.0;
     final customerName = (_ride['customer_name'] ?? _ride['rider']?['name'] ?? _ride['rider_name'] ?? _ride['passenger_name'] ?? 'Customer').toString();
     final customerPhone = _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'];
@@ -573,7 +584,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                             ),
                           const SizedBox(width: 8),
                           Text(
-                            '\$${fare.toStringAsFixed(2)}',
+                            '$currSym${fare.toStringAsFixed(2)}',
                             style: const TextStyle(
                               color: AppColors.success,
                               fontWeight: FontWeight.w900,
@@ -582,6 +593,60 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                           ),
                         ],
                       ),
+
+                      // Unified Payment Indicator
+                      Builder(builder: (_) {
+                        final rawMethod = (_ride['payment_method'] ?? _ride['payment']?['method'] ?? 'cash').toString().toLowerCase();
+                        String payTitle = 'Cash Direct Pay';
+                        String payDesc = 'Collect physical cash upon destination';
+                        Color payColor = const Color(0xFF10B981);
+                        IconData payIcon = Icons.payments_rounded;
+
+                        if (rawMethod.contains('stripe') || rawMethod.contains('card')) {
+                          payTitle = 'Stripe (Cards & Apple Pay)';
+                          payDesc = 'Prepaid online • Do NOT collect cash';
+                          payColor = const Color(0xFF6366F1);
+                          payIcon = Icons.credit_card_rounded;
+                        } else if (rawMethod.contains('momo')) {
+                          payTitle = 'MoMo Pay';
+                          payDesc = 'Prepaid via Mobile Money • Do NOT collect cash';
+                          payColor = const Color(0xFFFFCC00);
+                          payIcon = Icons.phone_android_rounded;
+                        } else if (rawMethod.contains('wallet')) {
+                          payTitle = 'RideMyCars Wallet';
+                          payDesc = 'Prepaid via In-App Wallet • Do NOT collect cash';
+                          payColor = const Color(0xFFF59E0B);
+                          payIcon = Icons.account_balance_wallet_rounded;
+                        }
+
+                        return Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: payColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: payColor.withOpacity(0.35)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(payIcon, size: 16, color: payColor),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '$payTitle: $payDesc',
+                                  style: TextStyle(
+                                    color: payColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
 
                       if (hasPoc) ...[
                         const SizedBox(height: 10),

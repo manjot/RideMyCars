@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../../services/delivery_service.dart';
 import '../../services/places_service.dart';
+import '../rider/widgets/ride_payment_method_sheet.dart';
 import 'delivery_tracker_screen.dart';
 
 class DeliveryBookingScreen extends StatefulWidget {
@@ -82,7 +83,27 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   bool _whiteGlove = false;
 
   // Step 5: Payment & Terms
-  String _paymentMethod = 'Stripe (Credit / Debit Card)';
+  String _paymentMethod = 'stripe';
+  String? _momoPhone;
+  String _momoNetwork = 'MTN';
+
+  Future<void> _openPaymentMethodSheet() async {
+    final result = await RidePaymentMethodSheet.show(
+      context,
+      currentMethod: _paymentMethod,
+      currentMomoPhone: _momoPhone,
+      currentMomoNetwork: _momoNetwork,
+      serviceType: 'delivery',
+    );
+    if (result != null) {
+      setState(() {
+        _paymentMethod = result.method;
+        _momoPhone = result.momoPhone;
+        _momoNetwork = result.momoNetwork ?? 'MTN';
+      });
+    }
+  }
+
   final _cardholderController = TextEditingController(text: 'Johnathan Doe');
   final _cardNumberController = TextEditingController(text: '4242 4242 4242 4242');
   final _cardExpiryController = TextEditingController(text: '12/28');
@@ -512,6 +533,8 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         if (_whiteGlove) 'white_glove',
       ],
       'payment_method': _paymentMethod,
+      'momo_phone': _momoPhone,
+      'momo_network': _momoNetwork,
       'prohibited_items_acknowledged': true,
       'country': countryProv.selectedCountryCode,
     };
@@ -1667,149 +1690,98 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         const Text('PAYMENT METHOD *', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
 
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _paymentMethod,
-              isExpanded: true,
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-              items: const [
-                DropdownMenuItem(value: 'Stripe (Credit / Debit Card)', child: Text('💳 Stripe (Credit / Debit Card)')),
-                DropdownMenuItem(value: 'Cash on Pickup', child: Text('💵 Cash on Pickup')),
-                DropdownMenuItem(value: 'In-App Wallet', child: Text('👛 In-App Wallet')),
-                DropdownMenuItem(value: 'Apple / Google Pay', child: Text('📱 Apple / Google Pay')),
+        // Unified Interactive Payment Selector Card
+        GestureDetector(
+          onTap: _openPaymentMethodSheet,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _paymentMethod == 'stripe'
+                        ? const Color(0xFF6366F1)
+                        : _paymentMethod == 'momo'
+                            ? const Color(0xFFFFCC00)
+                            : _paymentMethod == 'wallet'
+                                ? const Color(0xFFF59E0B)
+                                : const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: _paymentMethod == 'stripe'
+                      ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))
+                      : _paymentMethod == 'momo'
+                          ? const Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 18))
+                          : _paymentMethod == 'wallet'
+                              ? const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20)
+                              : const Icon(Icons.payments_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _paymentMethod == 'stripe'
+                            ? 'Stripe (Cards & Apple Pay)'
+                            : _paymentMethod == 'momo'
+                                ? 'MoMo Pay ($_momoNetwork)'
+                                : _paymentMethod == 'wallet'
+                                    ? 'RideMyCars Wallet'
+                                    : 'Cash Direct Pay',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _paymentMethod == 'stripe'
+                            ? 'Secured card & digital wallet hold'
+                            : _paymentMethod == 'momo'
+                                ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number'}'
+                                : _paymentMethod == 'wallet'
+                                    ? 'Instant deduction from verified wallet balance'
+                                    : 'Pay courier physical cash on parcel handover',
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 24),
               ],
-              onChanged: (val) => setState(() => _paymentMethod = val!),
             ),
           ),
         ),
 
-        if (_paymentMethod.contains('Stripe') || _paymentMethod.contains('Card')) ...[
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.credit_card, color: Color(0xFF3B82F6), size: 18),
-                        SizedBox(width: 6),
-                        Text('CARD DETAILS', style: TextStyle(color: Color(0xFF60A5FA), fontWeight: FontWeight.bold, fontSize: 11)),
-                      ],
-                    ),
-                    const Text('🔒 256-bit SSL', style: TextStyle(color: Colors.white38, fontSize: 10)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Text('Cardholder Name *', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                const SizedBox(height: 4),
-                TextField(
-                  controller: _cardholderController,
-                  style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text('Card Number *', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                const SizedBox(height: 4),
-                TextField(
-                  controller: _cardNumberController,
-                  style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Expiry *', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          TextField(
-                            controller: _cardExpiryController,
-                            style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color(0xFF0F172A),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('CVC *', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          TextField(
-                            controller: _cardCvcController,
-                            style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color(0xFF0F172A),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Zip / Postal *', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          TextField(
-                            controller: _cardZipController,
-                            style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color(0xFF0F172A),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        const SizedBox(height: 12),
+
+        // Security badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A).withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.06)),
           ),
-        ],
+          child: Row(
+            children: const [
+              Icon(Icons.shield_rounded, color: Color(0xFF10B981), size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'End-to-end encrypted transaction • Verified courier protection',
+                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+        ),
 
         const SizedBox(height: 14),
 

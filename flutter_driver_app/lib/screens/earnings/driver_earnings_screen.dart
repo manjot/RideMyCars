@@ -899,7 +899,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
                   const SizedBox(width: 10),
                 if (widget.allowedMethods.contains('momo'))
                   Expanded(
-                    child: _buildMethodRadio('momo', 'Mobile Money', Icons.phone_android_rounded),
+                    child: _buildMethodRadio('momo', 'MoMo Pay', Icons.phone_android_rounded),
                   ),
               ],
             ),
@@ -919,8 +919,23 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
                 ],
               ),
             ] else ...[
-              _buildField('Network Provider', _momoNetworkController, 'e.g. MTN / Airtel / Vodafone'),
-              const SizedBox(height: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Select MoMo Provider', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _buildMomoNetworkChoice('MTN', 'mtn_momo.png'),
+                      const SizedBox(width: 8),
+                      _buildMomoNetworkChoice('Telecel', 'telecel.png'),
+                      const SizedBox(width: 8),
+                      _buildMomoNetworkChoice('AirtelTigo', 'airteltigo.png'),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               _buildField('MoMo Mobile Number', _momoPhoneController, 'e.g. +91 9876543210', isNumber: true),
               const SizedBox(height: 10),
               _buildField('Registered Account Name', _momoNameController, 'e.g. John Doe'),
@@ -1050,6 +1065,67 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBrandIcon(String assetName, {double height = 20}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          'assets/images/payment-icons/$assetName',
+          height: height,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMomoNetworkChoice(String network, String iconFile) {
+    final isSelected = _momoNetworkController.text.trim().toLowerCase() == network.toLowerCase();
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _momoNetworkController.text = network),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFCC00).withOpacity(0.15) : AppColors.backgroundDark,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? const Color(0xFFFFCC00) : Colors.white12,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildBrandIcon(iconFile, height: 18),
+              const SizedBox(height: 4),
+              Text(
+                network,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white60,
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../models/driver_model.dart';
 import '../../services/driver_service.dart';
 import '../../services/places_service.dart';
 import '../payment/booking_confirmation_screen.dart';
+import '../rider/widgets/ride_payment_method_sheet.dart';
 
 class DriverDetailScreen extends StatefulWidget {
   final DriverModel? driver;
@@ -62,7 +63,26 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
   // Payment & Country
   String _selectedCountry = 'USA';
   String _currencySymbol = '\$';
-  String _paymentMethod = 'stripe'; // 'stripe', 'momo', 'cash', 'applepay'
+  String _paymentMethod = 'stripe';
+  String? _momoPhone;
+  String _momoNetwork = 'MTN';
+
+  Future<void> _openPaymentMethodSheet() async {
+    final result = await RidePaymentMethodSheet.show(
+      context,
+      currentMethod: _paymentMethod,
+      currentMomoPhone: _momoPhone,
+      currentMomoNetwork: _momoNetwork,
+      serviceType: 'driver',
+    );
+    if (result != null) {
+      setState(() {
+        _paymentMethod = result.method;
+        _momoPhone = result.momoPhone;
+        _momoNetwork = result.momoNetwork ?? 'MTN';
+      });
+    }
+  }
 
   // Dynamic Fare & Breakdown
   bool _isCalculating = false;
@@ -318,6 +338,8 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
       'preferred_gender': _preferredGender,
       'preferred_language': _preferredLanguage,
       'payment_method': _paymentMethod,
+      'momo_phone': _momoPhone,
+      'momo_network': _momoNetwork,
     };
 
     final result = await DriverService.bookDriver(payload);
@@ -1797,26 +1819,70 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _paymentMethod,
-                isExpanded: true,
-                dropdownColor: const Color(0xFF1E293B),
-                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                items: const [
-                  DropdownMenuItem(value: 'stripe', child: Text('💳 Stripe (Credit/Debit Card)')),
-                  DropdownMenuItem(value: 'momo', child: Text('📱 Momo Pay')),
-                  DropdownMenuItem(value: 'cash', child: Text('💵 Cash on Duty')),
-                  DropdownMenuItem(value: 'applepay', child: Text('🍏 Apple Pay')),
+          GestureDetector(
+            onTap: _openPaymentMethodSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _paymentMethod == 'stripe'
+                          ? const Color(0xFF6366F1)
+                          : _paymentMethod == 'momo'
+                              ? const Color(0xFFFFCC00)
+                              : _paymentMethod == 'wallet'
+                                  ? const Color(0xFFF59E0B)
+                                  : const Color(0xFF10B981),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: _paymentMethod == 'stripe'
+                        ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))
+                        : _paymentMethod == 'momo'
+                            ? const Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 16))
+                            : _paymentMethod == 'wallet'
+                                ? const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18)
+                                : const Icon(Icons.payments_rounded, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _paymentMethod == 'stripe'
+                              ? 'Stripe (Cards & Apple Pay)'
+                              : _paymentMethod == 'momo'
+                                  ? 'MoMo Pay ($_momoNetwork)'
+                                  : _paymentMethod == 'wallet'
+                                      ? 'RideMyCars Wallet'
+                                      : 'Cash Direct Pay',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _paymentMethod == 'stripe'
+                              ? 'Pre-authorization hold secured by Stripe'
+                              : _paymentMethod == 'momo'
+                                  ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number'}'
+                                  : _paymentMethod == 'wallet'
+                                      ? 'Pay directly with in-app balance'
+                                      : 'Pay personal chauffeur physical cash upon trip completion',
+                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 22),
                 ],
-                onChanged: (val) => setState(() => _paymentMethod = val ?? 'stripe'),
               ),
             ),
           ),

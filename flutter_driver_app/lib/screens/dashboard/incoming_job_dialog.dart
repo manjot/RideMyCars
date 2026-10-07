@@ -424,6 +424,72 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 ],
               ),
             ),
+
+            // Unified Payment Method Badge
+            Builder(builder: (_) {
+              final rawMethod = (request['payment_method'] ?? ride?['payment_method'] ?? booking?['payment_method'] ?? 'cash').toString().toLowerCase();
+              String payName = 'Cash Direct Pay';
+              String paySubtitle = 'Collect cash from passenger / recipient';
+              Color payColor = const Color(0xFF10B981);
+              IconData payIcon = Icons.payments_rounded;
+
+              if (rawMethod.contains('stripe') || rawMethod.contains('card')) {
+                payName = 'Stripe (Cards & Apple Pay)';
+                paySubtitle = 'Prepaid online • No cash collection needed';
+                payColor = const Color(0xFF6366F1);
+                payIcon = Icons.credit_card_rounded;
+              } else if (rawMethod.contains('momo')) {
+                payName = 'MoMo Pay';
+                paySubtitle = 'Prepaid via Mobile Money • Digital prompt';
+                payColor = const Color(0xFFFFCC00);
+                payIcon = Icons.phone_android_rounded;
+              } else if (rawMethod.contains('wallet')) {
+                payName = 'RideMyCars Wallet';
+                paySubtitle = 'Prepaid with verified in-app balance';
+                payColor = const Color(0xFFF59E0B);
+                payIcon = Icons.account_balance_wallet_rounded;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: payColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: payColor.withOpacity(0.4)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(payIcon, size: 20, color: payColor),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            payName,
+                            style: TextStyle(
+                              color: payColor,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            paySubtitle,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 18),
 
             // Route Details

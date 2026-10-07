@@ -1369,6 +1369,60 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
               ],
             ),
+
+            // Unified Payment Method Badge
+            Builder(builder: (_) {
+              final rawMethod = (ride['payment_method'] ?? ride['payment']?['method'] ?? 'cash').toString().toLowerCase();
+              String payName = 'Cash Direct Pay';
+              String payDesc = 'Collect physical cash';
+              Color payColor = const Color(0xFF10B981);
+              IconData payIcon = Icons.payments_rounded;
+
+              if (rawMethod.contains('stripe') || rawMethod.contains('card')) {
+                payName = 'Stripe (Cards & Apple Pay)';
+                payDesc = 'Prepaid online • No cash collection';
+                payColor = const Color(0xFF6366F1);
+                payIcon = Icons.credit_card_rounded;
+              } else if (rawMethod.contains('momo')) {
+                payName = 'MoMo Pay';
+                payDesc = 'Prepaid via Mobile Money';
+                payColor = const Color(0xFFFFCC00);
+                payIcon = Icons.phone_android_rounded;
+              } else if (rawMethod.contains('wallet')) {
+                payName = 'RideMyCars Wallet';
+                payDesc = 'Prepaid via In-App Balance';
+                payColor = const Color(0xFFF59E0B);
+                payIcon = Icons.account_balance_wallet_rounded;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: payColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: payColor.withOpacity(0.35)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(payIcon, size: 16, color: payColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$payName • $payDesc',
+                        style: TextStyle(
+                          color: payColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -2008,6 +2062,60 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
               ],
             ),
+
+            // Unified Payment Method Badge
+            Builder(builder: (_) {
+              final rawMethod = (job['payment_method'] ?? job['payment']?['method'] ?? 'cash').toString().toLowerCase();
+              String payName = 'Cash Direct Pay';
+              String payDesc = 'Collect physical cash upon destination';
+              Color payColor = const Color(0xFF10B981);
+              IconData payIcon = Icons.payments_rounded;
+
+              if (rawMethod.contains('stripe') || rawMethod.contains('card')) {
+                payName = 'Stripe (Cards & Apple Pay)';
+                payDesc = 'Prepaid online • No cash collection';
+                payColor = const Color(0xFF6366F1);
+                payIcon = Icons.credit_card_rounded;
+              } else if (rawMethod.contains('momo')) {
+                payName = 'MoMo Pay';
+                payDesc = 'Prepaid Mobile Money prompt';
+                payColor = const Color(0xFFFFCC00);
+                payIcon = Icons.phone_android_rounded;
+              } else if (rawMethod.contains('wallet')) {
+                payName = 'RideMyCars Wallet';
+                payDesc = 'Prepaid via In-App Wallet';
+                payColor = const Color(0xFFF59E0B);
+                payIcon = Icons.account_balance_wallet_rounded;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: payColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: payColor.withOpacity(0.35)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(payIcon, size: 16, color: payColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$payName • $payDesc',
+                        style: TextStyle(
+                          color: payColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 12),
 
             // Customer Details Row
