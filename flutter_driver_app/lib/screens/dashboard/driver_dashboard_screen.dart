@@ -925,15 +925,40 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
 
     if (confirmed == true) {
-      final ok = await driver.updateRideStatus(rideId, 'completed');
-      if (ok && context.mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('🎉 Trip Completed! Fare added to your earnings.'),
-            backgroundColor: AppColors.success,
+            content: Row(
+              children: [
+                SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                SizedBox(width: 12),
+                Text('Completing trip & collecting fare...'),
+              ],
+            ),
             duration: Duration(seconds: 4),
           ),
         );
+      }
+      final ok = await driver.updateRideStatus(rideId, 'completed');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        if (ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎉 Trip Completed! Fare added to your earnings.'),
+              backgroundColor: AppColors.success,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('⚠️ Could not complete trip. Please check connection and retry.'),
+              backgroundColor: AppColors.danger,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }
@@ -1490,7 +1515,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       height: 46,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          await driver.updateRideStatus(rideId, 'en_route');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Updating status to En Route...'), duration: Duration(seconds: 1)),
+                          );
+                          final ok = await driver.updateRideStatus(rideId, 'en_route');
+                          if (context.mounted && !ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not update status. Please retry.'), backgroundColor: AppColors.danger),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.info,
@@ -1511,7 +1544,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       height: 46,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          await driver.updateRideStatus(rideId, 'arrived');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Updating status to Arrived...'), duration: Duration(seconds: 1)),
+                          );
+                          final ok = await driver.updateRideStatus(rideId, 'arrived');
+                          if (context.mounted && !ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not update status. Please retry.'), backgroundColor: AppColors.danger),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.warning,

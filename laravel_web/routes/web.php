@@ -663,7 +663,16 @@ $unifiedCancelRideHandler = function ($id, \Illuminate\Http\Request $request) {
     $cleanId = ltrim($rawId, '#');
     $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
 
-    $ride = \App\Models\Ride::where('id', $id)->orWhere('id', $cleanId)->orWhere('ride_code', $rawId)->first();
+    $ride = null;
+    if (is_numeric($cleanId)) {
+        $ride = \App\Models\Ride::find($cleanId);
+    }
+    if (!$ride && is_numeric($id)) {
+        $ride = \App\Models\Ride::find($id);
+    }
+    if (!$ride) {
+        $ride = \App\Models\Ride::where('digital_receipt_code', $rawId)->first();
+    }
     if (!$ride) {
         $del = \App\Models\PackageDelivery::where('id', $id)->orWhere('id', $cleanId)->first();
         if ($del) {

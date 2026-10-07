@@ -19,6 +19,7 @@ class DriverTripsScreen extends StatefulWidget {
 class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTickerProviderStateMixin {
   final Dio _dio = ApiClient().dio;
   late TabController _tabController;
+  static List<Map<String, dynamic>> _cachedTrips = [];
   bool _isLoading = true;
   String? _errorMessage;
   List<Map<String, dynamic>> _trips = [];
@@ -27,6 +28,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    if (_cachedTrips.isNotEmpty) {
+      _trips = List.from(_cachedTrips);
+      _isLoading = false;
+    }
     _fetchTrips();
   }
 
@@ -38,24 +43,22 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
 
   Future<void> _fetchTrips() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (_trips.isEmpty) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       Response? res;
       try {
-        res = await _dio.get('/driver/trips').timeout(const Duration(seconds: 8));
+        res = await _dio.get('/driver/trips').timeout(const Duration(seconds: 5));
       } catch (e) {
-        debugPrint('Primary /driver/trips failed, trying fallback: $e');
+        debugPrint('Primary /driver/trips error: $e');
         try {
-          res = await _dio.get('/driver/rides').timeout(const Duration(seconds: 6));
-        } catch (_) {
-          try {
-            res = await _dio.get(ApiConstants.rides).timeout(const Duration(seconds: 6));
-          } catch (_) {}
-        }
+          res = await _dio.get(ApiConstants.rides).timeout(const Duration(seconds: 4));
+        } catch (_) {}
       }
 
       if (res != null && res.statusCode == 200 && res.data != null) {
@@ -90,6 +93,8 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
             }
           }
         } catch (_) {}
+
+        _cachedTrips = List.from(mapped);
 
         if (mounted) {
           setState(() {

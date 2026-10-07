@@ -42,6 +42,15 @@ class RideController extends Controller
             $driverUserIds = array_unique(array_merge($driverUserIds, $matchingIds));
         }
 
+        $pricingCache = [];
+        $getPricing = function ($country) use (&$pricingCache) {
+            $code = strtoupper(trim((string)$country)) ?: 'IND';
+            if (!isset($pricingCache[$code])) {
+                $pricingCache[$code] = CountryPricing::forCountry($code);
+            }
+            return $pricingCache[$code];
+        };
+
         $rides = Ride::with(['driver.driverProfile', 'rider', 'vehicle', 'receipt'])
             ->where(function ($q) use ($user, $driverUserIds) {
                 $q->where('rider_id', $user->id)
@@ -49,6 +58,7 @@ class RideController extends Controller
                   ->orWhereIn('verified_by_driver_id', $driverUserIds);
             })
             ->orderBy('created_at', 'desc')
+            ->take(50)
             ->get();
 
         // Also fetch chauffeur bookings for this user/driver
@@ -59,6 +69,7 @@ class RideController extends Controller
                   ->orWhereIn('verified_by_driver_id', $driverUserIds);
             })
             ->orderBy('created_at', 'desc')
+            ->take(50)
             ->get();
 
         // Also fetch package deliveries for this user/driver
@@ -68,6 +79,7 @@ class RideController extends Controller
                   ->orWhereIn('courier_id', $driverUserIds);
             })
             ->orderBy('created_at', 'desc')
+            ->take(50)
             ->get();
 
         $items = [];
@@ -97,7 +109,7 @@ class RideController extends Controller
             }
 
             $rCountry = $r->driver_country ?? $r->country ?? 'IND';
-            $rPricing = CountryPricing::forCountry($rCountry);
+            $rPricing = $getPricing($rCountry);
 
             $items[] = [
                 'id' => $r->id,
@@ -152,7 +164,7 @@ class RideController extends Controller
 
         foreach ($driverBookings as $db) {
             $dbCountry = $db->country ?? 'IND';
-            $dbPricing = CountryPricing::forCountry($dbCountry);
+            $dbPricing = $getPricing($dbCountry);
             $cleanName = $db->driver ? $db->driver->name : ($db->car_make_model ?? 'Executive Chauffeur');
             $items[] = [
                 'id' => $db->id,
@@ -186,7 +198,7 @@ class RideController extends Controller
 
         foreach ($deliveries as $del) {
             $delCountry = $del->country ?? 'IND';
-            $delPricing = CountryPricing::forCountry($delCountry);
+            $delPricing = $getPricing($delCountry);
             $items[] = [
                 'id' => $del->id,
                 'type' => 'delivery',
@@ -882,7 +894,16 @@ class RideController extends Controller
         $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
 
         // 1. Check Ride model
-        $ride = Ride::where('id', $id)->orWhere('id', $cleanId)->orWhere('ride_code', $rawId)->first();
+        $ride = null;
+        if (is_numeric($cleanId)) {
+            $ride = Ride::find($cleanId);
+        }
+        if (!$ride && is_numeric($id)) {
+            $ride = Ride::find($id);
+        }
+        if (!$ride) {
+            $ride = Ride::where('digital_receipt_code', $rawId)->first();
+        }
         if ($ride) {
             $updates = ['status' => $newStatus];
             if ($newStatus === 'en_route') $updates['en_route_at'] = now();
@@ -1237,7 +1258,16 @@ class RideController extends Controller
         $cleanId = ltrim($rawId, '#');
         $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
 
-        $ride = Ride::where('id', $id)->orWhere('id', $cleanId)->orWhere('ride_code', $rawId)->first();
+        $ride = null;
+        if (is_numeric($cleanId)) {
+            $ride = Ride::find($cleanId);
+        }
+        if (!$ride && is_numeric($id)) {
+            $ride = Ride::find($id);
+        }
+        if (!$ride) {
+            $ride = Ride::where('digital_receipt_code', $rawId)->first();
+        }
         if (!$ride) {
             // Also check PackageDelivery and DriverBooking models
             $del = \App\Models\PackageDelivery::where('id', $id)->orWhere('id', $cleanId)->first();
