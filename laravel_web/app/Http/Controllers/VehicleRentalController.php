@@ -138,6 +138,20 @@ class VehicleRentalController extends Controller
      */
     public function storeBooking(Request $request, Vehicle $vehicle)
     {
+        // Support aliases
+        if (!$request->has('end_date') && $request->has('return_date')) {
+            $request->merge(['end_date' => $request->input('return_date')]);
+        }
+        if (!$request->has('customer_age') && $request->has('driver_age')) {
+            $request->merge(['customer_age' => $request->input('driver_age')]);
+        }
+        if (!$request->has('driver_email') && $request->has('customer_email')) {
+            $request->merge(['driver_email' => $request->input('customer_email')]);
+        }
+        if (!$request->has('driver_phone') && $request->has('customer_phone')) {
+            $request->merge(['driver_phone' => $request->input('customer_phone')]);
+        }
+
         $request->validate([
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -226,6 +240,8 @@ class VehicleRentalController extends Controller
         $ride = Ride::create([
             'rider_id' => $riderId,
             'vehicle_id' => $vehicle->id,
+            'passenger_name' => $request->customer_name ?? $request->passenger_name ?? (Auth::check() ? Auth::user()->name : 'Customer'),
+            'passenger_phone' => $request->driver_phone ?? $request->customer_phone ?? (Auth::check() ? Auth::user()->phone : null),
             'pickup_location' => $request->pickup_location,
             'dropoff_location' => $dropoffLoc,
             'different_dropoff' => $request->boolean('different_dropoff'),
@@ -471,6 +487,20 @@ class VehicleRentalController extends Controller
      */
     public function bookRentalApi(Request $request, Vehicle $vehicle)
     {
+        // Support common aliases from mobile and web payloads
+        if (!$request->has('end_date') && $request->has('return_date')) {
+            $request->merge(['end_date' => $request->input('return_date')]);
+        }
+        if (!$request->has('customer_age') && $request->has('driver_age')) {
+            $request->merge(['customer_age' => $request->input('driver_age')]);
+        }
+        if (!$request->has('driver_email') && $request->has('customer_email')) {
+            $request->merge(['driver_email' => $request->input('customer_email')]);
+        }
+        if (!$request->has('driver_phone') && $request->has('customer_phone')) {
+            $request->merge(['driver_phone' => $request->input('customer_phone')]);
+        }
+
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -553,6 +583,8 @@ class VehicleRentalController extends Controller
         $ride = Ride::create([
             'rider_id' => $riderId,
             'vehicle_id' => $vehicle->id,
+            'passenger_name' => $request->customer_name ?? $request->passenger_name ?? ($user ? $user->name : 'Customer'),
+            'passenger_phone' => $request->driver_phone ?? $request->customer_phone ?? ($user ? $user->phone : null),
             'pickup_location' => $request->pickup_location,
             'dropoff_location' => $dropoffLoc,
             'different_dropoff' => $request->boolean('different_dropoff'),

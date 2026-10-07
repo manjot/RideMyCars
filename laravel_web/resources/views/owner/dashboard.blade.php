@@ -194,7 +194,16 @@
                                     <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 mb-5 space-y-2.5 text-xs">
                                         <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-700/60">
                                             <span class="text-slate-500 font-medium">Customer:</span>
-                                            <span class="font-bold text-slate-900 dark:text-white">{{ $ride->rider?->name ?? 'Guest Customer' }} ({{ $ride->passenger_phone ?? ($ride->rider?->phone ?? 'No phone') }})</span>
+                                            <span class="font-bold text-slate-900 dark:text-white">{{ $ride->passenger_name ?: ($ride->rider?->name ?: 'Guest Customer') }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-700/60">
+                                            <span class="text-slate-500 font-medium">Phone & Email:</span>
+                                            <span class="font-semibold text-slate-900 dark:text-slate-200 text-right truncate max-w-[220px]">
+                                                {{ $ride->passenger_phone ?: ($ride->driver_phone ?: ($ride->rider?->phone ?: 'N/A')) }}
+                                                @if($ride->driver_email ?: $ride->rider?->email)
+                                                    <span class="text-slate-400 block text-[11px]">{{ $ride->driver_email ?: $ride->rider?->email }}</span>
+                                                @endif
+                                            </span>
                                         </div>
                                         <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-700/60">
                                             <span class="text-slate-500 font-medium">Driver Age:</span>

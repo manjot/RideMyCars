@@ -28,25 +28,37 @@ class OwnerPortalController extends Controller
         $countryCode = CountryService::getCurrentCountryCode($request);
         $pricing = CountryPricing::forCountry($countryCode);
 
-        // Fetch owner vehicles
-        $vehicles = Vehicle::where('owner_id', $user->id)
-            ->latest()
-            ->get();
-
-        $vehicleIds = $vehicles->pluck('id')->toArray();
-
-        // If no vehicles yet and this is the default owner or admin, link seeded cars or demo cars
-        if (empty($vehicleIds) && ($user->email === 'owner@ridemycars.com' || $user->role === 'admin')) {
-            Vehicle::whereNull('owner_id')->update(['owner_id' => $user->id]);
-            $vehicles = Vehicle::where('owner_id', $user->id)->latest()->get();
+        if ($user->role === 'admin') {
+            $vehicles = Vehicle::with('owner')->latest()->get();
             $vehicleIds = $vehicles->pluck('id')->toArray();
-        }
+            $allBookings = Ride::with(['rider', 'vehicle'])
+                ->where(function($q) use ($vehicleIds) {
+                    $q->whereIn('vehicle_id', $vehicleIds)
+                      ->orWhere('vehicle_type', 'like', 'Car Rental%');
+                })
+                ->latest()
+                ->get();
+        } else {
+            // Fetch owner vehicles
+            $vehicles = Vehicle::where('owner_id', $user->id)
+                ->latest()
+                ->get();
 
-        // Rental Bookings for Owner's Vehicles
-        $allBookings = Ride::with(['rider', 'vehicle'])
-            ->whereIn('vehicle_id', $vehicleIds)
-            ->latest()
-            ->get();
+            $vehicleIds = $vehicles->pluck('id')->toArray();
+
+            // If no vehicles yet and this is the default owner, link seeded cars or demo cars
+            if (empty($vehicleIds) && $user->email === 'owner@ridemycars.com') {
+                Vehicle::whereNull('owner_id')->update(['owner_id' => $user->id]);
+                $vehicles = Vehicle::where('owner_id', $user->id)->latest()->get();
+                $vehicleIds = $vehicles->pluck('id')->toArray();
+            }
+
+            // Rental Bookings for Owner's Vehicles
+            $allBookings = Ride::with(['rider', 'vehicle'])
+                ->whereIn('vehicle_id', $vehicleIds)
+                ->latest()
+                ->get();
+        }
 
         $pendingRequests = $allBookings->where('status', 'pending');
         $activeRentals = $allBookings->whereIn('status', ['confirmed', 'accepted', 'in_progress']);
