@@ -589,18 +589,11 @@
         </form>
     </main>
 
-    <!-- Maps & Autocomplete Integration -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <!-- Google Maps & Places Integration -->
     @php
-        $gmapsKey = config('services.google_maps.api_key');
-        $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
+        $gmapsKey = config('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
     @endphp
-
-    @if($hasValidKey)
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places" async defer></script>
-    @endif
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places,geometry"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -636,23 +629,33 @@
             let defaultLat = defaultCenter.lat;
             let defaultLng = defaultCenter.lng;
 
-            // Custom Leaflet Icons
-            const createIcon = (emoji, bg) => L.divIcon({
-                className: 'custom-map-marker',
-                html: `<div style="background: ${bg}; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid white;">${emoji}</div>`,
-                iconSize: [34, 34],
-                iconAnchor: [17, 17]
+            // Custom Google Maps Icons
+            const createMapIcon = (emoji, bg) => ({
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="42" viewBox="0 0 36 42">
+                        <path d="M18 0C8.06 0 0 8.06 0 18c0 12.6 18 24 18 24s18-11.4 18-24c0-9.94-8.06-18-18-18z" fill="${bg}"/>
+                        <circle cx="18" cy="18" r="14" fill="#ffffff"/>
+                        <text x="18" y="22" font-size="14" text-anchor="middle" dominant-baseline="central">${emoji}</text>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(34, 40),
+                anchor: new google.maps.Point(17, 40)
             });
 
-            const pickupIcon = createIcon('📍', '#f59e0b');
-            const dropoffIcon = createIcon('🏁', '#ef4444');
-            const courierIcon = createIcon('🛵', '#10b981');
+            const courierIcon = () => ({
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
+                        <circle cx="17" cy="17" r="16" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
+                        <text x="17" y="21" font-size="15" text-anchor="middle" dominant-baseline="central">🛵</text>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(34, 34),
+                anchor: new google.maps.Point(17, 17)
+            });
 
             function updateNearbyCouriers(centerLat, centerLng) {
-                if (!mapInstance) return;
-                courierMarkers.forEach(m => {
-                    try { mapInstance.removeLayer(m); } catch (e) {}
-                });
+                if (!mapInstance || typeof google === 'undefined') return;
+                courierMarkers.forEach(m => m.setMap(null));
                 courierMarkers = [];
 
                 const offsets = [
@@ -662,47 +665,68 @@
                     [-0.006, -0.005]
                 ];
                 offsets.forEach((off, i) => {
-                    const m = L.marker([centerLat + off[0], centerLng + off[1]], { icon: courierIcon }).addTo(mapInstance)
-                        .bindPopup(`<b>🛵 Active Courier #${i+1}</b><br><span class="text-xs text-emerald-600 font-bold">● Available (2-4 mins away)</span>`);
-                    courierMarkers.push(m);
+                    const marker = new google.maps.Marker({
+                        position: { lat: centerLat + off[0], lng: centerLng + off[1] },
+                        map: mapInstance,
+                        icon: courierIcon(),
+                        title: `Active Courier #${i+1}`
+                    });
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `<div style="font-weight:700;padding:4px;">🛵 Active Courier #${i+1}<br><span style="color:#10b981;font-size:12px;">● Available (2-4 mins away)</span></div>`
+                    });
+                    marker.addListener('click', () => infoWindow.open(mapInstance, marker));
+                    courierMarkers.push(marker);
                 });
             }
 
             function initMap() {
                 const mapEl = document.getElementById('map');
-                if (!mapEl || typeof L === 'undefined') return;
+                if (!mapEl) return;
+                if (typeof google === 'undefined' || !google.maps) {
+                    setTimeout(initMap, 150);
+                    return;
+                }
 
                 try {
-                    mapInstance = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 13);
-
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: '&copy; OpenStreetMap'
-                    }).addTo(mapInstance);
+                    mapInstance = new google.maps.Map(mapEl, {
+                        center: { lat: defaultLat, lng: defaultLng },
+                        zoom: 13,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false,
+                        zoomControl: true,
+                        styles: [
+                            { "featureType": "poi", "elementType": "labels", "stylers": [{ "visibility": "off" }] }
+                        ]
+                    });
 
                     // Add initial pickup area marker
-                    pickupMarker = L.marker([defaultLat, defaultLng], { icon: pickupIcon, draggable: true }).addTo(mapInstance)
-                        .bindPopup('<b>📍 Pickup Location</b><br><span class="text-xs text-gray-500">Drag to refine location</span>');
+                    pickupMarker = new google.maps.Marker({
+                        position: { lat: defaultLat, lng: defaultLng },
+                        map: mapInstance,
+                        draggable: true,
+                        icon: createMapIcon('📍', '#f59e0b'),
+                        title: 'Pickup Location'
+                    });
 
-                    pickupMarker.on('dragend', function(e) {
-                        const pos = e.target.getLatLng();
-                        setPickup(pos.lat, pos.lng, true);
+                    pickupMarker.addListener('dragend', function() {
+                        const pos = pickupMarker.getPosition();
+                        setPickup(pos.lat(), pos.lng(), true);
                     });
 
                     // Add active couriers near initial center
                     updateNearbyCouriers(defaultLat, defaultLng);
 
                     // Map Click Handler: alternates setting pickup / dropoff
-                    mapInstance.on('click', function(e) {
-                        const { lat, lng } = e.latlng;
+                    mapInstance.addListener('click', function(e) {
+                        const lat = e.latLng.lat();
+                        const lng = e.latLng.lng();
                         if (!pLatInput.value || (pLatInput.value && dLatInput.value)) {
                             setPickup(lat, lng, true);
                         } else {
                             setDropoff(lat, lng, true);
                         }
                     });
-
-                    setTimeout(() => mapInstance.invalidateSize(), 300);
                 } catch (e) {
                     console.warn("Map initialization error:", e);
                 }
@@ -712,13 +736,19 @@
                 if (pLatInput) { pLatInput.value = lat; pLatInput.dispatchEvent(new Event('input')); }
                 if (pLngInput) { pLngInput.value = lng; pLngInput.dispatchEvent(new Event('input')); }
 
-                if (pickupMarker && mapInstance) {
-                    pickupMarker.setLatLng([lat, lng]);
-                } else if (mapInstance) {
-                    pickupMarker = L.marker([lat, lng], { icon: pickupIcon, draggable: true }).addTo(mapInstance);
-                    pickupMarker.on('dragend', function(e) {
-                        const pos = e.target.getLatLng();
-                        setPickup(pos.lat, pos.lng, true);
+                if (pickupMarker) {
+                    pickupMarker.setPosition({ lat, lng });
+                } else if (mapInstance && typeof google !== 'undefined') {
+                    pickupMarker = new google.maps.Marker({
+                        position: { lat, lng },
+                        map: mapInstance,
+                        draggable: true,
+                        icon: createMapIcon('📍', '#f59e0b'),
+                        title: 'Pickup Location'
+                    });
+                    pickupMarker.addListener('dragend', function() {
+                        const pos = pickupMarker.getPosition();
+                        setPickup(pos.lat(), pos.lng(), true);
                     });
                 }
 
@@ -743,13 +773,19 @@
                 if (dLatInput) { dLatInput.value = lat; dLatInput.dispatchEvent(new Event('input')); }
                 if (dLngInput) { dLngInput.value = lng; dLngInput.dispatchEvent(new Event('input')); }
 
-                if (dropoffMarker && mapInstance) {
-                    dropoffMarker.setLatLng([lat, lng]);
-                } else if (mapInstance) {
-                    dropoffMarker = L.marker([lat, lng], { icon: dropoffIcon, draggable: true }).addTo(mapInstance);
-                    dropoffMarker.on('dragend', function(e) {
-                        const pos = e.target.getLatLng();
-                        setDropoff(pos.lat, pos.lng, true);
+                if (dropoffMarker) {
+                    dropoffMarker.setPosition({ lat, lng });
+                } else if (mapInstance && typeof google !== 'undefined') {
+                    dropoffMarker = new google.maps.Marker({
+                        position: { lat, lng },
+                        map: mapInstance,
+                        draggable: true,
+                        icon: createMapIcon('🏁', '#ef4444'),
+                        title: 'Dropoff Location'
+                    });
+                    dropoffMarker.addListener('dragend', function() {
+                        const pos = dropoffMarker.getPosition();
+                        setDropoff(pos.lat(), pos.lng(), true);
                     });
                 }
 
@@ -769,28 +805,35 @@
             }
 
             function updateRouteAndBounds() {
-                if (!mapInstance) return;
+                if (!mapInstance || typeof google === 'undefined') return;
                 const pLat = parseFloat(pLatInput?.value);
                 const pLng = parseFloat(pLngInput?.value);
                 const dLat = parseFloat(dLatInput?.value);
                 const dLng = parseFloat(dLngInput?.value);
 
                 if (!isNaN(pLat) && !isNaN(pLng) && !isNaN(dLat) && !isNaN(dLng)) {
-                    if (routeLine) mapInstance.removeLayer(routeLine);
+                    if (routeLine) routeLine.setMap(null);
 
                     // Draw delivery dispatch route
-                    routeLine = L.polyline([[pLat, pLng], [dLat, dLng]], {
-                        color: '#f59e0b',
-                        weight: 4,
-                        opacity: 0.85,
-                        dashArray: '8, 8',
-                        lineCap: 'round'
-                    }).addTo(mapInstance);
+                    routeLine = new google.maps.Polyline({
+                        path: [
+                            { lat: pLat, lng: pLng },
+                            { lat: dLat, lng: dLng }
+                        ],
+                        geodesic: true,
+                        strokeColor: '#f59e0b',
+                        strokeOpacity: 0.85,
+                        strokeWeight: 4,
+                        map: mapInstance
+                    });
 
-                    const bounds = L.latLngBounds([[pLat, pLng], [dLat, dLng]]);
-                    mapInstance.fitBounds(bounds, { padding: [40, 40] });
+                    const bounds = new google.maps.LatLngBounds();
+                    bounds.extend({ lat: pLat, lng: pLng });
+                    bounds.extend({ lat: dLat, lng: dLng });
+                    mapInstance.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
                 } else if (!isNaN(pLat) && !isNaN(pLng)) {
-                    mapInstance.setView([pLat, pLng], 14);
+                    mapInstance.panTo({ lat: pLat, lng: pLng });
+                    mapInstance.setZoom(14);
                 }
             }
 
@@ -806,7 +849,8 @@
                 defaultLng = lng;
 
                 if (mapInstance) {
-                    mapInstance.setView([lat, lng], isGps ? 15 : 13);
+                    mapInstance.setCenter({ lat, lng });
+                    mapInstance.setZoom(isGps ? 15 : 13);
                 }
                 setPickup(lat, lng, true);
             };

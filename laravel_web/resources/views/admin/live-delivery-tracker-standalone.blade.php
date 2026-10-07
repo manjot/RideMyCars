@@ -399,16 +399,9 @@
     </main>
 
     @php
-        $gmapsKey = config('services.google_maps.api_key');
-        $hasValidKey = !empty($gmapsKey) && !str_contains($gmapsKey, 'AIzaSyDemoKey');
+        $gmapsKey = config('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
     @endphp
-
-    @if($hasValidKey)
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
-    @else
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    @endif
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places"></script>
 
     <script>
         function liveDeliveryTracker() {
@@ -531,17 +524,6 @@
                                 streetViewControl: false,
                             });
                         } catch (e) {}
-                    } else if (typeof L !== 'undefined') {
-                        try {
-                            if (this.map) {
-                                this.map.remove();
-                            }
-                            this.map = L.map(mapEl).setView([defaultLat, defaultLng], 13);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                maxZoom: 19,
-                                attribution: '© OpenStreetMap'
-                            }).addTo(this.map);
-                        } catch (e) {}
                     }
 
                     this.updateMapMarkers();
@@ -566,21 +548,21 @@
                             position: { lat: pLat, lng: pLng },
                             map: this.map,
                             title: "Pickup: " + this.selectedOrder.pickup_location,
-                            icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                            icon: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
                         });
 
                         this.driverMarker = new google.maps.Marker({
                             position: { lat: cLat, lng: cLng },
                             map: this.map,
                             title: "Driver Location",
-                            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                            icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                         });
 
                         this.dropoffMarker = new google.maps.Marker({
                             position: { lat: dLat, lng: dLng },
                             map: this.map,
                             title: "Dropoff: " + this.selectedOrder.dropoff_location,
-                            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                            icon: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
                         });
 
                         if (this.routePolyline) this.routePolyline.setMap(null);
@@ -597,23 +579,6 @@
                         });
                         this.routePolyline.setMap(this.map);
                         this.map.setCenter({ lat: cLat, lng: cLng });
-                    } else if (typeof L !== 'undefined') {
-                        if (this.pickupMarker) this.map.removeLayer(this.pickupMarker);
-                        if (this.driverMarker) this.map.removeLayer(this.driverMarker);
-                        if (this.dropoffMarker) this.map.removeLayer(this.dropoffMarker);
-                        if (this.routePolyline) this.map.removeLayer(this.routePolyline);
-
-                        this.pickupMarker = L.marker([pLat, pLng]).addTo(this.map).bindPopup("🟢 Pickup: " + this.selectedOrder.pickup_location);
-                        this.driverMarker = L.marker([cLat, cLng]).addTo(this.map).bindPopup("🚚 Driver: " + (this.selectedOrder.driver ? this.selectedOrder.driver.name : 'Courier'));
-                        this.dropoffMarker = L.marker([dLat, dLng]).addTo(this.map).bindPopup("🔴 Dropoff: " + this.selectedOrder.dropoff_location);
-
-                        this.routePolyline = L.polyline([
-                            [pLat, pLng],
-                            [cLat, cLng],
-                            [dLat, dLng]
-                        ], { color: '#F59E0B', weight: 4, opacity: 0.8 }).addTo(this.map);
-
-                        this.map.setView([cLat, cLng], 13);
                     }
                 },
 
@@ -625,14 +590,9 @@
                         const lat = parseFloat(this.selectedOrder.current_lat) || parseFloat(this.selectedOrder.pickup_lat) || 5.6037;
                         const lng = parseFloat(this.selectedOrder.current_lng) || parseFloat(this.selectedOrder.pickup_lng) || -0.1870;
 
-                        if (this.map) {
-                            if (typeof google !== 'undefined' && google.maps && typeof this.map.setCenter === 'function') {
-                                this.map.setCenter({ lat, lng });
-                                this.map.setZoom(15);
-                            } else if (typeof L !== 'undefined' && typeof this.map.setView === 'function') {
-                                try { this.map.invalidateSize(); } catch(e){}
-                                this.map.setView([lat, lng], 15);
-                            }
+                        if (this.map && typeof this.map.setCenter === 'function') {
+                            this.map.setCenter({ lat, lng });
+                            this.map.setZoom(15);
                         }
 
                         const mapEl = document.getElementById("live_tracker_map_standalone");

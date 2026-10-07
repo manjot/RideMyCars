@@ -1,8 +1,10 @@
 <x-layout theme="theme-ride">
     <x-slot:title>Book a Ride — RideMyCars</x-slot>
     <x-slot:head>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        @php
+            $gmapsKey = config('services.google_maps.api_key', 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0');
+        @endphp
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ $gmapsKey }}&libraries=places,geometry"></script>
         <style>
             .pac-container {
                 border-radius: 16px;
@@ -2498,185 +2500,228 @@
             }));
         });
 
-        document.addEventListener("DOMContentLoaded", function() {
+        function initRideGoogleMap() {
             const mapEl = document.getElementById('map');
-            if (mapEl) {
-                const countryCoords = {
-                    'IND': [28.6139, 77.2090], // New Delhi / India
-                    'USA': [40.7128, -74.0060], // New York / USA
-                    'GHA': [5.6037, -0.1870],   // Accra / Ghana
-                    'NGA': [6.5244, 3.3792],    // Lagos / Nigeria
-                    'ZAF': [-26.2041, 28.0473], // Johannesburg / South Africa
-                    'GBR': [51.5074, -0.1278],  // London / UK
-                    'CAN': [43.6532, -79.3832], // Toronto / Canada
-                    'ARE': [25.2048, 55.2708],  // Dubai / UAE
-                    'KEN': [-1.2921, 36.8219],  // Nairobi / Kenya
-                    'MWI': [-13.9626, 33.7741], // Lilongwe / Malawi
-                    'AUS': [-33.8688, 151.2093] // Sydney / Australia
-                };
-                const activeCountry = @json($currentCountryCode ?? 'USA');
-                const initialCenter = countryCoords[activeCountry] || countryCoords['USA'];
+            if (!mapEl) return;
+            if (typeof google === 'undefined' || !google.maps) {
+                setTimeout(initRideGoogleMap, 150);
+                return;
+            }
 
-                // Initialize Leaflet map with OpenStreetMap tiles
-                const map = L.map('map', {
-                    center: initialCenter, // Baseline center based on user detected country
-                    zoom: 13,
-                    zoomControl: true
-                });
+            const countryCoords = {
+                'IND': { lat: 28.6139, lng: 77.2090 }, // New Delhi / India
+                'USA': { lat: 40.7128, lng: -74.0060 }, // New York / USA
+                'GHA': { lat: 5.6037, lng: -0.1870 },   // Accra / Ghana
+                'NGA': { lat: 6.5244, lng: 3.3792 },    // Lagos / Nigeria
+                'ZAF': { lat: -26.2041, lng: 28.0473 }, // Johannesburg / South Africa
+                'GBR': { lat: 51.5074, lng: -0.1278 },  // London / UK
+                'CAN': { lat: 43.6532, lng: -79.3832 }, // Toronto / Canada
+                'ARE': { lat: 25.2048, lng: 55.2708 },  // Dubai / UAE
+                'KEN': { lat: -1.2921, lng: 36.8219 },  // Nairobi / Kenya
+                'MWI': { lat: -13.9626, lng: 33.7741 }, // Lilongwe / Malawi
+                'AUS': { lat: -33.8688, lng: 151.2093 } // Sydney / Australia
+            };
+            const activeCountry = @json($currentCountryCode ?? 'USA');
+            const initialCenter = countryCoords[activeCountry] || countryCoords['USA'];
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
+            const map = new google.maps.Map(mapEl, {
+                center: initialCenter,
+                zoom: 14,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                zoomControl: true,
+                styles: [
+                    { "featureType": "poi", "elementType": "labels", "stylers": [{ "visibility": "off" }] }
+                ]
+            });
+            window.rideGoogleMap = map;
 
-                let driverMarkers = [];
-                function updateNearbyDrivers(centerLat, centerLng) {
-                    driverMarkers.forEach(m => map.removeLayer(m));
-                    driverMarkers = [];
-                    const carIcon = L.divIcon({
-                        html: '<div class="w-8 h-8 rounded-full bg-black text-white dark:bg-white dark:text-black font-black text-sm flex items-center justify-center shadow-lg border-2 border-white dark:border-black hover:scale-110 transition-transform select-none">🚗</div>',
-                        className: 'car-marker-icon',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
+            // Car marker SVG icon
+            const carSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
+                    <circle cx="17" cy="17" r="16" fill="#111827" stroke="#ffffff" stroke-width="2"/>
+                    <text x="17" y="21" font-size="15" text-anchor="middle" dominant-baseline="central">🚗</text>
+                </svg>
+            `);
+
+            let driverMarkers = [];
+            function updateNearbyDrivers(centerLat, centerLng) {
+                driverMarkers.forEach(m => m.setMap(null));
+                driverMarkers = [];
+                for (let i = 0; i < 5; i++) {
+                    const offsetLat = (Math.random() - 0.5) * 0.025;
+                    const offsetLng = (Math.random() - 0.5) * 0.025;
+                    const m = new google.maps.Marker({
+                        position: { lat: centerLat + offsetLat, lng: centerLng + offsetLng },
+                        map: map,
+                        icon: {
+                            url: carSvg,
+                            scaledSize: new google.maps.Size(34, 34),
+                            anchor: new google.maps.Point(17, 17)
+                        },
+                        title: "Available Driver"
                     });
-                    for (let i = 0; i < 5; i++) {
-                        const offsetLat = (Math.random() - 0.5) * 0.025;
-                        const offsetLng = (Math.random() - 0.5) * 0.025;
-                        const m = L.marker([centerLat + offsetLat, centerLng + offsetLng], { icon: carIcon }).addTo(map);
-                        driverMarkers.push(m);
-                    }
+                    driverMarkers.push(m);
+                }
+            }
+
+            // Initial drivers near center
+            updateNearbyDrivers(initialCenter.lat, initialCenter.lng);
+
+            let userAccuracyCircle = null;
+            let userBeaconMarker = null;
+
+            // Handle user location detection event
+            window.addEventListener('map-user-located', function(e) {
+                const { lat, lng, accuracy, flyTo } = e.detail;
+                if (!map) return;
+
+                const pos = { lat, lng };
+                map.panTo(pos);
+                map.setZoom(16);
+
+                if (userAccuracyCircle) userAccuracyCircle.setMap(null);
+                if (accuracy && accuracy < 10000) {
+                    userAccuracyCircle = new google.maps.Circle({
+                        map: map,
+                        center: pos,
+                        radius: Math.max(accuracy, 25),
+                        fillColor: '#10b981',
+                        fillOpacity: 0.12,
+                        strokeColor: '#10b981',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 1.5
+                    });
                 }
 
-                // Initial drivers near center
-                updateNearbyDrivers(initialCenter[0], initialCenter[1]);
-
-                let userAccuracyCircle = null;
-                let userBeaconMarker = null;
-
-                // Handle user location detection event
-                window.addEventListener('map-user-located', function(e) {
-                    const { lat, lng, accuracy, flyTo } = e.detail;
-                    if (!map) return;
-
-                    if (flyTo) {
-                        map.flyTo([lat, lng], 16, { duration: 1.2 });
-                    } else {
-                        map.setView([lat, lng], 15);
-                    }
-
-                    if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
-                    if (accuracy && accuracy < 10000) {
-                        userAccuracyCircle = L.circle([lat, lng], {
-                            radius: Math.max(accuracy, 25),
-                            color: '#10b981',
-                            fillColor: '#10b981',
-                            fillOpacity: 0.12,
-                            weight: 1.5,
-                            dashArray: '4, 4'
-                        }).addTo(map);
-                    }
-
-                    if (userBeaconMarker) map.removeLayer(userBeaconMarker);
-                    const beaconIcon = L.divIcon({
-                        html: `
-                            <div class="relative flex items-center justify-center w-8 h-8">
-                                <span class="absolute w-7 h-7 rounded-full bg-emerald-500/35 animate-ping"></span>
-                                <span class="relative w-4 h-4 rounded-full bg-emerald-600 border-2 border-white shadow-lg ring-2 ring-emerald-300"></span>
-                            </div>
-                        `,
-                        className: 'user-beacon-icon',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
-                    });
-                    userBeaconMarker = L.marker([lat, lng], { icon: beaconIcon, zIndexOffset: 1000 })
-                        .addTo(map)
-                        .bindPopup("<b>Your GPS Location</b>");
-
-                    updateNearbyDrivers(lat, lng);
+                if (userBeaconMarker) userBeaconMarker.setMap(null);
+                const beaconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+                        <circle cx="15" cy="15" r="13" fill="#10b981" fill-opacity="0.3"/>
+                        <circle cx="15" cy="15" r="7" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+                    </svg>
+                `);
+                userBeaconMarker = new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    icon: {
+                        url: beaconSvg,
+                        scaledSize: new google.maps.Size(30, 30),
+                        anchor: new google.maps.Point(15, 15)
+                    },
+                    zIndex: 1000,
+                    title: "Your GPS Location"
                 });
 
-                // Click anywhere on map to set/adjust pickup location
-                map.on('click', function(e) {
-                    window.dispatchEvent(new CustomEvent('map-clicked', {
-                        detail: { lat: e.latlng.lat, lng: e.latlng.lng }
-                    }));
-                });
+                updateNearbyDrivers(lat, lng);
+            });
 
-                // Global event listener for updating route & waypoints on map
-                window.addEventListener('update-ride-route', function(e) {
-                    if (!map) return;
+            // Click anywhere on map to set/adjust pickup location
+            map.addListener('click', function(e) {
+                window.dispatchEvent(new CustomEvent('map-clicked', {
+                    detail: { lat: e.latLng.lat(), lng: e.latLng.lng() }
+                }));
+            });
 
-                    if (window.rideRoutePolyline) map.removeLayer(window.rideRoutePolyline);
-                    if (window.rideWaypointsMarkers) {
-                        window.rideWaypointsMarkers.forEach(m => map.removeLayer(m));
+            // Helper to create pin icon
+            const createPinSvg = (emoji, color) => 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="42" viewBox="0 0 36 42">
+                    <path d="M18 0C8.06 0 0 8.06 0 18c0 12.6 18 24 18 24s18-11.4 18-24c0-9.94-8.06-18-18-18z" fill="${color}"/>
+                    <circle cx="18" cy="18" r="14" fill="#ffffff"/>
+                    <text x="18" y="22" font-size="14" text-anchor="middle" dominant-baseline="central">${emoji}</text>
+                </svg>
+            `);
+
+            // Global event listener for updating route & waypoints on map
+            window.addEventListener('update-ride-route', function(e) {
+                if (!map) return;
+
+                if (window.rideRoutePolyline) {
+                    window.rideRoutePolyline.setMap(null);
+                }
+                if (window.rideWaypointsMarkers) {
+                    window.rideWaypointsMarkers.forEach(m => m.setMap(null));
+                }
+                window.rideWaypointsMarkers = [];
+
+                const waypoints = e.detail.waypoints || [];
+                if (waypoints.length === 0) return;
+
+                const bounds = new google.maps.LatLngBounds();
+                const pathCoordinates = [];
+
+                waypoints.forEach((wp, idx) => {
+                    const pos = { lat: wp.lat, lng: wp.lng };
+                    pathCoordinates.push(pos);
+                    bounds.extend(pos);
+
+                    const isPickup = wp.type === 'pickup';
+                    let emoji = '📍';
+                    let pinColor = '#10b981';
+                    if (wp.type === 'stop') {
+                        emoji = '🛑';
+                        pinColor = '#f59e0b';
+                    } else if (wp.type === 'dropoff') {
+                        emoji = '🏁';
+                        pinColor = '#ef4444';
                     }
-                    window.rideWaypointsMarkers = [];
 
-                    const waypoints = e.detail.waypoints || [];
-                    if (waypoints.length === 0) return;
-
-                    const latLngs = [];
-
-                    waypoints.forEach((wp, idx) => {
-                        latLngs.push([wp.lat, wp.lng]);
-
-                        const isPickup = wp.type === 'pickup';
-                        let iconHtml = '●';
-                        let bgClass = 'bg-emerald-500 text-white';
-                        if (wp.type === 'stop') {
-                            iconHtml = `Stop ${idx}`;
-                            bgClass = 'bg-amber-500 text-white font-black';
-                        } else if (wp.type === 'dropoff') {
-                            iconHtml = '■';
-                            bgClass = 'bg-black text-white dark:bg-white dark:text-black';
+                    const marker = new google.maps.Marker({
+                        position: pos,
+                        map: map,
+                        draggable: isPickup,
+                        zIndex: isPickup ? 900 : 500,
+                        title: wp.label || (isPickup ? 'Pickup' : 'Dropoff'),
+                        icon: {
+                            url: createPinSvg(emoji, pinColor),
+                            scaledSize: new google.maps.Size(34, 40),
+                            anchor: new google.maps.Point(17, 40)
                         }
+                    });
 
-                        const icon = L.divIcon({
-                            html: `<div class="px-3 py-1.5 rounded-full ${bgClass} text-xs font-extrabold shadow-2xl border-2 border-white flex items-center justify-center gap-1.5 select-none ${isPickup ? 'cursor-grab active:cursor-grabbing hover:scale-105 transition-transform' : ''}">
-                                <span>${isPickup ? '📍' : (wp.type === 'dropoff' ? '🏁' : '🛑')}</span>
-                                <span>${wp.label}</span>
-                                ${isPickup ? '<span class="text-[10px] opacity-80">(Drag)</span>' : ''}
-                            </div>`,
-                            className: 'waypoint-marker-icon',
-                            iconSize: [120, 32],
-                            iconAnchor: [60, 16]
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `<div style="font-weight:700;padding:4px 6px;">${wp.label || (isPickup ? 'Pickup Location' : 'Destination')}</div>`
+                    });
+
+                    marker.addListener('click', () => {
+                        infoWindow.open(map, marker);
+                    });
+
+                    if (isPickup) {
+                        marker.addListener('dragend', function() {
+                            const newPos = marker.getPosition();
+                            window.dispatchEvent(new CustomEvent('map-pickup-dragged', {
+                                detail: { lat: newPos.lat(), lng: newPos.lng() }
+                            }));
                         });
+                    }
 
-                        const marker = L.marker([wp.lat, wp.lng], { 
-                            icon,
-                            draggable: isPickup,
-                            zIndexOffset: isPickup ? 900 : 500
-                        }).addTo(map);
+                    window.rideWaypointsMarkers.push(marker);
+                });
 
-                        if (isPickup) {
-                            marker.bindPopup(`<b>Pickup Location</b><br><span style="font-size:11px;color:#666;">Drag pin to fine-tune exact pickup spot</span>`);
-                            marker.on('dragend', function(evt) {
-                                const pos = evt.target.getLatLng();
-                                window.dispatchEvent(new CustomEvent('map-pickup-dragged', {
-                                    detail: { lat: pos.lat, lng: pos.lng }
-                                }));
-                            });
-                        } else {
-                            marker.bindPopup(`<b>${wp.label}</b>`);
-                        }
-
-                        window.rideWaypointsMarkers.push(marker);
+                if (pathCoordinates.length >= 2) {
+                    window.rideRoutePolyline = new google.maps.Polyline({
+                        path: pathCoordinates,
+                        geodesic: true,
+                        strokeColor: '#10b981',
+                        strokeOpacity: 0.85,
+                        strokeWeight: 5,
+                        map: map
                     });
 
-                    if (latLngs.length >= 2) {
-                        window.rideRoutePolyline = L.polyline(latLngs, {
-                            color: '#10b981',
-                            weight: 5,
-                            opacity: 0.85,
-                            dashArray: '8, 8'
-                        }).addTo(map);
+                    map.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
+                } else if (pathCoordinates.length === 1) {
+                    map.panTo(pathCoordinates[0]);
+                    map.setZoom(16);
+                }
+            });
+        }
 
-                        map.fitBounds(window.rideRoutePolyline.getBounds(), { padding: [60, 60], maxZoom: 16 });
-                    } else if (latLngs.length === 1) {
-                        map.setView(latLngs[0], 16);
-                    }
-                });
-            }
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initRideGoogleMap);
+        } else {
+            initRideGoogleMap();
+        }
     </script>
 </x-layout>
