@@ -1050,7 +1050,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               myLocationEnabled: true,
               myLocationButtonEnabled: false,
               zoomControlsEnabled: false,
-              onMapCreated: (c) => _mapController = c,
+              onMapCreated: (c) {
+                _mapController = c;
+                if (_userLat != null && _userLng != null) {
+                  c.animateCamera(CameraUpdate.newLatLng(LatLng(_userLat!, _userLng!)));
+                }
+              },
               onTap: (_) {
                 _pickupFocusNode.unfocus();
                 _dropoffFocusNode.unfocus();

@@ -577,8 +577,43 @@
                             alert("Unable to detect location automatically. Please type manually.");
                         }
                     );
-                });
-            }
+            // Auto-detect location on load
+            const autoDetectRentLocation = async () => {
+                if (pInput && pInput.value.trim() === '') {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                                try {
+                                    const res = await fetch(`/api/places/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        if (data && data.place && (!pInput.value || pInput.value.trim() === '')) {
+                                            pInput.value = data.place.formatted_address || data.place.name;
+                                        }
+                                    }
+                                } catch (e) {}
+                            },
+                            async () => {
+                                try {
+                                    const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                                    if (ipRes.ok) {
+                                        const ipData = await ipRes.json();
+                                        const res = await fetch(`/api/places/reverse?lat=${ipData.latitude}&lng=${ipData.longitude}`);
+                                        if (res.ok) {
+                                            const data = await res.json();
+                                            if (data && data.place && (!pInput.value || pInput.value.trim() === '')) {
+                                                pInput.value = data.place.formatted_address || data.place.name;
+                                            }
+                                        }
+                                    }
+                                } catch (e) {}
+                            },
+                            { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+                        );
+                    }
+                }
+            };
+            autoDetectRentLocation();
         });
     </script>
     <x-stripe-modal serviceType="rental" />

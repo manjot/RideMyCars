@@ -1632,22 +1632,39 @@
                     const fallbackIpOnLoad = async () => {
                         if (locatedOnLoad) return;
                         try {
-                            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
-                            if (ipRes.ok) {
-                                const ipData = await ipRes.json();
-                                const lat = parseFloat(ipData.latitude);
-                                const lng = parseFloat(ipData.longitude);
-                                if (!isNaN(lat) && !isNaN(lng) && !locatedOnLoad) {
-                                    locatedOnLoad = true;
-                                    this.userLat = lat;
-                                    this.userLng = lng;
-                                    this.userAccuracy = 5000;
-                                    window.dispatchEvent(new CustomEvent('map-user-located', {
-                                        detail: { lat, lng, accuracy: 5000, flyTo: false }
-                                    }));
-                                    if (!this.pickup || this.pickup.trim() === '') {
-                                        await this.setPickupFromCoordinates(lat, lng, `Approximate location (${ipData.city || 'Network'})`);
+                            let lat = null, lng = null, cityName = 'Network';
+                            try {
+                                const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json', { cache: 'no-store' });
+                                if (ipRes.ok) {
+                                    const ipData = await ipRes.json();
+                                    lat = parseFloat(ipData.latitude);
+                                    lng = parseFloat(ipData.longitude);
+                                    cityName = ipData.city || 'Network';
+                                }
+                            } catch (e1) {}
+
+                            if (isNaN(lat) || isNaN(lng) || !lat) {
+                                try {
+                                    const ipRes2 = await fetch('https://ipapi.co/json/');
+                                    if (ipRes2.ok) {
+                                        const ipData2 = await ipRes2.json();
+                                        lat = parseFloat(ipData2.latitude);
+                                        lng = parseFloat(ipData2.longitude);
+                                        cityName = ipData2.city || 'Network';
                                     }
+                                } catch (e2) {}
+                            }
+
+                            if (!isNaN(lat) && !isNaN(lng) && lat && !locatedOnLoad) {
+                                locatedOnLoad = true;
+                                this.userLat = lat;
+                                this.userLng = lng;
+                                this.userAccuracy = 5000;
+                                window.dispatchEvent(new CustomEvent('map-user-located', {
+                                    detail: { lat, lng, accuracy: 5000, flyTo: false }
+                                }));
+                                if (!this.pickup || this.pickup.trim() === '') {
+                                    await this.setPickupFromCoordinates(lat, lng, `Approximate location (${cityName})`);
                                 }
                             }
                         } catch (e) {
@@ -1656,6 +1673,9 @@
                     };
 
                     if (navigator.geolocation) {
+                        // Fetch fast IP in parallel so map centers right away
+                        fallbackIpOnLoad();
+
                         navigator.geolocation.getCurrentPosition(
                             async (pos) => {
                                 locatedOnLoad = true;
@@ -1667,27 +1687,17 @@
                                 this.userAccuracy = accuracy;
 
                                 window.dispatchEvent(new CustomEvent('map-user-located', {
-                                    detail: { lat, lng, accuracy, flyTo: false }
+                                    detail: { lat, lng, accuracy, flyTo: true }
                                 }));
 
-                                // If pickup is blank on load, auto-populate with reverse-geocoded GPS address
-                                if (!this.pickup || this.pickup.trim() === '') {
-                                    await this.setPickupFromCoordinates(lat, lng, `GPS Accurate (±${accuracy}m)`);
-                                }
+                                await this.setPickupFromCoordinates(lat, lng, `GPS Accurate (±${accuracy}m)`);
                             },
                             async (err) => {
                                 console.warn('Browser GPS not available on load, using IP fallback:', err);
                                 fallbackIpOnLoad();
                             },
-                            { enableHighAccuracy: true, timeout: 6000, maximumAge: 300000 }
+                            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
                         );
-
-                        // If GPS permission prompt takes more than 1.5s, fetch IP in parallel so map shows user's city immediately
-                        setTimeout(() => {
-                            if (!locatedOnLoad) {
-                                fallbackIpOnLoad();
-                            }
-                        }, 1500);
                     } else {
                         fallbackIpOnLoad();
                     }
@@ -2637,7 +2647,11 @@
                     }
                 }
 
-                updateNearbyDriversGoogle(lastCenterCoords[0], lastCenterCoords[1]);
+                if (lastUserLocationData) {
+                    renderUserLocationGoogle(lastUserLocationData);
+                } else {
+                    updateNearbyDriversGoogle(lastCenterCoords[0], lastCenterCoords[1]);
+                }
 
                 gMapInstance.addListener('click', function(e) {
                     window.dispatchEvent(new CustomEvent('map-clicked', {
@@ -2819,19 +2833,14 @@
             }
         }
 
-        // --- Common Event Handlers for both Google and Leaflet ---
-        window.addEventListener('map-user-located', function(e) {
-            lastUserLocationData = e.detail;
-            const { lat, lng, accuracy, flyTo } = e.detail;
-
-            if (currentMapEngine === 'leaflet') {
-                renderUserLocationLeaflet(e.detail);
-                return;
-            }
-
+        function renderUserLocationGoogle({ lat, lng, accuracy, flyTo }) {
             if (!gMapInstance) return;
-            const pos = { lat, lng };
-            gMapInstance.panTo(pos);
+            const pos = { lat: Number(lat), lng: Number(lng) };
+            if (flyTo) {
+                gMapInstance.panTo(pos);
+            } else {
+                gMapInstance.setCenter(pos);
+            }
             gMapInstance.setZoom(16);
 
             if (gAccuracyCircle) gAccuracyCircle.setMap(null);
@@ -2866,6 +2875,21 @@
                 zIndex: 1000,
                 title: "Your GPS Location"
             });
+            updateNearbyDriversGoogle(lat, lng);
+        }
+
+        // --- Common Event Handlers for both Google and Leaflet ---
+        window.addEventListener('map-user-located', function(e) {
+            lastUserLocationData = e.detail;
+
+            if (currentMapEngine === 'leaflet') {
+                renderUserLocationLeaflet(e.detail);
+                return;
+            }
+
+            if (gMapInstance) {
+                renderUserLocationGoogle(e.detail);
+            }
         });
 
         window.addEventListener('update-ride-route', function(e) {

@@ -877,6 +877,43 @@
                 }
             @endif
 
+            async function applyDriverLoc(lat, lng) {
+                if (pLatInput) pLatInput.value = lat;
+                if (pLngInput) pLngInput.value = lng;
+                try {
+                    const res = await fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.place && pInput && (!pInput.value || pInput.value === 'Locating...')) {
+                            pInput.value = data.place.formatted_address || data.place.name;
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            // Auto-detect location on load
+            if (pInput && !pInput.value) {
+                (async () => {
+                    try {
+                        const ipRes = await Promise.any([
+                            fetch('https://get.geojs.io/v1/ip/geo.json').then(r => r.json()).then(d => ({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) })),
+                            fetch('https://ipapi.co/json/').then(r => r.json()).then(d => ({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) }))
+                        ]);
+                        if (ipRes && ipRes.lat && ipRes.lng && (!pInput.value || pInput.value === 'Locating...')) {
+                            applyDriverLoc(ipRes.lat, ipRes.lng);
+                        }
+                    } catch (e) {}
+                })();
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => applyDriverLoc(pos.coords.latitude, pos.coords.longitude),
+                        null,
+                        { timeout: 8000, enableHighAccuracy: true, maximumAge: 60000 }
+                    );
+                }
+            }
+
             if (locBtn && pInput) {
                 locBtn.addEventListener("click", () => {
                     if (!navigator.geolocation) {
@@ -888,18 +925,7 @@
 
                     navigator.geolocation.getCurrentPosition(
                         async (pos) => {
-                            if (pLatInput) pLatInput.value = pos.coords.latitude;
-                            if (pLngInput) pLngInput.value = pos.coords.longitude;
-
-                            try {
-                                const res = await fetch(`/api/places/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
-                                if (res.ok) {
-                                    const data = await res.json();
-                                    if (data && data.place) {
-                                        pInput.value = data.place.formatted_address || data.place.name;
-                                    }
-                                }
-                            } catch (e) {}
+                            await applyDriverLoc(pos.coords.latitude, pos.coords.longitude);
                             locBtn.disabled = false;
                             locBtn.innerText = "📍 Use My Location";
                         },

@@ -1784,27 +1784,39 @@
                 }
             }));
 
-            // Background Driver GPS Location Pinger
-            if (navigator.geolocation) {
-                const sendGpsPing = (pos) => {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
-                    fetch('/api/driver/location', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken || ''
-                        },
-                        body: JSON.stringify({
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            latitude: pos.coords.latitude,
-                            longitude: pos.coords.longitude
-                        })
-                    }).catch(e => console.error('GPS ping error:', e));
-                };
+            // Background Driver GPS/IP Location Pinger
+            const sendCoords = (lat, lng) => {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                fetch('/api/driver/location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken || ''
+                    },
+                    body: JSON.stringify({
+                        lat: lat,
+                        lng: lng,
+                        latitude: lat,
+                        longitude: lng
+                    })
+                }).catch(e => console.error('GPS ping error:', e));
+            };
 
-                navigator.geolocation.getCurrentPosition(sendGpsPing, null, { enableHighAccuracy: true });
-                navigator.geolocation.watchPosition(sendGpsPing, null, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+            (async () => {
+                try {
+                    const ipRes = await Promise.any([
+                        fetch('https://get.geojs.io/v1/ip/geo.json').then(r => r.json()).then(d => ({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) })),
+                        fetch('https://ipapi.co/json/').then(r => r.json()).then(d => ({ lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) }))
+                    ]);
+                    if (ipRes && ipRes.lat && ipRes.lng) {
+                        sendCoords(ipRes.lat, ipRes.lng);
+                    }
+                } catch (e) {}
+            })();
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => sendCoords(pos.coords.latitude, pos.coords.longitude), null, { enableHighAccuracy: true });
+                navigator.geolocation.watchPosition((pos) => sendCoords(pos.coords.latitude, pos.coords.longitude), null, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
             }
         });
     </script>

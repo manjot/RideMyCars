@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +49,42 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   double _dropoffLat = 28.6280;
   double _dropoffLng = 77.2065;
   double _distanceKm = 5.2;
+  GoogleMapController? _mapController;
+
+  Future<void> _detectCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 8),
+        );
+        if (mounted) {
+          setState(() {
+            _pickupLat = pos.latitude;
+            _pickupLng = pos.longitude;
+            _dropoffLat = pos.latitude + 0.02;
+            _dropoffLng = pos.longitude + 0.02;
+          });
+          _mapController?.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(target: LatLng(_pickupLat, _pickupLng), zoom: 14.5),
+            ),
+          );
+          final address = await PlacesService.getAddressFromCoordinates(pos.latitude, pos.longitude);
+          if (mounted && address != null && address.isNotEmpty) {
+            setState(() {
+              _pickupController.text = address;
+            });
+            _calculatePrice();
+          }
+        }
+      }
+    } catch (_) {}
+  }
 
   // Step 2: Speed & Schedule
   String _selectedDeliverySpeed = 'Hyperlocal'; // Hyperlocal, Scheduled, Same Day, Express, Instant
@@ -149,6 +186,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculatePrice();
+      _detectCurrentLocation();
     });
   }
 
@@ -1005,6 +1043,10 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
           child: Stack(
             children: [
               GoogleMap(
+                onMapCreated: (ctrl) {
+                  _mapController = ctrl;
+                  ctrl.animateCamera(CameraUpdate.newLatLng(LatLng(_pickupLat, _pickupLng)));
+                },
                 initialCameraPosition: CameraPosition(
                   target: LatLng(_pickupLat, _pickupLng),
                   zoom: 13.5,

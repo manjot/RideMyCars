@@ -789,6 +789,18 @@
 
                     updateNearbyCouriers(defaultLat, defaultLng);
 
+                    const curPLat = parseFloat(pLatInput?.value);
+                    const curPLng = parseFloat(pLngInput?.value);
+                    if (!isNaN(curPLat) && !isNaN(curPLng)) {
+                        gMapInstance.setCenter({ lat: curPLat, lng: curPLng });
+                        setPickup(curPLat, curPLng, false);
+                    }
+                    const curDLat = parseFloat(dLatInput?.value);
+                    const curDLng = parseFloat(dLngInput?.value);
+                    if (!isNaN(curDLat) && !isNaN(curDLng)) {
+                        setDropoff(curDLat, curDLng, false);
+                    }
+
                     gMapInstance.addListener('click', function(e) {
                         const lat = e.latLng.lat();
                         const lng = e.latLng.lng();
@@ -1011,23 +1023,53 @@
                 defaultLat = lat;
                 defaultLng = lng;
 
-                if (mapInstance) {
-                    mapInstance.setCenter({ lat, lng });
-                    mapInstance.setZoom(isGps ? 15 : 13);
-                }
+                const centerActiveMap = () => {
+                    if (gMapInstance && typeof google !== 'undefined') {
+                        gMapInstance.setCenter({ lat: Number(lat), lng: Number(lng) });
+                        gMapInstance.setZoom(isGps ? 15 : 14);
+                        if (gPickupMarker) {
+                            gPickupMarker.setPosition({ lat: Number(lat), lng: Number(lng) });
+                        }
+                    } else if (lMapInstance) {
+                        lMapInstance.setView([lat, lng], isGps ? 15 : 14);
+                        if (lPickupMarker) {
+                            lPickupMarker.setLatLng([lat, lng]);
+                        }
+                    } else {
+                        setTimeout(centerActiveMap, 100);
+                    }
+                };
+                centerActiveMap();
+
                 setPickup(lat, lng, true);
+                updateNearbyCouriers(lat, lng);
             };
 
             const fetchIpLocation = async () => {
                 try {
-                    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
-                    if (res.ok) {
-                        const data = await res.json();
-                        const lat = parseFloat(data.latitude);
-                        const lng = parseFloat(data.longitude);
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            applyAutoLocation(lat, lng, false);
+                    let lat = null, lng = null;
+                    try {
+                        const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { cache: 'no-store' });
+                        if (res.ok) {
+                            const data = await res.json();
+                            lat = parseFloat(data.latitude);
+                            lng = parseFloat(data.longitude);
                         }
+                    } catch (e1) {}
+
+                    if (isNaN(lat) || isNaN(lng) || !lat) {
+                        try {
+                            const res2 = await fetch('https://ipapi.co/json/');
+                            if (res2.ok) {
+                                const data2 = await res2.json();
+                                lat = parseFloat(data2.latitude);
+                                lng = parseFloat(data2.longitude);
+                            }
+                        } catch (e2) {}
+                    }
+
+                    if (!isNaN(lat) && !isNaN(lng) && lat) {
+                        applyAutoLocation(lat, lng, false);
                     }
                 } catch (e) {
                     console.warn("IP geolocation fallback failed:", e);
@@ -1035,25 +1077,19 @@
             };
 
             if (navigator.geolocation) {
+                // Request fast IP in parallel so map centers instantly even before user clicks "Allow" on GPS
+                fetchIpLocation();
+
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         applyAutoLocation(pos.coords.latitude, pos.coords.longitude, true);
                     },
                     (err) => {
-                        console.warn("GPS auto-detect failed, using IP fallback:", err);
-                        if (!autoLocationResolved) {
-                            fetchIpLocation();
-                        }
-                    },
-                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 300000 }
-                );
-
-                // If GPS takes more than 1.5s (e.g. pending permission prompt), fetch IP in parallel
-                setTimeout(() => {
-                    if (!autoLocationResolved) {
+                        console.warn("GPS auto-detect failed, using IP location:", err);
                         fetchIpLocation();
-                    }
-                }, 1500);
+                    },
+                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+                );
             } else {
                 fetchIpLocation();
             }
