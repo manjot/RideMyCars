@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../core/api/api_client.dart';
-import '../core/constants/api_constants.dart';
 import '../core/storage/token_storage.dart';
 
 class SupportedCountry {
