@@ -659,8 +659,21 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
 
 // Unified Ride Cancellation Endpoint (Supports Riders, Guests, Drivers & Admins)
 $unifiedCancelRideHandler = function ($id, \Illuminate\Http\Request $request) {
-    $ride = \App\Models\Ride::find($id);
+    $rawId = trim((string)$id);
+    $cleanId = ltrim($rawId, '#');
+    $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
+
+    $ride = \App\Models\Ride::where('id', $id)->orWhere('id', $cleanId)->orWhere('ride_code', $rawId)->first();
     if (!$ride) {
+        $del = \App\Models\PackageDelivery::where('id', $id)->orWhere('id', $cleanId)->first();
+        if ($del) {
+            return app(\App\Http\Controllers\Api\RideController::class)->updateStatus($request->merge(['status' => 'cancelled']), $id);
+        }
+        $bk = \App\Models\DriverBooking::where('id', $id)->orWhere('id', $cleanId)->first();
+        if ($bk) {
+            return app(\App\Http\Controllers\Api\RideController::class)->updateStatus($request->merge(['status' => 'cancelled']), $id);
+        }
+
         session()->forget('active_guest_ride_id');
         return response()->json([
             'success' => true,

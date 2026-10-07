@@ -939,8 +939,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Future<void> _showCancelTripDialog(BuildContext context, Map<String, dynamic> ride, DriverProvider driver) async {
-    final rideId = int.tryParse(ride['id']?.toString() ?? '0') ?? 0;
-    if (rideId <= 0) return;
+    final rawId = ride['id'] ?? ride['ride_id'] ?? ride['booking_id'] ?? ride['package_delivery_id'] ?? ride['code'] ?? '';
+    final cleanIdStr = rawId.toString().replaceAll(RegExp(r'[^0-9]'), '');
+    final rideId = int.tryParse(cleanIdStr) ?? (int.tryParse(rawId.toString()) ?? 0);
 
     String selectedReason = 'Passenger no-show';
     final reasons = [
@@ -1099,13 +1100,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         ),
       );
 
-      final ok = await driver.cancelRide(rideId, reason: selectedReason);
+      final ok = await driver.cancelRide(rideId > 0 ? rideId : rawId, reason: selectedReason, fallbackRide: ride);
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         if (ok) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✓ Trip #$rideId has been cancelled. You are now available for new rides.'),
+              content: Text('✓ Trip ${rideId > 0 ? "#$rideId " : ""}has been cancelled. You are now available for new rides.'),
               backgroundColor: AppColors.success,
             ),
           );
@@ -1901,9 +1902,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       );
 
                       if (confirmed == true) {
+                        final sId = int.tryParse(item['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0;
                         final ok = await driver.verifyBooking(
                           serviceType: type,
-                          serviceId: item['id'],
+                          serviceId: sId,
                           action: 'reject',
                           rejectionReason: 'Driver schedule or vehicle mismatch',
                         );
@@ -1928,9 +1930,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   flex: 3,
                   child: ElevatedButton(
                     onPressed: () async {
+                      final sId = int.tryParse(item['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0;
                       final ok = await driver.verifyBooking(
                         serviceType: type,
-                        serviceId: item['id'],
+                        serviceId: sId,
                         action: 'approve',
                       );
                       if (context.mounted) {

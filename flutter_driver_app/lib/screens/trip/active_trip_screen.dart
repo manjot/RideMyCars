@@ -188,8 +188,9 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   }
 
   Future<void> _showCancelDialog() async {
-    final rideId = int.tryParse(_ride['id']?.toString() ?? '0') ?? 0;
-    if (rideId <= 0) return;
+    final rawId = _ride['id'] ?? _ride['ride_id'] ?? _ride['booking_id'] ?? _ride['package_delivery_id'] ?? _ride['code'] ?? '';
+    final cleanIdStr = rawId.toString().replaceAll(RegExp(r'[^0-9]'), '');
+    final rideId = int.tryParse(cleanIdStr) ?? (int.tryParse(rawId.toString()) ?? 0);
 
     String selectedReason = 'Passenger no-show';
     final reasons = [
@@ -337,7 +338,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     if (confirmed == true && mounted) {
       setState(() => _isUpdating = true);
       final driver = Provider.of<DriverProvider>(context, listen: false);
-      final ok = await driver.cancelRide(rideId, reason: selectedReason);
+      final ok = await driver.cancelRide(rideId > 0 ? rideId : rawId, reason: selectedReason, fallbackRide: _ride);
 
       if (!mounted) return;
       setState(() => _isUpdating = false);
@@ -345,7 +346,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✓ Trip #$rideId has been cancelled.'),
+            content: Text('✓ Trip ${rideId > 0 ? "#$rideId " : ""}has been cancelled.'),
             backgroundColor: AppColors.success,
           ),
         );

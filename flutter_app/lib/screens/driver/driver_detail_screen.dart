@@ -27,13 +27,12 @@ class DriverDetailScreen extends StatefulWidget {
 class _DriverDetailScreenState extends State<DriverDetailScreen> {
   // Service Type Tabs
   final List<String> _serviceTypes = [
-    'Hire Driver',
     'Hourly Driver',
     'Daily Driver',
     'Outstation',
-    'Package',
+    'Weekly Package',
   ];
-  String _selectedServiceType = 'Hire Driver';
+  String _selectedServiceType = 'Hourly Driver';
 
   // Routing & Locations
   final TextEditingController _pickupController = TextEditingController();
@@ -74,10 +73,12 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
       currentMomoPhone: _momoPhone,
       currentMomoNetwork: _momoNetwork,
       serviceType: 'driver',
+      showCash: false,
+      showWallet: false,
     );
     if (result != null) {
       setState(() {
-        _paymentMethod = result.method;
+        _paymentMethod = (result.method == 'cash' || result.method == 'wallet') ? 'stripe' : result.method;
         _momoPhone = result.momoPhone;
         _momoNetwork = result.momoNetwork ?? 'MTN';
       });
@@ -101,6 +102,9 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
   @override
   void initState() {
     super.initState();
+    if (_paymentMethod == 'cash') {
+      _paymentMethod = 'stripe';
+    }
     if (widget.initialPickupLocation != null &&
         widget.initialPickupLocation!.isNotEmpty) {
       _pickupController.text = widget.initialPickupLocation!;
@@ -135,16 +139,16 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
   void _onServiceTypeSelected(String st) {
     setState(() {
       _selectedServiceType = st;
-      if (st == 'Daily Driver') {
+      if (st.contains('Daily')) {
         _durationType = 'daily';
         _durationCount = 1;
-      } else if (st == 'Hourly Driver') {
+      } else if (st.contains('Hourly')) {
         _durationType = 'hourly';
         _durationCount = 4;
-      } else if (st == 'Outstation') {
+      } else if (st.contains('Outstation')) {
         _durationType = 'daily';
         _durationCount = 2;
-      } else if (st == 'Package') {
+      } else if (st.contains('Weekly') || st.contains('Package')) {
         _durationType = 'weekly';
         _durationCount = 1;
       } else {
@@ -677,33 +681,43 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.2),
+                  color: const Color(0xFF10B981).withOpacity(0.18),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
                 ),
                 child: const Text(
-                  'RIDEMYCARS DRIVER HIRING',
+                  '🚗 DRIVER HIRING',
                   style: TextStyle(
                     color: Color(0xFF34D399),
                     fontSize: 9.5,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
-              const Spacer(),
-              const Text(
-                '🛡️ Verified & Insured',
-                style: TextStyle(color: Color(0xFF34D399), fontSize: 10.5, fontWeight: FontWeight.bold),
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.verified_user_rounded, color: Color(0xFF10B981), size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    'Verified & Insured',
+                    style: TextStyle(color: Color(0xFF34D399), fontSize: 10.5, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           const Text(
             'Hire a Personal or Commercial Driver',
             style: TextStyle(
@@ -726,9 +740,10 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   CircleAvatar(
                     radius: 24,
@@ -751,7 +766,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                           )
                         : null,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -760,56 +775,76 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                           'PRE-SELECTED DRIVER',
                           style: TextStyle(
                             color: Color(0xFF34D399),
-                            fontSize: 9.5,
+                            fontSize: 9,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 0.6,
+                            letterSpacing: 0.5,
                           ),
                         ),
+                        const SizedBox(height: 1),
                         Text(
                           widget.driver!.name,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 15,
+                            fontSize: 14.5,
                             fontWeight: FontWeight.w900,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
-                        Row(
+                        const SizedBox(height: 3),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 3,
                           children: [
-                            const Icon(Icons.star_rounded, color: Color(0xFFFFDC00), size: 14),
-                            const SizedBox(width: 2),
-                            Text(
-                              '${widget.driver!.rating.toStringAsFixed(1)} • ${widget.driver!.totalTrips} Trips',
-                              style: const TextStyle(
-                                color: Color(0xFFFFDC00),
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded, color: Color(0xFFFFDC00), size: 13),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${widget.driver!.rating.toStringAsFixed(1)} (${widget.driver!.totalTrips})',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFDC00),
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '🛡️ ${widget.driver!.experienceYears}+ Yrs',
-                              style: const TextStyle(color: Colors.white70, fontSize: 11),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${widget.driver!.experienceYears}+ Yrs',
+                                style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
                     ),
-                    child: Text(
-                      '$_currencySymbol${widget.driver!.hourlyRate.toStringAsFixed(0)}/hr',
-                      style: const TextStyle(
-                        color: Color(0xFF34D399),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '$_currencySymbol${widget.driver!.hourlyRate.toStringAsFixed(0)}/hr',
+                        style: const TextStyle(
+                          color: Color(0xFF34D399),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                   ),
@@ -850,27 +885,45 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
             child: Row(
               children: _serviceTypes.map((st) {
                 final isSelected = _selectedServiceType == st;
+                IconData icon;
+                if (st.contains('Hourly')) {
+                  icon = Icons.access_time_filled_rounded;
+                } else if (st.contains('Daily')) {
+                  icon = Icons.calendar_today_rounded;
+                } else if (st.contains('Outstation')) {
+                  icon = Icons.alt_route_rounded;
+                } else {
+                  icon = Icons.all_inclusive_rounded;
+                }
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
                     onTap: () => _onServiceTypeSelected(st),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelected ? const Color(0xFF10B981) : const Color(0xFF0F172A),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected ? const Color(0xFF10B981) : Colors.white12,
                         ),
                       ),
-                      child: Text(
-                        st,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white70,
-                          fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 14, color: isSelected ? Colors.white : Colors.white60),
+                          const SizedBox(width: 6),
+                          Text(
+                            st,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -1826,57 +1879,86 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(
+                  color: _paymentMethod == 'momo'
+                      ? const Color(0xFFFFDC00).withOpacity(0.4)
+                      : const Color(0xFF6366F1).withOpacity(0.4),
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: _paymentMethod == 'stripe'
-                          ? const Color(0xFF6366F1)
-                          : _paymentMethod == 'momo'
-                              ? const Color(0xFFFFCC00)
-                              : _paymentMethod == 'wallet'
-                                  ? const Color(0xFFF59E0B)
-                                  : const Color(0xFF10B981),
+                      color: _paymentMethod == 'momo'
+                          ? const Color(0xFFFFDC00)
+                          : const Color(0xFF6366F1),
                       borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_paymentMethod == 'momo'
+                                  ? const Color(0xFFFFDC00)
+                                  : const Color(0xFF6366F1))
+                              .withOpacity(0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     alignment: Alignment.center,
-                    child: _paymentMethod == 'stripe'
-                        ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))
-                        : _paymentMethod == 'momo'
-                            ? const Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 16))
-                            : _paymentMethod == 'wallet'
-                                ? const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18)
-                                : const Icon(Icons.payments_rounded, color: Colors.white, size: 18),
+                    child: _paymentMethod == 'momo'
+                        ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
+                        : const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _paymentMethod == 'stripe'
-                              ? 'Stripe (Cards & Apple Pay)'
-                              : _paymentMethod == 'momo'
-                                  ? 'MoMo Pay ($_momoNetwork)'
-                                  : _paymentMethod == 'wallet'
-                                      ? 'RideMyCars Wallet'
-                                      : 'Cash Direct Pay',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 2,
+                          children: [
+                            Text(
+                              _paymentMethod == 'momo'
+                                  ? 'MoMo Pay'
+                                  : 'Stripe',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _paymentMethod == 'momo'
+                                    ? const Color(0xFFFFDC00).withOpacity(0.2)
+                                    : const Color(0xFF6366F1).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                _paymentMethod == 'momo'
+                                    ? '📱 MOBILE MONEY'
+                                    : '💳 CARDS & APPLE PAY',
+                                style: TextStyle(
+                                  color: _paymentMethod == 'momo'
+                                      ? const Color(0xFFFFDC00)
+                                      : const Color(0xFF818CF8),
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _paymentMethod == 'stripe'
-                              ? 'Pre-authorization hold secured by Stripe'
-                              : _paymentMethod == 'momo'
-                                  ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number'}'
-                                  : _paymentMethod == 'wallet'
-                                      ? 'Pay directly with in-app balance'
-                                      : 'Pay personal chauffeur physical cash upon trip completion',
+                          _paymentMethod == 'momo'
+                              ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
+                              : 'Pre-authorization hold secured by Stripe',
                           style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -1961,28 +2043,31 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
                   )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        '🚀 REQUEST DRIVER NOW',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          '🚀 REQUEST DRIVER NOW',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '($_currencySymbol${_totalPrice.toStringAsFixed(2)})',
-                        style: const TextStyle(
-                          color: Color(0xFFFFB703),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
+                        const SizedBox(width: 6),
+                        Text(
+                          '($_currencySymbol${_totalPrice.toStringAsFixed(2)})',
+                          style: const TextStyle(
+                            color: Color(0xFFFFB703),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
           ),
         ),

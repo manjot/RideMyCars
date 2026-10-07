@@ -94,6 +94,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       currentMomoPhone: _momoPhone,
       currentMomoNetwork: _momoNetwork,
       serviceType: 'delivery',
+      showCash: true,
     );
     if (result != null) {
       setState(() {
@@ -1698,7 +1699,14 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.12)),
+              border: Border.all(
+                color: _paymentMethod == 'stripe'
+                    ? const Color(0xFF6366F1).withOpacity(0.4)
+                    : (_paymentMethod == 'momo'
+                        ? const Color(0xFFFFDC00).withOpacity(0.4)
+                        : const Color(0xFF10B981).withOpacity(0.4)),
+                width: 1.2,
+              ),
             ),
             child: Row(
               children: [
@@ -1708,47 +1716,87 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                   decoration: BoxDecoration(
                     color: _paymentMethod == 'stripe'
                         ? const Color(0xFF6366F1)
-                        : _paymentMethod == 'momo'
-                            ? const Color(0xFFFFCC00)
-                            : _paymentMethod == 'wallet'
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFF10B981),
+                        : (_paymentMethod == 'momo'
+                            ? const Color(0xFFFFDC00)
+                            : const Color(0xFF10B981)),
                     borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (_paymentMethod == 'stripe'
+                                ? const Color(0xFF6366F1)
+                                : (_paymentMethod == 'momo'
+                                    ? const Color(0xFFFFDC00)
+                                    : const Color(0xFF10B981)))
+                            .withOpacity(0.35),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   alignment: Alignment.center,
                   child: _paymentMethod == 'stripe'
                       ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))
-                      : _paymentMethod == 'momo'
-                          ? const Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 18))
-                          : _paymentMethod == 'wallet'
-                              ? const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20)
-                              : const Icon(Icons.payments_rounded, color: Colors.white, size: 20),
+                      : (_paymentMethod == 'momo'
+                          ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
+                          : const Icon(Icons.payments_rounded, color: Colors.white, size: 22)),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _paymentMethod == 'stripe'
-                            ? 'Stripe (Cards & Apple Pay)'
-                            : _paymentMethod == 'momo'
-                                ? 'MoMo Pay ($_momoNetwork)'
-                                : _paymentMethod == 'wallet'
-                                    ? 'RideMyCars Wallet'
-                                    : 'Cash Direct Pay',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
+                        children: [
+                          Text(
+                            _paymentMethod == 'stripe'
+                                ? 'Stripe'
+                                : (_paymentMethod == 'momo'
+                                    ? 'MoMo Pay'
+                                    : 'Cash Direct Pay'),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _paymentMethod == 'stripe'
+                                  ? const Color(0xFF6366F1).withOpacity(0.2)
+                                  : (_paymentMethod == 'momo'
+                                      ? const Color(0xFFFFDC00).withOpacity(0.2)
+                                      : const Color(0xFF10B981).withOpacity(0.2)),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              _paymentMethod == 'stripe'
+                                  ? '💳 CARDS & APPLE PAY'
+                                  : (_paymentMethod == 'momo'
+                                      ? '📱 MOBILE MONEY'
+                                      : '💵 PAY ON DELIVERY'),
+                              style: TextStyle(
+                                color: _paymentMethod == 'stripe'
+                                    ? const Color(0xFF818CF8)
+                                    : (_paymentMethod == 'momo'
+                                        ? const Color(0xFFFFDC00)
+                                        : const Color(0xFF34D399)),
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _paymentMethod == 'stripe'
                             ? 'Secured card & digital wallet hold'
-                            : _paymentMethod == 'momo'
-                                ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number'}'
-                                : _paymentMethod == 'wallet'
-                                    ? 'Instant deduction from verified wallet balance'
-                                    : 'Pay courier physical cash on parcel handover',
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            : (_paymentMethod == 'momo'
+                                ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
+                                : 'Pay courier physical cash on parcel handover'),
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -1948,11 +1996,14 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                 ),
                 child: _isSubmitting
                     ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.black))
-                    : Text(
-                        _currentStep == 5
-                            ? '🚀 Dispatch & Pay ($sym${_totalAmount.toStringAsFixed(2)})'
-                            : 'Next: Step ${_currentStep + 1} →',
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13.5),
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _currentStep == 5
+                              ? '🚀 Dispatch & Pay ($sym${_totalAmount.toStringAsFixed(2)})'
+                              : 'Next: Step ${_currentStep + 1} →',
+                          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13.5),
+                        ),
                       ),
               ),
             ),

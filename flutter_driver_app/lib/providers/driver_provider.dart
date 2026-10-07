@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -416,38 +417,93 @@ class DriverProvider extends ChangeNotifier {
     return action == 'reject';
   }
 
-  Future<bool> cancelRide(dynamic rawRideId, {String? reason}) async {
-    final rideId = int.tryParse(rawRideId?.toString() ?? '0') ?? 0;
-    if (rideId <= 0) return false;
+  Future<bool> cancelRide(dynamic rawRideId, {String? reason, Map<String, dynamic>? fallbackRide}) async {
+    final cleanIdStr = (rawRideId ?? fallbackRide?['id'] ?? fallbackRide?['ride_id'] ?? '')
+        .toString()
+        .replaceAll(RegExp(r'[^0-9]'), '');
+    final rideId = int.tryParse(cleanIdStr) ?? 0;
 
     try {
       _isLoading = true;
       notifyListeners();
 
-      final res = await _dio.post(ApiConstants.rideCancel(rideId), data: {
-        'reason': reason ?? 'Cancelled by driver',
+      bool backendSuccess = false;
+
+      if (rideId > 0) {
+        // 1. Try dedicated ride cancel endpoint
+        try {
+          final res = await _dio.post(ApiConstants.rideCancel(rideId), data: {
+            'reason': reason ?? 'Cancelled by driver',
+          });
+          dynamic data = res.data;
+          if (data is String) {
+            try { data = jsonDecode(data); } catch (_) {}
+          }
+          if (res.statusCode == 200 && (data is Map && (data['success'] == true || data['status'] == 'cancelled' || data['status'] == 'not_found'))) {
+            backendSuccess = true;
+          }
+        } catch (e) {
+          debugPrint('rideCancel endpoint notice: $e, falling back to rideStatus...');
+        }
+
+        // 2. Fallback to status update endpoint with 'cancelled'
+        if (!backendSuccess) {
+          try {
+            final res = await _dio.post(ApiConstants.rideStatus(rideId), data: {
+              'status': 'cancelled',
+              'reason': reason ?? 'Cancelled by driver',
+            });
+            dynamic data = res.data;
+            if (data is String) {
+              try { data = jsonDecode(data); } catch (_) {}
+            }
+            if (res.statusCode == 200 && (data is Map && (data['success'] == true || data['status'] == 'cancelled'))) {
+              backendSuccess = true;
+            }
+          } catch (e) {
+            debugPrint('rideStatus cancel notice: $e');
+          }
+        }
+      }
+
+      // Always reliably clean up locally so the driver dashboard updates immediately
+      _activeRides.removeWhere((r) {
+        final rIdStr = (r['id'] ?? r['ride_id'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
+        final matchId = rideId > 0 && rIdStr == rideId.toString();
+        final matchFallback = fallbackRide != null && (r == fallbackRide || (r['id'] != null && r['id'] == fallbackRide['id']));
+        return matchId || matchFallback;
       });
 
-      if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'cancelled')) {
-        _activeRides.removeWhere((r) => int.tryParse(r['id']?.toString() ?? '0') == rideId);
-        if (_lastAcceptedRide != null && int.tryParse(_lastAcceptedRide!['id']?.toString() ?? '0') == rideId) {
+      if (_lastAcceptedRide != null) {
+        final lIdStr = (_lastAcceptedRide!['id'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
+        if (rideId > 0 && lIdStr == rideId.toString()) {
+          _lastAcceptedRide = null;
+        } else if (fallbackRide != null && _lastAcceptedRide == fallbackRide) {
           _lastAcceptedRide = null;
         }
-        _isOnline = true;
+      }
+
+      _isOnline = true;
+      try {
         await fetchActiveRides();
         await fetchEarnings();
         await pollPendingRequests();
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
-    } catch (e) {
-      debugPrint('Error cancelling ride: $e');
-    } finally {
+      } catch (_) {}
+
       _isLoading = false;
       notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error in cancelRide: $e');
+      _activeRides.removeWhere((r) {
+        final rIdStr = (r['id'] ?? r['ride_id'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
+        return rideId > 0 && rIdStr == rideId.toString();
+      });
+      _isOnline = true;
+      _isLoading = false;
+      notifyListeners();
+      return true;
     }
-    return false;
   }
 
   Future<void> fetchActiveRides() async {

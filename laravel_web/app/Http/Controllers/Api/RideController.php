@@ -1233,8 +1233,22 @@ class RideController extends Controller
      */
     public function cancel(Request $request, $id): JsonResponse
     {
-        $ride = Ride::find($id);
+        $rawId = trim((string)$id);
+        $cleanId = ltrim($rawId, '#');
+        $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
+
+        $ride = Ride::where('id', $id)->orWhere('id', $cleanId)->orWhere('ride_code', $rawId)->first();
         if (!$ride) {
+            // Also check PackageDelivery and DriverBooking models
+            $del = \App\Models\PackageDelivery::where('id', $id)->orWhere('id', $cleanId)->first();
+            if ($del) {
+                return $this->updateStatus($request->merge(['status' => 'cancelled']), $id);
+            }
+            $bk = \App\Models\DriverBooking::where('id', $id)->orWhere('id', $cleanId)->first();
+            if ($bk) {
+                return $this->updateStatus($request->merge(['status' => 'cancelled']), $id);
+            }
+
             session()->forget('active_guest_ride_id');
             return response()->json([
                 'success' => true,

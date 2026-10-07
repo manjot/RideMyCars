@@ -64,10 +64,12 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
       currentMomoPhone: _momoPhone,
       currentMomoNetwork: _momoNetwork,
       serviceType: 'rental',
+      showCash: false,
+      showWallet: false,
     );
     if (result != null) {
       setState(() {
-        _paymentMethod = result.method;
+        _paymentMethod = (result.method == 'cash' || result.method == 'wallet') ? 'stripe' : result.method;
         _momoPhone = result.momoPhone;
         _momoNetwork = result.momoNetwork ?? 'MTN';
       });
@@ -83,6 +85,9 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
   @override
   void initState() {
     super.initState();
+    if (_paymentMethod == 'cash') {
+      _paymentMethod = 'stripe';
+    }
     _startDate = DateTime.now();
     _pickupTime = const TimeOfDay(hour: 10, minute: 0);
     _returnDate = DateTime.now().add(const Duration(days: 3));
@@ -885,9 +890,12 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '$sym${dailyRate.toStringAsFixed(2)}',
-                    style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 20, fontWeight: FontWeight.w900),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '$sym${dailyRate.toStringAsFixed(2)}',
+                      style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 20, fontWeight: FontWeight.w900),
+                    ),
                   ),
                   Text(
                     'per day',
@@ -900,7 +908,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
 
           const SizedBox(height: 10),
 
-          // 150-Point Check Badge
+          // 150-Point Check Badge (Zero Overflow Guarantee)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -916,7 +924,8 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                 Flexible(
                   child: Text(
                     'Passed 150-Point Safety & Mechanical Check',
-                    style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF34D399), fontSize: 10.5, fontWeight: FontWeight.bold),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -1658,10 +1667,18 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Estimated Total:', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
-              Text(
-                '$sym${totalAmount.toStringAsFixed(2)}',
-                style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 20, fontWeight: FontWeight.w900),
+              const Expanded(
+                child: Text('Estimated Total:', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$sym${totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 20, fontWeight: FontWeight.w900),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1690,11 +1707,14 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('20% Deposit Online', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                        const Text('20% Deposit Online', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 2),
-                        Text(
-                          '$sym${(totalAmount * 0.20).toStringAsFixed(2)}',
-                          style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 13),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '$sym${(totalAmount * 0.20).toStringAsFixed(2)}',
+                            style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 13),
+                          ),
                         ),
                       ],
                     ),
@@ -1719,11 +1739,14 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Full Payment (100%)', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                        const Text('Full Payment (100%)', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 2),
-                        Text(
-                          '$sym${totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 13),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '$sym${totalAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 13),
+                          ),
                         ),
                       ],
                     ),
@@ -1751,9 +1774,14 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                       child: Text('Payable Online Today:', style: TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '$sym${payNowDeposit.toStringAsFixed(2)}',
-                      style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w900, fontSize: 14),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '$sym${payNowDeposit.toStringAsFixed(2)}',
+                          style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w900, fontSize: 14),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1766,9 +1794,14 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         child: Text('Remaining Balance at Pickup:', style: TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '$sym${balanceAtPickup.toStringAsFixed(2)}',
-                        style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900, fontSize: 14),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '$sym${balanceAtPickup.toStringAsFixed(2)}',
+                            style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900, fontSize: 14),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1779,7 +1812,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
 
           const SizedBox(height: 14),
 
-          // Unified Payment Method Selector Card
+          // Unified Payment Method Selector Card (Cash Hidden for Rental)
           Text('Payment Method', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           GestureDetector(
@@ -1789,57 +1822,86 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(
+                  color: _paymentMethod == 'momo'
+                      ? const Color(0xFFFFDC00).withOpacity(0.4)
+                      : const Color(0xFF6366F1).withOpacity(0.4),
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: _paymentMethod == 'stripe'
-                          ? const Color(0xFF6366F1)
-                          : _paymentMethod == 'momo'
-                              ? const Color(0xFFFFCC00)
-                              : _paymentMethod == 'wallet'
-                                  ? const Color(0xFFF59E0B)
-                                  : const Color(0xFF10B981),
+                      color: _paymentMethod == 'momo'
+                          ? const Color(0xFFFFDC00)
+                          : const Color(0xFF6366F1),
                       borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_paymentMethod == 'momo'
+                                  ? const Color(0xFFFFDC00)
+                                  : const Color(0xFF6366F1))
+                              .withOpacity(0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     alignment: Alignment.center,
-                    child: _paymentMethod == 'stripe'
-                        ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))
-                        : _paymentMethod == 'momo'
-                            ? const Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 16))
-                            : _paymentMethod == 'wallet'
-                                ? const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18)
-                                : const Icon(Icons.payments_rounded, color: Colors.white, size: 18),
+                    child: _paymentMethod == 'momo'
+                        ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
+                        : const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _paymentMethod == 'stripe'
-                              ? 'Stripe (Cards & Apple Pay)'
-                              : _paymentMethod == 'momo'
-                                  ? 'MoMo Pay ($_momoNetwork)'
-                                  : _paymentMethod == 'wallet'
-                                      ? 'RideMyCars Wallet'
-                                      : 'Cash on Pick-up',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 2,
+                          children: [
+                            Text(
+                              _paymentMethod == 'momo'
+                                  ? 'MoMo Pay'
+                                  : 'Stripe',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _paymentMethod == 'momo'
+                                    ? const Color(0xFFFFDC00).withOpacity(0.2)
+                                    : const Color(0xFF6366F1).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                _paymentMethod == 'momo'
+                                    ? '📱 MOBILE MONEY'
+                                    : '💳 CARDS & APPLE PAY',
+                                style: TextStyle(
+                                  color: _paymentMethod == 'momo'
+                                      ? const Color(0xFFFFDC00)
+                                      : const Color(0xFF818CF8),
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _paymentMethod == 'stripe'
-                              ? 'Secured pre-auth hold via Stripe'
-                              : _paymentMethod == 'momo'
-                                  ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number'}'
-                                  : _paymentMethod == 'wallet'
-                                      ? 'Pay directly with verified in-app balance'
-                                      : 'Pay rental partner physical cash on vehicle pick-up',
+                          _paymentMethod == 'momo'
+                              ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
+                              : 'Secured pre-auth hold via Stripe',
                           style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

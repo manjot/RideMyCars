@@ -48,6 +48,8 @@ class RidePaymentMethodSheet extends StatefulWidget {
   final String? currentMomoPhone;
   final String? currentMomoNetwork;
   final String serviceType; // 'ride', 'rental', 'driver', 'delivery'
+  final bool? showCash;
+  final bool showWallet;
 
   const RidePaymentMethodSheet({
     super.key,
@@ -55,7 +57,18 @@ class RidePaymentMethodSheet extends StatefulWidget {
     this.currentMomoPhone,
     this.currentMomoNetwork,
     this.serviceType = 'ride',
+    this.showCash,
+    this.showWallet = false,
   });
+
+  bool get isCashAllowed {
+    if (showCash == false) return false;
+    final st = serviceType.toLowerCase().trim();
+    if (st == 'rental' || st == 'rent' || st == 'driver' || st == 'driver_booking') {
+      return false;
+    }
+    return showCash ?? true;
+  }
 
   static Future<RidePaymentSelection?> show(
     BuildContext context, {
@@ -63,6 +76,8 @@ class RidePaymentMethodSheet extends StatefulWidget {
     String? currentMomoPhone,
     String? currentMomoNetwork,
     String serviceType = 'ride',
+    bool? showCash,
+    bool showWallet = false,
   }) {
     return showModalBottomSheet<RidePaymentSelection>(
       context: context,
@@ -73,6 +88,8 @@ class RidePaymentMethodSheet extends StatefulWidget {
         currentMomoPhone: currentMomoPhone,
         currentMomoNetwork: currentMomoNetwork,
         serviceType: serviceType,
+        showCash: showCash,
+        showWallet: showWallet,
       ),
     );
   }
@@ -90,6 +107,9 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
   void initState() {
     super.initState();
     _selectedMethod = widget.currentMethod;
+    if (!widget.isCashAllowed && _selectedMethod == 'cash') {
+      _selectedMethod = 'stripe';
+    }
     _momoPhoneController = TextEditingController(text: widget.currentMomoPhone ?? '');
     _momoNetwork = widget.currentMomoNetwork ?? 'MTN';
   }
@@ -125,6 +145,12 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.isCashAllowed && _selectedMethod == 'cash') {
+      _selectedMethod = 'stripe';
+    }
+    if (!widget.showWallet && _selectedMethod == 'wallet') {
+      _selectedMethod = 'stripe';
+    }
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -456,202 +482,205 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-
-            // 3. Cash Direct Pay - Clean design, zero overflow
-            GestureDetector(
-              onTap: () => setState(() => _selectedMethod = 'cash'),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _selectedMethod == 'cash'
-                      ? const Color(0xFF10B981).withOpacity(0.12)
-                      : const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
+            if (widget.isCashAllowed) ...[
+              const SizedBox(height: 12),
+              // 3. Cash Direct Pay - Clean design, zero overflow
+              GestureDetector(
+                onTap: () => setState(() => _selectedMethod = 'cash'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
                     color: _selectedMethod == 'cash'
-                        ? const Color(0xFF10B981)
-                        : Colors.white.withOpacity(0.08),
-                    width: _selectedMethod == 'cash' ? 2 : 1,
+                        ? const Color(0xFF10B981).withOpacity(0.12)
+                        : const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _selectedMethod == 'cash'
+                          ? const Color(0xFF10B981)
+                          : Colors.white.withOpacity(0.08),
+                      width: _selectedMethod == 'cash' ? 2 : 1,
+                    ),
                   ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.payments_rounded, color: Color(0xFF10B981), size: 24),
+                        ),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.payments_rounded, color: Color(0xFF10B981), size: 24),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              const Text(
-                                'Cash Direct Pay',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.18),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
-                                ),
-                                child: Text(
-                                  widget.serviceType == 'rental'
-                                      ? 'PAY ON PICK-UP'
-                                      : (widget.serviceType == 'delivery'
-                                          ? 'PAY ON DELIVERY'
-                                          : 'PAY ON DROP-OFF'),
-                                  style: const TextStyle(
-                                    color: Color(0xFF34D399),
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.serviceType == 'rental'
-                                ? 'Pay rental partner physical cash upon picking up vehicle'
-                                : (widget.serviceType == 'delivery'
-                                    ? 'Pay courier physical cash upon package drop-off'
-                                    : (widget.serviceType == 'driver'
-                                        ? 'Pay personal chauffeur physical cash upon trip completion'
-                                        : 'Pay driver physical cash upon reaching destination (No upfront hold)')),
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11.5,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (_selectedMethod == 'cash')
-                      const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
-                    else
-                      const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 4. RideMyCars In-App Wallet
-            GestureDetector(
-              onTap: () => setState(() => _selectedMethod = 'wallet'),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _selectedMethod == 'wallet'
-                      ? const Color(0xFFF59E0B).withOpacity(0.12)
-                      : const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: _selectedMethod == 'wallet'
-                        ? const Color(0xFFF59E0B)
-                        : Colors.white.withOpacity(0.08),
-                    width: _selectedMethod == 'wallet' ? 2 : 1,
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35)),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFF59E0B), size: 24),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              const Text(
-                                'RideMyCars Wallet',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF59E0B).withOpacity(0.18),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
-                                ),
-                                child: const Text(
-                                  'IN-APP BALANCE',
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                const Text(
+                                  'Cash Direct Pay',
                                   style: TextStyle(
-                                    color: Color(0xFFFBBF24),
-                                    fontSize: 9.5,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.3,
+                                    fontSize: 15,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Instantly debit from your verified RideMyCars in-app wallet balance',
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11.5,
-                              height: 1.3,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    widget.serviceType == 'rental'
+                                        ? 'PAY ON PICK-UP'
+                                        : (widget.serviceType == 'delivery'
+                                            ? 'PAY ON DELIVERY'
+                                            : 'PAY ON DROP-OFF'),
+                                    style: const TextStyle(
+                                      color: Color(0xFF34D399),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.serviceType == 'rental'
+                                  ? 'Pay rental partner physical cash upon picking up vehicle'
+                                  : (widget.serviceType == 'delivery'
+                                      ? 'Pay courier physical cash upon package drop-off'
+                                      : (widget.serviceType == 'driver'
+                                          ? 'Pay personal chauffeur physical cash upon trip completion'
+                                          : 'Pay driver physical cash upon reaching destination (No upfront hold)')),
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 11.5,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (_selectedMethod == 'wallet')
-                      const Icon(Icons.check_circle_rounded, color: Color(0xFFF59E0B), size: 22)
-                    else
-                      const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
-                  ],
+                      const SizedBox(width: 8),
+                      if (_selectedMethod == 'cash')
+                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                      else
+                        const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
+
+            if (widget.showWallet) ...[
+              const SizedBox(height: 12),
+              // 4. RideMyCars In-App Wallet
+              GestureDetector(
+                onTap: () => setState(() => _selectedMethod = 'wallet'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _selectedMethod == 'wallet'
+                        ? const Color(0xFFF59E0B).withOpacity(0.12)
+                        : const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _selectedMethod == 'wallet'
+                          ? const Color(0xFFF59E0B)
+                          : Colors.white.withOpacity(0.08),
+                      width: _selectedMethod == 'wallet' ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF59E0B).withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35)),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFF59E0B), size: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                const Text(
+                                  'RideMyCars Wallet',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF59E0B).withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                                  ),
+                                  child: const Text(
+                                    'IN-APP BALANCE',
+                                    style: TextStyle(
+                                      color: Color(0xFFFBBF24),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Instantly debit from your verified RideMyCars in-app wallet balance',
+                              style: TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 11.5,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (_selectedMethod == 'wallet')
+                        const Icon(Icons.check_circle_rounded, color: Color(0xFFF59E0B), size: 22)
+                      else
+                        const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
 
             // Done Button: Yellow with Bold Black Text
@@ -660,10 +689,17 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
+                  String finalMethod = _selectedMethod;
+                  if (!widget.isCashAllowed && finalMethod == 'cash') {
+                    finalMethod = 'stripe';
+                  }
+                  if (!widget.showWallet && finalMethod == 'wallet') {
+                    finalMethod = 'stripe';
+                  }
                   Navigator.pop(
                     context,
                     RidePaymentSelection(
-                      method: _selectedMethod,
+                      method: finalMethod,
                       momoPhone: _momoPhoneController.text.trim().isNotEmpty
                           ? _momoPhoneController.text.trim()
                           : null,
