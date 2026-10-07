@@ -2548,9 +2548,13 @@ Route::middleware('auth')->prefix('owner')->group(function () {
     Route::post('/rentals/{ride}/approve', [\App\Http\Controllers\OwnerPortalController::class, 'approveRental']);
     Route::post('/rentals/{ride}/reject', [\App\Http\Controllers\OwnerPortalController::class, 'rejectRental']);
     Route::post('/vehicles/create', [\App\Http\Controllers\OwnerPortalController::class, 'storeVehicle']);
+    Route::post('/vehicles', [\App\Http\Controllers\OwnerPortalController::class, 'storeVehicle']);
     Route::post('/vehicles/{vehicle}/update', [\App\Http\Controllers\OwnerPortalController::class, 'updateVehicle']);
+    Route::put('/vehicles/{vehicle}', [\App\Http\Controllers\OwnerPortalController::class, 'updateVehicle']);
     Route::post('/vehicles/{vehicle}/delete', [\App\Http\Controllers\OwnerPortalController::class, 'deleteVehicle']);
+    Route::delete('/vehicles/{vehicle}', [\App\Http\Controllers\OwnerPortalController::class, 'deleteVehicle']);
     Route::post('/vehicles/{vehicle}/toggle-availability', [\App\Http\Controllers\OwnerPortalController::class, 'toggleAvailability']);
+    Route::post('/vehicles/{vehicle}/toggle', [\App\Http\Controllers\OwnerPortalController::class, 'toggleAvailability']);
 });
 
 Route::get('/account', function () {
