@@ -3024,9 +3024,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Select an address above or tap Done',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  const Expanded(
+                    child: Text(
+                      'Select an address above or tap Done',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -3496,9 +3499,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Select an address above or tap Done',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  const Expanded(
+                    child: Text(
+                      'Select an address above or tap Done',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -3923,9 +3929,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Select an address above or tap Done',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  const Expanded(
+                    child: Text(
+                      'Select an address above or tap Done',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
