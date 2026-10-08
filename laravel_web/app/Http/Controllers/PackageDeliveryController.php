@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PackageCategory;
 use App\Models\PackageDelivery;
 use App\Models\PackagePrescription;
 use App\Models\User;
@@ -22,7 +23,20 @@ class PackageDeliveryController extends Controller
      */
     public function index()
     {
-        return view('delivery');
+        $packageCategories = PackageCategory::getActiveCategories();
+        return view('delivery', compact('packageCategories'));
+    }
+
+    /**
+     * Get active package categories for mobile API and frontend.
+     */
+    public function getCategories()
+    {
+        $categories = PackageCategory::getActiveCategories();
+        return response()->json([
+            'success' => true,
+            'data' => $categories,
+        ]);
     }
 
     /**
@@ -38,6 +52,7 @@ class PackageDeliveryController extends Controller
             'delivery_type' => 'nullable|string',
             'package_size' => 'nullable|string|in:Small,Medium,Large',
             'package_weight_kg' => 'nullable|numeric|min:0.1',
+            'package_category' => 'nullable|string',
             'country' => 'nullable|string',
         ]);
 
@@ -76,8 +91,14 @@ class PackageDeliveryController extends Controller
         $perKgRate = (float) ($pricing->delivery_per_kg_rate ?: 0.75);
         $weightAddon = max(0, ((float)($validated['package_weight_kg'] ?? 1.0) - 1.0)) * $perKgRate;
 
+        $packageCategory = trim((string)($validated['package_category'] ?? $request->input('package_category', '')));
+        $serviceFeePercent = PackageCategory::getFeePercentFor($packageCategory);
+        $serviceFeeRate = round($serviceFeePercent / 100, 4);
+        $isPharmeasy = strtolower($packageCategory) === 'pharmeasy';
+        $requiresPrescription = PackageCategory::isPrescriptionMandatory($packageCategory);
+
         $subtotal = round(($baseFare + $distanceRate + $typeAddon + $weightAddon) * $sizeMultiplier, 2);
-        $serviceFee = round($subtotal * 0.05, 2);
+        $serviceFee = round($subtotal * $serviceFeeRate, 2);
         $tax = round($subtotal * 0.05, 2);
         $totalPrice = round($subtotal + $serviceFee + $tax, 2);
 
@@ -87,6 +108,11 @@ class PackageDeliveryController extends Controller
             'per_km_rate' => $perKmRate,
             'subtotal' => $subtotal,
             'service_fee' => $serviceFee,
+            'service_fee_rate' => $serviceFeeRate,
+            'service_fee_percent' => $serviceFeePercent,
+            'is_pharmeasy' => $isPharmeasy,
+            'requires_prescription' => $requiresPrescription,
+            'package_category' => $packageCategory ?: 'Documents',
             'tax' => $tax,
             'total_price' => $totalPrice,
             'currency_symbol' => $pricing->currency_symbol,
@@ -138,8 +164,9 @@ class PackageDeliveryController extends Controller
                 'prohibited_items_acknowledged' => 'required|accepted',
             ]);
 
-            // Mandatory Doctor Prescription validation for Pharmeasy category
-            if (strtolower($validated['package_category']) === 'pharmeasy') {
+            // Mandatory Doctor Prescription validation for categories requiring Rx (e.g. Pharmeasy)
+            $isPrescriptionMandatory = PackageCategory::isPrescriptionMandatory($validated['package_category']);
+            if ($isPrescriptionMandatory) {
                 $hasUploads = $request->hasFile('prescriptions') || $request->hasFile('prescription') || $request->hasFile('files');
                 $hasIds = $request->filled('prescription_ids') && !empty($request->input('prescription_ids'));
                 $hasToken = $request->filled('prescription_temp_token') && PackagePrescription::where('temp_token', $request->input('prescription_temp_token'))->exists();
@@ -147,9 +174,9 @@ class PackageDeliveryController extends Controller
                 if (!$hasUploads && !$hasIds && !$hasToken) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Upload Doctor Prescription is mandatory for Pharmeasy delivery. Please upload at least one valid prescription (JPG, PNG, or PDF).',
+                        'message' => 'Upload Doctor Prescription is mandatory for ' . $validated['package_category'] . ' delivery. Please upload at least one valid prescription (JPG, PNG, or PDF).',
                         'errors' => [
-                            'prescriptions' => ['Doctor prescription is mandatory for Pharmeasy package delivery.']
+                            'prescriptions' => ['Doctor prescription is mandatory for ' . $validated['package_category'] . ' package delivery.']
                         ]
                     ], 422);
                 }
@@ -188,7 +215,7 @@ class PackageDeliveryController extends Controller
                 'recipient_address' => $validated['recipient_address'] ?? $validated['dropoff_location'],
                 'delivery_instructions' => $validated['delivery_instructions'] ?? null,
                 'package_category' => $validated['package_category'],
-                'has_prescription' => strtolower($validated['package_category']) === 'pharmeasy',
+                'has_prescription' => $isPrescriptionMandatory,
                 'package_description' => $validated['package_description'] ?? null,
                 'package_size' => $validated['package_size'],
                 'package_weight_kg' => (float)$validated['package_weight_kg'],
@@ -396,6 +423,9 @@ class PackageDeliveryController extends Controller
                 'created_at' => $p->created_at?->toIso8601String(),
             ])->values()->all() : [],
             'delivery_otp' => $delivery->delivery_otp,
+            'subtotal' => floatval($delivery->subtotal),
+            'service_fee' => floatval($delivery->service_fee),
+            'tax' => floatval($delivery->tax),
             'total_price' => floatval($delivery->total_price),
             'currency' => $delivery->currency,
             'courier' => $courierData,

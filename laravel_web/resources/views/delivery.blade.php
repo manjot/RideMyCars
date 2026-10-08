@@ -363,27 +363,27 @@
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Package Category *</label>
-                            <span x-show="packageCategory === 'Pharmeasy'" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <span x-show="selectedCategoryRequiresRx" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                 <span>💊 Doctor Prescription Required</span>
                             </span>
                         </div>
                         <input type="hidden" name="package_category" x-model="packageCategory">
 
                         <div class="flex flex-wrap gap-2 text-xs font-bold">
-                            <template x-for="cat in ['Documents', 'Clothing', 'Electronics', 'Household items', 'Office supplies', 'Personal belongings', 'Pharmeasy', 'Other']" :key="cat">
-                                <button type="button" @click="selectCategory(cat)"
-                                        :class="packageCategory === cat ? (cat === 'Pharmeasy' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/50' : 'bg-amber-500 text-white shadow-sm') : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
+                            <template x-for="cat in availableCategories" :key="cat.name">
+                                <button type="button" @click="selectCategory(cat.name)"
+                                        :class="packageCategory === cat.name ? (cat.requires_prescription || cat.name === 'Pharmeasy' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/50' : 'bg-amber-500 text-white shadow-sm') : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
                                         class="py-2 px-3.5 rounded-xl transition-all flex items-center gap-1.5">
-                                    <span x-show="cat === 'Pharmeasy'">💊</span>
-                                    <span x-text="cat"></span>
-                                    <span x-show="cat === 'Pharmeasy'" class="px-1.5 py-0.2 rounded-md bg-white/20 text-[9px] uppercase font-black tracking-wider">Rx</span>
+                                    <span x-show="cat.icon" x-text="cat.icon"></span>
+                                    <span x-text="cat.name"></span>
+                                    <span x-show="cat.badge_text" x-text="cat.badge_text" class="px-1.5 py-0.2 rounded-md bg-white/20 text-[9px] uppercase font-black tracking-wider"></span>
                                 </button>
                             </template>
                         </div>
                     </div>
 
-                    <!-- MANDATORY DOCTOR PRESCRIPTION UPLOAD (Pharmeasy) -->
-                    <div x-show="packageCategory === 'Pharmeasy'" 
+                    <!-- MANDATORY DOCTOR PRESCRIPTION UPLOAD (Pharmeasy / Rx Categories) -->
+                    <div x-show="selectedCategoryRequiresRx" 
                          x-transition:enter="transition ease-out duration-300"
                          x-transition:enter-start="opacity-0 transform -translate-y-2"
                          x-transition:enter-end="opacity-100 transform translate-y-0"
@@ -650,8 +650,8 @@
                             <p><strong class="text-gray-900 dark:text-white">Speed:</strong> <span x-text="deliveryType"></span> Delivery</p>
                         </div>
 
-                        <!-- Pharmeasy Prescriptions Summary -->
-                        <template x-if="packageCategory === 'Pharmeasy'">
+                        <!-- Doctor Prescriptions Summary -->
+                        <template x-if="selectedCategoryRequiresRx">
                             <div class="p-4 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-2xl border border-emerald-300 dark:border-emerald-800/50 space-y-2">
                                 <div class="flex items-center justify-between">
                                     <h4 class="font-extrabold text-emerald-900 dark:text-emerald-200 uppercase flex items-center gap-1.5 text-xs">
@@ -725,7 +725,7 @@
                             <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.subtotal || 0).toFixed(2)"></span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                            <span>Service Fee (5%):</span>
+                            <span x-text="'Service Fee (' + (priceBreakdown.service_fee_percent || selectedCategoryServiceFeePercent) + '%):'"></span>
                             <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.service_fee || 0).toFixed(2)"></span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
@@ -1362,6 +1362,7 @@
                 priceBreakdown: {
                     subtotal: 0,
                     service_fee: 0,
+                    service_fee_percent: 5,
                     tax: 0,
                     total_price: 0,
                     currency_symbol: '{{ $currentCurrencySymbol ?? "$" }}'
@@ -1385,6 +1386,7 @@
                     this.$watch('deliveryType', () => this.updatePrice());
                     this.$watch('packageSize', () => this.updatePrice());
                     this.$watch('packageWeight', () => this.updatePrice());
+                    this.$watch('packageCategory', () => this.updatePrice());
                     this.$watch('pickupLat', () => this.updatePrice());
                     this.$watch('dropoffLat', () => this.updatePrice());
 
@@ -1418,6 +1420,7 @@
                                 delivery_type: this.deliveryType,
                                 package_size: this.packageSize,
                                 package_weight_kg: this.packageWeight,
+                                package_category: this.packageCategory,
                                 country: '{{ $currentCountryCode ?? "USA" }}'
                             })
                         });
@@ -1432,20 +1435,49 @@
                     }
                 },
                 isSubmitting: false,
-                selectCategory(cat) {
-                    this.packageCategory = cat;
-                    if (cat === 'Pharmeasy') {
+                availableCategories: @json($packageCategories ?? \App\Models\PackageCategory::getActiveCategories()),
+                get selectedCategoryRequiresRx() {
+                    const cur = this.availableCategories.find(c => c.name.toLowerCase() === (this.packageCategory || '').toLowerCase());
+                    return cur ? !!cur.requires_prescription : (this.packageCategory === 'Pharmeasy');
+                },
+                get selectedCategoryServiceFeePercent() {
+                    const cur = this.availableCategories.find(c => c.name.toLowerCase() === (this.packageCategory || '').toLowerCase());
+                    if (cur && cur.service_fee_percent !== undefined) {
+                        return Number(cur.service_fee_percent);
+                    }
+                    return (this.packageCategory === 'Pharmeasy') ? 10 : 5;
+                },
+
+                selectCategory(catName) {
+                    this.packageCategory = catName;
+                    const catObj = this.availableCategories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+                    if (catObj && catObj.default_description) {
+                        if (!this.packageDescription || this.packageDescription.includes('Legal Contracts') || this.packageDescription.includes('Prescription Medicines')) {
+                            this.packageDescription = catObj.default_description;
+                        }
+                    } else if (catName === 'Pharmeasy') {
                         if (!this.packageDescription || this.packageDescription.includes('Legal Contracts')) {
                             this.packageDescription = 'Prescription Medicines & Healthcare Supplies';
                         }
                     }
+                    if (this.priceBreakdown && this.priceBreakdown.subtotal > 0) {
+                        const feePercent = catObj && catObj.service_fee_percent !== undefined ? Number(catObj.service_fee_percent) : (catName === 'Pharmeasy' ? 10 : 5);
+                        const feeRate = feePercent / 100;
+                        const sub = Number(this.priceBreakdown.subtotal);
+                        const fee = Number((sub * feeRate).toFixed(2));
+                        const tax = Number(this.priceBreakdown.tax || (sub * 0.05).toFixed(2));
+                        this.priceBreakdown.service_fee = fee;
+                        this.priceBreakdown.service_fee_percent = feePercent;
+                        this.priceBreakdown.total_price = Number((sub + fee + tax).toFixed(2));
+                    }
+                    this.updatePrice();
                 },
 
                 proceedFromStep4() {
                     this.prescriptionError = '';
-                    if (this.packageCategory === 'Pharmeasy') {
+                    if (this.selectedCategoryRequiresRx) {
                         if (!this.prescriptionFiles || this.prescriptionFiles.length === 0) {
-                            this.prescriptionError = 'Doctor prescription upload is mandatory for Pharmeasy delivery. Please upload at least one valid prescription (JPG, PNG, or PDF) to continue.';
+                            this.prescriptionError = 'Doctor prescription upload is mandatory for ' + this.packageCategory + ' delivery. Please upload at least one valid prescription (JPG, PNG, or PDF) to continue.';
                             const el = document.getElementById('prescriptionFileInput');
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             return;
@@ -1600,11 +1632,11 @@
                         return;
                     }
 
-                    // Validate Step 4 Pharmeasy Prescription
-                    if (this.packageCategory === 'Pharmeasy' && this.prescriptionFiles.length === 0) {
+                    // Validate Step 4 Prescription if required
+                    if (this.selectedCategoryRequiresRx && this.prescriptionFiles.length === 0) {
                         this.currentStep = 4;
-                        this.submitError = 'Doctor prescription upload is mandatory for Pharmeasy delivery. Please upload at least one valid prescription.';
-                        this.prescriptionError = 'Doctor prescription upload is mandatory for Pharmeasy delivery.';
+                        this.submitError = 'Doctor prescription upload is mandatory for ' + this.packageCategory + ' delivery. Please upload at least one valid prescription.';
+                        this.prescriptionError = 'Doctor prescription upload is mandatory for ' + this.packageCategory + ' delivery.';
                         return;
                     }
 
@@ -1620,7 +1652,7 @@
 
                     try {
                         const formData = new FormData(event.target);
-                        if (this.packageCategory === 'Pharmeasy') {
+                        if (this.selectedCategoryRequiresRx) {
                             formData.append('prescription_temp_token', this.tempPrescriptionToken);
                             formData.append('prescription_ids', this.prescriptionFiles.map(p => p.id).join(','));
                         }

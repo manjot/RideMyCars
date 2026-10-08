@@ -48,6 +48,18 @@ class PackageDeliveryResource extends Resource
 
                 Forms\Components\Section::make('Pricing & Status')
                     ->schema([
+                        Forms\Components\TextInput::make('subtotal')
+                            ->label('Delivery Subtotal')
+                            ->numeric()
+                            ->prefix('$'),
+                        Forms\Components\TextInput::make('service_fee')
+                            ->label('Service Fee (10% Pharmeasy / 5% Normal)')
+                            ->numeric()
+                            ->prefix('$'),
+                        Forms\Components\TextInput::make('tax')
+                            ->label('Taxes (5%)')
+                            ->numeric()
+                            ->prefix('$'),
                         Forms\Components\TextInput::make('total_price')
                             ->numeric()
                             ->prefix('$'),
@@ -120,6 +132,12 @@ class PackageDeliveryResource extends Resource
                     ->label('Total')
                     ->money(fn (PackageDelivery $record) => $record->currency ?: 'USD')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('service_fee')
+                    ->label('Service Fee')
+                    ->money(fn (PackageDelivery $record) => $record->currency ?: 'USD')
+                    ->description(fn (PackageDelivery $record) => strtolower($record->package_category ?? '') === 'pharmeasy' ? '10% Pharmeasy' : '5% Standard')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('payment_status')
                     ->badge()

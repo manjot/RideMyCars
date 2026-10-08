@@ -6,6 +6,21 @@ import '../core/constants/api_constants.dart';
 class DeliveryService {
   static final Dio _dio = ApiClient().dio;
 
+  static Future<List<Map<String, dynamic>>?> fetchCategories() async {
+    try {
+      final res = await _dio.get(ApiConstants.deliveryCategories);
+      if (res.statusCode == 200 && res.data != null) {
+        final data = res.data['data'] ?? res.data;
+        if (data is List) {
+          return data.map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching delivery categories from API: $e');
+    }
+    return null;
+  }
+
   static Future<Map<String, dynamic>?> calculatePrice({
     double? pickupLat,
     double? pickupLng,
@@ -14,6 +29,7 @@ class DeliveryService {
     String? deliveryType,
     String? packageSize,
     double? packageWeightKg,
+    String? packageCategory,
     String? country,
   }) async {
     try {
@@ -27,6 +43,7 @@ class DeliveryService {
           'delivery_type': deliveryType ?? 'Hyperlocal',
           'package_size': packageSize ?? 'Small',
           'package_weight_kg': packageWeightKg ?? 1.0,
+          if (packageCategory != null) 'package_category': packageCategory,
           'country': country ?? 'USA',
         },
       );

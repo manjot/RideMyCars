@@ -728,6 +728,13 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                     _buildInfoRow('Recipient', '${widget.recipientName} (${widget.recipientPhone})', isDark),
                     _buildInfoRow('Pickup', widget.pickupLocation, isDark),
                     _buildInfoRow('Dropoff', widget.dropoffLocation, isDark),
+                    _buildInfoRow(
+                      widget.packageCategory.toLowerCase() == 'pharmeasy'
+                          ? 'Service Fee (10%)'
+                          : 'Service Fee (5%)',
+                      'Included',
+                      isDark,
+                    ),
                     _buildInfoRow('Fare Total', '${widget.currencySymbol}${widget.totalPrice.toStringAsFixed(2)}', isDark, isBold: true),
                     _buildInfoRow('Payment Method', widget.paymentMethod.toUpperCase(), isDark),
                   ],

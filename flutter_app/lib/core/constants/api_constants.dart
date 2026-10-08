@@ -45,6 +45,7 @@ class ApiConstants {
   static const String notificationsMarkRead = '/notifications/mark-read';
 
   // Delivery
+  static const String deliveryCategories = '/delivery/categories';
   static const String deliveryCalculate = '/delivery/calculate-price';
   static const String deliveryBook = '/delivery/book';
   static String deliveryStatus(int id) => '/delivery/$id/status';

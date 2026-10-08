@@ -103,7 +103,8 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
   // Step 4: Package Category & Specs
   String _selectedCategory = 'Documents';
-  final List<String> _categories = [
+  List<Map<String, dynamic>> _dynamicCategories = [];
+  final List<String> _defaultCategories = [
     'Documents',
     'Clothing',
     'Electronics',
@@ -113,6 +114,32 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     'Pharmeasy',
     'Other',
   ];
+
+  List<String> get _categories => _dynamicCategories.isNotEmpty
+      ? _dynamicCategories.map((c) => (c['name'] ?? '').toString()).where((s) => s.isNotEmpty).toList()
+      : _defaultCategories;
+
+  bool get _selectedCategoryRequiresRx {
+    final cur = _dynamicCategories.firstWhere(
+      (c) => (c['name'] ?? '').toString().toLowerCase() == _selectedCategory.toLowerCase(),
+      orElse: () => {},
+    );
+    if (cur.isNotEmpty && cur['requires_prescription'] != null) {
+      return cur['requires_prescription'] == true || cur['requires_prescription'] == 1 || cur['requires_prescription'] == '1';
+    }
+    return _selectedCategory.toLowerCase() == 'pharmeasy';
+  }
+
+  double get _selectedCategoryServiceFeePercent {
+    final cur = _dynamicCategories.firstWhere(
+      (c) => (c['name'] ?? '').toString().toLowerCase() == _selectedCategory.toLowerCase(),
+      orElse: () => {},
+    );
+    if (cur.isNotEmpty && cur['service_fee_percent'] != null) {
+      return (cur['service_fee_percent'] as num).toDouble();
+    }
+    return _selectedCategory.toLowerCase() == 'pharmeasy' ? 10.0 : 5.0;
+  }
 
   // Prescription upload state (Mandatory for Pharmeasy category)
   List<Map<String, dynamic>> _prescriptions = [];
@@ -549,9 +576,19 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCategories();
       _calculatePrice();
       _detectCurrentLocation();
     });
+  }
+
+  void _loadCategories() async {
+    final cats = await DeliveryService.fetchCategories();
+    if (cats != null && cats.isNotEmpty && mounted) {
+      setState(() {
+        _dynamicCategories = cats;
+      });
+    }
   }
 
   @override
@@ -730,6 +767,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       deliveryType: _selectedDeliverySpeed,
       packageSize: _selectedSize,
       packageWeightKg: _weightKg,
+      packageCategory: _selectedCategory,
       country: countryProv.selectedCountryCode,
     );
 
@@ -768,8 +806,10 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       if (_selectedSize == 'Medium') sizeMult = 1.25;
       if (_selectedSize == 'Large') sizeMult = 1.60;
 
+      final serviceFeeRate = _selectedCategoryServiceFeePercent / 100;
+
       double base = (15.00 + (_distanceKm * 1.50) + speedAddon + (max(0, _weightKg - 1.0) * 0.75)) * sizeMult * multiplier;
-      double fee = base * 0.05;
+      double fee = base * serviceFeeRate;
       double tax = base * 0.05;
       double tot = base + fee + tax;
 
@@ -880,23 +920,23 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         );
         return;
       }
-      if (_selectedCategory == 'Pharmeasy' && _prescriptions.isEmpty) {
+      if (_selectedCategoryRequiresRx && _prescriptions.isEmpty) {
         setState(() {
-          _prescriptionError = 'Doctor prescription upload is mandatory for Pharmeasy delivery bookings.';
+          _prescriptionError = 'Doctor prescription upload is mandatory for $_selectedCategory delivery bookings.';
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.error_outline_rounded, color: Colors.white),
-                SizedBox(width: 8),
+                const Icon(Icons.error_outline_rounded, color: Colors.white),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Doctor prescription is mandatory for Pharmeasy deliveries. Please upload your prescription before proceeding.'),
+                  child: Text('Doctor prescription is mandatory for $_selectedCategory deliveries. Please upload your prescription before proceeding.'),
                 ),
               ],
             ),
-            backgroundColor: Color(0xFFEF4444),
-            duration: Duration(seconds: 4),
+            backgroundColor: const Color(0xFFEF4444),
+            duration: const Duration(seconds: 4),
           ),
         );
         return;
@@ -1100,6 +1140,20 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                       children: [
                         const Text('Package Type', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         Text('$_selectedSize • $_selectedCategory', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Service Fee (${_selectedCategoryServiceFeePercent.toStringAsFixed(_selectedCategoryServiceFeePercent.truncateToDouble() == _selectedCategoryServiceFeePercent ? 0 : 1)}%)',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        Text(
+                          '+${countryProv.currencySymbol}${_serviceFee.toStringAsFixed(2)}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -1873,10 +1927,43 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
           runSpacing: 8,
           children: _categories.map((cat) {
             final isSel = _selectedCategory == cat;
+            final catObj = _dynamicCategories.firstWhere(
+              (c) => (c['name'] ?? '').toString().toLowerCase() == cat.toLowerCase(),
+              orElse: () => {},
+            );
+            final icon = catObj['icon']?.toString() ?? (cat.toLowerCase() == 'pharmeasy' ? '💊' : null);
+            final badge = catObj['badge_text']?.toString() ?? (cat.toLowerCase() == 'pharmeasy' ? 'Rx' : null);
+
             return ChoiceChip(
-              label: Text(cat),
+              avatar: icon != null ? Text(icon, style: const TextStyle(fontSize: 13)) : null,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(cat),
+                  if (badge != null && badge.isNotEmpty) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: isSel ? Colors.black26 : Colors.white24,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        badge,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: isSel ? Colors.black : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               selected: isSel,
-              selectedColor: const Color(0xFFF59E0B),
+              selectedColor: isSel && (_selectedCategoryRequiresRx || cat == 'Pharmeasy')
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFFF59E0B),
               backgroundColor: const Color(0xFF1E293B),
               labelStyle: TextStyle(
                 color: isSel ? Colors.black : Colors.white,
@@ -1886,10 +1973,13 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
               onSelected: (_) {
                 setState(() {
                   _selectedCategory = cat;
-                  if (cat == 'Pharmeasy') {
+                  if (catObj.isNotEmpty && catObj['default_description'] != null && (catObj['default_description'] as String).isNotEmpty) {
+                    _packageDescController.text = catObj['default_description'];
+                  } else if (cat == 'Pharmeasy') {
                     _packageDescController.text = 'Prescription Medicines & Healthcare Supplies';
                   }
                 });
+                _calculatePrice();
               },
             );
           }).toList(),
@@ -1897,8 +1987,8 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
         const SizedBox(height: 16),
 
-        // MANDATORY DOCTOR PRESCRIPTION SECTION (Pharmeasy)
-        if (_selectedCategory == 'Pharmeasy') ...[
+        // MANDATORY DOCTOR PRESCRIPTION SECTION (Rx Categories)
+        if (_selectedCategoryRequiresRx) ...[
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
@@ -2556,7 +2646,10 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Service Fee (5%):', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+              Text(
+                'Service Fee (${_selectedCategoryServiceFeePercent.toStringAsFixed(_selectedCategoryServiceFeePercent.truncateToDouble() == _selectedCategoryServiceFeePercent ? 0 : 1)}%):',
+                style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+              ),
               Text('+$sym${_serviceFee.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
             ],
           ),

@@ -264,7 +264,8 @@ class PricingService
         string $deliveryType = 'Hyperlocal',
         string $packageSize = 'Small',
         float $weightKg = 1.0,
-        ?string $country = null
+        ?string $country = null,
+        ?string $packageCategory = null
     ): array {
         $pricing = CountryPricing::forCountry($country);
 
@@ -289,8 +290,12 @@ class PricingService
         $perKgRate = (float) ($pricing->delivery_per_kg_rate ?: 0.75);
         $weightAddon = max(0, ($weightKg - 1.0)) * $perKgRate;
 
+        $serviceFeePercent = \App\Models\PackageCategory::getFeePercentFor($packageCategory);
+        $serviceFeeRate = round($serviceFeePercent / 100, 4);
+        $isPharmeasy = strtolower(trim((string)$packageCategory)) === 'pharmeasy';
+
         $subtotal = round(($baseFare + $distanceFare + $typeAddon + $weightAddon) * $sizeMultiplier, 2);
-        $serviceFee = round($subtotal * 0.05, 2);
+        $serviceFee = round($subtotal * $serviceFeeRate, 2);
         $tax = round($subtotal * 0.05, 2);
         $totalPrice = round($subtotal + $serviceFee + $tax, 2);
 
@@ -302,6 +307,10 @@ class PricingService
             'weight_addon' => round($weightAddon, 2),
             'subtotal' => $subtotal,
             'service_fee' => $serviceFee,
+            'service_fee_rate' => $serviceFeeRate,
+            'service_fee_percent' => $serviceFeePercent,
+            'is_pharmeasy' => $isPharmeasy,
+            'package_category' => $packageCategory ?: 'Documents',
             'tax' => $tax,
             'total_price' => $totalPrice,
             'currency' => $pricing->currency_code,

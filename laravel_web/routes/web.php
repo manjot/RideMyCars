@@ -513,6 +513,7 @@ Route::post('/logout', function (\Illuminate\Http\Request $request) {
 
 // Package Delivery Routes
 Route::get('/delivery', [PackageDeliveryController::class, 'index']);
+Route::get('/delivery/categories', [PackageDeliveryController::class, 'getCategories']);
 Route::post('/delivery/calculate-price', [PackageDeliveryController::class, 'calculatePrice']);
 Route::post('/api/delivery/calculate-price', [PackageDeliveryController::class, 'calculatePrice']);
 Route::post('/delivery/book', [PackageDeliveryController::class, 'storeBooking']);
@@ -3492,6 +3493,20 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['prescriptions_dir_exists'] = file_exists($rxDir);
     } catch (\Throwable $e) {
         $output['prescriptions_explicit_migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('package_categories')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', [
+                '--path' => 'database/migrations/2026_10_08_000002_create_package_categories_table.php',
+                '--force' => true,
+            ]);
+            $output['categories_explicit_migrate'] = \Illuminate\Support\Facades\Artisan::output();
+        }
+        $output['package_categories_table'] = \Illuminate\Support\Facades\Schema::hasTable('package_categories') ? 'Exists' : 'Missing';
+        $output['package_categories_count'] = \Illuminate\Support\Facades\Schema::hasTable('package_categories') ? \App\Models\PackageCategory::count() : 0;
+    } catch (\Throwable $e) {
+        $output['categories_explicit_migrate_err'] = $e->getMessage();
     }
 
     $quickSync = $request->boolean('quick_sync');

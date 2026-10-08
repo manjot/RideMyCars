@@ -132,6 +132,7 @@ Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
 Route::post('/hire-driver/book', [DriverApiController::class, 'bookDriver']);
 
 // Public Package Delivery API Routes
+Route::get('/delivery/categories', [\App\Http\Controllers\PackageDeliveryController::class, 'getCategories']);
 Route::post('/delivery/calculate-price', [\App\Http\Controllers\PackageDeliveryController::class, 'calculatePrice']);
 Route::post('/delivery/book', [\App\Http\Controllers\PackageDeliveryController::class, 'storeBooking']);
 Route::get('/delivery/{id}/status', [\App\Http\Controllers\PackageDeliveryController::class, 'statusApi']);
