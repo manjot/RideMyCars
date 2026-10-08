@@ -3976,21 +3976,6 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['last_log'] = array_slice($lines, -20);
     }
     
-    if ($request->has('test_update_tier')) {
-        $catKey = $request->query('test_update_tier', 'economy');
-        $tierToUp = \App\Models\CountryRideCategoryPricing::where('country_code', 'GHA')->where('category_key', $catKey)->first();
-        if ($tierToUp) {
-            $tierToUp->update([
-                'minimum_fare' => (float) $request->query('min_fare', 15.00),
-                'base_fare' => (float) $request->query('base_fare', 15.00),
-                'per_km_rate' => (float) $request->query('km_rate', 1.21),
-            ]);
-            $output['test_updated_tier'] = $tierToUp->fresh()->toArray();
-        }
-    }
-
-    $output['current_gha_tiers'] = \App\Models\CountryRideCategoryPricing::where('country_code', 'GHA')->get(['id', 'category_key', 'minimum_fare', 'base_fare', 'per_km_rate', 'per_minute_rate'])->toArray();
-
     return response()->json([
         'status' => 'success',
         'details' => $output,
