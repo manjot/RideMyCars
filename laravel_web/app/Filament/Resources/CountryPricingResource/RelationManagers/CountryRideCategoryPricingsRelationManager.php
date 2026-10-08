@@ -38,16 +38,19 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
                         ->label('Minimum Fare')
                         ->prefix($symbol)
                         ->numeric()
+                        ->step('any')
                         ->required(),
                     Forms\Components\TextInput::make('base_fare')
                         ->label('Base Starting Fare')
                         ->prefix($symbol)
                         ->numeric()
+                        ->step('any')
                         ->required(),
                     Forms\Components\TextInput::make('per_km_rate')
                         ->label('Per KM Distance Rate')
                         ->prefix($symbol)
                         ->numeric()
+                        ->step('any')
                         ->required(),
                 ]),
                 Forms\Components\Grid::make(3)->schema([
@@ -55,10 +58,12 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
                         ->label('Per Minute Rate')
                         ->prefix($symbol)
                         ->numeric()
+                        ->step('any')
                         ->default(0.30),
                     Forms\Components\TextInput::make('multiplier')
                         ->label('Multiplier')
                         ->numeric()
+                        ->step('any')
                         ->default(1.00),
                     Forms\Components\Toggle::make('is_active')
                         ->label('Active Tier')
@@ -90,7 +95,6 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        CountryRideCategoryPricing::ensureTableExists();
         $symbol = $this->getOwnerRecord()?->currency_symbol ?? $this->ownerRecord?->currency_symbol ?? '$';
 
         return $table
@@ -128,11 +132,20 @@ class CountryRideCategoryPricingsRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['country_code'] = $this->getOwnerRecord()?->country_code ?? $this->ownerRecord?->country_code ?? 'USA';
                         return $data;
+                    })
+                    ->after(function ($livewire) {
+                        $livewire->dispatch('refresh-country-pricing');
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->after(function ($livewire) {
+                        $livewire->dispatch('refresh-country-pricing');
+                    }),
+                Tables\Actions\DeleteAction::make()
+                    ->after(function ($livewire) {
+                        $livewire->dispatch('refresh-country-pricing');
+                    }),
             ]);
     }
 }

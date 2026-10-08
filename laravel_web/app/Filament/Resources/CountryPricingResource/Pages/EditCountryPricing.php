@@ -11,10 +11,14 @@ class EditCountryPricing extends EditRecord
 {
     protected static string $resource = CountryPricingResource::class;
 
-    public function mount(int | string $record): void
+    protected $listeners = [
+        'refresh-country-pricing' => 'refreshCountryPricingData',
+    ];
+
+    public function refreshCountryPricingData(): void
     {
-        CountryRideCategoryPricing::ensureTableExists();
-        parent::mount($record);
+        $this->record->refresh();
+        $this->fillForm();
     }
 
     protected function getHeaderActions(): array

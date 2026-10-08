@@ -84,6 +84,10 @@ class CountryRideCategoryPricing extends Model
                 Log::warning('Error syncing tier to country_pricings: ' . $e->getMessage());
             } finally {
                 static::$isSyncing = false;
+                try {
+                    \Illuminate\Support\Facades\Cache::forget('pricing_matrix_' . strtoupper(trim($model->country_code)));
+                    \Illuminate\Support\Facades\Cache::forget('country_pricing_' . strtoupper(trim($model->country_code)));
+                } catch (\Throwable $ignore) {}
             }
         });
     }
@@ -95,60 +99,43 @@ class CountryRideCategoryPricing extends Model
     public static function ensureTableExists(): void
     {
         try {
-            if (!Schema::hasTable('country_ride_category_pricings')) {
-                // Attempt artisan migrate first
-                try {
-                    Artisan::call('migrate', ['--force' => true]);
-                } catch (\Throwable $migErr) {
-                    Log::warning('Artisan migrate call in ensureTableExists: ' . $migErr->getMessage());
-                }
-
-                // If still missing, create table directly
-                if (!Schema::hasTable('country_ride_category_pricings')) {
-                    Schema::create('country_ride_category_pricings', function (Blueprint $table) {
-                        $table->id();
-                        $table->string('country_code', 10)->index();
-                        $table->string('category_key', 50);
-                        $table->string('category_name', 100);
-                        $table->string('icon', 50)->nullable()->default('🚗');
-                        $table->string('capacity', 50)->nullable()->default('1–4 seats');
-                        $table->string('target_vehicle')->nullable();
-                        $table->text('description')->nullable();
-                        $table->decimal('minimum_fare', 10, 2);
-                        $table->decimal('base_fare', 10, 2);
-                        $table->decimal('per_km_rate', 10, 2);
-                        $table->decimal('per_minute_rate', 10, 2)->default(0.30);
-                        $table->decimal('multiplier', 5, 2)->default(1.00);
-                        $table->integer('sort_order')->default(0);
-                        $table->boolean('is_active')->default(true);
-                        $table->boolean('active')->default(true);
-                        $table->timestamps();
-
-                        $table->unique(['country_code', 'category_key'], 'uniq_country_category_pricing');
-                    });
-                }
+            if (Schema::hasTable('country_ride_category_pricings')) {
+                return;
             }
 
-            // Ensure official Ghana PDF tiers exist and are synchronized
-            static::syncGhanaPdfTiers(false);
+            // Attempt artisan migrate first
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $migErr) {
+                Log::warning('Artisan migrate call in ensureTableExists: ' . $migErr->getMessage());
+            }
 
+            // If still missing, create table directly
+            if (!Schema::hasTable('country_ride_category_pricings')) {
+                Schema::create('country_ride_category_pricings', function (Blueprint $table) {
+                    $table->id();
+                    $table->string('country_code', 10)->index();
+                    $table->string('category_key', 50);
+                    $table->string('category_name', 100);
+                    $table->string('icon', 50)->nullable()->default('🚗');
+                    $table->string('capacity', 50)->nullable()->default('1–4 seats');
+                    $table->string('target_vehicle')->nullable();
+                    $table->text('description')->nullable();
+                    $table->decimal('minimum_fare', 10, 2);
+                    $table->decimal('base_fare', 10, 2);
+                    $table->decimal('per_km_rate', 10, 2);
+                    $table->decimal('per_minute_rate', 10, 2)->default(0.30);
+                    $table->decimal('multiplier', 5, 2)->default(1.00);
+                    $table->integer('sort_order')->default(0);
+                    $table->boolean('is_active')->default(true);
+                    $table->boolean('active')->default(true);
+                    $table->timestamps();
 
-            // Ensure rides table has payment hold and dispatch gate columns
-            if (Schema::hasTable('rides')) {
-                Schema::table('rides', function (Blueprint $table) {
-                    if (!Schema::hasColumn('rides', 'driver_search_started_at')) {
-                        $table->timestamp('driver_search_started_at')->nullable()->after('payment_status');
-                    }
-                    if (!Schema::hasColumn('rides', 'payment_held_at')) {
-                        $table->timestamp('payment_held_at')->nullable()->after('driver_search_started_at');
-                    }
-                    if (!Schema::hasColumn('rides', 'hold_payment_intent_id')) {
-                        $table->string('hold_payment_intent_id')->nullable()->after('payment_held_at');
-                    }
-                    if (!Schema::hasColumn('rides', 'hold_authorization_code')) {
-                        $table->string('hold_authorization_code')->nullable()->after('hold_payment_intent_id');
-                    }
+                    $table->unique(['country_code', 'category_key'], 'uniq_country_category_pricing');
                 });
+
+                // Only seed default tiers once upon initial table creation
+                static::syncGhanaPdfTiers(true);
             }
         } catch (\Throwable $e) {
             Log::error('ensureTableExists fatal error: ' . $e->getMessage());

@@ -346,10 +346,9 @@ class CountryPricingSeeder extends Seeder
         ];
 
         foreach ($presets as $data) {
-            CountryPricing::updateOrCreate(
-                ['country_code' => $data['country_code']],
-                $data
-            );
+            if (!CountryPricing::where('country_code', $data['country_code'])->exists()) {
+                CountryPricing::create($data);
+            }
         }
     }
 }

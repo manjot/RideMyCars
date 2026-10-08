@@ -3734,6 +3734,10 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         try {
             \Illuminate\Support\Facades\Artisan::call('optimize:clear');
             $output['optimize_clear'] = \Illuminate\Support\Facades\Artisan::output();
+            if (function_exists('opcache_reset')) {
+                @opcache_reset();
+                $output['opcache_reset'] = true;
+            }
         } catch (\Throwable $e) {}
 
         try {

@@ -90,7 +90,12 @@ class CountryPricing extends Model
                 return;
             }
 
-            // Sync ride rates to CountryRideCategoryPricing if tiers exist for this country
+            // Only sync if ride rates were explicitly modified on this CountryPricing instance
+            if (!$model->wasChanged(['ride_base_fare', 'ride_per_km_rate', 'ride_per_minute_rate', 'ride_minimum_fare'])) {
+                return;
+            }
+
+            // Sync ride rates to CountryRideCategoryPricing base tier if tiers exist for this country
             try {
                 if (\Illuminate\Support\Facades\Schema::hasTable('country_ride_category_pricings')) {
                     $code = strtoupper(trim($model->country_code));
@@ -103,63 +108,12 @@ class CountryPricing extends Model
                         $baseTier = $tiers->firstWhere('category_key', 'economy') ?? $tiers->first();
 
                         if ($baseTier) {
-                            $oldBase = (float) $baseTier->base_fare;
-                            $newBase = (float) $model->ride_base_fare;
-                            $oldKm = (float) $baseTier->per_km_rate;
-                            $newKm = (float) $model->ride_per_km_rate;
-                            $oldMin = (float) $baseTier->minimum_fare;
-                            $newMin = (float) $model->ride_minimum_fare;
-                            $newMinRate = (float) ($model->ride_per_minute_rate ?: 0.25);
-
                             $baseTier->update([
-                                'base_fare' => $newBase,
-                                'per_km_rate' => $newKm,
-                                'per_minute_rate' => $newMinRate,
-                                'minimum_fare' => $newMin,
+                                'base_fare' => (float) $model->ride_base_fare,
+                                'per_km_rate' => (float) $model->ride_per_km_rate,
+                                'per_minute_rate' => (float) ($model->ride_per_minute_rate ?: 0.25),
+                                'minimum_fare' => (float) $model->ride_minimum_fare,
                             ]);
-
-                            // If other tiers exist and any rate changed, adjust other tiers proportionally or by multiplier
-                            $hasBaseChange = ($oldBase > 0 && $newBase > 0 && abs($newBase - $oldBase) > 0.01);
-                            $hasKmChange = ($oldKm > 0 && $newKm > 0 && abs($newKm - $oldKm) > 0.01);
-                            $hasMinChange = ($oldMin > 0 && $newMin > 0 && abs($newMin - $oldMin) > 0.01);
-
-                            if ($hasBaseChange || $hasKmChange || $hasMinChange) {
-                                $baseRatio = $hasBaseChange ? ($newBase / $oldBase) : 1.0;
-                                $kmRatio = $hasKmChange ? ($newKm / $oldKm) : 1.0;
-                                $minRatio = $hasMinChange ? ($newMin / $oldMin) : 1.0;
-
-                                foreach ($tiers as $ot) {
-                                    if ($ot->id === $baseTier->id) {
-                                        continue;
-                                    }
-
-                                    $mult = (float) ($ot->multiplier ?: 1.0);
-                                    $updates = [];
-                                    if ($hasBaseChange) {
-                                        $updates['base_fare'] = ($mult > 1.0)
-                                            ? round($newBase * $mult, 2)
-                                            : round(((float) $ot->base_fare) * $baseRatio, 2);
-                                    }
-                                    if ($hasKmChange) {
-                                        $updates['per_km_rate'] = ($mult > 1.0)
-                                            ? round($newKm * $mult, 2)
-                                            : round(((float) $ot->per_km_rate) * $kmRatio, 2);
-                                    }
-                                    if ($hasMinChange) {
-                                        $updates['minimum_fare'] = ($mult > 1.0)
-                                            ? round($newMin * $mult, 2)
-                                            : round(((float) $ot->minimum_fare) * $minRatio, 2);
-                                    }
-                                    if ($newMinRate > 0) {
-                                        $updates['per_minute_rate'] = ($mult > 1.0)
-                                            ? round($newMinRate * $mult, 2)
-                                            : round(((float) $ot->per_minute_rate) * $baseRatio, 2);
-                                    }
-                                    if (!empty($updates)) {
-                                        $ot->update($updates);
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -167,6 +121,10 @@ class CountryPricing extends Model
                 \Illuminate\Support\Facades\Log::warning('Error syncing CountryPricing to tiers: ' . $syncErr->getMessage());
             } finally {
                 static::$isSyncing = false;
+                try {
+                    \Illuminate\Support\Facades\Cache::forget('pricing_matrix_' . strtoupper(trim($model->country_code)));
+                    \Illuminate\Support\Facades\Cache::forget('country_pricing_' . strtoupper(trim($model->country_code)));
+                } catch (\Throwable $ignore) {}
             }
         });
     }
@@ -327,7 +285,6 @@ class CountryPricing extends Model
      */
     public function rideCategoryPricings(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        CountryRideCategoryPricing::ensureTableExists();
         return $this->hasMany(CountryRideCategoryPricing::class, 'country_code', 'country_code');
     }
 
@@ -339,7 +296,6 @@ class CountryPricing extends Model
     public static function getGhanaPricingMatrix(): array
     {
         try {
-            CountryRideCategoryPricing::ensureTableExists();
             $dbTiers = CountryRideCategoryPricing::forCountry('GHA');
             if ($dbTiers->isNotEmpty()) {
                 $matrix = [];
