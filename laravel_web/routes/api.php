@@ -137,6 +137,10 @@ Route::post('/delivery/book', [\App\Http\Controllers\PackageDeliveryController::
 Route::get('/delivery/{id}/status', [\App\Http\Controllers\PackageDeliveryController::class, 'statusApi']);
 Route::post('/delivery/{id}/verify-otp', [\App\Http\Controllers\PackageDeliveryController::class, 'verifyOtp']);
 Route::post('/delivery/{id}/update-status', [\App\Http\Controllers\PackageDeliveryController::class, 'updateDeliveryStatus']);
+Route::post('/delivery/prescriptions/upload', [\App\Http\Controllers\PackageDeliveryController::class, 'uploadPrescription']);
+Route::delete('/delivery/prescriptions/{id}', [\App\Http\Controllers\PackageDeliveryController::class, 'deletePrescription']);
+Route::get('/package-delivery/prescriptions/{id}/view', [\App\Http\Controllers\PackageDeliveryController::class, 'viewPrescription']);
+Route::get('/package-delivery/prescriptions/{id}/download', [\App\Http\Controllers\PackageDeliveryController::class, 'downloadPrescription']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {

@@ -361,18 +361,156 @@
 
                     <!-- Category Pills -->
                     <div class="space-y-2">
-                        <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Package Category *</label>
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Package Category *</label>
+                            <span x-show="packageCategory === 'Pharmeasy'" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <span>💊 Doctor Prescription Required</span>
+                            </span>
+                        </div>
                         <input type="hidden" name="package_category" x-model="packageCategory">
 
                         <div class="flex flex-wrap gap-2 text-xs font-bold">
-                            <template x-for="cat in ['Documents', 'Clothing', 'Electronics', 'Household items', 'Office supplies', 'Personal belongings', 'Other']" :key="cat">
-                                <button type="button" @click="packageCategory = cat"
-                                        :class="packageCategory === cat ? 'bg-amber-500 text-white shadow-sm' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
-                                        class="py-2 px-3.5 rounded-xl transition-all">
+                            <template x-for="cat in ['Documents', 'Clothing', 'Electronics', 'Household items', 'Office supplies', 'Personal belongings', 'Pharmeasy', 'Other']" :key="cat">
+                                <button type="button" @click="selectCategory(cat)"
+                                        :class="packageCategory === cat ? (cat === 'Pharmeasy' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/50' : 'bg-amber-500 text-white shadow-sm') : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
+                                        class="py-2 px-3.5 rounded-xl transition-all flex items-center gap-1.5">
+                                    <span x-show="cat === 'Pharmeasy'">💊</span>
                                     <span x-text="cat"></span>
+                                    <span x-show="cat === 'Pharmeasy'" class="px-1.5 py-0.2 rounded-md bg-white/20 text-[9px] uppercase font-black tracking-wider">Rx</span>
                                 </button>
                             </template>
                         </div>
+                    </div>
+
+                    <!-- MANDATORY DOCTOR PRESCRIPTION UPLOAD (Pharmeasy) -->
+                    <div x-show="packageCategory === 'Pharmeasy'" 
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 transform -translate-y-2"
+                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                         class="p-5 bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-[#161616] rounded-2xl border-2 border-emerald-500/40 shadow-sm space-y-4">
+                        
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 dark:border-emerald-800/40 pb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-sm shadow-sm">
+                                    Rx
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                        Upload Doctor Prescription
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500 text-white uppercase tracking-wider">Mandatory</span>
+                                    </h3>
+                                    <p class="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
+                                        Please provide a valid prescription from a registered medical practitioner.
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2.5 py-1 rounded-lg">
+                                JPG, PNG, PDF (Max 10MB)
+                            </span>
+                        </div>
+
+                        <!-- Validation Error Display -->
+                        <div x-show="prescriptionError" 
+                             x-cloak
+                             class="p-3 bg-red-50 dark:bg-red-950/50 border border-red-300 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-start gap-2 animate-shake">
+                            <span class="text-base leading-none">⚠️</span>
+                            <span class="font-bold flex-1" x-text="prescriptionError"></span>
+                        </div>
+
+                        <!-- Drag and Drop / File Input Box -->
+                        <div @dragover.prevent="isDraggingPrescription = true"
+                             @dragleave.prevent="isDraggingPrescription = false"
+                             @drop.prevent="isDraggingPrescription = false; handlePrescriptionDrop($event)"
+                             :class="isDraggingPrescription ? 'border-emerald-500 bg-emerald-100/50 dark:bg-emerald-900/40' : 'border-gray-300 dark:border-gray-700 hover:border-emerald-400 bg-white dark:bg-[#111]'"
+                             class="border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer relative group">
+                            
+                            <input type="file" 
+                                   id="prescriptionFileInput"
+                                   multiple 
+                                   accept=".jpg,.jpeg,.png,.pdf" 
+                                   @change="handlePrescriptionFiles($event)"
+                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+
+                            <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                    📸
+                                </div>
+                                <div class="text-xs">
+                                    <span class="font-black text-emerald-600 dark:text-emerald-400 hover:underline">Click to upload</span> 
+                                    <span class="text-gray-600 dark:text-gray-400 font-semibold">or drag and drop your prescription here</span>
+                                </div>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                    Camera capture, gallery images, or multi-page PDF documents accepted
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Upload Spinner -->
+                        <div x-show="isUploadingPrescription" class="flex items-center justify-center gap-2 p-3 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                            <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Uploading and verifying prescription document...</span>
+                        </div>
+
+                        <!-- Uploaded Files Preview Cards -->
+                        <div x-show="prescriptionFiles.length > 0" class="space-y-2 pt-1">
+                            <div class="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300">
+                                <span class="flex items-center gap-1.5">
+                                    <span>Uploaded Prescriptions</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-extrabold" x-text="prescriptionFiles.length"></span>
+                                </span>
+                                <span class="text-[11px] text-gray-400">Click preview to zoom / full screen</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <template x-for="(file, idx) in prescriptionFiles" :key="file.id || idx">
+                                    <div class="flex items-center justify-between p-2.5 bg-white dark:bg-[#121212] rounded-xl border border-gray-200 dark:border-white/10 hover:border-emerald-500/50 shadow-sm transition">
+                                        <div class="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1" @click="openPreview(file)">
+                                            <!-- Thumbnail / Icon -->
+                                            <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                <template x-if="file.isImage">
+                                                    <img :src="file.viewUrl" alt="Rx Preview" class="w-full h-full object-cover">
+                                                </template>
+                                                <template x-if="file.isPdf">
+                                                    <span class="text-xl">📄</span>
+                                                </template>
+                                            </div>
+
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase"
+                                                          :class="file.isPdf ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'"
+                                                          x-text="file.type"></span>
+                                                    <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="file.name"></h4>
+                                                </div>
+                                                <p class="text-[10px] text-gray-400 mt-0.5">
+                                                    <span x-text="file.size"></span> • <span x-text="'Uploaded ' + file.uploadedAt"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Actions -->
+                                        <div class="flex items-center gap-1 pl-2">
+                                            <button type="button" 
+                                                    @click="openPreview(file)"
+                                                    title="Zoom / View Full Screen"
+                                                    class="p-1.5 text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                            </button>
+                                            <button type="button" 
+                                                    @click="removePrescription(idx)"
+                                                    title="Remove Prescription"
+                                                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Description & Value -->
@@ -453,8 +591,8 @@
                         <button type="button" @click="currentStep = 3" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
                             ← Back
                         </button>
-                        <button type="button" @click="currentStep = 5" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
-                            Next: Price & Payment →
+                        <button type="button" @click="proceedFromStep4()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md flex items-center gap-2">
+                            <span>Next: Price & Payment →</span>
                         </button>
                     </div>
                 </div>
@@ -511,6 +649,29 @@
                             <p><strong class="text-gray-900 dark:text-white">Category:</strong> <span x-text="packageCategory"></span> (<span x-text="packageSize"></span> Size, <span x-text="packageWeight"></span> kg)</p>
                             <p><strong class="text-gray-900 dark:text-white">Speed:</strong> <span x-text="deliveryType"></span> Delivery</p>
                         </div>
+
+                        <!-- Pharmeasy Prescriptions Summary -->
+                        <template x-if="packageCategory === 'Pharmeasy'">
+                            <div class="p-4 bg-emerald-50/80 dark:bg-emerald-950/30 rounded-2xl border border-emerald-300 dark:border-emerald-800/50 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-extrabold text-emerald-900 dark:text-emerald-200 uppercase flex items-center gap-1.5 text-xs">
+                                        <span>💊 Doctor Prescriptions Attached</span>
+                                    </h4>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white" x-text="prescriptionFiles.length + ' Document' + (prescriptionFiles.length > 1 ? 's' : '')"></span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                    <template x-for="(file, idx) in prescriptionFiles" :key="idx">
+                                        <div class="flex items-center gap-2 p-2 bg-white dark:bg-[#111] rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 text-xs">
+                                            <span class="text-base" x-text="file.isPdf ? '📄' : '🖼️'"></span>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="font-bold text-gray-900 dark:text-white truncate" x-text="file.name"></p>
+                                                <p class="text-[10px] text-gray-400" x-text="file.type + ' • ' + file.size"></p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
 
                         <!-- Prohibited Consignment Declaration Box -->
                         <div class="p-4 bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl space-y-2 text-xs">
@@ -1184,6 +1345,16 @@
                 declaredValue: 150,
                 specialHandling: ['signature_required'],
 
+                // Pharmeasy Prescription State
+                prescriptionFiles: [],
+                prescriptionError: '',
+                isUploadingPrescription: false,
+                isDraggingPrescription: false,
+                previewModal: false,
+                previewItem: null,
+                previewZoom: 1,
+                tempPrescriptionToken: 'temp_rx_' + Math.random().toString(36).substring(2, 15) + Date.now(),
+
                 paymentMethod: 'stripe',
                 momoPhone: @json(auth()->user()->phone ?? ''),
                 momoNetwork: 'MTN',
@@ -1261,6 +1432,136 @@
                     }
                 },
                 isSubmitting: false,
+                selectCategory(cat) {
+                    this.packageCategory = cat;
+                    if (cat === 'Pharmeasy') {
+                        if (!this.packageDescription || this.packageDescription.includes('Legal Contracts')) {
+                            this.packageDescription = 'Prescription Medicines & Healthcare Supplies';
+                        }
+                    }
+                },
+
+                proceedFromStep4() {
+                    this.prescriptionError = '';
+                    if (this.packageCategory === 'Pharmeasy') {
+                        if (!this.prescriptionFiles || this.prescriptionFiles.length === 0) {
+                            this.prescriptionError = 'Doctor prescription upload is mandatory for Pharmeasy delivery. Please upload at least one valid prescription (JPG, PNG, or PDF) to continue.';
+                            const el = document.getElementById('prescriptionFileInput');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            return;
+                        }
+                    }
+                    this.currentStep = 5;
+                },
+
+                handlePrescriptionFiles(event) {
+                    const files = Array.from(event.target.files);
+                    this.uploadPrescriptionFiles(files);
+                    event.target.value = '';
+                },
+
+                handlePrescriptionDrop(event) {
+                    const files = Array.from(event.dataTransfer.files);
+                    this.uploadPrescriptionFiles(files);
+                },
+
+                async uploadPrescriptionFiles(files) {
+                    this.prescriptionError = '';
+                    if (!files || files.length === 0) return;
+
+                    const allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+                    const validFiles = [];
+
+                    for (const f of files) {
+                        const ext = (f.name.split('.').pop() || '').toLowerCase();
+                        if (!allowed.includes(ext)) {
+                            this.prescriptionError = `File "${f.name}" has an invalid extension. Only JPG, PNG, and PDF files are allowed.`;
+                            return;
+                        }
+                        if (f.size > 10 * 1024 * 1024) {
+                            this.prescriptionError = `File "${f.name}" exceeds the maximum 10MB limit.`;
+                            return;
+                        }
+                        validFiles.push(f);
+                    }
+
+                    if (validFiles.length === 0) return;
+
+                    this.isUploadingPrescription = true;
+
+                    try {
+                        const formData = new FormData();
+                        validFiles.forEach(f => formData.append('files[]', f));
+                        formData.append('temp_token', this.tempPrescriptionToken);
+
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                        const res = await fetch('/delivery/prescriptions/upload', {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: formData
+                        });
+
+                        const data = await res.json();
+                        if (res.ok && data.success && data.prescriptions) {
+                            data.prescriptions.forEach(p => {
+                                this.prescriptionFiles.push({
+                                    id: p.id,
+                                    name: p.file_name,
+                                    size: p.formatted_size,
+                                    type: p.file_type.toUpperCase(),
+                                    isPdf: p.is_pdf,
+                                    isImage: p.is_image,
+                                    viewUrl: p.view_url,
+                                    downloadUrl: p.download_url,
+                                    uploadedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                });
+                            });
+                            this.prescriptionError = '';
+                        } else {
+                            this.prescriptionError = data.message || 'Failed to upload prescription. Please try again.';
+                        }
+                    } catch (e) {
+                        console.error('Prescription upload failed:', e);
+                        this.prescriptionError = 'An error occurred while uploading prescription. Please try again.';
+                    } finally {
+                        this.isUploadingPrescription = false;
+                    }
+                },
+
+                async removePrescription(idx) {
+                    const item = this.prescriptionFiles[idx];
+                    if (!item) return;
+
+                    if (item.id) {
+                        try {
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                            await fetch(`/delivery/prescriptions/${item.id}?token=${this.tempPrescriptionToken}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                }
+                            });
+                        } catch (err) {
+                            console.warn('Prescription delete error:', err);
+                        }
+                    }
+
+                    this.prescriptionFiles.splice(idx, 1);
+                    if (this.prescriptionFiles.length === 0 && this.packageCategory === 'Pharmeasy') {
+                        this.prescriptionError = 'Doctor prescription upload is mandatory for Pharmeasy deliveries.';
+                    }
+                },
+
+                openPreview(item) {
+                    this.previewItem = item;
+                    this.previewZoom = 1;
+                    this.previewModal = true;
+                },
+
                 submitError: '',
 
                 toggleHandling(val) {
@@ -1299,6 +1600,14 @@
                         return;
                     }
 
+                    // Validate Step 4 Pharmeasy Prescription
+                    if (this.packageCategory === 'Pharmeasy' && this.prescriptionFiles.length === 0) {
+                        this.currentStep = 4;
+                        this.submitError = 'Doctor prescription upload is mandatory for Pharmeasy delivery. Please upload at least one valid prescription.';
+                        this.prescriptionError = 'Doctor prescription upload is mandatory for Pharmeasy delivery.';
+                        return;
+                    }
+
                     // Validate Step 6 Checkbox
                     const prohibitedCheckbox = document.querySelector('input[name="prohibited_items_acknowledged"]');
                     if (prohibitedCheckbox && !prohibitedCheckbox.checked) {
@@ -1311,6 +1620,11 @@
 
                     try {
                         const formData = new FormData(event.target);
+                        if (this.packageCategory === 'Pharmeasy') {
+                            formData.append('prescription_temp_token', this.tempPrescriptionToken);
+                            formData.append('prescription_ids', this.prescriptionFiles.map(p => p.id).join(','));
+                        }
+
                         const response = await fetch('/delivery/book', {
                             method: 'POST',
                             headers: {
@@ -1353,5 +1667,46 @@
             }));
         });
     </script>
+
+    <!-- Fullscreen Prescription Lightbox Modal -->
+    <div x-show="previewModal" 
+         x-cloak
+         class="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between p-4"
+         @keydown.escape.window="previewModal = false">
+        <div class="flex items-center justify-between text-white border-b border-white/10 pb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-black text-emerald-400">Rx Document:</span>
+                <span class="text-sm font-bold truncate max-w-md" x-text="previewItem?.name"></span>
+                <span class="text-xs text-gray-400" x-text="'(' + previewItem?.size + ')'"></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <template x-if="previewItem?.isImage">
+                    <div class="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1 mr-2 text-xs">
+                        <button type="button" @click="previewZoom = Math.min(previewZoom + 0.25, 3.5)" class="px-2 py-0.5 hover:text-emerald-400 font-bold">+</button>
+                        <span x-text="Math.round(previewZoom * 100) + '%'" class="px-1 text-[11px] font-mono"></span>
+                        <button type="button" @click="previewZoom = Math.max(previewZoom - 0.25, 0.5)" class="px-2 py-0.5 hover:text-emerald-400 font-bold">-</button>
+                        <button type="button" @click="previewZoom = 1" class="text-[10px] text-amber-400 ml-1">Reset</button>
+                    </div>
+                </template>
+                <a :href="previewItem?.downloadUrl" target="_blank" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
+                    Download
+                </a>
+                <button type="button" @click="previewModal = false" class="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition">
+                    ✕ Close
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 flex items-center justify-center p-4 overflow-auto">
+            <template x-if="previewItem?.isImage">
+                <img :src="previewItem?.viewUrl" 
+                     :style="'transform: scale(' + previewZoom + '); transition: transform 0.2s ease-out;'"
+                     class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            </template>
+            <template x-if="previewItem?.isPdf">
+                <iframe :src="previewItem?.viewUrl" class="w-full h-full max-h-[85vh] rounded-xl border border-gray-700 bg-white"></iframe>
+            </template>
+        </div>
+    </div>
+
     <x-stripe-modal serviceType="package_delivery" />
 </x-layout>

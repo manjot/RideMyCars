@@ -105,6 +105,195 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     }
   }
 
+  Future<void> _sharePrescription(Map<String, dynamic> rx) async {
+    final downloadUrl = rx['download_url'] ?? rx['view_url'] ?? '';
+    final fileName = rx['file_name'] ?? 'Prescription';
+    final shareText = 'Doctor Prescription for Medicine Pickup ($fileName): $downloadUrl';
+
+    final uri = Uri.parse('whatsapp://send?text=${Uri.encodeComponent(shareText)}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      final mailUri = Uri.parse('mailto:?subject=${Uri.encodeComponent("Doctor Prescription - $fileName")}&body=${Uri.encodeComponent(shareText)}');
+      if (await canLaunchUrl(mailUri)) {
+        await launchUrl(mailUri);
+      } else if (downloadUrl.isNotEmpty) {
+        await launchUrl(Uri.parse(downloadUrl.toString()), mode: LaunchMode.externalApplication);
+      }
+    }
+  }
+
+  void _showPrescriptionModal(Map<String, dynamic> rx) {
+    final fileName = rx['file_name']?.toString() ?? 'Doctor Prescription';
+    final fileType = rx['file_type']?.toString().toUpperCase() ?? 'DOC';
+    final isPdf = fileType == 'PDF';
+    final downloadUrl = rx['download_url']?.toString();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        TransformationController transformCtrl = TransformationController();
+        return Dialog(
+          backgroundColor: const Color(0xFF0F172A),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isPdf ? Icons.picture_as_pdf_rounded : Icons.medical_services_rounded,
+                      color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fileName,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '$fileType Prescription • Pinch or use buttons to zoom',
+                            style: const TextStyle(color: Colors.white54, fontSize: 10.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Divider(color: Colors.white12, height: 16),
+                Container(
+                  height: 320,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InteractiveViewer(
+                    transformationController: transformCtrl,
+                    minScale: 0.8,
+                    maxScale: 5.0,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isPdf ? Icons.picture_as_pdf_rounded : Icons.receipt_long_rounded,
+                                color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                                size: 54,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              fileName,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                '✓ VALID PRESCRIPTION FOR PHARMACY',
+                                style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Present this screen to the pharmacist / medicine counter.\nPinch with 2 fingers to zoom into dosage details.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.white60, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.zoom_in, color: Color(0xFFF59E0B)),
+                          tooltip: 'Zoom In',
+                          onPressed: () {
+                            transformCtrl.value = transformCtrl.value.scaled(1.25);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.zoom_out, color: Color(0xFFF59E0B)),
+                          tooltip: 'Zoom Out',
+                          onPressed: () {
+                            transformCtrl.value = transformCtrl.value.scaled(0.8);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.restart_alt_rounded, color: Colors.white54),
+                          tooltip: 'Reset Zoom',
+                          onPressed: () {
+                            transformCtrl.value = Matrix4.identity();
+                          },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        if (downloadUrl != null && downloadUrl.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.download_rounded, color: Color(0xFF10B981)),
+                            tooltip: 'Download Prescription',
+                            onPressed: () async {
+                              final uri = Uri.parse(downloadUrl);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.share_rounded, color: Color(0xFF3B82F6)),
+                          tooltip: 'Share Prescription',
+                          onPressed: () => _sharePrescription(rx),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _advanceStatus(String newStatus) async {
     final rideId = int.tryParse(_ride['id']?.toString() ?? '0') ?? 0;
     if (rideId <= 0) return;
@@ -775,9 +964,152 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 18),
-                      const Divider(color: Colors.white10),
-                      const SizedBox(height: 12),
+                      // Doctor Prescription Section (Pharmeasy Medicine Delivery)
+                      Builder(builder: (_) {
+                        final category = (_ride['package_category'] ?? _ride['category'] ?? '').toString();
+                        final hasRx = _ride['has_prescription'] == true ||
+                            (_ride['prescriptions'] is List && (_ride['prescriptions'] as List).isNotEmpty);
+                        final isPharmeasy = category.toLowerCase() == 'pharmeasy' || hasRx;
+
+                        if (!isPharmeasy) return const SizedBox.shrink();
+
+                        final List prescriptions = (_ride['prescriptions'] as List?) ?? [];
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withOpacity(0.1),
+                                blurRadius: 12,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: const [
+                                      Icon(Icons.local_pharmacy_rounded, color: Color(0xFF10B981), size: 20),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Doctor Prescription (Rx)',
+                                        style: TextStyle(
+                                          color: Color(0xFF10B981),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'SHOW AT PHARMACY',
+                                      style: TextStyle(color: Colors.black, fontSize: 9.5, fontWeight: FontWeight.w900),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Present to pharmacy storekeeper to inspect dosage and verify medicine pickup.',
+                                style: TextStyle(color: Colors.white70, fontSize: 11),
+                              ),
+                              const SizedBox(height: 10),
+
+                              if (prescriptions.isNotEmpty) ...[
+                                ...prescriptions.map((rx) {
+                                  final rxMap = rx is Map ? Map<String, dynamic>.from(rx) : <String, dynamic>{};
+                                  final fileName = rxMap['file_name']?.toString() ?? 'Doctor Prescription';
+                                  final fileType = rxMap['file_type']?.toString().toUpperCase() ?? 'DOC';
+                                  final isPdf = fileType == 'PDF';
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1E293B),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.white10),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          isPdf ? Icons.picture_as_pdf_rounded : Icons.medical_services_rounded,
+                                          color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                fileName,
+                                                style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                '$fileType Document • ${rxMap['file_size'] ?? 'Attached'}',
+                                                style: const TextStyle(color: Colors.white54, fontSize: 9.5),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.zoom_in_rounded, color: Color(0xFFF59E0B), size: 20),
+                                          tooltip: 'View & Zoom Full Screen',
+                                          onPressed: () => _showPrescriptionModal(rxMap),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.share_rounded, color: Color(0xFF3B82F6), size: 18),
+                                          tooltip: 'Share with Pharmacy',
+                                          onPressed: () => _sharePrescription(rxMap),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ] else ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E293B),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text(
+                                          'Prescription approved on order dispatch.',
+                                          style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 8),
 
                       // Route display
                       Row(

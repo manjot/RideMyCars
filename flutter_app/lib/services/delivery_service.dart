@@ -70,4 +70,39 @@ class DeliveryService {
     }
     return null;
   }
+
+  static Future<Map<String, dynamic>?> uploadPrescription({
+    required List<int> bytes,
+    required String filename,
+    String? tempToken,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'prescriptions[]': MultipartFile.fromBytes(bytes, filename: filename),
+        if (tempToken != null && tempToken.isNotEmpty) 'temp_token': tempToken,
+      });
+
+      final res = await _dio.post(
+        ApiConstants.deliveryPrescriptionUpload,
+        data: formData,
+      );
+
+      if (res.statusCode == 200 && res.data != null) {
+        return Map<String, dynamic>.from(res.data);
+      }
+    } catch (e) {
+      debugPrint('Error uploading prescription via API: $e');
+    }
+    return null;
+  }
+
+  static Future<bool> deletePrescription(int id) async {
+    try {
+      final res = await _dio.delete(ApiConstants.deliveryPrescriptionDelete(id));
+      return res.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleting prescription via API: $e');
+      return false;
+    }
+  }
 }

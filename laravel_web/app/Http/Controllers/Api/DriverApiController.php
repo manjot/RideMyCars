@@ -784,7 +784,7 @@ class DriverApiController extends Controller
             ->toArray();
 
         // 1. Direct assignments assigned to this driver
-        $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client', 'packageDelivery.customer'])
+        $assignments = \App\Models\RideAssignment::with(['ride.rider', 'driverBooking.client', 'packageDelivery.customer', 'packageDelivery.prescriptions'])
             ->whereIn('driver_id', $userIds)
             ->where('status', 'pending')
             ->where(function ($q) use ($isPrivilegedUser) {
@@ -966,6 +966,22 @@ class DriverApiController extends Controller
                     'poc_phone' => $pocPhone,
                     'rider_name' => $pocName ?: $custName,
                     'rider_phone' => $pocPhone ?: $custPhone,
+                    'package_category' => $a->packageDelivery->package_category ?? 'Standard',
+                    'package_description' => $a->packageDelivery->package_description ?? '',
+                    'package_size' => $a->packageDelivery->package_size ?? 'Small',
+                    'has_prescription' => (bool)($a->packageDelivery->has_prescription || ($a->packageDelivery->prescriptions && $a->packageDelivery->prescriptions->isNotEmpty())),
+                    'prescriptions' => $a->packageDelivery->prescriptions ? $a->packageDelivery->prescriptions->map(fn($p) => [
+                        'id' => $p->id,
+                        'file_name' => $p->file_name,
+                        'file_type' => $p->file_type,
+                        'file_size' => $p->file_size,
+                        'formatted_size' => $p->formatted_size,
+                        'is_pdf' => $p->is_pdf,
+                        'is_image' => $p->is_image,
+                        'view_url' => $p->view_url,
+                        'download_url' => $p->download_url,
+                        'created_at' => $p->created_at?->toIso8601String(),
+                    ])->values()->all() : [],
                     'pickup_date' => $a->packageDelivery->pickup_date ? \Carbon\Carbon::parse($a->packageDelivery->pickup_date)->format('M d, Y') : null,
                     'pickup_time' => $a->packageDelivery->pickup_time ?? null,
                     'created_at' => $pCreatedAt ? $pCreatedAt->toIso8601String() : null,
@@ -1076,7 +1092,7 @@ class DriverApiController extends Controller
 
         $driverCurrency = $driverPricing->currency_code ?: 'INR';
 
-        $openPendingDeliveries = \App\Models\PackageDelivery::with('customer')
+        $openPendingDeliveries = \App\Models\PackageDelivery::with(['customer', 'prescriptions'])
             ->whereIn('delivery_status', ['pending', 'created', 'searching'])
             ->whereNull('courier_id')
             ->where(function($q) use ($driverCurrency, $driverCountry) {
@@ -1153,6 +1169,22 @@ class DriverApiController extends Controller
                 'poc_phone' => $pocPhone,
                 'rider_name' => $pocName ?: $custName,
                 'rider_phone' => $pocPhone ?: $custPhone,
+                'package_category' => $pd->package_category ?? 'Standard',
+                'package_description' => $pd->package_description ?? '',
+                'package_size' => $pd->package_size ?? 'Small',
+                'has_prescription' => (bool)($pd->has_prescription || ($pd->prescriptions && $pd->prescriptions->isNotEmpty())),
+                'prescriptions' => $pd->prescriptions ? $pd->prescriptions->map(fn($p) => [
+                    'id' => $p->id,
+                    'file_name' => $p->file_name,
+                    'file_type' => $p->file_type,
+                    'file_size' => $p->file_size,
+                    'formatted_size' => $p->formatted_size,
+                    'is_pdf' => $p->is_pdf,
+                    'is_image' => $p->is_image,
+                    'view_url' => $p->view_url,
+                    'download_url' => $p->download_url,
+                    'created_at' => $p->created_at?->toIso8601String(),
+                ])->values()->all() : [],
                 'pickup_date' => $pd->pickup_date ? \Carbon\Carbon::parse($pd->pickup_date)->format('M d, Y') : null,
                 'pickup_time' => $pd->pickup_time ?? null,
                 'created_at' => $pdCreatedAt ? $pdCreatedAt->toIso8601String() : null,
@@ -1499,7 +1531,7 @@ class DriverApiController extends Controller
         }
 
         // 2. Fetch active Package Deliveries
-        $deliveries = \App\Models\PackageDelivery::with(['customer'])
+        $deliveries = \App\Models\PackageDelivery::with(['customer', 'prescriptions'])
             ->where(function ($q) use ($userIds, $driverProfileId) {
                 $q->whereIn('courier_id', $userIds);
                 if ($driverProfileId) {
@@ -1516,7 +1548,7 @@ class DriverApiController extends Controller
             ->filter()
             ->toArray();
         if (!empty($assignedDeliveryIds)) {
-            $extraDeliveries = \App\Models\PackageDelivery::with(['customer'])
+            $extraDeliveries = \App\Models\PackageDelivery::with(['customer', 'prescriptions'])
                 ->whereIn('id', $assignedDeliveryIds)
                 ->whereNotIn('delivery_status', ['delivered', 'completed', 'cancelled', 'failed'])
                 ->get();
@@ -1561,6 +1593,22 @@ class DriverApiController extends Controller
                 'poc_name' => $del->recipient_name,
                 'poc_phone' => $del->recipient_phone,
                 'vehicle_type' => 'Delivery Courier',
+                'package_category' => $del->package_category ?? 'Standard',
+                'package_description' => $del->package_description ?? '',
+                'package_size' => $del->package_size ?? 'Small',
+                'has_prescription' => (bool)($del->has_prescription || ($del->prescriptions && $del->prescriptions->isNotEmpty())),
+                'prescriptions' => $del->prescriptions ? $del->prescriptions->map(fn($p) => [
+                    'id' => $p->id,
+                    'file_name' => $p->file_name,
+                    'file_type' => $p->file_type,
+                    'file_size' => $p->file_size,
+                    'formatted_size' => $p->formatted_size,
+                    'is_pdf' => $p->is_pdf,
+                    'is_image' => $p->is_image,
+                    'view_url' => $p->view_url,
+                    'download_url' => $p->download_url,
+                    'created_at' => $p->created_at?->toIso8601String(),
+                ])->values()->all() : [],
                 'payment_method' => $del->payment_method ?: 'cash',
                 'pickup_date' => $del->pickup_date ? \Carbon\Carbon::parse($del->pickup_date)->format('M d, Y') : null,
                 'pickup_time' => $del->pickup_time ?? null,

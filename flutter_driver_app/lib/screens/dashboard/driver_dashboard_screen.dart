@@ -1346,14 +1346,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final rideType = (ride['type'] ?? 'ride').toString().toLowerCase();
     final isDelivery = rideType.contains('delivery') || rideType.contains('package');
     final isBooking = rideType.contains('booking') || rideType.contains('chauffeur');
-    final typeBadge = isDelivery ? '#DEL-$rideId' : (isBooking ? '#DRV-$rideId' : '#RIDE-$rideId');
+    final category = (ride['package_category'] ?? ride['category'] ?? '').toString();
+    final hasRx = ride['has_prescription'] == true || (ride['prescriptions'] is List && (ride['prescriptions'] as List).isNotEmpty);
+    final isPharmeasy = isDelivery && (category.toLowerCase() == 'pharmeasy' || hasRx);
+    final typeBadge = isPharmeasy ? '💊 #PHARMEASY-$rideId' : (isDelivery ? '#DEL-$rideId' : (isBooking ? '#DRV-$rideId' : '#RIDE-$rideId'));
 
     return Card(
       color: AppColors.surfaceDark,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
-        side: const BorderSide(color: AppColors.success, width: 2),
+        side: BorderSide(color: isPharmeasy ? const Color(0xFF10B981) : AppColors.success, width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -1368,21 +1371,23 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.15),
+                        color: (isPharmeasy ? const Color(0xFF10B981) : AppColors.success).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            isDelivery ? Icons.local_shipping_rounded : (isBooking ? Icons.badge_rounded : Icons.circle),
-                            color: AppColors.success,
+                            isPharmeasy
+                                ? Icons.local_pharmacy_rounded
+                                : (isDelivery ? Icons.local_shipping_rounded : (isBooking ? Icons.badge_rounded : Icons.circle)),
+                            color: isPharmeasy ? const Color(0xFF10B981) : AppColors.success,
                             size: isDelivery || isBooking ? 12 : 8,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            status,
-                            style: const TextStyle(
-                              color: AppColors.success,
+                            isPharmeasy ? 'RX DELIVERY • $status' : status,
+                            style: TextStyle(
+                              color: isPharmeasy ? const Color(0xFF10B981) : AppColors.success,
                               fontWeight: FontWeight.w800,
                               fontSize: 11,
                             ),
@@ -1393,8 +1398,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     const SizedBox(width: 8),
                     Text(
                       typeBadge,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
+                      style: TextStyle(
+                        color: isPharmeasy ? const Color(0xFF10B981) : AppColors.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

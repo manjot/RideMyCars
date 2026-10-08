@@ -48,6 +48,10 @@ class ApiConstants {
   static const String deliveryCalculate = '/delivery/calculate-price';
   static const String deliveryBook = '/delivery/book';
   static String deliveryStatus(int id) => '/delivery/$id/status';
+  static const String deliveryPrescriptionUpload = '/delivery/prescriptions/upload';
+  static String deliveryPrescriptionDelete(int id) => '/delivery/prescriptions/$id';
+  static String deliveryPrescriptionView(int id) => '/delivery/prescriptions/$id/view';
+  static String deliveryPrescriptionDownload(int id) => '/delivery/prescriptions/$id/download';
 
   // Receipts
   static const String receipts = '/receipts';

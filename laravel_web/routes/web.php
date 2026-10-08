@@ -533,6 +533,10 @@ Route::get('/delivery/{delivery}/tracker', [PackageDeliveryController::class, 't
 Route::get('/api/package-delivery/{id}/status', [PackageDeliveryController::class, 'statusApi']);
 Route::post('/api/package-delivery/{id}/verify-otp', [PackageDeliveryController::class, 'verifyOtp']);
 Route::post('/api/package-delivery/{id}/update-status', [PackageDeliveryController::class, 'updateDeliveryStatus']);
+Route::post('/delivery/prescriptions/upload', [PackageDeliveryController::class, 'uploadPrescription']);
+Route::delete('/delivery/prescriptions/{id}', [PackageDeliveryController::class, 'deletePrescription']);
+Route::get('/package-delivery/prescriptions/{id}/view', [PackageDeliveryController::class, 'viewPrescription']);
+Route::get('/package-delivery/prescriptions/{id}/download', [PackageDeliveryController::class, 'downloadPrescription']);
 
 // Driver Hiring Routes
 Route::get('/hire-driver', [DriverBookingController::class, 'index']);
@@ -3469,6 +3473,25 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         }
     } catch (\Throwable $e) {
         $output['receipts_explicit_migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('package_prescriptions')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', [
+                '--path' => 'database/migrations/2026_10_08_000001_create_package_prescriptions_table.php',
+                '--force' => true,
+            ]);
+            $output['prescriptions_explicit_migrate'] = \Illuminate\Support\Facades\Artisan::output();
+        }
+        $output['package_prescriptions_table'] = \Illuminate\Support\Facades\Schema::hasTable('package_prescriptions') ? 'Exists' : 'Missing';
+        
+        $rxDir = storage_path('app/private/prescriptions');
+        if (!file_exists($rxDir)) {
+            @mkdir($rxDir, 0755, true);
+        }
+        $output['prescriptions_dir_exists'] = file_exists($rxDir);
+    } catch (\Throwable $e) {
+        $output['prescriptions_explicit_migrate_err'] = $e->getMessage();
     }
 
     $quickSync = $request->boolean('quick_sync');

@@ -89,6 +89,170 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
     widget.onDecline();
   }
 
+  void _showPrescriptionViewerDialog(BuildContext context, List prescriptions) {
+    if (prescriptions.isEmpty) return;
+    final rx = prescriptions.first is Map ? Map<String, dynamic>.from(prescriptions.first) : {'file_name': 'Prescription'};
+    final fileName = rx['file_name']?.toString() ?? 'Doctor Prescription';
+    final fileType = rx['file_type']?.toString().toUpperCase() ?? 'DOC';
+    final isPdf = fileType == 'PDF';
+    final downloadUrl = rx['download_url']?.toString();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        TransformationController transformCtrl = TransformationController();
+        return Dialog(
+          backgroundColor: const Color(0xFF0F172A),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isPdf ? Icons.picture_as_pdf_rounded : Icons.medical_services_rounded,
+                      color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fileName,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '$fileType Prescription • Pinch to zoom',
+                            style: const TextStyle(color: Colors.white54, fontSize: 10.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Divider(color: Colors.white12, height: 16),
+                Container(
+                  height: 320,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InteractiveViewer(
+                    transformationController: transformCtrl,
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isPdf ? Icons.picture_as_pdf_rounded : Icons.receipt_long_rounded,
+                                color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                                size: 48,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              fileName,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                '✓ VALID DOCTOR RX ATTACHED',
+                                style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Present this to the pharmacist/counter for verification.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.white54, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.zoom_in, color: Color(0xFFF59E0B)),
+                          tooltip: 'Zoom In',
+                          onPressed: () {
+                            transformCtrl.value = transformCtrl.value.scaled(1.25);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.zoom_out, color: Color(0xFFF59E0B)),
+                          tooltip: 'Zoom Out',
+                          onPressed: () {
+                            transformCtrl.value = transformCtrl.value.scaled(0.8);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.restart_alt_rounded, color: Colors.white54),
+                          tooltip: 'Reset Zoom',
+                          onPressed: () {
+                            transformCtrl.value = Matrix4.identity();
+                          },
+                        ),
+                      ],
+                    ),
+                    if (downloadUrl != null && downloadUrl.isNotEmpty)
+                      TextButton.icon(
+                        icon: const Icon(Icons.download_rounded, color: Color(0xFF10B981), size: 16),
+                        label: const Text('Download Rx', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                        onPressed: () async {
+                          final uri = Uri.parse(downloadUrl);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          }
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final request = widget.request;
@@ -108,6 +272,13 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
         ride?['driver_assignment_type'] == 'backup' ||
         booking?['driver_assignment_type'] == 'backup';
 
+    final category = (request['package_category'] ?? request['category'] ?? ride?['package_category'] ?? '').toString();
+    final hasPrescription = request['has_prescription'] == true ||
+        ride?['has_prescription'] == true ||
+        (request['prescriptions'] is List && (request['prescriptions'] as List).isNotEmpty);
+    final isPharmeasy = isDelivery && (category.toLowerCase() == 'pharmeasy' || hasPrescription);
+    final List prescriptions = (request['prescriptions'] as List?) ?? (ride?['prescriptions'] as List?) ?? [];
+
     String title = 'New Ride Request!';
     String acceptButtonText = '✓ Accept Ride';
     Color themeColor = AppColors.primary;
@@ -123,6 +294,11 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
       acceptButtonText = '✓ Accept Chauffeur';
       themeColor = AppColors.purple;
       orderIcon = Icons.airline_seat_recline_extra_rounded;
+    } else if (isPharmeasy) {
+      title = '💊 Pharmeasy Medicine Delivery!';
+      acceptButtonText = '✓ Accept Pharmeasy Delivery';
+      themeColor = const Color(0xFF10B981);
+      orderIcon = Icons.medical_services_rounded;
     } else if (isDelivery) {
       title = 'New Delivery Request!';
       acceptButtonText = '✓ Accept Delivery';
@@ -565,6 +741,81 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 ),
               );
             }),
+            // Pharmeasy Doctor Prescription Banner
+            if (isPharmeasy) ...[
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.local_pharmacy_rounded, color: Color(0xFF10B981), size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'PHARMEASY DELIVERY (Doctor Rx)',
+                            style: TextStyle(
+                              color: Color(0xFF10B981),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'PRESCRIPTION OK',
+                            style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Mandatory doctor prescription attached. Present to pharmacy before medicine collection.',
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                    if (prescriptions.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _showPrescriptionViewerDialog(context, prescriptions),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.zoom_in_rounded, color: Color(0xFFF59E0B), size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'View Doctor Prescription (Zoom)',
+                                style: TextStyle(color: Color(0xFFF59E0B), fontSize: 11.5, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
 
             // Route Details

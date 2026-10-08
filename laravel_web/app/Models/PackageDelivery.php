@@ -32,6 +32,7 @@ class PackageDelivery extends Model
         'recipient_address',
         'delivery_instructions',
         'package_category',
+        'has_prescription',
         'package_description',
         'package_size',
         'package_weight_kg',
@@ -87,6 +88,7 @@ class PackageDelivery extends Model
         'tax' => 'float',
         'total_price' => 'float',
         'special_handling' => 'array',
+        'has_prescription' => 'boolean',
         'prohibited_items_acknowledged' => 'boolean',
         'pickup_date' => 'date',
         'pod_timestamp' => 'datetime',
@@ -119,5 +121,10 @@ class PackageDelivery extends Model
     public function receipt()
     {
         return $this->belongsTo(Receipt::class, 'receipt_id');
+    }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(PackagePrescription::class, 'package_delivery_id');
     }
 }

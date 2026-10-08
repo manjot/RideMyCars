@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PackageDelivery;
+use App\Models\PackagePrescription;
 use App\Models\User;
 use App\Models\DriverProfile;
 use App\Services\ActivityLogService;
@@ -11,6 +12,7 @@ use App\Services\PackageDeliveryAssignmentService;
 use App\Services\RideAssignmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PackageDeliveryController extends Controller
@@ -136,6 +138,23 @@ class PackageDeliveryController extends Controller
                 'prohibited_items_acknowledged' => 'required|accepted',
             ]);
 
+            // Mandatory Doctor Prescription validation for Pharmeasy category
+            if (strtolower($validated['package_category']) === 'pharmeasy') {
+                $hasUploads = $request->hasFile('prescriptions') || $request->hasFile('prescription') || $request->hasFile('files');
+                $hasIds = $request->filled('prescription_ids') && !empty($request->input('prescription_ids'));
+                $hasToken = $request->filled('prescription_temp_token') && PackagePrescription::where('temp_token', $request->input('prescription_temp_token'))->exists();
+
+                if (!$hasUploads && !$hasIds && !$hasToken) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Upload Doctor Prescription is mandatory for Pharmeasy delivery. Please upload at least one valid prescription (JPG, PNG, or PDF).',
+                        'errors' => [
+                            'prescriptions' => ['Doctor prescription is mandatory for Pharmeasy package delivery.']
+                        ]
+                    ], 422);
+                }
+            }
+
             $customerId = Auth::id();
             if (!$customerId) {
                 $user = User::where('email', 'customer@ridemycars.com')->first() ?? User::first();
@@ -169,6 +188,7 @@ class PackageDeliveryController extends Controller
                 'recipient_address' => $validated['recipient_address'] ?? $validated['dropoff_location'],
                 'delivery_instructions' => $validated['delivery_instructions'] ?? null,
                 'package_category' => $validated['package_category'],
+                'has_prescription' => strtolower($validated['package_category']) === 'pharmeasy',
                 'package_description' => $validated['package_description'] ?? null,
                 'package_size' => $validated['package_size'],
                 'package_weight_kg' => (float)$validated['package_weight_kg'],
@@ -192,6 +212,61 @@ class PackageDeliveryController extends Controller
             }
 
             $delivery = PackageDelivery::create($deliveryData);
+
+            // Link or create uploaded prescriptions
+            $hasPrescription = false;
+            $uploadedFiles = [];
+            if ($request->hasFile('prescriptions')) {
+                $f = $request->file('prescriptions');
+                $uploadedFiles = array_merge($uploadedFiles, is_array($f) ? $f : [$f]);
+            }
+            if ($request->hasFile('prescription')) {
+                $uploadedFiles[] = $request->file('prescription');
+            }
+            if ($request->hasFile('files')) {
+                $f = $request->file('files');
+                $uploadedFiles = array_merge($uploadedFiles, is_array($f) ? $f : [$f]);
+            }
+
+            foreach ($uploadedFiles as $file) {
+                if ($file && $file->isValid()) {
+                    $ext = strtolower($file->getClientOriginalExtension());
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'])) {
+                        $path = $file->store('prescriptions', 'local');
+                        PackagePrescription::create([
+                            'package_delivery_id' => $delivery->id,
+                            'file_path' => $path,
+                            'file_name' => $file->getClientOriginalName(),
+                            'file_type' => $ext,
+                            'mime_type' => $file->getClientMimeType(),
+                            'file_size' => $file->getSize(),
+                            'uploaded_by' => $customerId,
+                        ]);
+                        $hasPrescription = true;
+                    }
+                }
+            }
+
+            if ($request->filled('prescription_ids')) {
+                $pIds = is_array($request->input('prescription_ids'))
+                    ? $request->input('prescription_ids')
+                    : explode(',', (string)$request->input('prescription_ids'));
+                $updated = PackagePrescription::whereIn('id', $pIds)->update([
+                    'package_delivery_id' => $delivery->id,
+                ]);
+                if ($updated > 0) $hasPrescription = true;
+            }
+
+            if ($request->filled('prescription_temp_token')) {
+                $updated = PackagePrescription::where('temp_token', $request->input('prescription_temp_token'))->update([
+                    'package_delivery_id' => $delivery->id,
+                ]);
+                if ($updated > 0) $hasPrescription = true;
+            }
+
+            if ($hasPrescription || strtolower($delivery->package_category) === 'pharmeasy') {
+                $delivery->update(['has_prescription' => true]);
+            }
 
             // Process payment safely
             try {
@@ -307,6 +382,19 @@ class PackageDeliveryController extends Controller
             'recipient_name' => $delivery->recipient_name,
             'package_category' => $delivery->package_category,
             'package_size' => $delivery->package_size,
+            'has_prescription' => (bool) ($delivery->has_prescription || $delivery->prescriptions()->exists()),
+            'prescriptions' => $delivery->prescriptions ? $delivery->prescriptions->map(fn($p) => [
+                'id' => $p->id,
+                'file_name' => $p->file_name,
+                'file_type' => $p->file_type,
+                'file_size' => $p->file_size,
+                'formatted_size' => $p->formatted_size,
+                'is_pdf' => $p->is_pdf,
+                'is_image' => $p->is_image,
+                'view_url' => $p->view_url,
+                'download_url' => $p->download_url,
+                'created_at' => $p->created_at?->toIso8601String(),
+            ])->values()->all() : [],
             'delivery_otp' => $delivery->delivery_otp,
             'total_price' => floatval($delivery->total_price),
             'currency' => $delivery->currency,
@@ -407,5 +495,234 @@ class PackageDeliveryController extends Controller
         );
 
         return back()->with('success', "Delivery status updated to {$newStatus}.");
+    }
+
+    /**
+     * Upload one or multiple doctor prescription documents (JPG, JPEG, PNG, PDF).
+     */
+    public function uploadPrescription(Request $request)
+    {
+        $request->validate([
+            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'prescriptions.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'prescription' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+        ]);
+
+        $uploadedFiles = [];
+        if ($request->hasFile('files')) {
+            $f = $request->file('files');
+            $uploadedFiles = array_merge($uploadedFiles, is_array($f) ? $f : [$f]);
+        }
+        if ($request->hasFile('prescriptions')) {
+            $f = $request->file('prescriptions');
+            $uploadedFiles = array_merge($uploadedFiles, is_array($f) ? $f : [$f]);
+        }
+        if ($request->hasFile('file')) {
+            $uploadedFiles[] = $request->file('file');
+        }
+        if ($request->hasFile('prescription')) {
+            $uploadedFiles[] = $request->file('prescription');
+        }
+
+        if (empty($uploadedFiles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No files were provided. Please select a valid JPG, JPEG, PNG, or PDF file (max 10MB).',
+            ], 422);
+        }
+
+        $tempToken = $request->input('temp_token') ?: Str::random(32);
+        $savedRecords = [];
+
+        foreach ($uploadedFiles as $file) {
+            if (!$file || !$file->isValid()) continue;
+
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'])) {
+                continue;
+            }
+
+            $path = $file->store('prescriptions', 'local');
+            $rec = PackagePrescription::create([
+                'package_delivery_id' => $request->input('package_delivery_id'),
+                'temp_token' => $tempToken,
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'file_type' => $ext,
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+                'uploaded_by' => Auth::id(),
+            ]);
+
+            try {
+                ActivityLogService::log(
+                    'prescription_uploaded',
+                    "Uploaded doctor prescription {$rec->file_name} ({$rec->formatted_size})",
+                    Auth::id(),
+                    ['prescription_id' => $rec->id, 'file_name' => $rec->file_name]
+                );
+            } catch (\Throwable $e) {}
+
+            $savedRecords[] = [
+                'id' => $rec->id,
+                'temp_token' => $rec->temp_token,
+                'file_name' => $rec->file_name,
+                'file_type' => $rec->file_type,
+                'file_size' => $rec->file_size,
+                'formatted_size' => $rec->formatted_size,
+                'is_pdf' => $rec->is_pdf,
+                'is_image' => $rec->is_image,
+                'view_url' => $rec->view_url,
+                'download_url' => $rec->download_url,
+                'created_at' => $rec->created_at?->toIso8601String(),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Prescription uploaded successfully.',
+            'temp_token' => $tempToken,
+            'prescriptions' => $savedRecords,
+            'count' => count($savedRecords),
+        ]);
+    }
+
+    /**
+     * Delete an uploaded prescription before or after booking confirmation.
+     */
+    public function deletePrescription($id, Request $request)
+    {
+        $prescription = PackagePrescription::findOrFail($id);
+
+        $token = $request->input('token') ?? $request->query('token');
+        $isOwner = (Auth::id() && $prescription->uploaded_by === Auth::id()) || ($token && $token === $prescription->temp_token);
+        $isAdmin = Auth::user()?->is_admin || Auth::user()?->role === 'admin' || Auth::guard('filament')->check();
+
+        if (!$isOwner && !$isAdmin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized to remove this prescription.'], 403);
+        }
+
+        Storage::disk('local')->delete($prescription->file_path);
+        $delivery = $prescription->packageDelivery;
+        $prescription->delete();
+
+        if ($delivery && !$delivery->prescriptions()->exists()) {
+            $delivery->update(['has_prescription' => false]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Prescription document removed successfully.']);
+    }
+
+    /**
+     * View prescription document securely (inline stream).
+     */
+    public function viewPrescription($id, Request $request)
+    {
+        $prescription = PackagePrescription::findOrFail($id);
+
+        if (!$this->canAccessPrescription($prescription, $request)) {
+            abort(403, 'Unauthorized access to prescription document.');
+        }
+
+        $disk = Storage::disk('local');
+        $filePath = $prescription->file_path;
+
+        if (!$disk->exists($filePath)) {
+            if (file_exists(storage_path('app/' . $filePath))) {
+                $fileContent = file_get_contents(storage_path('app/' . $filePath));
+            } elseif (file_exists(storage_path('app/private/' . $filePath))) {
+                $fileContent = file_get_contents(storage_path('app/private/' . $filePath));
+            } else {
+                abort(404, 'Prescription file not found on disk.');
+            }
+        } else {
+            $fileContent = $disk->get($filePath);
+        }
+
+        try {
+            ActivityLogService::log(
+                'prescription_viewed',
+                "Viewed doctor prescription #{$id} ({$prescription->file_name})",
+                Auth::id()
+            );
+        } catch (\Throwable $e) {}
+
+        $mime = $prescription->mime_type ?: ($disk->exists($filePath) ? $disk->mimeType($filePath) : 'application/octet-stream');
+
+        return response($fileContent, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . addslashes($prescription->file_name) . '"',
+            'Cache-Control' => 'private, no-cache, no-store, must-revalidate',
+        ]);
+    }
+
+    /**
+     * Download prescription document securely.
+     */
+    public function downloadPrescription($id, Request $request)
+    {
+        $prescription = PackagePrescription::findOrFail($id);
+
+        if (!$this->canAccessPrescription($prescription, $request)) {
+            abort(403, 'Unauthorized access to prescription document.');
+        }
+
+        $disk = Storage::disk('local');
+        $filePath = $prescription->file_path;
+
+        if (!$disk->exists($filePath)) {
+            $alt = storage_path('app/' . $filePath);
+            if (file_exists($alt)) {
+                return response()->download($alt, $prescription->file_name);
+            }
+            $altPriv = storage_path('app/private/' . $filePath);
+            if (file_exists($altPriv)) {
+                return response()->download($altPriv, $prescription->file_name);
+            }
+            abort(404, 'Prescription file not found on disk.');
+        }
+
+        try {
+            ActivityLogService::log(
+                'prescription_downloaded',
+                "Downloaded doctor prescription #{$id} ({$prescription->file_name})",
+                Auth::id()
+            );
+        } catch (\Throwable $e) {}
+
+        return $disk->download($filePath, $prescription->file_name);
+    }
+
+    /**
+     * Determine if current user or request token is authorized to access prescription.
+     */
+    protected function canAccessPrescription(PackagePrescription $prescription, Request $request): bool
+    {
+        $user = Auth::user();
+        if ($user && ($user->is_admin || $user->role === 'admin' || Auth::guard('filament')->check())) {
+            return true;
+        }
+
+        $token = $request->query('token') ?? $request->input('token');
+        if ($token && $prescription->temp_token && hash_equals($prescription->temp_token, (string)$token)) {
+            return true;
+        }
+
+        if ($user && $prescription->uploaded_by && $user->id === $prescription->uploaded_by) {
+            return true;
+        }
+
+        if ($prescription->packageDelivery) {
+            $delivery = $prescription->packageDelivery;
+            if ($user && $delivery->customer_id === $user->id) {
+                return true;
+            }
+            if ($user && ($delivery->courier_id === $user->id || $delivery->assignments()->where('driver_id', $user->id)->exists())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

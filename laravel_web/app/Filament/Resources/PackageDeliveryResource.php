@@ -73,6 +73,14 @@ class PackageDeliveryResource extends Resource
                                 'cancelled' => 'Cancelled',
                             ]),
                     ])->columns(3),
+
+                Forms\Components\Section::make('Doctor Prescriptions (Pharmeasy Delivery)')
+                    ->visible(fn (?PackageDelivery $record) => $record && (strtolower($record->package_category ?? '') === 'pharmeasy' || $record->has_prescription || $record->prescriptions()->exists()))
+                    ->schema([
+                        Forms\Components\ViewField::make('prescriptions_preview')
+                            ->view('filament.resources.package-deliveries.prescriptions-inline')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 
@@ -121,6 +129,19 @@ class PackageDeliveryResource extends Resource
                         default => 'gray',
                     }),
 
+                Tables\Columns\TextColumn::make('package_category')
+                    ->label('Category')
+                    ->badge()
+                    ->color(fn (?string $state): string => strtolower($state ?? '') === 'pharmeasy' ? 'success' : 'gray'),
+
+                Tables\Columns\IconColumn::make('has_prescription')
+                    ->label('Rx')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->trueColor('success')
+                    ->falseIcon('heroicon-o-minus')
+                    ->falseColor('gray'),
+
                 Tables\Columns\TextColumn::make('delivery_status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -137,6 +158,20 @@ class PackageDeliveryResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
+                Tables\Actions\Action::make('view_prescriptions')
+                    ->label('Rx Prescriptions')
+                    ->icon('heroicon-o-document-magnifying-glass')
+                    ->color('success')
+                    ->visible(fn (PackageDelivery $record) => strtolower($record->package_category ?? '') === 'pharmeasy' || $record->has_prescription || $record->prescriptions()->exists())
+                    ->modalHeading(fn (PackageDelivery $record) => "Pharmeasy Doctor Prescriptions — #{$record->delivery_code}")
+                    ->modalWidth('5xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalContent(fn (PackageDelivery $record) => view('filament.resources.package-deliveries.prescriptions-modal', [
+                        'delivery' => $record->load('prescriptions'),
+                        'prescriptions' => $record->prescriptions,
+                    ])),
+
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\Action::make('view_receipt')
                         ->label('View Receipt')
