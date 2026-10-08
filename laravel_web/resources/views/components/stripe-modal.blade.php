@@ -44,7 +44,7 @@
                 <div class="bg-gray-50 dark:bg-gray-900/60 rounded-2xl p-4 flex justify-between items-center border border-gray-200 dark:border-gray-700">
                     <div>
                         <span class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Total Amount</span>
-                        <div class="text-2xl font-black text-gray-900 dark:text-white" x-text="currency + ' $' + amount.toFixed(2)"></div>
+                        <div class="text-2xl font-black text-gray-900 dark:text-white" x-text="(currency === 'USD' ? '$' : (currency === 'INR' ? '₹' : (currency === 'GHS' ? 'GH₵' : (currency === 'ZAR' ? 'R' : (currency === 'EUR' ? '€' : (currency === 'GBP' ? '£' : currency + ' ')))))) + Number(amount).toFixed(2)"></div>
                     </div>
                     <span class="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-bold text-xs rounded-full">
                         🔒 Encrypted

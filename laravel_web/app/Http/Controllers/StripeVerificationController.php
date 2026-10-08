@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CountryPricing;
 use App\Models\DriverBooking;
 use App\Models\PackageDelivery;
 use App\Models\PaymentTransaction;
 use App\Models\Ride;
 use App\Models\User;
-
 use App\Services\ActivityLogService;
+use App\Services\CountryService;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -514,6 +515,73 @@ class StripeVerificationController extends Controller
         $driverId = Auth::id();
         $items = [];
 
+        // Resolve target country pricing from driver request, headers, or profile
+        $targetCountry = CountryService::getCurrentCountryCode($request);
+        $driverPricing = CountryPricing::forCountry($targetCountry);
+
+        // Helper to resolve currency & format price based on country and booking location
+        $formatItemFare = function ($baseAmount, $pickupLocation = '', $dropoffLocation = '', $explicitCountry = null, $rawCurrency = null) use ($driverPricing, $targetCountry) {
+            $baseAmount = (float) $baseAmount;
+            $rawCurrency = strtoupper(trim($rawCurrency ?? ''));
+
+            // Check if booking location indicates country (e.g. Ghana, India, etc.)
+            $bookingCountry = $explicitCountry;
+            if (empty($bookingCountry)) {
+                $fullLoc = strtolower($pickupLocation . ' ' . $dropoffLocation);
+                if (str_contains($fullLoc, 'ghana') || str_contains($fullLoc, 'accra') || str_contains($fullLoc, 'weija')) {
+                    $bookingCountry = 'GHA';
+                } elseif (str_contains($fullLoc, 'india') || str_contains($fullLoc, 'delhi') || str_contains($fullLoc, 'mumbai') || str_contains($fullLoc, 'bangalore') || str_contains($fullLoc, 'punjab')) {
+                    $bookingCountry = 'IND';
+                } elseif (str_contains($fullLoc, 'south africa') || str_contains($fullLoc, 'johannesburg') || str_contains($fullLoc, 'cape town')) {
+                    $bookingCountry = 'ZAF';
+                } elseif (str_contains($fullLoc, 'nigeria') || str_contains($fullLoc, 'lagos') || str_contains($fullLoc, 'abuja')) {
+                    $bookingCountry = 'NGA';
+                } elseif (str_contains($fullLoc, 'united kingdom') || str_contains($fullLoc, 'london') || str_contains($fullLoc, 'uk')) {
+                    $bookingCountry = 'GBR';
+                } elseif (str_contains($fullLoc, 'malawi') || str_contains($fullLoc, 'blantyre') || str_contains($fullLoc, 'lilongwe')) {
+                    $bookingCountry = 'MWI';
+                } elseif (str_contains($fullLoc, 'kenya') || str_contains($fullLoc, 'nairobi')) {
+                    $bookingCountry = 'KEN';
+                } elseif (str_contains($fullLoc, 'canada') || str_contains($fullLoc, 'toronto') || str_contains($fullLoc, 'vancouver')) {
+                    $bookingCountry = 'CAN';
+                } elseif (str_contains($fullLoc, 'emirates') || str_contains($fullLoc, 'dubai') || str_contains($fullLoc, 'uae')) {
+                    $bookingCountry = 'ARE';
+                }
+            }
+
+            // Target pricing: prioritize driver's active country selection if driver is viewing in their currency,
+            // or if driver is in USA/default, use booking location's country
+            $activeCountryCode = $targetCountry;
+            if ($activeCountryCode === 'USA' && !empty($bookingCountry) && $bookingCountry !== 'USA') {
+                $activeCountryCode = $bookingCountry;
+            }
+            $activePricing = CountryPricing::forCountry($activeCountryCode);
+
+            $exchangeRate = (float)($activePricing->exchange_rate ?? 1.0);
+            if ($exchangeRate <= 0) $exchangeRate = 1.0;
+
+            // If base amount is USD and viewer currency is not USD, convert:
+            if (($rawCurrency === 'USD' || empty($rawCurrency)) && $activePricing->currency_code !== 'USD') {
+                $convertedAmount = round($baseAmount * $exchangeRate, 2);
+            } elseif ($rawCurrency === $activePricing->currency_code) {
+                $convertedAmount = $baseAmount;
+            } else {
+                $convertedAmount = $baseAmount;
+            }
+
+            $sym = $activePricing->currency_symbol ?? '$';
+            $code = $activePricing->currency_code ?? 'USD';
+
+            return [
+                'amount' => $convertedAmount,
+                'base_amount' => $baseAmount,
+                'currency' => $code,
+                'currency_symbol' => $sym,
+                'formatted_amount' => $sym . number_format($convertedAmount, 2),
+                'country' => $activePricing->country_code,
+            ];
+        };
+
         // Driver Bookings
         $driverBookings = DriverBooking::with(['client'])
             ->where('verification_status', 'pending_verification')
@@ -527,6 +595,7 @@ class StripeVerificationController extends Controller
             ->get();
 
         foreach ($driverBookings as $db) {
+            $fareInfo = $formatItemFare($db->total_price, $db->pickup_location, $db->dropoff_location, $db->country, $db->currency);
             $items[] = [
                 'type' => 'driver_booking',
                 'type_label' => 'Chauffeur Booking',
@@ -542,8 +611,12 @@ class StripeVerificationController extends Controller
                 'request_time_formatted' => $db->created_at ? $db->created_at->format('M d, Y • h:i A') : null,
                 'request_time_human' => $db->created_at ? $db->created_at->diffForHumans() : null,
                 'vehicle' => $db->car_make_model ?? 'Executive Vehicle',
-                'amount' => (float)$db->total_price,
-                'currency' => $db->currency ?? 'USD',
+                'amount' => $fareInfo['amount'],
+                'base_amount' => $fareInfo['base_amount'],
+                'currency' => $fareInfo['currency'],
+                'currency_symbol' => $fareInfo['currency_symbol'],
+                'formatted_amount' => $fareInfo['formatted_amount'],
+                'country' => $fareInfo['country'],
             ];
         }
 
@@ -560,6 +633,8 @@ class StripeVerificationController extends Controller
             ->get();
 
         foreach ($rides as $r) {
+            $rawAmount = (float)($r->total_amount ?? $r->fare ?? 0);
+            $fareInfo = $formatItemFare($rawAmount, $r->pickup_location, $r->dropoff_location, $r->driver_country ?? $r->country, 'USD');
             $items[] = [
                 'type' => 'ride',
                 'type_label' => 'Ride Service',
@@ -575,8 +650,12 @@ class StripeVerificationController extends Controller
                 'request_time_formatted' => $r->created_at ? $r->created_at->format('M d, Y • h:i A') : null,
                 'request_time_human' => $r->created_at ? $r->created_at->diffForHumans() : null,
                 'vehicle' => $r->vehicle ? ($r->vehicle->make . ' ' . $r->vehicle->model) : ($r->vehicle_type ?? 'Standard Sedan'),
-                'amount' => (float)($r->total_amount ?? $r->fare ?? 0),
-                'currency' => 'USD',
+                'amount' => $fareInfo['amount'],
+                'base_amount' => $fareInfo['base_amount'],
+                'currency' => $fareInfo['currency'],
+                'currency_symbol' => $fareInfo['currency_symbol'],
+                'formatted_amount' => $fareInfo['formatted_amount'],
+                'country' => $fareInfo['country'],
             ];
         }
 
@@ -593,6 +672,7 @@ class StripeVerificationController extends Controller
             ->get();
 
         foreach ($deliveries as $pd) {
+            $fareInfo = $formatItemFare($pd->total_price, $pd->pickup_location, $pd->dropoff_location, $pd->country, $pd->currency);
             $items[] = [
                 'type' => 'package_delivery',
                 'type_label' => 'Parcel Dispatch',
@@ -608,8 +688,12 @@ class StripeVerificationController extends Controller
                 'request_time_formatted' => $pd->created_at ? $pd->created_at->format('M d, Y • h:i A') : null,
                 'request_time_human' => $pd->created_at ? $pd->created_at->diffForHumans() : null,
                 'vehicle' => 'Courier Vehicle',
-                'amount' => (float)$pd->total_price,
-                'currency' => $pd->currency ?? 'USD',
+                'amount' => $fareInfo['amount'],
+                'base_amount' => $fareInfo['base_amount'],
+                'currency' => $fareInfo['currency'],
+                'currency_symbol' => $fareInfo['currency_symbol'],
+                'formatted_amount' => $fareInfo['formatted_amount'],
+                'country' => $fareInfo['country'],
             ];
         }
 

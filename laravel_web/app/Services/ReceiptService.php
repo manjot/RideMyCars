@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Mail\BookingReceiptMail;
+use App\Models\CountryPricing;
 use App\Models\DriverBooking;
 use App\Models\PackageDelivery;
 use App\Models\Receipt;
 use App\Models\Ride;
 use App\Models\User;
+use App\Services\CountryService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -96,14 +98,14 @@ class ReceiptService
             'completed_at' => $ride->completed_at ? $ride->completed_at->toIso8601String() : now()->toIso8601String(),
         ] + static::getCompanySnapshot();
 
-        $currency = 'USD';
-        if ($rider && !empty($rider->country)) {
-            $country = strtolower($rider->country);
-            if (in_array($country, ['ghana', 'gh'])) $currency = 'GHS';
-            elseif (in_array($country, ['india', 'in'])) $currency = 'INR';
-            elseif (in_array($country, ['uk', 'gbr', 'united kingdom'])) $currency = 'GBP';
-            elseif (in_array($country, ['eu', 'germany', 'france', 'spain'])) $currency = 'EUR';
-        }
+        $detectedCountry = static::detectCountryCode(
+            $ride->pickup_location,
+            $ride->dropoff_location,
+            $ride->driver_country ?? $ride->country,
+            $rider
+        );
+        $pricing = CountryPricing::forCountry($detectedCountry);
+        $currency = $pricing->currency_code ?: 'USD';
 
         $receipt = Receipt::create([
             'receipt_number' => $receiptNumber,
@@ -198,7 +200,14 @@ class ReceiptService
             'completed_at' => $booking->completed_at ? $booking->completed_at->toIso8601String() : now()->toIso8601String(),
         ] + static::getCompanySnapshot();
 
-        $currency = $booking->currency ?: 'USD';
+        $detectedCountry = static::detectCountryCode(
+            $booking->pickup_location,
+            $booking->dropoff_location,
+            $booking->country ?? $booking->driver_country,
+            $client
+        );
+        $pricing = CountryPricing::forCountry($detectedCountry);
+        $currency = $booking->currency ?: ($pricing->currency_code ?: 'USD');
 
         $receipt = Receipt::create([
             'receipt_number' => $receiptNumber,
@@ -285,7 +294,14 @@ class ReceiptService
             'completed_at' => $delivery->delivered_at ? $delivery->delivered_at->toIso8601String() : now()->toIso8601String(),
         ] + static::getCompanySnapshot();
 
-        $currency = $delivery->currency ?: 'USD';
+        $detectedCountry = static::detectCountryCode(
+            $delivery->pickup_location,
+            $delivery->dropoff_location,
+            $delivery->country,
+            $customer
+        );
+        $pricing = CountryPricing::forCountry($detectedCountry);
+        $currency = $delivery->currency ?: ($pricing->currency_code ?: 'USD');
 
         $receipt = Receipt::create([
             'receipt_number' => $receiptNumber,
@@ -434,5 +450,34 @@ class ReceiptService
             'company_gst_vat' => SettingService::get('company_gst_vat', 'GSTIN/VAT: 07AAACR1234F1Z8'),
             'company_website' => SettingService::get('company_website', 'https://ridemycars.com'),
         ];
+    }
+
+    /**
+     * Detect country code from booking locations, explicit country, or user profile.
+     */
+    public static function detectCountryCode($pickupLocation = '', $dropoffLocation = '', $explicitCountry = null, $user = null): string
+    {
+        if (!empty($explicitCountry)) {
+            $code = CountryService::normalizeToCode($explicitCountry);
+            if ($code) return $code;
+        }
+
+        if ($user && !empty($user->country)) {
+            $code = CountryService::normalizeToCode($user->country);
+            if ($code) return $code;
+        }
+
+        $loc = strtolower(($pickupLocation ?? '') . ' ' . ($dropoffLocation ?? ''));
+        if (str_contains($loc, 'ghana') || str_contains($loc, 'accra') || str_contains($loc, 'weija')) return 'GHA';
+        if (str_contains($loc, 'india') || str_contains($loc, 'delhi') || str_contains($loc, 'mumbai') || str_contains($loc, 'bangalore') || str_contains($loc, 'punjab')) return 'IND';
+        if (str_contains($loc, 'south africa') || str_contains($loc, 'johannesburg') || str_contains($loc, 'cape town')) return 'ZAF';
+        if (str_contains($loc, 'nigeria') || str_contains($loc, 'lagos') || str_contains($loc, 'abuja')) return 'NGA';
+        if (str_contains($loc, 'united kingdom') || str_contains($loc, 'london') || str_contains($loc, 'uk')) return 'GBR';
+        if (str_contains($loc, 'malawi') || str_contains($loc, 'blantyre') || str_contains($loc, 'lilongwe')) return 'MWI';
+        if (str_contains($loc, 'kenya') || str_contains($loc, 'nairobi')) return 'KEN';
+        if (str_contains($loc, 'canada') || str_contains($loc, 'toronto') || str_contains($loc, 'vancouver')) return 'CAN';
+        if (str_contains($loc, 'emirates') || str_contains($loc, 'dubai') || str_contains($loc, 'uae')) return 'ARE';
+
+        return CountryService::getCurrentCountryCode();
     }
 }

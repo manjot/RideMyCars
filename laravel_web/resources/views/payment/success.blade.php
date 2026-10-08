@@ -22,10 +22,16 @@
                     <span class="text-gray-500 dark:text-gray-400 font-medium">Transaction Ref</span>
                     <span class="font-mono font-bold text-gray-900 dark:text-white">{{ $transaction->transaction_ref ?? request('txn', 'N/A') }}</span>
                 </div>
+                @php
+                    $txCurr = strtoupper($transaction->currency ?? 'USD');
+                    $pricing = \App\Models\CountryPricing::where('currency_code', $txCurr)->first();
+                    $sym = $pricing ? $pricing->currency_symbol : ($txCurr === 'USD' ? '$' : $txCurr . ' ');
+                    $amt = (float)($transaction->amount ?? request('amount', 0));
+                @endphp
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-500 dark:text-gray-400 font-medium">Amount Paid</span>
                     <span class="font-extrabold text-green-600 dark:text-green-400 text-base">
-                        {{ $transaction->currency ?? 'USD' }} ${{ number_format($transaction->amount ?? request('amount', 0), 2) }}
+                        {{ $sym }}{{ number_format($amt, 2) }}
                     </span>
                 </div>
                 <div class="flex justify-between items-center text-sm">

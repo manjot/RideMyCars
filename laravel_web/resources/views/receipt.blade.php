@@ -100,6 +100,38 @@
             </div>
         @endif
 
+        @php
+            $activePricing = \App\Services\CountryService::getCurrentPricing();
+            $targetCurrencyCode = $activePricing->currency_code ?? 'USD';
+            $targetCurrencySymbol = $activePricing->currency_symbol ?? '$';
+            $targetExchangeRate = (float)($activePricing->exchange_rate ?? 1.0);
+            if ($targetExchangeRate <= 0) $targetExchangeRate = 1.0;
+
+            $receiptCurrency = strtoupper(trim($receipt->currency ?? 'USD'));
+            
+            // Check if currency conversion is applicable
+            $isConverted = false;
+            $rate = 1.0;
+
+            if ($receiptCurrency === 'USD' && $targetCurrencyCode !== 'USD') {
+                $rate = $targetExchangeRate;
+                $displayCurrencySymbol = $targetCurrencySymbol;
+                $displayCurrencyCode = $targetCurrencyCode;
+                $isConverted = true;
+            } elseif ($receiptCurrency === $targetCurrencyCode) {
+                $displayCurrencySymbol = $targetCurrencySymbol;
+                $displayCurrencyCode = $targetCurrencyCode;
+            } else {
+                $receiptPricing = \App\Models\CountryPricing::where('currency_code', $receiptCurrency)->first();
+                $displayCurrencySymbol = $receiptPricing ? $receiptPricing->currency_symbol : ($receiptCurrency === 'USD' ? '$' : $receiptCurrency . ' ');
+                $displayCurrencyCode = $receiptCurrency;
+            }
+
+            $fmt = function($amt) use ($rate, $displayCurrencySymbol) {
+                return $displayCurrencySymbol . number_format((float)$amt * $rate, 2);
+            };
+        @endphp
+
         <!-- Ola-style Receipt Card -->
         <div class="receipt-card bg-white dark:bg-[#121212] rounded-3xl border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden print:border print:border-gray-200 print:shadow-none print:m-0">
             
@@ -122,9 +154,14 @@
             <!-- Big Price Hero -->
             <div class="text-center py-8 px-6 bg-gray-50/50 dark:bg-white/[0.02] border-b border-gray-100 dark:border-white/5">
                 <div class="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
-                    {{ $receipt->currency }} {{ number_format($receipt->total_amount, 2) }}
+                    {{ $fmt($receipt->total_amount) }}
                 </div>
-                <div class="mt-1 font-mono text-xs font-bold text-gray-400 tracking-wider">
+                @if($isConverted)
+                    <div class="mt-1 text-xs text-gray-400 font-semibold tracking-wide">
+                        ≈ ${{ number_format($receipt->total_amount, 2) }} USD
+                    </div>
+                @endif
+                <div class="mt-2 font-mono text-xs font-bold text-gray-400 tracking-wider">
                     CRN: {{ $receipt->receipt_number }}
                 </div>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-300 font-medium">
@@ -235,47 +272,47 @@
                         <div class="space-y-3">
                             <div class="flex items-center justify-between text-xs">
                                 <span class="text-gray-500 dark:text-gray-400 font-medium">Base Fare / Service Price</span>
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $receipt->currency }} {{ number_format($receipt->subtotal, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $fmt($receipt->subtotal) }}</span>
                             </div>
 
                             @if($receipt->discount_amount > 0)
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Special Discount</span>
-                                    <span class="font-bold text-emerald-600 dark:text-emerald-400">-{{ $receipt->currency }} {{ number_format($receipt->discount_amount, 2) }}</span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400">-{{ $fmt($receipt->discount_amount) }}</span>
                                 </div>
                             @endif
 
                             @if(!empty($snapshot['extras_fee']) && floatval($snapshot['extras_fee']) > 0)
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Selected Extras</span>
-                                    <span class="font-bold text-gray-900 dark:text-white">{{ $receipt->currency }} {{ number_format(floatval($snapshot['extras_fee']), 2) }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ $fmt(floatval($snapshot['extras_fee'])) }}</span>
                                 </div>
                             @endif
 
                             @if(!empty($snapshot['protection_fee']) && floatval($snapshot['protection_fee']) > 0)
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Protection Option Fee</span>
-                                    <span class="font-bold text-gray-900 dark:text-white">{{ $receipt->currency }} {{ number_format(floatval($snapshot['protection_fee']), 2) }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ $fmt(floatval($snapshot['protection_fee'])) }}</span>
                                 </div>
                             @endif
 
                             @if($receipt->fee_amount > 0)
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Platform & Booking Fee</span>
-                                    <span class="font-bold text-gray-900 dark:text-white">{{ $receipt->currency }} {{ number_format($receipt->fee_amount, 2) }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ $fmt($receipt->fee_amount) }}</span>
                                 </div>
                             @endif
 
                             @if($receipt->tax_amount > 0)
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-gray-500 dark:text-gray-400 font-medium">Taxes (GST / VAT)</span>
-                                    <span class="font-bold text-gray-900 dark:text-white">{{ $receipt->currency }} {{ number_format($receipt->tax_amount, 2) }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white">{{ $fmt($receipt->tax_amount) }}</span>
                                 </div>
                             @endif
 
                             <div class="pt-4 border-t-2 border-gray-900 dark:border-white/20 flex items-center justify-between">
                                 <span class="font-black text-sm text-gray-900 dark:text-white">Total Bill (Paid)</span>
-                                <span class="font-black text-lg text-gray-900 dark:text-white">{{ $receipt->currency }} {{ number_format($receipt->total_amount, 2) }}</span>
+                                <span class="font-black text-lg text-gray-900 dark:text-white">{{ $fmt($receipt->total_amount) }}</span>
                             </div>
                         </div>
 

@@ -1828,13 +1828,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final code = item['code'] ?? item['id']?.toString() ?? '';
     final customer = item['customer_name'] ?? 'Customer';
     final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
-    final currency = item['currency'] ?? 'USD';
     final pickup = item['pickup'] ?? 'N/A';
     final dropoff = item['dropoff'] ?? 'N/A';
     final schedule = item['schedule'] ?? 'Immediate';
     final vehicle = item['vehicle'] ?? 'Standard';
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     final currSym = (item['currency_symbol'] ?? countryProv.currencySymbol).toString();
+
+    // Auto-convert price based on driver's active country/currency or use backend formatted price
+    final formattedBackend = item['formatted_amount']?.toString();
+    final String priceDisplay;
+    if (formattedBackend != null && formattedBackend.trim().isNotEmpty) {
+      priceDisplay = formattedBackend.trim();
+    } else {
+      double displayAmount = amount;
+      final rawCurrency = (item['currency'] ?? '').toString().toUpperCase();
+      if ((rawCurrency == 'USD' || rawCurrency.isEmpty) &&
+          countryProv.currencyCode != 'USD' &&
+          countryProv.priceMultiplier > 1.0) {
+        displayAmount = amount * countryProv.priceMultiplier;
+      }
+      priceDisplay = '$currSym${displayAmount.toStringAsFixed(2)}';
+    }
 
     Color typeColor = Colors.amber;
     if (type == 'driver_booking') {
@@ -1908,7 +1923,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '$currSym${amount.toStringAsFixed(2)} $currency',
+                      priceDisplay,
                       style: const TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.w900,
@@ -2009,87 +2024,126 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Action Buttons
+            // Action Buttons (Balanced 50/50, clean single-line icons & text)
             Row(
               children: [
                 Expanded(
-                  flex: 2,
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: AppColors.surfaceDark,
-                          title: const Text('Reject Verification', style: TextStyle(color: Colors.white)),
-                          content: const Text(
-                            'Are you sure you want to reject this booking verification request?',
-                            style: TextStyle(color: AppColors.textMuted),
+                  flex: 1,
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: AppColors.surfaceDark,
+                            title: const Text('Reject Verification', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            content: const Text(
+                              'Are you sure you want to reject this booking verification request?',
+                              style: TextStyle(color: AppColors.textMuted),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Reject', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Reject', style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
-                        ),
-                      );
+                        );
 
-                      if (confirmed == true) {
+                        if (confirmed == true) {
+                          final sId = int.tryParse(item['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0;
+                          final ok = await driver.verifyBooking(
+                            serviceType: type,
+                            serviceId: sId,
+                            action: 'reject',
+                            rejectionReason: 'Driver schedule or vehicle mismatch',
+                          );
+                          if (context.mounted && ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Verification rejected.')),
+                            );
+                          }
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        backgroundColor: AppColors.danger.withOpacity(0.08),
+                        side: BorderSide(color: AppColors.danger.withOpacity(0.6), width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.close_rounded, size: 16, color: AppColors.danger),
+                          SizedBox(width: 6),
+                          Text(
+                            'Reject',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              letterSpacing: 0.3,
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 1,
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () async {
                         final sId = int.tryParse(item['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0;
                         final ok = await driver.verifyBooking(
                           serviceType: type,
                           serviceId: sId,
-                          action: 'reject',
-                          rejectionReason: 'Driver schedule or vehicle mismatch',
+                          action: 'approve',
                         );
-                        if (context.mounted && ok) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Verification rejected.')),
+                            SnackBar(
+                              content: Text(ok ? '✓ Booking details verified and approved!' : 'Failed to approve verification.'),
+                              backgroundColor: ok ? AppColors.success : AppColors.danger,
+                            ),
                           );
                         }
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.danger,
-                      side: BorderSide(color: AppColors.danger.withOpacity(0.5)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('✕ Reject Verification', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final sId = int.tryParse(item['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0;
-                      final ok = await driver.verifyBooking(
-                        serviceType: type,
-                        serviceId: sId,
-                        action: 'approve',
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(ok ? '✓ Booking details verified and approved!' : 'Failed to approve verification.'),
-                            backgroundColor: ok ? AppColors.success : AppColors.danger,
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: Colors.white,
+                        elevation: 3,
+                        shadowColor: AppColors.success.withOpacity(0.4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
+                          SizedBox(width: 6),
+                          Text(
+                            'Approve & Verify',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              letterSpacing: 0.3,
+                              color: Colors.white,
+                            ),
                           ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                        ],
+                      ),
                     ),
-                    child: const Text('✓ Approve & Verify Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
                 ),
               ],
