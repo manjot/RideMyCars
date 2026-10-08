@@ -3644,13 +3644,17 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         // Ensure Ghana rental multiplier is synced in database
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('country_pricings')) {
+                $ghaPricing = \Illuminate\Support\Facades\DB::table('country_pricings')->where('country_code', 'GHA')->first();
+                $ghaUpdates = [
+                    'rental_price_multiplier' => 12.5000,
+                    'updated_at' => now(),
+                ];
+                if (!$ghaPricing || empty($ghaPricing->driver_hourly_rate)) {
+                    $ghaUpdates['driver_hourly_rate'] = 40.00;
+                }
                 \Illuminate\Support\Facades\DB::table('country_pricings')
                     ->where('country_code', 'GHA')
-                    ->update([
-                        'rental_price_multiplier' => 12.5000,
-                        'driver_hourly_rate' => 40.00,
-                        'updated_at' => now(),
-                    ]);
+                    ->update($ghaUpdates);
                 $output['gha_rental_multiplier_synced'] = true;
             }
         } catch (\Throwable $e) {

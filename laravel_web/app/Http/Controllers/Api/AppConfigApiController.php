@@ -115,7 +115,8 @@ class AppConfigApiController extends Controller
      */
     public function getRideCategories(Request $request): JsonResponse
     {
-        $currentPricing = CountryService::getCurrentPricing($request);
+        $explicitCountry = $request->query('country') ?? $request->input('country');
+        $currentPricing = $explicitCountry ? \App\Models\CountryPricing::forCountry($explicitCountry) : CountryService::getCurrentPricing($request);
         $countryCode = $currentPricing->country_code ?? 'USA';
         $currencySymbol = $currentPricing->currency_symbol ?? '$';
         $currencyCode = $currentPricing->currency_code ?? 'USD';

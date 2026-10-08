@@ -44,6 +44,8 @@ class CountryRideCategoryPricing extends Model
         'active' => 'boolean',
     ];
 
+    public static bool $isSyncing = false;
+
     protected static function booted(): void
     {
         static::saving(function ($model) {
@@ -52,6 +54,36 @@ class CountryRideCategoryPricing extends Model
                 $model->active = $model->is_active;
             } elseif ($model->isDirty('active') && !$model->isDirty('is_active')) {
                 $model->is_active = $model->active;
+            }
+        });
+
+        static::saved(function ($model) {
+            if (static::$isSyncing || \App\Models\CountryPricing::$isSyncing) {
+                return;
+            }
+
+            try {
+                $key = strtolower(trim($model->category_key));
+                if (in_array($key, ['economy', 'standard'])) {
+                    $code = strtoupper(trim($model->country_code));
+                    $hasEconomy = static::where('country_code', $code)->where('category_key', 'economy')->exists();
+                    if ($key === 'economy' || !$hasEconomy) {
+                        static::$isSyncing = true;
+                        $cp = \App\Models\CountryPricing::where('country_code', $code)->first();
+                        if ($cp) {
+                            $cp->update([
+                                'ride_base_fare' => (float) $model->base_fare,
+                                'ride_per_km_rate' => (float) $model->per_km_rate,
+                                'ride_per_minute_rate' => (float) ($model->per_minute_rate ?: $cp->ride_per_minute_rate),
+                                'ride_minimum_fare' => (float) ($model->minimum_fare ?: $cp->ride_minimum_fare),
+                            ]);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Error syncing tier to country_pricings: ' . $e->getMessage());
+            } finally {
+                static::$isSyncing = false;
             }
         });
     }
@@ -138,21 +170,9 @@ class CountryRideCategoryPricing extends Model
                 ->where('country_code', 'GHA')
                 ->count();
 
-            // If not forced and all 6 tiers already exist with proper minimum_fare, do not overwrite custom edits
-            if (!$force && $count >= 6) {
-                $hasValidEconomy = DB::table('country_ride_category_pricings')
-                    ->where('country_code', 'GHA')
-                    ->where('category_key', 'economy')
-                    ->where('minimum_fare', 8.50)
-                    ->exists();
-                $hasValidStandard = DB::table('country_ride_category_pricings')
-                    ->where('country_code', 'GHA')
-                    ->where('category_key', 'standard')
-                    ->where('minimum_fare', 23.50)
-                    ->exists();
-                if ($hasValidEconomy && $hasValidStandard) {
-                    return;
-                }
+            // If not forced and tiers already exist, NEVER overwrite custom edits made by admin!
+            if (!$force && $count > 0) {
+                return;
             }
 
             $now = now();
@@ -289,31 +309,35 @@ class CountryRideCategoryPricing extends Model
                 ->whereNotIn('category_key', ['economy', 'standard', 'luxury', 'van_xl', 'vip_chauffeur', 'group_bus'])
                 ->delete();
 
-            // Ensure parent CountryPricing for Ghana is aligned with the PDF matrix
+            // Only seed parent CountryPricing for Ghana if it does not exist yet (never overwrite custom edits)
             if (Schema::hasTable('country_pricings')) {
-                DB::table('country_pricings')->updateOrInsert(
-                    ['country_code' => 'GHA'],
-                    [
-                        'country_name' => 'Ghana',
-                        'currency_code' => 'GHS',
-                        'currency_symbol' => 'GH₵',
-                        'exchange_rate' => 15.5000,
-                        'is_active' => true,
-                        'ride_base_fare' => 7.00,
-                        'ride_per_km_rate' => 1.80,
-                        'ride_per_minute_rate' => 0.30,
-                        'ride_minimum_fare' => 10.00, // Standalone platform threshold from PDF note
-                        'ride_additional_stop_fee' => 3.50,
-                        'delivery_base_fare' => 18.00,
-                        'delivery_per_km_rate' => 2.00,
-                        'delivery_instant_addon' => 10.00,
-                        'delivery_express_addon' => 8.00,
-                        'delivery_same_day_addon' => 4.00,
-                        'delivery_scheduled_addon' => 2.00,
-                        'delivery_per_kg_rate' => 1.00,
-                        'updated_at' => $now,
-                    ]
-                );
+                $exists = DB::table('country_pricings')->where('country_code', 'GHA')->exists();
+                if (!$exists) {
+                    DB::table('country_pricings')->insert(
+                        [
+                            'country_name' => 'Ghana',
+                            'country_code' => 'GHA',
+                            'currency_code' => 'GHS',
+                            'currency_symbol' => 'GH₵',
+                            'exchange_rate' => 15.5000,
+                            'is_active' => true,
+                            'ride_base_fare' => 4.50,
+                            'ride_per_km_rate' => 1.10,
+                            'ride_per_minute_rate' => 0.20,
+                            'ride_minimum_fare' => 8.50,
+                            'ride_additional_stop_fee' => 3.50,
+                            'delivery_base_fare' => 18.00,
+                            'delivery_per_km_rate' => 2.00,
+                            'delivery_instant_addon' => 10.00,
+                            'delivery_express_addon' => 8.00,
+                            'delivery_same_day_addon' => 4.00,
+                            'delivery_scheduled_addon' => 2.00,
+                            'delivery_per_kg_rate' => 1.00,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]
+                    );
+                }
             }
         } catch (\Throwable $err) {
             Log::error('syncGhanaPdfTiers error: ' . $err->getMessage());

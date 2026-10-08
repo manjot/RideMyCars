@@ -74,6 +74,8 @@ class CountryPricing extends Model
         'rental_gps_rate' => 'float',
     ];
 
+    public static bool $isSyncing = false;
+
     protected static function booted()
     {
         static::saved(function ($model) {
@@ -82,6 +84,89 @@ class CountryPricing extends Model
                 static::where('id', '!=', $model->id)
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
+            }
+
+            if (static::$isSyncing || \App\Models\CountryRideCategoryPricing::$isSyncing) {
+                return;
+            }
+
+            // Sync ride rates to CountryRideCategoryPricing if tiers exist for this country
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('country_ride_category_pricings')) {
+                    $code = strtoupper(trim($model->country_code));
+                    $tiers = \App\Models\CountryRideCategoryPricing::where('country_code', $code)->get();
+
+                    if ($tiers->isNotEmpty()) {
+                        static::$isSyncing = true;
+
+                        // Find the base tier (economy or standard)
+                        $baseTier = $tiers->firstWhere('category_key', 'economy') ?? $tiers->first();
+
+                        if ($baseTier) {
+                            $oldBase = (float) $baseTier->base_fare;
+                            $newBase = (float) $model->ride_base_fare;
+                            $oldKm = (float) $baseTier->per_km_rate;
+                            $newKm = (float) $model->ride_per_km_rate;
+                            $oldMin = (float) $baseTier->minimum_fare;
+                            $newMin = (float) $model->ride_minimum_fare;
+                            $newMinRate = (float) ($model->ride_per_minute_rate ?: 0.25);
+
+                            $baseTier->update([
+                                'base_fare' => $newBase,
+                                'per_km_rate' => $newKm,
+                                'per_minute_rate' => $newMinRate,
+                                'minimum_fare' => $newMin,
+                            ]);
+
+                            // If other tiers exist and any rate changed, adjust other tiers proportionally or by multiplier
+                            $hasBaseChange = ($oldBase > 0 && $newBase > 0 && abs($newBase - $oldBase) > 0.01);
+                            $hasKmChange = ($oldKm > 0 && $newKm > 0 && abs($newKm - $oldKm) > 0.01);
+                            $hasMinChange = ($oldMin > 0 && $newMin > 0 && abs($newMin - $oldMin) > 0.01);
+
+                            if ($hasBaseChange || $hasKmChange || $hasMinChange) {
+                                $baseRatio = $hasBaseChange ? ($newBase / $oldBase) : 1.0;
+                                $kmRatio = $hasKmChange ? ($newKm / $oldKm) : 1.0;
+                                $minRatio = $hasMinChange ? ($newMin / $oldMin) : 1.0;
+
+                                foreach ($tiers as $ot) {
+                                    if ($ot->id === $baseTier->id) {
+                                        continue;
+                                    }
+
+                                    $mult = (float) ($ot->multiplier ?: 1.0);
+                                    $updates = [];
+                                    if ($hasBaseChange) {
+                                        $updates['base_fare'] = ($mult > 1.0)
+                                            ? round($newBase * $mult, 2)
+                                            : round(((float) $ot->base_fare) * $baseRatio, 2);
+                                    }
+                                    if ($hasKmChange) {
+                                        $updates['per_km_rate'] = ($mult > 1.0)
+                                            ? round($newKm * $mult, 2)
+                                            : round(((float) $ot->per_km_rate) * $kmRatio, 2);
+                                    }
+                                    if ($hasMinChange) {
+                                        $updates['minimum_fare'] = ($mult > 1.0)
+                                            ? round($newMin * $mult, 2)
+                                            : round(((float) $ot->minimum_fare) * $minRatio, 2);
+                                    }
+                                    if ($newMinRate > 0) {
+                                        $updates['per_minute_rate'] = ($mult > 1.0)
+                                            ? round($newMinRate * $mult, 2)
+                                            : round(((float) $ot->per_minute_rate) * $baseRatio, 2);
+                                    }
+                                    if (!empty($updates)) {
+                                        $ot->update($updates);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $syncErr) {
+                \Illuminate\Support\Facades\Log::warning('Error syncing CountryPricing to tiers: ' . $syncErr->getMessage());
+            } finally {
+                static::$isSyncing = false;
             }
         });
     }
@@ -448,12 +533,7 @@ class CountryPricing extends Model
             $countryPricing = static::forCountry($countryCode);
             $code = strtoupper(trim($countryPricing->country_code ?? 'USA'));
 
-            // 1. Ghana specific PDF matrix
-            if ($code === 'GHA' || strtoupper(trim($countryPricing->currency_code ?? '')) === 'GHS') {
-                return static::getGhanaPricingMatrix();
-            }
-
-            // 2. Custom category rows in database for this specific country
+            // 1. Check if database has configured tiers for this country (e.g. Ghana or any custom configured country)
             $dbTiers = CountryRideCategoryPricing::forCountry($code);
             if ($dbTiers->isNotEmpty()) {
                 $matrix = [];
@@ -491,6 +571,11 @@ class CountryPricing extends Model
                     $matrix[$tier->category_key] = $item;
                 }
                 return $matrix;
+            }
+
+            // 2. Ghana specific PDF fallback matrix if database table was empty
+            if ($code === 'GHA' || strtoupper(trim($countryPricing->currency_code ?? '')) === 'GHS') {
+                return static::getGhanaPricingMatrix();
             }
 
             // 3. Dynamic Native Tiers calculated from country_pricings base and km rates

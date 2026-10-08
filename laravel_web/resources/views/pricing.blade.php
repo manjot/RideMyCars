@@ -7,7 +7,7 @@
         $dynamicVehicles = \App\Models\CountryPricing::getPricingMatrixForCountry($currentCountryCode);
         $rentalRates = \App\Models\CountryPricing::getRentalFleetRatesForCountry($currentCountryCode, $currentPricing?->rental_price_multiplier ?? 1.0);
         $isGhana = ($currentCountryCode === 'GHA' || ($currentPricing?->currency_code ?? '') === 'GHS' || ($currentCurrencySymbol ?? '') === 'GH₵');
-        $driverHourlyRate = (float) ($isGhana ? (($currentPricing?->driver_hourly_rate && $currentPricing->driver_hourly_rate != 35.00) ? $currentPricing->driver_hourly_rate : 40.00) : ($currentPricing?->driver_hourly_rate ?? 25.00));
+        $driverHourlyRate = (float) ($currentPricing?->driver_hourly_rate ?: ($isGhana ? 40.00 : 25.00));
     @endphp
 
     <!-- Ambient Glow Effects -->
