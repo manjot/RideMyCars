@@ -1463,6 +1463,22 @@ Route::post('/api/notifications/clear', function (\Illuminate\Http\Request $requ
     return response()->json(['success' => true]);
 });
 
+// Delete Single Notification
+Route::delete('/api/notifications/{id}', function (\Illuminate\Http\Request $request, $id) {
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+    if (!$user) return response()->json(['success' => false], 401);
+
+    $userIds = [$user->id];
+    $matchingIds = \App\Models\User::where('name', $user->name)
+        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+        ->pluck('id')
+        ->toArray();
+    $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+    \App\Models\UserNotification::whereIn('user_id', $userIds)->where('id', $id)->delete();
+    return response()->json(['success' => true]);
+});
+
 // My Rides & Bookings page (Rides, Car Rentals, Hire a Driver, Deliveries)
 Route::get('/my-rides', function () {
     $user = auth()->user();

@@ -83,12 +83,27 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteNotification(int id) async {
+    final idx = _notifications.indexWhere((n) => n['id'] == id);
+    if (idx != -1) {
+      final wasUnread = _notifications[idx]['is_read'] != true;
+      _notifications.removeAt(idx);
+      if (wasUnread && _unreadCount > 0) _unreadCount--;
+      notifyListeners();
+    }
+    try {
+      await _dio.delete('/notifications/$id');
+    } catch (e) {
+      debugPrint('Error deleting notification: $e');
+    }
+  }
+
   Future<void> clearAll() async {
+    _notifications.clear();
+    _unreadCount = 0;
+    notifyListeners();
     try {
       await _dio.post('/notifications/clear');
-      _notifications.clear();
-      _unreadCount = 0;
-      notifyListeners();
     } catch (e) {
       debugPrint('Error clearing notifications: $e');
     }

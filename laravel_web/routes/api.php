@@ -238,6 +238,20 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['success' => true]);
     });
 
+    Route::post('/notifications/clear', function (Request $request) {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false], 401);
+        \App\Models\UserNotification::where('user_id', $user->id)->delete();
+        return response()->json(['success' => true]);
+    });
+
+    Route::delete('/notifications/{id}', function (Request $request, $id) {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false], 401);
+        \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->delete();
+        return response()->json(['success' => true]);
+    });
+
     // Banners & Categories Management
     Route::post('/banners', [BannerApiController::class, 'store']);
     Route::put('/banners/{id}', [BannerApiController::class, 'update']);
