@@ -887,6 +887,207 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
+  Future<void> _promptStartRidePin(BuildContext context, int rideId, DriverProvider driver, {String type = 'ride'}) async {
+    final TextEditingController pinCtrl = TextEditingController();
+    String? localError;
+    bool isSubmitting = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) {
+          final isDark = Theme.of(modalCtx).brightness == Brightness.dark;
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.pin_rounded, color: AppColors.primary, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Verify 4-Digit Ride PIN',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Ask the customer for their secure start PIN',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  if (localError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade400, width: 1.2),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              localError!,
+                              style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  TextField(
+                    controller: pinCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    textAlign: TextAlign.center,
+                    autofocus: true,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 16.0,
+                      fontFamily: 'monospace',
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: '••••',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.withOpacity(0.4),
+                        letterSpacing: 16.0,
+                      ),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final code = pinCtrl.text.trim();
+                            if (code.length != 4) {
+                              setModalState(() => localError = 'Please enter all 4 digits of the PIN.');
+                              return;
+                            }
+
+                            setModalState(() {
+                              isSubmitting = true;
+                              localError = null;
+                            });
+
+                            final ok = await driver.updateRideStatus(rideId, 'in_progress', type: type, otp: code);
+                            if (ok) {
+                              if (Navigator.canPop(modalCtx)) {
+                                Navigator.pop(modalCtx);
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✓ 4-Digit PIN Verified! Trip started.'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            } else {
+                              setModalState(() {
+                                isSubmitting = false;
+                                localError = driver.lastStatusError ?? driver.errorMessage ?? 'Invalid 4-digit PIN. Please re-check with customer.';
+                              });
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 2,
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline_rounded, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Verify & Start Trip',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.pop(modalCtx),
+                    child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _confirmEndTrip(BuildContext context, int rideId, double fare, DriverProvider driver, {String currencySymbol = '\$', String type = 'ride'}) async {
     final isDelivery = type.contains('delivery') || type.contains('package');
     final isBooking = type.contains('booking') || type.contains('chauffeur');
@@ -1726,7 +1927,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       height: 48,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          await driver.updateRideStatus(rideId, 'in_progress', type: rideType);
+                          if (!isDelivery && !isBooking) {
+                            await _promptStartRidePin(context, rideId, driver, type: rideType);
+                          } else {
+                            await driver.updateRideStatus(rideId, 'in_progress', type: rideType);
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.success,
