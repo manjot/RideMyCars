@@ -239,7 +239,7 @@
 
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-extrabold">
                         <span class="text-gray-900 dark:text-white">Total Amount:</span>
-                        <span class="text-brand-500">${{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</span>
+                        <span class="text-brand-500">{{ \App\Services\CountryService::resolveItemCurrency($booking) }}{{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</span>
                     </div>
                 </div>
 

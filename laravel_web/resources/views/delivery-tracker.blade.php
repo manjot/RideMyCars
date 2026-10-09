@@ -287,27 +287,28 @@
                     @php
                         $isDelPharmeasy = strtolower((string)$delivery->package_category) === 'pharmeasy' || $delivery->has_prescription;
                         $serviceFeePercent = $isDelPharmeasy ? 10 : 5;
+                        $delCurrencySymbol = \App\Services\CountryService::resolveItemCurrency($delivery);
                     @endphp
                     @if($delivery->subtotal > 0)
                         <div class="pt-3 border-t border-gray-100 dark:border-white/10 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                             <div class="flex justify-between">
                                 <span>Delivery Fee:</span>
-                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($delivery->subtotal, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->subtotal, 2) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Service Fee ({{ $serviceFeePercent }}%):</span>
-                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($delivery->service_fee, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->service_fee, 2) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Taxes (5%):</span>
-                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($delivery->tax, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->tax, 2) }}</span>
                             </div>
                         </div>
                     @endif
 
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-extrabold">
                         <span class="text-gray-900 dark:text-white">Total Amount:</span>
-                        <span class="text-amber-500">${{ number_format($delivery->total_price, 2) }} {{ $delivery->currency }}</span>
+                        <span class="text-amber-500">{{ $delCurrencySymbol }}{{ number_format($delivery->total_price, 2) }} {{ $delivery->currency }}</span>
                     </div>
                 </div>
 

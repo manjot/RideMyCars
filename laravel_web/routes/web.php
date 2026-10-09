@@ -723,7 +723,9 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $vehicleType = $request->vehicle_type ?? 'Economy';
         $stopsCount = count($parsedStops);
 
-        $country = $request->input('country') ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $country = $request->input('country') 
+            ?? \App\Services\CountryService::detectCountryFromLocation(($request->pickup_location ?? '') . ' ' . ($request->dropoff_location ?? ''), $request->input('pickup_lat'), $request->input('pickup_lng'))
+            ?? \App\Services\CountryService::getCurrentCountryCode($request);
         $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
         $amount = $rawAmount > 0 ? $rawAmount : $breakdown['total_fare'];
 
@@ -752,6 +754,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'duration_minutes' => $durationMin,
             'fare' => $amount,
             'total_amount' => $amount,
+            'driver_country' => $country,
             'vehicle_type' => $vehicleType,
             'payment_method' => $paymentMethod,
             'is_for_someone_else' => $isForSomeoneElse,

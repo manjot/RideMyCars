@@ -758,4 +758,276 @@ class CountryService
     {
         return config('world_countries') ?? [];
     }
+
+    /**
+     * Get currency symbol from currency code or country code.
+     */
+    public static function getCurrencySymbolByCode(?string $code): string
+    {
+        if (empty($code)) {
+            return '$';
+        }
+
+        $upper = strtoupper(trim($code));
+
+        return match ($upper) {
+            'INR', 'IND', 'IN' => '₹',
+            'GHS', 'GHA', 'GH' => 'GH₵',
+            'NGN', 'NGA', 'NG' => '₦',
+            'ZAR', 'ZAF', 'ZA' => 'R',
+            'MWK', 'MWI', 'MW' => 'MK',
+            'GBP', 'GBR', 'GB', 'UK' => '£',
+            'EUR', 'EU', 'DEU', 'FRA', 'ITA', 'ESP', 'NLD', 'BEL', 'IRL' => '€',
+            'AED', 'ARE', 'AE' => 'AED ',
+            'KES', 'KEN', 'KE' => 'KSh ',
+            'CAD', 'CAN', 'CA' => 'CA$',
+            'AUD', 'AUS', 'AU' => 'AU$',
+            default => (strlen($upper) === 3 && $upper !== 'USD') ? ($upper . ' ') : '$',
+        };
+    }
+
+    /**
+     * Detect country code (USA, GHA, IND, etc.) from location string and/or coordinates.
+     */
+    public static function detectCountryFromLocation(?string $location, $lat = null, $lng = null): ?string
+    {
+        $lat = (float) ($lat ?? 0);
+        $lng = (float) ($lng ?? 0);
+
+        // 1. Coordinate bounding box checks
+        if ($lat != 0 && $lng != 0) {
+            // India bounds: lat 6.0 to 37.5, lng 68.0 to 97.5
+            if ($lat >= 6.0 && $lat <= 37.5 && $lng >= 68.0 && $lng <= 97.5) {
+                return 'IND';
+            }
+            // Ghana bounds: lat 4.5 to 11.5, lng -3.5 to 1.5
+            if ($lat >= 4.5 && $lat <= 11.5 && $lng >= -3.5 && $lng <= 1.5) {
+                return 'GHA';
+            }
+            // Nigeria bounds: lat 4.0 to 14.0, lng 2.5 to 15.0
+            if ($lat >= 4.0 && $lat <= 14.0 && $lng >= 2.5 && $lng <= 15.0) {
+                return 'NGA';
+            }
+            // South Africa bounds: lat -35.0 to -22.0, lng 16.0 to 33.0
+            if ($lat >= -35.0 && $lat <= -22.0 && $lng >= 16.0 && $lng <= 33.0) {
+                return 'ZAF';
+            }
+            // Malawi bounds: lat -17.1 to -9.3, lng 32.6 to 35.9
+            if ($lat >= -17.1 && $lat <= -9.3 && $lng >= 32.6 && $lng <= 35.9) {
+                return 'MWI';
+            }
+            // United Kingdom bounds: lat 49.5 to 61.0, lng -8.0 to 2.0
+            if ($lat >= 49.5 && $lat <= 61.0 && $lng >= -8.0 && $lng <= 2.0) {
+                return 'GBR';
+            }
+        }
+
+        // 2. Keyword detection from text
+        if (!empty($location)) {
+            $loc = ' ' . strtolower(trim($location)) . ' ';
+
+            // India
+            $indiaKeywords = [
+                'india', 'bharat', 'delhi', 'new delhi', 'mumbai', 'bombay', 'bangalore', 'bengaluru',
+                'hyderabad', 'chennai', 'madras', 'kolkata', 'calcutta', 'pune', 'jaipur', 'ahmedabad',
+                'lucknow', 'chandigarh', 'noida', 'gurugram', 'gurgaon', 'kerala', 'punjab', 'gujarat',
+                'maharashtra', 'tamil nadu', 'karnataka', 'bihar', 'uttar pradesh', 'ghazipur', 'zamania',
+                'varanasi', 'banaras', 'agra', 'kanpur', 'prayagraj', 'allahabad', 'patna', 'indore',
+                'bhopal', 'nagpur', 'surat', 'vadodara', 'amritsar', 'ludhiana', 'lanka'
+            ];
+            foreach ($indiaKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'IND';
+                }
+            }
+
+            // Ghana
+            $ghanaKeywords = [
+                'ghana', 'accra', 'kumasi', 'tamale', 'takoradi', 'sekondi', 'cape coast', 'tema',
+                'kotoka', 'spintex', 'osu', 'east legon', 'kasoa', 'ashaiman', 'teshie', 'madina'
+            ];
+            foreach ($ghanaKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'GHA';
+                }
+            }
+
+            // Nigeria
+            $nigeriaKeywords = [
+                'nigeria', 'lagos', 'abuja', 'port harcourt', 'kano', 'ibadan', 'ikeja', 'lekki',
+                'yaba', 'surulere', 'victoria island', 'enugu', 'benin city'
+            ];
+            foreach ($nigeriaKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'NGA';
+                }
+            }
+
+            // South Africa
+            $zafKeywords = [
+                'south africa', 'johannesburg', 'cape town', 'durban', 'pretoria', 'sandton',
+                'soweto', 'bloemfontein', 'gqeberha', 'port elizabeth'
+            ];
+            foreach ($zafKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'ZAF';
+                }
+            }
+
+            // Malawi
+            $mwiKeywords = [
+                'malawi', 'lilongwe', 'blantyre', 'mzuzu', 'zomba', 'mangochi'
+            ];
+            foreach ($mwiKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'MWI';
+                }
+            }
+
+            // United Kingdom
+            $ukKeywords = [
+                'united kingdom', 'london', 'manchester', 'birmingham', 'leeds', 'glasgow',
+                'edinburgh', 'liverpool', 'heathrow', 'gatwick'
+            ];
+            foreach ($ukKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'GBR';
+                }
+            }
+
+            // Canada
+            $caKeywords = [
+                'canada', 'toronto', 'vancouver', 'montreal', 'calgary', 'ottawa', 'edmonton'
+            ];
+            foreach ($caKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'CAN';
+                }
+            }
+
+            // United States
+            $usKeywords = [
+                'united states', 'usa', 'new york', 'los angeles', 'chicago', 'houston',
+                'phoenix', 'philadelphia', 'san antonio', 'san diego', 'dallas', 'san jose',
+                'austin', 'miami', 'atlanta', 'california', 'texas', 'florida'
+            ];
+            foreach ($usKeywords as $kw) {
+                if (str_contains($loc, $kw)) {
+                    return 'USA';
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve currency symbol for an item (Ride, DriverBooking, PackageDelivery).
+     */
+    public static function resolveItemCurrency($item, ?string $fallbackSymbol = null): string
+    {
+        if (!$item) {
+            return $fallbackSymbol ?? (view()->shared('currentCurrencySymbol') ?: '$');
+        }
+
+        // 1. Receipt currency
+        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency)) {
+            return static::getCurrencySymbolByCode($item->receipt->currency);
+        }
+
+        // 2. Direct currency property (if non-USD or explicitly set)
+        $currency = is_object($item) ? ($item->currency ?? null) : ($item['currency'] ?? null);
+        if (!empty($currency) && strtoupper($currency) !== 'USD') {
+            return static::getCurrencySymbolByCode($currency);
+        }
+
+        // 3. Country property (country or driver_country)
+        $country = is_object($item)
+            ? ($item->driver_country ?? $item->country ?? null)
+            : ($item['driver_country'] ?? $item['country'] ?? null);
+        if (!empty($country)) {
+            $code = static::normalizeToCode($country);
+            if ($code && $code !== 'USA') {
+                return static::getCurrencySymbolByCode($code);
+            }
+        }
+
+        // 4. Detect country from pickup / dropoff locations or coordinates
+        $pickupLoc = is_object($item) ? ($item->pickup_location ?? null) : ($item['pickup_location'] ?? null);
+        $dropoffLoc = is_object($item) ? ($item->dropoff_location ?? null) : ($item['dropoff_location'] ?? null);
+        $lat = is_object($item) ? ($item->pickup_lat ?? null) : ($item['pickup_lat'] ?? null);
+        $lng = is_object($item) ? ($item->pickup_lng ?? null) : ($item['pickup_lng'] ?? null);
+
+        $detectedCode = static::detectCountryFromLocation(($pickupLoc ?? '') . ' ' . ($dropoffLoc ?? ''), $lat, $lng);
+        if ($detectedCode) {
+            return static::getCurrencySymbolByCode($detectedCode);
+        }
+
+        // 5. If item explicitly specifies USD, return $
+        if (!empty($currency) && strtoupper($currency) === 'USD') {
+            return '$';
+        }
+
+        // 6. Visitor active session currency
+        $sharedSymbol = view()->shared('currentCurrencySymbol');
+        if (!empty($sharedSymbol)) {
+            return $sharedSymbol;
+        }
+
+        return $fallbackSymbol ?? '$';
+    }
+
+    /**
+     * Resolve 3-letter currency code for an item (e.g. INR, GHS, USD).
+     */
+    public static function resolveItemCurrencyCode($item, ?string $fallbackCode = null): string
+    {
+        if (!$item) {
+            return $fallbackCode ?? (view()->shared('currentCurrencyCode') ?: 'USD');
+        }
+
+        // 1. Receipt currency
+        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency)) {
+            return strtoupper(trim($item->receipt->currency));
+        }
+
+        // 2. Direct currency property
+        $currency = is_object($item) ? ($item->currency ?? null) : ($item['currency'] ?? null);
+        if (!empty($currency) && strtoupper($currency) !== 'USD') {
+            return strtoupper(trim($currency));
+        }
+
+        // 3. Country property
+        $country = is_object($item)
+            ? ($item->driver_country ?? $item->country ?? null)
+            : ($item['driver_country'] ?? $item['country'] ?? null);
+        if (!empty($country)) {
+            $code = static::normalizeToCode($country);
+            if ($code && $code !== 'USA') {
+                return static::getCurrencyCode($code);
+            }
+        }
+
+        // 4. Detect from location
+        $pickupLoc = is_object($item) ? ($item->pickup_location ?? null) : ($item['pickup_location'] ?? null);
+        $dropoffLoc = is_object($item) ? ($item->dropoff_location ?? null) : ($item['dropoff_location'] ?? null);
+        $lat = is_object($item) ? ($item->pickup_lat ?? null) : ($item['pickup_lat'] ?? null);
+        $lng = is_object($item) ? ($item->pickup_lng ?? null) : ($item['pickup_lng'] ?? null);
+
+        $detectedCode = static::detectCountryFromLocation(($pickupLoc ?? '') . ' ' . ($dropoffLoc ?? ''), $lat, $lng);
+        if ($detectedCode) {
+            return static::getCurrencyCode($detectedCode);
+        }
+
+        if (!empty($currency) && strtoupper($currency) === 'USD') {
+            return 'USD';
+        }
+
+        $sharedCode = view()->shared('currentCurrencyCode');
+        if (!empty($sharedCode)) {
+            return $sharedCode;
+        }
+
+        return $fallbackCode ?? 'USD';
+    }
 }

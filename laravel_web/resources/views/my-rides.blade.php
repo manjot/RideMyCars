@@ -84,6 +84,7 @@
                             $dropoff = urlencode($ride->dropoff_location ?? '');
                             $mapUrl = "https://maps.googleapis.com/maps/api/staticmap?size=800x220&scale=2&maptype=roadmap&markers=color:green%7Clabel:A%7C{$pickup}&markers=color:red%7Clabel:B%7C{$dropoff}&path=color:0x4f46e5%7Cweight:5%7Cgeodesic:true%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
                             $displayFare = ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : 28.50;
+                            $rideCurrencySymbol = \App\Services\CountryService::resolveItemCurrency($ride, $currentCurrencySymbol ?? '$');
                         @endphp
 
                         <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -164,15 +165,15 @@
 
                                     <!-- Pricing & Payment Status -->
                                     <div class="sm:text-right sm:pl-4 sm:border-l sm:border-gray-100 sm:dark:border-white/10 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 shrink-0">
-                                        <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">${{ number_format($ride->total_amount ?? $displayFare, 2) }}</p>
+                                        <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">{{ $rideCurrencySymbol }}{{ number_format($ride->total_amount ?? $displayFare, 2) }}</p>
                                         
                                         @if($ride->total_amount > 0 && $ride->paid_amount !== null)
                                             <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                                Paid: ${{ number_format($ride->paid_amount, 2) }}
+                                                Paid: {{ $rideCurrencySymbol }}{{ number_format($ride->paid_amount, 2) }}
                                             </div>
                                             @if($ride->remaining_balance > 0)
                                                 <div class="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                                                    Due: ${{ number_format($ride->remaining_balance, 2) }}
+                                                    Due: {{ $rideCurrencySymbol }}{{ number_format($ride->remaining_balance, 2) }}
                                                 </div>
                                             @endif
                                         @endif
@@ -399,6 +400,7 @@
                             $bookingPayment = strtolower($booking->payment_status ?? 'pending');
                             $isBookingPaid = in_array($bookingPayment, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
                             $isChauffeurConfirmed = !empty($booking->driver_id) && !empty($booking->driver) && in_array(strtolower($booking->booking_status ?? ''), ['confirmed', 'assigned', 'started', 'completed']);
+                            $chfCurrencySymbol = \App\Services\CountryService::resolveItemCurrency($booking, $currentCurrencySymbol ?? '$');
                         @endphp
 
                         <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow p-5">
@@ -423,7 +425,7 @@
                                     @endif
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-2xl font-black text-gray-900 dark:text-white">${{ number_format($booking->total_price ?? 0, 2) }}</p>
+                                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $chfCurrencySymbol }}{{ number_format($booking->total_price ?? 0, 2) }}</p>
                                     <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full
                                         @if($isBookingPaid) bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300
                                         @else bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300
@@ -473,7 +475,7 @@
                                             </div>
                                         </div>
                                         <a href="/payment/verify-details/driver_booking/{{ $booking->id }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all whitespace-nowrap">
-                                            Authorize Payment (${{ number_format($booking->total_price ?? 0, 2) }}) →
+                                            Authorize Payment ({{ $chfCurrencySymbol }}{{ number_format($booking->total_price ?? 0, 2) }}) →
                                         </a>
                                     </div>
 
@@ -581,6 +583,7 @@
                             $deliveryPayment = strtolower($delivery->payment_status ?? 'pending');
                             $isDeliveryPaid = in_array($deliveryPayment, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
                             $isCourierConfirmed = !empty($delivery->courier_id) && !empty($delivery->courier) && in_array(strtolower($delivery->delivery_status ?? ''), ['accepted', 'arrived_pickup', 'picked_up', 'in_transit', 'arrived_destination', 'delivered']);
+                            $delCurrencySymbol = \App\Services\CountryService::resolveItemCurrency($delivery, $currentCurrencySymbol ?? '$');
                         @endphp
 
                         <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow p-5">
@@ -605,7 +608,7 @@
                                     @endif
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-2xl font-black text-gray-900 dark:text-white">${{ number_format($delivery->total_price ?? 0, 2) }}</p>
+                                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->total_price ?? 0, 2) }}</p>
                                     <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full
                                         @if($isDeliveryPaid) bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300
                                         @else bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300
@@ -646,7 +649,7 @@
                                             </div>
                                         </div>
                                         <a href="/payment/verify-details/package_delivery/{{ $delivery->id }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all whitespace-nowrap">
-                                            Pay & Dispatch Courier (${{ number_format($delivery->total_price ?? 0, 2) }}) →
+                                            Pay & Dispatch Courier ({{ $delCurrencySymbol }}{{ number_format($delivery->total_price ?? 0, 2) }}) →
                                         </a>
                                     </div>
 

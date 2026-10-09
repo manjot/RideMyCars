@@ -13,6 +13,7 @@
             <div class="flex items-center gap-3">
                 @php
                     $rentalReceipt = $ride->receipt ?? \App\Models\Receipt::where('booking_type', 'rental')->where('booking_id', $ride->id)->first();
+                    $voucherCurrencySymbol = \App\Services\CountryService::resolveItemCurrency($ride, $currentCurrencySymbol ?? '$');
                 @endphp
                 @if($rentalReceipt)
                     <a href="{{ $rentalReceipt->download_url }}" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-extrabold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-all">
@@ -129,7 +130,7 @@
                     </div>
                     <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                         <span>Refundable Security Deposit:</span>
-                        <span class="font-bold text-amber-600 dark:text-amber-400">${{ number_format($ride->vehicle->security_deposit_amount ?? 200, 2) }}</span>
+                        <span class="font-bold text-amber-600 dark:text-amber-400">{{ $voucherCurrencySymbol }}{{ number_format($ride->vehicle->security_deposit_amount ?? 200, 2) }}</span>
                     </div>
                 </div>
 
@@ -210,33 +211,33 @@
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
                         <span>Total Rental Fare:</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">${{ number_format($ride->total_amount, 2) }}</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ $voucherCurrencySymbol }}{{ number_format($ride->total_amount, 2) }}</span>
                     </div>
                     @if($ride->protection_fee > 0)
                         <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                             <span>Includes Full Protection Cover:</span>
-                            <span class="font-semibold text-gray-900 dark:text-white">+${{ number_format($ride->protection_fee, 2) }}</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">+{{ $voucherCurrencySymbol }}{{ number_format($ride->protection_fee, 2) }}</span>
                         </div>
                     @endif
                     @if($ride->extras_fee > 0)
                         <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                             <span>Includes Optional Extras:</span>
-                            <span class="font-semibold text-gray-900 dark:text-white">+${{ number_format($ride->extras_fee, 2) }}</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">+{{ $voucherCurrencySymbol }}{{ number_format($ride->extras_fee, 2) }}</span>
                         </div>
                     @endif
 
                     <div class="pt-2 border-t border-brand-200 dark:border-brand-800/30 flex justify-between items-center text-sm font-bold">
                         <span class="text-emerald-700 dark:text-emerald-400">Amount Paid Online (20% Deposit):</span>
-                        <span class="text-emerald-700 dark:text-emerald-400 text-lg">${{ number_format($ride->paid_amount, 2) }}</span>
+                        <span class="text-emerald-700 dark:text-emerald-400 text-lg">{{ $voucherCurrencySymbol }}{{ number_format($ride->paid_amount, 2) }}</span>
                     </div>
 
                     <div class="flex justify-between items-center text-sm font-extrabold text-amber-700 dark:text-amber-400 pt-1">
                         <span>Remaining Balance Payable at Pickup (80%):</span>
-                        <span class="text-lg">${{ number_format($ride->remaining_balance, 2) }}</span>
+                        <span class="text-lg">{{ $voucherCurrencySymbol }}{{ number_format($ride->remaining_balance, 2) }}</span>
                     @if($ride->payment_status !== 'paid')
                         <div class="pt-3 border-t border-brand-200 dark:border-brand-800/30">
                             <a href="{{ route('payment.verify-details', ['serviceType' => 'rental', 'serviceId' => $ride->id]) }}" class="w-full py-3.5 px-6 bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                                <span>💳 Pay ${{ number_format($ride->total_amount, 2) }} Online with Stripe</span>
+                                <span>💳 Pay {{ $voucherCurrencySymbol }}{{ number_format($ride->total_amount, 2) }} Online with Stripe</span>
                                 <span>→</span>
                             </a>
                         </div>

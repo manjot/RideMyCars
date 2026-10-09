@@ -737,21 +737,9 @@ class StripeVerificationController extends Controller
         $pickup = $booking->pickup_location ?? 'Default Pickup Address';
         $dropoff = $booking->dropoff_location ?? 'Default Destination';
         $amount = (float) ($booking->total_price ?? $booking->fare ?? 0);
-        $country = $booking->country ?? ($booking->driver_country ?? \App\Services\CountryService::getCurrentCountryCode(request()));
-        $currency = $booking->currency ?? (\App\Services\CountryService::getCurrencyCode($country) ?: 'USD');
-        $currencySymbol = match(strtoupper($currency)) {
-            'INR' => '₹',
-            'GHS' => 'GH₵',
-            'NGN' => '₦',
-            'ZAR' => 'R',
-            'GBP' => '£',
-            'EUR' => '€',
-            'AED' => 'AED ',
-            'KES' => 'KSh ',
-            'CAD' => 'CA$',
-            'AUD' => 'AU$',
-            default => '$',
-        };
+        $currency = $booking->currency ?? \App\Services\CountryService::resolveItemCurrencyCode($booking);
+        $currencySymbol = \App\Services\CountryService::resolveItemCurrency($booking);
+        $country = $booking->country ?? ($booking->driver_country ?? \App\Services\CountryService::detectCountryFromLocation(($pickup ?? '') . ' ' . ($dropoff ?? ''), $booking->pickup_lat ?? null, $booking->pickup_lng ?? null) ?? \App\Services\CountryService::getCurrentCountryCode(request()));
         $date = $booking->start_date ? $booking->start_date->format('Y-m-d') : ($booking->pickup_date ? $booking->pickup_date->format('Y-m-d') : date('Y-m-d'));
         $time = $booking->start_time ?? $booking->pickup_time ?? '09:00 AM';
 
