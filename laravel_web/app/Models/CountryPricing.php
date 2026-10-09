@@ -209,7 +209,7 @@ class CountryPricing extends Model
         // Automatically convert default USD price into the location's currency using cached exchange rates
         $meta = \App\Services\CountryService::getCountryMetaByIso($code);
         if ($meta && !empty($meta['name'])) {
-            $currencyCode = $meta['currency_code'] ?? \App\Services\CountryService::getCurrencyCode($meta['code_3']);
+            $currencyCode = $meta['currency_code'] ?? \App\Services\CountryService::getCurrencyCodeByCountryIso($meta['code_3']);
             $currencySymbol = $meta['currency_symbol'] ?? \App\Services\CountryService::getCurrencySymbolByCode($currencyCode);
 
             if ($currencyCode && $currencyCode !== 'USD') {

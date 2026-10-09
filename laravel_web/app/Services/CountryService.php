@@ -403,6 +403,8 @@ class CountryService
             'RW' => ['code_3' => 'RWA', 'name' => 'Rwanda', 'currency_code' => 'RWF', 'currency_symbol' => 'FRw '],
             'ZW' => ['code_3' => 'ZWE', 'name' => 'Zimbabwe', 'currency_code' => 'ZWL', 'currency_symbol' => 'Z$'],
             'ZM' => ['code_3' => 'ZMB', 'name' => 'Zambia', 'currency_code' => 'ZMW', 'currency_symbol' => 'K'],
+            'JP' => ['code_3' => 'JPN', 'name' => 'Japan', 'currency_code' => 'JPY', 'currency_symbol' => '¥'],
+            'CN' => ['code_3' => 'CHN', 'name' => 'China', 'currency_code' => 'CNY', 'currency_symbol' => '¥'],
         ];
 
         $upper = strtoupper(trim($iso2));
@@ -419,9 +421,60 @@ class CountryService
         return [
             'code_3' => $upper,
             'name' => $upper,
-            'currency_code' => static::getCurrencyCode($upper),
+            'currency_code' => static::getCurrencyCodeByCountryIso($upper),
             'currency_symbol' => static::getCurrencySymbolByCode($upper),
         ];
+    }
+
+    /**
+     * Map country ISO code directly to 3-letter currency code without invoking CountryPricing (non-recursive).
+     */
+    public static function getCurrencyCodeByCountryIso(?string $code): string
+    {
+        if (empty($code)) {
+            return 'USD';
+        }
+        $upper = strtoupper(trim($code));
+        return match ($upper) {
+            'US', 'USA' => 'USD',
+            'GH', 'GHA' => 'GHS',
+            'IN', 'IND' => 'INR',
+            'NG', 'NGA' => 'NGN',
+            'ZA', 'ZAF' => 'ZAR',
+            'MW', 'MWI' => 'MWK',
+            'GB', 'GBR', 'UK' => 'GBP',
+            'CA', 'CAN' => 'CAD',
+            'AU', 'AUS' => 'AUD',
+            'JP', 'JPN' => 'JPY',
+            'CN', 'CHN' => 'CNY',
+            'DE', 'DEU', 'FR', 'FRA', 'IT', 'ITA', 'ES', 'ESP', 'NL', 'NLD', 'BE', 'BEL', 'IE', 'IRL', 'AT', 'AUT', 'PT', 'PRT', 'GR', 'GRC', 'FI', 'FIN' => 'EUR',
+            'AE', 'ARE' => 'AED',
+            'KE', 'KEN' => 'KES',
+            'BR', 'BRA' => 'BRL',
+            'MX', 'MEX' => 'MXN',
+            'PK', 'PAK' => 'PKR',
+            'BD', 'BGD' => 'BDT',
+            'PH', 'PHL' => 'PHP',
+            'ID', 'IDN' => 'IDR',
+            'MY', 'MYS' => 'MYR',
+            'SG', 'SGP' => 'SGD',
+            'NZ', 'NZL' => 'NZD',
+            'CH', 'CHE' => 'CHF',
+            'SE', 'SWE' => 'SEK',
+            'NO', 'NOR' => 'NOK',
+            'DK', 'DNK' => 'DKK',
+            'PL', 'POL' => 'PLN',
+            'EG', 'EGY' => 'EGP',
+            'SA', 'SAU' => 'SAR',
+            'QA', 'QAT' => 'QAR',
+            'KW', 'KWT' => 'KWD',
+            'UG', 'UGA' => 'UGX',
+            'TZ', 'TZA' => 'TZS',
+            'RW', 'RWA' => 'RWF',
+            'ZW', 'ZWE' => 'ZWL',
+            'ZM', 'ZMB' => 'ZMW',
+            default => (strlen($upper) === 3 && isset(CurrencyExchangeService::FALLBACK_RATES[$upper])) ? $upper : 'USD',
+        };
     }
 
     /**
@@ -789,6 +842,8 @@ class CountryService
             'KES', 'KEN', 'KE' => 'KSh ',
             'CAD', 'CAN', 'CA' => 'CA$',
             'AUD', 'AUS', 'AU' => 'AU$',
+            'JPY', 'JPN', 'JP' => '¥',
+            'CNY', 'CHN', 'CN' => '¥',
             default => (strlen($upper) === 3 && $upper !== 'USD') ? ($upper . ' ') : '$',
         };
     }
@@ -1017,7 +1072,7 @@ class CountryService
 
         $detectedCode = static::detectCountryFromLocation(($pickupLoc ?? '') . ' ' . ($dropoffLoc ?? ''), $lat, $lng);
         if ($detectedCode) {
-            return static::getCurrencyCode($detectedCode);
+            return static::getCurrencyCodeByCountryIso($detectedCode);
         }
 
         // 2. Country property
@@ -1027,7 +1082,7 @@ class CountryService
         if (!empty($country)) {
             $code = static::normalizeToCode($country);
             if ($code && $code !== 'USA') {
-                return static::getCurrencyCode($code);
+                return static::getCurrencyCodeByCountryIso($code);
             }
         }
 
