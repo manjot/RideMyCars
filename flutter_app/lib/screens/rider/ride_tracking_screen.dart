@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/country_provider.dart';
 import '../../providers/ride_provider.dart';
 import '../safety/widgets/sos_floating_button.dart';
 
@@ -226,8 +227,12 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     _checkCancellationNotification(rideProv);
     _checkAndShowBackupModal(currentRide);
 
+    final countryProv = Provider.of<CountryProvider>(context);
     final status = currentRide['status'] ?? 'pending';
     final fare = currentRide['fare'] != null ? double.tryParse(currentRide['fare'].toString()) ?? 0.0 : 0.0;
+    final currSym = (currentRide['currency_symbol'] != null && currentRide['currency_symbol'].toString().isNotEmpty)
+        ? currentRide['currency_symbol'].toString()
+        : (currentRide['currency'] == 'INR' ? '₹' : countryProv.currencySymbol);
     final driver = currentRide['driver'];
     final pickup = currentRide['pickup_location'] ?? 'Pickup';
     final dropoff = currentRide['dropoff_location'] ?? 'Destination';
@@ -338,30 +343,13 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                     ),
                   ),
                   const Spacer(),
-                  // Prominent Cancel Button in Header (always visible during booking / pending / en_route)
-                  if (status == 'pending' || status == 'accepted' || status == 'en_route')
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ElevatedButton.icon(
-                        onPressed: () => _confirmAndCancelRide(context, currentRide['id']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surfaceDark,
-                          foregroundColor: AppColors.danger,
-                          side: const BorderSide(color: AppColors.danger),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          elevation: 2,
-                        ),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: const Text('Cancel Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      ),
-                    ),
                   ElevatedButton.icon(
                     onPressed: _launchGoogleMaps,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       elevation: 6,
                     ),
                     icon: const Icon(Icons.navigation_rounded, size: 18),
@@ -372,10 +360,10 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             ),
           ),
 
-          // Map Corner SOS Emergency Button
+          // Map Corner SOS Emergency Button (Positioned safely below top bar)
           Positioned(
             right: 16,
-            top: 76,
+            top: 96,
             child: SosFloatingButton(
               rideId: currentRide['id'] as int?,
               role: 'rider',
@@ -446,66 +434,103 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                       // Driver Details (if assigned)
                       if (driver != null) ...[
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
                             color: AppColors.backgroundDark,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(color: Colors.white10),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildAvatar(driver['photo_url'] ?? driver['image_url'], driver['name'] ?? 'Driver'),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      driver['name'] ?? 'Driver',
-                                      style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 16),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (driver['phone'] != null && driver['phone'].toString().isNotEmpty)
-                                      Text(
-                                        driver['phone'].toString(),
-                                        style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
-                                      ),
-                                    Row(
+                              // Top Row: Avatar + Driver Name & Rating + Prominent Fare
+                              Row(
+                                children: [
+                                  _buildAvatar(driver['photo_url'] ?? driver['image_url'], driver['name'] ?? 'Driver'),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.star_rounded, color: AppColors.primary, size: 15),
-                                        const SizedBox(width: 3),
                                         Text(
-                                          '${driver['rating'] ?? 4.9} · ${driver['total_trips'] ?? 40} trips',
-                                          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                          driver['name'] ?? 'Driver',
+                                          style: const TextStyle(
+                                            color: AppColors.textLight,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.star_rounded, color: AppColors.primary, size: 15),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              '${driver['rating'] ?? 4.9} · ${driver['total_trips'] ?? 40} trips',
+                                              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              if (driver['phone'] != null && driver['phone'].toString().isNotEmpty)
-                                ElevatedButton.icon(
-                                  onPressed: () => _callDriver(driver['phone'].toString()),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.success,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    elevation: 2,
                                   ),
-                                  icon: const Icon(Icons.phone_rounded, size: 16),
-                                  label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '\$${fare.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 18,
-                                ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '$currSym${fare.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      color: AppColors.success,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ],
                               ),
+                              // Bottom Row: Phone number on single line & Call button
+                              if (driver['phone'] != null && driver['phone'].toString().isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  decoration: const BoxDecoration(
+                                    border: Border(top: BorderSide(color: Colors.white10)),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            driver['phone'].toString(),
+                                            style: const TextStyle(
+                                              color: AppColors.primary,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      ElevatedButton.icon(
+                                        onPressed: () => _callDriver(driver['phone'].toString()),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.success,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          elevation: 2,
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        icon: const Icon(Icons.phone_rounded, size: 14),
+                                        label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

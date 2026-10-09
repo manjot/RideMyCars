@@ -652,35 +652,15 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Top Quick Cancel Button
-                  ElevatedButton.icon(
-                    onPressed: _isUpdating ? null : _showCancelDialog,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.surfaceDark,
-                      foregroundColor: AppColors.danger,
-                      side: BorderSide(color: AppColors.danger.withOpacity(0.5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      elevation: 4,
-                    ),
-                    icon: const Icon(Icons.cancel_outlined, size: 16),
-                    label: const Text(
-                      'Cancel',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
 
-          // SOS Map Corner Floating Button (Driver)
+          // SOS Map Corner Floating Button (Driver, positioned safely below top bar)
           Positioned(
             right: 16,
-            top: 76,
+            top: 96,
             child: SosFloatingButton(
               rideId: int.tryParse(_ride['id']?.toString() ?? '0'),
               role: 'driver',
@@ -715,72 +695,113 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Customer Info Row
-                      Row(
+                      // Customer Info (Clean 2-row Layout)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: AppColors.purple,
-                            child: Text(
-                              customerName.isNotEmpty ? customerName[0].toUpperCase() : 'C',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  customerName,
-                                  style: const TextStyle(
-                                    color: AppColors.textLight,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                          // Row 1: Avatar + Name & Status Badge + Fare
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: AppColors.purple,
+                                child: Text(
+                                  customerName.isNotEmpty ? customerName[0].toUpperCase() : 'C',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
                                 ),
-                                if (customerPhone != null && customerPhone.toString().isNotEmpty)
-                                  Text(
-                                    customerPhone.toString(),
-                                    style: const TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                Text(
-                                  status.replaceAll('_', ' ').toUpperCase(),
-                                  style: const TextStyle(
-                                    color: AppColors.textMuted,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 10,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (customerPhone != null && customerPhone.toString().isNotEmpty)
-                            ElevatedButton.icon(
-                              onPressed: () => _callRider(customerPhone.toString()),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.success,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              icon: const Icon(Icons.phone_rounded, size: 15),
-                              label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                            ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '$currSym${fare.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              color: AppColors.success,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      customerName,
+                                      style: const TextStyle(
+                                        color: AppColors.textLight,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                                      ),
+                                      child: Text(
+                                        status.replaceAll('_', ' ').toUpperCase(),
+                                        style: const TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 9.5,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                '$currSym${fare.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 22,
+                                ),
+                              ),
+                            ],
                           ),
+                          // Row 2: Customer Phone Number (Single clean line) & Call button
+                          if (customerPhone != null && customerPhone.toString().isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.04),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        customerPhone.toString(),
+                                        style: const TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: () => _callRider(customerPhone.toString()),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.success,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      elevation: 2,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    icon: const Icon(Icons.phone_rounded, size: 13),
+                                    label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
 
@@ -810,8 +831,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                         }
 
                         return Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          margin: const EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: payColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(10),
@@ -819,18 +840,30 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(payIcon, size: 16, color: payColor),
-                              const SizedBox(width: 8),
+                              Icon(payIcon, size: 18, color: payColor),
+                              const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
-                                  '$payTitle: $payDesc',
-                                  style: TextStyle(
-                                    color: payColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      payTitle,
+                                      style: TextStyle(
+                                        color: payColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      payDesc,
+                                      style: TextStyle(
+                                        color: payColor.withOpacity(0.85),
+                                        fontSize: 10.5,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -1206,7 +1239,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 icon: const Icon(Icons.directions_car_rounded, size: 18),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('🚗 En Route to Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  child: Text('En Route to Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 ),
               ),
             ),
@@ -1226,7 +1259,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 icon: const Icon(Icons.check_circle_rounded, size: 16),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: Text('End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
             ),
@@ -1250,7 +1283,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 icon: const Icon(Icons.location_on_rounded, size: 18),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('📍 Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  child: Text('Arrived at Pickup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 ),
               ),
             ),
@@ -1270,7 +1303,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 icon: const Icon(Icons.check_circle_rounded, size: 16),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: Text('End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
             ),
@@ -1294,7 +1327,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 icon: const Icon(Icons.play_arrow_rounded, size: 20),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('▶ Start Trip', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  child: Text('Start Trip', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 ),
               ),
             ),
@@ -1314,7 +1347,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 icon: const Icon(Icons.check_circle_rounded, size: 16),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('✓ End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: Text('End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
             ),
@@ -1334,7 +1367,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             elevation: 4,
           ),
           icon: const Icon(Icons.check_circle_rounded, size: 22),
-          label: const Text('✓ Complete & End Trip', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          label: const Text('Complete & End Trip', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
       );
     }

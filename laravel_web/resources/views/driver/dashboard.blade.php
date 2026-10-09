@@ -232,7 +232,7 @@
                                             <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Customer: ' + item.customer_name"></p>
                                         </div>
                                         <div class="text-right">
-                                            <span class="font-black text-xl text-emerald-600 dark:text-emerald-400" x-text="'$' + item.amount.toFixed(2) + ' ' + item.currency"></span>
+                                            <span class="font-black text-xl text-emerald-600 dark:text-emerald-400" x-text="item.formatted_amount ? item.formatted_amount : ((item.currency_symbol || '$') + item.amount.toFixed(2) + ' ' + (item.currency || ''))"></span>
                                             <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">💳 Stripe Verification Pending</div>
                                         </div>
                                     </div>
@@ -244,13 +244,13 @@
                                         <p><strong>🚘 Vehicle Info:</strong> <span x-text="item.vehicle"></span></p>
                                     </div>
 
-                                    <div class="flex items-center justify-end gap-3 pt-2">
-                                        <button type="button" @click="respond(item, 'reject')" :disabled="processing" class="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 font-bold rounded-xl text-xs transition">
-                                            ✗ Reject Verification
+                                    <div class="grid grid-cols-2 gap-3 pt-2">
+                                        <button type="button" @click="respond(item, 'reject')" :disabled="processing" class="w-full py-2.5 px-3 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 font-bold rounded-xl text-xs sm:text-sm text-center transition flex items-center justify-center gap-1.5">
+                                            <span>✗ Reject</span>
                                         </button>
-                                        <button type="button" @click="respond(item, 'approve')" :disabled="processing" class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+                                        <button type="button" @click="respond(item, 'approve')" :disabled="processing" class="w-full py-2.5 px-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-1.5">
                                             <span x-show="processing" class="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
-                                            <span>✓ Approve & Verify Details</span>
+                                            <span>✓ Approve & Verify</span>
                                         </button>
                                     </div>
                                 </div>

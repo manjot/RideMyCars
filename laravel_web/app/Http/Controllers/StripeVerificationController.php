@@ -604,7 +604,7 @@ class StripeVerificationController extends Controller
                 'customer_name' => $db->client->name ?? 'Customer',
                 'pickup' => $db->pickup_location,
                 'dropoff' => $db->dropoff_location ?? 'N/A',
-                'schedule' => ($db->start_date ? $db->start_date->format('Y-m-d') : date('Y-m-d')) . ' ' . $db->start_time,
+                'schedule' => ($db->start_date ? \Carbon\Carbon::parse($db->start_date)->format('M d, Y') : date('M d, Y')) . ' at ' . ($db->start_time ?? '09:00 AM'),
                 'pickup_date' => $db->start_date ? \Carbon\Carbon::parse($db->start_date)->format('M d, Y') : null,
                 'pickup_time' => $db->start_time ?? null,
                 'created_at' => $db->created_at ? $db->created_at->toIso8601String() : null,
@@ -634,7 +634,14 @@ class StripeVerificationController extends Controller
 
         foreach ($rides as $r) {
             $rawAmount = (float)($r->total_amount ?? $r->fare ?? 0);
-            $fareInfo = $formatItemFare($rawAmount, $r->pickup_location, $r->dropoff_location, $r->driver_country ?? $r->country, 'USD');
+            $rideCurrency = $r->currency ?: \App\Services\CountryService::resolveItemCurrencyCode($r, 'USD');
+            $fareInfo = $formatItemFare($rawAmount, $r->pickup_location, $r->dropoff_location, $r->driver_country ?? $r->country, $rideCurrency);
+            
+            $isImmediate = empty($r->pickup_time) || strtolower(trim($r->pickup_time)) === 'immediate';
+            $scheduleFormatted = $isImmediate 
+                ? 'Immediate (Now)' 
+                : (($r->pickup_date ? \Carbon\Carbon::parse($r->pickup_date)->format('M d, Y') : date('M d, Y')) . ' at ' . $r->pickup_time);
+
             $items[] = [
                 'type' => 'ride',
                 'type_label' => 'Ride Service',
@@ -643,9 +650,9 @@ class StripeVerificationController extends Controller
                 'customer_name' => $r->rider->name ?? $r->passenger_name ?? 'Rider',
                 'pickup' => $r->pickup_location,
                 'dropoff' => $r->dropoff_location,
-                'schedule' => ($r->pickup_date ? $r->pickup_date->format('Y-m-d') : date('Y-m-d')) . ' ' . ($r->pickup_time ?? 'Immediate'),
+                'schedule' => $scheduleFormatted,
                 'pickup_date' => $r->pickup_date ? \Carbon\Carbon::parse($r->pickup_date)->format('M d, Y') : null,
-                'pickup_time' => $r->pickup_time ?? null,
+                'pickup_time' => $r->pickup_time ?? 'Immediate',
                 'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
                 'request_time_formatted' => $r->created_at ? $r->created_at->format('M d, Y • h:i A') : null,
                 'request_time_human' => $r->created_at ? $r->created_at->diffForHumans() : null,
@@ -673,6 +680,11 @@ class StripeVerificationController extends Controller
 
         foreach ($deliveries as $pd) {
             $fareInfo = $formatItemFare($pd->total_price, $pd->pickup_location, $pd->dropoff_location, $pd->country, $pd->currency);
+            $isDelImmediate = empty($pd->pickup_time) || strtolower(trim($pd->pickup_time)) === 'immediate';
+            $delSchedule = $isDelImmediate 
+                ? 'Immediate (Express)' 
+                : (($pd->pickup_date ? \Carbon\Carbon::parse($pd->pickup_date)->format('M d, Y') : date('M d, Y')) . ' at ' . $pd->pickup_time);
+
             $items[] = [
                 'type' => 'package_delivery',
                 'type_label' => 'Parcel Dispatch',
@@ -681,7 +693,7 @@ class StripeVerificationController extends Controller
                 'customer_name' => $pd->customer->name ?? $pd->sender_name ?? 'Sender',
                 'pickup' => $pd->pickup_location,
                 'dropoff' => $pd->dropoff_location,
-                'schedule' => ($pd->pickup_date ? $pd->pickup_date->format('Y-m-d') : date('Y-m-d')) . ' ' . $pd->pickup_time,
+                'schedule' => $delSchedule,
                 'pickup_date' => $pd->pickup_date ? \Carbon\Carbon::parse($pd->pickup_date)->format('M d, Y') : null,
                 'pickup_time' => $pd->pickup_time ?? null,
                 'created_at' => $pd->created_at ? $pd->created_at->toIso8601String() : null,

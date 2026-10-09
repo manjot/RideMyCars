@@ -1830,7 +1830,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
     final pickup = item['pickup'] ?? 'N/A';
     final dropoff = item['dropoff'] ?? 'N/A';
-    final schedule = item['schedule'] ?? 'Immediate';
+    final rawSchedule = (item['schedule'] ?? 'Immediate').toString().trim();
+    final schedule = rawSchedule.toLowerCase().contains('immediate') ? 'Immediate (Now)' : rawSchedule;
     final vehicle = item['vehicle'] ?? 'Standard';
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     final currSym = (item['currency_symbol'] ?? countryProv.currencySymbol).toString();
@@ -2078,21 +2079,24 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.close_rounded, size: 16, color: AppColors.danger),
-                          SizedBox(width: 6),
-                          Text(
-                            'Reject',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              letterSpacing: 0.3,
-                              color: AppColors.danger,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.close_rounded, size: 16, color: AppColors.danger),
+                            SizedBox(width: 6),
+                            Text(
+                              'Reject',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                letterSpacing: 0.3,
+                                color: AppColors.danger,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -2127,21 +2131,24 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
-                          SizedBox(width: 6),
-                          Text(
-                            'Approve & Verify',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              letterSpacing: 0.3,
-                              color: Colors.white,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text(
+                              'Approve & Verify',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                letterSpacing: 0.3,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
