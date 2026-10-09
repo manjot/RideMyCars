@@ -640,32 +640,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Instant Demo Rider Access
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final auth = Provider.of<AuthProvider>(context, listen: false);
-                      final success = await auth.login('customer@ridemycars.com', '123456');
-                      if (success && mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.flash_on_rounded, color: AppColors.primary, size: 18),
-                    label: const Text(
-                      '⚡ Quick Demo Rider Access',
-                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // 3-Option Authentication Tabs
                   Container(

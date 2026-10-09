@@ -116,8 +116,8 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
       text: widget.initialDropoffLocation ?? widget.initialPickupLocation ?? 'Main Airport Hub / City Center',
     );
     _licenseController = TextEditingController(text: 'DL-88997766');
-    _emailController = TextEditingController(text: auth.userEmail ?? 'customer@ridemycars.com');
-    _phoneController = TextEditingController(text: '+1 (555) 019-2834');
+    _emailController = TextEditingController(text: auth.userEmail ?? '');
+    _phoneController = TextEditingController();
 
     if (_driverAge < widget.vehicle.minDriverAge) {
       _driverAge = widget.vehicle.minDriverAge;
