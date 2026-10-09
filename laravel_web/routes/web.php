@@ -1469,7 +1469,7 @@ Route::get('/my-rides', function () {
             $q->where('rider_id', $user->id)
               ->orWhere('driver_id', $user->id);
         })
-        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview', 'receipt'])
+        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview', 'receipt', 'stops'])
         ->orderBy('created_at', 'desc')
         ->paginate(15);
 

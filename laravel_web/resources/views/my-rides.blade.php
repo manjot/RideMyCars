@@ -72,6 +72,7 @@
                             $serviceType = $isRental ? 'car_rental' : 'ride';
                             $paymentStatus = strtolower($ride->payment_status ?? 'pending');
                             $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
+                            $isDriverConfirmed = !empty($ride->driver_id) && !empty($ride->driver) && in_array(strtolower($ride->status ?? ''), ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']);
                             $mapKey = trim((string) config('services.google_maps.api_key'));
                             if (empty($mapKey)) {
                                 $mapKey = trim((string) env('GOOGLE_MAPS_API_KEY'));
@@ -79,8 +80,8 @@
                             if (empty($mapKey)) {
                                 $mapKey = 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0';
                             }
-                            $pickup = urlencode($ride->pickup_location);
-                            $dropoff = urlencode($ride->dropoff_location);
+                            $pickup = urlencode($ride->pickup_location ?? '');
+                            $dropoff = urlencode($ride->dropoff_location ?? '');
                             $mapUrl = "https://maps.googleapis.com/maps/api/staticmap?size=800x220&scale=2&maptype=roadmap&markers=color:green%7Clabel:A%7C{$pickup}&markers=color:red%7Clabel:B%7C{$dropoff}&path=color:0x4f46e5%7Cweight:5%7Cgeodesic:true%7C{$pickup}%7C{$dropoff}&key={$mapKey}&style=feature:all%7Celement:labels%7Cvisibility:simplified";
                             $displayFare = ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : 28.50;
                         @endphp
@@ -111,7 +112,7 @@
                                 <!-- Date on Map -->
                                 <div class="absolute top-3 right-3">
                                     <span class="text-xs font-semibold text-white bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                                        {{ $ride->created_at->timezone(config('app.timezone', 'Asia/Kolkata'))->format('M d, Y · h:i A') }}
+                                        {{ $ride->created_at ? $ride->created_at->timezone(config('app.timezone', 'Asia/Kolkata'))->format('M d, Y · h:i A') : 'Recent' }}
                                     </span>
                                 </div>
                             </div>
@@ -287,19 +288,19 @@
                                         <!-- State 3: Payment Confirmed AND Driver Confirmed (Unlocked) -->
                                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                             <div class="flex items-center gap-3">
-                                                @if($ride->driver->avatar_url)
+                                                @if($ride->driver?->avatar_url)
                                                     <img src="{{ $ride->driver->avatar_url }}" alt="{{ $ride->driver->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                                     <div style="display: none;" class="w-10 h-10 rounded-full bg-emerald-500 text-white items-center justify-center text-sm font-bold shrink-0">
                                                         {{ strtoupper(substr($ride->driver->name ?? 'D', 0, 1)) }}
                                                     </div>
                                                 @else
                                                     <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                                                        {{ strtoupper(substr($ride->driver->name ?? 'D', 0, 1)) }}
+                                                        {{ strtoupper(substr($ride->driver?->name ?? 'D', 0, 1)) }}
                                                     </div>
                                                 @endif
                                                 <div class="min-w-0">
                                                     <div class="flex items-center gap-1.5">
-                                                        <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $ride->driver->name }}</p>
+                                                        <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $ride->driver?->name ?? 'Confirmed Driver' }}</p>
                                                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold uppercase">Confirmed Driver</span>
                                                     </div>
                                                     <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -310,7 +311,7 @@
 
                                             <!-- Direct Contact Buttons -->
                                             <div class="flex items-center gap-2 shrink-0">
-                                                @if($ride->driver->phone)
+                                                @if($ride->driver?->phone)
                                                     <a href="tel:{{ $ride->driver->phone }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                                         <span>Call</span>
@@ -397,7 +398,7 @@
                         @php
                             $bookingPayment = strtolower($booking->payment_status ?? 'pending');
                             $isBookingPaid = in_array($bookingPayment, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
-                            $isChauffeurConfirmed = $booking->driver && in_array(strtolower($booking->booking_status ?? ''), ['confirmed', 'assigned', 'started', 'completed']);
+                            $isChauffeurConfirmed = !empty($booking->driver_id) && !empty($booking->driver) && in_array(strtolower($booking->booking_status ?? ''), ['confirmed', 'assigned', 'started', 'completed']);
                         @endphp
 
                         <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow p-5">
@@ -503,26 +504,26 @@
                                     <!-- Paid & Confirmed Chauffeur -->
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                         <div class="flex items-center gap-3">
-                                            @if($booking->driver->avatar_url)
+                                            @if($booking->driver?->avatar_url)
                                                 <img src="{{ $booking->driver->avatar_url }}" alt="{{ $booking->driver->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shrink-0">
                                             @else
                                                 <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                                                    {{ strtoupper(substr($booking->driver->name ?? 'D', 0, 1)) }}
+                                                    {{ strtoupper(substr($booking->driver?->name ?? 'D', 0, 1)) }}
                                                 </div>
                                             @endif
                                             <div>
                                                 <div class="flex items-center gap-2">
-                                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $booking->driver->name }}</p>
+                                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $booking->driver?->name ?? 'Assigned Chauffeur' }}</p>
                                                     <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500 text-white font-bold uppercase">Assigned Chauffeur</span>
                                                 </div>
                                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                    Phone: {{ $booking->driver->phone ?? 'Contact available below' }}
+                                                    Phone: {{ $booking->driver?->phone ?? 'Contact available below' }}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div class="flex items-center gap-2 shrink-0">
-                                            @if($booking->driver->phone)
+                                            @if($booking->driver?->phone)
                                                 <a href="tel:{{ $booking->driver->phone }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                                     <span>Call Chauffeur</span>
@@ -579,7 +580,7 @@
                         @php
                             $deliveryPayment = strtolower($delivery->payment_status ?? 'pending');
                             $isDeliveryPaid = in_array($deliveryPayment, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
-                            $isCourierConfirmed = $delivery->courier && in_array(strtolower($delivery->delivery_status ?? ''), ['accepted', 'arrived_pickup', 'picked_up', 'in_transit', 'arrived_destination', 'delivered']);
+                            $isCourierConfirmed = !empty($delivery->courier_id) && !empty($delivery->courier) && in_array(strtolower($delivery->delivery_status ?? ''), ['accepted', 'arrived_pickup', 'picked_up', 'in_transit', 'arrived_destination', 'delivered']);
                         @endphp
 
                         <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow p-5">
@@ -679,26 +680,26 @@
                                     <!-- Paid & Confirmed Courier -->
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                                         <div class="flex items-center gap-3">
-                                            @if($delivery->courier->avatar_url)
+                                            @if($delivery->courier?->avatar_url)
                                                 <img src="{{ $delivery->courier->avatar_url }}" alt="{{ $delivery->courier->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shrink-0">
                                             @else
                                                 <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                                                    {{ strtoupper(substr($delivery->courier->name ?? 'C', 0, 1)) }}
+                                                    {{ strtoupper(substr($delivery->courier?->name ?? 'C', 0, 1)) }}
                                                 </div>
                                             @endif
                                             <div>
                                                 <div class="flex items-center gap-2">
-                                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $delivery->courier->name }}</p>
+                                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $delivery->courier?->name ?? 'Assigned Courier' }}</p>
                                                     <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500 text-white font-bold uppercase">Assigned Courier</span>
                                                 </div>
                                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                    Phone: {{ $delivery->courier->phone ?? 'Contact available below' }}
+                                                    Phone: {{ $delivery->courier?->phone ?? 'Contact available below' }}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div class="flex items-center gap-2 shrink-0">
-                                            @if($delivery->courier->phone)
+                                            @if($delivery->courier?->phone)
                                                 <a href="tel:{{ $delivery->courier->phone }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                                     <span>Call Courier</span>
