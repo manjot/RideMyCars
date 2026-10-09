@@ -17,9 +17,13 @@ class PaymentService
         array $paymentData = []
     ): PaymentTransaction {
         $isDelivery = $booking instanceof \App\Models\PackageDelivery;
-        $country = $isDelivery ? 'USA' : ($booking->country ?? 'USA');
-        $currency = $isDelivery ? ($booking->currency ?? 'USD') : CountryService::getCurrencyCode($country);
-        $amount = $booking->total_price ?? $booking->fare ?? $booking->total_amount ?? 0.00;
+        $isRide = $booking instanceof \App\Models\Ride;
+        $pickupLoc = $booking->pickup_location ?? '';
+        $dropoffLoc = $booking->dropoff_location ?? '';
+        $detectedCountry = CountryService::detectCountryFromLocation($pickupLoc . ' ' . $dropoffLoc);
+        $country = $booking->driver_country ?? $booking->country ?? $detectedCountry ?? CountryService::getCurrentCountryCode();
+        $currency = $booking->currency ?: CountryService::resolveItemCurrencyCode($booking, CountryService::getCurrencyCode($country));
+        $amount = (float)($booking->total_price ?? $booking->fare ?? $booking->total_amount ?? 0.00);
         $userId = $isDelivery ? $booking->customer_id : ($booking->client_id ?? $booking->rider_id ?? 1);
         $bookingCode = $isDelivery ? $booking->delivery_code : ($booking->booking_code ?? 'RIDE-' . $booking->id);
 

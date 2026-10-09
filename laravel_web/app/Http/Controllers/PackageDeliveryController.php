@@ -117,8 +117,12 @@ class PackageDeliveryController extends Controller
             'total_price' => $totalPrice,
             'currency_symbol' => $pricing->currency_symbol,
             'currency' => $pricing->currency_code,
+            'currency_code' => $pricing->currency_code,
             'country_code' => $pricing->country_code,
             'country_name' => $pricing->country_name,
+            'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
+            'exchange_rate' => (float) ($pricing->exchange_rate ?? 1.0),
+            'formatted_price' => \App\Services\CountryService::formatPrice($totalPrice, $pricing->currency_code, $pricing->currency_symbol),
             'addons' => [
                 'Instant' => (float) ($pricing->delivery_instant_addon ?: 10.00),
                 'Express' => (float) ($pricing->delivery_express_addon ?: 8.00),

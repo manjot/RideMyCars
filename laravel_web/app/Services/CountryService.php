@@ -361,48 +361,48 @@ class CountryService
     public static function getCountryMetaByIso(string $iso2): array
     {
         $map = [
-            'US' => ['code_3' => 'USA', 'name' => 'United States'],
-            'GH' => ['code_3' => 'GHA', 'name' => 'Ghana'],
-            'ZA' => ['code_3' => 'ZAF', 'name' => 'South Africa'],
-            'NG' => ['code_3' => 'NGA', 'name' => 'Nigeria'],
-            'GB' => ['code_3' => 'GBR', 'name' => 'United Kingdom'],
-            'UK' => ['code_3' => 'GBR', 'name' => 'United Kingdom'],
-            'CA' => ['code_3' => 'CAN', 'name' => 'Canada'],
-            'AE' => ['code_3' => 'ARE', 'name' => 'United Arab Emirates'],
-            'KE' => ['code_3' => 'KEN', 'name' => 'Kenya'],
-            'IN' => ['code_3' => 'IND', 'name' => 'India'],
-            'MW' => ['code_3' => 'MWI', 'name' => 'Malawi'],
-            'AU' => ['code_3' => 'AUS', 'name' => 'Australia'],
-            'DE' => ['code_3' => 'DEU', 'name' => 'Germany'],
-            'FR' => ['code_3' => 'FRA', 'name' => 'France'],
-            'IT' => ['code_3' => 'ITA', 'name' => 'Italy'],
-            'ES' => ['code_3' => 'ESP', 'name' => 'Spain'],
-            'BR' => ['code_3' => 'BRA', 'name' => 'Brazil'],
-            'MX' => ['code_3' => 'MEX', 'name' => 'Mexico'],
-            'PK' => ['code_3' => 'PAK', 'name' => 'Pakistan'],
-            'BD' => ['code_3' => 'BGD', 'name' => 'Bangladesh'],
-            'PH' => ['code_3' => 'PHL', 'name' => 'Philippines'],
-            'ID' => ['code_3' => 'IDN', 'name' => 'Indonesia'],
-            'MY' => ['code_3' => 'MYS', 'name' => 'Malaysia'],
-            'SG' => ['code_3' => 'SGP', 'name' => 'Singapore'],
-            'NZ' => ['code_3' => 'NZL', 'name' => 'New Zealand'],
-            'IE' => ['code_3' => 'IRL', 'name' => 'Ireland'],
-            'NL' => ['code_3' => 'NLD', 'name' => 'Netherlands'],
-            'BE' => ['code_3' => 'BEL', 'name' => 'Belgium'],
-            'CH' => ['code_3' => 'CHE', 'name' => 'Switzerland'],
-            'SE' => ['code_3' => 'SWE', 'name' => 'Sweden'],
-            'NO' => ['code_3' => 'NOR', 'name' => 'Norway'],
-            'DK' => ['code_3' => 'DNK', 'name' => 'Denmark'],
-            'PL' => ['code_3' => 'POL', 'name' => 'Poland'],
-            'EG' => ['code_3' => 'EGY', 'name' => 'Egypt'],
-            'SA' => ['code_3' => 'SAU', 'name' => 'Saudi Arabia'],
-            'QA' => ['code_3' => 'QAT', 'name' => 'Qatar'],
-            'KW' => ['code_3' => 'KWT', 'name' => 'Kuwait'],
-            'UG' => ['code_3' => 'UGA', 'name' => 'Uganda'],
-            'TZ' => ['code_3' => 'TZA', 'name' => 'Tanzania'],
-            'RW' => ['code_3' => 'RWA', 'name' => 'Rwanda'],
-            'ZW' => ['code_3' => 'ZWE', 'name' => 'Zimbabwe'],
-            'ZM' => ['code_3' => 'ZMB', 'name' => 'Zambia'],
+            'US' => ['code_3' => 'USA', 'name' => 'United States', 'currency_code' => 'USD', 'currency_symbol' => '$'],
+            'GH' => ['code_3' => 'GHA', 'name' => 'Ghana', 'currency_code' => 'GHS', 'currency_symbol' => 'GH₵'],
+            'ZA' => ['code_3' => 'ZAF', 'name' => 'South Africa', 'currency_code' => 'ZAR', 'currency_symbol' => 'R'],
+            'NG' => ['code_3' => 'NGA', 'name' => 'Nigeria', 'currency_code' => 'NGN', 'currency_symbol' => '₦'],
+            'GB' => ['code_3' => 'GBR', 'name' => 'United Kingdom', 'currency_code' => 'GBP', 'currency_symbol' => '£'],
+            'UK' => ['code_3' => 'GBR', 'name' => 'United Kingdom', 'currency_code' => 'GBP', 'currency_symbol' => '£'],
+            'CA' => ['code_3' => 'CAN', 'name' => 'Canada', 'currency_code' => 'CAD', 'currency_symbol' => 'CA$'],
+            'AE' => ['code_3' => 'ARE', 'name' => 'United Arab Emirates', 'currency_code' => 'AED', 'currency_symbol' => 'AED '],
+            'KE' => ['code_3' => 'KEN', 'name' => 'Kenya', 'currency_code' => 'KES', 'currency_symbol' => 'KSh '],
+            'IN' => ['code_3' => 'IND', 'name' => 'India', 'currency_code' => 'INR', 'currency_symbol' => '₹'],
+            'MW' => ['code_3' => 'MWI', 'name' => 'Malawi', 'currency_code' => 'MWK', 'currency_symbol' => 'MK'],
+            'AU' => ['code_3' => 'AUS', 'name' => 'Australia', 'currency_code' => 'AUD', 'currency_symbol' => 'AU$'],
+            'DE' => ['code_3' => 'DEU', 'name' => 'Germany', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'FR' => ['code_3' => 'FRA', 'name' => 'France', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'IT' => ['code_3' => 'ITA', 'name' => 'Italy', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'ES' => ['code_3' => 'ESP', 'name' => 'Spain', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'BR' => ['code_3' => 'BRA', 'name' => 'Brazil', 'currency_code' => 'BRL', 'currency_symbol' => 'R$'],
+            'MX' => ['code_3' => 'MEX', 'name' => 'Mexico', 'currency_code' => 'MXN', 'currency_symbol' => 'Mex$'],
+            'PK' => ['code_3' => 'PAK', 'name' => 'Pakistan', 'currency_code' => 'PKR', 'currency_symbol' => 'Rs '],
+            'BD' => ['code_3' => 'BGD', 'name' => 'Bangladesh', 'currency_code' => 'BDT', 'currency_symbol' => '৳'],
+            'PH' => ['code_3' => 'PHL', 'name' => 'Philippines', 'currency_code' => 'PHP', 'currency_symbol' => '₱'],
+            'ID' => ['code_3' => 'IDN', 'name' => 'Indonesia', 'currency_code' => 'IDR', 'currency_symbol' => 'Rp '],
+            'MY' => ['code_3' => 'MYS', 'name' => 'Malaysia', 'currency_code' => 'MYR', 'currency_symbol' => 'RM '],
+            'SG' => ['code_3' => 'SGP', 'name' => 'Singapore', 'currency_code' => 'SGD', 'currency_symbol' => 'S$'],
+            'NZ' => ['code_3' => 'NZL', 'name' => 'New Zealand', 'currency_code' => 'NZD', 'currency_symbol' => 'NZ$'],
+            'IE' => ['code_3' => 'IRL', 'name' => 'Ireland', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'NL' => ['code_3' => 'NLD', 'name' => 'Netherlands', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'BE' => ['code_3' => 'BEL', 'name' => 'Belgium', 'currency_code' => 'EUR', 'currency_symbol' => '€'],
+            'CH' => ['code_3' => 'CHE', 'name' => 'Switzerland', 'currency_code' => 'CHF', 'currency_symbol' => 'CHF '],
+            'SE' => ['code_3' => 'SWE', 'name' => 'Sweden', 'currency_code' => 'SEK', 'currency_symbol' => 'kr '],
+            'NO' => ['code_3' => 'NOR', 'name' => 'Norway', 'currency_code' => 'NOK', 'currency_symbol' => 'kr '],
+            'DK' => ['code_3' => 'DNK', 'name' => 'Denmark', 'currency_code' => 'DKK', 'currency_symbol' => 'kr '],
+            'PL' => ['code_3' => 'POL', 'name' => 'Poland', 'currency_code' => 'PLN', 'currency_symbol' => 'zł'],
+            'EG' => ['code_3' => 'EGY', 'name' => 'Egypt', 'currency_code' => 'EGP', 'currency_symbol' => 'E£'],
+            'SA' => ['code_3' => 'SAU', 'name' => 'Saudi Arabia', 'currency_code' => 'SAR', 'currency_symbol' => 'SAR '],
+            'QA' => ['code_3' => 'QAT', 'name' => 'Qatar', 'currency_code' => 'QAR', 'currency_symbol' => 'QAR '],
+            'KW' => ['code_3' => 'KWT', 'name' => 'Kuwait', 'currency_code' => 'KWD', 'currency_symbol' => 'KD '],
+            'UG' => ['code_3' => 'UGA', 'name' => 'Uganda', 'currency_code' => 'UGX', 'currency_symbol' => 'USh '],
+            'TZ' => ['code_3' => 'TZA', 'name' => 'Tanzania', 'currency_code' => 'TZS', 'currency_symbol' => 'TSh '],
+            'RW' => ['code_3' => 'RWA', 'name' => 'Rwanda', 'currency_code' => 'RWF', 'currency_symbol' => 'FRw '],
+            'ZW' => ['code_3' => 'ZWE', 'name' => 'Zimbabwe', 'currency_code' => 'ZWL', 'currency_symbol' => 'Z$'],
+            'ZM' => ['code_3' => 'ZMB', 'name' => 'Zambia', 'currency_code' => 'ZMW', 'currency_symbol' => 'K'],
         ];
 
         $upper = strtoupper(trim($iso2));
@@ -416,7 +416,12 @@ class CountryService
             }
         }
 
-        return ['code_3' => $upper, 'name' => $upper];
+        return [
+            'code_3' => $upper,
+            'name' => $upper,
+            'currency_code' => static::getCurrencyCode($upper),
+            'currency_symbol' => static::getCurrencySymbolByCode($upper),
+        ];
     }
 
     /**
@@ -597,18 +602,19 @@ class CountryService
                 if (isset($result[$visitorCode])) {
                     $result[$visitorCode]['is_visitor_location'] = true;
                 } else {
+                    $visitorPricing = CountryPricing::forCountry($visitorCode);
                     // Prepend visitor location so it is visible and selected
                     $visitorEntry = [
                         $visitorCode => [
                             'name' => $visitor['name'],
                             'code' => $visitorCode,
-                            'currency' => 'USD',
-                            'symbol' => '$',
+                            'currency' => $visitorPricing->currency_code,
+                            'symbol' => $visitorPricing->currency_symbol,
                             'flag_url' => $visitor['flag_url'],
                             'phone_prefix' => static::getPhonePrefixForCountry($visitorCode),
                             'payment_methods' => static::getPaymentMethodsForCountry($visitorCode),
-                            'pricing' => CountryPricing::createUnsupportedInstance($visitorCode, $visitor['name']),
-                            'is_supported' => false,
+                            'pricing' => $visitorPricing,
+                            'is_supported' => ($visitorPricing->pricing_source === 'admin_configured'),
                             'is_visitor_location' => true,
                         ]
                     ];
@@ -694,8 +700,9 @@ class CountryService
      */
     public static function formatPrice(float $amount, ?string $countryKey = null): string
     {
+        $currencyCode = static::getCurrencyCode($countryKey);
         $symbol = static::getCurrencySymbol($countryKey);
-        return $symbol . number_format($amount, 2);
+        return CurrencyExchangeService::format($amount, $currencyCode, $symbol);
     }
 
     /**
@@ -924,35 +931,22 @@ class CountryService
     /**
      * Resolve currency symbol for an item (Ride, DriverBooking, PackageDelivery).
      */
+    /**
+     * Resolve currency symbol for an item (Ride, DriverBooking, PackageDelivery).
+     * Follows strict location-first and context-aware resolution:
+     * 1. Physical location (pickup/dropoff keywords & coordinates) takes precedence.
+     * 2. Item's explicit country or driver_country.
+     * 3. Item's explicit currency property or receipt currency (if non-USD or location matches).
+     * 4. Current active visitor session currency (e.g. INR ₹ when browsing with India selected).
+     * 5. USD ($) fallback.
+     */
     public static function resolveItemCurrency($item, ?string $fallbackSymbol = null): string
     {
         if (!$item) {
             return $fallbackSymbol ?? (view()->shared('currentCurrencySymbol') ?: '$');
         }
 
-        // 1. Receipt currency
-        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency)) {
-            return static::getCurrencySymbolByCode($item->receipt->currency);
-        }
-
-        // 2. Direct currency property (if non-USD or explicitly set)
-        $currency = is_object($item) ? ($item->currency ?? null) : ($item['currency'] ?? null);
-        if (!empty($currency) && strtoupper($currency) !== 'USD') {
-            return static::getCurrencySymbolByCode($currency);
-        }
-
-        // 3. Country property (country or driver_country)
-        $country = is_object($item)
-            ? ($item->driver_country ?? $item->country ?? null)
-            : ($item['driver_country'] ?? $item['country'] ?? null);
-        if (!empty($country)) {
-            $code = static::normalizeToCode($country);
-            if ($code && $code !== 'USA') {
-                return static::getCurrencySymbolByCode($code);
-            }
-        }
-
-        // 4. Detect country from pickup / dropoff locations or coordinates
+        // 1. Detect country from physical pickup / dropoff locations or coordinates
         $pickupLoc = is_object($item) ? ($item->pickup_location ?? null) : ($item['pickup_location'] ?? null);
         $dropoffLoc = is_object($item) ? ($item->dropoff_location ?? null) : ($item['dropoff_location'] ?? null);
         $lat = is_object($item) ? ($item->pickup_lat ?? null) : ($item['pickup_lat'] ?? null);
@@ -963,15 +957,44 @@ class CountryService
             return static::getCurrencySymbolByCode($detectedCode);
         }
 
-        // 5. If item explicitly specifies USD, return $
-        if (!empty($currency) && strtoupper($currency) === 'USD') {
-            return '$';
+        // 2. Explicit item country property (country or driver_country)
+        $country = is_object($item)
+            ? ($item->driver_country ?? $item->country ?? null)
+            : ($item['driver_country'] ?? $item['country'] ?? null);
+        if (!empty($country)) {
+            $code = static::normalizeToCode($country);
+            if ($code && $code !== 'USA') {
+                return static::getCurrencySymbolByCode($code);
+            }
         }
 
-        // 6. Visitor active session currency
+        // 3. Receipt currency (if non-USD)
+        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency)) {
+            $rc = strtoupper(trim($item->receipt->currency));
+            if ($rc !== 'USD') {
+                return static::getCurrencySymbolByCode($rc);
+            }
+        }
+
+        // 4. Direct currency property (if non-USD)
+        $currency = is_object($item) ? ($item->currency ?? null) : ($item['currency'] ?? null);
+        if (!empty($currency) && strtoupper($currency) !== 'USD') {
+            return static::getCurrencySymbolByCode($currency);
+        }
+
+        // 5. Visitor active session currency (e.g. IND ₹ selected in header)
         $sharedSymbol = view()->shared('currentCurrencySymbol');
         if (!empty($sharedSymbol)) {
             return $sharedSymbol;
+        }
+
+        // 6. Explicit USD on receipt or item
+        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency) && strtoupper($item->receipt->currency) === 'USD') {
+            return '$';
+        }
+
+        if (!empty($currency) && strtoupper($currency) === 'USD') {
+            return '$';
         }
 
         return $fallbackSymbol ?? '$';
@@ -986,29 +1009,7 @@ class CountryService
             return $fallbackCode ?? (view()->shared('currentCurrencyCode') ?: 'USD');
         }
 
-        // 1. Receipt currency
-        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency)) {
-            return strtoupper(trim($item->receipt->currency));
-        }
-
-        // 2. Direct currency property
-        $currency = is_object($item) ? ($item->currency ?? null) : ($item['currency'] ?? null);
-        if (!empty($currency) && strtoupper($currency) !== 'USD') {
-            return strtoupper(trim($currency));
-        }
-
-        // 3. Country property
-        $country = is_object($item)
-            ? ($item->driver_country ?? $item->country ?? null)
-            : ($item['driver_country'] ?? $item['country'] ?? null);
-        if (!empty($country)) {
-            $code = static::normalizeToCode($country);
-            if ($code && $code !== 'USA') {
-                return static::getCurrencyCode($code);
-            }
-        }
-
-        // 4. Detect from location
+        // 1. Detect from physical location
         $pickupLoc = is_object($item) ? ($item->pickup_location ?? null) : ($item['pickup_location'] ?? null);
         $dropoffLoc = is_object($item) ? ($item->dropoff_location ?? null) : ($item['dropoff_location'] ?? null);
         $lat = is_object($item) ? ($item->pickup_lat ?? null) : ($item['pickup_lat'] ?? null);
@@ -1019,13 +1020,39 @@ class CountryService
             return static::getCurrencyCode($detectedCode);
         }
 
-        if (!empty($currency) && strtoupper($currency) === 'USD') {
-            return 'USD';
+        // 2. Country property
+        $country = is_object($item)
+            ? ($item->driver_country ?? $item->country ?? null)
+            : ($item['driver_country'] ?? $item['country'] ?? null);
+        if (!empty($country)) {
+            $code = static::normalizeToCode($country);
+            if ($code && $code !== 'USA') {
+                return static::getCurrencyCode($code);
+            }
         }
 
+        // 3. Receipt currency (if non-USD)
+        if (is_object($item) && isset($item->receipt) && !empty($item->receipt->currency)) {
+            $rc = strtoupper(trim($item->receipt->currency));
+            if ($rc !== 'USD') {
+                return $rc;
+            }
+        }
+
+        // 4. Direct currency property (if non-USD)
+        $currency = is_object($item) ? ($item->currency ?? null) : ($item['currency'] ?? null);
+        if (!empty($currency) && strtoupper($currency) !== 'USD') {
+            return strtoupper(trim($currency));
+        }
+
+        // 5. Visitor active session currency
         $sharedCode = view()->shared('currentCurrencyCode');
         if (!empty($sharedCode)) {
             return $sharedCode;
+        }
+
+        if (!empty($currency) && strtoupper($currency) === 'USD') {
+            return 'USD';
         }
 
         return $fallbackCode ?? 'USD';

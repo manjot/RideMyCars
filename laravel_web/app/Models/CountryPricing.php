@@ -74,6 +74,21 @@ class CountryPricing extends Model
         'rental_gps_rate' => 'float',
     ];
 
+    protected $appends = [
+        'pricing_source',
+        'is_unsupported_region',
+    ];
+
+    public function getPricingSourceAttribute()
+    {
+        return $this->attributes['pricing_source'] ?? ($this->exists ? 'admin_configured' : 'default_usd');
+    }
+
+    public function getIsUnsupportedRegionAttribute()
+    {
+        return (bool) ($this->attributes['is_unsupported_region'] ?? false);
+    }
+
     public static bool $isSyncing = false;
 
     protected static function booted()
@@ -140,17 +155,25 @@ class CountryPricing extends Model
                 ?? static::query()->first();
 
             if ($record instanceof self) {
+                $record->setAttribute('pricing_source', 'admin_configured');
+                $record->setAttribute('is_unsupported_region', false);
                 return $record;
             }
         } catch (\Throwable $e) {
             // database might not be migrated yet or connection error
         }
 
-        return static::fallbackUsdInstance();
+        $fallback = static::fallbackUsdInstance();
+        $fallback->setAttribute('pricing_source', 'default_usd');
+        $fallback->setAttribute('is_unsupported_region', false);
+        return $fallback;
     }
 
     /**
-     * Find pricing for a country code or name.
+     * Find pricing for a country code or name adhering to the 3-tier priority rules:
+     * Priority 1: Location-Specific Price Exists in the Database or Admin Panel -> exact configured price.
+     * Priority 2: Location Exists but No Price Is Configured -> auto-convert USD default via exchange rate.
+     * Priority 3: Neither Location-Specific Pricing nor Location Configuration Exists -> default USD ($) price.
      */
     public static function forCountry(?string $country): self
     {
@@ -162,6 +185,7 @@ class CountryPricing extends Model
         $code = $normalized ? strtoupper($normalized) : strtoupper(trim($country));
         $raw = trim($country);
 
+        // PRIORITY 1: Location-Specific Price Exists in the Database or Admin Panel
         try {
             $pricing = static::where('is_active', true)
                 ->where(function ($q) use ($code, $raw) {
@@ -173,24 +197,104 @@ class CountryPricing extends Model
                 ->first();
 
             if ($pricing instanceof self) {
+                $pricing->setAttribute('pricing_source', 'admin_configured');
+                $pricing->setAttribute('is_unsupported_region', false);
                 return $pricing;
             }
         } catch (\Throwable $e) {
-            // fallback
+            // database fallback
         }
 
-        // Check if country metadata is known (e.g. IND / India)
+        // PRIORITY 2: Location Exists in System / World Metadata but No Admin Price Is Configured
+        // Automatically convert default USD price into the location's currency using cached exchange rates
         $meta = \App\Services\CountryService::getCountryMetaByIso($code);
+        if ($meta && !empty($meta['name'])) {
+            $currencyCode = $meta['currency_code'] ?? \App\Services\CountryService::getCurrencyCode($meta['code_3']);
+            $currencySymbol = $meta['currency_symbol'] ?? \App\Services\CountryService::getCurrencySymbolByCode($currencyCode);
+
+            if ($currencyCode && $currencyCode !== 'USD') {
+                return static::createConvertedInstance(
+                    $meta['code_3'],
+                    $meta['name'],
+                    $currencyCode,
+                    $currencySymbol
+                );
+            } elseif ($meta['code_3'] === 'USA') {
+                return static::defaultPricing();
+            }
+        }
+
+        // PRIORITY 3: Neither Location-Specific Pricing nor Location Configuration Exists
+        // Show location selected in dropdown, but price displayed in USD ($)
         if ($meta && !empty($meta['name'])) {
             return static::createUnsupportedInstance($meta['code_3'], $meta['name']);
         }
 
-        return static::defaultPricing();
+        return static::createUnsupportedInstance($code, $raw ?: $code);
     }
 
     /**
-     * Create an in-memory CountryPricing instance for a visitor's location that isn't configured in admin yet.
-     * All rates fallback to USD ($), with unsupported indicator.
+     * Priority 2: Create an in-memory CountryPricing instance for a known country that has no custom admin price.
+     * Converts standard USD rates into the country's local currency using real/cached exchange rate.
+     */
+    public static function createConvertedInstance(
+        string $code,
+        ?string $name = null,
+        ?string $currencyCode = null,
+        ?string $currencySymbol = null
+    ): self {
+        $code = strtoupper(trim($code));
+        $meta = \App\Services\CountryService::getCountryMetaByIso($code);
+        $name = $name ?: ($meta['name'] ?? $code);
+        $currencyCode = strtoupper(trim($currencyCode ?: ($meta['currency_code'] ?? 'USD')));
+        $currencySymbol = $currencySymbol ?: ($meta['currency_symbol'] ?? \App\Services\CountryService::getCurrencySymbolByCode($currencyCode));
+
+        $rate = \App\Services\CurrencyExchangeService::getExchangeRate($currencyCode);
+
+        $instance = new self();
+        $instance->id = 0;
+        $instance->country_code = $code;
+        $instance->country_name = $name;
+        $instance->currency_code = $currencyCode;
+        $instance->currency_symbol = $currencySymbol;
+        $instance->exchange_rate = $rate;
+        $instance->is_default = false;
+        $instance->is_active = true;
+
+        // Fares converted from USD base rates via exchange rate
+        $instance->ride_base_fare = round(5.00 * $rate, 2);
+        $instance->ride_per_km_rate = round(1.50 * $rate, 2);
+        $instance->ride_per_minute_rate = round(0.25 * $rate, 2);
+        $instance->ride_minimum_fare = round(10.00 * $rate, 2);
+        $instance->ride_additional_stop_fee = round(3.50 * $rate, 2);
+
+        $instance->delivery_base_fare = round(15.00 * $rate, 2);
+        $instance->delivery_per_km_rate = round(1.50 * $rate, 2);
+        $instance->delivery_instant_addon = round(10.00 * $rate, 2);
+        $instance->delivery_express_addon = round(8.00 * $rate, 2);
+        $instance->delivery_same_day_addon = round(4.00 * $rate, 2);
+        $instance->delivery_scheduled_addon = round(2.00 * $rate, 2);
+        $instance->delivery_per_kg_rate = round(0.75 * $rate, 2);
+
+        $instance->driver_hourly_rate = round(25.00 * $rate, 2);
+        $instance->driver_daily_rate = round(170.00 * $rate, 2);
+        $instance->driver_weekly_rate = round(1000.00 * $rate, 2);
+
+        $instance->rental_price_multiplier = $rate;
+        $instance->rental_protection_daily_rate = round(12.00 * $rate, 2);
+        $instance->rental_additional_driver_rate = round(10.00 * $rate, 2);
+        $instance->rental_child_seat_rate = round(8.00 * $rate, 2);
+        $instance->rental_gps_rate = round(5.00 * $rate, 2);
+
+        $instance->setAttribute('pricing_source', 'automatically_converted');
+        $instance->setAttribute('is_unsupported_region', false);
+
+        return $instance;
+    }
+
+    /**
+     * Priority 3: Create an in-memory CountryPricing instance when neither location-specific pricing
+     * nor valid currency configuration exists. Preserves location name in dropdown, displays prices in USD ($).
      */
     public static function createUnsupportedInstance(string $code, ?string $name = null): self
     {
@@ -207,28 +311,29 @@ class CountryPricing extends Model
         // Fares in USD ($)
         $instance->ride_base_fare = 5.00;
         $instance->ride_per_km_rate = 1.50;
-        $instance->ride_per_minute_rate = 0.35;
-        $instance->ride_minimum_fare = 8.00;
-        $instance->ride_additional_stop_fee = 3.00;
+        $instance->ride_per_minute_rate = 0.25;
+        $instance->ride_minimum_fare = 10.00;
+        $instance->ride_additional_stop_fee = 3.50;
 
-        $instance->delivery_base_fare = 4.50;
-        $instance->delivery_per_km_rate = 1.20;
-        $instance->delivery_instant_addon = 3.50;
-        $instance->delivery_express_addon = 2.00;
-        $instance->delivery_same_day_addon = 0.00;
-        $instance->delivery_scheduled_addon = 0.00;
-        $instance->delivery_per_kg_rate = 0.50;
+        $instance->delivery_base_fare = 15.00;
+        $instance->delivery_per_km_rate = 1.50;
+        $instance->delivery_instant_addon = 10.00;
+        $instance->delivery_express_addon = 8.00;
+        $instance->delivery_same_day_addon = 4.00;
+        $instance->delivery_scheduled_addon = 2.00;
+        $instance->delivery_per_kg_rate = 0.75;
 
-        $instance->driver_hourly_rate = 15.00;
-        $instance->driver_daily_rate = 90.00;
-        $instance->driver_weekly_rate = 450.00;
+        $instance->driver_hourly_rate = 25.00;
+        $instance->driver_daily_rate = 170.00;
+        $instance->driver_weekly_rate = 1000.00;
 
         $instance->rental_price_multiplier = 1.00;
-        $instance->rental_protection_daily_rate = 15.00;
+        $instance->rental_protection_daily_rate = 12.00;
         $instance->rental_additional_driver_rate = 10.00;
-        $instance->rental_child_seat_rate = 7.00;
+        $instance->rental_child_seat_rate = 8.00;
         $instance->rental_gps_rate = 5.00;
 
+        $instance->setAttribute('pricing_source', 'default_usd');
         $instance->setAttribute('is_unsupported_region', true);
 
         return $instance;

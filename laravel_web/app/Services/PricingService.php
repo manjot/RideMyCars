@@ -9,6 +9,75 @@ use App\Models\Vehicle;
 class PricingService
 {
     /**
+     * Centralized price resolution following the 3-tier location priority:
+     * Priority 1: Location-Specific Price Exists in Database/Admin -> exact configured price.
+     * Priority 2: Location Exists in System but No Price Configured -> auto-convert USD default via exchange rate.
+     * Priority 3: Neither Location-Specific Pricing nor Location Configured -> fallback USD ($) price.
+     */
+    public static function resolvePrice(
+        float $basePriceUsd,
+        ?float $adminConfiguredPrice = null,
+        ?string $country = null,
+        ?string $currency = null
+    ): array {
+        $pricing = CountryPricing::forCountry($country);
+        $source = $pricing->pricing_source ?? 'default_usd';
+        $rate = (float) ($pricing->exchange_rate ?: CurrencyExchangeService::getExchangeRate($pricing->currency_code));
+
+        // Priority 1: Admin-configured specific price exists
+        if ($adminConfiguredPrice !== null && $adminConfiguredPrice > 0) {
+            $finalPrice = round((float) $adminConfiguredPrice, 2);
+            return [
+                'original_price' => $finalPrice,
+                'original_currency' => $pricing->currency_code,
+                'final_price' => $finalPrice,
+                'display_price' => $finalPrice,
+                'currency_code' => $pricing->currency_code,
+                'currency_symbol' => $pricing->currency_symbol,
+                'country_code' => $pricing->country_code,
+                'country_name' => $pricing->country_name,
+                'pricing_source' => 'admin_configured',
+                'exchange_rate' => $rate,
+                'formatted_price' => CurrencyExchangeService::format($finalPrice, $pricing->currency_code, $pricing->currency_symbol),
+            ];
+        }
+
+        // Priority 2: Location exists, convert default USD price using exchange rate
+        if ($source === 'automatically_converted' || (strtoupper($pricing->currency_code) !== 'USD' && $rate > 0)) {
+            $converted = round($basePriceUsd * $rate, 2);
+            return [
+                'original_price' => round($basePriceUsd, 2),
+                'original_currency' => 'USD',
+                'final_price' => $converted,
+                'display_price' => $converted,
+                'currency_code' => $pricing->currency_code,
+                'currency_symbol' => $pricing->currency_symbol,
+                'country_code' => $pricing->country_code,
+                'country_name' => $pricing->country_name,
+                'pricing_source' => 'automatically_converted',
+                'exchange_rate' => $rate,
+                'formatted_price' => CurrencyExchangeService::format($converted, $pricing->currency_code, $pricing->currency_symbol),
+            ];
+        }
+
+        // Priority 3: Fallback USD
+        $usdFinal = round($basePriceUsd, 2);
+        return [
+            'original_price' => $usdFinal,
+            'original_currency' => 'USD',
+            'final_price' => $usdFinal,
+            'display_price' => $usdFinal,
+            'currency_code' => 'USD',
+            'currency_symbol' => '$',
+            'country_code' => $pricing->country_code ?: 'USA',
+            'country_name' => $pricing->country_name ?: 'United States',
+            'pricing_source' => 'default_usd',
+            'exchange_rate' => 1.0,
+            'formatted_price' => '$' . number_format($usdFinal, 2),
+        ];
+    }
+
+    /**
      * Calculate price breakdown based on duration, driver rates, and country.
      */
     public static function calculate(
@@ -21,6 +90,8 @@ class PricingService
         $countryCode = $pricing->country_code;
         $currency = $pricing->currency_code;
         $symbol = $pricing->currency_symbol;
+        $source = $pricing->pricing_source ?? 'admin_configured';
+        $exchangeRate = (float) ($pricing->exchange_rate ?: 1.0);
 
         // Base rates from country pricing or driver profile
         // If driver has custom rates in their profile matching the driver's country, respect them;
@@ -80,6 +151,11 @@ class PricingService
             'total_price' => $totalPrice,
             'currency' => $currency,
             'currency_symbol' => $symbol,
+            'country_code' => $countryCode,
+            'country_name' => $pricing->country_name,
+            'pricing_source' => $source,
+            'exchange_rate' => $exchangeRate,
+            'formatted_price' => $symbol . number_format($totalPrice, 2),
         ];
     }
 
@@ -252,6 +328,10 @@ class PricingService
             'currency_symbol' => $pricing->currency_symbol,
             'country_code' => $pricing->country_code,
             'country_name' => $pricing->country_name,
+            'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
+            'exchange_rate' => (float) ($pricing->exchange_rate ?: 1.0),
+            'formatted_price' => $pricing->currency_symbol . number_format($finalFare, 2),
+            'formatted_grand_total' => $pricing->currency_symbol . number_format($grandTotal, 2),
             'target_vehicle' => $tier['target'] ?? ($tier['name'] ?? 'Economy'),
         ];
     }
@@ -317,6 +397,9 @@ class PricingService
             'currency_symbol' => $pricing->currency_symbol,
             'country_code' => $pricing->country_code,
             'country_name' => $pricing->country_name,
+            'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
+            'exchange_rate' => (float) ($pricing->exchange_rate ?: 1.0),
+            'formatted_price' => $pricing->currency_symbol . number_format($totalPrice, 2),
         ];
     }
 
@@ -370,6 +453,9 @@ class PricingService
             'currency_symbol' => $pricing->currency_symbol,
             'country_code' => $pricing->country_code,
             'country_name' => $pricing->country_name,
+            'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
+            'exchange_rate' => (float) ($pricing->exchange_rate ?: 1.0),
+            'formatted_price' => $pricing->currency_symbol . number_format($totalAmount, 2),
         ];
     }
 }

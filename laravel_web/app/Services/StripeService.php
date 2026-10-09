@@ -63,7 +63,14 @@ class StripeService
         $amount = (float) $bookingDetails['amount'];
         $rawCurrency = strtolower($bookingDetails['currency'] ?? 'usd');
         $supportedStripeCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud', 'chf', 'jpy', 'zar', 'inr', 'ngn'];
-        $currency = in_array($rawCurrency, $supportedStripeCurrencies) ? $rawCurrency : 'usd';
+
+        if (in_array($rawCurrency, $supportedStripeCurrencies)) {
+            $currency = $rawCurrency;
+        } else {
+            // Convert to USD safely using CurrencyExchangeService so non-USD currencies are not charged 1:1 in USD
+            $amount = CurrencyExchangeService::convertToUsd($amount, strtoupper($rawCurrency));
+            $currency = 'usd';
+        }
 
         if ($amount <= 0) {
             throw new \InvalidArgumentException("Invalid payment amount for {$serviceType} #{$serviceId}.");
@@ -610,11 +617,12 @@ class StripeService
             case 'ride':
             case 'rental':
                 $ride = Ride::findOrFail($serviceId);
-                $country = request()->input('country') ?? ($ride->driver_country ?? 'USA');
-                $currency = CountryService::getCurrencyCode($country) ?: 'USD';
+                $detected = CountryService::detectCountryFromLocation(($ride->pickup_location ?? '') . ' ' . ($ride->dropoff_location ?? ''));
+                $country = request()->input('country') ?? ($ride->driver_country ?? $ride->country ?? $detected ?? 'USA');
+                $currency = $ride->currency ?: CountryService::resolveItemCurrencyCode($ride, CountryService::getCurrencyCode($country));
                 return [
                     'model' => $ride,
-                    'amount' => $ride->fare ?? $ride->total_price ?? 50.00,
+                    'amount' => (float)($ride->total_amount ?? $ride->fare ?? $ride->total_price ?? 50.00),
                     'currency' => $currency,
                     'title' => 'Ride/Rental Booking',
                     'country' => $country,
@@ -624,24 +632,30 @@ class StripeService
             case 'driver_booking':
             case 'hire-driver':
                 $booking = DriverBooking::findOrFail($serviceId);
+                $detected = CountryService::detectCountryFromLocation(($booking->pickup_location ?? '') . ' ' . ($booking->dropoff_location ?? ''));
+                $country = request()->input('country') ?? ($booking->country ?? $booking->driver_country ?? $detected ?? 'USA');
+                $currency = $booking->currency ?: CountryService::resolveItemCurrencyCode($booking, CountryService::getCurrencyCode($country));
                 return [
                     'model' => $booking,
-                    'amount' => $booking->total_price,
-                    'currency' => CountryService::getCurrencyCode($booking->country ?? 'USA'),
+                    'amount' => (float)$booking->total_price,
+                    'currency' => $currency,
                     'title' => 'Chauffeur Booking',
-                    'country' => $booking->country ?? 'USA',
+                    'country' => $country,
                     'foreign_key' => 'driver_booking_id',
                 ];
 
             case 'package_delivery':
             case 'delivery':
                 $delivery = PackageDelivery::findOrFail($serviceId);
+                $detected = CountryService::detectCountryFromLocation(($delivery->pickup_location ?? '') . ' ' . ($delivery->dropoff_location ?? ''));
+                $country = request()->input('country') ?? ($delivery->country ?? $detected ?? 'USA');
+                $currency = $delivery->currency ?: CountryService::resolveItemCurrencyCode($delivery, CountryService::getCurrencyCode($country));
                 return [
                     'model' => $delivery,
-                    'amount' => $delivery->total_price,
-                    'currency' => $delivery->currency ?? 'USD',
+                    'amount' => (float)$delivery->total_price,
+                    'currency' => $currency,
                     'title' => 'Package Delivery',
-                    'country' => 'USA',
+                    'country' => $country,
                     'foreign_key' => 'package_delivery_id',
                 ];
 

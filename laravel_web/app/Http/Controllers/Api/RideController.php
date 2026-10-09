@@ -438,6 +438,8 @@ class RideController extends Controller
             'country_name' => $pricing->country_name,
             'currency_symbol' => $pricing->currency_symbol,
             'currency_code' => $pricing->currency_code,
+            'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
+            'exchange_rate' => (float) ($pricing->exchange_rate ?? 1.0),
             'surge_info' => $surgeInfo,
             'categories' => $results,
         ]);

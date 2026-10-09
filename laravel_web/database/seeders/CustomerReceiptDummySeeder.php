@@ -201,6 +201,9 @@ class CustomerReceiptDummySeeder extends Seeder
             'pickup_lng' => -0.1748,
             'dropoff_lat' => 5.6052,
             'dropoff_lng' => -0.1668,
+            'country' => 'GHA',
+            'driver_country' => 'GHA',
+            'currency' => 'GHS',
             'fare' => 48.50,
             'total_amount' => 48.50,
             'paid_amount' => 48.50,
@@ -243,6 +246,9 @@ class CustomerReceiptDummySeeder extends Seeder
             'pickup_lng' => -0.1668,
             'dropoff_lat' => 5.5780,
             'dropoff_lng' => -0.2012,
+            'country' => 'GHA',
+            'driver_country' => 'GHA',
+            'currency' => 'GHS',
             'pickup_date' => now()->subDays(5)->toDateString(),
             'pickup_time' => '09:00',
             'return_date' => now()->subDays(2)->toDateString(),
@@ -262,6 +268,11 @@ class CustomerReceiptDummySeeder extends Seeder
         ]);
         $rental->save();
 
+        // Regenerate receipt with proper currency
+        if ($rental->receipt_id) {
+            Receipt::where('id', $rental->receipt_id)->update(['currency' => 'GHS']);
+        }
+        $rental->update(['receipt_id' => null]);
         $receiptRental = ReceiptService::generateReceiptForRide($rental, false);
 
         // ========================================================
@@ -300,7 +311,7 @@ class CustomerReceiptDummySeeder extends Seeder
             'service_fee' => 15.00,
             'tax' => 10.00,
             'total_price' => 185.00,
-            'currency' => 'USD',
+            'currency' => 'GHS',
             'payment_method' => 'Credit Card (Stripe)',
             'payment_status' => 'paid',
             'booking_status' => 'completed',
@@ -311,6 +322,10 @@ class CustomerReceiptDummySeeder extends Seeder
         ]);
         $chauffeur->save();
 
+        if ($chauffeur->receipt_id) {
+            Receipt::where('id', $chauffeur->receipt_id)->update(['currency' => 'GHS']);
+        }
+        $chauffeur->update(['receipt_id' => null]);
         $receiptChauffeur = ReceiptService::generateReceiptForDriverBooking($chauffeur, false);
 
         // ========================================================
@@ -329,6 +344,7 @@ class CustomerReceiptDummySeeder extends Seeder
             'delivery_status' => 'delivered',
             'delivery_type' => 'express',
             'schedule_mode' => 'instant',
+            'country' => 'GHA',
             'pickup_date' => now()->subDay()->toDateString(),
             'pickup_time' => '11:15',
             'pickup_location' => 'Ridge Ambassadorial Enclave, House 12, Accra',
@@ -354,7 +370,7 @@ class CustomerReceiptDummySeeder extends Seeder
             'service_fee' => 4.50,
             'tax' => 2.50,
             'total_price' => 45.00,
-            'currency' => 'USD',
+            'currency' => 'GHS',
             'payment_method' => 'Credit Card',
             'payment_status' => 'paid',
             'pod_status' => 'signed',
@@ -363,10 +379,57 @@ class CustomerReceiptDummySeeder extends Seeder
         ]);
         $delivery->save();
 
+        if ($delivery->receipt_id) {
+            Receipt::where('id', $delivery->receipt_id)->update(['currency' => 'GHS']);
+        }
+        $delivery->update(['receipt_id' => null]);
         $receiptDelivery = ReceiptService::generateReceiptForPackageDelivery($delivery, false);
 
+        // ========================================================
+        // FEATURE 5: INDIA RIDE (New Delhi to Gurugram - ₹500 Configured)
+        // ========================================================
+        $indiaRide = Ride::where('rider_id', $customer->id)
+            ->where('country', 'IND')
+            ->first();
+
+        if (!$indiaRide) {
+            $indiaRide = new Ride();
+        }
+
+        $indiaRide->fill([
+            'rider_id' => $customer->id,
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicleRide->id,
+            'ride_type' => 'ride',
+            'status' => 'completed',
+            'vehicle_type' => 'Sedan Comfort',
+            'pickup_location' => 'Indira Gandhi International Airport (DEL), Terminal 3, New Delhi',
+            'dropoff_location' => 'Cyber Hub, DLF Phase 2, Gurugram, Haryana',
+            'pickup_lat' => 28.5562,
+            'pickup_lng' => 77.1000,
+            'dropoff_lat' => 28.4950,
+            'dropoff_lng' => 77.0895,
+            'country' => 'IND',
+            'driver_country' => 'IND',
+            'currency' => 'INR',
+            'fare' => 500.00,
+            'total_amount' => 500.00,
+            'paid_amount' => 500.00,
+            'payment_method' => 'UPI / Credit Card (INR)',
+            'payment_status' => 'paid',
+            'pickup_date' => now()->subHours(8)->toDateString(),
+            'pickup_time' => '10:00',
+            'started_at' => now()->subHours(8),
+            'completed_at' => now()->subHours(7)->subMinutes(15),
+            'distance_km' => 16.5,
+            'duration_minutes' => 45,
+        ]);
+        $indiaRide->save();
+
+        $receiptIndia = ReceiptService::generateReceiptForRide($indiaRide, false);
+
         // Force regenerate all PDF files so they use the latest logo template
-        foreach ([$receiptRide, $receiptRental, $receiptChauffeur, $receiptDelivery] as $rec) {
+        foreach ([$receiptRide, $receiptRental, $receiptChauffeur, $receiptDelivery, $receiptIndia] as $rec) {
             if ($rec) {
                 ReceiptService::generatePdf($rec, true);
             }

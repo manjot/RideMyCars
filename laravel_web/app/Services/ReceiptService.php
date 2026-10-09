@@ -105,7 +105,7 @@ class ReceiptService
             $rider
         );
         $pricing = CountryPricing::forCountry($detectedCountry);
-        $currency = $pricing->currency_code ?: 'USD';
+        $currency = $ride->currency ?: ($pricing->currency_code ?: 'USD');
 
         $receipt = Receipt::create([
             'receipt_number' => $receiptNumber,
@@ -457,26 +457,28 @@ class ReceiptService
      */
     public static function detectCountryCode($pickupLocation = '', $dropoffLocation = '', $explicitCountry = null, $user = null): string
     {
+        // 1. Explicit country on the booking / request
         if (!empty($explicitCountry)) {
             $code = CountryService::normalizeToCode($explicitCountry);
-            if ($code) return $code;
+            if ($code && $code !== 'USA') return $code;
         }
 
+        // 2. Physical booking location keywords and coordinates take precedence
+        $detected = CountryService::detectCountryFromLocation(($pickupLocation ?? '') . ' ' . ($dropoffLocation ?? ''));
+        if ($detected) {
+            return $detected;
+        }
+
+        // 3. User profile country preference
         if ($user && !empty($user->country)) {
             $code = CountryService::normalizeToCode($user->country);
             if ($code) return $code;
         }
 
-        $loc = strtolower(($pickupLocation ?? '') . ' ' . ($dropoffLocation ?? ''));
-        if (str_contains($loc, 'ghana') || str_contains($loc, 'accra') || str_contains($loc, 'weija')) return 'GHA';
-        if (str_contains($loc, 'india') || str_contains($loc, 'delhi') || str_contains($loc, 'mumbai') || str_contains($loc, 'bangalore') || str_contains($loc, 'punjab')) return 'IND';
-        if (str_contains($loc, 'south africa') || str_contains($loc, 'johannesburg') || str_contains($loc, 'cape town')) return 'ZAF';
-        if (str_contains($loc, 'nigeria') || str_contains($loc, 'lagos') || str_contains($loc, 'abuja')) return 'NGA';
-        if (str_contains($loc, 'united kingdom') || str_contains($loc, 'london') || str_contains($loc, 'uk')) return 'GBR';
-        if (str_contains($loc, 'malawi') || str_contains($loc, 'blantyre') || str_contains($loc, 'lilongwe')) return 'MWI';
-        if (str_contains($loc, 'kenya') || str_contains($loc, 'nairobi')) return 'KEN';
-        if (str_contains($loc, 'canada') || str_contains($loc, 'toronto') || str_contains($loc, 'vancouver')) return 'CAN';
-        if (str_contains($loc, 'emirates') || str_contains($loc, 'dubai') || str_contains($loc, 'uae')) return 'ARE';
+        if (!empty($explicitCountry)) {
+            $code = CountryService::normalizeToCode($explicitCountry);
+            if ($code) return $code;
+        }
 
         return CountryService::getCurrentCountryCode();
     }

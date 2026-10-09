@@ -25,6 +25,10 @@ class Product extends Model
 
     protected $appends = [
         'formatted_price_with_unit',
+        'display_price',
+        'currency_symbol',
+        'currency_code',
+        'pricing_source',
     ];
 
     public static array $unitOptions = [
@@ -44,9 +48,34 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function getResolvedPricingAttribute(): array
+    {
+        return \App\Services\PricingService::resolvePrice((float) $this->price);
+    }
+
+    public function getDisplayPriceAttribute(): float
+    {
+        return (float) ($this->resolved_pricing['display_price'] ?? $this->price);
+    }
+
+    public function getCurrencySymbolAttribute(): string
+    {
+        return $this->resolved_pricing['currency_symbol'] ?? '$';
+    }
+
+    public function getCurrencyCodeAttribute(): string
+    {
+        return $this->resolved_pricing['currency_code'] ?? 'USD';
+    }
+
+    public function getPricingSourceAttribute(): string
+    {
+        return $this->resolved_pricing['pricing_source'] ?? 'default_usd';
+    }
+
     public function getFormattedPriceWithUnitAttribute(): string
     {
-        $unitLabel = static::$unitOptions[$this->unit] ?? $this->unit;
-        return '$' . number_format($this->price, 2) . ' / ' . $this->unit;
+        $resolved = $this->resolved_pricing;
+        return ($resolved['formatted_price'] ?? ('$' . number_format($this->price, 2))) . ' / ' . $this->unit;
     }
 }
