@@ -252,6 +252,23 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['success' => true]);
     });
 
+    Route::post('/notifications/test', function (Request $request) {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        $title = $request->input('title', 'RideMyCars Push Alert');
+        $message = $request->input('message', 'Realtime system notification received on your device! Push notifications are working.');
+        $notif = \App\Services\NotificationService::send(
+            $user->id,
+            'test_alert',
+            $title,
+            $message,
+            null,
+            $user->role === 'driver' ? '/driver/dashboard' : '/my-rides',
+            ['status' => 'test', 'icon' => 'bell', 'color' => 'indigo']
+        );
+        return response()->json(['success' => true, 'notification' => $notif]);
+    });
+
     // Banners & Categories Management
     Route::post('/banners', [BannerApiController::class, 'store']);
     Route::put('/banners/{id}', [BannerApiController::class, 'update']);
