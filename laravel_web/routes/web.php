@@ -3153,6 +3153,44 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['driver_259'] = \App\Models\User::find(259);
         $output['driver_22'] = \App\Models\User::find(22);
 
+        // Test render my-rides view for User 22 to verify 0 errors
+        try {
+            $testUser = \App\Models\User::find(22) ?? \App\Models\User::first();
+            if ($testUser) {
+                $testRides = \App\Models\Ride::where(function ($q) use ($testUser) {
+                        $q->where('rider_id', $testUser->id)
+                          ->orWhere('driver_id', $testUser->id);
+                    })
+                    ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview', 'receipt', 'stops'])
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(15);
+                $testDriverBookings = \App\Models\DriverBooking::where(function ($q) use ($testUser) {
+                        $q->where('client_id', $testUser->id)
+                          ->orWhere('driver_id', $testUser->id);
+                    })
+                    ->with(['driver', 'driverProfile', 'client', 'receipt'])
+                    ->take(15)
+                    ->get();
+                $testPackageDeliveries = \App\Models\PackageDelivery::where(function ($q) use ($testUser) {
+                        $q->where('customer_id', $testUser->id)
+                          ->orWhere('courier_id', $testUser->id);
+                    })
+                    ->with(['courier', 'courierProfile', 'customer', 'receipt'])
+                    ->take(15)
+                    ->get();
+
+                $renderedHtml = view('my-rides', [
+                    'user' => $testUser,
+                    'rides' => $testRides,
+                    'driverBookings' => $testDriverBookings,
+                    'packageDeliveries' => $testPackageDeliveries,
+                ])->render();
+                $output['my_rides_test_render'] = 'SUCCESS (length ' . strlen($renderedHtml) . ')';
+            }
+        } catch (\Throwable $e) {
+            $output['my_rides_test_render_err'] = $e->getMessage() . ' on line ' . $e->getLine() . ' of ' . $e->getFile();
+        }
+
         $pendingDeliveries = \App\Models\PackageDelivery::whereIn('delivery_status', ['pending', 'searching', 'created'])
             ->whereNull('courier_id')
             ->get();
