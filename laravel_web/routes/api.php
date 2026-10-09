@@ -200,7 +200,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Notifications
     Route::get('/notifications', function (Request $request) {
         $user = $request->user();
-        $notifications = \App\Models\UserNotification::where('user_id', $user->id)
+        if (!$user) return response()->json(['success' => true, 'notifications' => [], 'unread_count' => 0]);
+
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+        $notifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
             ->orderBy('created_at', 'desc')
             ->take(30)
             ->get()
@@ -218,7 +227,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 ];
             });
 
-        $unreadCount = \App\Models\UserNotification::where('user_id', $user->id)->where('is_read', false)->count();
+        $unreadCount = \App\Models\UserNotification::whereIn('user_id', $userIds)->where('is_read', false)->count();
 
         return response()->json([
             'success' => true,
@@ -229,11 +238,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/notifications/mark-read', function (Request $request) {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false], 401);
+
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
         $id = $request->input('id');
         if ($id) {
-            \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->update(['is_read' => true]);
+            \App\Models\UserNotification::whereIn('user_id', $userIds)->where('id', $id)->update(['is_read' => true]);
         } else {
-            \App\Models\UserNotification::where('user_id', $user->id)->update(['is_read' => true]);
+            \App\Models\UserNotification::whereIn('user_id', $userIds)->update(['is_read' => true]);
         }
         return response()->json(['success' => true]);
     });
@@ -241,14 +259,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/clear', function (Request $request) {
         $user = $request->user();
         if (!$user) return response()->json(['success' => false], 401);
-        \App\Models\UserNotification::where('user_id', $user->id)->delete();
+
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+        \App\Models\UserNotification::whereIn('user_id', $userIds)->delete();
         return response()->json(['success' => true]);
     });
 
     Route::delete('/notifications/{id}', function (Request $request, $id) {
         $user = $request->user();
         if (!$user) return response()->json(['success' => false], 401);
-        \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->delete();
+
+        $userIds = [$user->id];
+        $matchingIds = \App\Models\User::where('name', $user->name)
+            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+            ->pluck('id')
+            ->toArray();
+        $userIds = array_unique(array_merge($userIds, $matchingIds));
+
+        \App\Models\UserNotification::whereIn('user_id', $userIds)->where('id', $id)->delete();
         return response()->json(['success' => true]);
     });
 
