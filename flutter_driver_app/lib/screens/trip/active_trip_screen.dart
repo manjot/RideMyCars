@@ -298,6 +298,11 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     final rideId = int.tryParse(_ride['id']?.toString() ?? '0') ?? 0;
     if (rideId <= 0) return;
 
+    if (newStatus == 'in_progress') {
+      await _showStartTripPinDialog();
+      return;
+    }
+
     if (newStatus == 'completed') {
       final fareAmount = double.tryParse((_ride['fare'] ?? _ride['total_price'] ?? '0').toString()) ?? 0.0;
       final countryProv = Provider.of<CountryProvider>(context, listen: false);
@@ -374,6 +379,232 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _showStartTripPinDialog() async {
+    final rideId = int.tryParse(_ride['id']?.toString() ?? '0') ?? 0;
+    if (rideId <= 0) return;
+
+    final pinController = TextEditingController();
+    String? localError;
+    bool isVerifying = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final bottomInset = MediaQuery.of(sheetCtx).viewInsets.bottom;
+          return Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceDark,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            padding: EdgeInsets.fromLTRB(24, 20, 24, bottomInset + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFF59E0B).withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.shield_rounded, color: Colors.white, size: 26),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Enter Rider 4-Digit PIN',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Ask passenger for their secure 4-digit PIN',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: Colors.amber, size: 18),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Before starting drive to destination, verify the 4-digit PIN displayed on the customer\'s screen.',
+                          style: TextStyle(color: Colors.amber, fontSize: 11.5, height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: pinController,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 16,
+                    fontFamily: 'monospace',
+                  ),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    hintText: '••••',
+                    hintStyle: const TextStyle(
+                      color: Colors.white24,
+                      fontSize: 32,
+                      letterSpacing: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Colors.white12, width: 1.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFF59E0B), width: 2),
+                    ),
+                  ),
+                  onChanged: (val) {
+                    if (localError != null) {
+                      setSheetState(() => localError = null);
+                    }
+                  },
+                ),
+                if (localError != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    localError!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.danger,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: isVerifying
+                        ? null
+                        : () async {
+                            final pin = pinController.text.trim();
+                            if (pin.length < 4) {
+                              setSheetState(() => localError = 'Please enter the full 4-digit PIN.');
+                              return;
+                            }
+                            setSheetState(() {
+                              isVerifying = true;
+                              localError = null;
+                            });
+
+                            final driver = Provider.of<DriverProvider>(context, listen: false);
+                            final success = await driver.updateRideStatus(
+                              rideId,
+                              'in_progress',
+                              otp: pin,
+                              type: _ride['type']?.toString(),
+                            );
+
+                            if (!mounted) return;
+
+                            if (success) {
+                              Navigator.pop(sheetCtx);
+                              setState(() {
+                                _ride['status'] = 'in_progress';
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✓ 4-Digit PIN verified! Trip started.'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            } else {
+                              setSheetState(() {
+                                isVerifying = false;
+                                localError = driver.lastStatusError ?? 'Invalid 4-digit PIN. Please ask customer for correct code.';
+                              });
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 2,
+                    ),
+                    child: isVerifying
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : const Text(
+                            '✓ Verify PIN & Start Trip',
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _showCancelDialog() async {
@@ -799,6 +1030,34 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                                     label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                   ),
                                 ],
+                              ),
+                            ),
+                          ],
+                          if (status.toString().toLowerCase() == 'arrived') ...[
+                            const SizedBox(height: 10),
+                            InkWell(
+                              onTap: () => _showStartTripPinDialog(),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.amber.withOpacity(0.4)),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.shield_rounded, color: Colors.amber, size: 18),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Customer 4-Digit PIN required to start trip. Tap to enter PIN.',
+                                        style: TextStyle(color: Colors.amber, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    Icon(Icons.arrow_forward_ios_rounded, color: Colors.amber, size: 12),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -1318,7 +1577,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             child: SizedBox(
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () => _advanceStatus('in_progress'),
+                onPressed: () => _showStartTripPinDialog(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.success,
                   foregroundColor: Colors.white,

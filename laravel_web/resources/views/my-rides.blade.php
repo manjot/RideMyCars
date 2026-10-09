@@ -196,6 +196,23 @@
                                     </div>
                                 </div>
 
+                                @if(!$isRental && in_array(strtolower($ride->status ?? ''), ['pending', 'accepted', 'en_route', 'arrived', 'in_progress']))
+                                    <div class="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs">
+                                        <div class="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-300">
+                                            <span>🛡️ 4-Digit Ride PIN:</span>
+                                            <span class="text-gray-500 dark:text-gray-400 font-normal text-[11px]">(Share with driver at pickup)</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono font-black text-sm tracking-widest text-slate-900 dark:text-amber-400 bg-amber-400/20 px-2.5 py-0.5 rounded-lg border border-amber-400/30">
+                                                {{ $ride->start_pin }}
+                                            </span>
+                                            <a href="/ride/track/{{ $ride->id }}" class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold hover:bg-emerald-500/30 transition-colors">
+                                                Track ➔
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <!-- Rental & Extra Meta -->
                                 @if($ride->pickup_time || $ride->fuel_policy || $ride->passenger_phone || $isRental)
                                     <div class="mt-3 pt-3 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">

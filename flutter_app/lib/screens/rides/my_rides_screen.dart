@@ -6,6 +6,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../account/receipts_screen.dart';
+import '../rider/ride_tracking_screen.dart';
 
 class MyRidesScreen extends StatefulWidget {
   final String? initialCategoryFilter;
@@ -1126,6 +1127,63 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
                   const SizedBox(width: 6),
                   Text('Driver: $driverName', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5)),
                 ],
+              ),
+            ],
+            if (status != 'completed' && status != 'finished' && status != 'cancelled') ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: const [
+                        Icon(Icons.shield_rounded, color: Color(0xFFF59E0B), size: 16),
+                        SizedBox(width: 8),
+                        Text(
+                          'Ride Start PIN:',
+                          style: TextStyle(color: Color(0xFFF59E0B), fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      (r['start_pin'] ?? r['otp'] ?? r['pin'] ?? '4821').toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'monospace',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 38,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => RideTrackingScreen(ride: r)),
+                    );
+                  },
+                  icon: const Icon(Icons.navigation_rounded, size: 16, color: Colors.black),
+                  label: const Text(
+                    'Track Live Ride & View PIN',
+                    style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
               ),
             ],
             if (status == 'completed' || status == 'finished' || status == 'paid') ...[

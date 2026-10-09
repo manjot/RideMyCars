@@ -1156,6 +1156,9 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
 
     $response = [
         'status' => $ride->status,
+        'start_pin' => $ride->start_pin,
+        'otp' => $ride->start_pin,
+        'pin' => $ride->start_pin,
         'payment_status' => $ride->payment_status,
         'fare' => ($ride->fare && floatval($ride->fare) > 0) ? floatval($ride->fare) : $fareBreakdown['total_fare'],
         'fare_breakdown' => $fareBreakdown,
@@ -1707,6 +1710,15 @@ Route::post('/api/driver/rides/{id}/status', $driverRideStatusHandler);
 Route::post('/driver/rides/{id}/status', $driverRideStatusHandler);
 Route::post('/api/rides/{id}/status', $driverRideStatusHandler);
 Route::post('/rides/{id}/status', $driverRideStatusHandler);
+
+// Driver verifies start PIN to begin trip
+$driverRideVerifyPinHandler = function (\Illuminate\Http\Request $request, $id) {
+    return app(\App\Http\Controllers\Api\RideController::class)->verifyPin($request, $id);
+};
+Route::post('/api/driver/rides/{id}/verify-pin', $driverRideVerifyPinHandler);
+Route::post('/driver/rides/{id}/verify-pin', $driverRideVerifyPinHandler);
+Route::post('/api/rides/{id}/verify-pin', $driverRideVerifyPinHandler);
+Route::post('/rides/{id}/verify-pin', $driverRideVerifyPinHandler);
 
 // Driver responds to assignment/request (Accept / Reject)
 $driverRespondHandler = function (\Illuminate\Http\Request $request) {

@@ -154,6 +154,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rides Lifecycle
     Route::get('/rides/active', [RideController::class, 'active']);
     Route::post('/rides/{id}/status', [RideController::class, 'updateStatus']);
+    Route::post('/rides/{id}/verify-pin', [RideController::class, 'verifyPin']);
+    Route::post('/driver/rides/{id}/verify-pin', [RideController::class, 'verifyPin']);
     Route::post('/rides/{id}/confirm-payment', [RideController::class, 'confirmPayment']);
     Route::post('/rides/{id}/cancel', [RideController::class, 'cancel']);
 

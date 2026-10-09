@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -424,6 +425,9 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // 4-Digit Secure Ride PIN Verification Card
+                      _buildSecurePinCard(currentRide, status),
 
                       // In-App Modal Card: Primary Chauffeur Unavailable
                       if (currentRide['backup_status'] == 'waiting' && currentRide['backup_driver'] != null) ...[
@@ -996,6 +1000,131 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurePinCard(Map<String, dynamic> currentRide, String status) {
+    final rawPin = currentRide['start_pin'] ?? currentRide['otp'] ?? currentRide['pin'] ?? widget.ride['start_pin'] ?? widget.ride['otp'];
+    final pin = rawPin?.toString() ?? '4821';
+    final isVerified = ['in_progress', 'completed'].contains(status.toLowerCase());
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131D33),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isVerified ? const Color(0xFF10B981).withOpacity(0.4) : const Color(0xFFF59E0B).withOpacity(0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B)).withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B)).withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isVerified ? Icons.verified_user_rounded : Icons.shield_rounded,
+                  color: isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SECURE RIDE VERIFICATION',
+                      style: TextStyle(
+                        color: isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isVerified ? 'PIN Verified • Trip in Progress' : '4-Digit Start Ride PIN',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: pin));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✓ 4-Digit Ride PIN copied to clipboard!'),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Color(0xFF10B981),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isVerified ? const Color(0xFF10B981).withOpacity(0.6) : const Color(0xFFF59E0B).withOpacity(0.6),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        pin,
+                        style: TextStyle(
+                          color: isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                          fontFamily: 'monospace',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 3,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.copy_rounded,
+                        size: 13,
+                        color: isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            isVerified
+                ? 'Your 4-digit PIN was verified with your driver. Sit back, relax, and enjoy your journey!'
+                : 'Share this 4-digit PIN with your driver upon arrival. The driver must verify this PIN before starting the ride.',
+            style: const TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.35),
           ),
         ],
       ),

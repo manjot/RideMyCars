@@ -237,6 +237,63 @@
                     </div>
                 </div>
 
+                <!-- 4-Digit Secure Ride PIN Card -->
+                <div class="rounded-3xl border border-amber-300/80 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-transparent p-6 sm:p-7 shadow-sm relative overflow-hidden backdrop-blur-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-bold shrink-0 shadow-md">
+                                🛡️
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                                        Secure Ride Verification
+                                    </span>
+                                    <span x-show="['in_progress', 'completed'].includes(ride.status)" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                                        ✓ PIN Verified
+                                    </span>
+                                </div>
+                                <h3 class="text-lg font-black text-gray-900 dark:text-white">
+                                    4-Digit Ride Start PIN
+                                </h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5 max-w-md">
+                                    Share this 4-digit PIN with your driver upon arrival. The driver must input and verify this PIN to begin your trip to destination.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 sm:self-center shrink-0">
+                            <div class="px-5 py-3 rounded-2xl bg-slate-900 dark:bg-black border border-amber-400/40 text-amber-400 font-mono font-black text-2xl tracking-[0.35em] shadow-lg flex items-center justify-center select-all">
+                                <span x-text="ride.start_pin || '{{ $ride->start_pin }}'"></span>
+                            </div>
+                            <button type="button" @click="copyPin()" class="p-3 rounded-2xl bg-white dark:bg-white/10 hover:bg-gray-100 dark:hover:bg-white/15 text-gray-700 dark:text-white border border-gray-200 dark:border-white/10 transition-all text-xs font-bold flex items-center justify-center cursor-pointer shadow-xs" title="Copy PIN">
+                                <span x-text="pinCopied ? '✓' : '📋'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Driver PIN Verification Form (Visible to Assigned Driver or Driver Role on Web) -->
+                    @if(auth()->check() && (auth()->id() === $ride->driver_id || auth()->user()->role === 'driver' || auth()->user()->role === 'admin' || auth()->user()->driverProfile))
+                    <div x-show="['accepted', 'en_route', 'arrived'].includes(ride.status)" class="mt-5 pt-4 border-t border-amber-500/20">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                            <div class="text-xs">
+                                <span class="font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">Driver Action Required</span>
+                                <span class="text-gray-600 dark:text-gray-300">Ask the passenger for their 4-digit PIN and verify below to start driving:</span>
+                            </div>
+                            <form @submit.prevent="verifyDriverPin()" class="flex items-center gap-2">
+                                <input type="text" x-model="driverEnteredPin" maxlength="4" required placeholder="Enter 4-digit PIN"
+                                       class="px-4 py-2.5 bg-white dark:bg-[#111] border border-amber-400/60 rounded-xl font-mono font-black text-center text-lg text-gray-900 dark:text-white w-44 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <button type="submit" :disabled="isVerifyingPin"
+                                        class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                                    <span x-text="isVerifyingPin ? 'Verifying...' : '✓ Verify & Start Trip'"></span>
+                                </button>
+                            </form>
+                        </div>
+                        <p x-show="pinVerifyError" class="text-xs text-rose-500 font-bold mt-2" x-text="pinVerifyError"></p>
+                    </div>
+                    @endif
+                </div>
+
                 <!-- 2. Interactive Map / Route Card -->
                 <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-sm">
                     <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
@@ -543,6 +600,8 @@
                 rideId: rideId,
                 ride: {
                     status: initialStatus,
+                    start_pin: @json($ride->start_pin),
+                    otp: @json($ride->start_pin),
                     fare: '{{ $ride->fare }}',
                     pickup: @json($ride->pickup_location),
                     dropoff: @json($ride->dropoff_location),
@@ -569,6 +628,10 @@
                 showBackupModal: false,
                 isConfirmingBackup: false,
                 isDecliningBackup: false,
+                driverEnteredPin: '',
+                isVerifyingPin: false,
+                pinVerifyError: '',
+                pinCopied: false,
 
                 init() {
                     // Remember this ride in localStorage for guest tracking continuity
@@ -586,6 +649,10 @@
                             this.ride.fare = data.fare;
                             this.ride.pickup = data.pickup;
                             this.ride.dropoff = data.dropoff;
+                            if (data.start_pin) {
+                                this.ride.start_pin = data.start_pin;
+                                this.ride.otp = data.start_pin;
+                            }
                             this.ride.backup_chauffeur_enabled = data.backup_chauffeur_enabled;
                             this.ride.backup_status = data.backup_status;
                             this.ride.driver_assignment_type = data.driver_assignment_type;
@@ -722,6 +789,57 @@
                         setTimeout(() => this.shareSuccess = false, 3000);
                     } else {
                         alert('Tracking Link: ' + url);
+                    }
+                },
+
+                copyPin() {
+                    const pin = this.ride.start_pin || '{{ $ride->start_pin }}';
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(pin);
+                        this.pinCopied = true;
+                        setTimeout(() => this.pinCopied = false, 2500);
+                    } else {
+                        alert('Your 4-Digit Ride PIN is: ' + pin);
+                    }
+                },
+
+                async verifyDriverPin() {
+                    const pin = (this.driverEnteredPin || '').trim();
+                    if (pin.length !== 4) {
+                        this.pinVerifyError = 'Please enter a valid 4-digit PIN.';
+                        return;
+                    }
+                    this.isVerifyingPin = true;
+                    this.pinVerifyError = '';
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                        const res = await fetch(`/api/driver/rides/${this.rideId}/status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token || ''
+                            },
+                            body: JSON.stringify({
+                                status: 'in_progress',
+                                otp: pin,
+                                pin: pin,
+                                type: 'ride'
+                            })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.ride.status = 'in_progress';
+                            this.driverEnteredPin = '';
+                            this.pinVerifyError = '';
+                            await this.poll();
+                        } else {
+                            this.pinVerifyError = data.message || 'Invalid 4-digit PIN. Please verify code with passenger.';
+                        }
+                    } catch(e) {
+                        this.pinVerifyError = 'Network error verifying PIN. Please try again.';
+                    } finally {
+                        this.isVerifyingPin = false;
                     }
                 },
 

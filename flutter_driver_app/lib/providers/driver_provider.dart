@@ -569,19 +569,39 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRideStatus(dynamic rawRideId, String newStatus, {String? type}) async {
+  String? _lastStatusError;
+  String? get lastStatusError => _lastStatusError;
+
+  Future<bool> updateRideStatus(dynamic rawRideId, String newStatus, {String? type, String? otp}) async {
     final rideId = int.tryParse(rawRideId?.toString() ?? '0') ?? 0;
     if (rideId <= 0) return false;
+
+    _lastStatusError = null;
 
     final postData = <String, dynamic>{
       'status': newStatus,
       if (type != null && type.isNotEmpty) 'type': type,
+      if (otp != null && otp.isNotEmpty) ...{
+        'otp': otp.trim(),
+        'pin': otp.trim(),
+        'start_pin': otp.trim(),
+      },
     };
 
     try {
       Response? res;
       try {
         res = await _dio.post(ApiConstants.rideStatus(rideId), data: postData).timeout(const Duration(seconds: 5));
+      } on DioException catch (dioErr) {
+        if (dioErr.response?.data is Map && dioErr.response?.data['message'] != null) {
+          _lastStatusError = dioErr.response?.data['message']?.toString();
+        }
+        res = dioErr.response;
+        if (res == null || res.statusCode != 422) {
+          try {
+            res = await _dio.post('/driver/rides/$rideId/status', data: postData).timeout(const Duration(seconds: 5));
+          } catch (_) {}
+        }
       } catch (e) {
         try {
           res = await _dio.post('/driver/rides/$rideId/status', data: postData).timeout(const Duration(seconds: 5));
@@ -610,6 +630,8 @@ class DriverProvider extends ChangeNotifier {
         await fetchActiveRides();
         notifyListeners();
         return true;
+      } else if (res?.data is Map && res?.data['message'] != null) {
+        _lastStatusError = res!.data['message'].toString();
       }
     } catch (e) {
       debugPrint('Error updating status: $e');

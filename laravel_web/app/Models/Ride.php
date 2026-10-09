@@ -13,6 +13,7 @@ class Ride extends Model
         'dropoff_location',
         'fare',
         'status',
+        'start_pin',
         'vehicle_type',
         'payment_method',
         'is_for_someone_else',
@@ -170,6 +171,24 @@ class Ride extends Model
     public function receipt()
     {
         return $this->belongsTo(Receipt::class, 'receipt_id');
+    }
+
+    /**
+     * Ensure a 4-digit start PIN is always returned for ride verification
+     */
+    public function getStartPinAttribute($value)
+    {
+        if (empty($value)) {
+            $generated = str_pad((string)(($this->id ? ($this->id % 9000) : rand(1000, 8999)) + 1000), 4, '0', STR_PAD_LEFT);
+            if ($this->exists && !empty($this->id)) {
+                try {
+                    $this->attributes['start_pin'] = $generated;
+                    $this->saveQuietly();
+                } catch (\Throwable $e) {}
+            }
+            return $generated;
+        }
+        return (string) $value;
     }
 }
 

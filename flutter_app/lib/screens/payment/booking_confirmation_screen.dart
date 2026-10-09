@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
@@ -324,6 +325,116 @@ class BookingConfirmationScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // 4-Digit Secure PIN Banner (if available for ride / delivery)
+              Builder(
+                builder: (_) {
+                  final pin = extraDetails?['start_pin'] ?? extraDetails?['otp'] ?? extraDetails?['pin'];
+                  if (pin == null || pin.toString().trim().isEmpty) return const SizedBox.shrink();
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                            : [const Color(0xFFFEF9C3), const Color(0xFFFEF08A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFEAB308), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEAB308).withOpacity(0.18),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFCA8A04),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.pin_outlined, color: Colors.white, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'SECURE START PIN',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.0,
+                                  color: isDark ? const Color(0xFFFDE047) : const Color(0xFF854D0E),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Share with driver to start your trip',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white70 : const Color(0xFF713F12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: pin.toString()));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Copied PIN $pin to clipboard!'),
+                                duration: const Duration(seconds: 2),
+                                backgroundColor: Colors.black87,
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFCA8A04), width: 1.5),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  pin.toString(),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 3.0,
+                                    fontFamily: 'monospace',
+                                    color: isDark ? const Color(0xFFFDE047) : const Color(0xFF854D0E),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.copy_rounded,
+                                  size: 14,
+                                  color: isDark ? const Color(0xFFFDE047) : const Color(0xFF854D0E),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // Payment & Receipt Card
               Container(

@@ -18,6 +18,7 @@ class ApiConstants {
   static const String rides = '/rides';
   static const String activeRide = '/rides/active';
   static String rideStatus(int id) => '/rides/$id/status';
+  static String rideVerifyPin(int id) => '/rides/$id/verify-pin';
   static String rideCancel(int id) => '/rides/$id/cancel';
 
   // Driver

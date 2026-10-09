@@ -118,6 +118,9 @@ class RideController extends Controller
                     ? ($r->digital_receipt_code ?: ('RNT-' . $r->id)) 
                     : ($isDelivery ? ('DEL-' . $r->id) : ('RIDE-' . $r->id)),
                 'status' => $r->status,
+                'start_pin' => $r->start_pin,
+                'otp' => $r->start_pin,
+                'pin' => $r->start_pin,
                 'receipt_id' => $r->receipt_id,
                 'digital_receipt_code' => $r->digital_receipt_code ?: ($isRental ? ('RNT-' . $r->id) : ('REC-' . $r->id)),
                 'receipt_url' => $r->receipt ? $r->receipt->view_url : url('/receipts/' . ($r->digital_receipt_code ?: ($isRental ? ('RNT-' . $r->id) : ('REC-' . $r->id)))),
@@ -507,6 +510,7 @@ class RideController extends Controller
         $amount = $breakdown['total_fare'];
 
         $digitalReceipt = 'REC-' . strtoupper(Str::random(8));
+        $startPin = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
         $ride = Ride::create([
             'rider_id' => $user->id,
@@ -529,6 +533,7 @@ class RideController extends Controller
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
+            'start_pin' => $startPin,
             'payment_status' => 'pending',
             'backup_chauffeur_enabled' => $request->boolean('backup_chauffeur_enabled', false),
             'driver_assignment_type' => 'primary',
@@ -757,6 +762,9 @@ class RideController extends Controller
             'ride' => [
                 'id' => $ride->id,
                 'status' => $ride->status,
+                'start_pin' => $ride->start_pin,
+                'otp' => $ride->start_pin,
+                'pin' => $ride->start_pin,
                 'payment_status' => $ride->payment_status,
                 'pickup_location' => $ride->pickup_location,
                 'pickup_lat' => $ride->pickup_lat ? floatval($ride->pickup_lat) : null,
@@ -1012,6 +1020,35 @@ class RideController extends Controller
         }
 
         if ($ride) {
+            // Require and verify 4-digit PIN before starting the ride
+            if ($newStatus === 'in_progress') {
+                $submittedPin = trim((string)($request->input('otp') ?? $request->input('pin') ?? $request->input('start_pin') ?? ''));
+                $expectedPin = trim((string)($ride->start_pin ?? ''));
+
+                if (empty($expectedPin)) {
+                    $expectedPin = str_pad((string)(($ride->id ? ($ride->id % 9000) : rand(1000, 8999)) + 1000), 4, '0', STR_PAD_LEFT);
+                    $ride->update(['start_pin' => $expectedPin]);
+                }
+
+                if (empty($submittedPin)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => '4-Digit Start PIN is required to start the ride. Please ask the passenger for their PIN.',
+                        'error_code' => 'PIN_REQUIRED',
+                        'requires_pin' => true,
+                    ], 422);
+                }
+
+                if ($submittedPin !== $expectedPin) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid 4-digit PIN. Please verify the code with the customer.',
+                        'error_code' => 'INVALID_PIN',
+                        'requires_pin' => true,
+                    ], 422);
+                }
+            }
+
             $updates = ['status' => $newStatus];
             if ($newStatus === 'en_route') $updates['en_route_at'] = now();
             if ($newStatus === 'arrived') $updates['arrived_at'] = now();
@@ -1084,6 +1121,8 @@ class RideController extends Controller
                 'success' => true,
                 'message' => "Ride status updated to {$newStatus}",
                 'ride' => $ride->fresh(['rider', 'stops']),
+                'start_pin' => $ride->start_pin,
+                'otp' => $ride->start_pin,
             ]);
         }
 
@@ -1112,6 +1151,15 @@ class RideController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Ride or order not found.'], 404);
+    }
+
+    /**
+     * Dedicated endpoint to verify 4-digit start PIN and start the ride
+     */
+    public function verifyPin(Request $request, $id): JsonResponse
+    {
+        $submittedPin = trim((string)($request->input('otp') ?? $request->input('pin') ?? $request->input('start_pin') ?? ''));
+        return $this->updateStatus($request->merge(['status' => 'in_progress', 'otp' => $submittedPin]), $id);
     }
 
     /**
