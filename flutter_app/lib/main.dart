@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
+import 'core/services/local_notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/country_provider.dart';
 import 'providers/notification_provider.dart';
@@ -14,6 +15,11 @@ void main() async {
     await Firebase.initializeApp();
   } catch (e) {
     debugPrint('Firebase init: $e');
+  }
+  try {
+    await LocalNotificationService.instance.initialize();
+  } catch (e) {
+    debugPrint('LocalNotificationService init error: $e');
   }
   runApp(const RideMyCarsRiderApp());
 }

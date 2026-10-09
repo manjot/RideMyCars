@@ -112,6 +112,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined, color: AppColors.primary, size: 22),
+            tooltip: 'Test Phone Notification',
+            onPressed: () async {
+              await notifs.sendTestNotification();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🔔 Notification sent! Check your phone status bar & lock screen.'),
+                    backgroundColor: Color(0xFF1E293B),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+          ),
           if (notifs.notifications.isNotEmpty) ...[
             if (notifs.unreadCount > 0)
               IconButton(

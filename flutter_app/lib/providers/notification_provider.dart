@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../core/api/api_client.dart';
 import '../core/constants/api_constants.dart';
 
+import '../core/services/local_notification_service.dart';
+
 class NotificationProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -40,6 +42,21 @@ class NotificationProvider extends ChangeNotifier {
           final topId = (newNotifications.first['id'] as num?)?.toInt() ?? 0;
           if (_lastSeenId != 0 && topId > _lastSeenId) {
             _playChime();
+            for (final n in newNotifications) {
+              final nId = (n['id'] as num?)?.toInt() ?? 0;
+              if (nId > _lastSeenId && n['is_read'] != true) {
+                LocalNotificationService.instance.showNotification(
+                  id: nId,
+                  title: n['title'] ?? 'RideMyCars Alert',
+                  body: n['message'] ?? '',
+                );
+              }
+            }
+          } else if (_lastSeenId == 0) {
+            // First run: mark existing notifications as seen so we don't alert on old history
+            LocalNotificationService.instance.markMultipleAsDisplayed(
+              newNotifications.map((n) => (n['id'] as num?)?.toInt() ?? 0),
+            );
           }
           _lastSeenId = topId;
         }
@@ -50,6 +67,28 @@ class NotificationProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
+    }
+  }
+
+  Future<void> sendTestNotification({String? title, String? body}) async {
+    final testTitle = title ?? 'RideMyCars Push Alert';
+    final testBody = body ?? 'Realtime notification test received successfully on your phone!';
+    final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    _playChime();
+    await LocalNotificationService.instance.showNotification(
+      id: id,
+      title: testTitle,
+      body: testBody,
+      force: true,
+    );
+    try {
+      await _dio.post('/notifications/test', data: {
+        'title': testTitle,
+        'message': testBody,
+      });
+      fetchNotifications();
+    } catch (e) {
+      debugPrint('Error dispatching test notification: $e');
     }
   }
 
