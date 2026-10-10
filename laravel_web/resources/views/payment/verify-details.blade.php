@@ -445,11 +445,11 @@
                     </div>
 
                     <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                        <a href="{{ $serviceType === 'ride' ? route('ride') : ($serviceType === 'driver_booking' ? route('hire-driver') : route('delivery')) }}"
+                        <a href="{{ $serviceType === 'ride' ? url('/ride') : ($serviceType === 'driver_booking' ? url('/hire-driver') : url('/delivery')) }}"
                            class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
                             <span>🔄 Try Again (Fresh 5-Min Request)</span>
                         </a>
-                        <a href="{{ route('home') }}"
+                        <a href="{{ url('/') }}"
                            class="w-full sm:w-auto px-6 py-3.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-xl transition-all text-center">
                             Return Home
                         </a>
