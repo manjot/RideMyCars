@@ -488,7 +488,14 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">MoMo Phone Number</label>
-                                    <input type="tel" x-model="withdrawForm.momo_details.momo_phone" placeholder="e.g. 0244123456"
+                                    <input type="tel" 
+                                           inputmode="tel"
+                                           pattern="[0-9+\s\-]*"
+                                           x-model="withdrawForm.momo_details.momo_phone" 
+                                           @input="withdrawForm.momo_details.momo_phone = withdrawForm.momo_details.momo_phone.replace(/[^0-9+\s\-]/g, '')"
+                                           @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                           @paste="setTimeout(() => { withdrawForm.momo_details.momo_phone = withdrawForm.momo_details.momo_phone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
+                                           placeholder="e.g. 0244123456"
                                            class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
                                 </div>
                                 <div>
@@ -598,7 +605,16 @@
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">MoMo Phone Number</label>
-                                    <input type="tel" x-model="newMethodForm.momo_phone" required placeholder="0244..." class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                    <input type="tel" 
+                                           inputmode="tel"
+                                           pattern="[0-9+\s\-]*"
+                                           x-model="newMethodForm.momo_phone" 
+                                           @input="newMethodForm.momo_phone = newMethodForm.momo_phone.replace(/[^0-9+\s\-]/g, '')"
+                                           @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                           @paste="setTimeout(() => { newMethodForm.momo_phone = newMethodForm.momo_phone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
+                                           required 
+                                           placeholder="0244..." 
+                                           class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Holder Name</label>

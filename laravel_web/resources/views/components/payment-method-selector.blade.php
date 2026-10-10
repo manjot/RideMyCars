@@ -248,9 +248,14 @@
                 Mobile Money Phone Number *
             </label>
             <input type="tel" 
+                   inputmode="tel"
+                   pattern="[0-9+\s\-]*"
                    name="{{ $momoInputName }}"
                    x-model="{{ $phoneModel }}" 
-                   placeholder="e.g. 024 123 4567" 
+                   @input="{{ $phoneModel }} = {{ $phoneModel }}.replace(/[^0-9+\s\-]/g, '')"
+                   @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                   @paste="setTimeout(() => { {{ $phoneModel }} = {{ $phoneModel }}.replace(/[^0-9+\s\-]/g, ''); }, 0)"
+                   placeholder="e.g. 024 123 4567 (digits only)" 
                    class="w-full px-3 py-2 bg-white dark:bg-[#161618] border border-amber-300/70 dark:border-amber-700/40 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-500 focus:outline-none transition">
             <p class="text-[10px] text-amber-800 dark:text-amber-400 mt-1 font-medium">
                 📲 A payment authorization prompt will be pushed to this mobile device to enter your secret PIN.

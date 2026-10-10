@@ -345,8 +345,13 @@
                                             <div>
                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Rider Phone Number <span class="text-red-500">*</span></label>
                                                 <input type="tel" 
+                                                       inputmode="tel"
+                                                       pattern="[0-9+\s\-]*"
                                                        x-model="riderPhone" 
-                                                       placeholder="e.g. +1 555-0199" 
+                                                       @input="riderPhone = riderPhone.replace(/[^0-9+\s\-]/g, '')"
+                                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                                       @paste="setTimeout(() => { riderPhone = riderPhone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
+                                                       placeholder="e.g. +1 555-0199 (digits only)" 
                                                        class="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
                                                 <p class="text-[10px] text-gray-400 mt-1">We'll send driver arrival alerts via SMS to this phone.</p>
                                             </div>
@@ -596,16 +601,27 @@
                         </div>
 
                         <!-- Mandatory Phone Number for Driver Coordination -->
-                        <div class="relative bg-gray-50/90 dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-all focus-within:border-gray-400 dark:focus-within:border-white/30 focus-within:bg-white dark:focus-within:bg-[#161616]">
+                        <div class="relative bg-gray-50/90 dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-all focus-within:border-gray-400 dark:focus-within:border-white/30 focus-within:bg-white dark:focus-within:bg-[#161616]"
+                             :class="{ 'border-rose-500/60 ring-2 ring-rose-500/20': phoneError }">
                             <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-sm shrink-0 select-none">
                                 📞
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Number (Required)</div>
-                                <input type="tel" name="phone_number" x-model="phone" required placeholder="Enter mobile phone number..." 
+                                <input type="tel" 
+                                       inputmode="tel"
+                                       pattern="[0-9+\s\-]*"
+                                       name="phone_number" 
+                                       x-model="phone" 
+                                       @input="phone = phone.replace(/[^0-9+\s\-]/g, ''); phoneError = '';"
+                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { phone = phone.replace(/[^0-9+\s\-]/g, ''); phoneError = ''; }, 0)"
+                                       required 
+                                       placeholder="Enter mobile phone number (digits only)..." 
                                        class="w-full bg-transparent text-xs sm:text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none">
                             </div>
                         </div>
+                        <p x-show="phoneError" x-cloak class="text-xs text-rose-500 font-bold px-1.5 mt-1" x-text="phoneError"></p>
 
                         <!-- Primary CTA: Search Rides -->
                         <button type="button" 
@@ -1242,7 +1258,14 @@
 
                         <div>
                             <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Mobile Money Phone Number</label>
-                            <input type="tel" x-model="momoPhone" placeholder="024 XXX XXXX"
+                            <input type="tel" 
+                                   inputmode="tel"
+                                   pattern="[0-9+\s\-]*"
+                                   x-model="momoPhone" 
+                                   @input="momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, '')"
+                                   @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                   @paste="setTimeout(() => { momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
+                                   placeholder="024 XXX XXXX (digits only)"
                                    class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">
                             <p class="text-[11px] text-gray-400 mt-1">A payment authorization prompt will be sent to this phone upon booking.</p>
                         </div>
@@ -1358,6 +1381,7 @@
                 showDropoffSuggestions: false,
 
                 phone: '{{ auth()->user()->phone ?? "" }}',
+                phoneError: '',
                 stops: [],
                 estimatedDistanceKm: 10.0,
                 estimatedDurationMin: 15,
@@ -2506,6 +2530,14 @@
                 },
 
                 goToChooseRide() {
+                    this.phoneError = '';
+                    const cleanDigits = (this.phone || '').replace(/[^0-9]/g, '');
+                    if (!this.phone || cleanDigits.length < 6) {
+                        this.phoneError = 'Please enter a valid contact phone number with digits only.';
+                        const phoneInput = document.querySelector('input[name="phone_number"]');
+                        if (phoneInput) phoneInput.focus();
+                        return;
+                    }
                     if (this.pickup.trim() && this.dropoff.trim()) {
                         this.bookingStep = 'choose_ride';
                     }

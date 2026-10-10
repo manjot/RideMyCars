@@ -317,7 +317,17 @@
                             </div>
                             <div>
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Sender Phone Number *</label>
-                                <input type="tel" name="sender_phone" x-model="senderPhone" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                <input type="tel" 
+                                       inputmode="tel"
+                                       pattern="[0-9+\s\-]*"
+                                       name="sender_phone" 
+                                       x-model="senderPhone" 
+                                       @input="senderPhone = senderPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = '';"
+                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { senderPhone = senderPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = ''; }, 0)"
+                                       placeholder="e.g. 024 XXX XXXX (digits only)"
+                                       required 
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
                             </div>
                         </div>
                     </div>
@@ -332,7 +342,17 @@
                             </div>
                             <div>
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Recipient Phone Number (For PIN SMS) *</label>
-                                <input type="tel" name="recipient_phone" x-model="recipientPhone" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                <input type="tel" 
+                                       inputmode="tel"
+                                       pattern="[0-9+\s\-]*"
+                                       name="recipient_phone" 
+                                       x-model="recipientPhone" 
+                                       @input="recipientPhone = recipientPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = '';"
+                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { recipientPhone = recipientPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = ''; }, 0)"
+                                       placeholder="e.g. 055 XXX XXXX (digits only)"
+                                       required 
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
                             </div>
                         </div>
 
@@ -342,11 +362,13 @@
                         </div>
                     </div>
 
+                    <p x-show="step3Error" x-cloak class="text-xs text-rose-500 font-bold px-1" x-text="step3Error"></p>
+
                     <div class="flex justify-between pt-2">
                         <button type="button" @click="currentStep = 2" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
                             ← Back
                         </button>
-                        <button type="button" @click="currentStep = 4" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
+                        <button type="button" @click="proceedFromStep3()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
                             Next: Package Specifications →
                         </button>
                     </div>
@@ -1473,6 +1495,31 @@
                     this.updatePrice();
                 },
 
+                step3Error: '',
+
+                proceedFromStep3() {
+                    this.step3Error = '';
+                    const cleanSender = (this.senderPhone || '').replace(/\D/g, '');
+                    if (!this.senderName || !this.senderName.trim()) {
+                        this.step3Error = 'Please enter the Sender Full Name.';
+                        return;
+                    }
+                    if (!cleanSender || cleanSender.length < 6) {
+                        this.step3Error = 'Please enter a valid numeric Sender phone number (at least 6 digits).';
+                        return;
+                    }
+                    const cleanRecipient = (this.recipientPhone || '').replace(/\D/g, '');
+                    if (!this.recipientName || !this.recipientName.trim()) {
+                        this.step3Error = 'Please enter the Recipient Full Name.';
+                        return;
+                    }
+                    if (!cleanRecipient || cleanRecipient.length < 6) {
+                        this.step3Error = 'Please enter a valid numeric Recipient phone number (at least 6 digits).';
+                        return;
+                    }
+                    this.currentStep = 4;
+                },
+
                 proceedFromStep4() {
                     this.prescriptionError = '';
                     if (this.selectedCategoryRequiresRx) {
@@ -1621,14 +1668,18 @@
                     }
 
                     // Validate Step 3
-                    if (!this.senderName || !this.senderName.trim() || !this.senderPhone || !this.senderPhone.trim()) {
+                    const cleanSender = (this.senderPhone || '').replace(/\D/g, '');
+                    if (!this.senderName || !this.senderName.trim() || !cleanSender || cleanSender.length < 6) {
                         this.currentStep = 3;
-                        this.submitError = 'Please fill in Sender Name and Phone Number.';
+                        this.submitError = 'Please enter a valid Sender Name and numeric phone number (at least 6 digits).';
+                        this.step3Error = this.submitError;
                         return;
                     }
-                    if (!this.recipientName || !this.recipientName.trim() || !this.recipientPhone || !this.recipientPhone.trim()) {
+                    const cleanRecipient = (this.recipientPhone || '').replace(/\D/g, '');
+                    if (!this.recipientName || !this.recipientName.trim() || !cleanRecipient || cleanRecipient.length < 6) {
                         this.currentStep = 3;
-                        this.submitError = 'Please fill in Recipient Name and Phone Number.';
+                        this.submitError = 'Please enter a valid Recipient Name and numeric phone number (at least 6 digits).';
+                        this.step3Error = this.submitError;
                         return;
                     }
 

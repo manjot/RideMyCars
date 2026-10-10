@@ -453,10 +453,14 @@
                                 </button>
 
                                 <!-- Mobile Input -->
-                                <input type="tel" 
+                                <input type="tel"
+                                       inputmode="tel"
+                                       pattern="[0-9\s\-]*"
                                        x-model="mobileNumber"
-                                       @input="updatePhone()"
-                                       placeholder="Mobile number" 
+                                       @input="mobileNumber = mobileNumber.replace(/[^0-9\s\-]/g, ''); updatePhone();"
+                                       @keypress="if (!/[0-9\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { mobileNumber = mobileNumber.replace(/[^0-9\s\-]/g, ''); updatePhone(); }, 0)"
+                                       placeholder="Mobile number"
                                        required
                                        class="phone-text-input"
                                        style="height: 50px; min-height: 50px; padding: 0 16px;">

@@ -253,7 +253,14 @@
                                 <span class="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-gray-300 dark:border-white/15 bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-bold text-xs">
                                     🇬🇭 +233
                                 </span>
-                                <input type="tel" x-model="momoPhone" placeholder="024 123 4567"
+                                <input type="tel" 
+                                       inputmode="tel"
+                                       pattern="[0-9+\s\-]*"
+                                       x-model="momoPhone" 
+                                       @input="momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, '')"
+                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
+                                       placeholder="024 123 4567 (digits only)"
                                        class="flex-1 px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-white/15 rounded-r-xl text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
                             </div>
                             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
