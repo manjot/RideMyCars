@@ -726,6 +726,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $country = $request->input('country') 
             ?? \App\Services\CountryService::detectCountryFromLocation(($request->pickup_location ?? '') . ' ' . ($request->dropoff_location ?? ''), $request->input('pickup_lat'), $request->input('pickup_lng'))
             ?? \App\Services\CountryService::getCurrentCountryCode($request);
+        $country = \App\Services\CountryService::normalizeToCode($country) ?? 'IND';
         $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
         $amount = $rawAmount > 0 ? $rawAmount : $breakdown['total_fare'];
 

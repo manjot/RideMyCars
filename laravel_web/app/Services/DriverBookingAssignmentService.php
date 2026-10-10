@@ -68,43 +68,69 @@ class DriverBookingAssignmentService
             return null;
         }
 
+        // Determine booking operating country
+        $bookingCountry = \App\Services\CountryService::detectCountryFromLocation(
+            ($booking->pickup_location ?? '') . ' ' . ($booking->dropoff_location ?? ''),
+            $booking->pickup_lat,
+            $booking->pickup_lng
+        ) ?? \App\Services\CountryService::normalizeToCode($booking->country ?? null)
+          ?? 'IND';
+
         $pickupLat = $booking->pickup_lat;
         $pickupLng = $booking->pickup_lng;
 
+        // If pickup coordinates aren't set, attempt geocoding once
         if (is_null($pickupLat) || is_null($pickupLng)) {
-            $chosenDriver = $onlineDrivers->first();
-            $assignment = RideAssignment::create([
-                'driver_booking_id' => $booking->id,
-                'ride_id' => null,
-                'driver_id' => $chosenDriver->user_id,
-                'status' => 'pending',
-                'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
-            ]);
-            \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $chosenDriver->user_id);
-            return $assignment;
-        }
-
-        // Sort by Haversine distance
-        $driversWithDistance = $onlineDrivers->map(function ($driver) use ($pickupLat, $pickupLng) {
-            $dist = RideAssignmentService::haversineDistance($pickupLat, $pickupLng, $driver->current_lat, $driver->current_lng);
-            $driver->distance_km = $dist;
-            return $driver;
-        })->sortBy('distance_km');
-
-        $radii = config('ride.matching_radii', [3, 5, 10, 20]);
-        $chosenDriver = null;
-
-        foreach ($radii as $radius) {
-            $candidate = $driversWithDistance->first(fn($d) => $d->distance_km <= $radius);
-            if ($candidate) {
-                $chosenDriver = $candidate;
-                break;
+            if (!empty($booking->pickup_location)) {
+                try {
+                    $geoRes = app(\App\Http\Controllers\Api\PlacesApiController::class)->geocode(request()->merge(['query' => $booking->pickup_location]));
+                    $geoData = $geoRes->getData(true);
+                    if (!empty($geoData['lat']) && !empty($geoData['lng'])) {
+                        $pickupLat = (float) $geoData['lat'];
+                        $pickupLng = (float) $geoData['lng'];
+                        $booking->update(['pickup_lat' => $pickupLat, 'pickup_lng' => $pickupLng]);
+                    }
+                } catch (\Throwable $e) {}
             }
         }
 
-        if (!$chosenDriver) {
-            $chosenDriver = $driversWithDistance->first();
+        // Never assign overseas or unverified drivers if coordinates are missing
+        if (is_null($pickupLat) || is_null($pickupLng)) {
+            \Illuminate\Support\Facades\Log::info("DriverBookingAssignmentService: Cannot proximity dispatch booking #{$booking->id} because coordinates are missing.");
+            return null;
         }
+
+        $maxRadius = 10.0;
+
+        // Sort and filter drivers strictly within 10 km in the same country
+        $chosenDriver = $onlineDrivers->map(function ($driver) use ($pickupLat, $pickupLng) {
+            $dist = RideAssignmentService::haversineDistance($pickupLat, $pickupLng, $driver->current_lat, $driver->current_lng);
+            $driver->distance_km = $dist;
+            return $driver;
+        })
+        ->filter(function ($d) use ($maxRadius, $bookingCountry) {
+            // Must have valid GPS coordinates
+            if (is_null($d->current_lat) || is_null($d->current_lng)) {
+                return false;
+            }
+
+            // Must match operating country
+            $driverUser = $d->user ?? \App\Models\User::find($d->user_id);
+            $rawCountry = $d->country ?? $driverUser?->country ?? null;
+            $driverCountry = \App\Services\CountryService::normalizeToCode($rawCountry);
+            if (!$driverCountry && $d->current_lat && $d->current_lng) {
+                $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $d->current_lat, $d->current_lng);
+            }
+
+            if ($driverCountry !== $bookingCountry) {
+                return false;
+            }
+
+            // Must be within strict 10.0 km radius
+            return $d->distance_km <= $maxRadius;
+        })
+        ->sortBy('distance_km')
+        ->first();
 
         if (!$chosenDriver) {
             return null;

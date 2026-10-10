@@ -106,42 +106,74 @@ class RideAssignmentService
             return null;
         }
 
+        // 4. Determine verified ride country
+        $rideCountry = \App\Services\CountryService::detectCountryFromLocation(
+            ($ride->pickup_location ?? '') . ' ' . ($ride->dropoff_location ?? ''),
+            $ride->pickup_lat,
+            $ride->pickup_lng
+        ) ?? \App\Services\CountryService::normalizeToCode($ride->driver_country ?? $ride->country ?? null)
+          ?? 'IND';
+
         $pickupLat = $ride->pickup_lat;
         $pickupLng = $ride->pickup_lng;
 
-        // If pickup coordinates aren't set, fallback to default assignment to first available driver
+        // If pickup coordinates aren't set, attempt geocoding once
         if (is_null($pickupLat) || is_null($pickupLng)) {
-            $chosenDriver = $onlineDrivers->first();
-            $assignment = RideAssignment::create([
-                'ride_id' => $ride->id,
-                'driver_id' => $chosenDriver->user_id,
-                'status' => 'pending',
-                'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
-            ]);
-            \App\Services\NotificationService::notifyDriverRideAssigned($ride, $chosenDriver->user_id);
-            return $assignment;
+            if (!empty($ride->pickup_location)) {
+                try {
+                    $geoRes = app(\App\Http\Controllers\Api\PlacesApiController::class)->geocode(request()->merge(['query' => $ride->pickup_location]));
+                    $geoData = $geoRes->getData(true);
+                    if (!empty($geoData['lat']) && !empty($geoData['lng'])) {
+                        $pickupLat = (float) $geoData['lat'];
+                        $pickupLng = (float) $geoData['lng'];
+                        $ride->update(['pickup_lat' => $pickupLat, 'pickup_lng' => $pickupLng]);
+                    }
+                } catch (\Throwable $e) {}
+            }
         }
 
-        // Calculate distance for all drivers
-        $driversWithDistance = $onlineDrivers->map(function ($driver) use ($pickupLat, $pickupLng) {
+        // If coordinates still missing, NEVER assign randomly to overseas drivers
+        if (is_null($pickupLat) || is_null($pickupLng)) {
+            \Illuminate\Support\Facades\Log::info("RideAssignmentService: Cannot proximity dispatch ride #{$ride->id} because pickup coordinates are missing.");
+            return null;
+        }
+
+        // Strict 10.0 km proximity matching based on country-configured dispatch_radius_km
+        $countryPricing = \App\Models\CountryPricing::forCountry($rideCountry);
+        $maxRadius = (float)($countryPricing->dispatch_radius_km ?? 10.0);
+        if ($maxRadius <= 0.0 || $maxRadius > 10.0) {
+            $maxRadius = 10.0;
+        }
+
+        // Filter drivers strictly within 10 km in the same country
+        $chosenDriver = $onlineDrivers->map(function ($driver) use ($pickupLat, $pickupLng) {
             $dist = self::haversineDistance($pickupLat, $pickupLng, $driver->current_lat, $driver->current_lng);
             $driver->distance_km = $dist;
             return $driver;
-        })->sortBy('distance_km');
-
-        // 4. Proximity matching based on country-configured dispatch_radius_km (default 10km)
-        $rideCountry = strtoupper($ride->driver_country ?? $ride->country ?? 'IND');
-        $countryPricing = \App\Models\CountryPricing::forCountry($rideCountry);
-        $maxRadius = (float)($countryPricing->dispatch_radius_km ?? 10.0);
-        if ($maxRadius <= 0.0) $maxRadius = 10.0;
-
-        $chosenDriver = $driversWithDistance->first(function($d) use ($maxRadius, $rideCountry) {
-            $driverCountry = strtoupper($d->country ?? '');
-            if ($rideCountry && $driverCountry && $driverCountry !== $rideCountry) {
+        })
+        ->filter(function ($d) use ($maxRadius, $rideCountry) {
+            // Must have valid GPS coordinates
+            if (is_null($d->current_lat) || is_null($d->current_lng)) {
                 return false;
             }
+
+            // Must match operating country
+            $driverUser = $d->user ?? \App\Models\User::find($d->user_id);
+            $rawDriverCountry = $d->country ?? $driverUser?->country ?? null;
+            $driverCountry = \App\Services\CountryService::normalizeToCode($rawDriverCountry);
+            if (!$driverCountry && $d->current_lat && $d->current_lng) {
+                $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $d->current_lat, $d->current_lng);
+            }
+
+            if ($driverCountry !== $rideCountry) {
+                return false;
+            }
+
+            // Must be within strict 10.0 km radius
             return $d->distance_km <= $maxRadius;
-        });
+        })
+        ->sortBy('distance_km')
+        ->first();
 
         if (!$chosenDriver) {
             return null;

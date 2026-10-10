@@ -96,13 +96,41 @@ class StripeVerificationController extends Controller
                 $driverUser = Auth::user() ?? (auth('sanctum')->check() ? auth('sanctum')->user() : null);
             }
             if (!$driverUser) {
-                $driverUser = \App\Models\User::where('role', 'driver')->first();
+                return response()->json(['success' => false, 'message' => 'Unauthenticated driver.'], 401);
             }
-            $driverId = $driverUser ? $driverUser->id : null;
+            $driverId = $driverUser->id;
 
             $booking = $this->getBookingModel($serviceType, $serviceId);
             if (!$booking) {
                 return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+            }
+
+            $pickupLoc = $booking->pickup_location ?? $booking->sender_address ?? '';
+            $dropoffLoc = $booking->dropoff_location ?? $booking->recipient_address ?? '';
+            $pLat = (float)($booking->pickup_lat ?? 0);
+            $pLng = (float)($booking->pickup_lng ?? 0);
+
+            $detectedCountry = \App\Services\CountryService::detectCountryFromLocation(
+                ($pickupLoc ?: '') . ' ' . ($dropoffLoc ?: ''),
+                $pLat != 0 ? $pLat : null,
+                $pLng != 0 ? $pLng : null
+            ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
+              ?? 'IND';
+
+            $driverCountry = \App\Services\CountryService::normalizeToCode($driverUser->driverProfile?->country ?? $driverUser->country ?? '');
+            if (!$driverCountry && $driverUser->driverProfile?->current_lat && $driverUser->driverProfile?->current_lng) {
+                $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $driverUser->driverProfile->current_lat, $driverUser->driverProfile->current_lng);
+            }
+
+            if ($driverCountry && $detectedCountry && $driverCountry !== $detectedCountry) {
+                return response()->json(['success' => false, 'message' => 'This booking is outside your registered operating country.'], 403);
+            }
+
+            if ($pLat != 0 && $pLng != 0 && $driverUser->driverProfile?->current_lat && $driverUser->driverProfile?->current_lng) {
+                $dist = \App\Services\RideAssignmentService::haversineDistance($pLat, $pLng, (float)$driverUser->driverProfile->current_lat, (float)$driverUser->driverProfile->current_lng);
+                if ($dist > 10.0) {
+                    return response()->json(['success' => false, 'message' => 'You are too far from the pickup location (exceeds 10 km limit).'], 422);
+                }
             }
 
             if ($action === 'approve') {
@@ -215,12 +243,16 @@ class StripeVerificationController extends Controller
             if ($driverId) {
                 $driverUser = User::find($driverId);
                 if ($driverUser) {
-                    $phone = $driverUser->phone ?? '+233 24 555 0192';
-                    $email = $driverUser->email ?? 'michael.driver@ridemycars.com';
-                    $cleanedWa = preg_replace('/[^0-9]/', '', $phone);
-                    if (!str_starts_with($cleanedWa, '233') && strlen($cleanedWa) <= 10) {
-                        $cleanedWa = '233' . ltrim($cleanedWa, '0');
-                    }
+                    $bCountry = \App\Services\CountryService::detectCountryFromLocation(
+                        ($booking->pickup_location ?? '') . ' ' . ($booking->dropoff_location ?? ''),
+                        $booking->pickup_lat ?? null,
+                        $booking->pickup_lng ?? null
+                    ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
+                      ?? 'IND';
+
+                    $phone = $driverUser->phone ?? $this->getFallbackDriverPhone($bCountry);
+                    $email = $driverUser->email ?? 'driver@ridemycars.com';
+                    $cleanedWa = $this->formatWhatsAppPhone($phone, $bCountry);
 
                     $driverData = [
                         'name' => $driverUser->name,
@@ -461,13 +493,95 @@ class StripeVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Booking record not found.'], 404);
         }
 
-        // Find or assign driver (e.g. Michael Scott ID 3 or Kwame Mensah ID 4)
+        $pickupLoc = $booking->pickup_location ?? $booking->sender_address ?? '';
+        $dropoffLoc = $booking->dropoff_location ?? $booking->recipient_address ?? '';
+        $pLat = (float)($booking->pickup_lat ?? 0);
+        $pLng = (float)($booking->pickup_lng ?? 0);
+
+        $bookingCountry = \App\Services\CountryService::detectCountryFromLocation(
+            ($pickupLoc ?: '') . ' ' . ($dropoffLoc ?: ''),
+            $pLat != 0 ? $pLat : null,
+            $pLng != 0 ? $pLng : null
+        ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
+          ?? 'IND';
+
+        // Find or assign driver (strict 10km proximity and matching country)
         if (!$driverId && !$booking->driver_id) {
-            $driverUser = User::where('role', 'driver')->where('id', '!=', 1)->first() ?? User::find(3);
-            $driverId = $driverUser?->id ?? 3;
+            $candidateDrivers = \App\Models\DriverProfile::where('is_available', true)
+                ->where('is_live', true)
+                ->with('user')
+                ->get();
+
+            $nearestDriver = null;
+            $minDist = 99999.0;
+            $maxRadiusKm = 10.0;
+
+            foreach ($candidateDrivers as $dp) {
+                if (is_null($dp->current_lat) || is_null($dp->current_lng)) {
+                    continue;
+                }
+
+                $dCountry = \App\Services\CountryService::normalizeToCode($dp->country ?? $dp->user?->country ?? '');
+                if (!$dCountry && $dp->current_lat && $dp->current_lng) {
+                    $dCountry = \App\Services\CountryService::detectCountryFromLocation(null, $dp->current_lat, $dp->current_lng);
+                }
+
+                if ($dCountry !== $bookingCountry) {
+                    continue;
+                }
+
+                if ($pLat != 0 && $pLng != 0) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance($pLat, $pLng, (float)$dp->current_lat, (float)$dp->current_lng);
+                    if ($dist <= $maxRadiusKm && $dist < $minDist) {
+                        $minDist = $dist;
+                        $nearestDriver = $dp;
+                    }
+                }
+            }
+
+            if (!$nearestDriver) {
+                return response()->json([
+                    'success' => false,
+                    'is_searching' => true,
+                    'booking_status' => 'pending',
+                    'message' => 'No active drivers found within 10 km of your pickup location. Your booking is active and broadcasting to nearby drivers.',
+                ]);
+            }
+
+            $driverUser = $nearestDriver->user;
+            $driverId = $nearestDriver->user_id;
         } else {
             $driverId = $driverId ?: $booking->driver_id;
             $driverUser = User::find($driverId);
+            if ($driverUser) {
+                $dCountry = \App\Services\CountryService::normalizeToCode($driverUser->driverProfile?->country ?? $driverUser->country ?? '');
+                if ($dCountry && $bookingCountry && $dCountry !== $bookingCountry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'The selected driver is not registered in the trip pickup country.',
+                    ], 422);
+                }
+
+                $dLat = $driverUser->driverProfile?->current_lat ?? $driverUser->latitude;
+                $dLng = $driverUser->driverProfile?->current_lng ?? $driverUser->longitude;
+                if ($pLat != 0 && $pLng != 0 && $dLat && $dLng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance($pLat, $pLng, (float)$dLat, (float)$dLng);
+                    if ($dist > 10.0) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'This request is outside your service area (must be within 10 km of pickup location).',
+                        ], 422);
+                    }
+                }
+            }
+        }
+
+        if (!$driverUser) {
+            return response()->json([
+                'success' => false,
+                'is_searching' => true,
+                'message' => 'No driver currently available. Still searching nearby drivers...',
+            ]);
         }
 
         $booking->update([
@@ -477,12 +591,9 @@ class StripeVerificationController extends Controller
             'verified_at' => now(),
         ]);
 
-        $phone = $driverUser->phone ?? '+233 24 555 0192';
-        $email = $driverUser->email ?? 'michael.driver@ridemycars.com';
-        $cleanedWa = preg_replace('/[^0-9]/', '', $phone);
-        if (!str_starts_with($cleanedWa, '233') && strlen($cleanedWa) <= 10) {
-            $cleanedWa = '233' . ltrim($cleanedWa, '0');
-        }
+        $phone = $driverUser->phone ?? $this->getFallbackDriverPhone($bookingCountry);
+        $email = $driverUser->email ?? 'driver@ridemycars.com';
+        $cleanedWa = $this->formatWhatsAppPhone($phone, $bookingCountry);
 
         ActivityLogService::log(
             'driver_confirmed_trip',
@@ -509,14 +620,39 @@ class StripeVerificationController extends Controller
 
     /**
      * Driver Dashboard API: Fetch pending verification requests.
+     * Geofenced: drivers only receive verification requests registered in their country and within 10 km.
      */
     public function getPendingVerifications(Request $request): JsonResponse
     {
-        $driverId = Auth::id();
+        $driver = Auth::user();
+        $driverId = $driver ? $driver->id : null;
+        $driverProfile = $driver?->driverProfile;
         $items = [];
 
+        // Determine driver's current coordinates
+        $driverLat = $request->query('lat') ?? $driver?->latitude ?? $driverProfile?->current_lat;
+        $driverLng = $request->query('lng') ?? $driver?->longitude ?? $driverProfile?->current_lng;
+        if ($driverLat !== null && $driverLat !== '') $driverLat = (float) $driverLat; else $driverLat = null;
+        if ($driverLng !== null && $driverLng !== '') $driverLng = (float) $driverLng; else $driverLng = null;
+
+        // Determine driver's operating country
+        $driverCountry = null;
+        if (!empty($driver?->country)) {
+            $driverCountry = CountryService::normalizeToCode($driver->country);
+        }
+        if (empty($driverCountry) && !empty($driverProfile?->country)) {
+            $driverCountry = CountryService::normalizeToCode($driverProfile->country);
+        }
+        if (empty($driverCountry) && $driverLat !== null && $driverLng !== null) {
+            $driverCountry = CountryService::detectCountryFromLocation(null, $driverLat, $driverLng);
+        }
+        if (empty($driverCountry)) {
+            $driverCountry = CountryService::getCurrentCountryCode($request);
+        }
+        $driverCountry = CountryService::normalizeToCode($driverCountry);
+
         // Resolve target country pricing from driver request, headers, or profile
-        $targetCountry = CountryService::getCurrentCountryCode($request);
+        $targetCountry = $driverCountry ?: CountryService::getCurrentCountryCode($request);
         $driverPricing = CountryPricing::forCountry($targetCountry);
 
         // Helper to resolve currency & format price based on country and booking location
@@ -530,7 +666,7 @@ class StripeVerificationController extends Controller
                 $fullLoc = strtolower($pickupLocation . ' ' . $dropoffLocation);
                 if (str_contains($fullLoc, 'ghana') || str_contains($fullLoc, 'accra') || str_contains($fullLoc, 'weija')) {
                     $bookingCountry = 'GHA';
-                } elseif (str_contains($fullLoc, 'india') || str_contains($fullLoc, 'delhi') || str_contains($fullLoc, 'mumbai') || str_contains($fullLoc, 'bangalore') || str_contains($fullLoc, 'punjab')) {
+                } elseif (str_contains($fullLoc, 'india') || str_contains($fullLoc, 'delhi') || str_contains($fullLoc, 'mumbai') || str_contains($fullLoc, 'bangalore') || str_contains($fullLoc, 'punjab') || str_contains($fullLoc, 'uttar pradesh')) {
                     $bookingCountry = 'IND';
                 } elseif (str_contains($fullLoc, 'south africa') || str_contains($fullLoc, 'johannesburg') || str_contains($fullLoc, 'cape town')) {
                     $bookingCountry = 'ZAF';
@@ -591,10 +727,32 @@ class StripeVerificationController extends Controller
                 });
             })
             ->latest()
-            ->take(10)
+            ->take(20)
             ->get();
 
         foreach ($driverBookings as $db) {
+            $bCountry = CountryService::detectCountryFromLocation(
+                ($db->pickup_location ?? '') . ' ' . ($db->dropoff_location ?? ''),
+                $db->pickup_lat ? (float)$db->pickup_lat : null,
+                $db->pickup_lng ? (float)$db->pickup_lng : null
+            ) ?? CountryService::normalizeToCode($db->country ?? null);
+
+            // Country isolation: driver only sees bookings in their country
+            if ($driverCountry && $bCountry && $driverCountry !== $bCountry) {
+                continue;
+            }
+
+            // Proximity isolation: for unassigned bookings, driver MUST be within 10 km
+            if ($db->driver_id !== $driverId) {
+                if ($driverLat === null || $driverLng === null || empty($db->pickup_lat) || empty($db->pickup_lng)) {
+                    continue;
+                }
+                $dist = RideAssignmentService::haversineDistance((float)$db->pickup_lat, (float)$db->pickup_lng, $driverLat, $driverLng);
+                if ($dist > 10.0) {
+                    continue;
+                }
+            }
+
             $fareInfo = $formatItemFare($db->total_price, $db->pickup_location, $db->dropoff_location, $db->country, $db->currency);
             $items[] = [
                 'type' => 'driver_booking',
@@ -629,10 +787,32 @@ class StripeVerificationController extends Controller
                 });
             })
             ->latest()
-            ->take(10)
+            ->take(20)
             ->get();
 
         foreach ($rides as $r) {
+            $rCountry = CountryService::detectCountryFromLocation(
+                ($r->pickup_location ?? '') . ' ' . ($r->dropoff_location ?? ''),
+                $r->pickup_lat ? (float)$r->pickup_lat : null,
+                $r->pickup_lng ? (float)$r->pickup_lng : null
+            ) ?? CountryService::normalizeToCode($r->driver_country ?? $r->country ?? null);
+
+            // Country isolation: driver only sees rides in their country
+            if ($driverCountry && $rCountry && $driverCountry !== $rCountry) {
+                continue;
+            }
+
+            // Proximity isolation: for unassigned rides, driver MUST be within 10 km
+            if ($r->driver_id !== $driverId) {
+                if ($driverLat === null || $driverLng === null || empty($r->pickup_lat) || empty($r->pickup_lng)) {
+                    continue;
+                }
+                $dist = RideAssignmentService::haversineDistance((float)$r->pickup_lat, (float)$r->pickup_lng, $driverLat, $driverLng);
+                if ($dist > 10.0) {
+                    continue;
+                }
+            }
+
             $rawAmount = (float)($r->total_amount ?? $r->fare ?? 0);
             $rideCurrency = $r->currency ?: \App\Services\CountryService::resolveItemCurrencyCode($r, 'USD');
             $fareInfo = $formatItemFare($rawAmount, $r->pickup_location, $r->dropoff_location, $r->driver_country ?? $r->country, $rideCurrency);
@@ -675,10 +855,34 @@ class StripeVerificationController extends Controller
                 });
             })
             ->latest()
-            ->take(10)
+            ->take(20)
             ->get();
 
         foreach ($deliveries as $pd) {
+            $pLat = $pd->pickup_lat ?? $pd->sender_lat ?? null;
+            $pLng = $pd->pickup_lng ?? $pd->sender_lng ?? null;
+            $dCountry = CountryService::detectCountryFromLocation(
+                ($pd->pickup_location ?? $pd->sender_address ?? '') . ' ' . ($pd->dropoff_location ?? $pd->recipient_address ?? ''),
+                $pLat ? (float)$pLat : null,
+                $pLng ? (float)$pLng : null
+            ) ?? CountryService::normalizeToCode($pd->country ?? null);
+
+            // Country isolation: driver only sees package deliveries in their country
+            if ($driverCountry && $dCountry && $driverCountry !== $dCountry) {
+                continue;
+            }
+
+            // Proximity isolation: for unassigned deliveries, driver MUST be within 10 km
+            if ($pd->courier_id !== $driverId) {
+                if ($driverLat === null || $driverLng === null || empty($pLat) || empty($pLng)) {
+                    continue;
+                }
+                $dist = RideAssignmentService::haversineDistance((float)$pLat, (float)$pLng, $driverLat, $driverLng);
+                if ($dist > 10.0) {
+                    continue;
+                }
+            }
+
             $fareInfo = $formatItemFare($pd->total_price, $pd->pickup_location, $pd->dropoff_location, $pd->country, $pd->currency);
             $isDelImmediate = empty($pd->pickup_time) || strtolower(trim($pd->pickup_time)) === 'immediate';
             $delSchedule = $isDelImmediate 
@@ -746,12 +950,21 @@ class StripeVerificationController extends Controller
         }
 
         $code = $booking->booking_code ?? $booking->delivery_code ?? ('BOOK-' . $booking->id);
-        $pickup = $booking->pickup_location ?? 'Default Pickup Address';
-        $dropoff = $booking->dropoff_location ?? 'Default Destination';
+        $pickup = $booking->pickup_location ?? $booking->sender_address ?? 'Default Pickup Address';
+        $dropoff = $booking->dropoff_location ?? $booking->recipient_address ?? 'Default Destination';
+        $pLat = (float)($booking->pickup_lat ?? 0);
+        $pLng = (float)($booking->pickup_lng ?? 0);
+
         $amount = (float) ($booking->total_price ?? $booking->fare ?? 0);
         $currency = $booking->currency ?? \App\Services\CountryService::resolveItemCurrencyCode($booking);
         $currencySymbol = \App\Services\CountryService::resolveItemCurrency($booking);
-        $country = $booking->country ?? ($booking->driver_country ?? \App\Services\CountryService::detectCountryFromLocation(($pickup ?? '') . ' ' . ($dropoff ?? ''), $booking->pickup_lat ?? null, $booking->pickup_lng ?? null) ?? \App\Services\CountryService::getCurrentCountryCode(request()));
+        $country = \App\Services\CountryService::detectCountryFromLocation(
+            ($pickup ?: '') . ' ' . ($dropoff ?: ''),
+            $pLat != 0 ? $pLat : null,
+            $pLng != 0 ? $pLng : null
+        ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
+          ?? \App\Services\CountryService::getCurrentCountryCode(request())
+          ?? 'IND';
         $date = $booking->start_date ? $booking->start_date->format('Y-m-d') : ($booking->pickup_date ? $booking->pickup_date->format('Y-m-d') : date('Y-m-d'));
         $time = $booking->start_time ?? $booking->pickup_time ?? '09:00 AM';
 
@@ -786,12 +999,9 @@ class StripeVerificationController extends Controller
         }
 
         if ($isPaymentConfirmed && $isDriverConfirmed && ($driverUser || $booking->driver_id)) {
-            $rawPhone = $driverUser->phone ?? '+233 24 555 0192';
-            $rawEmail = $driverUser->email ?? 'michael.driver@ridemycars.com';
-            $cleanedWa = preg_replace('/[^0-9]/', '', $rawPhone);
-            if (!str_starts_with($cleanedWa, '233') && strlen($cleanedWa) <= 10) {
-                $cleanedWa = '233' . ltrim($cleanedWa, '0');
-            }
+            $rawPhone = $driverUser->phone ?? $this->getFallbackDriverPhone($country);
+            $rawEmail = $driverUser->email ?? 'driver@ridemycars.com';
+            $cleanedWa = $this->formatWhatsAppPhone($rawPhone, $country);
 
             $driver = [
                 'name' => $driverUser->name ?? 'Michael Scott',
@@ -855,6 +1065,55 @@ class StripeVerificationController extends Controller
             'paidMethod' => $transaction->payment_method ?? $booking->payment_method ?? 'stripe',
             'customerPhone' => $custPhone ?? '',
         ];
+    }
+
+    /**
+     * Format phone number for WhatsApp with country-aware international dial code.
+     */
+    public function formatWhatsAppPhone(?string $phone, ?string $countryCode = null): string
+    {
+        if (empty($phone)) return '';
+        $digits = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($digits)) return '';
+
+        $countryCode = strtoupper(trim((string)$countryCode));
+
+        // If it already has an international prefix with 11+ digits, keep as-is
+        if (strlen($digits) > 10) {
+            return $digits;
+        }
+
+        // 10 digits or less (local number), prepend country dial code
+        $localNum = ltrim($digits, '0');
+        return match ($countryCode) {
+            'IND', 'IN' => '91' . $localNum,
+            'GHA', 'GH' => '233' . $localNum,
+            'ZAF', 'ZA' => '27' . $localNum,
+            'NGA', 'NG' => '234' . $localNum,
+            'GBR', 'UK', 'GB' => '44' . $localNum,
+            'USA', 'US', 'CAN', 'CA' => '1' . $localNum,
+            'MWI', 'MW' => '265' . $localNum,
+            'ARE', 'AE' => '971' . $localNum,
+            'KEN', 'KE' => '254' . $localNum,
+            default => '91' . $localNum,
+        };
+    }
+
+    /**
+     * Get fallback driver phone number based on country.
+     */
+    public function getFallbackDriverPhone(?string $countryCode = null): string
+    {
+        return match (strtoupper(trim((string)$countryCode))) {
+            'IND', 'IN' => '+91 98765 43210',
+            'USA', 'US' => '+1 202 555 0192',
+            'GHA', 'GH' => '+233 24 555 0192',
+            'ZAF', 'ZA' => '+27 82 555 0192',
+            'NGA', 'NG' => '+234 803 555 0192',
+            'MWI', 'MW' => '+265 99 555 0192',
+            'GBR', 'UK', 'GB' => '+44 7700 900077',
+            default => '+91 98765 43210',
+        };
     }
 }
 

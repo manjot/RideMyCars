@@ -128,10 +128,19 @@ class BackupChauffeurService
         $pickupLng = $ride->pickup_lng;
 
         if (is_null($pickupLat) || is_null($pickupLng)) {
-            return $onlineDrivers->values();
+            return collect();
         }
 
-        // Calculate Haversine distance and filter within radius
+        $rideCountry = \App\Services\CountryService::detectCountryFromLocation(
+            ($ride->pickup_location ?? '') . ' ' . ($ride->dropoff_location ?? ''),
+            $pickupLat,
+            $pickupLng
+        ) ?? \App\Services\CountryService::normalizeToCode($ride->driver_country ?? $ride->country ?? null)
+          ?? 'IND';
+
+        $maxRadius = min($radius, 10.0);
+
+        // Calculate Haversine distance and filter strictly within 10 km in the same country
         return $onlineDrivers->map(function ($driver) use ($pickupLat, $pickupLng) {
             $driver->distance_km = RideAssignmentService::haversineDistance(
                 $pickupLat,
@@ -141,7 +150,24 @@ class BackupChauffeurService
             );
             return $driver;
         })
-        ->filter(fn($d) => $d->distance_km <= $radius)
+        ->filter(function ($d) use ($maxRadius, $rideCountry) {
+            if (is_null($d->current_lat) || is_null($d->current_lng)) {
+                return false;
+            }
+
+            $driverUser = $d->user ?? \App\Models\User::find($d->user_id);
+            $rawCountry = $d->country ?? $driverUser?->country ?? null;
+            $driverCountry = \App\Services\CountryService::normalizeToCode($rawCountry);
+            if (!$driverCountry && $d->current_lat && $d->current_lng) {
+                $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $d->current_lat, $d->current_lng);
+            }
+
+            if ($driverCountry !== $rideCountry) {
+                return false;
+            }
+
+            return $d->distance_km <= $maxRadius;
+        })
         ->sortBy('distance_km')
         ->values();
     }

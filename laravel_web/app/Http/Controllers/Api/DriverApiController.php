@@ -739,28 +739,31 @@ class DriverApiController extends Controller
         $processedRideIds = [];
 
         // Determine driver operating country & coordinates
-        $driverCountry = $request->header('X-Country-Code') 
-            ?? $request->header('X-Country') 
-            ?? $request->input('country') 
-            ?? $user->driverProfile?->country;
-
         $driverLat = $request->input('lat') ?? $request->input('latitude') ?? $user->driverProfile?->current_lat;
         $driverLng = $request->input('lng') ?? $request->input('longitude') ?? $user->driverProfile?->current_lng;
 
-        if (!$driverCountry && $driverLat && $driverLng) {
-            $dLat = (float)$driverLat;
-            $dLng = (float)$driverLng;
-            if ($dLat >= 6.0 && $dLat <= 38.0 && $dLng >= 68.0 && $dLng <= 98.0) {
-                $driverCountry = 'IND';
-            }
+        $rawDriverCountry = $request->header('X-Country-Code') 
+            ?? $request->header('X-Country') 
+            ?? $request->input('country') 
+            ?? $user->driverProfile?->country
+            ?? $user->country;
+
+        $detectedGpsCountry = null;
+        if ($driverLat && $driverLng) {
+            $detectedGpsCountry = CountryService::detectCountryFromLocation(null, $driverLat, $driverLng);
         }
-        if (!$driverCountry) {
-            $driverCountry = CountryService::getCurrentCountryCode($request) ?: 'IND';
-        }
-        $driverCountry = strtoupper(trim($driverCountry));
+
+        $driverCountry = $detectedGpsCountry
+            ?? CountryService::normalizeToCode($rawDriverCountry)
+            ?? CountryService::getCurrentCountryCode($request)
+            ?? 'IND';
+        $driverCountry = CountryService::normalizeToCode($driverCountry) ?? 'IND';
+
         $driverPricing = \App\Models\CountryPricing::forCountry($driverCountry);
         $maxRadiusKm = (float)($driverPricing->dispatch_radius_km ?? 10.0);
-        if ($maxRadiusKm <= 0.0) $maxRadiusKm = 10.0;
+        if ($maxRadiusKm <= 0.0 || $maxRadiusKm > 10.0) {
+            $maxRadiusKm = 10.0;
+        }
 
         $userIds = [$user->id];
         if (!empty($user->name) || !empty($user->email)) {
@@ -813,16 +816,14 @@ class DriverApiController extends Controller
         $assignments = $assignments->filter(function($a) use ($driverCountry, $driverPricing, $driverLat, $driverLng, $maxRadiusKm, $isPrivilegedUser) {
             $driverCurrency = $driverPricing->currency_code ?: 'INR';
             if ($a->ride) {
-                $rCountry = strtoupper($a->ride->driver_country ?? $a->ride->country ?? '');
+                $rCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($a->ride->pickup_location ?? '') . ' ' . ($a->ride->dropoff_location ?? ''),
+                    $a->ride->pickup_lat,
+                    $a->ride->pickup_lng
+                ) ?? \App\Services\CountryService::normalizeToCode($a->ride->driver_country ?? $a->ride->country ?? null);
+
                 if ($rCountry && $rCountry !== $driverCountry) {
                     return false;
-                }
-                if ($driverCountry === 'IND' && $a->ride->pickup_lat && $a->ride->pickup_lng) {
-                    $pLat = (float)$a->ride->pickup_lat;
-                    $pLng = (float)$a->ride->pickup_lng;
-                    if ($pLat < 6.0 || $pLat > 38.0 || $pLng < 68.0 || $pLng > 98.0) {
-                        return false;
-                    }
                 }
                 if ($driverLat && $driverLng && $a->ride->pickup_lat && $a->ride->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
@@ -833,29 +834,37 @@ class DriverApiController extends Controller
                 }
             }
             if ($a->packageDelivery) {
-                $pdCurrency = strtoupper($a->packageDelivery->currency ?? '');
-                if ($pdCurrency && $pdCurrency !== $driverCurrency) {
+                $delCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($a->packageDelivery->pickup_location ?? '') . ' ' . ($a->packageDelivery->dropoff_location ?? ''),
+                    $a->packageDelivery->pickup_lat,
+                    $a->packageDelivery->pickup_lng
+                ) ?? ($a->packageDelivery->currency === 'INR' ? 'IND' : ($a->packageDelivery->currency === 'GHS' ? 'GHA' : \App\Services\CountryService::normalizeToCode($a->packageDelivery->country ?? null)));
+
+                if ($delCountry && $delCountry !== $driverCountry) {
                     return false;
-                }
-                $pickupText = strtolower($a->packageDelivery->pickup_location ?? '');
-                $dropText = strtolower($a->packageDelivery->dropoff_location ?? '');
-                if ($driverCountry === 'IND') {
-                    if (str_contains($pickupText, 'ghana') || str_contains($pickupText, 'mallam') || str_contains($pickupText, 'weija') || str_contains($pickupText, 'kb lodge') ||
-                        str_contains($dropText, 'ghana') || str_contains($dropText, 'mallam') || str_contains($dropText, 'west hills') || str_contains($dropText, 'accra')) {
-                        return false;
-                    }
-                    if ($a->packageDelivery->pickup_lat && $a->packageDelivery->pickup_lng) {
-                        $pLat = (float)$a->packageDelivery->pickup_lat;
-                        $pLng = (float)$a->packageDelivery->pickup_lng;
-                        if ($pLat < 6.0 || $pLat > 38.0 || $pLng < 68.0 || $pLng > 98.0) {
-                            return false;
-                        }
-                    }
                 }
                 if ($driverLat && $driverLng && $a->packageDelivery->pickup_lat && $a->packageDelivery->pickup_lng) {
                     $dist = \App\Services\RideAssignmentService::haversineDistance(
                         (float)$driverLat, (float)$driverLng,
                         (float)$a->packageDelivery->pickup_lat, (float)$a->packageDelivery->pickup_lng
+                    );
+                    if ($dist > $maxRadiusKm && !$isPrivilegedUser) return false;
+                }
+            }
+            if ($a->driverBooking) {
+                $bCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($a->driverBooking->pickup_location ?? '') . ' ' . ($a->driverBooking->dropoff_location ?? ''),
+                    $a->driverBooking->pickup_lat,
+                    $a->driverBooking->pickup_lng
+                ) ?? \App\Services\CountryService::normalizeToCode($a->driverBooking->country ?? null);
+
+                if ($bCountry && $bCountry !== $driverCountry) {
+                    return false;
+                }
+                if ($driverLat && $driverLng && $a->driverBooking->pickup_lat && $a->driverBooking->pickup_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$driverLat, (float)$driverLng,
+                        (float)$a->driverBooking->pickup_lat, (float)$a->driverBooking->pickup_lng
                     );
                     if ($dist > $maxRadiusKm && !$isPrivilegedUser) return false;
                 }
@@ -1016,31 +1025,33 @@ class DriverApiController extends Controller
                   ->orWhere('payment_status', 'pending')
                   ->orWhere('payment_status', 'pending_cash');
             })
-            ->where(function($q) use ($driverCountry) {
-                $q->where('driver_country', $driverCountry);
-                if ($driverCountry === 'IND') {
-                    $q->orWhere(function($sub) {
-                        $sub->whereNull('driver_country')
-                            ->whereBetween('pickup_lat', [6.0, 38.0])
-                            ->whereBetween('pickup_lng', [68.0, 98.0]);
-                    });
-                }
-            })
             ->whereNotIn('id', array_unique(array_merge($processedRideIds, $rejectedRideIds)))
             ->latest()
-            ->take(15)
+            ->take(30)
             ->get();
 
-        if ($driverLat && $driverLng) {
-            $openPendingRides = $openPendingRides->filter(function($pr) use ($driverLat, $driverLng, $maxRadiusKm) {
-                if ($pr->pickup_lat && $pr->pickup_lng) {
-                    $dist = \App\Services\RideAssignmentService::haversineDistance(
-                        (float)$driverLat, (float)$driverLng,
-                        (float)$pr->pickup_lat, (float)$pr->pickup_lng
-                    );
-                    return $dist <= $maxRadiusKm;
+        if (!$driverLat || !$driverLng) {
+            $openPendingRides = collect();
+        } else {
+            $openPendingRides = $openPendingRides->filter(function($pr) use ($driverLat, $driverLng, $driverCountry, $maxRadiusKm) {
+                if (empty($pr->pickup_lat) || empty($pr->pickup_lng)) {
+                    return false;
                 }
-                return false;
+                $rCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($pr->pickup_location ?? '') . ' ' . ($pr->dropoff_location ?? ''),
+                    $pr->pickup_lat,
+                    $pr->pickup_lng
+                ) ?? \App\Services\CountryService::normalizeToCode($pr->driver_country ?? $pr->country ?? null);
+
+                if ($rCountry !== $driverCountry) {
+                    return false;
+                }
+
+                $dist = \App\Services\RideAssignmentService::haversineDistance(
+                    (float)$driverLat, (float)$driverLng,
+                    (float)$pr->pickup_lat, (float)$pr->pickup_lng
+                );
+                return $dist <= $maxRadiusKm;
             });
         }
 
@@ -1121,42 +1132,33 @@ class DriverApiController extends Controller
             ->where(function($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
-            ->where(function($q) use ($driverCurrency, $driverCountry) {
-                $q->where('currency', $driverCurrency);
-                if ($driverCountry === 'IND') {
-                    $q->orWhere(function($sub) {
-                        $sub->whereNull('currency')
-                            ->whereBetween('pickup_lat', [6.0, 38.0])
-                            ->whereBetween('pickup_lng', [68.0, 98.0]);
-                    });
-                }
-            })
-            ->where(function($q) use ($driverCountry) {
-                if ($driverCountry === 'IND') {
-                    $q->where('pickup_location', 'not like', '%Ghana%')
-                      ->where('pickup_location', 'not like', '%mallam%')
-                      ->where('pickup_location', 'not like', '%Weija%')
-                      ->where('pickup_location', 'not like', '%KB Lodge%')
-                      ->where('dropoff_location', 'not like', '%Ghana%')
-                      ->where('dropoff_location', 'not like', '%West Hills%');
-                }
-            })
             ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
             ->latest()
-            ->take(10)
+            ->take(20)
             ->get();
 
-        if ($driverLat && $driverLng) {
-            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng, $maxRadiusKm, $isPrivilegedUser) {
-                if ($isPrivilegedUser) return true;
-                if ($pd->pickup_lat && $pd->pickup_lng) {
-                    $dist = \App\Services\RideAssignmentService::haversineDistance(
-                        (float)$driverLat, (float)$driverLng,
-                        (float)$pd->pickup_lat, (float)$pd->pickup_lng
-                    );
-                    return $dist <= $maxRadiusKm;
+        if (!$driverLat || !$driverLng) {
+            $openPendingDeliveries = collect();
+        } else {
+            $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng, $driverCountry, $maxRadiusKm, $isPrivilegedUser) {
+                if (empty($pd->pickup_lat) || empty($pd->pickup_lng)) {
+                    return false;
                 }
-                return false;
+                $delCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($pd->pickup_location ?? '') . ' ' . ($pd->dropoff_location ?? ''),
+                    $pd->pickup_lat,
+                    $pd->pickup_lng
+                ) ?? ($pd->currency === 'INR' ? 'IND' : ($pd->currency === 'GHS' ? 'GHA' : \App\Services\CountryService::normalizeToCode($pd->country ?? null)));
+
+                if ($delCountry !== $driverCountry) {
+                    return false;
+                }
+
+                $dist = \App\Services\RideAssignmentService::haversineDistance(
+                    (float)$driverLat, (float)$driverLng,
+                    (float)$pd->pickup_lat, (float)$pd->pickup_lng
+                );
+                return $dist <= $maxRadiusKm;
             });
         }
 
@@ -1347,6 +1349,38 @@ class DriverApiController extends Controller
                     ], 410);
                 }
 
+                // Verify operating country & proximity
+                $rideCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($ride->pickup_location ?? '') . ' ' . ($ride->dropoff_location ?? ''),
+                    $ride->pickup_lat,
+                    $ride->pickup_lng
+                ) ?? \App\Services\CountryService::normalizeToCode($ride->driver_country ?? $ride->country ?? null);
+
+                $driverCountry = \App\Services\CountryService::normalizeToCode($user->driverProfile?->country ?? $user->country ?? '');
+                if (!$driverCountry && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
+                    $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $user->driverProfile->current_lat, $user->driverProfile->current_lng);
+                }
+
+                if ($driverCountry && $rideCountry && $driverCountry !== $rideCountry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This ride request is in another country and cannot be accepted.',
+                    ], 403);
+                }
+
+                if ($ride->pickup_lat && $ride->pickup_lng && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$user->driverProfile->current_lat, (float)$user->driverProfile->current_lng,
+                        (float)$ride->pickup_lat, (float)$ride->pickup_lng
+                    );
+                    if ($dist > 10.0) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'You are too far from the pickup location (exceeds 10 km limit).',
+                        ], 422);
+                    }
+                }
+
                 $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
 
                 $ride->update([
@@ -1401,6 +1435,31 @@ class DriverApiController extends Controller
                         ], 410);
                     }
 
+                    $delCountry = \App\Services\CountryService::detectCountryFromLocation(
+                        ($delivery->pickup_location ?? '') . ' ' . ($delivery->dropoff_location ?? ''),
+                        $delivery->pickup_lat,
+                        $delivery->pickup_lng
+                    ) ?? ($delivery->currency === 'INR' ? 'IND' : ($delivery->currency === 'GHS' ? 'GHA' : \App\Services\CountryService::normalizeToCode($delivery->country ?? null)));
+
+                    $driverCountry = \App\Services\CountryService::normalizeToCode($user->driverProfile?->country ?? $user->country ?? '');
+                    if (!$driverCountry && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
+                        $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $user->driverProfile->current_lat, $user->driverProfile->current_lng);
+                    }
+
+                    if ($driverCountry && $delCountry && $driverCountry !== $delCountry) {
+                        return response()->json(['success' => false, 'message' => 'This delivery request is in another country.'], 403);
+                    }
+
+                    if ($delivery->pickup_lat && $delivery->pickup_lng && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
+                        $dist = \App\Services\RideAssignmentService::haversineDistance(
+                            (float)$user->driverProfile->current_lat, (float)$user->driverProfile->current_lng,
+                            (float)$delivery->pickup_lat, (float)$delivery->pickup_lng
+                        );
+                        if ($dist > 10.0) {
+                            return response()->json(['success' => false, 'message' => 'You are too far from the pickup location (exceeds 10 km limit).'], 422);
+                        }
+                    }
+
                     $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
 
                     $delivery->update([
@@ -1439,6 +1498,32 @@ class DriverApiController extends Controller
                 }
             } elseif ($assignment->driverBooking) {
                 $booking = $assignment->driverBooking;
+
+                $bCountry = \App\Services\CountryService::detectCountryFromLocation(
+                    ($booking->pickup_location ?? '') . ' ' . ($booking->dropoff_location ?? ''),
+                    $booking->pickup_lat,
+                    $booking->pickup_lng
+                ) ?? \App\Services\CountryService::normalizeToCode($booking->country ?? null);
+
+                $driverCountry = \App\Services\CountryService::normalizeToCode($user->driverProfile?->country ?? $user->country ?? '');
+                if (!$driverCountry && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
+                    $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $user->driverProfile->current_lat, $user->driverProfile->current_lng);
+                }
+
+                if ($driverCountry && $bCountry && $driverCountry !== $bCountry) {
+                    return response()->json(['success' => false, 'message' => 'This driver booking is in another country.'], 403);
+                }
+
+                if ($booking->pickup_lat && $booking->pickup_lng && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
+                    $dist = \App\Services\RideAssignmentService::haversineDistance(
+                        (float)$user->driverProfile->current_lat, (float)$user->driverProfile->current_lng,
+                        (float)$booking->pickup_lat, (float)$booking->pickup_lng
+                    );
+                    if ($dist > 10.0) {
+                        return response()->json(['success' => false, 'message' => 'You are too far from the pickup location (exceeds 10 km limit).'], 422);
+                    }
+                }
+
                 $booking->update([
                     'driver_id' => $user->id,
                     'booking_status' => 'accepted',

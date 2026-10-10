@@ -337,9 +337,9 @@
                             Searching for Available Driver...
                         </h3>
                         <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300">
-                            We are broadcasting your pickup request to vetted chauffeurs near <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
+                            We are broadcasting your pickup request to vetted chauffeurs within <strong class="text-amber-500 font-bold">10 km</strong> of <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
                             <span x-show="paymentMethod === 'cash'">Please have {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} ready in physical cash upon completing your trip.</span>
-                            <span x-show="paymentMethod !== 'cash'">Your payment is held safely in escrow and driver contact details will appear the moment a driver confirms.</span>
+                            <span x-show="paymentMethod !== 'cash'">Your payment is held safely in escrow and driver contact details will appear the moment a nearby driver confirms.</span>
                         </p>
                     </div>
 
@@ -351,10 +351,10 @@
                         </div>
                         <div class="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 flex items-center justify-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                            Radar Dispatch
+                            10 km Radar
                         </div>
                         <div class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-400">
-                            Awaiting Accept
+                            Awaiting Driver
                         </div>
                     </div>
 
@@ -363,10 +363,10 @@
                         <button type="button" @click="confirmDriverAssignment()"
                                 :disabled="isSimulatingMatch"
                                 class="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-2">
-                            <span x-show="!isSimulatingMatch">⚡ Connect & Confirm Nearest Driver Now</span>
+                            <span x-show="!isSimulatingMatch">⚡ Connect Nearest Driver (Within 10 km)</span>
                             <span x-show="isSimulatingMatch" class="flex items-center gap-2">
                                 <svg class="animate-spin h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                Matching Chauffeur...
+                                Searching within 10 km...
                             </span>
                         </button>
                     </div>
@@ -702,6 +702,8 @@
                         if (data.driver) {
                             this.driver = Object.assign({}, this.driver, data.driver);
                         }
+                    } else {
+                        alert(data.message || 'No drivers currently available within 10 km of your pickup location. Your booking is active and broadcasting to nearby drivers.');
                     }
                 } catch (e) {
                     console.error("Driver match error:", e);

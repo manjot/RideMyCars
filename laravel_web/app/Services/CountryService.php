@@ -80,6 +80,10 @@ class CountryService
             $lat = (float)($request->input('pickup_lat') ?? $request->input('latitude') ?? $request->input('current_lat') ?? 0);
             $lng = (float)($request->input('pickup_lng') ?? $request->input('longitude') ?? $request->input('current_lng') ?? 0);
             if ($lat != 0 && $lng != 0) {
+                // India bounds: lat 6.0 to 38.0, lng 68.0 to 98.0
+                if ($lat >= 6.0 && $lat <= 38.0 && $lng >= 68.0 && $lng <= 98.0) {
+                    return 'IND';
+                }
                 // Ghana bounds: lat 4.5 to 11.5, lng -3.5 to 1.5
                 if ($lat >= 4.5 && $lat <= 11.5 && $lng >= -3.5 && $lng <= 1.5) {
                     return 'GHA';
@@ -95,6 +99,14 @@ class CountryService
                 // Malawi bounds: lat -17.1 to -9.3, lng 32.6 to 35.9
                 if ($lat >= -17.1 && $lat <= -9.3 && $lng >= 32.6 && $lng <= 35.9) {
                     return 'MWI';
+                }
+                // United Kingdom bounds: lat 49.5 to 61.0, lng -8.0 to 2.0
+                if ($lat >= 49.5 && $lat <= 61.0 && $lng >= -8.0 && $lng <= 2.0) {
+                    return 'GBR';
+                }
+                // USA bounds: lat 24.0 to 50.0, lng -125.0 to -65.0
+                if ($lat >= 24.0 && $lat <= 50.0 && $lng >= -125.0 && $lng <= -65.0) {
+                    return 'USA';
                 }
             }
         }

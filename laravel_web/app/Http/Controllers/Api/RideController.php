@@ -505,7 +505,11 @@ class RideController extends Controller
             $durationMin = max(5, intval(round(($distanceKm / 30.0) * 60) + ($stopsCount * 5)));
         }
 
-        $country = $request->input('country') ?? CountryService::getCurrentCountryCode($request);
+        $country = $request->input('country')
+            ?? CountryService::detectCountryFromLocation(($request->pickup_location ?? '') . ' ' . ($request->dropoff_location ?? ''), $request->pickup_lat, $request->pickup_lng)
+            ?? CountryService::getCurrentCountryCode($request)
+            ?? 'IND';
+        $country = CountryService::normalizeToCode($country) ?? 'IND';
         $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
         $amount = $breakdown['total_fare'];
 
