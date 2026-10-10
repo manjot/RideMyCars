@@ -94,6 +94,7 @@ class Ride extends Model
         'backup_attempt_count',
         'backup_reserved_at',
         'backup_declined_driver_ids',
+        'expires_at',
     ];
 
     protected $casts = [
@@ -121,6 +122,7 @@ class Ride extends Model
         'backup_chauffeur_enabled' => 'boolean',
         'backup_reserved_at' => 'datetime',
         'backup_declined_driver_ids' => 'array',
+        'expires_at' => 'datetime',
     ];
 
     public function vehicle()
@@ -190,5 +192,49 @@ class Ride extends Model
         }
         return (string) $value;
     }
+
+    /**
+     * Check if this ride request has exceeded its driver waiting time window.
+     */
+    public function isExpired(): bool
+    {
+        return !empty($this->expires_at) && $this->expires_at->isPast();
+    }
+
+    /**
+     * Get the remaining waiting time seconds before request expires (0 if expired).
+     */
+    public function remainingSeconds(): int
+    {
+        if (empty($this->expires_at)) {
+            return 0;
+        }
+        return (int) max(0, now()->diffInSeconds($this->expires_at, false));
+    }
+
+    /**
+     * Remaining seconds attribute for API serialization.
+     */
+    public function getRemainingSecondsAttribute(): int
+    {
+        return $this->remainingSeconds();
+    }
+
+    /**
+     * Ensure expires_at column exists in database.
+     */
+    public static function ensureColumnsExist(): void
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('rides')) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('rides', 'expires_at')) {
+                    \Illuminate\Support\Facades\Schema::table('rides', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->timestamp('expires_at')->nullable()->after('status')->index();
+                    });
+                }
+            }
+        } catch (\Throwable $e) {}
+    }
 }
+
 

@@ -511,6 +511,10 @@ class RideController extends Controller
 
         $digitalReceipt = 'REC-' . strtoupper(Str::random(8));
         $startPin = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        $waitingMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
+        $expiresAt = now()->addMinutes($waitingMinutes);
+
+        Ride::ensureColumnsExist();
 
         $ride = Ride::create([
             'rider_id' => $user->id,
@@ -533,6 +537,7 @@ class RideController extends Controller
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
+            'expires_at' => $expiresAt,
             'start_pin' => $startPin,
             'payment_status' => 'pending',
             'backup_chauffeur_enabled' => $request->boolean('backup_chauffeur_enabled', false),
@@ -603,10 +608,21 @@ class RideController extends Controller
             } catch (\Throwable $e) {}
         }
 
+        $freshRide = $ride->fresh(['stops']);
+        $rideData = $freshRide->toArray();
+        $rideData['expires_at'] = $freshRide->expires_at ? $freshRide->expires_at->toIso8601String() : $expiresAt->toIso8601String();
+        $rideData['waiting_time_minutes'] = $waitingMinutes;
+        $rideData['waiting_time_seconds'] = $waitingMinutes * 60;
+        $rideData['remaining_seconds'] = $freshRide->remainingSeconds();
+
         return response()->json(array_merge([
             'success' => true,
             'message' => 'Ride booking created. Searching for nearby drivers.',
-            'ride' => $ride->fresh(['stops']),
+            'ride' => $rideData,
+            'expires_at' => $rideData['expires_at'],
+            'waiting_time_minutes' => $waitingMinutes,
+            'waiting_time_seconds' => $waitingMinutes * 60,
+            'remaining_seconds' => $rideData['remaining_seconds'],
             'country_code' => $breakdown['country_code'] ?? 'USA',
             'currency' => $breakdown['currency'] ?? 'USD',
             'currency_symbol' => $breakdown['currency_symbol'] ?? '$',
@@ -621,6 +637,11 @@ class RideController extends Controller
     {
         $user = $request->user();
 
+        // Expire any overdue pending requests before querying
+        try {
+            \App\Services\RequestExpirationService::expireOverdueRides();
+        } catch (\Throwable $e) {}
+
         $ride = Ride::with(['driver.driverProfile', 'rider', 'stops', 'backupDriver.driverProfile'])
             ->where(function ($q) use ($user) {
                 $q->where('rider_id', $user->id)
@@ -631,6 +652,12 @@ class RideController extends Controller
             ->latest()
             ->first();
 
+        // If the ride is pending and has expired, cancel it immediately
+        if ($ride && $ride->status === 'pending' && $ride->driver_id === null && $ride->isExpired()) {
+            \App\Services\RequestExpirationService::cancelExpiredRide($ride);
+            $ride = null;
+        }
+
         if (!$ride) {
             $recentCancelled = Ride::with(['driver.driverProfile', 'rider'])
                 ->where('rider_id', $user->id)
@@ -640,7 +667,8 @@ class RideController extends Controller
                 ->first();
 
             if ($recentCancelled) {
-                $reason = $recentCancelled->cancellation_reason ?: 'Driver was unable to take your ride request or declined the offer.';
+                $reason = $recentCancelled->cancellation_reason ?: 'No driver was available within the waiting period.';
+                $isExpiredReason = str_contains(strtolower($reason), 'waiting') || str_contains(strtolower($reason), 'expire');
                 return response()->json([
                     'success' => true,
                     'ride' => [
@@ -654,7 +682,7 @@ class RideController extends Controller
                     ],
                     'notification' => [
                         'type' => 'ride_cancelled',
-                        'title' => 'Ride Request Cancelled',
+                        'title' => $isExpiredReason ? 'No Driver Available' : 'Ride Request Cancelled',
                         'message' => $reason,
                     ],
                 ]);
@@ -799,6 +827,10 @@ class RideController extends Controller
                     'is_for_someone_else' => (bool)$ride->is_for_someone_else,
                 ],
                 'stops' => $ride->stops,
+                'expires_at' => $ride->expires_at ? $ride->expires_at->toIso8601String() : null,
+                'waiting_time_minutes' => \App\Services\SettingService::getRideWaitingTimeMinutes(),
+                'waiting_time_seconds' => \App\Services\SettingService::getRideWaitingTimeSeconds(),
+                'remaining_seconds' => $ride->remainingSeconds(),
             ],
         ]);
     }
@@ -820,12 +852,30 @@ class RideController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized to view this ride details'], 403);
         }
 
+        // If request has expired, auto-cancel it
+        if ($ride->status === 'pending' && $ride->driver_id === null && $ride->isExpired()) {
+            \App\Services\RequestExpirationService::cancelExpiredRide($ride);
+            $ride->refresh();
+        }
+
         // Gate driver contacts unless confirmed/accepted
         if (!in_array($ride->status, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'], true)) {
             $ride->setRelation('driver', null);
         }
 
-        return response()->json(['success' => true, 'ride' => $ride]);
+        $rideData = $ride->toArray();
+        $rideData['expires_at'] = $ride->expires_at ? $ride->expires_at->toIso8601String() : null;
+        $rideData['waiting_time_minutes'] = \App\Services\SettingService::getRideWaitingTimeMinutes();
+        $rideData['waiting_time_seconds'] = \App\Services\SettingService::getRideWaitingTimeSeconds();
+        $rideData['remaining_seconds'] = $ride->remainingSeconds();
+
+        return response()->json([
+            'success' => true,
+            'ride' => $rideData,
+            'expires_at' => $rideData['expires_at'],
+            'remaining_seconds' => $rideData['remaining_seconds'],
+            'waiting_time_seconds' => $rideData['waiting_time_seconds'],
+        ]);
     }
 
     /**

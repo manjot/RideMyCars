@@ -202,6 +202,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   void _checkIncomingJobs(DriverProvider driver) {
     if (_dialogOpen) return;
     final unhandled = driver.pendingRequests.where((j) {
+      final rem = j['remaining_seconds'];
+      if (rem != null && (int.tryParse(rem.toString()) ?? 1) <= 0) return false;
+      final exp = j['expires_at'];
+      if (exp != null) {
+        try {
+          if (DateTime.parse(exp.toString()).toLocal().isBefore(DateTime.now())) return false;
+        } catch (_) {}
+      }
       final aId = int.tryParse((j['assignment_id'] ?? j['id'] ?? '').toString());
       final rId = int.tryParse((j['ride_id'] ?? '').toString());
       final dId = int.tryParse((j['package_delivery_id'] ?? j['delivery_id'] ?? '').toString());
@@ -847,6 +855,40 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                               ),
                             ),
                           ],
+                          Builder(builder: (_) {
+                            final bRem = firstJob?['remaining_seconds'];
+                            final bExp = firstJob?['expires_at'];
+                            int bSecs = 0;
+                            if (bRem != null) {
+                              bSecs = int.tryParse(bRem.toString()) ?? 0;
+                            } else if (bExp != null) {
+                              try {
+                                final d = DateTime.parse(bExp.toString()).toLocal().difference(DateTime.now()).inSeconds;
+                                bSecs = d > 0 ? d : 0;
+                              } catch (_) {}
+                            }
+                            if (bSecs <= 0) return const SizedBox.shrink();
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: bSecs <= 30 ? Colors.black45 : Colors.amber.withOpacity(0.25),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.amberAccent, width: 0.8),
+                                ),
+                                child: Text(
+                                  '⏱️ ${(bSecs ~/ 60).toString().padLeft(2, '0')}:${(bSecs % 60).toString().padLeft(2, '0')}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -2400,6 +2442,19 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       badgeLabel = 'PACKAGE DELIVERY';
     }
 
+    final rawRemaining = job['remaining_seconds'];
+    final rawExpiresAt = job['expires_at'];
+    int remainingSecs = 0;
+    if (rawRemaining != null) {
+      remainingSecs = int.tryParse(rawRemaining.toString()) ?? 0;
+    } else if (rawExpiresAt != null) {
+      try {
+        final exp = DateTime.parse(rawExpiresAt.toString()).toLocal();
+        final diff = exp.difference(DateTime.now()).inSeconds;
+        remainingSecs = diff > 0 ? diff : 0;
+      } catch (_) {}
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -2469,6 +2524,42 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
               ],
             ),
+
+            // Live Driver Request Waiting Time Badge
+            if (remainingSecs > 0) ...[
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: remainingSecs <= 30 ? Colors.red.withOpacity(0.18) : Colors.amber.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: remainingSecs <= 30 ? Colors.redAccent : Colors.amber.withOpacity(0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.timer_outlined,
+                      size: 15,
+                      color: remainingSecs <= 30 ? Colors.redAccent : Colors.amber,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Waiting Time: ${(remainingSecs ~/ 60).toString().padLeft(2, '0')}:${(remainingSecs % 60).toString().padLeft(2, '0')} remaining',
+                      style: TextStyle(
+                        color: remainingSecs <= 30 ? Colors.redAccent : Colors.amber,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             // Unified Payment Method Badge
             Builder(builder: (_) {

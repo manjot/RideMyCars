@@ -8,6 +8,27 @@
               isPaymentConfirmed: {{ in_array(strtolower($delivery->payment_status ?? ''), ['paid', 'hold', 'authorized']) ? 'true' : 'false' }},
               courierData: null,
               otpInput: '',
+              remainingSeconds: {{ $delivery->remaining_seconds ?? 300 }},
+              cancellationReason: @json($delivery->cancellation_reason ?? null),
+              countdownInterval: null,
+              startCountdown() {
+                  if (this.countdownInterval) clearInterval(this.countdownInterval);
+                  this.countdownInterval = setInterval(() => {
+                      if (['pending', 'searching', 'created'].includes(this.deliveryStatus)) {
+                          if (this.remainingSeconds > 0) {
+                              this.remainingSeconds--;
+                          } else {
+                              this.pollStatus();
+                          }
+                      }
+                  }, 1000);
+              },
+              get countdownFormatted() {
+                  const total = Math.max(0, this.remainingSeconds || 0);
+                  const mins = Math.floor(total / 60);
+                  const secs = total % 60;
+                  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+              },
               async pollStatus() {
                   try {
                       const res = await fetch(`/api/package-delivery/{{ $delivery->id }}/status`);
@@ -15,6 +36,12 @@
                           const data = await res.json();
                           if (data.status) {
                               this.deliveryStatus = data.status;
+                          }
+                          if (data.remaining_seconds !== undefined) {
+                              this.remainingSeconds = data.remaining_seconds;
+                          }
+                          if (data.cancellation_reason) {
+                              this.cancellationReason = data.cancellation_reason;
                           }
                           if (data.payment_status) {
                               this.paymentStatus = data.payment_status;
@@ -29,7 +56,7 @@
                   } catch (e) {}
               }
           }"
-          x-init="pollStatus(); setInterval(() => pollStatus(), 3500);">
+          x-init="startCountdown(); pollStatus(); setInterval(() => pollStatus(), 3500);">
 
         <!-- Header -->
         <div class="text-center mb-8">
@@ -69,6 +96,32 @@
                     <div>
                         <h3 class="text-xl font-black text-gray-900 dark:text-white">Finding Nearest Available Courier</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Matching couriers within 3 km $\rightarrow$ 5 km $\rightarrow$ 10 km from pickup address...</p>
+                    </div>
+
+                    <!-- Live Countdown Timer -->
+                    <div class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-black/5 dark:bg-white/10 border border-amber-500/30 shadow-inner">
+                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></div>
+                        <div class="flex items-center gap-2 font-mono">
+                            <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Courier Waiting Time:</span>
+                            <span class="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-wider" x-text="countdownFormatted">05:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancelled State Card -->
+                <div x-show="deliveryStatus === 'cancelled'" class="bg-rose-50 dark:bg-rose-950/30 rounded-3xl border-2 border-rose-500/30 p-8 text-center space-y-4 shadow-sm relative overflow-hidden">
+                    <div class="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center text-3xl font-bold shadow-lg mx-auto">
+                        ✕
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white">Delivery Request Cancelled</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-w-md mx-auto mt-1" x-text="cancellationReason || 'No courier was available within the waiting period. Your request has been automatically cancelled.'">
+                        </p>
+                    </div>
+                    <div class="pt-2">
+                        <a href="/package-delivery" class="inline-flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-extrabold text-xs rounded-xl shadow hover:opacity-90 transition-all">
+                            <span>+ Book Another Delivery</span>
+                        </a>
                     </div>
                 </div>
 

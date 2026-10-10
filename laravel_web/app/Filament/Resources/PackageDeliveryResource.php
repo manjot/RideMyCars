@@ -170,6 +170,19 @@ class PackageDeliveryResource extends Resource
                         default => 'warning',
                     }),
 
+                Tables\Columns\TextColumn::make('expires_at')
+                    ->label('Waiting Window')
+                    ->description(function (PackageDelivery $record) {
+                        if (!in_array($record->delivery_status, ['pending', 'created', 'searching']) || !$record->expires_at) return null;
+                        $rem = $record->remainingSeconds();
+                        if ($rem <= 0) return 'Expired';
+                        return sprintf('⏱️ %02d:%02d remaining', floor($rem / 60), $rem % 60);
+                    })
+                    ->badge(fn (PackageDelivery $record) => in_array($record->delivery_status, ['pending', 'created', 'searching']) && $record->expires_at && $record->remainingSeconds() > 0)
+                    ->color(fn (PackageDelivery $record) => ($record->remainingSeconds() > 60) ? 'warning' : 'danger')
+                    ->dateTime('M d, H:i')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

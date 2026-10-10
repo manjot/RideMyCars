@@ -235,6 +235,33 @@
                             Dispatched to top-rated professional drivers in your vicinity. You'll be notified immediately when a driver accepts.
                         </p>
                     </div>
+
+                    <!-- Live Countdown Timer -->
+                    <div class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-black/5 dark:bg-white/10 border border-amber-500/30 shadow-inner">
+                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></div>
+                        <div class="flex items-center gap-2 font-mono">
+                            <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Driver Waiting Time:</span>
+                            <span class="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-wider" x-text="countdownFormatted">05:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancelled Notice Card -->
+                <div x-show="ride.status === 'cancelled'" 
+                     class="bg-rose-500/10 border-2 border-rose-500/30 rounded-3xl p-8 text-center space-y-4 shadow-sm relative overflow-hidden">
+                    <div class="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center text-3xl font-bold shadow-lg mx-auto">
+                        ✕
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white">Ride Request Cancelled</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-w-md mx-auto mt-1" x-text="ride.cancellation_reason || 'No driver was available within the waiting period. Your request has been automatically cancelled.'">
+                        </p>
+                    </div>
+                    <div class="pt-2">
+                        <a href="/ride" class="inline-flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-extrabold text-xs rounded-xl shadow hover:opacity-90 transition-all">
+                            <span>+ Book Another Ride</span>
+                        </a>
+                    </div>
                 </div>
 
                 <!-- 4-Digit Secure Ride PIN Card -->
@@ -618,11 +645,14 @@
                     backup_chauffeur_enabled: {{ $ride->backup_chauffeur_enabled ? 'true' : 'false' }},
                     backup_status: '{{ $ride->backup_status }}',
                     driver_assignment_type: '{{ $ride->driver_assignment_type ?? "primary" }}',
-                    backup_driver: null
+                    backup_driver: null,
+                    cancellation_reason: @json($ride->cancellation_reason ?? null)
                 },
                 driver: @json($driverData),
                 mapKey: '{{ $mapKey }}',
                 pollingTimer: null,
+                countdownInterval: null,
+                remainingSeconds: {{ $ride->remaining_seconds ?? 300 }},
                 shareSuccess: false,
                 cancelling: false,
                 showBackupModal: false,
@@ -636,8 +666,29 @@
                 init() {
                     // Remember this ride in localStorage for guest tracking continuity
                     localStorage.setItem('rmc_active_ride_id', this.rideId);
+                    this.startCountdown();
                     this.poll();
                     this.pollingTimer = setInterval(() => this.poll(), 3500);
+                },
+
+                startCountdown() {
+                    if (this.countdownInterval) clearInterval(this.countdownInterval);
+                    this.countdownInterval = setInterval(() => {
+                        if (this.ride.status === 'pending') {
+                            if (this.remainingSeconds > 0) {
+                                this.remainingSeconds--;
+                            } else {
+                                this.poll();
+                            }
+                        }
+                    }, 1000);
+                },
+
+                get countdownFormatted() {
+                    const total = Math.max(0, this.remainingSeconds || 0);
+                    const mins = Math.floor(total / 60);
+                    const secs = total % 60;
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                 },
 
                 async poll() {
@@ -649,6 +700,12 @@
                             this.ride.fare = data.fare;
                             this.ride.pickup = data.pickup;
                             this.ride.dropoff = data.dropoff;
+                            if (data.remaining_seconds !== undefined) {
+                                this.remainingSeconds = data.remaining_seconds;
+                            }
+                            if (data.cancellation_reason) {
+                                this.ride.cancellation_reason = data.cancellation_reason;
+                            }
                             if (data.start_pin) {
                                 this.ride.start_pin = data.start_pin;
                                 this.ride.otp = data.start_pin;

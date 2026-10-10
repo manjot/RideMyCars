@@ -26,6 +26,8 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   bool _isAccepting = false;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 300;
 
   @override
   void initState() {
@@ -43,10 +45,48 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
     final type = widget.request['type']?.toString() ?? 'order';
     final id = widget.request['ride_id'] ?? widget.request['package_delivery_id'] ?? widget.request['assignment_id'] ?? widget.request['id'];
     SoundService.instance.startIncomingOrderRingtone(orderType: type, orderId: id);
+
+    final rawRemaining = widget.request['remaining_seconds'];
+    final rawExpiresAt = widget.request['expires_at'];
+    if (rawRemaining != null) {
+      _remainingSeconds = int.tryParse(rawRemaining.toString()) ?? 300;
+    } else if (rawExpiresAt != null) {
+      try {
+        final exp = DateTime.parse(rawExpiresAt.toString()).toLocal();
+        final diff = exp.difference(DateTime.now()).inSeconds;
+        _remainingSeconds = diff > 0 ? diff : 300;
+      } catch (_) {
+        _remainingSeconds = 300;
+      }
+    }
+    if (_remainingSeconds <= 0) _remainingSeconds = 300;
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 1) {
+        if (mounted) {
+          setState(() {
+            _remainingSeconds--;
+          });
+        }
+      } else {
+        timer.cancel();
+        if (mounted) {
+          _handleDecline();
+        }
+      }
+    });
+  }
+
+  String _formatCountdown(int totalSeconds) {
+    final s = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = s ~/ 60;
+    final seconds = s % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _pulseController.dispose();
     // Guarantee sound stops whenever the dialog closes/dismisses
     SoundService.instance.stopRingtone();
@@ -433,6 +473,49 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                 ),
               ),
             ],
+
+            // Live Driver Request Waiting Time Countdown Banner
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _remainingSeconds <= 30 ? Colors.red.withOpacity(0.18) : themeColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _remainingSeconds <= 30 ? Colors.red : themeColor.withOpacity(0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.timer_outlined,
+                    color: _remainingSeconds <= 30 ? Colors.redAccent : themeColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Time to Accept: ',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    _formatCountdown(_remainingSeconds),
+                    style: TextStyle(
+                      color: _remainingSeconds <= 30 ? Colors.redAccent : themeColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'monospace',
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             // Header Row: Type Icon & Order Title
             Row(

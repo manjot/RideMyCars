@@ -53,6 +53,20 @@ class AppConfigApiController extends Controller
 
         $data = [
             'app_name' => 'RideMyCars',
+            'waiting_time' => [
+                'ride_waiting_time_minutes' => SettingService::getRideWaitingTimeMinutes(),
+                'delivery_waiting_time_minutes' => SettingService::getDeliveryWaitingTimeMinutes(),
+                'ride_waiting_time_seconds' => SettingService::getRideWaitingTimeSeconds(),
+                'delivery_waiting_time_seconds' => SettingService::getDeliveryWaitingTimeSeconds(),
+                'auto_cancel_unaccepted' => SettingService::isAutoCancelUnacceptedEnabled(),
+            ],
+            'dispatch' => [
+                'ride_waiting_time_minutes' => SettingService::getRideWaitingTimeMinutes(),
+                'delivery_waiting_time_minutes' => SettingService::getDeliveryWaitingTimeMinutes(),
+                'ride_waiting_time_seconds' => SettingService::getRideWaitingTimeSeconds(),
+                'delivery_waiting_time_seconds' => SettingService::getDeliveryWaitingTimeSeconds(),
+                'auto_cancel_unaccepted' => SettingService::isAutoCancelUnacceptedEnabled(),
+            ],
             'maps' => [
                 'google_maps_api_key' => SettingService::get('geo.google_maps_api_key') ?: (config('services.google_maps.api_key') ?: 'AIzaSyACN52o17kFjtg_K45rKU_ETTJ6WaXvkC0'),
                 'distance_unit' => SettingService::get('geo.distance_unit', 'km'),

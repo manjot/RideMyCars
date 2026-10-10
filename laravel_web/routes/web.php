@@ -1836,6 +1836,11 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
                     return response()->json(['error' => 'Associated package delivery not found.'], 404);
                 }
 
+                if (!in_array($delivery->delivery_status, ['pending', 'created', 'searching']) || $delivery->isExpired() || ($delivery->courier_id !== null && $delivery->courier_id != $user->id)) {
+                    $assignment->update(['status' => 'expired']);
+                    return response()->json(['error' => 'This delivery request has expired or was already accepted/cancelled.', 'is_expired' => true], 410);
+                }
+
                 $assignment->update(['status' => 'accepted']);
                 $delivery->update([
                     'courier_id' => $user->id,
@@ -1908,6 +1913,11 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
             $ride = \App\Models\Ride::where('id', $assignment->ride_id)->lockForUpdate()->first();
             if (!$ride) {
                 return response()->json(['error' => 'Associated ride not found.'], 404);
+            }
+
+            if ($ride->status !== 'pending' || $ride->isExpired() || ($ride->driver_id !== null && $ride->driver_id != $user->id)) {
+                $assignment->update(['status' => 'expired']);
+                return response()->json(['error' => 'This ride request has expired or was already accepted/cancelled.', 'is_expired' => true], 410);
             }
 
             $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
@@ -3765,6 +3775,58 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
         } catch (\Throwable $e) {
             $output['tranche_a_equity_err'] = $e->getMessage();
+        }
+
+        // Ensure Driver Request Waiting Time settings & schema are present
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => 'dispatch.ride_waiting_time_minutes'],
+                    ['value' => '5', 'group' => 'Dispatch & Waiting Times', 'type' => 'number', 'label' => 'Ride Request Waiting Time (Minutes)', 'updated_at' => now()]
+                );
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => 'dispatch.delivery_waiting_time_minutes'],
+                    ['value' => '5', 'group' => 'Dispatch & Waiting Times', 'type' => 'number', 'label' => 'Delivery Request Waiting Time (Minutes)', 'updated_at' => now()]
+                );
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => 'dispatch.auto_cancel_unaccepted'],
+                    ['value' => '1', 'group' => 'Dispatch & Waiting Times', 'type' => 'boolean', 'label' => 'Auto-Cancel Unaccepted Requests', 'updated_at' => now()]
+                );
+                $output['dispatch_waiting_time_settings_synced'] = true;
+            }
+
+            // Explicitly ensure expires_at & cancellation_reason columns exist on rides and package_deliveries
+            if (\Illuminate\Support\Facades\Schema::hasTable('rides')) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('rides', 'expires_at')) {
+                    \Illuminate\Support\Facades\Schema::table('rides', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->timestamp('expires_at')->nullable()->after('status')->index();
+                    });
+                    $output['rides_expires_at_column'] = 'added';
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('rides', 'cancellation_reason')) {
+                    \Illuminate\Support\Facades\Schema::table('rides', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->text('cancellation_reason')->nullable()->after('status');
+                    });
+                    $output['rides_cancellation_reason_column'] = 'added';
+                }
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('package_deliveries')) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('package_deliveries', 'expires_at')) {
+                    \Illuminate\Support\Facades\Schema::table('package_deliveries', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->timestamp('expires_at')->nullable()->after('delivery_status')->index();
+                    });
+                    $output['deliveries_expires_at_column'] = 'added';
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('package_deliveries', 'cancellation_reason')) {
+                    \Illuminate\Support\Facades\Schema::table('package_deliveries', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->text('cancellation_reason')->nullable()->after('delivery_status');
+                    });
+                    $output['deliveries_cancellation_reason_column'] = 'added';
+                }
+            }
+        } catch (\Throwable $e) {
+            $output['dispatch_waiting_time_sync_err'] = $e->getMessage();
         }
 
         // Ensure all admin users have role 'admin' and active status

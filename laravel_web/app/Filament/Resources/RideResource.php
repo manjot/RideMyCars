@@ -250,6 +250,18 @@ class RideResource extends Resource
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('expires_at')
+                    ->label('Waiting Window')
+                    ->description(function (Ride $record) {
+                        if ($record->status !== 'pending' || !$record->expires_at) return null;
+                        $rem = $record->remainingSeconds();
+                        if ($rem <= 0) return 'Expired';
+                        return sprintf('⏱️ %02d:%02d remaining', floor($rem / 60), $rem % 60);
+                    })
+                    ->badge(fn (Ride $record) => $record->status === 'pending' && $record->expires_at && $record->remainingSeconds() > 0)
+                    ->color(fn (Ride $record) => ($record->remainingSeconds() > 60) ? 'warning' : 'danger')
+                    ->dateTime('M d, H:i')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('driver_assignment_type')
                     ->label('Type')
                     ->badge()

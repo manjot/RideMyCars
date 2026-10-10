@@ -39,6 +39,9 @@ class DeliveryTrackerScreen extends StatefulWidget {
 
 class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   Timer? _pollTimer;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 300;
+  String? _cancellationReason;
   String _deliveryStatus = 'pending';
   String _paymentStatus = 'pending';
   Map<String, dynamic>? _courierData;
@@ -61,13 +64,39 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
     super.initState();
     _otp = widget.initialOtp;
     _hasPrescription = widget.packageCategory == 'Pharmeasy';
+    _startCountdownTimer();
     _pollStatus();
     _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _pollStatus());
+  }
+
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (['pending', 'searching', 'created'].contains(_deliveryStatus)) {
+        if (_remainingSeconds > 0) {
+          if (mounted) {
+            setState(() {
+              _remainingSeconds--;
+            });
+          }
+        } else {
+          _pollStatus();
+        }
+      }
+    });
+  }
+
+  String _formatCountdown(int totalSeconds) {
+    final s = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = s ~/ 60;
+    final seconds = s % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -80,6 +109,12 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
           setState(() {
             _deliveryStatus = data['status']?.toString() ?? _deliveryStatus;
             _paymentStatus = data['payment_status']?.toString() ?? _paymentStatus;
+            if (data['remaining_seconds'] != null) {
+              _remainingSeconds = int.tryParse(data['remaining_seconds'].toString()) ?? _remainingSeconds;
+            }
+            if (data['cancellation_reason'] != null) {
+              _cancellationReason = data['cancellation_reason'].toString();
+            }
             if (data['delivery_otp'] != null) {
               _otp = data['delivery_otp'].toString();
             }
@@ -353,8 +388,53 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Cancelled State Banner
+              if (_deliveryStatus == 'cancelled')
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.red.withOpacity(0.4)),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.cancel_rounded, color: Colors.red, size: 48),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Delivery Request Cancelled',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.red),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _cancellationReason ?? 'No courier was available within the waiting period. Your request has been automatically cancelled.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 13, color: Colors.white70),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
+                            (route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('Back to Home', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+
               // Radar Animation if searching / pending
-              if (isPending)
+              if (isPending && _deliveryStatus != 'cancelled')
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                   margin: const EdgeInsets.only(bottom: 20),
@@ -402,6 +482,36 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                       const Text(
                         'Matching vetted drivers within 5km radius',
                         style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.timer_outlined, color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Courier Waiting Time: ',
+                              style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              _formatCountdown(_remainingSeconds),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                fontFamily: 'monospace',
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

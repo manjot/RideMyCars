@@ -133,6 +133,11 @@ class ManageAppSettings extends Page implements HasForms
             'backup_chauffeur_customer_timeout_sec' => (int) ($all['backup.customer_timeout_sec'] ?? 60),
             'backup_chauffeur_max_attempts' => (int) ($all['backup.max_attempts'] ?? 3),
             'backup_chauffeur_notifications_enabled' => (bool) ($all['backup.notifications_enabled'] ?? true),
+
+            // Dispatch & Request Waiting Time Settings
+            'dispatch_ride_waiting_time_minutes' => (int) ($all['dispatch.ride_waiting_time_minutes'] ?? 5),
+            'dispatch_delivery_waiting_time_minutes' => (int) ($all['dispatch.delivery_waiting_time_minutes'] ?? 5),
+            'dispatch_auto_cancel_unaccepted' => (bool) ($all['dispatch.auto_cancel_unaccepted'] ?? true),
         ]);
     }
 
@@ -634,6 +639,40 @@ class ManageAppSettings extends Page implements HasForms
                                             ->default(true),
                                     ]),
                             ]),
+
+                        // TAB: Dispatch & Waiting Times
+                        Forms\Components\Tabs\Tab::make('Dispatch & Waiting Times')
+                            ->icon('heroicon-o-clock')
+                            ->schema([
+                                Forms\Components\Section::make('Driver Request Waiting Time (Ride & Delivery)')
+                                    ->description('Configure how long a newly created Ride or Delivery request will wait for an available driver or courier to accept before automatically cancelling.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('dispatch_auto_cancel_unaccepted')
+                                            ->label('Enable Automated Request Expiration & Cancellation')
+                                            ->helperText('When enabled, pending requests that reach 00:00 without driver acceptance are automatically cancelled, removed from driver request lists, and the customer is notified.')
+                                            ->default(true),
+
+                                        Forms\Components\Grid::make(2)->schema([
+                                            Forms\Components\TextInput::make('dispatch_ride_waiting_time_minutes')
+                                                ->label('Ride Request Waiting Time (Minutes)')
+                                                ->numeric()
+                                                ->minValue(1)
+                                                ->maxValue(60)
+                                                ->default(5)
+                                                ->required()
+                                                ->helperText('Countdown window for nearby drivers to accept a ride request (default: 5 minutes).'),
+
+                                            Forms\Components\TextInput::make('dispatch_delivery_waiting_time_minutes')
+                                                ->label('Delivery Request Waiting Time (Minutes)')
+                                                ->numeric()
+                                                ->minValue(1)
+                                                ->maxValue(60)
+                                                ->default(5)
+                                                ->required()
+                                                ->helperText('Countdown window for couriers to accept a package delivery request (default: 5 minutes).'),
+                                        ]),
+                                    ]),
+                            ]),
                     ]),
             ])
             ->statePath('data');
@@ -739,6 +778,11 @@ class ManageAppSettings extends Page implements HasForms
             'backup_chauffeur_customer_timeout_sec' => ['key' => 'backup.customer_timeout_sec', 'group' => 'Proximity Backup'],
             'backup_chauffeur_max_attempts' => ['key' => 'backup.max_attempts', 'group' => 'Proximity Backup'],
             'backup_chauffeur_notifications_enabled' => ['key' => 'backup.notifications_enabled', 'group' => 'Proximity Backup'],
+
+            // Dispatch & Waiting Times
+            'dispatch_ride_waiting_time_minutes' => ['key' => 'dispatch.ride_waiting_time_minutes', 'group' => 'Dispatch & Waiting Times'],
+            'dispatch_delivery_waiting_time_minutes' => ['key' => 'dispatch.delivery_waiting_time_minutes', 'group' => 'Dispatch & Waiting Times'],
+            'dispatch_auto_cancel_unaccepted' => ['key' => 'dispatch.auto_cancel_unaccepted', 'group' => 'Dispatch & Waiting Times'],
         ];
 
         foreach ($mapping as $field => $info) {

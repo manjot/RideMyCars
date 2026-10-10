@@ -514,4 +514,52 @@ class SettingService
             'Admin@1234'
         ]);
     }
+
+    /**
+     * Get the configured waiting time in minutes for Ride requests before auto-cancellation.
+     * Default: 5 minutes.
+     */
+    public static function getRideWaitingTimeMinutes(): int
+    {
+        $val = static::get('dispatch.ride_waiting_time_minutes', 5);
+        $intVal = (int) $val;
+        return $intVal > 0 ? $intVal : 5;
+    }
+
+    /**
+     * Get the configured waiting time in seconds for Ride requests.
+     */
+    public static function getRideWaitingTimeSeconds(): int
+    {
+        return static::getRideWaitingTimeMinutes() * 60;
+    }
+
+    /**
+     * Get the configured waiting time in minutes for Delivery requests before auto-cancellation.
+     * Default: 5 minutes.
+     */
+    public static function getDeliveryWaitingTimeMinutes(): int
+    {
+        $val = static::get('dispatch.delivery_waiting_time_minutes', 5);
+        $intVal = (int) $val;
+        return $intVal > 0 ? $intVal : 5;
+    }
+
+    /**
+     * Get the configured waiting time in seconds for Delivery requests.
+     */
+    public static function getDeliveryWaitingTimeSeconds(): int
+    {
+        return static::getDeliveryWaitingTimeMinutes() * 60;
+    }
+
+    /**
+     * Check if automated request cancellation upon waiting time expiration is enabled.
+     * Default: true.
+     */
+    public static function isAutoCancelUnacceptedEnabled(): bool
+    {
+        return filter_var(static::get('dispatch.auto_cancel_unaccepted', true), FILTER_VALIDATE_BOOLEAN);
+    }
 }
+

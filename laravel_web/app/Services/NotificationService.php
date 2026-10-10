@@ -446,4 +446,53 @@ class NotificationService
             ['ride_id' => $ride->id, 'status' => 'declined', 'icon' => 'x', 'color' => 'red']
         );
     }
+
+    /**
+     * Notify Customer that no driver was available within the waiting time window.
+     */
+    public static function notifyRideExpiredNoDriver(Ride $ride): void
+    {
+        if ($ride->rider_id) {
+            self::send(
+                $ride->rider_id,
+                'ride_cancelled',
+                'No Driver Available',
+                'No driver was available within the waiting period. Your ride request has been automatically cancelled.',
+                $ride->id,
+                '/my-rides',
+                [
+                    'ride_id' => $ride->id,
+                    'status' => 'cancelled',
+                    'reason' => 'expired_waiting_time',
+                    'icon' => 'clock',
+                    'color' => 'red',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that no courier was available within the waiting time window.
+     */
+    public static function notifyDeliveryExpiredNoDriver(PackageDelivery $delivery): void
+    {
+        if ($delivery->customer_id) {
+            self::send(
+                $delivery->customer_id,
+                'delivery_cancelled',
+                'No Courier Available',
+                'No courier was available within the waiting period. Your delivery request has been automatically cancelled.',
+                null,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'cancelled',
+                    'reason' => 'expired_waiting_time',
+                    'icon' => 'clock',
+                    'color' => 'red',
+                ]
+            );
+        }
+    }
 }
+

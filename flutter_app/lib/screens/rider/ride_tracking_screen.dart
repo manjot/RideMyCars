@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -22,17 +23,52 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   GoogleMapController? _mapController;
   int? _lastPromptedBackupDriverId;
   bool _isRespondingToBackup = false;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 300;
 
   @override
   void initState() {
     super.initState();
+    final initRem = widget.ride['remaining_seconds'];
+    if (initRem != null) {
+      _remainingSeconds = int.tryParse(initRem.toString()) ?? 300;
+    }
+    _startCountdownTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<RideProvider>(context, listen: false).startActiveRidePolling();
     });
   }
 
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final rideProv = Provider.of<RideProvider>(context, listen: false);
+      final currentRide = rideProv.activeRide ?? widget.ride;
+      final status = currentRide['status'] ?? 'pending';
+      if (status == 'pending') {
+        if (_remainingSeconds > 0) {
+          if (mounted) {
+            setState(() {
+              _remainingSeconds--;
+            });
+          }
+        } else {
+          rideProv.fetchActiveRide();
+        }
+      }
+    });
+  }
+
+  String _formatCountdown(int totalSeconds) {
+    final s = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = s ~/ 60;
+    final seconds = s % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
   }
@@ -399,28 +435,80 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Status Banner
+                      // Status Banner & Driver Waiting Countdown
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity( 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.primary.withOpacity( 0.3)),
+                          color: status == 'cancelled'
+                              ? AppColors.danger.withOpacity(0.15)
+                              : AppColors.primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: status == 'cancelled'
+                                ? AppColors.danger.withOpacity(0.4)
+                                : AppColors.primary.withOpacity(0.35),
+                          ),
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            const Icon(Icons.radar_rounded, color: AppColors.primary, size: 20),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _statusDescription(status, driver?['name'], currentRide),
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                            Row(
+                              children: [
+                                Icon(
+                                  status == 'cancelled' ? Icons.cancel_rounded : Icons.radar_rounded,
+                                  color: status == 'cancelled' ? AppColors.danger : AppColors.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    status == 'cancelled'
+                                        ? (currentRide['cancellation_reason']?.toString() ?? 'Ride Cancelled — No driver was available within the waiting period.')
+                                        : _statusDescription(status, driver?['name'], currentRide),
+                                    style: TextStyle(
+                                      color: status == 'cancelled' ? AppColors.danger : AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (status == 'pending') ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black38,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.timer_outlined, color: AppColors.primary, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Driver Waiting Time: ',
+                                      style: TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatCountdown(_remainingSeconds),
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: 'monospace',
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

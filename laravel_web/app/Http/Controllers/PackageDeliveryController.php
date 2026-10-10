@@ -198,6 +198,10 @@ class PackageDeliveryController extends Controller
             $deliveryCode = 'DEL-' . strtoupper(Str::random(8));
             $deliveryOtp = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
+            PackageDelivery::ensureColumnsExist();
+            $waitingMinutes = \App\Services\SettingService::getDeliveryWaitingTimeMinutes();
+            $expiresAt = now()->addMinutes($waitingMinutes);
+
             $deliveryData = [
                 'delivery_code' => $deliveryCode,
                 'customer_id' => $customerId,
@@ -228,6 +232,7 @@ class PackageDeliveryController extends Controller
                 'special_handling' => $validated['special_handling'] ?? [],
                 'delivery_otp' => $deliveryOtp,
                 'delivery_status' => 'pending',
+                'expires_at' => $expiresAt,
                 'subtotal' => $priceRes['subtotal'] ?? 0,
                 'service_fee' => $priceRes['service_fee'] ?? 0,
                 'tax' => $priceRes['tax'] ?? 0,
@@ -336,6 +341,10 @@ class PackageDeliveryController extends Controller
                     'delivery_code' => $delivery->delivery_code,
                     'total_price' => (float)$delivery->total_price,
                     'currency' => $delivery->currency ?? 'USD',
+                    'expires_at' => $delivery->expires_at ? $delivery->expires_at->toIso8601String() : null,
+                    'waiting_time_minutes' => $waitingMinutes,
+                    'waiting_time_seconds' => $waitingMinutes * 60,
+                    'remaining_seconds' => $delivery->remainingSeconds(),
                     'redirect_url' => $redirectUrl,
                 ]);
             }
@@ -373,9 +382,16 @@ class PackageDeliveryController extends Controller
      */
     public function statusApi($id)
     {
+        PackageDelivery::ensureColumnsExist();
         $delivery = PackageDelivery::with(['courier', 'courierProfile'])->find($id);
         if (!$delivery) {
             return response()->json(['error' => 'Delivery not found'], 404);
+        }
+
+        // Auto-cancel delivery request if courier waiting time expired
+        if (in_array(strtolower($delivery->delivery_status ?? ''), ['pending', 'created', 'searching']) && $delivery->courier_id === null && $delivery->isExpired()) {
+            \App\Services\RequestExpirationService::cancelExpiredDelivery($delivery);
+            $delivery->refresh();
         }
 
         $paymentStatus = strtolower($delivery->payment_status ?? 'pending');
@@ -433,6 +449,11 @@ class PackageDeliveryController extends Controller
             'total_price' => floatval($delivery->total_price),
             'currency' => $delivery->currency,
             'courier' => $courierData,
+            'expires_at' => $delivery->expires_at?->toIso8601String(),
+            'waiting_time_minutes' => \App\Services\SettingService::getDeliveryWaitingTimeMinutes(),
+            'waiting_time_seconds' => \App\Services\SettingService::getDeliveryWaitingTimeSeconds(),
+            'remaining_seconds' => $delivery->remainingSeconds(),
+            'cancellation_reason' => $delivery->cancellation_reason,
             'arrived_at_pickup_at' => $delivery->arrived_at_pickup_at?->toIso8601String(),
             'picked_up_at' => $delivery->picked_up_at?->toIso8601String(),
             'arrived_at_destination_at' => $delivery->arrived_at_destination_at?->toIso8601String(),

@@ -231,7 +231,20 @@ class DriverProvider extends ChangeNotifier {
         ).timeout(const Duration(seconds: 4));
         if (res.statusCode == 200) {
           final List newReqs = (res.data is Map ? (res.data['requests'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
-          final mapped = newReqs.map((e) => Map<String, dynamic>.from(e)).toList();
+          final mapped = newReqs
+              .map((e) => Map<String, dynamic>.from(e))
+              .where((j) {
+                final rem = j['remaining_seconds'];
+                if (rem != null && (int.tryParse(rem.toString()) ?? 1) <= 0) return false;
+                final exp = j['expires_at'];
+                if (exp != null) {
+                  try {
+                    if (DateTime.parse(exp.toString()).toLocal().isBefore(DateTime.now())) return false;
+                  } catch (_) {}
+                }
+                return true;
+              })
+              .toList();
           
           if (mapped.isNotEmpty) {
             // Loud and long ringtone starts ringing continuously until driver responds
@@ -388,8 +401,22 @@ class DriverProvider extends ChangeNotifier {
           if (effectiveBookingId != null && effectiveBookingId > 0) 'driver_booking_id': effectiveBookingId,
           'action': action,
         }).timeout(const Duration(seconds: 8));
-      } catch (e) {
-        debugPrint('driverRespond failed: $e');
+      } on DioException catch (dioErr) {
+        debugPrint('driverRespond DioException: ${dioErr.response?.statusCode} ${dioErr.response?.data}');
+        final respData = dioErr.response?.data;
+        if (dioErr.response?.statusCode == 410 || (respData is Map && respData['is_expired'] == true)) {
+          _errorMessage = respData is Map
+              ? (respData['message']?.toString() ?? 'This request has expired and is no longer available.')
+              : 'This request has expired and is no longer available.';
+          removePendingRequestLocally(
+            assignmentId: assignmentId,
+            rideId: effectiveRideId,
+            deliveryId: effectiveDeliveryId,
+            bookingId: effectiveBookingId,
+          );
+          notifyListeners();
+          return false;
+        }
         // Fallback to /api/driver/requests/{id}/respond if driverRespond fails
         final targetId = assignmentId ?? effectiveRideId ?? effectiveDeliveryId ?? effectiveBookingId;
         if (targetId != null && targetId > 0) {
@@ -397,8 +424,25 @@ class DriverProvider extends ChangeNotifier {
             res = await _dio.post('/driver/requests/$targetId/respond', data: {
               'status': action == 'accept' ? 'accepted' : 'rejected',
             }).timeout(const Duration(seconds: 6));
-          } catch (_) {}
+          } catch (fallbackErr) {
+            if (fallbackErr is DioException && fallbackErr.response?.statusCode == 410) {
+              final fbData = fallbackErr.response?.data;
+              _errorMessage = fbData is Map
+                  ? (fbData['message']?.toString() ?? 'This request has expired and is no longer available.')
+                  : 'This request has expired and is no longer available.';
+              removePendingRequestLocally(
+                assignmentId: assignmentId,
+                rideId: effectiveRideId,
+                deliveryId: effectiveDeliveryId,
+                bookingId: effectiveBookingId,
+              );
+              notifyListeners();
+              return false;
+            }
+          }
         }
+      } catch (e) {
+        debugPrint('driverRespond failed: $e');
       }
 
       if (action == 'reject') {

@@ -74,6 +74,8 @@ class PackageDelivery extends Model
         'refund_reference',
         'refunded_at',
         'accepted_at',
+        'expires_at',
+        'cancellation_reason',
     ];
 
     protected $casts = [
@@ -96,6 +98,7 @@ class PackageDelivery extends Model
         'picked_up_at' => 'datetime',
         'arrived_at_destination_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'expires_at' => 'datetime',
     ];
 
     public function customer()
@@ -127,4 +130,53 @@ class PackageDelivery extends Model
     {
         return $this->hasMany(PackagePrescription::class, 'package_delivery_id');
     }
+
+    /**
+     * Check if this delivery request has exceeded its waiting time window.
+     */
+    public function isExpired(): bool
+    {
+        return !empty($this->expires_at) && $this->expires_at->isPast();
+    }
+
+    /**
+     * Get the remaining waiting time seconds before request expires (0 if expired).
+     */
+    public function remainingSeconds(): int
+    {
+        if (empty($this->expires_at)) {
+            return 0;
+        }
+        return (int) max(0, now()->diffInSeconds($this->expires_at, false));
+    }
+
+    /**
+     * Remaining seconds attribute for API serialization.
+     */
+    public function getRemainingSecondsAttribute(): int
+    {
+        return $this->remainingSeconds();
+    }
+
+    /**
+     * Ensure expires_at and cancellation_reason columns exist in database.
+     */
+    public static function ensureColumnsExist(): void
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('package_deliveries')) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('package_deliveries', 'expires_at')) {
+                    \Illuminate\Support\Facades\Schema::table('package_deliveries', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->timestamp('expires_at')->nullable()->after('delivery_status')->index();
+                    });
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('package_deliveries', 'cancellation_reason')) {
+                    \Illuminate\Support\Facades\Schema::table('package_deliveries', function (\Illuminate\Database\Schema\Blueprint $table) {
+                        $table->text('cancellation_reason')->nullable()->after('delivery_status');
+                    });
+                }
+            }
+        } catch (\Throwable $e) {}
+    }
 }
+

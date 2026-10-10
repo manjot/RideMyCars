@@ -731,6 +731,10 @@ class DriverApiController extends Controller
             }
         }
 
+        try {
+            \App\Services\RequestExpirationService::expireAllOverdue();
+        } catch (\Throwable $e) {}
+
         $requests = [];
         $processedRideIds = [];
 
@@ -860,7 +864,7 @@ class DriverApiController extends Controller
         });
 
         foreach ($assignments as $a) {
-            if ($a->ride && $a->ride->status === 'pending') {
+            if ($a->ride && $a->ride->status === 'pending' && !$a->ride->isExpired()) {
                 $processedRideIds[] = $a->ride->id;
 
                 $rPricing = \App\Models\CountryPricing::forCountry($a->ride->driver_country ?? $a->ride->country ?? $driverCountry);
@@ -895,7 +899,9 @@ class DriverApiController extends Controller
                     'is_for_someone_else' => (bool)$a->ride->is_for_someone_else,
                     'distance_km' => $a->ride->distance_km,
                     'duration_minutes' => $a->ride->duration_minutes,
-                    'expires_at' => $a->expires_at->toIso8601String(),
+                    'expires_at' => $a->ride->expires_at ? $a->ride->expires_at->toIso8601String() : $a->expires_at->toIso8601String(),
+                    'remaining_seconds' => $a->ride->remaining_seconds,
+                    'waiting_time_seconds' => \App\Services\SettingService::getRideWaitingTimeSeconds(),
                     'is_backup' => $a->assignment_type === 'backup',
                     'assignment_type' => $a->assignment_type ?? 'primary',
                     'created_at' => $rCreatedAt ? $rCreatedAt->toIso8601String() : null,
@@ -937,8 +943,10 @@ class DriverApiController extends Controller
                     'request_time_formatted' => ($a->driverBooking->created_at ?? $a->created_at)?->format('M d, Y • h:i A'),
                     'request_time_human' => ($a->driverBooking->created_at ?? $a->created_at)?->diffForHumans(),
                     'expires_at' => $a->expires_at->toIso8601String(),
+                    'remaining_seconds' => max(0, now()->diffInSeconds($a->expires_at, false)),
+                    'waiting_time_seconds' => 300,
                 ];
-            } elseif ($a->packageDelivery && $a->packageDelivery->delivery_status === 'pending') {
+            } elseif ($a->packageDelivery && in_array($a->packageDelivery->delivery_status, ['pending', 'created', 'searching']) && !$a->packageDelivery->isExpired()) {
                 $pdCountry = $a->packageDelivery->currency === 'GHS' ? 'GHA' : ($a->packageDelivery->currency === 'INR' ? 'IND' : ($a->packageDelivery->country ?? $driverCountry));
                 $pPricing = \App\Models\CountryPricing::forCountry($pdCountry);
                 $custName = $a->packageDelivery->customer?->name ?? $a->packageDelivery->sender_name ?? 'Sender';
@@ -987,7 +995,9 @@ class DriverApiController extends Controller
                     'created_at' => $pCreatedAt ? $pCreatedAt->toIso8601String() : null,
                     'request_time_formatted' => $pCreatedAt ? $pCreatedAt->format('M d, Y • h:i A') : null,
                     'request_time_human' => $pCreatedAt ? $pCreatedAt->diffForHumans() : null,
-                    'expires_at' => $a->expires_at->toIso8601String(),
+                    'expires_at' => $a->packageDelivery->expires_at ? $a->packageDelivery->expires_at->toIso8601String() : $a->expires_at->toIso8601String(),
+                    'remaining_seconds' => $a->packageDelivery->remaining_seconds,
+                    'waiting_time_seconds' => \App\Services\SettingService::getDeliveryWaitingTimeSeconds(),
                 ];
             }
         }
@@ -996,6 +1006,9 @@ class DriverApiController extends Controller
         $openPendingRides = \App\Models\Ride::with('rider')
             ->where('status', 'pending')
             ->whereNull('driver_id')
+            ->where(function($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
             ->where(function($q) {
                 $q->whereIn('payment_status', ['hold', 'authorized', 'paid'])
                   ->orWhere('payment_method', 'cash')
@@ -1031,10 +1044,18 @@ class DriverApiController extends Controller
             });
         }
 
+        $rideWaitMins = \App\Services\SettingService::getRideWaitingTimeMinutes();
+        $rideWaitSecs = \App\Services\SettingService::getRideWaitingTimeSeconds();
+
         foreach ($openPendingRides as $pr) {
+            if ($pr->isExpired()) {
+                continue;
+            }
+
+            $expiresAt = $pr->expires_at ?? now()->addMinutes($rideWaitMins);
             $assignment = \App\Models\RideAssignment::firstOrCreate(
                 ['ride_id' => $pr->id, 'driver_id' => $user->id],
-                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+                ['status' => 'pending', 'expires_at' => $expiresAt]
             );
 
             if ($assignment->status === 'rejected') {
@@ -1073,7 +1094,9 @@ class DriverApiController extends Controller
                 'is_for_someone_else' => (bool)$pr->is_for_someone_else,
                 'distance_km' => $pr->distance_km,
                 'duration_minutes' => $pr->duration_minutes,
-                'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),
+                'expires_at' => $pr->expires_at ? $pr->expires_at->toIso8601String() : ($assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes($rideWaitMins)->toIso8601String()),
+                'remaining_seconds' => $pr->remaining_seconds,
+                'waiting_time_seconds' => $rideWaitSecs,
                 'created_at' => $prCreatedAt ? $prCreatedAt->toIso8601String() : null,
                 'request_time_formatted' => $prCreatedAt ? $prCreatedAt->format('M d, Y • h:i A') : null,
                 'request_time_human' => $prCreatedAt ? $prCreatedAt->diffForHumans() : null,
@@ -1095,6 +1118,9 @@ class DriverApiController extends Controller
         $openPendingDeliveries = \App\Models\PackageDelivery::with(['customer', 'prescriptions'])
             ->whereIn('delivery_status', ['pending', 'created', 'searching'])
             ->whereNull('courier_id')
+            ->where(function($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
             ->where(function($q) use ($driverCurrency, $driverCountry) {
                 $q->where('currency', $driverCurrency);
                 if ($driverCountry === 'IND') {
@@ -1134,10 +1160,18 @@ class DriverApiController extends Controller
             });
         }
 
+        $deliveryWaitMins = \App\Services\SettingService::getDeliveryWaitingTimeMinutes();
+        $deliveryWaitSecs = \App\Services\SettingService::getDeliveryWaitingTimeSeconds();
+
         foreach ($openPendingDeliveries as $pd) {
+            if ($pd->isExpired()) {
+                continue;
+            }
+
+            $dExpiresAt = $pd->expires_at ?? now()->addMinutes($deliveryWaitMins);
             $assignment = \App\Models\RideAssignment::firstOrCreate(
                 ['package_delivery_id' => $pd->id, 'driver_id' => $user->id],
-                ['status' => 'pending', 'expires_at' => now()->addMinutes(30)]
+                ['status' => 'pending', 'expires_at' => $dExpiresAt]
             );
 
             if ($assignment->status === 'rejected') {
@@ -1190,7 +1224,9 @@ class DriverApiController extends Controller
                 'created_at' => $pdCreatedAt ? $pdCreatedAt->toIso8601String() : null,
                 'request_time_formatted' => $pdCreatedAt ? $pdCreatedAt->format('M d, Y • h:i A') : null,
                 'request_time_human' => $pdCreatedAt ? $pdCreatedAt->diffForHumans() : null,
-                'expires_at' => $assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes(30)->toIso8601String(),
+                'expires_at' => $pd->expires_at ? $pd->expires_at->toIso8601String() : ($assignment->expires_at ? $assignment->expires_at->toIso8601String() : now()->addMinutes($deliveryWaitMins)->toIso8601String()),
+                'remaining_seconds' => $pd->remaining_seconds,
+                'waiting_time_seconds' => $deliveryWaitSecs,
             ];
         }
 
@@ -1299,10 +1335,20 @@ class DriverApiController extends Controller
                 ]);
             }
 
-            $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
-
             $ride = $assignment->ride ?? ($assignment->ride_id ? \App\Models\Ride::find($assignment->ride_id) : ($request->ride_id ? \App\Models\Ride::find($request->ride_id) : null));
             if ($ride) {
+                if ($ride->status !== 'pending' || $ride->isExpired() || ($ride->driver_id !== null && $ride->driver_id != $user->id)) {
+                    $assignment->update(['status' => 'expired']);
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'This ride request has expired or was already accepted/cancelled.',
+                        'message' => 'This ride request has expired or was already accepted/cancelled.',
+                        'is_expired' => true,
+                    ], 410);
+                }
+
+                $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
+
                 $ride->update([
                     'driver_id' => $user->id,
                     'status' => 'accepted',
@@ -1345,6 +1391,18 @@ class DriverApiController extends Controller
             } elseif ($assignment->packageDelivery || $assignment->package_delivery_id) {
                 $delivery = $assignment->packageDelivery ?: \App\Models\PackageDelivery::find($assignment->package_delivery_id);
                 if ($delivery) {
+                    if (!in_array($delivery->delivery_status, ['pending', 'created', 'searching']) || $delivery->isExpired() || ($delivery->courier_id !== null && $delivery->courier_id != $user->id)) {
+                        $assignment->update(['status' => 'expired']);
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'This delivery request has expired or was already accepted/cancelled.',
+                            'message' => 'This delivery request has expired or was already accepted/cancelled.',
+                            'is_expired' => true,
+                        ], 410);
+                    }
+
+                    $assignment->update(['status' => 'accepted', 'driver_id' => $user->id]);
+
                     $delivery->update([
                         'courier_id' => $user->id,
                         'courier_profile_id' => $user->driverProfile?->id,

@@ -373,7 +373,11 @@
                                             <p x-show="req.dropoff_location || (req.ride && req.ride.dropoff_location)"><strong>🏁 Dropoff:</strong> <span x-text="req.dropoff_location || (req.ride ? req.ride.dropoff_location : '')"></span></p>
                                             <p x-show="req.duration_type"><strong>Schedule:</strong> <span x-text="req.start_date + ' (' + req.duration_count + ' ' + req.duration_type + ')'"></span></p>
                                             <p x-show="req.vehicle_type"><strong>Vehicle:</strong> <span x-text="req.vehicle_type"></span></p>
-                                            <p x-show="req.expires_at"><strong>Expires In:</strong> <span class="text-red-500 font-bold" x-text="Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000)) + 's'"></span></p>
+                                            <div x-show="req.expires_at || req.remaining_seconds" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-bold font-mono">
+                                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                                <span>Waiting Time:</span>
+                                                <span class="text-sm font-black text-amber-600 dark:text-amber-400" x-text="formatCountdown(req)"></span>
+                                            </div>
                                         </div>
 
                                         <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
@@ -651,6 +655,12 @@
                                                             <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                                             <span>Requested: {{ $pr->created_at->format('M d, Y • h:i A') }}</span>
                                                             <span class="text-gray-500 dark:text-gray-400 font-medium">({{ $pr->created_at->diffForHumans() }})</span>
+                                                        </span>
+                                                    @endif
+                                                    @if($pr->expires_at)
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-lg border border-amber-500/20 font-mono">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                            <span>⏱️ {{ sprintf('%02d:%02d', floor(max(0, $pr->remaining_seconds) / 60), max(0, $pr->remaining_seconds) % 60) }} remaining</span>
                                                         </span>
                                                     @endif
                                                 </div>
@@ -1658,9 +1668,26 @@
                     this.fetchRequests();
                     this.pollingInterval = setInterval(() => this.fetchRequests(), 5000); // Check every 5s
                     this.countdownInterval = setInterval(() => {
-                        // Force reactivity update for the countdown timer
-                        this.requests = [...this.requests];
+                        const now = new Date().getTime();
+                        this.requests = this.requests.filter(req => {
+                            if (req.expires_at) {
+                                return (new Date(req.expires_at).getTime() - now) > 0;
+                            }
+                            return true;
+                        });
                     }, 1000);
+                },
+
+                formatCountdown(req) {
+                    let diff = 0;
+                    if (req.expires_at) {
+                        diff = Math.max(0, Math.floor((new Date(req.expires_at) - new Date()) / 1000));
+                    } else if (req.remaining_seconds !== undefined) {
+                        diff = Math.max(0, req.remaining_seconds);
+                    }
+                    const mins = Math.floor(diff / 60);
+                    const secs = diff % 60;
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                 },
                 
                 async fetchRequests() {
@@ -1668,7 +1695,10 @@
                     try {
                         const res = await fetch('/api/driver/requests');
                         if (res.ok) {
-                            this.requests = await res.json();
+                            const data = await res.json();
+                            const raw = Array.isArray(data) ? data : (data.requests || data.data || []);
+                            const now = new Date().getTime();
+                            this.requests = raw.filter(r => !r.expires_at || new Date(r.expires_at).getTime() > now);
                         }
                     } catch (e) {
                         console.error('Error fetching requests', e);
@@ -1692,13 +1722,19 @@
                         });
                         
                         const data = await res.json();
+                        if (res.status === 410 || data.is_expired) {
+                            this.requests = this.requests.filter(r => (r.assignment_id || r.id) !== id);
+                            alert(data.error || data.message || 'This request has expired or was already accepted.');
+                            this.responding = false;
+                            return;
+                        }
                         if (res.ok && data.success) {
-                            this.requests = this.requests.filter(r => r.id !== id);
+                            this.requests = this.requests.filter(r => (r.assignment_id || r.id) !== id);
                             if (status === 'accepted') {
                                 window.location.reload(); // Reload to show active job
                             }
                         } else {
-                            alert(data.error || 'Failed to process ride response.');
+                            alert(data.error || data.message || 'Failed to process ride response.');
                         }
                     } catch (e) {
                         console.error('Error responding', e);
