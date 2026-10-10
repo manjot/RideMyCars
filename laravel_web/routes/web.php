@@ -743,6 +743,10 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             $passengerPhone = $request->input('phone') ?? 'N/A';
         }
 
+        $waitingMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
+        $expiresAt = now()->addMinutes($waitingMinutes);
+        \App\Models\Ride::ensureColumnsExist();
+
         $ride = \App\Models\Ride::create([
             'rider_id' => $riderId,
             'pickup_location' => $request->pickup_location,
@@ -766,6 +770,7 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
             'notes' => $request->notes,
             'digital_receipt_code' => $digitalReceipt,
             'status' => 'pending',
+            'expires_at' => $expiresAt,
             'backup_chauffeur_enabled' => $request->boolean('backup_chauffeur_enabled', false),
             'driver_assignment_type' => 'primary',
         ]);
@@ -856,6 +861,10 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'stripe_client_secret' => $intentData['client_secret'] ?? null,
                     'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
                     'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
+                    'expires_at' => $expiresAt->toIso8601String(),
+                    'waiting_time_minutes' => $waitingMinutes,
+                    'waiting_time_seconds' => $waitingMinutes * 60,
+                    'remaining_seconds' => $waitingMinutes * 60,
                     'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
                     'tracking_url' => "/ride/track/{$ride->id}",
                     'polling_url' => "/api/ride/{$ride->id}/status",
@@ -884,6 +893,10 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'redirect_url' => $momoResult['checkout_url'] ?? ("/payment/verify-details/ride/{$ride->id}"),
                     'transaction_ref' => $momoResult['transaction_ref'] ?? null,
                     'message' => $momoResult['message'] ?? 'Please confirm USSD prompt on your phone.',
+                    'expires_at' => $expiresAt->toIso8601String(),
+                    'waiting_time_minutes' => $waitingMinutes,
+                    'waiting_time_seconds' => $waitingMinutes * 60,
+                    'remaining_seconds' => $waitingMinutes * 60,
                     'tracking_url' => "/ride/track/{$ride->id}",
                     'polling_url' => "/api/ride/{$ride->id}/status",
                 ]);
@@ -932,6 +945,10 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                 'ride_id' => $ride->id,
                 'payment_method' => 'cash',
                 'payment_status' => 'pending_cash',
+                'expires_at' => $expiresAt->toIso8601String(),
+                'waiting_time_minutes' => $waitingMinutes,
+                'waiting_time_seconds' => $waitingMinutes * 60,
+                'remaining_seconds' => $waitingMinutes * 60,
                 'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
                 'message' => 'Ride request placed with cash on drop-off. Searching for available driver...',
                 'tracking_url' => "/ride/track/{$ride->id}",
@@ -1096,6 +1113,14 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         || ($sessionRideId && (int)$sessionRideId === (int)$ride->id)
         || ($receiptCode && $receiptCode === $ride->digital_receipt_code);
 
+    \App\Models\Ride::ensureColumnsExist();
+
+    // Auto-cancel ride request if driver waiting time expired
+    if ($ride->status === 'pending' && empty($ride->driver_id) && $ride->isExpired()) {
+        \App\Services\RequestExpirationService::cancelExpiredRide($ride);
+        $ride->refresh();
+    }
+
     // Auto-capture Stripe hold if ride reached completion
     if ($ride->status === 'completed' && $ride->payment_status === 'authorized') {
         \App\Services\StripeService::captureRideHold($ride);
@@ -1184,6 +1209,10 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         'pickup_date' => $ride->pickup_date,
         'pickup_time' => $ride->pickup_time,
         'cancellation_reason' => $ride->cancellation_reason,
+        'expires_at' => $ride->expires_at?->toIso8601String(),
+        'waiting_time_minutes' => \App\Services\SettingService::getRideWaitingTimeMinutes(),
+        'waiting_time_seconds' => \App\Services\SettingService::getRideWaitingTimeSeconds(),
+        'remaining_seconds' => $ride->remainingSeconds(),
         'driver_name' => $driverName,
         'driver_phone' => $driverPhone,
         'driver_email' => $driverEmail,

@@ -821,6 +821,39 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connecting with top-rated nearby drivers</p>
                         </div>
 
+                        <!-- LIVE DRIVER REQUEST COUNTDOWN TIMER -->
+                        <div class="max-w-md mx-auto bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent rounded-2xl p-5 border-2 border-amber-400/80 dark:border-amber-500/40 shadow-sm space-y-3 text-center">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                    </span>
+                                    Driver Waiting Time
+                                </span>
+                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
+                                      x-text="waitingMinutes + ' Min Timeout'">
+                                    5 Min Timeout
+                                </span>
+                            </div>
+
+                            <div class="flex items-baseline justify-center gap-2 py-1">
+                                <span class="text-4xl md:text-5xl font-black font-mono tracking-wider text-gray-900 dark:text-white"
+                                      x-text="countdownFormatted">05:00</span>
+                                <span class="text-xs font-bold text-gray-400 uppercase">remaining</span>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-200 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                                <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-1000 ease-linear"
+                                     :style="'width: ' + Math.min(100, Math.max(0, (remainingSeconds / (waitingMinutes * 60)) * 100)) + '%'"></div>
+                            </div>
+
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                                Broadcasting to nearby chauffeurs. If no driver accepts within <strong class="text-amber-600 dark:text-amber-400" x-text="waitingMinutes + ' minutes'">5 minutes</strong>, this request will automatically cancel.
+                            </p>
+                        </div>
+
                         <!-- Guest Ongoing Ride Tracking Card with Message & Direct Link -->
                         <template x-if="currentRideId">
                             <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-slate-900/5 dark:to-slate-950/40 border border-emerald-500/30 dark:border-emerald-500/20 text-left space-y-3.5 shadow-sm">
@@ -878,6 +911,38 @@
 
                         <button type="button" @click="cancelRide()" class="w-full py-3.5 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 text-rose-600 font-extrabold text-sm rounded-2xl transition-all">
                             Cancel Request
+                        </button>
+                    </div>
+
+                    <!-- STEP 4B: REQUEST EXPIRED / CANCELLED (bookingStep === 'cancelled') -->
+                    <div x-show="['cancelled', 'expired'].includes(bookingStep)" style="display: none;" class="w-full bg-white dark:bg-[#111] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-[24px] border border-rose-200 dark:border-rose-900/40 space-y-6 text-center">
+                        <div class="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-black text-2xl flex items-center justify-center mx-auto shadow-inner">
+                            ⏱️
+                        </div>
+
+                        <div class="space-y-1">
+                            <span class="px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-extrabold text-[11px] uppercase tracking-wider">
+                                Request Waiting Time Expired
+                            </span>
+                            <h2 class="text-xl font-black text-gray-900 dark:text-white pt-2">No Driver Available in Time</h2>
+                            <p class="text-xs text-rose-700 dark:text-rose-300 font-medium max-w-sm mx-auto"
+                               x-text="cancelReason || 'No nearby driver accepted your ride within the 5-minute waiting window. Request has been cancelled.'"></p>
+                        </div>
+
+                        <div class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 text-xs text-left space-y-1.5 max-w-sm mx-auto">
+                            <div class="flex justify-between font-bold">
+                                <span class="text-gray-400">Payment Status:</span>
+                                <span class="text-emerald-600 dark:text-emerald-400">✓ Voided / Not Charged</span>
+                            </div>
+                            <div class="flex justify-between font-bold">
+                                <span class="text-gray-400">Waiting Time:</span>
+                                <span class="text-gray-700 dark:text-gray-300" x-text="waitingMinutes + ' minutes'">5 minutes</span>
+                            </div>
+                        </div>
+
+                        <button type="button" @click="resetBookingForm()"
+                                class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-2xl transition-all shadow-md">
+                            🔄 Book Again (Start New Request)
                         </button>
                     </div>
 
@@ -1392,6 +1457,10 @@
                 showModalSuggestions: false,
                 currentRideId: null,
                 pollTimer: null,
+                countdownInterval: null,
+                remainingSeconds: 300,
+                waitingMinutes: 5,
+                cancelReason: '',
                 driverName: '',
                 driverPlate: '',
                 driverModel: '',
@@ -1448,6 +1517,40 @@
                     window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
                 },
 
+                startCountdown() {
+                    if (this.countdownInterval) clearInterval(this.countdownInterval);
+                    this.countdownInterval = setInterval(() => {
+                        if (['driver_assigned', 'en_route', 'arrived', 'in_progress', 'completed'].includes(this.bookingStep)) {
+                            clearInterval(this.countdownInterval);
+                            return;
+                        }
+                        if (this.remainingSeconds > 0) {
+                            this.remainingSeconds--;
+                        } else {
+                            clearInterval(this.countdownInterval);
+                            if (this.pollTimer) clearInterval(this.pollTimer);
+                            this.cancelReason = 'No nearby driver accepted your ride within the waiting period.';
+                            this.bookingStep = 'cancelled';
+                        }
+                    }, 1000);
+                },
+
+                get countdownFormatted() {
+                    const total = Math.max(0, this.remainingSeconds);
+                    const mins = Math.floor(total / 60);
+                    const secs = total % 60;
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                },
+
+                resetBookingForm() {
+                    if (this.pollTimer) clearInterval(this.pollTimer);
+                    if (this.countdownInterval) clearInterval(this.countdownInterval);
+                    this.currentRideId = null;
+                    localStorage.removeItem('rmc_active_ride_id');
+                    this.cancelReason = '';
+                    this.bookingStep = 'find_trip';
+                },
+
                 init() {
                     if (this.categories && this.categories.length > 0) {
                         this.vehicle_type = this.categories[0].name;
@@ -1500,10 +1603,19 @@
                                     this.driverWhatsapp = data.driver.whatsapp || '';
                                     this.bookingStep = 'driver_assigned';
                                 } else {
+                                    this.remainingSeconds = typeof data.remaining_seconds === 'number' ? data.remaining_seconds : 300;
+                                    this.waitingMinutes = data.waiting_time_minutes || 5;
                                     this.bookingStep = (data.status === 'pending') ? 'finding_driver' : 'driver_assigned';
+                                    if (data.status === 'pending') {
+                                        this.startCountdown();
+                                    }
                                 }
                                 this.startRideStatusPolling(resumeId);
-                            } else if (['completed', 'cancelled'].includes(data.status)) {
+                            } else if (data.status === 'cancelled') {
+                                localStorage.removeItem('rmc_active_ride_id');
+                                this.cancelReason = data.cancellation_reason || 'No driver accepted the ride within the waiting period.';
+                                this.bookingStep = 'cancelled';
+                            } else if (data.status === 'completed') {
                                 localStorage.removeItem('rmc_active_ride_id');
                             }
                         }
@@ -1517,7 +1629,11 @@
                             const sRes = await fetch(`/api/ride/${rideId}/status`);
                             if (sRes.ok) {
                                 const sData = await sRes.json();
+                                if (typeof sData.remaining_seconds === 'number' && this.bookingStep === 'finding_driver') {
+                                    this.remainingSeconds = sData.remaining_seconds;
+                                }
                                 if (['accepted', 'en_route', 'arrived', 'in_progress'].includes(sData.status)) {
+                                    if (this.countdownInterval) clearInterval(this.countdownInterval);
                                     this.driverName = (sData.driver && sData.driver.name) || sData.driver_name || 'Driver';
                                     this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || 'REG-8899';
                                     this.driverModel = (sData.driver && sData.driver.vehicle_model) || 'Executive Sedan';
@@ -1527,13 +1643,15 @@
                                     this.bookingStep = 'driver_assigned';
                                 } else if (sData.status === 'completed') {
                                     clearInterval(this.pollTimer);
+                                    if (this.countdownInterval) clearInterval(this.countdownInterval);
                                     localStorage.removeItem('rmc_active_ride_id');
                                     this.bookingStep = 'completed';
-                                } else if (sData.status === 'cancelled') {
+                                } else if (sData.status === 'cancelled' || sData.is_expired) {
                                     clearInterval(this.pollTimer);
+                                    if (this.countdownInterval) clearInterval(this.countdownInterval);
                                     localStorage.removeItem('rmc_active_ride_id');
-                                    alert('Ride request was cancelled.');
-                                    this.bookingStep = 'find_trip';
+                                    this.cancelReason = sData.cancellation_reason || 'No nearby driver accepted the ride within the waiting period.';
+                                    this.bookingStep = 'cancelled';
                                 }
                             }
                         } catch(err) {}
@@ -2454,6 +2572,9 @@
                                 // Payment hold authorized! Transition immediately to finding driver
                                 if (confirmRes.ok && confirmData.success) {
                                     this.bookingStep = 'finding_driver';
+                                    this.remainingSeconds = data.remaining_seconds || (this.waitingMinutes * 60);
+                                    this.waitingMinutes = data.waiting_time_minutes || 5;
+                                    this.startCountdown();
                                     this.isAuthorizingPayment = false;
                                     this.startRideStatusPolling(data.ride_id);
                                     return;
@@ -2475,6 +2596,9 @@
                             }
 
                             this.bookingStep = 'finding_driver';
+                            this.remainingSeconds = data.remaining_seconds || (this.waitingMinutes * 60);
+                            this.waitingMinutes = data.waiting_time_minutes || 5;
+                            this.startCountdown();
                             this.isAuthorizingPayment = false;
                             this.startRideStatusPolling(data.ride_id);
                         } else if (data.ride_id) {
@@ -2485,6 +2609,9 @@
                                 return;
                             }
                             this.bookingStep = 'finding_driver';
+                            this.remainingSeconds = data.remaining_seconds || (this.waitingMinutes * 60);
+                            this.waitingMinutes = data.waiting_time_minutes || 5;
+                            this.startCountdown();
                             this.isAuthorizingPayment = false;
                             this.startRideStatusPolling(data.ride_id);
                         }
@@ -2496,6 +2623,7 @@
                 },
                 cancelRide() {
                     if (this.pollTimer) clearInterval(this.pollTimer);
+                    if (this.countdownInterval) clearInterval(this.countdownInterval);
                     localStorage.removeItem('rmc_active_ride_id');
                     sessionStorage.removeItem('rmc_active_ride_id');
                     if (this.currentRideId) {

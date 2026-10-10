@@ -12,7 +12,11 @@
             driverData: {{ json_encode($driver) }},
             bookingCode: '{{ $bookingCode }}',
             initialPaymentMethod: '{{ $paidMethod ?? "stripe" }}',
-            customerPhone: '{{ $customerPhone ?? "" }}'
+            customerPhone: '{{ $customerPhone ?? "" }}',
+            remainingSeconds: {{ $remainingSeconds ?? 300 }},
+            waitingMinutes: {{ $waitingMinutes ?? 5 }},
+            isExpired: {{ ($isExpired ?? false) ? 'true' : 'false' }},
+            cancellationReason: '{{ addslashes($cancellationReason ?? "") }}'
          })"
          x-init="initPage()"
          class="min-h-screen bg-gray-50 dark:bg-[#09090b] py-12 px-4 sm:px-6 lg:px-8">
@@ -315,7 +319,7 @@
             </div>
 
             <!-- STATE B: PAYMENT HELD & ACTIVELY SEARCHING FOR DRIVER -->
-            <div x-show="isPaymentConfirmed && !isDriverConfirmed" x-transition class="space-y-6">
+            <div x-show="isPaymentConfirmed && !isDriverConfirmed && bookingStatus !== 'cancelled' && !isExpired" x-transition class="space-y-6">
                 
                 <div class="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-400 dark:border-amber-600/60 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-6 relative overflow-hidden">
                     
@@ -340,6 +344,39 @@
                             We are broadcasting your pickup request to vetted chauffeurs within <strong class="text-amber-500 font-bold">10 km</strong> of <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
                             <span x-show="paymentMethod === 'cash'">Please have {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} ready in physical cash upon completing your trip.</span>
                             <span x-show="paymentMethod !== 'cash'">Your payment is held safely in escrow and driver contact details will appear the moment a nearby driver confirms.</span>
+                        </p>
+                    </div>
+
+                    <!-- LIVE DRIVER REQUEST COUNTDOWN TIMER -->
+                    <div class="max-w-md mx-auto bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-md rounded-2xl p-5 border-2 border-amber-400 dark:border-amber-500/40 shadow-lg space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                <span class="relative flex h-2.5 w-2.5">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                </span>
+                                Driver Waiting Time
+                            </span>
+                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
+                                  x-text="waitingMinutes + ' Min Timeout'">
+                                5 Min Timeout
+                            </span>
+                        </div>
+
+                        <div class="flex items-baseline justify-center gap-2 py-1">
+                            <span class="text-4xl md:text-5xl font-black font-mono tracking-wider text-gray-900 dark:text-white"
+                                  x-text="countdownFormatted">05:00</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase">remaining</span>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-100 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-1000 ease-linear"
+                                 :style="'width: ' + Math.min(100, Math.max(0, (remainingSeconds / (waitingMinutes * 60)) * 100)) + '%'"></div>
+                        </div>
+
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 text-center">
+                            Nearby drivers have <span class="font-bold text-amber-600 dark:text-amber-400" x-text="waitingMinutes + ' minutes'">5 minutes</span> to accept. If no driver is available, this request auto-cancels and no funds are captured.
                         </p>
                     </div>
 
@@ -373,6 +410,51 @@
 
                 </div>
 
+            </div>
+
+            <!-- STATE D: REQUEST EXPIRED OR CANCELLED -->
+            <div x-show="bookingStatus === 'cancelled' || isExpired" x-transition class="space-y-6">
+                <div class="bg-rose-50/80 dark:bg-rose-950/30 border-2 border-rose-400 dark:border-rose-600/50 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-6">
+                    <div class="w-20 h-20 mx-auto rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center text-4xl shadow-inner">
+                        ⏱️
+                    </div>
+
+                    <div class="space-y-2 max-w-md mx-auto">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300 font-extrabold text-xs">
+                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                            Driver Waiting Time Expired
+                        </span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                            No Driver Available in Time
+                        </h3>
+                        <p class="text-xs md:text-sm text-rose-800 dark:text-rose-300 leading-relaxed font-medium"
+                           x-text="cancellationReason || 'No nearby driver accepted the request within the ' + waitingMinutes + '-minute waiting period. Any payment authorization has been released.'">
+                            No nearby driver accepted the request within the waiting period. Any payment authorization has been released.
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-white/80 dark:bg-black/40 rounded-2xl border border-rose-200 dark:border-rose-800/30 max-w-md mx-auto text-xs text-left space-y-2">
+                        <div class="flex items-center justify-between font-bold">
+                            <span class="text-gray-500">Payment Authorization</span>
+                            <span class="text-emerald-600 dark:text-emerald-400">✓ Voided / Not Charged</span>
+                        </div>
+                        <div class="flex items-center justify-between font-bold">
+                            <span class="text-gray-500">Request Status</span>
+                            <span class="text-rose-600 dark:text-rose-400 uppercase">Cancelled (Expired)</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <a href="{{ $serviceType === 'ride' ? route('ride') : ($serviceType === 'driver_booking' ? route('hire-driver') : route('delivery')) }}"
+                           class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                            <span>🔄 Try Again (Fresh 5-Min Request)</span>
+                        </a>
+                        <a href="{{ route('home') }}"
+                           class="w-full sm:w-auto px-6 py-3.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-xl transition-all text-center">
+                            Return Home
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <!-- STATE C: DRIVER CONFIRMED & DISPATCHED (All Contacts Unlocked) -->
@@ -581,15 +663,47 @@
             paymentMethod: (config.initialPaymentMethod === 'cash' || config.initialPaymentStatus === 'pending_cash') ? 'cash' : ((config.initialPaymentMethod === 'momo' || config.initialPaymentMethod === 'mobile_money') ? 'momo' : 'stripe'),
             momoNetwork: 'MTN',
             momoPhone: config.customerPhone || '',
+            remainingSeconds: parseInt(config.remainingSeconds) || 300,
+            waitingMinutes: parseInt(config.waitingMinutes) || 5,
+            isExpired: !!config.isExpired,
+            cancellationReason: config.cancellationReason || '',
             isProcessing: false,
             isSimulatingMatch: false,
             pollingInterval: null,
+            countdownInterval: null,
 
             initPage() {
-                // If payment is held and driver not yet confirmed, poll for driver acceptance
-                if (this.isPaymentConfirmed && !this.isDriverConfirmed) {
+                // If payment is held and driver not yet confirmed, poll for driver acceptance and start countdown
+                if (this.isPaymentConfirmed && !this.isDriverConfirmed && !this.isExpired) {
                     this.startPolling();
+                    this.startCountdown();
                 }
+            },
+
+            startCountdown() {
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    if (this.isDriverConfirmed || this.bookingStatus === 'cancelled' || this.isExpired) {
+                        clearInterval(this.countdownInterval);
+                        return;
+                    }
+                    if (this.remainingSeconds > 0) {
+                        this.remainingSeconds--;
+                    } else {
+                        clearInterval(this.countdownInterval);
+                        this.isExpired = true;
+                        this.bookingStatus = 'cancelled';
+                        this.cancellationReason = 'No driver accepted within the waiting period.';
+                        if (this.pollingInterval) clearInterval(this.pollingInterval);
+                    }
+                }, 1000);
+            },
+
+            get countdownFormatted() {
+                const total = Math.max(0, this.remainingSeconds);
+                const mins = Math.floor(total / 60);
+                const secs = total % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
             },
 
             startPolling() {
@@ -609,14 +723,27 @@
                             this.isPaymentConfirmed = data.is_payment_confirmed;
                             this.isDriverConfirmed = data.is_driver_confirmed;
 
+                            if (typeof data.remaining_seconds === 'number' && !this.isDriverConfirmed) {
+                                this.remainingSeconds = data.remaining_seconds;
+                            }
+
+                            if (data.is_expired || data.booking_status === 'cancelled') {
+                                this.isExpired = true;
+                                this.bookingStatus = 'cancelled';
+                                this.cancellationReason = data.cancellation_reason || 'No driver accepted within the waiting period.';
+                                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                                if (this.pollingInterval) clearInterval(this.pollingInterval);
+                            }
+
                             if (this.isPaymentConfirmed && this.isDriverConfirmed && data.driver) {
                                 this.driver = Object.assign({}, this.driver || {}, data.driver);
                             } else if (!this.isPaymentConfirmed || !this.isDriverConfirmed) {
                                 this.driver = null;
                             }
 
-                            if (this.isDriverConfirmed && this.pollingInterval) {
-                                clearInterval(this.pollingInterval);
+                            if (this.isDriverConfirmed) {
+                                if (this.pollingInterval) clearInterval(this.pollingInterval);
+                                if (this.countdownInterval) clearInterval(this.countdownInterval);
                             }
                         }
                     }
@@ -666,6 +793,7 @@
                         this.isPaymentConfirmed = true;
                         this.currentPaymentStatus = data.payment_status || (method === 'cash' ? 'pending_cash' : 'hold');
                         this.startPolling();
+                        this.startCountdown();
                     } else {
                         alert(data.message || 'Payment hold authorization failed. Please try again.');
                     }

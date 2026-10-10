@@ -232,9 +232,30 @@ class StripeVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
         }
 
+        $isExpired = false;
+        if (in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
+            if (method_exists($booking, 'isExpired') && $booking->isExpired()) {
+                $isExpired = true;
+                if ($serviceType === 'ride' || $serviceType === 'rental') {
+                    \App\Services\RequestExpirationService::cancelExpiredRide($booking, 'No driver accepted within the waiting period.');
+                } else {
+                    \App\Services\RequestExpirationService::cancelExpiredDelivery($booking, 'No courier accepted within the waiting period.');
+                }
+                $booking->refresh();
+            }
+        }
+
+        $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+            ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
+            : \App\Services\SettingService::rideWaitingTimeMinutes();
+
+        $remainingSeconds = method_exists($booking, 'remainingSeconds')
+            ? $booking->remainingSeconds()
+            : 0;
+
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
         $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash']);
-        $bookingStatus = strtolower($booking->booking_status ?? 'pending');
+        $bookingStatus = strtolower($booking->booking_status ?? $booking->status ?? 'pending');
         $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
 
         $driverData = null;
@@ -278,7 +299,13 @@ class StripeVerificationController extends Controller
             'is_driver_confirmed' => $isDriverConfirmed,
             'driver' => $driverData,
             'rejection_reason' => $booking->rejection_reason,
+            'cancellation_reason' => $booking->cancellation_reason ?? null,
             'is_verified' => ($booking->verification_status === 'driver_verified'),
+            'expires_at' => $booking->expires_at ? $booking->expires_at->toIso8601String() : null,
+            'waiting_time_minutes' => $waitingMinutes,
+            'waiting_time_seconds' => $waitingMinutes * 60,
+            'remaining_seconds' => $remainingSeconds,
+            'is_expired' => $isExpired || ($bookingStatus === 'cancelled' && str_contains(strtolower($booking->cancellation_reason ?? ''), 'waiting period')),
         ]);
     }
 
@@ -1041,6 +1068,28 @@ class StripeVerificationController extends Controller
             $custPhone = Auth::user()->phone;
         }
 
+        $isExpired = false;
+        if (in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
+            if (method_exists($booking, 'isExpired') && $booking->isExpired()) {
+                $isExpired = true;
+                if ($serviceType === 'ride' || $serviceType === 'rental') {
+                    \App\Services\RequestExpirationService::cancelExpiredRide($booking, 'No driver accepted within the waiting period.');
+                } else {
+                    \App\Services\RequestExpirationService::cancelExpiredDelivery($booking, 'No courier accepted within the waiting period.');
+                }
+                $booking->refresh();
+                $bookingStatus = strtolower($booking->booking_status ?? $booking->status ?? 'cancelled');
+            }
+        }
+
+        $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+            ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
+            : \App\Services\SettingService::rideWaitingTimeMinutes();
+
+        $remainingSeconds = method_exists($booking, 'remainingSeconds')
+            ? $booking->remainingSeconds()
+            : ($waitingMinutes * 60);
+
         return [
             'serviceType' => $serviceType,
             'serviceId' => $serviceId,
@@ -1064,6 +1113,11 @@ class StripeVerificationController extends Controller
             'paidAt' => $transaction?->paid_at ? $transaction->paid_at->format('M d, Y • h:i A') : ($booking->updated_at ? $booking->updated_at->format('M d, Y • h:i A') : date('M d, Y • h:i A')),
             'paidMethod' => $transaction->payment_method ?? $booking->payment_method ?? 'stripe',
             'customerPhone' => $custPhone ?? '',
+            'expiresAt' => $booking->expires_at ? $booking->expires_at->toIso8601String() : null,
+            'remainingSeconds' => $remainingSeconds,
+            'waitingMinutes' => $waitingMinutes,
+            'isExpired' => $isExpired || ($bookingStatus === 'cancelled'),
+            'cancellationReason' => $booking->cancellation_reason ?? $booking->rejection_reason ?? null,
         ];
     }
 

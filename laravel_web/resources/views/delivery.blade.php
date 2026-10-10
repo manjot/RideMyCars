@@ -1685,10 +1685,12 @@
                             return;
                         }
 
-                        if (this.paymentMethod === 'stripe' || this.paymentMethod === 'card' || (data.redirect_url && data.redirect_url.includes('verify-details'))) {
-                            window.location.href = data.redirect_url || ('/payment/verify-details/package_delivery/' + data.delivery_id);
+                        if (data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                        } else if (this.paymentMethod === 'stripe' || this.paymentMethod === 'card' || this.paymentMethod === 'momo' || this.paymentMethod === 'cash') {
+                            window.location.href = '/payment/verify-details/package_delivery/' + data.delivery_id;
                         } else {
-                            window.location.href = data.redirect_url || ('/admin/package-delivery-tracker/' + data.delivery_id);
+                            window.location.href = '/delivery/' + data.delivery_id + '/tracker';
                         }
                     } catch (err) {
                         console.error("Delivery submission error:", err);

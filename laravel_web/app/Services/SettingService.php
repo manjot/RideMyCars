@@ -561,5 +561,26 @@ class SettingService
     {
         return filter_var(static::get('dispatch.auto_cancel_unaccepted', true), FILTER_VALIDATE_BOOLEAN);
     }
+
+    /** Shorthand aliases */
+    public static function rideWaitingTimeMinutes(): int
+    {
+        return static::getRideWaitingTimeMinutes();
+    }
+
+    public static function deliveryWaitingTimeMinutes(): int
+    {
+        return static::getDeliveryWaitingTimeMinutes();
+    }
+
+    public static function rideWaitingTimeSeconds(): int
+    {
+        return static::getRideWaitingTimeSeconds();
+    }
+
+    public static function deliveryWaitingTimeSeconds(): int
+    {
+        return static::getDeliveryWaitingTimeSeconds();
+    }
 }
 
