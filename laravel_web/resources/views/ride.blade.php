@@ -1561,6 +1561,13 @@
                     this.initScheduleDefaults();
                     this.initUserLocation();
                     this.checkForActiveRide();
+
+                    window.addEventListener('resume-ride-map', (evt) => {
+                        const rId = evt?.detail?.rideId;
+                        if (rId) {
+                            this.checkForActiveRide(rId);
+                        }
+                    });
                 },
 
                 selectCategory(cat) {
@@ -1580,9 +1587,9 @@
                     };
                 },
 
-                async checkForActiveRide() {
+                async checkForActiveRide(specificRideId = null) {
                     const urlParams = new URLSearchParams(window.location.search);
-                    const resumeId = urlParams.get('resume') || localStorage.getItem('rmc_active_ride_id');
+                    const resumeId = specificRideId || urlParams.get('resume') || localStorage.getItem('rmc_active_ride_id');
                     if (!resumeId) return;
 
                     try {
@@ -1594,6 +1601,21 @@
                                 localStorage.setItem('rmc_active_ride_id', resumeId);
                                 if (data.pickup) this.pickup = data.pickup;
                                 if (data.dropoff) this.dropoff = data.dropoff;
+                                if (data.pickup_lat && data.pickup_lng) {
+                                    this.pickupLat = parseFloat(data.pickup_lat);
+                                    this.pickupLng = parseFloat(data.pickup_lng);
+                                }
+                                if (data.dropoff_lat && data.dropoff_lng) {
+                                    this.dropoffLat = parseFloat(data.dropoff_lat);
+                                    this.dropoffLng = parseFloat(data.dropoff_lng);
+                                }
+                                if (this.pickupLat && this.pickupLng && this.dropoffLat && this.dropoffLng) {
+                                    setTimeout(() => {
+                                        if (typeof this.updateMapRoute === 'function') {
+                                            this.updateMapRoute();
+                                        }
+                                    }, 400);
+                                }
                                 if (data.driver) {
                                     this.driverName = data.driver.name || 'Driver';
                                     this.driverPlate = data.driver.vehicle_plate || '';

@@ -2678,7 +2678,7 @@
                     <div class="space-y-2.5 pt-2">
                         <!-- Open Google Maps Turn-by-Turn Navigation -->
                         <a :href="googleMapsUrl" target="_blank" rel="noopener noreferrer"
-                           @click="openNavigation()"
+                           @click="openGoogleMapsNavigation($event)"
                            class="block w-full text-center py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                            style="background-color: #059669 !important; color: #ffffff !important;">
                             <span class="text-base">🧭</span>
@@ -2688,7 +2688,8 @@
 
                         <!-- In-App Track on Live Map -->
                         <a :href="'/ride?resume=' + (ride ? ride.id : '')" 
-                           class="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold text-xs rounded-2xl hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                           @click="viewInRideMyCarsMap($event)"
+                           class="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold text-xs rounded-2xl hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
                             <span>🗺️</span>
                             <span>View in RideMyCars Map</span>
                             <span>→</span>
@@ -2696,7 +2697,8 @@
 
                         <!-- Dedicated Full Live GPS Tracking Page -->
                         <a :href="'/ride/track/' + (ride ? ride.id : '')" 
-                           class="block w-full text-center py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold text-xs rounded-2xl shadow-md transition-all flex items-center justify-center gap-2">
+                           @click="openDedicatedTracker($event)"
+                           class="block w-full text-center py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold text-xs rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
                             <span>📍</span>
                             <span>Open Dedicated Live GPS Tracker</span>
                             <span>→</span>
@@ -2759,9 +2761,9 @@
                 <!-- Quick Action Buttons -->
                 <div class="flex items-center gap-1 shrink-0 ml-1">
                     <a :href="googleMapsUrl" target="_blank" rel="noopener noreferrer"
-                       @click.stop="openNavigation()"
+                       @click.stop="openGoogleMapsNavigation($event)"
                        title="Navigate in Google Maps"
-                       class="w-7 h-7 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 flex items-center justify-center text-xs transition-colors border border-emerald-500/30">
+                       class="w-7 h-7 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 flex items-center justify-center text-xs transition-colors border border-emerald-500/30 cursor-pointer">
                         🧭
                     </a>
                     <button type="button" @click.stop="expanded = true" 
@@ -2806,25 +2808,87 @@
                 let origin = '';
                 let destination = '';
 
-                if (this.ride.pickup_lat && this.ride.pickup_lng) {
+                if (this.ride.pickup_lat && this.ride.pickup_lng && parseFloat(this.ride.pickup_lat) !== 0) {
                     origin = `${this.ride.pickup_lat},${this.ride.pickup_lng}`;
-                } else {
-                    origin = encodeURIComponent(this.ride.pickup_location || '');
+                } else if (this.ride.pickup_location) {
+                    origin = encodeURIComponent(this.ride.pickup_location.trim());
                 }
 
-                if (this.ride.dropoff_lat && this.ride.dropoff_lng) {
+                if (this.ride.dropoff_lat && this.ride.dropoff_lng && parseFloat(this.ride.dropoff_lat) !== 0) {
                     destination = `${this.ride.dropoff_lat},${this.ride.dropoff_lng}`;
-                } else {
-                    destination = encodeURIComponent(this.ride.dropoff_location || '');
+                } else if (this.ride.dropoff_location) {
+                    destination = encodeURIComponent(this.ride.dropoff_location.trim());
+                }
+
+                if (!destination && !origin) return '#';
+                if (destination && !origin) {
+                    return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
                 }
 
                 return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
             },
-            openNavigation() {
-                setTimeout(() => {
-                    this.expanded = false;
-                    this.dismissed = false;
-                }, 500);
+            openGoogleMapsNavigation(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const url = this.googleMapsUrl;
+                if (!url || url === '#' || url.length < 15) {
+                    alert('Route navigation coordinates are not available yet.');
+                    return;
+                }
+                // Minimize modal so customer can return to app smoothly
+                this.expanded = false;
+                this.dismissed = false;
+
+                const win = window.open(url, '_blank');
+                if (!win || win.closed || typeof win.closed === 'undefined') {
+                    window.location.href = url;
+                }
+            },
+            viewInRideMyCarsMap(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                if (!this.ride) return;
+                const rideId = this.ride.id;
+                try {
+                    localStorage.setItem('rmc_active_ride_id', rideId);
+                    sessionStorage.setItem('rmc_active_ride_id', rideId);
+                } catch(err) {}
+
+                // Hide the modal immediately so the live map underneath is fully revealed!
+                this.expanded = false;
+                this.dismissed = true;
+
+                if (window.location.pathname === '/ride') {
+                    const mapContainer = document.getElementById('map') || document.querySelector('.leaflet-container') || document.querySelector('main');
+                    if (mapContainer) {
+                        mapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    window.dispatchEvent(new CustomEvent('resume-ride-map', { detail: { rideId: rideId, ride: this.ride } }));
+                } else {
+                    window.location.href = '/ride?resume=' + encodeURIComponent(rideId);
+                }
+            },
+            openDedicatedTracker(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const rideId = (this.ride && this.ride.id) || localStorage.getItem('rmc_active_ride_id');
+                if (!rideId) {
+                    window.location.href = '/ride/track';
+                    return;
+                }
+                try {
+                    localStorage.setItem('rmc_active_ride_id', rideId);
+                    sessionStorage.setItem('rmc_active_ride_id', rideId);
+                } catch(err) {}
+
+                this.expanded = false;
+                window.location.href = '/ride/track/' + encodeURIComponent(rideId);
             },
             init() {
                 this.check();
