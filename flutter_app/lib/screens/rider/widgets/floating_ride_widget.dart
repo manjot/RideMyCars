@@ -24,7 +24,12 @@ class FloatingRideWidget extends StatelessWidget {
   }
 
   Future<void> _launchMaps() async {
-    final dest = ride['dropoff_location'] ?? ride['pickup_location'] ?? '';
+    String dest = '';
+    if (ride['dropoff_lat'] != null && ride['dropoff_lng'] != null && ride['dropoff_lat'].toString() != '0') {
+      dest = '${ride['dropoff_lat']},${ride['dropoff_lng']}';
+    } else {
+      dest = ride['dropoff_location']?.toString() ?? ride['pickup_location']?.toString() ?? '';
+    }
     if (dest.isEmpty) return;
 
     final uri = Uri.parse(

@@ -74,13 +74,32 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   }
 
   Future<void> _launchGoogleMaps() async {
-    final pickup = widget.ride['pickup_location'] ?? '';
-    final dropoff = widget.ride['dropoff_location'] ?? '';
-    if (dropoff.isEmpty) return;
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
+    final currentRide = rideProv.activeRide ?? widget.ride;
 
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&origin=${Uri.encodeComponent(pickup)}&destination=${Uri.encodeComponent(dropoff)}&travelmode=driving',
-    );
+    String origin = '';
+    if (currentRide['pickup_lat'] != null && currentRide['pickup_lng'] != null && currentRide['pickup_lat'].toString() != '0') {
+      origin = '${currentRide['pickup_lat']},${currentRide['pickup_lng']}';
+    } else {
+      origin = currentRide['pickup_location']?.toString() ?? '';
+    }
+
+    String destination = '';
+    if (currentRide['dropoff_lat'] != null && currentRide['dropoff_lng'] != null && currentRide['dropoff_lat'].toString() != '0') {
+      destination = '${currentRide['dropoff_lat']},${currentRide['dropoff_lng']}';
+    } else {
+      destination = currentRide['dropoff_location']?.toString() ?? '';
+    }
+
+    if (destination.isEmpty && origin.isEmpty) return;
+
+    final uri = destination.isNotEmpty && origin.isNotEmpty
+        ? Uri.parse(
+            'https://www.google.com/maps/dir/?api=1&origin=${Uri.encodeComponent(origin)}&destination=${Uri.encodeComponent(destination)}&travelmode=driving',
+          )
+        : Uri.parse(
+            'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(destination.isNotEmpty ? destination : origin)}&travelmode=driving',
+          );
 
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

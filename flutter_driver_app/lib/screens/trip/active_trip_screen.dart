@@ -71,9 +71,15 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   String get _currentDestination {
     final status = _ride['status'];
     if (status == 'in_progress') {
-      return _ride['dropoff_location'] ?? '';
+      if (_ride['dropoff_lat'] != null && _ride['dropoff_lng'] != null && _ride['dropoff_lat'].toString() != '0') {
+        return '${_ride['dropoff_lat']},${_ride['dropoff_lng']}';
+      }
+      return _ride['dropoff_location']?.toString() ?? '';
     }
-    return _ride['pickup_location'] ?? '';
+    if (_ride['pickup_lat'] != null && _ride['pickup_lng'] != null && _ride['pickup_lat'].toString() != '0') {
+      return '${_ride['pickup_lat']},${_ride['pickup_lng']}';
+    }
+    return _ride['pickup_location']?.toString() ?? '';
   }
 
   Future<void> _launchGoogleMapsNavigation() async {
