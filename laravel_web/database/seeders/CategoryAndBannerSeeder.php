@@ -36,22 +36,42 @@ class CategoryAndBannerSeeder extends Seeder
             'Executive Car & Sedan Comfort',
             'Fast Bike & Motorbike City Hops',
             'Eco-Friendly Scooti City Mobility',
+            'Ride More, Pay Less — 50% Off First 3 Rides',
+            'Executive Sedan Comfort & Low Fares',
+            'Ride More, Pay Less — 50% Off First 3 Rides (Hatchback)',
+            'Ride More, Pay Less — 50% Off First 3 Rides (Sedan Edition)',
         ])->delete();
 
         // Banners Data (Campaigns & Offers)
         $banners = [
             [
                 'category_id' => $createdCategories['Ride']->id,
-                'title' => 'Ride More, Pay Less — 50% Off First 3 Rides (Hatchback)',
-                'description' => 'Download ridemycars.com app and get 50% off your first 3 rides with vetted drivers.',
+                'title' => 'Welcome Offer: 50% Off First 3 Trips',
+                'description' => 'New to RideMyCars? Use promo code RIDE50 at checkout to save 50% on your first three rides across Greater Accra & Tema.',
                 'image' => 'images/promo-ride-payless.jpg',
                 'link' => '/ride',
                 'status' => 'active',
             ],
             [
                 'category_id' => $createdCategories['Ride']->id,
-                'title' => 'Ride More, Pay Less — 50% Off First 3 Rides (Sedan Edition)',
-                'description' => 'Fast rides, 24/7 available, low fares. Enjoy 50% off your first 3 trips in executive sedans.',
+                'title' => 'Executive Sedans & Airport Transfers',
+                'description' => 'Travel in spotless comfort with verified private chauffeurs, extra legroom, air-conditioning, and guaranteed on-time airport pickups.',
+                'image' => 'images/promo-ride-payless-sedan.jpg',
+                'link' => '/ride',
+                'status' => 'active',
+            ],
+            [
+                'category_id' => $createdCategories['Ride']->id,
+                'title' => 'Affordable Hatchbacks for Daily Commuting',
+                'description' => 'Beat Accra rush hour traffic with nimble, fuel-efficient compact hatchbacks at our lowest everyday upfront rates.',
+                'image' => 'images/promo-ride-payless.jpg',
+                'link' => '/ride',
+                'status' => 'active',
+            ],
+            [
+                'category_id' => $createdCategories['Ride']->id,
+                'title' => 'Reliable 24/7 Rides with Zero Surge Pricing',
+                'description' => 'No hidden multipliers or midnight price hikes. Enjoy real-time GPS tracking, 24/7 emergency dispatch, and instant MoMo payments.',
                 'image' => 'images/promo-ride-payless-sedan.jpg',
                 'link' => '/ride',
                 'status' => 'active',

@@ -3599,20 +3599,63 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['categories_explicit_migrate_err'] = $e->getMessage();
     }
 
-    // Purge the 3 vehicle card banner divs (Executive Car, Fast Bike, Eco-Friendly Scooti)
+    // Purge and sync 4 unique Ride category banner cards with distinct headings & descriptions
     try {
         if (\Illuminate\Support\Facades\Schema::hasTable('banners')) {
+            $rideCatId = \Illuminate\Support\Facades\DB::table('categories')->where('slug', 'ride')->value('id') ?? 1;
+
             \Illuminate\Support\Facades\DB::table('banners')
-                ->whereIn('title', [
-                    'Executive Car & Sedan Comfort',
-                    'Fast Bike & Motorbike City Hops',
-                    'Eco-Friendly Scooti City Mobility',
-                ])
+                ->where('category_id', $rideCatId)
                 ->delete();
 
-            // Execute CategoryAndBannerSeeder
+            $uniqueRideBanners = [
+                [
+                    'category_id' => $rideCatId,
+                    'title' => 'Welcome Offer: 50% Off First 3 Trips',
+                    'description' => 'New to RideMyCars? Use promo code RIDE50 at checkout to save 50% on your first three rides across Greater Accra & Tema.',
+                    'image' => 'images/promo-ride-payless.jpg',
+                    'link' => '/ride',
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'category_id' => $rideCatId,
+                    'title' => 'Executive Sedans & Airport Transfers',
+                    'description' => 'Travel in spotless comfort with verified private chauffeurs, extra legroom, air-conditioning, and guaranteed on-time airport pickups.',
+                    'image' => 'images/promo-ride-payless-sedan.jpg',
+                    'link' => '/ride',
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'category_id' => $rideCatId,
+                    'title' => 'Affordable Hatchbacks for Daily Commuting',
+                    'description' => 'Beat Accra rush hour traffic with nimble, fuel-efficient compact hatchbacks at our lowest everyday upfront rates.',
+                    'image' => 'images/promo-ride-payless.jpg',
+                    'link' => '/ride',
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'category_id' => $rideCatId,
+                    'title' => 'Reliable 24/7 Rides with Zero Surge Pricing',
+                    'description' => 'No hidden multipliers or midnight price hikes. Enjoy real-time GPS tracking, 24/7 emergency dispatch, and instant MoMo payments.',
+                    'image' => 'images/promo-ride-payless-sedan.jpg',
+                    'link' => '/ride',
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ];
+
+            \Illuminate\Support\Facades\DB::table('banners')->insert($uniqueRideBanners);
+
+            // Execute CategoryAndBannerSeeder for remaining categories (Rent, Delivery, etc.)
             \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CategoryAndBannerSeeder', '--force' => true]);
-            $output['removed_marked_vehicle_banners'] = true;
+            $output['unique_4_ride_banners_synced'] = true;
         }
     } catch (\Throwable $e) {
         $output['banner_sync_err'] = $e->getMessage();

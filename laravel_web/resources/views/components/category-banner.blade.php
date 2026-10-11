@@ -14,6 +14,35 @@
               ->orWhere('slug', \Illuminate\Support\Str::slug($catName));
         })
         ->get();
+
+    // Ensure all 4 Ride banner cards have 100% distinct, unique headings and descriptions
+    if (in_array(strtolower($catName), ['ride', 'rides'])) {
+        $uniqueRideDetails = [
+            0 => [
+                'title' => 'Welcome Offer: 50% Off First 3 Trips',
+                'description' => 'New to RideMyCars? Use promo code RIDE50 at checkout to save 50% on your first three rides across Greater Accra & Tema.',
+            ],
+            1 => [
+                'title' => 'Executive Sedans & Airport Transfers',
+                'description' => 'Travel in spotless comfort with verified private chauffeurs, extra legroom, air-conditioning, and guaranteed on-time airport pickups.',
+            ],
+            2 => [
+                'title' => 'Affordable Hatchbacks for Daily Commuting',
+                'description' => 'Beat Accra rush hour traffic with nimble, fuel-efficient compact hatchbacks at our lowest everyday upfront rates.',
+            ],
+            3 => [
+                'title' => 'Reliable 24/7 Rides with Zero Surge Pricing',
+                'description' => 'No hidden multipliers or midnight price hikes. Enjoy real-time GPS tracking, 24/7 emergency dispatch, and instant MoMo payments.',
+            ],
+        ];
+
+        foreach ($banners as $idx => $b) {
+            if (isset($uniqueRideDetails[$idx])) {
+                $b->title = $uniqueRideDetails[$idx]['title'];
+                $b->description = $uniqueRideDetails[$idx]['description'];
+            }
+        }
+    }
 @endphp
 
 @if($banners->count() > 0)
