@@ -1327,163 +1327,186 @@
                             @endif
                         </button>
                         
-                        <div x-show="userMenuOpen" x-transition class="dropdown-menu-card absolute top-full right-0 mt-2.5 sm:mt-4 w-[calc(100vw-32px)] sm:w-[340px] max-w-[340px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 sm:p-5 z-[110]" style="display: none;">
+                        <div x-show="userMenuOpen" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                             class="dropdown-menu-card absolute top-full right-0 mt-2.5 sm:mt-3 w-[calc(100vw-32px)] sm:w-[350px] max-w-[350px] bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl p-4 z-[120] flex flex-col max-h-[calc(100vh-95px)] overflow-hidden" 
+                             style="display: none;">
                             
-                            <!-- Header -->
-                            <div class="flex items-center justify-between mb-6">
+                            <!-- Header (Fixed top) -->
+                            <div class="flex items-center justify-between pb-3.5 mb-2.5 border-b border-gray-100 dark:border-white/10 shrink-0">
                                 <div class="overflow-hidden pr-3">
-                                    <h2 class="text-xl font-bold text-black dark:text-white leading-tight truncate">{{ auth()->user()->name }}</h2>
-                                    <div class="inline-flex items-center gap-1 bg-[#f0f0f0] dark:bg-gray-800 px-2 py-0.5 rounded-full mt-1.5">
+                                    <h2 class="text-lg font-bold text-black dark:text-white leading-tight truncate">{{ auth()->user()->name }}</h2>
+                                    <div class="inline-flex items-center gap-1.5 bg-[#f0f0f0] dark:bg-gray-800 px-2 py-0.5 rounded-full mt-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                                         <span class="text-xs font-bold text-gray-900 dark:text-white">5.00</span>
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500">·</span>
+                                        <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 capitalize">{{ auth()->user()->role ?? 'Client' }}</span>
                                     </div>
                                 </div>
                                 @if(auth()->user()->avatar_url)
-                                    <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-brand-500 shadow-md shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div style="display: none;" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-500 text-black items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
+                                    <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-brand-500 shadow-md shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div style="display: none;" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-brand-500 text-black items-center justify-center font-bold text-lg sm:text-xl shrink-0">
                                         {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
                                     </div>
                                 @else
-                                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-500 text-black flex items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
+                                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-brand-500 text-black flex items-center justify-center font-bold text-lg sm:text-xl shrink-0">
                                         {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
                                     </div>
                                 @endif
                             </div>
 
-                            @if(auth()->user()->role === 'owner')
-                            <!-- Owner Action Buttons -->
-                            <div class="flex items-stretch gap-2 mb-4">
-                                <a href="/owner/dashboard" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
-                                    <span class="text-xl">🔑</span>
-                                    <span class="text-xs font-bold text-blue-600 dark:text-blue-400">Owner Portal</span>
+                            <!-- Scrollable Menu Items -->
+                            <div class="overflow-y-auto flex-1 pr-1 overscroll-contain space-y-2.5" style="scrollbar-width: thin;">
+                                @if(auth()->user()->role === 'owner')
+                                <!-- Owner Action Buttons -->
+                                <div class="flex items-stretch gap-2 mb-2">
+                                    <a href="/owner/dashboard" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                                        <span class="text-lg">🔑</span>
+                                        <span class="text-xs font-bold text-blue-600 dark:text-blue-400">Owner Portal</span>
+                                    </a>
+                                    <a href="/owner/dashboard" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <span class="text-lg">🚗</span>
+                                        <span class="text-xs font-bold text-black dark:text-white">My Fleet</span>
+                                    </a>
+                                    <a href="/rent" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <span class="text-lg">🔍</span>
+                                        <span class="text-xs font-bold text-black dark:text-white">Rent Fleet</span>
+                                    </a>
+                                </div>
+
+                                <div class="flex flex-col space-y-0.5">
+                                    <a href="/owner/dashboard" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <span class="text-base">📊</span>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Fleet & Bookings</span>
+                                    </a>
+                                    <a href="/account" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <span class="text-base">⚙️</span>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Manage Account</span>
+                                    </a>
+                                </div>
+
+                                @elseif(auth()->user()->role === 'driver')
+                                <!-- Driver Action Buttons -->
+                                <div class="flex items-stretch gap-2 mb-2">
+                                    <a href="/driver/dashboard" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-black dark:text-white"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                                        <span class="text-xs font-bold text-black dark:text-white">Dashboard</span>
+                                    </a>
+                                    <a href="/wallet" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-black dark:text-white"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                        <span class="text-xs font-bold text-black dark:text-white">Earnings</span>
+                                    </a>
+                                    <a href="/help" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-black dark:text-white"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                                        <span class="text-xs font-bold text-black dark:text-white">Help</span>
+                                    </a>
+                                </div>
+
+                                <!-- Driver List Links -->
+                                <div class="flex flex-col space-y-0.5">
+                                    <a href="/driver/dashboard" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Driver Dashboard</span>
+                                    </a>
+                                    <a href="/driver/incentives" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <span class="text-base">🎁</span>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Incentive Program</span>
+                                        <span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400">Live</span>
+                                    </a>
+                                    <a href="/my-rides" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Ride History</span>
+                                    </a>
+                                    <a href="/account" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Manage account</span>
+                                    </a>
+                                    <a href="/sos" class="flex items-center gap-3 py-2 px-2.5 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
+                                        <div class="w-5 h-5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-black">
+                                            🚨
+                                        </div>
+                                        <span class="font-bold text-red-600 dark:text-red-400 text-[14px]">SOS Emergency Contacts</span>
+                                        <span class="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
+                                    </a>
+                                    <a href="/legal" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Legal</span>
+                                    </a>
+                                </div>
+                                @else
+                                <!-- Rider Action Buttons -->
+                                <div class="flex items-stretch gap-2 mb-2">
+                                    <a href="/help" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-black dark:text-white"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
+                                        <span class="text-xs font-bold text-black dark:text-white">Help</span>
+                                    </a>
+                                    <a href="/wallet" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-black dark:text-white"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                                        <span class="text-xs font-bold text-black dark:text-white">Wallet</span>
+                                    </a>
+                                    <a href="/activity" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-black dark:text-white"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                                        <span class="text-xs font-bold text-black dark:text-white">Activity</span>
+                                    </a>
+                                </div>
+
+                                <!-- RideMyCars Cash -->
+                                <a href="/wallet" class="flex items-center justify-between p-3 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
+                                    <span class="font-bold text-black dark:text-white text-xs sm:text-sm">RideMyCars Cash</span>
+                                    <span class="font-bold text-black dark:text-white text-base sm:text-lg">$0.00</span>
                                 </a>
-                                <a href="/owner/dashboard" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <span class="text-xl">🚗</span>
-                                    <span class="text-xs font-bold text-black dark:text-white">My Fleet</span>
-                                </a>
-                                <a href="/rent" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <span class="text-xl">🔍</span>
-                                    <span class="text-xs font-bold text-black dark:text-white">Rent Fleet</span>
-                                </a>
+
+                                <!-- Rider List Links -->
+                                <div class="flex flex-col space-y-0.5">
+                                    <a href="/account" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Manage account</span>
+                                    </a>
+                                    <a href="/sos" class="flex items-center gap-3 py-2 px-2.5 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
+                                        <div class="w-5 h-5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-black">
+                                            🚨
+                                        </div>
+                                        <span class="font-bold text-red-600 dark:text-red-400 text-[14px]">SOS Emergency Contacts</span>
+                                        <span class="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
+                                    </a>
+                                    <a href="/my-rides" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">My Rides</span>
+                                    </a>
+                                    <a href="/promotions" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.41l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.41zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Promotions</span>
+                                    </a>
+                                    <a href="/legal" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Legal</span>
+                                    </a>
+                                </div>
+                                @endif
                             </div>
 
-                            <div class="flex flex-col mb-4">
-                                <a href="/owner/dashboard" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <span class="text-lg">📊</span>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Fleet & Bookings</span>
-                                </a>
-                                <a href="/account" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <span class="text-lg">⚙️</span>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Manage Account</span>
-                                </a>
+                            <!-- Pinned Log Out Footer (Always visible) -->
+                            <div class="pt-3 mt-2 border-t border-gray-100 dark:border-white/10 shrink-0">
+                                <form method="POST" action="/logout">
+                                    @csrf
+                                    <button type="submit" class="w-full flex items-center justify-between py-2.5 px-3.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/60 rounded-xl transition-all text-left font-bold text-red-600 dark:text-red-400 text-[14px] group border border-red-200/60 dark:border-red-900/40 shadow-sm cursor-pointer">
+                                        <div class="flex items-center gap-2.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600 dark:text-red-400 group-hover:-translate-x-0.5 transition-transform">
+                                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                                <polyline points="16 17 21 12 16 7"/>
+                                                <line x1="21" x2="9" y1="12" y2="12"/>
+                                            </svg>
+                                            <span>Log Out</span>
+                                        </div>
+                                        <span class="text-xs font-semibold opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Sign out &rarr;</span>
+                                    </button>
+                                </form>
                             </div>
-
-                            @elseif(auth()->user()->role === 'driver')
-                            <!-- Driver Action Buttons -->
-                            <div class="flex items-stretch gap-2 mb-4">
-                                <a href="/driver/dashboard" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-black dark:text-white"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                                    <span class="text-xs font-bold text-black dark:text-white">Dashboard</span>
-                                </a>
-                                <a href="/wallet" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-black dark:text-white"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                    <span class="text-xs font-bold text-black dark:text-white">Earnings</span>
-                                </a>
-                                <a href="/help" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-black dark:text-white"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
-                                    <span class="text-xs font-bold text-black dark:text-white">Help</span>
-                                </a>
-                            </div>
-
-                            <!-- Driver List Links -->
-                            <div class="flex flex-col mb-4">
-                                <a href="/driver/dashboard" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Driver Dashboard</span>
-                                </a>
-                                <a href="/driver/incentives" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <span class="text-lg">🎁</span>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Incentive Program</span>
-                                    <span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400">Live</span>
-                                </a>
-                                <a href="/my-rides" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Ride History</span>
-                                </a>
-                                <a href="/account" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Manage account</span>
-                                </a>
-                                <a href="/sos" class="flex items-center gap-3 py-3 px-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
-                                    <div class="w-5 h-5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-black">
-                                        🚨
-                                    </div>
-                                    <span class="font-bold text-red-600 dark:text-red-400 text-[15px]">SOS Emergency Contacts</span>
-                                    <span class="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
-                                </a>
-                                <a href="/legal" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Legal</span>
-                                </a>
-                            </div>
-                            @else
-                            <!-- Rider Action Buttons -->
-                            <div class="flex items-stretch gap-2 mb-4">
-                                <a href="/help" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-black dark:text-white"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
-                                    <span class="text-xs font-bold text-black dark:text-white">Help</span>
-                                </a>
-                                <a href="/wallet" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-black dark:text-white"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-                                    <span class="text-xs font-bold text-black dark:text-white">Wallet</span>
-                                </a>
-                                <a href="/activity" class="flex-1 flex flex-col items-center justify-center gap-2 py-3 px-1 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-black dark:text-white"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-                                    <span class="text-xs font-bold text-black dark:text-white">Activity</span>
-                                </a>
-                            </div>
-
-                            <!-- RideMyCars Cash -->
-                            <a href="/wallet" class="flex items-center justify-between p-4 bg-[#f8f8f8] dark:bg-gray-800 rounded-xl mb-4 hover:bg-[#eaeaea] dark:hover:bg-gray-700 transition-colors">
-                                <span class="font-bold text-black dark:text-white text-sm">RideMyCars Cash</span>
-                                <span class="font-bold text-black dark:text-white text-lg">$0.00</span>
-                            </a>
-
-                            <!-- Rider List Links -->
-                            <div class="flex flex-col mb-4">
-                                <a href="/account" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Zm0 8a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm9 11v-1a7 7 0 0 0-7-7h-4a7 7 0 0 0-7 7v1h2v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1h2Z"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Manage account</span>
-                                </a>
-                                <a href="/sos" class="flex items-center gap-3 py-3 px-2 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
-                                    <div class="w-5 h-5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-black">
-                                        🚨
-                                    </div>
-                                    <span class="font-bold text-red-600 dark:text-red-400 text-[15px]">SOS Emergency Contacts</span>
-                                    <span class="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 border border-red-500/30">SOS</span>
-                                </a>
-                                <a href="/my-rides" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-900 dark:text-gray-300"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">My Rides</span>
-                                </a>
-                                <a href="/promotions" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.41l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.41zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Promotions</span>
-                                </a>
-                                <a href="/legal" class="flex items-center gap-3 py-3 px-2 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                    <span class="font-medium text-black dark:text-white text-[15px]">Legal</span>
-                                </a>
-                            </div>
-                            @endif
-
-                            <!-- Sign Out Button -->
-                            <form method="POST" action="/logout">
-                                @csrf
-                                <button type="submit" class="w-full py-3 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors text-left px-2 font-medium text-red-600 text-[15px]">
-                                    Sign out
-                                </button>
-                            </form>
                         </div>
                     </div>
                     @else
