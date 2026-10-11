@@ -670,42 +670,16 @@
                              },
                              {
                                  id: 2,
-                                 title: 'Chauffeur & Driver Career',
+                                 title: 'Chauffeur & Driver Partner Career',
                                  badge: 'KEEP 85-90% REVENUE',
                                  badgeColor: 'indigo',
-                                 duration: '0:33',
-                                 videoSrc: '{{ asset('videos/video-2.mp4') }}',
-                                 poster: '{{ asset('videos/poster-2.jpg') }}',
-                                 tagline: 'Only 10% Platform Fee — You Keep 85% to 90%',
-                                 desc: 'Why give away 25% or more to foreign apps? Keep 90% from your first trip with guaranteed weekly deposits and instant 24/7 MoMo.',
-                                 ctaText: 'Register as Driver',
-                                 ctaLink: '/become-driver'
-                             },
-                             {
-                                 id: 3,
-                                 title: 'Earnings & Instant Payouts',
-                                 badge: 'INSTANT 24/7 MOMO',
-                                 badgeColor: 'emerald',
                                  duration: '0:36',
                                  videoSrc: '{{ asset('videos/video-3.mp4') }}',
                                  poster: '{{ asset('videos/poster-3.jpg') }}',
-                                 tagline: 'Fast Mobile Money & Commercial Bank Transfers',
-                                 desc: 'Withdraw your trip earnings with zero waiting period. Direct to your MTN, Telecel, or AT Mobile Money wallet anytime.',
-                                 ctaText: 'Calculate Driver Profit',
-                                 ctaLink: '/become-driver#calculator'
-                             },
-                             {
-                                 id: 4,
-                                 title: 'Smart City Mobility',
-                                 badge: 'MULTI-MODAL TRANSIT',
-                                 badgeColor: 'blue',
-                                 duration: '0:25',
-                                 videoSrc: '{{ asset('videos/video-4.mp4') }}',
-                                 poster: '{{ asset('videos/poster-4.jpg') }}',
-                                 tagline: 'Cars, Bikes & Express Delivery at Your Fingertips',
-                                 desc: 'Book on-demand city trips, rent executive luxury cars, or send fast parcel couriers across Greater Accra and Tema.',
-                                 ctaText: 'Explore Services',
-                                 ctaLink: '/ride'
+                                 tagline: 'Only 10% Platform Fee — You Keep 85% to 90% with Instant MoMo',
+                                 desc: 'Why give away 25% or more to foreign apps? Keep 85% to 90% from your first trip with guaranteed weekly deposits and instant 24/7 MoMo.',
+                                 ctaText: 'Register as Driver',
+                                 ctaLink: '/become-driver'
                              }
                          ],
                          openPromoModal(v) {
@@ -738,35 +712,35 @@
                         </p>
                     </div>
 
-                    <!-- 4 Video Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- 2 Unique Videos Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         <template x-for="v in promoVideos" :key="v.id">
-                            <div class="group relative rounded-2xl overflow-hidden border border-white/20 hover:border-amber-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-1 aspect-[9/16] min-h-[420px] bg-black flex flex-col justify-between"
+                            <div class="group relative rounded-3xl overflow-hidden border-2 border-white/20 hover:border-amber-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-1 aspect-[9/16] min-h-[460px] bg-black flex flex-col justify-between"
                                  @click="openPromoModal(v)">
                                 <img :src="v.poster" :alt="v.title" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
                                 
-                                <div class="relative z-10 p-3.5 flex items-center justify-between">
-                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-black/75 border border-white/20 text-amber-300"
+                                <div class="relative z-10 p-5 flex items-center justify-between">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/75 border border-white/20 text-amber-300"
                                           x-text="v.badge"></span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/80 text-white text-[10px] font-bold">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 text-white text-[10px] font-bold">
                                         <svg class="w-3 h-3 fill-current text-amber-400" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                         <span x-text="v.duration"></span>
                                     </span>
                                 </div>
 
                                 <div class="relative z-10 my-auto flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/60 flex items-center justify-center text-white shadow-xl transition-all duration-300 group-hover:scale-115 group-hover:bg-amber-500 group-hover:text-black">
-                                        <svg class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border border-white/60 flex items-center justify-center text-white shadow-xl transition-all duration-300 group-hover:scale-115 group-hover:bg-amber-500 group-hover:text-black">
+                                        <svg class="w-7 h-7 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                     </div>
                                 </div>
 
-                                <div class="relative z-10 p-4 space-y-1 bg-gradient-to-t from-black via-black/85 to-transparent">
-                                    <h3 class="text-base font-black text-white leading-tight group-hover:text-amber-300 transition-colors" x-text="v.title"></h3>
-                                    <p class="text-[11px] text-gray-300 font-medium leading-snug line-clamp-2" x-text="v.tagline"></p>
-                                    <div class="pt-1 flex items-center justify-between text-[11px] font-bold text-amber-400">
+                                <div class="relative z-10 p-5 space-y-1.5 bg-gradient-to-t from-black via-black/85 to-transparent">
+                                    <h3 class="text-lg font-black text-white leading-tight group-hover:text-amber-300 transition-colors" x-text="v.title"></h3>
+                                    <p class="text-xs text-gray-300 font-medium leading-snug line-clamp-2" x-text="v.tagline"></p>
+                                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-amber-400">
                                         <span>Watch Reel ▶</span>
-                                        <span class="text-[9px] text-gray-400">🔊 Sound On</span>
+                                        <span class="text-[10px] text-gray-400">🔊 Sound On</span>
                                     </div>
                                 </div>
                             </div>

@@ -766,7 +766,7 @@
                          {
                              id: 1,
                              title: 'Executive Ride Experience',
-                             badge: '🎬 Rider Spotlight',
+                             badge: '🎬 Rider Spotlight • 50% Off',
                              badgeColor: 'amber',
                              borderClass: 'border-amber-400/40 hover:border-amber-400 hover:shadow-amber-500/25',
                              tagline: 'Riders Pay Less, Drivers Earn More',
@@ -787,69 +787,25 @@
                          },
                          {
                              id: 2,
-                             title: 'Chauffeur & Driver Career',
-                             badge: '⭐ Pro Chauffeurs',
+                             title: 'Professional Chauffeur & Driver Partner',
+                             badge: '⭐ Pro Chauffeurs • Keep 85-90%',
                              badgeColor: 'indigo',
                              borderClass: 'border-indigo-400/40 hover:border-indigo-400 hover:shadow-indigo-500/25',
-                             tagline: 'Love Driving? Keep 85-90% + Instant MoMo',
-                             duration: '0:33',
-                             videoSrc: '{{ asset('videos/video-2.mp4') }}',
-                             poster: '{{ asset('videos/poster-2.jpg') }}',
-                             desc: 'Drive executive sedans for high-value corporate clients and travelers. Benefit from our lowest 10% platform fee, simple 3-step online registration, and guaranteed daily payouts.',
-                             highlights: [
-                                 'Keep 85% to 90% from Trip #1',
-                                 '3-step rapid online registration',
-                                 'Verified corporate riders & executive trips',
-                                 'Daily instant MoMo cashouts 24/7'
-                             ],
-                             ctaText: 'Register as Chauffeur',
-                             ctaLink: '/driver-signup',
-                             secondaryText: 'Driver Partner Model',
-                             secondaryLink: '/become-driver'
-                         },
-                         {
-                             id: 3,
-                             title: 'Earnings & Instant Payouts',
-                             badge: '💰 Driver Partner',
-                             badgeColor: 'emerald',
-                             borderClass: 'border-emerald-400/40 hover:border-emerald-400 hover:shadow-emerald-500/25',
-                             tagline: 'Fast Mobile Money & Bank Payouts',
+                             tagline: 'Love Driving? Keep 85-90% + Instant 24/7 MoMo Cash Outs',
                              duration: '0:36',
                              videoSrc: '{{ asset('videos/video-3.mp4') }}',
                              poster: '{{ asset('videos/poster-3.jpg') }}',
-                             desc: 'Take complete control over your earnings. Cash out instantly 24/7 directly to your Mobile Money (MTN, Telecel, AT) or receive weekly direct bank deposits without delays.',
+                             desc: 'Drive executive sedans for high-value corporate clients and travelers. Benefit from our lowest 10% platform fee, simple 3-step online registration, and guaranteed daily payouts directly to Mobile Money.',
                              highlights: [
-                                 'Instant 24/7 Mobile Money cash outs',
-                                 'Weekly direct bank deposits with 0 fees',
-                                 'Live telemetry & transparent gross fares',
-                                 'Only 10% platform fee — keep 90%'
+                                 'Keep 85% to 90% from Trip #1',
+                                 '3-step rapid online registration',
+                                 'Instant 24/7 MoMo & bank withdrawals',
+                                 'Verified executive & corporate riders'
                              ],
-                             ctaText: 'Calculate Your Profit',
-                             ctaLink: '/become-driver#calculator',
-                             secondaryText: 'Sign Up to Drive',
-                             secondaryLink: '/driver-signup'
-                         },
-                         {
-                             id: 4,
-                             title: 'Smart City Mobility',
-                             badge: '⚡ Smart Transit',
-                             badgeColor: 'blue',
-                             borderClass: 'border-blue-400/40 hover:border-blue-400 hover:shadow-blue-500/25',
-                             tagline: 'Affordable, Safe & Fast Transit Across Accra',
-                             duration: '0:25',
-                             videoSrc: '{{ asset('videos/video-4.mp4') }}',
-                             poster: '{{ asset('videos/poster-4.jpg') }}',
-                             desc: 'One unified mobility super-app for city rides, luxury rentals, certified drivers, and instant package deliveries across Greater Accra and Tema.',
-                             highlights: [
-                                 'Cars, Bikes & Scootis at your fingertips',
-                                 'Average pickup within 3 to 5 minutes',
-                                 'Vetted, background-checked chauffeurs',
-                                 'Same-day door-to-door courier dispatches'
-                             ],
-                             ctaText: 'Book a Ride Now',
-                             ctaLink: '/ride',
-                             secondaryText: 'Send a Package',
-                             secondaryLink: '/delivery'
+                             ctaText: 'Register as Chauffeur',
+                             ctaLink: '/driver-signup',
+                             secondaryText: 'Calculate Driver Profit',
+                             secondaryLink: '/become-driver#calculator'
                          }
                      ],
                      openModal(video) {
@@ -887,7 +843,7 @@
             <div class="absolute -bottom-32 right-1/4 w-[600px] h-[400px] bg-indigo-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] bg-emerald-500/5 blur-[160px] rounded-full pointer-events-none -z-10"></div>
 
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 
                 <!-- Section Header -->
                 <div class="text-center max-w-3xl mx-auto mb-14">
@@ -899,24 +855,24 @@
                         Experience RideMyCars <span class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">In Motion</span>
                     </h2>
                     <p class="text-sm sm:text-base text-gray-300 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
-                        Watch our verified video spotlights: executive rider comfort, chauffeur career opportunities, driver yield with instant MoMo cash-outs, and rapid city transit.
+                        Watch our verified video spotlights: executive rider comfort across Accra, and chauffeur opportunities with guaranteed 85% to 90% payouts and instant MoMo cash-outs.
                     </p>
                 </div>
 
-                <!-- 4 Video Reels Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
+                <!-- 2 Unique Video Reels Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                     <template x-for="video in videos" :key="video.id">
-                        <div class="group relative rounded-[2rem] overflow-hidden border-2 bg-gradient-to-b from-[#141822] via-[#0f121a] to-[#0b0e14] transition-all duration-500 cursor-pointer shadow-2xl hover:-translate-y-2 flex flex-col justify-between aspect-[9/16] min-h-[480px]"
+                        <div class="group relative rounded-[2rem] overflow-hidden border-2 bg-gradient-to-b from-[#141822] via-[#0f121a] to-[#0b0e14] transition-all duration-500 cursor-pointer shadow-2xl hover:-translate-y-2 flex flex-col justify-between aspect-[9/16] min-h-[500px] sm:min-h-[540px]"
                              :class="video.borderClass"
                              @click="openModal(video)">
                             
-                            <!-- Video Poster / Frame Background with Gentle Zoom -->
+                            <!-- Video Poster Background with Gentle Zoom -->
                             <img :src="video.poster" 
                                  :alt="video.title" 
                                  class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                                  loading="lazy">
 
-                            <!-- Cinematic Dark Gradient Overlays for High Contrast Readability -->
+                            <!-- Cinematic Dark Gradient Overlays -->
                             <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30 group-hover:from-black/95 group-hover:via-black/55 transition-all duration-300"></div>
 
                             <!-- Top Bar: Category Pill & Duration Badge -->
@@ -924,9 +880,7 @@
                                 <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border"
                                       :class="{
                                           'bg-amber-500/90 text-gray-950 border-amber-300': video.badgeColor === 'amber',
-                                          'bg-indigo-600/90 text-white border-indigo-400': video.badgeColor === 'indigo',
-                                          'bg-emerald-600/90 text-white border-emerald-400': video.badgeColor === 'emerald',
-                                          'bg-blue-600/90 text-white border-blue-400': video.badgeColor === 'blue'
+                                          'bg-indigo-600/90 text-white border-indigo-400': video.badgeColor === 'indigo'
                                       }"
                                       x-text="video.badge"></span>
 
@@ -942,24 +896,23 @@
                                     <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24">
                                         <path d="M8 5v14l11-7z"/>
                                     </svg>
-                                    <!-- Hover Ping Ring -->
                                     <div class="absolute inset-0 rounded-full border-2 border-white group-hover:border-amber-400 group-hover:animate-ping opacity-0 group-hover:opacity-60 pointer-events-none"></div>
                                 </div>
                             </div>
 
                             <!-- Bottom Info Bar -->
-                            <div class="relative z-10 p-5 space-y-2 bg-gradient-to-t from-black via-black/80 to-transparent">
-                                <h3 class="text-xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors"
+                            <div class="relative z-10 p-6 space-y-2 bg-gradient-to-t from-black via-black/85 to-transparent">
+                                <h3 class="text-xl sm:text-2xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors"
                                     x-text="video.title"></h3>
-                                <p class="text-xs text-gray-300 font-medium leading-relaxed line-clamp-2"
+                                <p class="text-xs sm:text-sm text-gray-300 font-medium leading-relaxed line-clamp-2"
                                    x-text="video.tagline"></p>
                                 
-                                <div class="pt-2 flex items-center justify-between border-t border-white/10">
+                                <div class="pt-2.5 flex items-center justify-between border-t border-white/10">
                                     <span class="inline-flex items-center gap-1.5 text-xs font-black text-amber-400 group-hover:text-amber-300 transition-colors">
-                                        <span>Watch Reel</span>
+                                        <span>Watch Full Reel</span>
                                         <span class="text-sm font-bold">▶</span>
                                     </span>
-                                    <span class="text-[11px] font-semibold text-gray-400 group-hover:text-white transition-colors">
+                                    <span class="text-xs font-semibold text-gray-400 group-hover:text-white transition-colors">
                                         🔊 Sound On
                                     </span>
                                 </div>
@@ -978,7 +931,7 @@
 
             </div>
 
-            <!-- Full-Screen Video Lightbox Modal with Audio & Next/Prev Controls -->
+            <!-- Full-Screen Video Lightbox Modal with Audio & Switcher -->
             <template x-teleport="body">
                 <div x-show="activeVideo" 
                      style="display: none;"
@@ -997,17 +950,17 @@
                     <div class="relative bg-[#11141c] text-white rounded-3xl max-w-4xl w-full max-h-[94vh] shadow-2xl border border-white/15 flex flex-col lg:flex-row overflow-hidden"
                          @click.stop>
                         
-                        <!-- Top Action Buttons: Close + Prev/Next -->
+                        <!-- Top Action Buttons: Close + Switcher -->
                         <div class="absolute top-4 right-4 z-30 flex items-center gap-2">
                             <button type="button" 
                                     @click="prevVideo()"
-                                    title="Previous Reel (Left Arrow)"
+                                    title="Switch Reel (Left Arrow)"
                                     class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold backdrop-blur-md border border-white/15 transition shadow-lg cursor-pointer">
                                 ◀
                             </button>
                             <button type="button" 
                                     @click="nextVideo()"
-                                    title="Next Reel (Right Arrow)"
+                                    title="Switch Reel (Right Arrow)"
                                     class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold backdrop-blur-md border border-white/15 transition shadow-lg cursor-pointer">
                                 ▶
                             </button>
@@ -1042,9 +995,7 @@
                                     <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md border"
                                           :class="{
                                               'bg-amber-500/90 text-gray-950 border-amber-300': activeVideo?.badgeColor === 'amber',
-                                              'bg-indigo-600/90 text-white border-indigo-400': activeVideo?.badgeColor === 'indigo',
-                                              'bg-emerald-600/90 text-white border-emerald-400': activeVideo?.badgeColor === 'emerald',
-                                              'bg-blue-600/90 text-white border-blue-400': activeVideo?.badgeColor === 'blue'
+                                              'bg-indigo-600/90 text-white border-indigo-400': activeVideo?.badgeColor === 'indigo'
                                           }"
                                           x-text="activeVideo?.badge"></span>
                                     
@@ -1075,16 +1026,19 @@
 
                                 <!-- Switch Reel Selector Row -->
                                 <div class="pt-4 border-t border-white/10">
-                                    <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-2.5">More Video Stories</h4>
-                                    <div class="grid grid-cols-4 gap-2">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-2.5">Select Video Story</h4>
+                                    <div class="grid grid-cols-2 gap-3">
                                         <template x-for="v in videos" :key="v.id">
                                             <button type="button" 
                                                     @click="openModal(v)"
-                                                    class="relative rounded-xl overflow-hidden aspect-[9/16] border-2 transition-all group/thumb cursor-pointer"
+                                                    class="relative rounded-2xl overflow-hidden aspect-[9/16] border-2 transition-all group/thumb cursor-pointer max-h-36"
                                                     :class="activeVideo?.id === v.id ? 'border-amber-400 scale-95 shadow-md shadow-amber-400/30 ring-2 ring-amber-400' : 'border-white/15 opacity-60 hover:opacity-100 hover:border-white/40'">
                                                 <img :src="v.poster" :alt="v.title" class="w-full h-full object-cover">
-                                                <div class="absolute inset-0 bg-black/30 group-hover/thumb:bg-transparent"></div>
-                                                <span class="absolute bottom-1 right-1 text-[8px] font-black bg-black/80 text-white px-1 rounded" x-text="v.duration"></span>
+                                                <div class="absolute inset-0 bg-black/40 group-hover/thumb:bg-transparent"></div>
+                                                <div class="absolute bottom-2 left-2 right-2 text-left">
+                                                    <span class="text-[10px] font-black text-white block truncate" x-text="v.title"></span>
+                                                    <span class="text-[9px] text-amber-300 font-bold" x-text="v.duration"></span>
+                                                </div>
                                             </button>
                                         </template>
                                     </div>

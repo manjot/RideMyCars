@@ -529,14 +529,14 @@
                      driverVideos: [
                          {
                              id: 2,
-                             title: 'Chauffeur & Driver Career',
-                             badge: '⭐ Keep 85% • Executive Tier',
+                             title: 'Chauffeur & Driver Partner Career',
+                             badge: '⭐ Keep 85-90% • Instant MoMo',
                              badgeColor: 'indigo',
-                             duration: '0:33',
-                             videoSrc: '{{ asset('videos/video-2.mp4') }}',
-                             poster: '{{ asset('videos/poster-2.jpg') }}',
-                             tagline: 'Love Driving? Command Executive Sedans & Luxury Fleets',
-                             desc: 'Drive executive sedans for high-value corporate clients, airport transfers, and VIP concierge travelers. Enjoy our lowest 10% to 15% platform fee, rapid 3-step online registration, and instant 24/7 Mobile Money cash outs.',
+                             duration: '0:36',
+                             videoSrc: '{{ asset('videos/video-3.mp4') }}',
+                             poster: '{{ asset('videos/poster-3.jpg') }}',
+                             tagline: 'Love Driving? Command Executive Sedans & Keep 85-90% with 24/7 Cash Outs',
+                             desc: 'Drive executive sedans for high-value corporate clients, airport transfers, and VIP concierge travelers. Enjoy our lowest 10% platform fee, rapid 3-step online registration, and instant 24/7 Mobile Money cash outs directly to your account.',
                              highlights: [
                                  'Keep 85% to 90% guaranteed from Trip #1',
                                  '3 simple steps: Register online, verify & drive',
@@ -547,34 +547,15 @@
                              ctaLink: '/driver-signup'
                          },
                          {
-                             id: 3,
-                             title: 'Earnings & Instant Payouts',
-                             badge: '💰 Keep 90% • Daily Cashouts',
-                             badgeColor: 'emerald',
-                             duration: '0:36',
-                             videoSrc: '{{ asset('videos/video-3.mp4') }}',
-                             poster: '{{ asset('videos/poster-3.jpg') }}',
-                             tagline: 'Fast Mobile Money (MoMo) & Direct Bank Payouts',
-                             desc: 'Why let foreign ride-hailing apps hold your money? RideMyCars allows you to withdraw your earnings instantly directly into your Mobile Money wallet (MTN, Telecel, AT) or bank account at any hour of the day.',
-                             highlights: [
-                                 'Instant 24/7 Mobile Money payouts',
-                                 'Zero delayed settlements or hidden fees',
-                                 'Only 10% platform commission',
-                                 'Real-time earnings ledger in driver app'
-                             ],
-                             ctaText: 'Calculate Your Profit',
-                             ctaLink: '#calculator'
-                         },
-                         {
                              id: 1,
-                             title: 'Executive Rider Experience',
-                             badge: '🎬 Rider Demand',
+                             title: 'Executive Rider Experience & Demand',
+                             badge: '🎬 Continuous Trip Volume',
                              badgeColor: 'amber',
                              duration: '0:25',
                              videoSrc: '{{ asset('videos/video-1.mp4') }}',
                              poster: '{{ asset('videos/poster-1.jpg') }}',
-                             tagline: 'High Passenger Demand Means Continuous Trip Dispatches',
-                             desc: 'RideMyCars riders love our competitive fares and comfortable vehicles. High demand across Accra and Tema ensures consistent bookings and back-to-back trips for partners.',
+                             tagline: 'High Passenger Demand Across Accra Means Non-Stop Bookings',
+                             desc: 'RideMyCars riders love our transparent pricing and reliable service. High demand across Accra and Tema ensures consistent bookings and back-to-back trips for partners.',
                              highlights: [
                                  'Steady flow of corporate & resident riders',
                                  'Upfront pricing with verified pickups',
@@ -582,25 +563,6 @@
                                  'Flexible driving hours whenever you want'
                              ],
                              ctaText: 'Sign Up to Drive',
-                             ctaLink: '/driver-signup'
-                         },
-                         {
-                             id: 4,
-                             title: 'Smart City Mobility',
-                             badge: '⚡ City Transit',
-                             badgeColor: 'blue',
-                             duration: '0:25',
-                             videoSrc: '{{ asset('videos/video-4.mp4') }}',
-                             poster: '{{ asset('videos/poster-4.jpg') }}',
-                             tagline: 'Multimodal Transit: Cars, Motorbikes & Parcel Courier',
-                             desc: 'Partner with us across multiple categories. Operate regular sedan trips, executive chauffeured rides, or courier parcel deliveries with real-time GPS tracking.',
-                             highlights: [
-                                 'Accept both rides and parcel deliveries',
-                                 'Average dispatch time under 3 minutes',
-                                 'Reliable in-app navigation & GPS routing',
-                                 'Full 24/7 local driver safety support'
-                             ],
-                             ctaText: 'Join RideMyCars',
                              ctaLink: '/driver-signup'
                          }
                      ],
@@ -622,7 +584,7 @@
                      }
                  }">
             
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div class="text-center max-w-3xl mx-auto mb-14">
                     <span class="px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black uppercase tracking-widest inline-block mb-3">
                         🎬 Watch In Action • Real Partner Stories
@@ -635,10 +597,10 @@
                     </p>
                 </div>
 
-                <!-- 4 Videos Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 2 Unique Videos Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                     <template x-for="v in driverVideos" :key="v.id">
-                        <div class="group relative rounded-3xl overflow-hidden border-2 border-white/10 hover:border-emerald-400 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1.5 flex flex-col justify-between aspect-[9/16] min-h-[460px] bg-black"
+                        <div class="group relative rounded-3xl overflow-hidden border-2 border-white/10 hover:border-emerald-400 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1.5 flex flex-col justify-between aspect-[9/16] min-h-[480px] bg-black"
                              @click="openModal(v)">
                             
                             <img :src="v.poster" :alt="v.title" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
@@ -646,10 +608,10 @@
                             <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
 
                             <!-- Top Bar -->
-                            <div class="relative z-10 p-4 flex items-center justify-between">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/70 border border-white/20 text-white"
+                            <div class="relative z-10 p-5 flex items-center justify-between">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/70 border border-white/20 text-white"
                                       x-text="v.badge"></span>
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/80 text-white text-[10px] font-bold">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 text-white text-[10px] font-bold">
                                     <svg class="w-3 h-3 fill-current text-emerald-400" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                     <span x-text="v.duration"></span>
                                 </span>
@@ -657,18 +619,18 @@
 
                             <!-- Play Button -->
                             <div class="relative z-10 my-auto flex items-center justify-center">
-                                <div class="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-115 group-hover:bg-emerald-500 group-hover:text-gray-950 group-hover:border-emerald-400">
-                                    <svg class="w-6 h-6 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-115 group-hover:bg-emerald-500 group-hover:text-gray-950 group-hover:border-emerald-400">
+                                    <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                 </div>
                             </div>
 
                             <!-- Bottom Info -->
-                            <div class="relative z-10 p-5 space-y-1.5 bg-gradient-to-t from-black via-black/80 to-transparent">
-                                <h3 class="text-lg font-black text-white leading-tight group-hover:text-emerald-400 transition-colors" x-text="v.title"></h3>
-                                <p class="text-xs text-gray-300 font-medium leading-relaxed line-clamp-2" x-text="v.tagline"></p>
-                                <div class="pt-2 flex items-center justify-between border-t border-white/10 text-xs font-bold text-emerald-400">
+                            <div class="relative z-10 p-6 space-y-2 bg-gradient-to-t from-black via-black/85 to-transparent">
+                                <h3 class="text-xl font-black text-white leading-tight group-hover:text-emerald-400 transition-colors" x-text="v.title"></h3>
+                                <p class="text-xs sm:text-sm text-gray-300 font-medium leading-relaxed line-clamp-2" x-text="v.tagline"></p>
+                                <div class="pt-2.5 flex items-center justify-between border-t border-white/10 text-xs font-bold text-emerald-400">
                                     <span>Watch Video Reel ▶</span>
-                                    <span class="text-[10px] text-gray-400">🔊 Sound On</span>
+                                    <span class="text-xs text-gray-400">🔊 Sound On</span>
                                 </div>
                             </div>
                         </div>
