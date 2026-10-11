@@ -417,7 +417,13 @@ class TwilioSmsService
                 ];
             }
 
-            if ($exchangeFirstDigit === '0' || $exchangeFirstDigit === '1') {
+            // Exemption: Fictional/test numbers (e.g. 555-0100 through 555-0199 for Apple Review & QA testing)
+            $isFictionalOrTest = str_starts_with($digits, '555')
+                              || substr($digits, 3, 3) === '555'
+                              || str_contains($digits, '9876543210')
+                              || str_contains($digits, '9876543211');
+
+            if (!$isFictionalOrTest && ($exchangeFirstDigit === '0' || $exchangeFirstDigit === '1')) {
                 return [
                     'valid' => false,
                     'error' => "The phone number {$phone} has an invalid exchange code. In North America, the middle 3 digits cannot start with 0 or 1.",

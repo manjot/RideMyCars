@@ -193,9 +193,9 @@ def prepare_clean_ios_screen(src_path, target_aspect=9/19.5, is_ipad=False):
     raw = Image.open(src_path).convert("RGBA")
     sw, sh = raw.size
     
-    # Strip Android top status bar (top ~100px) and Android bottom nav (~85px)
-    top_crop = int(sh * 0.045)
-    bottom_crop = int(sh * 0.038)
+    # Cleanly strip 100% of Android top status bar (top 100px) and Android bottom nav (145px)
+    top_crop = 100
+    bottom_crop = 145
     cropped = raw.crop((0, top_crop, sw, sh - bottom_crop))
     
     # Sample top app bar color from row 10 of cropped area
@@ -209,8 +209,8 @@ def prepare_clean_ios_screen(src_path, target_aspect=9/19.5, is_ipad=False):
         bot_color = (bot_color[0], bot_color[1], bot_color[2])
     
     cw, ch = cropped.size
-    ios_bar_h = int(cw * (0.11 if not is_ipad else 0.05))
-    ios_home_h = int(cw * (0.05 if not is_ipad else 0.03))
+    ios_bar_h = int(cw * (0.12 if not is_ipad else 0.055))
+    ios_home_h = int(cw * (0.055 if not is_ipad else 0.035))
     
     new_h = ch + ios_bar_h + ios_home_h
     clean_canvas = Image.new("RGBA", (cw, new_h), top_color + (255,))
@@ -250,25 +250,25 @@ def create_framed_screenshot(src_path, target_size, badge_text, headline, subtit
     # Ambient luxury gradient background
     for y in range(int(th * 0.45)):
         fac = y / float(th * 0.45)
-        r = int(245 * 0.12 * (1 - fac) + 11)
-        g = int(158 * 0.10 * (1 - fac) + 17)
-        b = int(11 * 0.10 * (1 - fac) + 32)
+        r = int(245 * 0.10 * (1 - fac) + 11)
+        g = int(158 * 0.08 * (1 - fac) + 17)
+        b = int(11 * 0.08 * (1 - fac) + 32)
         draw.line([(0, y), (tw, y)], fill=(r, g, b) if is_rgb else (r, g, b, 255))
 
     # Radial Glow
-    glow_r = int(tw * 0.4)
-    glow_cx, glow_cy = tw // 2, int(th * 0.12)
+    glow_r = int(tw * 0.45)
+    glow_cx, glow_cy = tw // 2, int(th * 0.10)
     for r in range(glow_r, 0, -8):
-        alpha = int(20 * (1 - r / float(glow_r)))
+        alpha = int(18 * (1 - r / float(glow_r)))
         draw.ellipse([glow_cx - r, glow_cy - r, glow_cx + r, glow_cy + r], 
                      fill=(11 + int(alpha * 0.9), 17 + int(alpha * 0.6), 32 + int(alpha * 0.1)) if is_rgb else (11 + int(alpha * 0.9), 17 + int(alpha * 0.6), 32 + int(alpha * 0.1), 255))
 
-    # Header Layout
-    header_top = int(th * 0.035)
+    # Header Layout - Bold & Highly Legible Typography
+    header_top = int(th * 0.038)
     
     # 1. Pill Badge
-    font_badge = get_font(max(20, int(tw * 0.024)), bold=True)
-    badge_pad_x = int(tw * 0.03)
+    font_badge = get_font(max(26, int(tw * 0.024)), bold=True)
+    badge_pad_x = int(tw * 0.035)
     badge_pad_y = int(tw * 0.012)
     badge_bbox = font_badge.getbbox(badge_text)
     badge_w = badge_bbox[2] - badge_bbox[0] + badge_pad_x * 2
@@ -279,23 +279,23 @@ def create_framed_screenshot(src_path, target_size, badge_text, headline, subtit
     draw.rounded_rectangle([badge_x, badge_y, badge_x + badge_w, badge_y + badge_h], radius=badge_h // 2, fill=(24, 33, 47) if is_rgb else (24, 33, 47, 255), outline=(245, 158, 11) if is_rgb else (245, 158, 11, 255), width=max(2, int(tw * 0.002)))
     draw.text((tw // 2, badge_y + badge_h // 2), badge_text, fill=(245, 158, 11) if is_rgb else (245, 158, 11, 255), font=font_badge, anchor="mm")
 
-    # 2. Main Headline
-    font_head = get_font(max(32, int(tw * 0.046)), bold=True)
-    head_y = badge_y + badge_h + int(th * 0.022)
+    # 2. Main Headline (Bold, Crisp White)
+    font_head = get_font(max(56, int(tw * 0.052)), bold=True)
+    head_y = badge_y + badge_h + int(th * 0.020)
     draw.text((tw // 2, head_y), headline, fill=(255, 255, 255) if is_rgb else (255, 255, 255, 255), font=font_head, anchor="mm")
 
-    # 3. Subtitle
-    font_sub = get_font(max(20, int(tw * 0.025)), bold=False)
-    sub_y = head_y + int(th * 0.024)
+    # 3. Subtitle (Clean Slate Silver)
+    font_sub = get_font(max(26, int(tw * 0.025)), bold=False)
+    sub_y = head_y + int(th * 0.022)
     draw.text((tw // 2, sub_y), subtitle, fill=(148, 163, 184) if is_rgb else (148, 163, 184, 255), font=font_sub, anchor="mm")
 
     # Device Mockup Placement
     clean_screen = prepare_clean_ios_screen(src_path, is_ipad=is_ipad)
     if clean_screen:
         sw, sh = clean_screen.size
-        top_offset = sub_y + int(th * 0.03)
+        top_offset = sub_y + int(th * 0.026)
         avail_w = int(tw * (0.86 if not is_ipad else 0.88))
-        avail_h = th - top_offset - int(th * 0.03)
+        avail_h = th - top_offset - int(th * 0.025)
         
         scale = min(avail_w / sw, avail_h / sh)
         nw, nh = int(sw * scale), int(sh * scale)
@@ -305,15 +305,15 @@ def create_framed_screenshot(src_path, target_size, badge_text, headline, subtit
         paste_x = (tw - nw) // 2
         paste_y = top_offset + (avail_h - nh) // 2
         
-        # Phone Device Bezel Frame
-        frame_pad = max(4, int(tw * 0.008))
-        bezel_radius = max(24, int(nw * 0.08))
+        # Phone Device Bezel Frame (Space Gray / Dark Titanium - authentic Apple hardware styling)
+        frame_pad = max(4, int(tw * 0.007))
+        bezel_radius = max(32, int(nw * 0.085))
         draw.rounded_rectangle(
             [paste_x - frame_pad, paste_y - frame_pad, paste_x + nw + frame_pad, paste_y + nh + frame_pad],
             radius=bezel_radius,
-            fill=(30, 41, 59) if is_rgb else (30, 41, 59, 255),
-            outline=(245, 158, 11) if is_rgb else (245, 158, 11, 255),
-            width=max(2, int(tw * 0.003))
+            fill=(20, 26, 38) if is_rgb else (20, 26, 38, 255),
+            outline=(55, 65, 85) if is_rgb else (55, 65, 85, 255),
+            width=max(2, int(tw * 0.0025))
         )
         
         # Clip image inside rounded mask

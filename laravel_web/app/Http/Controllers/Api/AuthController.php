@@ -482,39 +482,13 @@ class AuthController extends Controller
                 $smsService = app(\App\Services\TwilioSmsService::class);
                 $formattedPhone = $smsService->formatE164($phone);
                 $cleanPhone = preg_replace('/\s+/', '', $phone);
-
-                $validation = $smsService->validatePhoneNumber($formattedPhone);
-                if (!$validation['valid']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $validation['error']
-                    ], 422);
-                }
-
-                // Anti-Bot, Cooldown & SMS Toll-Fraud Security Shield
-                $securityCheck = \App\Services\OtpSecurityService::checkOtpRequest($request, $formattedPhone, 'phone');
-                if ($securityCheck['silent_mock']) {
-                    return response()->json([
-                        'success' => true,
-                        'user_exists' => false,
-                        'action' => $action,
-                        'message' => "Verification code sent to {$formattedPhone}",
-                        'phone' => $formattedPhone,
-                        'expires_in' => 300,
-                    ]);
-                }
-                if (!$securityCheck['allowed']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $securityCheck['error'],
-                        'error' => $securityCheck['error'],
-                        'cooldown' => $securityCheck['retry_after'] ?? 60,
-                    ], $securityCheck['code'] ?? 429);
-                }
-
-                // Check if test phone number for Apple Review / QA demo
                 $cleanDigits = preg_replace('/\D/', '', $phone ?? '');
+
+                // Check if test phone number for Apple Review / QA demo BEFORE any external validation or rate limiting
                 $isTestPhone = str_starts_with($formattedPhone, '+1555')
+                            || str_starts_with($cleanDigits, '1555')
+                            || str_starts_with($cleanDigits, '555')
+                            || str_contains($cleanDigits, '55501')
                             || str_contains($cleanDigits, '9876543210')
                             || str_contains($cleanDigits, '9876543211')
                             || $formattedPhone === '+19876543210'
@@ -568,6 +542,35 @@ class AuthController extends Controller
                         'phone' => $formattedPhone,
                         'expires_in' => 300,
                     ]);
+                }
+
+                $validation = $smsService->validatePhoneNumber($formattedPhone);
+                if (!$validation['valid']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $validation['error']
+                    ], 422);
+                }
+
+                // Anti-Bot, Cooldown & SMS Toll-Fraud Security Shield
+                $securityCheck = \App\Services\OtpSecurityService::checkOtpRequest($request, $formattedPhone, 'phone');
+                if ($securityCheck['silent_mock']) {
+                    return response()->json([
+                        'success' => true,
+                        'user_exists' => false,
+                        'action' => $action,
+                        'message' => "Verification code sent to {$formattedPhone}",
+                        'phone' => $formattedPhone,
+                        'expires_in' => 300,
+                    ]);
+                }
+                if (!$securityCheck['allowed']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $securityCheck['error'],
+                        'error' => $securityCheck['error'],
+                        'cooldown' => $securityCheck['retry_after'] ?? 60,
+                    ], $securityCheck['code'] ?? 429);
                 }
 
                 // If phone is not in database during login, initiate registration process or allow smooth OTP
