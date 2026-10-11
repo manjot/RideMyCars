@@ -64,20 +64,20 @@ Paste the following response directly into the **Resolution Center Reply** box:
 ```text
 Dear Apple App Review Team,
 
-Thank you for your review feedback regarding Guidelines 2.1.0 and 2.3.10. We have resolved both identified items in full on our live production environment and App Store listing:
+Thank you for your review feedback regarding Guidelines 2.1.0 and 2.3.10 for RideMyCars (com.ridemycars.rider). We have resolved both identified items in full on our live production environment and App Store listing:
 
-1. Guideline 2.1.0 — App Completeness (Sign-In Verified on iPad & iPhone):
+1. Guideline 2.1.0 — App Completeness (Phone Sign-In Verified on iPad & iPhone):
 We investigated the sign-in issue reported on the iPad Air. The error ("invalid exchange code") occurred because the phone validation engine strictly filtered North American numbers starting with 0/1 in the middle three digits, which unintentionally blocked standard fictional/test numbers such as +1 555-019-2834. 
 
 We have updated our production authentication service (https://www.ridemycars.com):
-- Fictional/test numbers (including +1 555-019-2834, 555-01xx, and +1 987-654-3210) now bypass carrier validation and rate limits immediately.
-- Entering any test number or demo credential instantly issues OTP code "1234" (or "123456") and authenticates into an active, verified account with complete access to all booking and mobility features.
+- Fictional and test numbers (including +1 555-019-2834, 555-01xx, and +1 987-654-3210) now bypass carrier validation and rate limits immediately.
+- Entering any test number or demo credential instantly issues verification code "1234" (or "123456") and authenticates into an active, verified rider account with complete access to all booking and mobility features.
 
-DEMO LOGIN CREDENTIALS:
-Option A — Phone OTP Tab:
+CUSTOMER DEMO LOGIN CREDENTIALS:
+Option A — Phone OTP Tab (Default launch tab):
 • Phone: +1 555-019-2834 (or +1 987-654-3210)
 • Verification Code: 1234 (or 123456)
-• Result: Instant sign-in to John Client (Demo) with active wallet and past rides.
+• Result: Instant sign-in to John Client (Demo) with active wallet, home map, and booking activity.
 
 Option B — Password Tab:
 • Email: customer@ridemycars.com
@@ -89,7 +89,7 @@ We have completely replaced the App Store screenshot sets across all display tie
 - Screenshots now authentically represent the application running on iOS devices with native iOS status bar styling (9:41 time, Dynamic Island, native cellular/Wi-Fi/battery glyphs) and iOS home indicator.
 - Updated screenshots have been uploaded via Media Manager across all required dimensions.
 
-Both endpoints and assets have been verified live. We appreciate your guidance and look forward to the completion of your review.
+Both endpoints and assets have been verified live on production. We appreciate your guidance and look forward to the completion of your review.
 
 Sincerely,
 RideMyCars Development Team
@@ -103,16 +103,11 @@ contact@ridemycars.com
 In App Store Connect, go to **App Review Information** and update the **Notes** field with:
 
 ```text
-DEMO CREDENTIALS FOR APP REVIEW:
+DEMO CREDENTIALS FOR APP REVIEW (CUSTOMER / RIDER APP):
 
-Customer / Rider Account:
-• Phone OTP Tab: +1 555-019-2834 (or +1 987-654-3210) | Code: 1234
+• Phone OTP Tab: +1 555-019-2834 (or +1 987-654-3210) | Code: 1234 (or 123456)
 • Email Tab / Password: customer@ridemycars.com | Password: RideMyCars@2026! (or 123456)
-• Direct access to on-demand cabs, car rentals, private chauffeurs, and courier parcel deliveries.
+• Sign-In Steps: Launch the app on iPad or iPhone -> Enter the phone number or email above -> Enter code 1234 -> Instant access to home booking map, on-demand cabs, car rentals, hourly chauffeurs, and courier deliveries.
 
-Driver Partner Account (Optional Review):
-• Phone: +1 987-654-3211 | Code: 1234
-• Email: michael.driver@ridemycars.com | Password: RideMyCars@2026!
-
-All demo authentication bypasses are live on production server (https://www.ridemycars.com).
+All demo authentication bypasses are live on the production server (https://www.ridemycars.com).
 ```
