@@ -558,6 +558,11 @@
                                         <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📰</span>
                                         <span class="flex-1 truncate">Blogs & News</span>
                                     </a>
+                                    <a href="/#video-stories" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                        <span class="w-6 h-6 rounded-lg bg-red-500/15 text-red-500 flex items-center justify-center shrink-0 text-xs">🎬</span>
+                                        <span class="flex-1 truncate">Video Stories & Reels</span>
+                                        <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-red-500/15 text-red-700 dark:text-red-300">Watch</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -2028,6 +2033,12 @@
                             <a href="/contact#offices" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Global Offices</span>
                                 <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 ml-1">HQ</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/#video-stories" class="text-zinc-400 hover:text-amber-400 transition-colors duration-150 flex items-center justify-between group py-0.5">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Video Stories & Reels</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/30 shrink-0 ml-1">Reels</span>
                             </a>
                         </li>
                     </ul>

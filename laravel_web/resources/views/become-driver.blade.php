@@ -521,6 +521,242 @@
             </div>
         </section>
 
+        <!-- Driver Video Stories & Real Walkthroughs -->
+        <section id="driver-videos" 
+                 class="py-20 lg:py-24 bg-gradient-to-b from-gray-900 via-[#10141d] to-gray-950 text-white relative overflow-hidden"
+                 x-data="{
+                     activeDriverVideo: null,
+                     driverVideos: [
+                         {
+                             id: 2,
+                             title: 'Chauffeur & Driver Career',
+                             badge: '⭐ Keep 85% • Executive Tier',
+                             badgeColor: 'indigo',
+                             duration: '0:33',
+                             videoSrc: '{{ asset('videos/video-2.mp4') }}',
+                             poster: '{{ asset('videos/poster-2.jpg') }}',
+                             tagline: 'Love Driving? Command Executive Sedans & Luxury Fleets',
+                             desc: 'Drive executive sedans for high-value corporate clients, airport transfers, and VIP concierge travelers. Enjoy our lowest 10% to 15% platform fee, rapid 3-step online registration, and instant 24/7 Mobile Money cash outs.',
+                             highlights: [
+                                 'Keep 85% to 90% guaranteed from Trip #1',
+                                 '3 simple steps: Register online, verify & drive',
+                                 'Corporate travelers & vetted VIP passengers',
+                                 'Instant 24/7 MoMo + Weekly bank deposits'
+                             ],
+                             ctaText: 'Register as Chauffeur',
+                             ctaLink: '/driver-signup'
+                         },
+                         {
+                             id: 3,
+                             title: 'Earnings & Instant Payouts',
+                             badge: '💰 Keep 90% • Daily Cashouts',
+                             badgeColor: 'emerald',
+                             duration: '0:36',
+                             videoSrc: '{{ asset('videos/video-3.mp4') }}',
+                             poster: '{{ asset('videos/poster-3.jpg') }}',
+                             tagline: 'Fast Mobile Money (MoMo) & Direct Bank Payouts',
+                             desc: 'Why let foreign ride-hailing apps hold your money? RideMyCars allows you to withdraw your earnings instantly directly into your Mobile Money wallet (MTN, Telecel, AT) or bank account at any hour of the day.',
+                             highlights: [
+                                 'Instant 24/7 Mobile Money payouts',
+                                 'Zero delayed settlements or hidden fees',
+                                 'Only 10% platform commission',
+                                 'Real-time earnings ledger in driver app'
+                             ],
+                             ctaText: 'Calculate Your Profit',
+                             ctaLink: '#calculator'
+                         },
+                         {
+                             id: 1,
+                             title: 'Executive Rider Experience',
+                             badge: '🎬 Rider Demand',
+                             badgeColor: 'amber',
+                             duration: '0:25',
+                             videoSrc: '{{ asset('videos/video-1.mp4') }}',
+                             poster: '{{ asset('videos/poster-1.jpg') }}',
+                             tagline: 'High Passenger Demand Means Continuous Trip Dispatches',
+                             desc: 'RideMyCars riders love our competitive fares and comfortable vehicles. High demand across Accra and Tema ensures consistent bookings and back-to-back trips for partners.',
+                             highlights: [
+                                 'Steady flow of corporate & resident riders',
+                                 'Upfront pricing with verified pickups',
+                                 'Door-to-door rider and delivery requests',
+                                 'Flexible driving hours whenever you want'
+                             ],
+                             ctaText: 'Sign Up to Drive',
+                             ctaLink: '/driver-signup'
+                         },
+                         {
+                             id: 4,
+                             title: 'Smart City Mobility',
+                             badge: '⚡ City Transit',
+                             badgeColor: 'blue',
+                             duration: '0:25',
+                             videoSrc: '{{ asset('videos/video-4.mp4') }}',
+                             poster: '{{ asset('videos/poster-4.jpg') }}',
+                             tagline: 'Multimodal Transit: Cars, Motorbikes & Parcel Courier',
+                             desc: 'Partner with us across multiple categories. Operate regular sedan trips, executive chauffeured rides, or courier parcel deliveries with real-time GPS tracking.',
+                             highlights: [
+                                 'Accept both rides and parcel deliveries',
+                                 'Average dispatch time under 3 minutes',
+                                 'Reliable in-app navigation & GPS routing',
+                                 'Full 24/7 local driver safety support'
+                             ],
+                             ctaText: 'Join RideMyCars',
+                             ctaLink: '/driver-signup'
+                         }
+                     ],
+                     openModal(v) {
+                         this.activeDriverVideo = v;
+                         this.$nextTick(() => {
+                             const el = document.getElementById('driverModalPlayer');
+                             if (el) {
+                                 el.load();
+                                 el.currentTime = 0;
+                                 el.play().catch(() => {});
+                             }
+                         });
+                     },
+                     closeModal() {
+                         const el = document.getElementById('driverModalPlayer');
+                         if (el) el.pause();
+                         this.activeDriverVideo = null;
+                     }
+                 }">
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <span class="px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black uppercase tracking-widest inline-block mb-3">
+                        🎬 Watch In Action • Real Partner Stories
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                        See How You Earn, Drive & <span class="text-emerald-400">Cash Out</span>
+                    </h2>
+                    <p class="text-sm sm:text-base text-gray-300 mt-3 font-medium leading-relaxed">
+                        Watch our official video spotlights on executive chauffeur earnings, the 10% commission advantage, and instant 24/7 Mobile Money cash outs.
+                    </p>
+                </div>
+
+                <!-- 4 Videos Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <template x-for="v in driverVideos" :key="v.id">
+                        <div class="group relative rounded-3xl overflow-hidden border-2 border-white/10 hover:border-emerald-400 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1.5 flex flex-col justify-between aspect-[9/16] min-h-[460px] bg-black"
+                             @click="openModal(v)">
+                            
+                            <img :src="v.poster" :alt="v.title" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
+
+                            <!-- Top Bar -->
+                            <div class="relative z-10 p-4 flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/70 border border-white/20 text-white"
+                                      x-text="v.badge"></span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/80 text-white text-[10px] font-bold">
+                                    <svg class="w-3 h-3 fill-current text-emerald-400" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    <span x-text="v.duration"></span>
+                                </span>
+                            </div>
+
+                            <!-- Play Button -->
+                            <div class="relative z-10 my-auto flex items-center justify-center">
+                                <div class="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-115 group-hover:bg-emerald-500 group-hover:text-gray-950 group-hover:border-emerald-400">
+                                    <svg class="w-6 h-6 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Info -->
+                            <div class="relative z-10 p-5 space-y-1.5 bg-gradient-to-t from-black via-black/80 to-transparent">
+                                <h3 class="text-lg font-black text-white leading-tight group-hover:text-emerald-400 transition-colors" x-text="v.title"></h3>
+                                <p class="text-xs text-gray-300 font-medium leading-relaxed line-clamp-2" x-text="v.tagline"></p>
+                                <div class="pt-2 flex items-center justify-between border-t border-white/10 text-xs font-bold text-emerald-400">
+                                    <span>Watch Video Reel ▶</span>
+                                    <span class="text-[10px] text-gray-400">🔊 Sound On</span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+            </div>
+
+            <!-- Lightbox Modal for Driver Videos -->
+            <template x-teleport="body">
+                <div x-show="activeDriverVideo" 
+                     style="display: none;"
+                     class="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     @click.self="closeModal()"
+                     @keydown.escape.window="closeModal()">
+                    
+                    <div class="relative bg-[#11141c] text-white rounded-3xl max-w-4xl w-full max-h-[94vh] shadow-2xl border border-white/15 flex flex-col lg:flex-row overflow-hidden"
+                         @click.stop>
+                        
+                        <!-- Close Button -->
+                        <button type="button" 
+                                @click="closeModal()"
+                                class="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center text-base font-black backdrop-blur-md border border-red-400 transition shadow-lg cursor-pointer">
+                            ✕
+                        </button>
+
+                        <!-- Left: 9:16 Video Player -->
+                        <div class="lg:w-[420px] shrink-0 bg-black flex items-center justify-center relative p-2 sm:p-4 border-b lg:border-b-0 lg:border-r border-white/10">
+                            <div class="relative w-full max-w-[340px] aspect-[9/16] max-h-[65vh] lg:max-h-[82vh] rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10">
+                                <video id="driverModalPlayer" 
+                                       :src="activeDriverVideo?.videoSrc" 
+                                       :poster="activeDriverVideo?.poster"
+                                       controls 
+                                       autoplay 
+                                       playsinline 
+                                       preload="auto"
+                                       class="w-full h-full object-contain bg-black">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        </div>
+
+                        <!-- Right: Info & CTA -->
+                        <div class="flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto max-h-[60vh] lg:max-h-[86vh] space-y-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md border border-emerald-400 bg-emerald-500/20 text-emerald-400"
+                                          x-text="activeDriverVideo?.badge"></span>
+                                    <span class="text-xs font-semibold text-gray-400" x-text="'Duration: ' + activeDriverVideo?.duration"></span>
+                                </div>
+
+                                <h3 class="text-2xl sm:text-3xl font-black text-white leading-tight" x-text="activeDriverVideo?.title"></h3>
+                                <p class="text-sm font-bold text-emerald-400" x-text="activeDriverVideo?.tagline"></p>
+                                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed font-normal" x-text="activeDriverVideo?.desc"></p>
+
+                                <div class="pt-4 border-t border-white/10">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-2.5">Key Highlights</h4>
+                                    <div class="space-y-2">
+                                        <template x-for="(hl, idx) in (activeDriverVideo?.highlights || [])" :key="idx">
+                                            <div class="flex items-center gap-2.5 text-xs font-semibold text-gray-200">
+                                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                                <span x-text="hl"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-white/10">
+                                <a :href="activeDriverVideo?.ctaLink" 
+                                   class="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-gray-950 font-black text-sm rounded-xl shadow-lg transition-all hover:scale-[1.02]">
+                                    <span x-text="activeDriverVideo?.ctaText"></span>
+                                    <span>→</span>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </template>
+        </section>
+
         <!-- 5. Driver Mobile App Download Strip -->
         <section class="py-20 bg-gray-50 dark:bg-[#0d0d0d] border-t border-gray-200 dark:border-white/10">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">

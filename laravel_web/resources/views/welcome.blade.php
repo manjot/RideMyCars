@@ -757,6 +757,359 @@
             </template>
         </section>
 
+        <!-- RideMyCars in Motion — Official Video Stories & Reels Showcase -->
+        <section id="video-stories" 
+                 class="py-20 lg:py-28 bg-[#090c12] text-white border-t border-white/10 relative overflow-hidden"
+                 x-data="{
+                     activeVideo: null,
+                     videos: [
+                         {
+                             id: 1,
+                             title: 'Executive Ride Experience',
+                             badge: '🎬 Rider Spotlight',
+                             badgeColor: 'amber',
+                             borderClass: 'border-amber-400/40 hover:border-amber-400 hover:shadow-amber-500/25',
+                             tagline: 'Riders Pay Less, Drivers Earn More',
+                             duration: '0:25',
+                             videoSrc: '{{ asset('videos/video-1.mp4') }}',
+                             poster: '{{ asset('videos/poster-1.jpg') }}',
+                             desc: 'Step inside a RideMyCars executive ride across Greater Accra. Enjoy spotless premium vehicles, verified chauffeurs, transparent upfront fares, and zero surge pricing.',
+                             highlights: [
+                                 '50% off on your first 3 trips',
+                                 'Executive sedans & verified chauffeurs',
+                                 'Real-time GPS tracking & 24/7 support',
+                                 'Pay with MoMo, Card, or Cash'
+                             ],
+                             ctaText: 'Book a Ride Now',
+                             ctaLink: '/ride',
+                             secondaryText: 'Download Rider App',
+                             secondaryLink: '/apps#rider-app'
+                         },
+                         {
+                             id: 2,
+                             title: 'Chauffeur & Driver Career',
+                             badge: '⭐ Pro Chauffeurs',
+                             badgeColor: 'indigo',
+                             borderClass: 'border-indigo-400/40 hover:border-indigo-400 hover:shadow-indigo-500/25',
+                             tagline: 'Love Driving? Keep 85-90% + Instant MoMo',
+                             duration: '0:33',
+                             videoSrc: '{{ asset('videos/video-2.mp4') }}',
+                             poster: '{{ asset('videos/poster-2.jpg') }}',
+                             desc: 'Drive executive sedans for high-value corporate clients and travelers. Benefit from our lowest 10% platform fee, simple 3-step online registration, and guaranteed daily payouts.',
+                             highlights: [
+                                 'Keep 85% to 90% from Trip #1',
+                                 '3-step rapid online registration',
+                                 'Verified corporate riders & executive trips',
+                                 'Daily instant MoMo cashouts 24/7'
+                             ],
+                             ctaText: 'Register as Chauffeur',
+                             ctaLink: '/driver-signup',
+                             secondaryText: 'Driver Partner Model',
+                             secondaryLink: '/become-driver'
+                         },
+                         {
+                             id: 3,
+                             title: 'Earnings & Instant Payouts',
+                             badge: '💰 Driver Partner',
+                             badgeColor: 'emerald',
+                             borderClass: 'border-emerald-400/40 hover:border-emerald-400 hover:shadow-emerald-500/25',
+                             tagline: 'Fast Mobile Money & Bank Payouts',
+                             duration: '0:36',
+                             videoSrc: '{{ asset('videos/video-3.mp4') }}',
+                             poster: '{{ asset('videos/poster-3.jpg') }}',
+                             desc: 'Take complete control over your earnings. Cash out instantly 24/7 directly to your Mobile Money (MTN, Telecel, AT) or receive weekly direct bank deposits without delays.',
+                             highlights: [
+                                 'Instant 24/7 Mobile Money cash outs',
+                                 'Weekly direct bank deposits with 0 fees',
+                                 'Live telemetry & transparent gross fares',
+                                 'Only 10% platform fee — keep 90%'
+                             ],
+                             ctaText: 'Calculate Your Profit',
+                             ctaLink: '/become-driver#calculator',
+                             secondaryText: 'Sign Up to Drive',
+                             secondaryLink: '/driver-signup'
+                         },
+                         {
+                             id: 4,
+                             title: 'Smart City Mobility',
+                             badge: '⚡ Smart Transit',
+                             badgeColor: 'blue',
+                             borderClass: 'border-blue-400/40 hover:border-blue-400 hover:shadow-blue-500/25',
+                             tagline: 'Affordable, Safe & Fast Transit Across Accra',
+                             duration: '0:25',
+                             videoSrc: '{{ asset('videos/video-4.mp4') }}',
+                             poster: '{{ asset('videos/poster-4.jpg') }}',
+                             desc: 'One unified mobility super-app for city rides, luxury rentals, certified drivers, and instant package deliveries across Greater Accra and Tema.',
+                             highlights: [
+                                 'Cars, Bikes & Scootis at your fingertips',
+                                 'Average pickup within 3 to 5 minutes',
+                                 'Vetted, background-checked chauffeurs',
+                                 'Same-day door-to-door courier dispatches'
+                             ],
+                             ctaText: 'Book a Ride Now',
+                             ctaLink: '/ride',
+                             secondaryText: 'Send a Package',
+                             secondaryLink: '/delivery'
+                         }
+                     ],
+                     openModal(video) {
+                         this.activeVideo = video;
+                         this.$nextTick(() => {
+                             const el = document.getElementById('storyVideoPlayer');
+                             if (el) {
+                                 el.load();
+                                 el.currentTime = 0;
+                                 el.play().catch(() => {});
+                             }
+                         });
+                     },
+                     closeModal() {
+                         const el = document.getElementById('storyVideoPlayer');
+                         if (el) el.pause();
+                         this.activeVideo = null;
+                     },
+                     nextVideo() {
+                         if (!this.activeVideo) return;
+                         const currentIndex = this.videos.findIndex(v => v.id === this.activeVideo.id);
+                         const nextIndex = (currentIndex + 1) % this.videos.length;
+                         this.openModal(this.videos[nextIndex]);
+                     },
+                     prevVideo() {
+                         if (!this.activeVideo) return;
+                         const currentIndex = this.videos.findIndex(v => v.id === this.activeVideo.id);
+                         const prevIndex = (currentIndex - 1 + this.videos.length) % this.videos.length;
+                         this.openModal(this.videos[prevIndex]);
+                     }
+                 }">
+            
+            <!-- Ambient Cinema Glow Lights -->
+            <div class="absolute -top-32 left-1/4 w-[600px] h-[400px] bg-amber-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+            <div class="absolute -bottom-32 right-1/4 w-[600px] h-[400px] bg-indigo-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] bg-emerald-500/5 blur-[160px] rounded-full pointer-events-none -z-10"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                
+                <!-- Section Header -->
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/40 text-amber-300 font-black text-xs uppercase tracking-widest shadow-lg mb-4">
+                        <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                        <span>🎬 Official Video Stories & Reels</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                        Experience RideMyCars <span class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">In Motion</span>
+                    </h2>
+                    <p class="text-sm sm:text-base text-gray-300 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
+                        Watch our verified video spotlights: executive rider comfort, chauffeur career opportunities, driver yield with instant MoMo cash-outs, and rapid city transit.
+                    </p>
+                </div>
+
+                <!-- 4 Video Reels Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
+                    <template x-for="video in videos" :key="video.id">
+                        <div class="group relative rounded-[2rem] overflow-hidden border-2 bg-gradient-to-b from-[#141822] via-[#0f121a] to-[#0b0e14] transition-all duration-500 cursor-pointer shadow-2xl hover:-translate-y-2 flex flex-col justify-between aspect-[9/16] min-h-[480px]"
+                             :class="video.borderClass"
+                             @click="openModal(video)">
+                            
+                            <!-- Video Poster / Frame Background with Gentle Zoom -->
+                            <img :src="video.poster" 
+                                 :alt="video.title" 
+                                 class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                                 loading="lazy">
+
+                            <!-- Cinematic Dark Gradient Overlays for High Contrast Readability -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30 group-hover:from-black/95 group-hover:via-black/55 transition-all duration-300"></div>
+
+                            <!-- Top Bar: Category Pill & Duration Badge -->
+                            <div class="relative z-10 p-5 flex items-center justify-between">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border"
+                                      :class="{
+                                          'bg-amber-500/90 text-gray-950 border-amber-300': video.badgeColor === 'amber',
+                                          'bg-indigo-600/90 text-white border-indigo-400': video.badgeColor === 'indigo',
+                                          'bg-emerald-600/90 text-white border-emerald-400': video.badgeColor === 'emerald',
+                                          'bg-blue-600/90 text-white border-blue-400': video.badgeColor === 'blue'
+                                      }"
+                                      x-text="video.badge"></span>
+
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white/95 text-[11px] font-bold border border-white/15 shadow">
+                                    <svg class="w-3 h-3 fill-current text-amber-400" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    <span x-text="video.duration"></span>
+                                </span>
+                            </div>
+
+                            <!-- Center: Vibrant Pulsing Play Button -->
+                            <div class="relative z-10 my-auto flex items-center justify-center">
+                                <div class="relative w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-115 group-hover:bg-amber-500 group-hover:text-gray-950 group-hover:border-amber-400">
+                                    <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                    <!-- Hover Ping Ring -->
+                                    <div class="absolute inset-0 rounded-full border-2 border-white group-hover:border-amber-400 group-hover:animate-ping opacity-0 group-hover:opacity-60 pointer-events-none"></div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Info Bar -->
+                            <div class="relative z-10 p-5 space-y-2 bg-gradient-to-t from-black via-black/80 to-transparent">
+                                <h3 class="text-xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors"
+                                    x-text="video.title"></h3>
+                                <p class="text-xs text-gray-300 font-medium leading-relaxed line-clamp-2"
+                                   x-text="video.tagline"></p>
+                                
+                                <div class="pt-2 flex items-center justify-between border-t border-white/10">
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-black text-amber-400 group-hover:text-amber-300 transition-colors">
+                                        <span>Watch Reel</span>
+                                        <span class="text-sm font-bold">▶</span>
+                                    </span>
+                                    <span class="text-[11px] font-semibold text-gray-400 group-hover:text-white transition-colors">
+                                        🔊 Sound On
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Bottom Helper Bar -->
+                <div class="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400 font-medium text-center">
+                    <span class="flex items-center gap-1.5"><span class="text-amber-400">⚡</span> High-Definition 9:16 Mobile Reels</span>
+                    <span class="flex items-center gap-1.5"><span class="text-amber-400">🇬🇭</span> Greater Accra & Tema Coverage</span>
+                    <span class="flex items-center gap-1.5"><span class="text-amber-400">✓</span> Verified Official Brand Media</span>
+                </div>
+
+            </div>
+
+            <!-- Full-Screen Video Lightbox Modal with Audio & Next/Prev Controls -->
+            <template x-teleport="body">
+                <div x-show="activeVideo" 
+                     style="display: none;"
+                     class="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     @click.self="closeModal()"
+                     @keydown.escape.window="closeModal()"
+                     @keydown.arrow-right.window="nextVideo()"
+                     @keydown.arrow-left.window="prevVideo()">
+                    
+                    <div class="relative bg-[#11141c] text-white rounded-3xl max-w-4xl w-full max-h-[94vh] shadow-2xl border border-white/15 flex flex-col lg:flex-row overflow-hidden"
+                         @click.stop>
+                        
+                        <!-- Top Action Buttons: Close + Prev/Next -->
+                        <div class="absolute top-4 right-4 z-30 flex items-center gap-2">
+                            <button type="button" 
+                                    @click="prevVideo()"
+                                    title="Previous Reel (Left Arrow)"
+                                    class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold backdrop-blur-md border border-white/15 transition shadow-lg cursor-pointer">
+                                ◀
+                            </button>
+                            <button type="button" 
+                                    @click="nextVideo()"
+                                    title="Next Reel (Right Arrow)"
+                                    class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold backdrop-blur-md border border-white/15 transition shadow-lg cursor-pointer">
+                                ▶
+                            </button>
+                            <button type="button" 
+                                    @click="closeModal()"
+                                    title="Close (Escape)"
+                                    class="w-10 h-10 rounded-full bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center text-base font-black backdrop-blur-md border border-red-400 transition shadow-lg cursor-pointer">
+                                ✕
+                            </button>
+                        </div>
+
+                        <!-- Left Side: HTML5 Video Reel Player -->
+                        <div class="lg:w-[420px] shrink-0 bg-black flex items-center justify-center relative p-2 sm:p-4 border-b lg:border-b-0 lg:border-r border-white/10">
+                            <div class="relative w-full max-w-[340px] aspect-[9/16] max-h-[65vh] lg:max-h-[82vh] rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10">
+                                <video id="storyVideoPlayer" 
+                                       :src="activeVideo?.videoSrc" 
+                                       :poster="activeVideo?.poster"
+                                       controls 
+                                       autoplay 
+                                       playsinline 
+                                       preload="auto"
+                                       class="w-full h-full object-contain bg-black">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Reel Narrative, Takeaways & Immediate CTAs -->
+                        <div class="flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto max-h-[60vh] lg:max-h-[86vh] space-y-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md border"
+                                          :class="{
+                                              'bg-amber-500/90 text-gray-950 border-amber-300': activeVideo?.badgeColor === 'amber',
+                                              'bg-indigo-600/90 text-white border-indigo-400': activeVideo?.badgeColor === 'indigo',
+                                              'bg-emerald-600/90 text-white border-emerald-400': activeVideo?.badgeColor === 'emerald',
+                                              'bg-blue-600/90 text-white border-blue-400': activeVideo?.badgeColor === 'blue'
+                                          }"
+                                          x-text="activeVideo?.badge"></span>
+                                    
+                                    <span class="text-xs font-semibold text-gray-400" x-text="'Duration: ' + activeVideo?.duration"></span>
+                                </div>
+
+                                <h3 class="text-2xl sm:text-3xl font-black text-white leading-tight"
+                                    x-text="activeVideo?.title"></h3>
+                                
+                                <p class="text-sm font-bold text-amber-400 leading-snug"
+                                   x-text="activeVideo?.tagline"></p>
+
+                                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed font-normal"
+                                   x-text="activeVideo?.desc"></p>
+
+                                <!-- Highlights Checklist -->
+                                <div class="pt-4 border-t border-white/10">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-2.5">Key Highlights</h4>
+                                    <div class="space-y-2">
+                                        <template x-for="(hl, idx) in (activeVideo?.highlights || [])" :key="idx">
+                                            <div class="flex items-center gap-2.5 text-xs font-semibold text-gray-200">
+                                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                                <span x-text="hl"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Switch Reel Selector Row -->
+                                <div class="pt-4 border-t border-white/10">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-2.5">More Video Stories</h4>
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <template x-for="v in videos" :key="v.id">
+                                            <button type="button" 
+                                                    @click="openModal(v)"
+                                                    class="relative rounded-xl overflow-hidden aspect-[9/16] border-2 transition-all group/thumb cursor-pointer"
+                                                    :class="activeVideo?.id === v.id ? 'border-amber-400 scale-95 shadow-md shadow-amber-400/30 ring-2 ring-amber-400' : 'border-white/15 opacity-60 hover:opacity-100 hover:border-white/40'">
+                                                <img :src="v.poster" :alt="v.title" class="w-full h-full object-cover">
+                                                <div class="absolute inset-0 bg-black/30 group-hover/thumb:bg-transparent"></div>
+                                                <span class="absolute bottom-1 right-1 text-[8px] font-black bg-black/80 text-white px-1 rounded" x-text="v.duration"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CTAs Footer -->
+                            <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/10">
+                                <a :href="activeVideo?.ctaLink" 
+                                   class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-gray-950 font-black text-sm rounded-xl shadow-lg transition-all hover:scale-[1.02]">
+                                    <span x-text="activeVideo?.ctaText"></span>
+                                    <span>→</span>
+                                </a>
+                                <a :href="activeVideo?.secondaryLink"
+                                   class="inline-flex items-center justify-center px-4 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/15 transition-all"
+                                   x-text="activeVideo?.secondaryText"></a>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </template>
+        </section>
+
         <!-- Customer Categories Section (Tailored Solutions) -->
         <section class="py-16 lg:py-20 bg-[#f8fafc] dark:bg-[#0c0c0c] border-t border-gray-200/80 dark:border-white/10 relative overflow-hidden">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
