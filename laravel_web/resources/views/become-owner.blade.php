@@ -57,9 +57,49 @@
                         </div>
                     </div>
 
-                    <!-- Right Hero Real Owner Photo -->
-                    <div class="lg:col-span-5 relative">
-                        <div class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-blue-200 dark:border-blue-500/30 group">
+                    <!-- Right Hero: Switcher between Official Fleet Flyer and Host Photo -->
+                    <div class="lg:col-span-5 relative" x-data="{ viewMode: 'flyer', showFleetModal: false }">
+                        <!-- Switcher Pills -->
+                        <div class="flex items-center justify-center lg:justify-end gap-2 mb-3">
+                            <button type="button" 
+                                    @click="viewMode = 'flyer'"
+                                    :class="viewMode === 'flyer' ? 'bg-blue-600 text-white font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
+                                    class="px-4 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>📄</span> Official Fleet Flyer
+                            </button>
+                            <button type="button" 
+                                    @click="viewMode = 'photo'"
+                                    :class="viewMode === 'photo' ? 'bg-blue-600 text-white font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
+                                    class="px-4 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>👤</span> Verified Host
+                            </button>
+                        </div>
+
+                        <!-- Flyer View -->
+                        <div x-show="viewMode === 'flyer'" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-blue-400 dark:border-blue-500/40 group bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1a1a1a] dark:to-[#121212] p-3 sm:p-4 flex flex-col items-center">
+                            <div class="relative w-full cursor-pointer overflow-hidden rounded-2xl" @click="showFleetModal = true">
+                                <img src="{{ asset('images/promo-fleet-owner.jpg') }}" alt="Own Cars? Turn Them Into Monthly Income - Official Fleet Flyer" class="w-full h-auto max-h-[480px] sm:max-h-[520px] object-contain rounded-2xl shadow-md transition-transform duration-700 group-hover:scale-[1.01]">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                                    <span class="px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                        🔍 Click to Enlarge
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Clean Info Bar Below Flyer -->
+                            <div class="w-full mt-3 p-3.5 rounded-2xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 shadow-md flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-black text-blue-600 dark:text-blue-400">Own Cars? Turn Into Monthly Income</div>
+                                    <div class="text-[11px] text-gray-600 dark:text-gray-400 font-semibold">Weekly Bank + Instant MoMo Cash Outs</div>
+                                </div>
+                                <a href="/owner-signup" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-xs transition">
+                                    List Fleet →
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Photo View -->
+                        <div x-show="viewMode === 'photo'" style="display: none;" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-blue-200 dark:border-blue-500/30 group">
                             <img src="{{ asset('images/owner-hero.jpg') }}" alt="Proud RideMyCars Fleet Host" class="w-full h-[450px] sm:h-[520px] object-cover transition-transform duration-700 group-hover:scale-[1.02]">
                             
                             <!-- Floating Glass Badge -->
@@ -74,6 +114,35 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Lightbox Modal for Official Fleet Flyer -->
+                        <template x-teleport="body">
+                            <div x-show="showFleetModal" 
+                                 style="display: none;"
+                                 class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                                 @click.self="showFleetModal = false"
+                                 @keydown.escape.window="showFleetModal = false">
+                                <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-blue-400 flex flex-col items-center">
+                                    <button type="button" 
+                                            @click="showFleetModal = false"
+                                            class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                        ✕
+                                    </button>
+                                    <img src="{{ asset('images/promo-fleet-owner.jpg') }}" 
+                                         alt="Own Cars? Turn Them Into Monthly Income Flyer" 
+                                         class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-4">
+                                    <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                                        <div>
+                                            <h4 class="text-sm font-black text-gray-900 dark:text-white">List Your Fleet on RideMyCars</h4>
+                                            <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">Safe • Reliable • Profitable</p>
+                                        </div>
+                                        <a href="/owner-signup" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl transition shadow-md">
+                                            List Fleet Now →
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                 </div>
@@ -280,6 +349,149 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Official Fleet Partner Guarantees Showcase (Directly from Campaign Flyer) -->
+        <section class="py-24 bg-gradient-to-b from-blue-50/50 via-white to-gray-50 dark:from-[#0d131d] dark:via-[#111] dark:to-[#0f0f0f] border-b border-gray-100 dark:border-white/10 relative overflow-hidden" x-data="{ showFleetSectionModal: false }">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <span class="px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-xs uppercase tracking-wider border border-blue-300 dark:border-blue-800/40 inline-block mb-3">
+                        ⭐ Official Fleet Campaign
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-black text-gray-950 dark:text-white tracking-tight">
+                        Own Cars? <span class="text-blue-600 dark:text-blue-400">Turn Them Into Monthly Income</span>
+                    </h2>
+                    <p class="text-base text-gray-600 dark:text-gray-300 font-medium mt-3 max-w-2xl mx-auto">
+                        List your single vehicle or full fleet on RideMyCars. Built to deliver maximum vehicle utilization with complete host peace of mind.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                    <!-- Left: Official Flyer Showcase Card -->
+                    <div class="lg:col-span-5 flex justify-center">
+                        <div class="p-3 sm:p-4 rounded-3xl bg-white dark:bg-[#181818] border-2 border-blue-400 dark:border-blue-500/40 shadow-2xl max-w-md w-full group cursor-pointer"
+                             @click="showFleetSectionModal = true">
+                            <div class="relative rounded-2xl overflow-hidden shadow-lg bg-gray-950">
+                                <img src="{{ asset('images/promo-fleet-owner.jpg') }}" 
+                                     alt="Own Cars? Turn Them Into Monthly Income - Official Campaign Flyer" 
+                                     class="w-full h-auto object-contain group-hover:scale-[1.02] transition-transform duration-500">
+                                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                                    <span class="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg">
+                                        🔍 Click to Enlarge Flyer
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-4 px-2 flex items-center justify-between text-xs">
+                                <div>
+                                    <span class="font-black text-blue-600 dark:text-blue-400 block">Official Fleet Host Poster</span>
+                                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Safe • Reliable • Profitable</span>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-[11px] border border-blue-200 dark:border-blue-800">
+                                    ridemycars.com
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: The 4 Core Pillars from Flyer -->
+                    <div class="lg:col-span-7 space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            
+                            <!-- Pillar 1: Earn From Every Trip -->
+                            <div class="p-5 rounded-2xl bg-white dark:bg-[#161616] border-2 border-gray-100 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 shadow-sm transition-all">
+                                <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                                </div>
+                                <h3 class="text-base font-black text-gray-950 dark:text-white mb-1">Earn From Every Trip</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                                    Maximize revenue on every completed ride with daily trip accruals and detailed booking breakdowns on your portal.
+                                </p>
+                            </div>
+
+                            <!-- Pillar 2: We Provide Verified Drivers -->
+                            <div class="p-5 rounded-2xl bg-white dark:bg-[#161616] border-2 border-gray-100 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 shadow-sm transition-all">
+                                <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                                </div>
+                                <h3 class="text-base font-black text-gray-950 dark:text-white mb-1">We Provide Verified Drivers</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                                    Thoroughly vetted, background-checked, and driving-record approved drivers assigned directly to keep your fleet active.
+                                </p>
+                            </div>
+
+                            <!-- Pillar 3: Real-Time Fleet Tracking -->
+                            <div class="p-5 rounded-2xl bg-white dark:bg-[#161616] border-2 border-gray-100 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 shadow-sm transition-all">
+                                <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                </div>
+                                <h3 class="text-base font-black text-gray-950 dark:text-white mb-1">Real-Time Fleet Tracking</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                                    Monitor your cars 24/7 via dashboard & mobile app with turn-by-turn live GPS telemetry, geofencing, and trip logs.
+                                </p>
+                            </div>
+
+                            <!-- Pillar 4: Weekly Bank Transfer + Instant MoMo -->
+                            <div class="p-5 rounded-2xl bg-white dark:bg-[#161616] border-2 border-gray-100 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 shadow-sm transition-all">
+                                <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 flex items-center justify-center mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                                </div>
+                                <h3 class="text-base font-black text-gray-950 dark:text-white mb-1">Weekly Bank + Instant MoMo</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                                    Get paid weekly directly to your bank account or cash out your net earnings instantly to Mobile Money (MTN / Vodafone) 24/7.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-left">
+                                <div class="text-xs font-black text-blue-900 dark:text-blue-300">Ready to activate your vehicle?</div>
+                                <div class="text-[11px] text-gray-600 dark:text-gray-400">List in 2 minutes or contact our fleet coordinator</div>
+                            </div>
+                            <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                                <button type="button" 
+                                        @click="showFleetSectionModal = true"
+                                        class="px-4 py-2.5 bg-white dark:bg-white/10 text-gray-900 dark:text-white font-bold text-xs rounded-xl border border-gray-200 dark:border-white/10 transition cursor-pointer">
+                                    🔍 Enlarge Flyer
+                                </button>
+                                <a href="/owner-signup" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition">
+                                    List Your Fleet Now →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lightbox Modal -->
+                <template x-teleport="body">
+                    <div x-show="showFleetSectionModal" 
+                         style="display: none;"
+                         class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                         @click.self="showFleetSectionModal = false"
+                         @keydown.escape.window="showFleetSectionModal = false">
+                        <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-blue-400 flex flex-col items-center">
+                            <button type="button" 
+                                    @click="showFleetSectionModal = false"
+                                    class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                ✕
+                            </button>
+                            <img src="{{ asset('images/promo-fleet-owner.jpg') }}" 
+                                 alt="Own Cars? Turn Them Into Monthly Income Flyer" 
+                                 class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-4">
+                            <div class="w-full flex items-center justify-between gap-4 pt-2 border-t border-gray-100 dark:border-white/10">
+                                <div>
+                                    <h4 class="text-sm font-black text-gray-900 dark:text-white">Turn Cars Into Monthly Income</h4>
+                                    <span class="text-xs text-blue-600 dark:text-blue-400 font-bold">List Your Fleet on RideMyCars</span>
+                                </div>
+                                <a href="/owner-signup" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition">
+                                    List Fleet Now →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </section>
 

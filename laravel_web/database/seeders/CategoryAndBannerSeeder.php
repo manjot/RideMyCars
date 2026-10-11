@@ -35,7 +35,7 @@ class CategoryAndBannerSeeder extends Seeder
         $banners = [
             [
                 'category_id' => $createdCategories['Ride']->id,
-                'title' => 'Ride More, Pay Less — 50% Off First 3 Rides',
+                'title' => 'Ride More, Pay Less — 50% Off First 3 Rides (Hatchback)',
                 'description' => 'Download ridemycars.com app and get 50% off your first 3 rides with vetted drivers.',
                 'image' => 'images/promo-ride-payless.jpg',
                 'link' => '/ride',
@@ -43,10 +43,18 @@ class CategoryAndBannerSeeder extends Seeder
             ],
             [
                 'category_id' => $createdCategories['Ride']->id,
-                'title' => 'Executive Sedan Comfort & Low Fares',
-                'description' => 'Travel in style with premium executive sedans, 24/7 availability, and transparent pricing.',
-                'image' => 'images/promo-ride-payless.jpg',
+                'title' => 'Ride More, Pay Less — 50% Off First 3 Rides (Sedan Edition)',
+                'description' => 'Fast rides, 24/7 available, low fares. Enjoy 50% off your first 3 trips in executive sedans.',
+                'image' => 'images/promo-ride-payless-sedan.jpg',
                 'link' => '/ride',
+                'status' => 'active',
+            ],
+            [
+                'category_id' => $createdCategories['Rent']->id,
+                'title' => 'Own Cars? Turn Them Into Monthly Income — List Fleet',
+                'description' => 'Earn from every trip, verified drivers provided, real-time fleet tracking, weekly bank + instant MoMo cash outs.',
+                'image' => 'images/promo-fleet-owner.jpg',
+                'link' => '/become-owner',
                 'status' => 'active',
             ],
             [
@@ -60,8 +68,8 @@ class CategoryAndBannerSeeder extends Seeder
             [
                 'category_id' => $createdCategories['Hire a Driver']->id,
                 'title' => 'Become a RideMyCars Chauffeur — Earn 85%',
-                'description' => 'Drive luxury executive sedans. Keep 85% from Trip #1 with weekly bank transfers & MoMo.',
-                'image' => 'images/promo-chauffeur-earn85.jpg',
+                'description' => 'Drive luxury executive sedans. 3-step registration, keep 85% from Trip 1, weekly bank transfers & MoMo cashouts.',
+                'image' => 'images/promo-chauffeur-wanted.jpg',
                 'link' => '/hire-driver',
                 'status' => 'active',
             ],
@@ -71,6 +79,14 @@ class CategoryAndBannerSeeder extends Seeder
                 'description' => 'Same Day Delivery across Greater Accra & Tema. Real-time GPS tracked with Instant MoMo & Hotline 0559776761.',
                 'image' => 'images/promo-delivery-accra.jpg',
                 'link' => '/delivery',
+                'status' => 'active',
+            ],
+            [
+                'category_id' => $createdCategories['General']->id,
+                'title' => 'Official RideMyCars Mobile App & Quick Register',
+                'description' => 'Safe, reliable, affordable mobility. Scan QR to download iOS/Android app or register online instantly.',
+                'image' => 'images/promo-app-qr-register.jpg',
+                'link' => '/apps',
                 'status' => 'active',
             ],
         ];

@@ -61,29 +61,41 @@
                         </div>
                     </div>
 
-                    <!-- Right Hero Real Driver Photo & Official Campaign Flyer -->
-                    <div class="lg:col-span-5 relative" x-data="{ viewMode: 'flyer' }">
+                    <!-- Right Hero Real Driver Photo & Official Campa                    <div class="lg:col-span-5 relative" x-data="{ viewMode: 'flyer-driver', showHeroFlyerModal: null }">
                         <!-- Toggle Pills -->
                         <div class="flex items-center justify-center gap-2 mb-3">
                             <button type="button" 
-                                    @click="viewMode = 'flyer'"
-                                    :class="viewMode === 'flyer' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
-                                    class="px-4 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5">
-                                <span>📄</span> Official 90% Flyer
+                                    @click="viewMode = 'flyer-driver'" 
+                                    :class="viewMode === 'flyer-driver' ? 'bg-emerald-600 text-white font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
+                                    class="px-3.5 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>📄</span> Driver 90%
                             </button>
                             <button type="button" 
-                                    @click="viewMode = 'photo'"
+                                    @click="viewMode = 'flyer-chauffeur'" 
+                                    :class="viewMode === 'flyer-chauffeur' ? 'bg-indigo-600 text-white font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
+                                    class="px-3.5 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>⭐</span> Chauffeur 85%
+                            </button>
+                            <button type="button" 
+                                    @click="viewMode = 'photo'" 
                                     :class="viewMode === 'photo' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-bold'"
-                                    class="px-4 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5">
-                                <span>👤</span> Verified Partner
+                                    class="px-3.5 py-1.5 rounded-full text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>👤</span> Partner
                             </button>
                         </div>
 
-                        <!-- Flyer View -->
-                        <div x-show="viewMode === 'flyer'" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-300 dark:border-emerald-500/40 group bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1a1a1a] dark:to-[#121212] p-3 sm:p-4 flex flex-col items-center">
-                            <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% - Official Flyer" class="w-full h-auto max-h-[480px] sm:max-h-[520px] object-contain rounded-2xl shadow-md transition-transform duration-700 group-hover:scale-[1.01]">
+                        <!-- Flyer View: Driver 90% -->
+                        <div x-show="viewMode === 'flyer-driver'" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-300 dark:border-emerald-500/40 group bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1a1a1a] dark:to-[#121212] p-3 sm:p-4 flex flex-col items-center">
+                            <div class="relative w-full cursor-pointer overflow-hidden rounded-2xl" @click="showHeroFlyerModal = { title: 'Drive With Us, Earn 90% — Keep 90% from Trip #1', img: '{{ asset('images/promo-driver-earn90.jpg') }}' }">
+                                <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90% - Official Flyer" class="w-full h-auto max-h-[480px] sm:max-h-[520px] object-contain rounded-2xl shadow-md transition-transform duration-700 group-hover:scale-[1.01]">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                                    <span class="px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                        🔍 Click to Enlarge
+                                    </span>
+                                </div>
+                            </div>
                             
-                            <!-- Clean Info Bar Below Flyer (no text overlap) -->
+                            <!-- Clean Info Bar Below Flyer -->
                             <div class="w-full mt-3 p-3.5 rounded-2xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 shadow-md flex items-center justify-between">
                                 <div>
                                     <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">Keep 90% From Trip #1</div>
@@ -91,6 +103,29 @@
                                 </div>
                                 <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-black rounded-lg border border-emerald-300">
                                     Only 10% Fee
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Flyer View: Chauffeur 85% -->
+                        <div x-show="viewMode === 'flyer-chauffeur'" style="display: none;" class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-indigo-400 dark:border-indigo-500/40 group bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1a1a1a] dark:to-[#121212] p-3 sm:p-4 flex flex-col items-center">
+                            <div class="relative w-full cursor-pointer overflow-hidden rounded-2xl" @click="showHeroFlyerModal = { title: 'Become a RideMyCars Chauffeur — Professional Chauffeurs Wanted (85%)', img: '{{ asset('images/promo-chauffeur-wanted.jpg') }}' }">
+                                <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur - Official Flyer" class="w-full h-auto max-h-[480px] sm:max-h-[520px] object-contain rounded-2xl shadow-md transition-transform duration-700 group-hover:scale-[1.01]">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                                    <span class="px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shadow-lg">
+                                        🔍 Click to Enlarge
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Clean Info Bar Below Flyer -->
+                            <div class="w-full mt-3 p-3.5 rounded-2xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 shadow-md flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-black text-indigo-600 dark:text-indigo-400">Keep 85% Guaranteed</div>
+                                    <div class="text-[11px] text-gray-600 dark:text-gray-400 font-semibold">3 Steps • Instant MoMo Payouts</div>
+                                </div>
+                                <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-black rounded-lg border border-indigo-300">
+                                    Executive Tier
                                 </span>
                             </div>
                         </div>
@@ -113,6 +148,33 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Modal Lightbox for Hero Flyers -->
+                        <template x-teleport="body">
+                            <div x-show="showHeroFlyerModal" 
+                                 style="display: none;"
+                                 class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                                 @click.self="showHeroFlyerModal = null"
+                                 @keydown.escape.window="showHeroFlyerModal = null">
+                                <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-white/20 flex flex-col items-center">
+                                    <button type="button" 
+                                            @click="showHeroFlyerModal = null"
+                                            class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                        ✕
+                                    </button>
+                                    <img :src="showHeroFlyerModal?.img" 
+                                         :alt="showHeroFlyerModal?.title" 
+                                         class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-4">
+                                    <div class="w-full flex items-center justify-between gap-4 pt-2 border-t border-gray-100 dark:border-white/10">
+                                        <h4 class="text-sm font-black text-gray-900 dark:text-white" x-text="showHeroFlyerModal?.title"></h4>
+                                        <a href="/driver-signup" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition">
+                                            Apply Online →
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>                        </div>
                     </div>
 
                 </div>
@@ -362,39 +424,98 @@
                     </div>
 
                     <!-- Tier 2: Executive Chauffeur (Keep 85%) -->
-                    <div class="bg-white dark:bg-[#151515] rounded-3xl border-2 border-blue-300 dark:border-blue-500/30 p-8 shadow-xl hover:shadow-2xl transition-all flex flex-col justify-between group">
+                    <div class="bg-white dark:bg-[#151515] rounded-3xl border-2 border-indigo-400 dark:border-indigo-500/40 p-8 shadow-xl hover:shadow-2xl transition-all flex flex-col justify-between group" x-data="{ showChauffeurTierModal: false }">
                         <div class="space-y-6">
                             <div class="flex items-center justify-between">
-                                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-black rounded-full border border-blue-300">
-                                    Executive Tier • 15% Fee
+                                <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-black rounded-full border border-indigo-300">
+                                    Executive Chauffeur • 15% Fee
                                 </span>
-                                <span class="text-2xl font-black text-blue-600 dark:text-blue-400">85% Payout</span>
+                                <span class="text-2xl font-black text-indigo-600 dark:text-indigo-400">85% Payout</span>
                             </div>
 
                             <div class="flex flex-col sm:flex-row items-center gap-6">
-                                <div class="w-full sm:w-44 shrink-0 rounded-2xl overflow-hidden shadow-md border border-blue-200 dark:border-blue-700/40 bg-gray-950">
-                                    <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" alt="Become a RideMyCars Chauffeur" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-full sm:w-48 shrink-0 rounded-2xl overflow-hidden shadow-lg border border-indigo-200 dark:border-indigo-700/40 bg-gray-950 cursor-pointer relative group/img"
+                                     @click="showChauffeurTierModal = true">
+                                    <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur - Earn 85%" class="w-full h-auto object-cover group-hover/img:scale-105 transition-transform duration-300">
+                                    <div class="absolute inset-0 bg-black/20 group-hover/img:bg-transparent transition-colors flex items-center justify-center">
+                                        <span class="px-2.5 py-1 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                            🔍 Enlarge Flyer
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="space-y-2">
-                                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Executive Chauffeur</h3>
+                                <div class="space-y-3">
+                                    <h3 class="text-2xl font-black text-gray-900 dark:text-white">Professional Chauffeur</h3>
                                     <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
-                                        Reserved for executive luxury sedans (Mercedes, BMW, Audi, Lexus). Drive verified corporate travelers and VIP clients.
+                                        Drive luxury sedans for executive & corporate travelers. Follow our rapid 3-step onboarding:
                                     </p>
+                                    
+                                    <!-- 3-Step Process from Flyer -->
+                                    <div class="grid grid-cols-3 gap-2 py-2 border-y border-gray-100 dark:border-white/10 text-center">
+                                        <div class="p-1.5 rounded-xl bg-gray-50 dark:bg-white/5">
+                                            <span class="w-5 h-5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] inline-flex items-center justify-center mb-1">1</span>
+                                            <div class="text-[10px] font-black text-gray-900 dark:text-white leading-tight">Register Online</div>
+                                            <div class="text-[9px] text-gray-500">2-min signup</div>
+                                        </div>
+                                        <div class="p-1.5 rounded-xl bg-gray-50 dark:bg-white/5">
+                                            <span class="w-5 h-5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] inline-flex items-center justify-center mb-1">2</span>
+                                            <div class="text-[10px] font-black text-gray-900 dark:text-white leading-tight">Document Check</div>
+                                            <div class="text-[9px] text-gray-500">Quick approval</div>
+                                        </div>
+                                        <div class="p-1.5 rounded-xl bg-gray-50 dark:bg-white/5">
+                                            <span class="w-5 h-5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] inline-flex items-center justify-center mb-1">3</span>
+                                            <div class="text-[10px] font-black text-gray-900 dark:text-white leading-tight">Start Driving</div>
+                                            <div class="text-[9px] text-gray-500">Earn right away</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Benefits Checklist from Flyer -->
                                     <ul class="text-xs text-gray-700 dark:text-gray-300 space-y-1.5 pt-1 font-semibold">
-                                        <li class="flex items-center gap-2"><span class="text-blue-500 font-bold">✓</span> Guaranteed 85% payout on premium fares</li>
-                                        <li class="flex items-center gap-2"><span class="text-blue-500 font-bold">✓</span> Verified riders & executive concierge</li>
-                                        <li class="flex items-center gap-2"><span class="text-blue-500 font-bold">✓</span> 24/7 dedicated partner priority support</li>
+                                        <li class="flex items-center gap-2"><span class="text-indigo-500 font-bold">✓</span> Keep 85% guaranteed from Trip #1</li>
+                                        <li class="flex items-center gap-2"><span class="text-indigo-500 font-bold">✓</span> Verified riders & executive concierge</li>
+                                        <li class="flex items-center gap-2"><span class="text-indigo-500 font-bold">✓</span> Weekly Bank Transfer + Free Chauffeur App</li>
+                                        <li class="flex items-center gap-2"><span class="text-indigo-500 font-bold">✓</span> <strong class="text-indigo-600 dark:text-indigo-400">NEW:</strong> Instant MoMo Cash Outs 24/7</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row gap-3">
-                            <a href="/driver-signup" class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-xl shadow-lg transition-all">
+                            <a href="/driver-signup" class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-xl shadow-lg transition-all">
                                 <span>Register as Chauffeur (Earn 85%)</span>
                                 <span>→</span>
                             </a>
+                            <button type="button" 
+                                    @click="showChauffeurTierModal = true"
+                                    class="px-4 py-3.5 bg-white dark:bg-white/10 hover:bg-gray-100 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-xs rounded-xl border border-gray-200 dark:border-white/10 transition">
+                                <span>🔍 Flyer</span>
+                            </button>
                         </div>
+
+                        <!-- Chauffeur Modal Lightbox -->
+                        <template x-teleport="body">
+                            <div x-show="showChauffeurTierModal" 
+                                 style="display: none;"
+                                 class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                                 @click.self="showChauffeurTierModal = false"
+                                 @keydown.escape.window="showChauffeurTierModal = false">
+                                <div class="relative max-w-lg w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-indigo-400 flex flex-col items-center">
+                                    <button type="button" 
+                                            @click="showChauffeurTierModal = false"
+                                            class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                        ✕
+                                    </button>
+                                    <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" 
+                                         alt="Become a RideMyCars Chauffeur Flyer" 
+                                         class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-3">
+                                    <div class="w-full flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/10">
+                                        <h4 class="text-xs font-black text-gray-900 dark:text-white">Become a RideMyCars Chauffeur</h4>
+                                        <a href="/driver-signup" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition">
+                                            Register Online
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                 </div>

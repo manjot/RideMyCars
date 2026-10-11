@@ -122,56 +122,103 @@
                     </div>
 
                     <!-- Right Column: Official Flyer & Scannable QR Code -->
-                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center" x-data="{ tab: 'flyer' }">
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center" x-data="{ tab: 'flyer', flyerSub: 'hatchback', showAppFlyerModal: null }">
                         <!-- Switcher Tabs -->
                         <div class="inline-flex items-center p-1 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 mb-4 text-xs font-bold gap-1">
                             <button type="button" 
-                                    @click="tab = 'flyer'" 
-                                    :class="tab === 'flyer' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
-                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
-                                <span>📄</span> Official Flyer
+                                    @click="tab = 'flyer'; flyerSub = 'hatchback'" 
+                                    :class="tab === 'flyer' && flyerSub === 'hatchback' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📄</span> Hatchback Flyer
+                            </button>
+                            <button type="button" 
+                                    @click="tab = 'flyer'; flyerSub = 'sedan'" 
+                                    :class="tab === 'flyer' && flyerSub === 'sedan' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer">
+                                <span>🚗</span> Sedan Flyer
                             </button>
                             <button type="button" 
                                     @click="tab = 'qr'" 
                                     :class="tab === 'qr' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
-                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
-                                <span>📱</span> Scan QR Code
+                                    class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📱</span> Official QR Poster
                             </button>
                         </div>
 
-                        <!-- Flyer View -->
-                        <div x-show="tab === 'flyer'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-amber-300 dark:border-amber-500/30 shadow-2xl max-w-[280px] w-full group">
-                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md">
+                        <!-- Flyer View: Hatchback -->
+                        <div x-show="tab === 'flyer' && flyerSub === 'hatchback'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-amber-300 dark:border-amber-500/30 shadow-2xl max-w-[280px] w-full group cursor-pointer"
+                             @click="showAppFlyerModal = { title: 'Ride More, Pay Less — 50% Off First 3 Rides (Hatchback)', img: '{{ asset('images/promo-ride-payless.jpg') }}' }">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md relative">
                                 <img src="{{ asset('images/promo-ride-payless.jpg') }}" 
                                      alt="Ride More, Pay Less - Rider App Official Flyer" 
                                      class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
+                                <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                    🔍 Click to Enlarge
+                                </div>
                             </div>
                             <div class="mt-3 px-1 text-center">
                                 <span class="text-xs font-black text-amber-600 dark:text-amber-400 block">50% Off First 3 Rides</span>
-                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Scan QR on flyer or app store</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Fast Rides • 24/7 Available • Low Fares</span>
                             </div>
                         </div>
 
-                        <!-- QR Code View -->
-                        <div x-show="tab === 'qr'" style="display: none;" class="p-6 rounded-3xl bg-white dark:bg-[#1a1a1a] border border-gray-200/80 dark:border-white/10 shadow-xl max-w-xs w-full">
-                            <div class="p-4 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-white/5 flex items-center justify-center mb-4">
-                                <!-- Real Scannable QR Code Generator -->
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ urlencode($riderDownloadTargetUrl) }}" 
-                                     alt="Scan to Download Rider App" 
-                                     class="w-44 h-44 rounded-xl object-contain p-1 bg-white border border-gray-200 dark:border-white/10 shadow-sm"
-                                     loading="lazy">
+                        <!-- Flyer View: Sedan -->
+                        <div x-show="tab === 'flyer' && flyerSub === 'sedan'" style="display: none;" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-amber-400 dark:border-amber-500/40 shadow-2xl max-w-[280px] w-full group cursor-pointer"
+                             @click="showAppFlyerModal = { title: 'Ride More, Pay Less — Executive Sedan Edition', img: '{{ asset('images/promo-ride-payless-sedan.jpg') }}' }">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md relative">
+                                <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" 
+                                     alt="Ride More, Pay Less - Executive Sedan Edition" 
+                                     class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                    🔍 Click to Enlarge
+                                </div>
                             </div>
-                            <span class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider block">
-                                Scan to Download Rider App
-                            </span>
-                            <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">
-                                Point your camera to install on iOS / Android
-                            </span>
-                            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[11px] text-gray-500">
-                                <span>Package: <code class="font-mono text-brand-500 font-bold">com.ridemycars.app</code></span>
-                                <span>Free</span>
+                            <div class="mt-3 px-1 text-center">
+                                <span class="text-xs font-black text-amber-600 dark:text-amber-400 block">Sedan Promo Edition</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Available on iOS & Android</span>
                             </div>
                         </div>
+
+                        <!-- Official Registration QR Poster View -->
+                        <div x-show="tab === 'qr'" style="display: none;" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-yellow-400 dark:border-yellow-500/40 shadow-2xl max-w-[280px] w-full group cursor-pointer"
+                             @click="showAppFlyerModal = { title: 'RideMyCars Official Registration & Download Poster', img: '{{ asset('images/promo-app-qr-register.jpg') }}' }">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md relative">
+                                <img src="{{ asset('images/promo-app-qr-register.jpg') }}" 
+                                     alt="RideMyCars Official Registration & Download QR Poster" 
+                                     class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
+                                <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                    🔍 Click to Enlarge
+                                </div>
+                            </div>
+                            <div class="mt-3 px-1 text-center">
+                                <span class="text-xs font-black text-yellow-600 dark:text-yellow-400 block">Scan to Register Instantly</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Apple App Store & Google Play</span>
+                            </div>
+                        </div>
+
+                        <!-- Rider Modal Lightbox -->
+                        <template x-teleport="body">
+                            <div x-show="showAppFlyerModal" 
+                                 style="display: none;"
+                                 class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                                 @click.self="showAppFlyerModal = null"
+                                 @keydown.escape.window="showAppFlyerModal = null">
+                                <div class="relative max-w-lg w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-amber-300 flex flex-col items-center">
+                                    <button type="button" 
+                                            @click="showAppFlyerModal = null"
+                                            class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                        ✕
+                                    </button>
+                                    <img :src="showAppFlyerModal?.img" 
+                                         :alt="showAppFlyerModal?.title" 
+                                         class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-3">
+                                    <div class="w-full flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/10">
+                                        <h4 class="text-xs font-black text-gray-900 dark:text-white" x-text="showAppFlyerModal?.title"></h4>
+                                        <span class="text-[11px] text-amber-600 dark:text-amber-400 font-bold">Safe • Reliable • Affordable</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -255,33 +302,60 @@
                     </div>
 
                     <!-- Right Column: Official Flyer & Scannable QR Code -->
-                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center" x-data="{ tab: 'flyer' }">
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center text-center" x-data="{ tab: 'flyer-driver', showDriverFlyerModal: null }">
                         <!-- Switcher Tabs -->
                         <div class="inline-flex items-center p-1 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 mb-4 text-xs font-bold gap-1">
                             <button type="button" 
-                                    @click="tab = 'flyer'" 
-                                    :class="tab === 'flyer' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
-                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
-                                <span>📄</span> Official Flyer
+                                    @click="tab = 'flyer-driver'" 
+                                    :class="tab === 'flyer-driver' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📄</span> Driver 90%
+                            </button>
+                            <button type="button" 
+                                    @click="tab = 'flyer-chauffeur'" 
+                                    :class="tab === 'flyer-chauffeur' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
+                                    class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer">
+                                <span>⭐</span> Chauffeur 85%
                             </button>
                             <button type="button" 
                                     @click="tab = 'qr'" 
                                     :class="tab === 'qr' ? 'bg-amber-500 text-gray-950 font-black shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'"
-                                    class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
-                                <span>📱</span> Scan QR Code
+                                    class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📱</span> Scan QR
                             </button>
                         </div>
 
-                        <!-- Flyer View -->
-                        <div x-show="tab === 'flyer'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-emerald-300 dark:border-emerald-500/30 shadow-2xl max-w-[280px] w-full group">
-                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md">
+                        <!-- Flyer View: Driver 90% -->
+                        <div x-show="tab === 'flyer-driver'" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-emerald-300 dark:border-emerald-500/30 shadow-2xl max-w-[280px] w-full group cursor-pointer"
+                             @click="showDriverFlyerModal = { title: 'Drive With Us, Earn 90% — Only 10% Fee', img: '{{ asset('images/promo-driver-earn90.jpg') }}' }">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md relative">
                                 <img src="{{ asset('images/promo-driver-earn90.jpg') }}" 
                                      alt="Drive With Us, Earn 90% - Driver App Official Flyer" 
                                      class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
+                                <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                    🔍 Click to Enlarge
+                                </div>
                             </div>
                             <div class="mt-3 px-1 text-center">
                                 <span class="text-xs font-black text-emerald-600 dark:text-emerald-400 block">Keep 90% from Trip #1</span>
                                 <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">Only 10% Platform Commission</span>
+                            </div>
+                        </div>
+
+                        <!-- Flyer View: Chauffeur 85% -->
+                        <div x-show="tab === 'flyer-chauffeur'" style="display: none;" class="p-3 rounded-3xl bg-white dark:bg-[#1a1a1a] border-2 border-indigo-400 dark:border-indigo-500/40 shadow-2xl max-w-[280px] w-full group cursor-pointer"
+                             @click="showDriverFlyerModal = { title: 'Become a RideMyCars Chauffeur — Professional Chauffeurs Wanted (85%)', img: '{{ asset('images/promo-chauffeur-wanted.jpg') }}' }">
+                            <div class="rounded-2xl overflow-hidden h-72 p-2 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-[#222] dark:to-[#161616] flex items-center justify-center shadow-md relative">
+                                <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" 
+                                     alt="Become a RideMyCars Chauffeur - Official Infographic Flyer" 
+                                     class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
+                                <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                    🔍 Click to Enlarge
+                                </div>
+                            </div>
+                            <div class="mt-3 px-1 text-center">
+                                <span class="text-xs font-black text-indigo-600 dark:text-indigo-400 block">Earn 85% from Trip #1</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400 block mt-0.5">3 Steps: Register, Verify, Drive</span>
                             </div>
                         </div>
 
@@ -305,10 +379,173 @@
                                 <span>Free</span>
                             </div>
                         </div>
+
+                        <!-- Driver Modal Lightbox -->
+                        <template x-teleport="body">
+                            <div x-show="showDriverFlyerModal" 
+                                 style="display: none;"
+                                 class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                                 @click.self="showDriverFlyerModal = null"
+                                 @keydown.escape.window="showDriverFlyerModal = null">
+                                <div class="relative max-w-lg w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-emerald-400 flex flex-col items-center">
+                                    <button type="button" 
+                                            @click="showDriverFlyerModal = null"
+                                            class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                                        ✕
+                                    </button>
+                                    <img :src="showDriverFlyerModal?.img" 
+                                         :alt="showDriverFlyerModal?.title" 
+                                         class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-3">
+                                    <div class="w-full flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/10">
+                                        <h4 class="text-xs font-black text-gray-900 dark:text-white" x-text="showDriverFlyerModal?.title"></h4>
+                                        <a href="/become-driver" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition">
+                                            Join Partner →
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
 
+        </div>
+    </section>
+
+    <!-- Official Promotional Campaign Posters & Scannable Flyers Gallery -->
+    <section class="py-20 bg-white dark:bg-[#111] border-t border-gray-100 dark:border-white/5" x-data="{ activePosterModal: null }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="px-3.5 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-xs uppercase tracking-wider border border-amber-300 dark:border-amber-700/60 inline-block mb-3">
+                    📱 Official Campaign Materials
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                    Official Mobile App & Campaign Posters
+                </h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Click any poster to view in full resolution, scan official QR codes, and redeem discounts directly on your device.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                
+                <!-- Poster 1: Quick Register QR Poster -->
+                <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-yellow-400 dark:border-yellow-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                     @click="activePosterModal = { title: 'RideMyCars Official Registration & Download QR Poster', img: '{{ asset('images/promo-app-qr-register.jpg') }}', link: '/apps', cta: 'Download App' }">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-app-qr-register.jpg') }}" alt="Official QR Register Poster" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            🔍 Zoom
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 border border-yellow-300">
+                            Universal QR
+                        </span>
+                        <h4 class="text-sm font-black text-gray-900 dark:text-white mt-1 leading-snug">App Registration Poster</h4>
+                        <p class="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">Scan to install directly on App Store & Google Play.</p>
+                    </div>
+                </div>
+
+                <!-- Poster 2: 50% Off First 3 Rides Hatchback -->
+                <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-amber-300 dark:border-amber-500/30 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                     @click="activePosterModal = { title: 'Ride More, Pay Less — 50% Off (Hatchback Edition)', img: '{{ asset('images/promo-ride-payless.jpg') }}', link: '/ride', cta: 'Book Ride' }">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less Hatchback" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            🔍 Zoom
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300">
+                            50% Off Rides
+                        </span>
+                        <h4 class="text-sm font-black text-gray-900 dark:text-white mt-1 leading-snug">Ride More, Pay Less</h4>
+                        <p class="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">Fast rides, 24/7 available, and low fares.</p>
+                    </div>
+                </div>
+
+                <!-- Poster 3: 50% Off First 3 Rides Sedan -->
+                <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-amber-400 dark:border-amber-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                     @click="activePosterModal = { title: 'Ride More, Pay Less — Executive Sedan Edition', img: '{{ asset('images/promo-ride-payless-sedan.jpg') }}', link: '/apps#rider-app', cta: 'Get Sedan App' }">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" alt="Ride More, Pay Less Sedan" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            🔍 Zoom
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300">
+                            Sedan Edition
+                        </span>
+                        <h4 class="text-sm font-black text-gray-900 dark:text-white mt-1 leading-snug">Executive Sedan Offer</h4>
+                        <p class="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">Available on iOS & Android with QR scan.</p>
+                    </div>
+                </div>
+
+                <!-- Poster 4: Fleet Owner Income -->
+                <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-blue-400 dark:border-blue-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                     @click="activePosterModal = { title: 'Own Cars? Turn Them Into Monthly Income — List Your Fleet', img: '{{ asset('images/promo-fleet-owner.jpg') }}', link: '/become-owner', cta: 'List Fleet' }">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-fleet-owner.jpg') }}" alt="Turn Cars Into Monthly Income" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            🔍 Zoom
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300">
+                            Fleet Hosts
+                        </span>
+                        <h4 class="text-sm font-black text-gray-900 dark:text-white mt-1 leading-snug">Turn Cars Into Income</h4>
+                        <p class="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">Verified drivers + 24/7 GPS fleet tracking.</p>
+                    </div>
+                </div>
+
+                <!-- Poster 5: Become a Chauffeur -->
+                <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-indigo-400 dark:border-indigo-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                     @click="activePosterModal = { title: 'Become a RideMyCars Chauffeur — Professional Chauffeurs Wanted (85%)', img: '{{ asset('images/promo-chauffeur-wanted.jpg') }}', link: '/driver-signup', cta: 'Apply Chauffeur' }">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            🔍 Zoom
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300">
+                            Earn 85%
+                        </span>
+                        <h4 class="text-sm font-black text-gray-900 dark:text-white mt-1 leading-snug">Chauffeur Wanted</h4>
+                        <p class="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">3-step signup with Instant MoMo cashouts.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Lightbox Modal for Gallery -->
+            <template x-teleport="body">
+                <div x-show="activePosterModal" 
+                     style="display: none;"
+                     class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                     @click.self="activePosterModal = null"
+                     @keydown.escape.window="activePosterModal = null">
+                    <div class="relative max-w-xl w-full bg-white dark:bg-[#181818] rounded-3xl p-5 shadow-2xl border border-white/20 flex flex-col items-center">
+                        <button type="button" 
+                                @click="activePosterModal = null"
+                                class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                            ✕
+                        </button>
+                        <img :src="activePosterModal?.img" 
+                             :alt="activePosterModal?.title" 
+                             class="w-full max-h-[75vh] rounded-2xl object-contain shadow-md mb-4">
+                        <div class="w-full flex items-center justify-between gap-4 pt-2 border-t border-gray-100 dark:border-white/10">
+                            <h4 class="text-sm font-black text-gray-900 dark:text-white" x-text="activePosterModal?.title"></h4>
+                            <a :href="activePosterModal?.link" 
+                               class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl shrink-0 transition"
+                               x-text="activePosterModal?.cta"></a>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
     </section>
 

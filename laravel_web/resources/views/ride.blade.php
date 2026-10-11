@@ -42,37 +42,62 @@
         <!-- Category Banner Component & Official Ride Promo Spotlight -->
         <x-category-banner category="Ride" />
 
-        <!-- Official 50% Off Promo Flyer Banner -->
+        <!-- Official 50% Off Promo Flyer Banner (Dual Hatchback & Sedan Editions) -->
         <div class="mb-6 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border-2 border-amber-300 dark:border-amber-500/30 p-4 sm:p-5 shadow-lg relative overflow-hidden"
-             x-data="{ showRideFlyerModal: false }">
-            <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-4 w-full sm:w-auto">
-                    <!-- Flyer Thumbnail with Zoom -->
-                    <div class="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden shadow-md border-2 border-amber-400 dark:border-amber-500/40 shrink-0 cursor-pointer group bg-gray-950"
-                         @click="showRideFlyerModal = true">
-                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+             x-data="{ showRideFlyerModal: false, activeRideFlyer: 'hatchback' }">
+            <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-5">
+                <div class="flex items-center gap-4 w-full lg:w-auto">
+                    <!-- Flyer Thumbnails with Active Indicator -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="w-14 h-18 sm:w-16 sm:h-22 rounded-2xl overflow-hidden shadow-md border-2 shrink-0 cursor-pointer group bg-gray-950 relative transition-all"
+                             :class="activeRideFlyer === 'hatchback' ? 'border-amber-500 ring-2 ring-amber-400/50 scale-105' : 'border-gray-300 dark:border-white/20 opacity-70 hover:opacity-100'"
+                             @click="activeRideFlyer = 'hatchback'; showRideFlyerModal = true">
+                            <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - Hatchback" class="w-full h-full object-cover">
+                            <span class="absolute bottom-0 inset-x-0 bg-amber-500 text-[8px] font-black text-center text-gray-950 uppercase py-0.5">Hatchback</span>
+                        </div>
+                        <div class="w-14 h-18 sm:w-16 sm:h-22 rounded-2xl overflow-hidden shadow-md border-2 shrink-0 cursor-pointer group bg-gray-950 relative transition-all"
+                             :class="activeRideFlyer === 'sedan' ? 'border-amber-500 ring-2 ring-amber-400/50 scale-105' : 'border-gray-300 dark:border-white/20 opacity-70 hover:opacity-100'"
+                             @click="activeRideFlyer = 'sedan'; showRideFlyerModal = true">
+                            <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" alt="Ride More, Pay Less - Sedan" class="w-full h-full object-cover">
+                            <span class="absolute bottom-0 inset-x-0 bg-amber-500 text-[8px] font-black text-center text-gray-950 uppercase py-0.5">Sedan</span>
+                        </div>
                     </div>
+                    
                     <div class="space-y-1">
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] uppercase tracking-wider shadow-xs">
                                 50% OFF
                             </span>
-                            <span class="text-xs font-bold text-amber-700 dark:text-amber-400">First 3 Rides Welcome Deal</span>
+                            <span class="text-xs font-bold text-amber-700 dark:text-amber-400">First 3 Rides Welcome Deal (iOS & Android)</span>
                         </div>
                         <h3 class="text-lg sm:text-xl font-black text-gray-950 dark:text-white leading-tight">
                             Ride More, Pay Less with RideMyCars
                         </h3>
                         <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                            Fast rides • 24/7 available • Low fares. Use code <code class="font-mono bg-amber-200 dark:bg-amber-950 px-1.5 py-0.5 rounded font-black text-amber-900 dark:text-amber-300">RIDE50</code> or download the app.
+                            ⚡ Fast rides (minutes pickup) • 🕒 24/7 available • 🏷️ Low fares. Apply voucher <code class="font-mono bg-amber-200 dark:bg-amber-950 px-1.5 py-0.5 rounded font-black text-amber-900 dark:text-amber-300">RIDE50</code> or scan the QR code to install.
                         </p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
+                <div class="flex items-center gap-2.5 w-full lg:w-auto justify-end shrink-0">
+                    <div class="inline-flex rounded-xl p-1 bg-amber-100/70 dark:bg-white/5 border border-amber-300/60 dark:border-white/10 text-xs font-bold">
+                        <button type="button" 
+                                @click="activeRideFlyer = 'hatchback'; showRideFlyerModal = true"
+                                :class="activeRideFlyer === 'hatchback' ? 'bg-amber-500 text-gray-950 font-black shadow-xs' : 'text-gray-600 dark:text-gray-300'"
+                                class="px-3 py-1.5 rounded-lg transition-all">
+                            Hatchback Flyer
+                        </button>
+                        <button type="button" 
+                                @click="activeRideFlyer = 'sedan'; showRideFlyerModal = true"
+                                :class="activeRideFlyer === 'sedan' ? 'bg-amber-500 text-gray-950 font-black shadow-xs' : 'text-gray-600 dark:text-gray-300'"
+                                class="px-3 py-1.5 rounded-lg transition-all">
+                            Sedan Flyer
+                        </button>
+                    </div>
                     <button type="button" 
                             @click="showRideFlyerModal = true"
                             class="px-4 py-2.5 bg-white dark:bg-white/10 hover:bg-gray-100 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-xs rounded-xl border border-gray-200 dark:border-white/10 transition-all cursor-pointer">
-                        <span>🔍 View Flyer</span>
+                        <span>🔍 Zoom</span>
                     </button>
                     <a href="/apps#rider-app" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl shadow-md transition-all">
                         <span>Get App →</span>
@@ -80,7 +105,7 @@
                 </div>
             </div>
 
-            <!-- Modal Lightbox -->
+            <!-- Modal Lightbox with Flyer Toggle -->
             <template x-teleport="body">
                 <div x-show="showRideFlyerModal" 
                      style="display: none;"
@@ -93,13 +118,38 @@
                                 class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
                             ✕
                         </button>
-                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" 
-                             alt="Ride More, Pay Less - 50% Off First 3 Rides Flyer" 
-                             class="w-full max-h-[80vh] rounded-2xl object-contain shadow-md mb-3">
+
+                        <!-- Switcher Tabs inside Modal -->
+                        <div class="inline-flex rounded-xl p-1 bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-xs font-bold mb-3">
+                            <button type="button" 
+                                    @click="activeRideFlyer = 'hatchback'"
+                                    :class="activeRideFlyer === 'hatchback' ? 'bg-amber-500 text-gray-950 font-black' : 'text-gray-600 dark:text-gray-300'"
+                                    class="px-4 py-1.5 rounded-lg transition-all">
+                                Hatchback Edition
+                            </button>
+                            <button type="button" 
+                                    @click="activeRideFlyer = 'sedan'"
+                                    :class="activeRideFlyer === 'sedan' ? 'bg-amber-500 text-gray-950 font-black' : 'text-gray-600 dark:text-gray-300'"
+                                    class="px-4 py-1.5 rounded-lg transition-all">
+                                Executive Sedan Edition
+                            </button>
+                        </div>
+
+                        <div class="w-full flex justify-center overflow-hidden rounded-2xl bg-gray-950 mb-3">
+                            <img x-show="activeRideFlyer === 'hatchback'"
+                                 src="{{ asset('images/promo-ride-payless.jpg') }}" 
+                                 alt="Ride More, Pay Less - Hatchback Flyer" 
+                                 class="w-full max-h-[75vh] object-contain">
+                            <img x-show="activeRideFlyer === 'sedan'"
+                                 src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" 
+                                 alt="Ride More, Pay Less - Sedan Flyer" 
+                                 class="w-full max-h-[75vh] object-contain">
+                        </div>
+
                         <div class="w-full flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/10">
                             <div>
                                 <h4 class="text-xs font-black text-gray-900 dark:text-white">Ride More, Pay Less</h4>
-                                <span class="text-[11px] text-amber-600 dark:text-amber-400 font-bold">50% off your first 3 rides</span>
+                                <span class="text-[11px] text-amber-600 dark:text-amber-400 font-bold">50% off your first 3 rides • Code RIDE50</span>
                             </div>
                             <a href="/apps#rider-app" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs rounded-xl">
                                 Download App Now

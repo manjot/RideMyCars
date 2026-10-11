@@ -161,34 +161,62 @@
                         </div>
 
                         <h2 class="text-2xl sm:text-3xl font-black text-gray-950 dark:text-white tracking-tight leading-tight">
-                            RideMyCars <span class="text-blue-600 dark:text-blue-400">Executive Chauffeur</span> Program
+                            Become a RideMyCars <span class="text-blue-600 dark:text-blue-400">Executive Chauffeur</span> — Earn 85%
                         </h2>
 
                         <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                            Every chauffeur in our network undergoes rigorous background checks and vehicle roadworthiness inspection. Chauffeurs command guaranteed 85% payouts on luxury assignments, with flexible weekly bank deposits and instant MoMo cashouts.
+                            Professional chauffeurs wanted for corporate executive clients, VIP airport transfers, and private intercity hire. Keep 85% from trip #1 with weekly bank deposits and instant MoMo cashouts.
                         </p>
 
+                        <!-- 3-Step Process from Official Flyer -->
+                        <div class="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-700/40">
+                            <span class="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 block mb-2">How It Works (3 Fast Steps)</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-gray-950 font-black text-xs flex items-center justify-center shrink-0">1</span>
+                                    <div>
+                                        <p class="font-extrabold text-gray-900 dark:text-white">Register Online</p>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Quick 2-min signup</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-gray-950 font-black text-xs flex items-center justify-center shrink-0">2</span>
+                                    <div>
+                                        <p class="font-extrabold text-gray-900 dark:text-white">Document Verification</p>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Fast approval</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-gray-950 font-black text-xs flex items-center justify-center shrink-0">3</span>
+                                    <div>
+                                        <p class="font-extrabold text-gray-900 dark:text-white">Start Driving</p>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Begin earning right away</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Key Pillars Grid -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
                             <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
                                 <span class="text-lg block mb-1">🛡️</span>
-                                <span class="text-xs font-black text-gray-900 dark:text-white block">85% Payout</span>
-                                <span class="text-[10px] text-gray-500">From trip #1</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Keep 85%</span>
+                                <span class="text-[10px] text-gray-500">From Trip 1</span>
                             </div>
                             <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
                                 <span class="text-lg block mb-1">👔</span>
                                 <span class="text-xs font-black text-gray-900 dark:text-white block">VIP Clients</span>
-                                <span class="text-[10px] text-gray-500">Verified riders</span>
+                                <span class="text-[10px] text-gray-500">Verified riders only</span>
                             </div>
                             <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
                                 <span class="text-lg block mb-1">🏦</span>
                                 <span class="text-xs font-black text-gray-900 dark:text-white block">Bank + MoMo</span>
-                                <span class="text-[10px] text-gray-500">Fast cashouts</span>
+                                <span class="text-[10px] text-gray-500">Instant cash outs</span>
                             </div>
                             <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-blue-200/60 dark:border-white/10 text-center shadow-xs">
-                                <span class="text-lg block mb-1">🤝</span>
-                                <span class="text-xs font-black text-gray-900 dark:text-white block">24/7 Support</span>
-                                <span class="text-[10px] text-gray-500">Partner concierge</span>
+                                <span class="text-lg block mb-1">📱</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Free App</span>
+                                <span class="text-[10px] text-gray-500">Dedicated dispatch</span>
                             </div>
                         </div>
 
@@ -208,9 +236,9 @@
 
                     <!-- Right: Poster Visual -->
                     <div class="lg:col-span-4 flex justify-center">
-                        <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-blue-400 dark:border-blue-500/40"
+                        <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-blue-400 dark:border-blue-500/40 bg-gray-950"
                              @click="showChauffeurModal = true">
-                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" 
+                            <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" 
                                  alt="Become a RideMyCars Chauffeur Flyer" 
                                  class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
                             <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -235,7 +263,7 @@
                                     class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
                                 ✕
                             </button>
-                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" 
+                            <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" 
                                  alt="Become a RideMyCars Chauffeur" 
                                  class="w-full h-auto rounded-2xl object-contain max-h-[85vh]">
                         </div>

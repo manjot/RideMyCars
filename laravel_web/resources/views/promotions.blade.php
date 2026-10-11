@@ -144,13 +144,16 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                     
-                    <!-- Flyer 1: 50% Off First 3 Rides -->
-                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-amber-300 dark:border-amber-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                    <!-- Flyer 1: 50% Off First 3 Rides (Hatchback Edition) -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-amber-300 dark:border-amber-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
                         <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
-                             @click="activeFlyerModal = { title: 'Ride More, Pay Less — 50% Off First 3 Rides', img: '{{ asset('images/promo-ride-payless.jpg') }}', link: '/ride', cta: 'Book Ride (50% Off)' }">
-                            <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                             @click="activeFlyerModal = { title: 'Ride More, Pay Less — 50% Off First 3 Rides (Hatchback)', img: '{{ asset('images/promo-ride-payless.jpg') }}', link: '/ride', cta: 'Book Ride (50% Off)' }">
+                            <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - 50% Off First 3 Rides" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] uppercase tracking-wider shadow">
+                                50% OFF
+                            </div>
                             <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                                 <span>🔍 Click to Enlarge</span>
                             </div>
@@ -158,24 +161,133 @@
                         <div class="p-5 space-y-3">
                             <div>
                                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300">
-                                    New Riders
+                                    New Riders • 50% Off
                                 </span>
-                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">50% Off First 3 Rides</h3>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Download app to redeem 50% off automatically on your first 3 trips.</p>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Ride More, Pay Less (Hatchback)</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Download app to redeem 50% off automatically on your first 3 trips. Fast rides, 24/7 available, and low fares.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-amber-500 font-bold">✓</span> Fast rides & quick pickup in minutes</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-amber-500 font-bold">✓</span> 24/7 availability city-wide</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-amber-500 font-bold">✓</span> Low fares & transparent pricing</li>
+                                </ul>
                             </div>
                             <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
-                                <a href="/ride" class="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-600 text-gray-950 text-center font-black text-xs rounded-xl shadow-xs transition">
-                                    Book Now →
+                                <a href="/ride" class="flex-1 py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-gray-950 text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Book Ride (50% Off) →
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Flyer 2: Drive with Us, Earn 90% -->
-                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-emerald-300 dark:border-emerald-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                    <!-- Flyer 2: 50% Off First 3 Rides (Sedan Edition) -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-amber-400 dark:border-amber-500/40 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Ride More, Pay Less — 50% Off (Executive Sedan Edition)', img: '{{ asset('images/promo-ride-payless-sedan.jpg') }}', link: '/apps#rider-app', cta: 'Download Rider App' }">
+                            <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" alt="Ride More, Pay Less - Executive Sedan Edition" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-amber-500 text-gray-950 font-black text-[10px] uppercase tracking-wider shadow">
+                                SEDAN EDITION
+                            </div>
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300">
+                                    iOS & Android • QR Scan
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Ride More, Pay Less (Sedan)</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Scan the QR code to install RideMyCars on your smartphone. Premium sedan comfort with 50% off for new users.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-amber-500 font-bold">✓</span> Scannable QR code for instant install</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-amber-500 font-bold">✓</span> Available on iOS App Store & Android</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-amber-500 font-bold">✓</span> Safe, reliable, and affordable mobility</li>
+                                </ul>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/apps#rider-app" class="flex-1 py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-gray-950 text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Scan & Download →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flyer 3: Own Cars? Turn Them Into Monthly Income (Fleet Hosts) -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-blue-400 dark:border-blue-500/40 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Own Cars? Turn Them Into Monthly Income — List Your Fleet', img: '{{ asset('images/promo-fleet-owner.jpg') }}', link: '/become-owner', cta: 'List Your Fleet Now' }">
+                            <img src="{{ asset('images/promo-fleet-owner.jpg') }}" alt="Turn Cars Into Monthly Income - List Your Fleet on RideMyCars" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-blue-600 text-white font-black text-[10px] uppercase tracking-wider shadow">
+                                FLEET HOSTS
+                            </div>
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300">
+                                    Fleet Partnership • Passive Yield
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Turn Cars Into Monthly Income</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">List your cars on RideMyCars. We provide verified drivers, 24/7 GPS fleet tracking, and weekly bank + MoMo payouts.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-blue-500 font-bold">✓</span> Earn from every completed trip</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-blue-500 font-bold">✓</span> We provide thoroughly vetted drivers</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-blue-500 font-bold">✓</span> 24/7 real-time fleet GPS tracking</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-blue-500 font-bold">✓</span> Weekly bank transfer + Instant MoMo cash outs</li>
+                                </ul>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/become-owner" class="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    List Fleet Now →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flyer 4: Become a RideMyCars Chauffeur — Earn 85% -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-indigo-400 dark:border-indigo-500/40 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
+                        <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
+                             @click="activeFlyerModal = { title: 'Become a RideMyCars Chauffeur — Professional Chauffeurs Wanted (85%)', img: '{{ asset('images/promo-chauffeur-wanted.jpg') }}', link: '/driver-signup', cta: 'Register as Chauffeur' }">
+                            <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur - Professional Chauffeurs Wanted Earn 85%" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[10px] uppercase tracking-wider shadow">
+                                EARN 85%
+                            </div>
+                            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <span>🔍 Click to Enlarge</span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border border-indigo-300">
+                                    Chauffeur Tier • 3-Step Setup
+                                </span>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Become a RideMyCars Chauffeur</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Professional chauffeurs wanted. Keep 85% from Trip #1. 3 simple steps: Register online, verify documents, and start driving.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-indigo-500 font-bold">✓</span> Keep 85% guaranteed from Trip #1</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-indigo-500 font-bold">✓</span> Verified riders & executive concierge</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-indigo-500 font-bold">✓</span> Weekly Bank Transfer + Smart Wallet</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-indigo-500 font-bold">✓</span> NEW: Instant MoMo cash outs 24/7</li>
+                                </ul>
+                            </div>
+                            <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
+                                <a href="/driver-signup" class="flex-1 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Register as Chauffeur →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flyer 5: Drive with Us, Earn 90% (Standard Partner) -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-emerald-300 dark:border-emerald-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
                         <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
                              @click="activeFlyerModal = { title: 'Drive With Us, Earn 90% — Only 10% Platform Fee', img: '{{ asset('images/promo-driver-earn90.jpg') }}', link: '/become-driver', cta: 'Join as Driver Partner' }">
                             <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider shadow">
+                                KEEP 90%
+                            </div>
                             <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                                 <span>🔍 Click to Enlarge</span>
                             </div>
@@ -186,46 +298,62 @@
                                     Drivers • 10% Fee
                                 </span>
                                 <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Drive & Earn 90%</h3>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Keep 90% from Trip #1 with weekly bank transfers and instant MoMo payouts.</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Keep 90% from Trip #1 with weekly bank transfers and instant MoMo payouts. Only 10% platform commission.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Industry lowest 10% commission</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Instant trip dispatch alerts</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Weekly Friday bank deposits + MoMo</li>
+                                </ul>
                             </div>
                             <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
-                                <a href="/become-driver" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                <a href="/become-driver" class="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
                                     Join Partner →
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Flyer 3: Become a Chauffeur, Earn 85% -->
-                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                    <!-- Flyer 6: Official Mobile App & Instant Registration QR Poster -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-yellow-400 dark:border-yellow-500/40 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
                         <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
-                             @click="activeFlyerModal = { title: 'Become a RideMyCars Chauffeur — Earn 85%', img: '{{ asset('images/promo-chauffeur-earn85.jpg') }}', link: '/driver-signup', cta: 'Register as Chauffeur' }">
-                            <img src="{{ asset('images/promo-chauffeur-earn85.jpg') }}" alt="Become a RideMyCars Chauffeur" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                             @click="activeFlyerModal = { title: 'RideMyCars Official App & Instant Registration QR Poster', img: '{{ asset('images/promo-app-qr-register.jpg') }}', link: '/apps', cta: 'Download Mobile App' }">
+                            <img src="{{ asset('images/promo-app-qr-register.jpg') }}" alt="RideMyCars Official App & Registration QR Poster" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-yellow-500 text-gray-950 font-black text-[10px] uppercase tracking-wider shadow">
+                                SCAN & REGISTER
+                            </div>
                             <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                                 <span>🔍 Click to Enlarge</span>
                             </div>
                         </div>
                         <div class="p-5 space-y-3">
                             <div>
-                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300">
-                                    Executive Tier
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border border-yellow-300">
+                                    Universal App • Quick QR
                                 </span>
-                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Executive Chauffeur 85%</h3>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Drive VIP & corporate clients in luxury vehicles with guaranteed 85% payout.</p>
+                                <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Official App & Register Poster</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Scan the official QR code to download from App Store or Google Play. Safe, reliable, and affordable rides anytime.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-yellow-600 font-bold">✓</span> Large scannable official QR code</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-yellow-600 font-bold">✓</span> Direct Apple App Store & Google Play links</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-yellow-600 font-bold">✓</span> Quick 2-minute account signup</li>
+                                </ul>
                             </div>
                             <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
-                                <a href="/driver-signup" class="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
-                                    Apply Now →
+                                <a href="/apps" class="flex-1 py-2.5 px-3 bg-yellow-500 hover:bg-yellow-600 text-gray-950 text-center font-black text-xs rounded-xl shadow-xs transition">
+                                    Get Mobile App →
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Flyer 4: Accra & Tema Package Delivery -->
-                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-purple-300 dark:border-purple-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between">
+                    <!-- Flyer 7: Accra & Tema Package Delivery -->
+                    <div class="bg-white dark:bg-[#141414] rounded-3xl border-2 border-purple-300 dark:border-purple-500/30 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1">
                         <div class="relative cursor-pointer h-72 sm:h-80 p-3 bg-gradient-to-b from-gray-50 via-gray-100/50 to-gray-50 dark:from-[#1c1c1c] dark:via-[#161616] dark:to-[#1c1c1c] border-b border-gray-100 dark:border-white/5 flex items-center justify-center overflow-hidden"
                              @click="activeFlyerModal = { title: 'Fast Package Delivery — Accra & Tema', img: '{{ asset('images/promo-delivery-accra.jpg') }}', link: '/delivery', cta: 'Send a Package' }">
                             <img src="{{ asset('images/promo-delivery-accra.jpg') }}" alt="Fast Package Delivery Accra & Tema" class="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-purple-600 text-white font-black text-[10px] uppercase tracking-wider shadow">
+                                ACCRA & TEMA
+                            </div>
                             <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                                 <span>🔍 Click to Enlarge</span>
                             </div>
@@ -233,13 +361,18 @@
                         <div class="p-5 space-y-3">
                             <div>
                                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-300">
-                                    Accra & Tema
+                                    Accra & Tema Express
                                 </span>
                                 <h3 class="text-base font-black text-gray-900 dark:text-white mt-1.5 leading-snug">Express Courier Dispatch</h3>
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Same day parcel delivery with live GPS tracking, smart wallet, and MoMo.</p>
+                                <ul class="text-[11px] text-gray-700 dark:text-gray-300 space-y-1 pt-2 font-medium">
+                                    <li class="flex items-center gap-1.5"><span class="text-purple-500 font-bold">✓</span> Same day express delivery</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-purple-500 font-bold">✓</span> Turn-by-turn live GPS tracking</li>
+                                    <li class="flex items-center gap-1.5"><span class="text-purple-500 font-bold">✓</span> Instant MoMo & wallet payments</li>
+                                </ul>
                             </div>
                             <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center gap-2">
-                                <a href="/delivery" class="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
+                                <a href="/delivery" class="flex-1 py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white text-center font-black text-xs rounded-xl shadow-xs transition">
                                     Dispatch Parcel →
                                 </a>
                             </div>
