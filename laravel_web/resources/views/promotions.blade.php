@@ -651,7 +651,7 @@
             </div>
 
             <!-- Official Video Reels & Campaign Spotlights -->
-            <section class="rounded-3xl p-6 sm:p-10 bg-[#0a0d14] text-white border-2 border-amber-400/30 shadow-2xl relative overflow-hidden"
+            <section class="rounded-3xl p-6 sm:p-10 bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9] to-[#f8fafc] dark:from-[#0b0f19] dark:via-[#111827] dark:to-[#0b0f19] text-gray-900 dark:text-white border border-gray-200/90 dark:border-amber-400/30 shadow-xl relative overflow-hidden"
                      x-data="{
                          activeVideoPromo: null,
                          promoVideos: [
@@ -701,26 +701,26 @@
                      }">
                 <div class="relative z-10">
                     <div class="text-center max-w-2xl mx-auto mb-10">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 border border-amber-400/40 rounded-full text-xs font-bold text-amber-300 uppercase tracking-wider mb-3">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-500/10 dark:bg-amber-400/20 border border-amber-500/30 text-amber-900 dark:text-amber-300 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
                             <span>🎬</span> Watch Brand Reels & Stories
                         </div>
-                        <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                        <h2 class="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                             See Our Offers & Experience in Motion
                         </h2>
-                        <p class="text-sm text-gray-300 mt-2 font-medium">
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 font-medium">
                             Watch our official video reels highlighting passenger discounts, chauffeur careers, and instant MoMo driver cashouts.
                         </p>
                     </div>
 
-                    <!-- 2 Unique Videos Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <!-- 2 Unique Videos Grid (Compact Height) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
                         <template x-for="v in promoVideos" :key="v.id">
-                            <div class="group relative rounded-3xl overflow-hidden border-2 border-white/20 hover:border-amber-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-1 aspect-[9/16] min-h-[460px] bg-black flex flex-col justify-between"
+                            <div class="group relative rounded-3xl overflow-hidden border border-gray-200/90 dark:border-white/20 hover:border-amber-500 dark:hover:border-amber-400 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-1 h-[280px] sm:h-[320px] bg-gray-950 flex flex-col justify-between"
                                  @click="openPromoModal(v)">
                                 <img :src="v.poster" :alt="v.title" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
                                 
-                                <div class="relative z-10 p-5 flex items-center justify-between">
+                                <div class="relative z-10 p-4 sm:p-5 flex items-center justify-between">
                                     <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/75 border border-white/20 text-amber-300"
                                           x-text="v.badge"></span>
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 text-white text-[10px] font-bold">
@@ -730,14 +730,14 @@
                                 </div>
 
                                 <div class="relative z-10 my-auto flex items-center justify-center">
-                                    <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border border-white/60 flex items-center justify-center text-white shadow-xl transition-all duration-300 group-hover:scale-115 group-hover:bg-amber-500 group-hover:text-black">
-                                        <svg class="w-7 h-7 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    <div class="w-14 h-14 rounded-full bg-white/25 backdrop-blur-md border border-white/70 flex items-center justify-center text-white shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-black">
+                                        <svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                     </div>
                                 </div>
 
-                                <div class="relative z-10 p-5 space-y-1.5 bg-gradient-to-t from-black via-black/85 to-transparent">
+                                <div class="relative z-10 p-4 sm:p-5 space-y-1.5 bg-gradient-to-t from-black via-black/85 to-transparent">
                                     <h3 class="text-lg font-black text-white leading-tight group-hover:text-amber-300 transition-colors" x-text="v.title"></h3>
-                                    <p class="text-xs text-gray-300 font-medium leading-snug line-clamp-2" x-text="v.tagline"></p>
+                                    <p class="text-xs text-gray-300 font-medium leading-snug line-clamp-1" x-text="v.tagline"></p>
                                     <div class="pt-2 flex items-center justify-between text-xs font-bold text-amber-400">
                                         <span>Watch Reel ▶</span>
                                         <span class="text-[10px] text-gray-400">🔊 Sound On</span>

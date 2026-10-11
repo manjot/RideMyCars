@@ -759,7 +759,7 @@
 
         <!-- RideMyCars in Motion — Official Video Stories & Reels Showcase -->
         <section id="video-stories" 
-                 class="py-20 lg:py-28 bg-[#090c12] text-white border-t border-white/10 relative overflow-hidden"
+                 class="py-12 lg:py-16 bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9] to-[#f8fafc] dark:from-[#0b0f19] dark:via-[#111827] dark:to-[#0b0f19] text-gray-900 dark:text-white border-y border-gray-200/80 dark:border-white/10 relative overflow-hidden"
                  x-data="{
                      activeVideo: null,
                      videos: [
@@ -839,30 +839,30 @@
                  }">
             
             <!-- Ambient Cinema Glow Lights -->
-            <div class="absolute -top-32 left-1/4 w-[600px] h-[400px] bg-amber-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
-            <div class="absolute -bottom-32 right-1/4 w-[600px] h-[400px] bg-indigo-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] bg-emerald-500/5 blur-[160px] rounded-full pointer-events-none -z-10"></div>
+            <div class="absolute -top-32 left-1/4 w-[500px] h-[350px] bg-amber-500/10 dark:bg-amber-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+            <div class="absolute -bottom-32 right-1/4 w-[500px] h-[350px] bg-indigo-500/10 dark:bg-indigo-500/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/5 blur-[160px] rounded-full pointer-events-none -z-10"></div>
 
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 
                 <!-- Section Header -->
-                <div class="text-center max-w-3xl mx-auto mb-14">
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/40 text-amber-300 font-black text-xs uppercase tracking-widest shadow-lg mb-4">
+                <div class="text-center max-w-3xl mx-auto mb-10">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 text-amber-900 dark:text-amber-300 font-black text-xs uppercase tracking-widest shadow-sm mb-3">
                         <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
                         <span>🎬 Official Video Stories & Reels</span>
                     </div>
-                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-                        Experience RideMyCars <span class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">In Motion</span>
+                    <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black text-gray-900 dark:text-white tracking-tight leading-tight">
+                        Experience RideMyCars <span class="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 dark:from-amber-400 dark:via-orange-400 dark:to-amber-300 bg-clip-text text-transparent">In Motion</span>
                     </h2>
-                    <p class="text-sm sm:text-base text-gray-300 mt-3 max-w-2xl mx-auto font-medium leading-relaxed">
+                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-2.5 max-w-2xl mx-auto font-medium leading-relaxed">
                         Watch our verified video spotlights: executive rider comfort across Accra, and chauffeur opportunities with guaranteed 85% to 90% payouts and instant MoMo cash-outs.
                     </p>
                 </div>
 
-                <!-- 2 Unique Video Reels Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- 2 Unique Video Reels Grid (Decreased Height for Sleek Layout) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
                     <template x-for="video in videos" :key="video.id">
-                        <div class="group relative rounded-[2rem] overflow-hidden border-2 bg-gradient-to-b from-[#141822] via-[#0f121a] to-[#0b0e14] transition-all duration-500 cursor-pointer shadow-2xl hover:-translate-y-2 flex flex-col justify-between aspect-[9/16] min-h-[500px] sm:min-h-[540px]"
+                        <div class="group relative rounded-3xl overflow-hidden border border-gray-200/90 dark:border-white/10 bg-gray-950 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between h-[280px] sm:h-[320px]"
                              :class="video.borderClass"
                              @click="openModal(video)">
                             
@@ -873,10 +873,10 @@
                                  loading="lazy">
 
                             <!-- Cinematic Dark Gradient Overlays -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30 group-hover:from-black/95 group-hover:via-black/55 transition-all duration-300"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/30 group-hover:from-black/95 group-hover:via-black/55 transition-all duration-300"></div>
 
                             <!-- Top Bar: Category Pill & Duration Badge -->
-                            <div class="relative z-10 p-5 flex items-center justify-between">
+                            <div class="relative z-10 p-4 sm:p-5 flex items-center justify-between">
                                 <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border"
                                       :class="{
                                           'bg-amber-500/90 text-gray-950 border-amber-300': video.badgeColor === 'amber',
@@ -892,8 +892,8 @@
 
                             <!-- Center: Vibrant Pulsing Play Button -->
                             <div class="relative z-10 my-auto flex items-center justify-center">
-                                <div class="relative w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-115 group-hover:bg-amber-500 group-hover:text-gray-950 group-hover:border-amber-400">
-                                    <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24">
+                                <div class="relative w-14 h-14 rounded-full bg-white/25 backdrop-blur-md border-2 border-white/70 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-gray-950 group-hover:border-amber-400">
+                                    <svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24">
                                         <path d="M8 5v14l11-7z"/>
                                     </svg>
                                     <div class="absolute inset-0 rounded-full border-2 border-white group-hover:border-amber-400 group-hover:animate-ping opacity-0 group-hover:opacity-60 pointer-events-none"></div>
@@ -901,18 +901,18 @@
                             </div>
 
                             <!-- Bottom Info Bar -->
-                            <div class="relative z-10 p-6 space-y-2 bg-gradient-to-t from-black via-black/85 to-transparent">
-                                <h3 class="text-xl sm:text-2xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors"
+                            <div class="relative z-10 p-4 sm:p-5 space-y-1.5 bg-gradient-to-t from-black via-black/85 to-transparent">
+                                <h3 class="text-lg sm:text-xl font-black text-white leading-tight group-hover:text-amber-300 transition-colors"
                                     x-text="video.title"></h3>
-                                <p class="text-xs sm:text-sm text-gray-300 font-medium leading-relaxed line-clamp-2"
+                                <p class="text-xs text-gray-300 font-medium leading-snug line-clamp-1"
                                    x-text="video.tagline"></p>
                                 
-                                <div class="pt-2.5 flex items-center justify-between border-t border-white/10">
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-black text-amber-400 group-hover:text-amber-300 transition-colors">
+                                <div class="pt-2 flex items-center justify-between border-t border-white/10 text-xs">
+                                    <span class="inline-flex items-center gap-1.5 font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
                                         <span>Watch Full Reel</span>
-                                        <span class="text-sm font-bold">▶</span>
+                                        <span class="text-xs">▶</span>
                                     </span>
-                                    <span class="text-xs font-semibold text-gray-400 group-hover:text-white transition-colors">
+                                    <span class="text-[11px] font-semibold text-gray-400 group-hover:text-white transition-colors">
                                         🔊 Sound On
                                     </span>
                                 </div>
@@ -923,10 +923,10 @@
                 </div>
 
                 <!-- Bottom Helper Bar -->
-                <div class="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400 font-medium text-center">
-                    <span class="flex items-center gap-1.5"><span class="text-amber-400">⚡</span> High-Definition 9:16 Mobile Reels</span>
-                    <span class="flex items-center gap-1.5"><span class="text-amber-400">🇬🇭</span> Greater Accra & Tema Coverage</span>
-                    <span class="flex items-center gap-1.5"><span class="text-amber-400">✓</span> Verified Official Brand Media</span>
+                <div class="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-500 dark:text-gray-400 font-medium text-center">
+                    <span class="flex items-center gap-1.5"><span class="text-amber-500">⚡</span> High-Definition 9:16 Mobile Reels</span>
+                    <span class="flex items-center gap-1.5"><span class="text-amber-500">🇬🇭</span> Greater Accra & Tema Coverage</span>
+                    <span class="flex items-center gap-1.5"><span class="text-amber-500">✓</span> Verified Official Brand Media</span>
                 </div>
 
             </div>

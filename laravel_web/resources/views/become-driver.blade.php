@@ -523,7 +523,7 @@
 
         <!-- Driver Video Stories & Real Walkthroughs -->
         <section id="driver-videos" 
-                 class="py-20 lg:py-24 bg-gradient-to-b from-gray-900 via-[#10141d] to-gray-950 text-white relative overflow-hidden"
+                 class="py-12 lg:py-16 bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9] to-[#f8fafc] dark:from-[#0b0f19] dark:via-[#111827] dark:to-[#0b0f19] text-gray-900 dark:text-white border-y border-gray-200/80 dark:border-white/10 relative overflow-hidden"
                  x-data="{
                      activeDriverVideo: null,
                      driverVideos: [
@@ -585,30 +585,30 @@
                  }">
             
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div class="text-center max-w-3xl mx-auto mb-14">
-                    <span class="px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black uppercase tracking-widest inline-block mb-3">
+                <div class="text-center max-w-3xl mx-auto mb-10">
+                    <span class="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black uppercase tracking-widest inline-block mb-3">
                         🎬 Watch In Action • Real Partner Stories
                     </span>
-                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
-                        See How You Earn, Drive & <span class="text-emerald-400">Cash Out</span>
+                    <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
+                        See How You Earn, Drive & <span class="text-emerald-600 dark:text-emerald-400">Cash Out</span>
                     </h2>
-                    <p class="text-sm sm:text-base text-gray-300 mt-3 font-medium leading-relaxed">
+                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-2.5 font-medium leading-relaxed">
                         Watch our official video spotlights on executive chauffeur earnings, the 10% commission advantage, and instant 24/7 Mobile Money cash outs.
                     </p>
                 </div>
 
-                <!-- 2 Unique Videos Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- 2 Unique Videos Grid (Compact Height) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
                     <template x-for="v in driverVideos" :key="v.id">
-                        <div class="group relative rounded-3xl overflow-hidden border-2 border-white/10 hover:border-emerald-400 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1.5 flex flex-col justify-between aspect-[9/16] min-h-[480px] bg-black"
+                        <div class="group relative rounded-3xl overflow-hidden border border-gray-200/90 dark:border-white/10 hover:border-emerald-500 dark:hover:border-emerald-400 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1.5 flex flex-col justify-between h-[280px] sm:h-[320px] bg-gray-950"
                              @click="openModal(v)">
                             
                             <img :src="v.poster" :alt="v.title" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                             
-                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 group-hover:from-black/95 transition-all"></div>
 
                             <!-- Top Bar -->
-                            <div class="relative z-10 p-5 flex items-center justify-between">
+                            <div class="relative z-10 p-4 sm:p-5 flex items-center justify-between">
                                 <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/70 border border-white/20 text-white"
                                       x-text="v.badge"></span>
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 text-white text-[10px] font-bold">
@@ -619,18 +619,18 @@
 
                             <!-- Play Button -->
                             <div class="relative z-10 my-auto flex items-center justify-center">
-                                <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-115 group-hover:bg-emerald-500 group-hover:text-gray-950 group-hover:border-emerald-400">
-                                    <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <div class="w-14 h-14 rounded-full bg-white/25 backdrop-blur-md border-2 border-white/70 flex items-center justify-center text-white shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-gray-950 group-hover:border-emerald-400">
+                                    <svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                 </div>
                             </div>
 
                             <!-- Bottom Info -->
-                            <div class="relative z-10 p-6 space-y-2 bg-gradient-to-t from-black via-black/85 to-transparent">
-                                <h3 class="text-xl font-black text-white leading-tight group-hover:text-emerald-400 transition-colors" x-text="v.title"></h3>
-                                <p class="text-xs sm:text-sm text-gray-300 font-medium leading-relaxed line-clamp-2" x-text="v.tagline"></p>
-                                <div class="pt-2.5 flex items-center justify-between border-t border-white/10 text-xs font-bold text-emerald-400">
+                            <div class="relative z-10 p-4 sm:p-5 space-y-1.5 bg-gradient-to-t from-black via-black/85 to-transparent">
+                                <h3 class="text-lg sm:text-xl font-black text-white leading-tight group-hover:text-emerald-400 transition-colors" x-text="v.title"></h3>
+                                <p class="text-xs text-gray-300 font-medium leading-snug line-clamp-1" x-text="v.tagline"></p>
+                                <div class="pt-2 flex items-center justify-between border-t border-white/10 text-xs font-bold text-emerald-400">
                                     <span>Watch Video Reel ▶</span>
-                                    <span class="text-xs text-gray-400">🔊 Sound On</span>
+                                    <span class="text-[11px] text-gray-400">🔊 Sound On</span>
                                 </div>
                             </div>
                         </div>
