@@ -4,6 +4,11 @@
     $catName = $category;
     $banners = \App\Models\Banner::with('category')
         ->where('status', 'active')
+        ->whereNotIn('title', [
+            'Executive Car & Sedan Comfort',
+            'Fast Bike & Motorbike City Hops',
+            'Eco-Friendly Scooti City Mobility'
+        ])
         ->whereHas('category', function ($q) use ($catName) {
             $q->where('name', $catName)
               ->orWhere('slug', \Illuminate\Support\Str::slug($catName));
