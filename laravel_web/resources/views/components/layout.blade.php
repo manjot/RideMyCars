@@ -2151,6 +2151,15 @@
                                 <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 ml-1">SEC</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="/promotions" class="text-amber-400 hover:text-amber-300 font-bold transition-colors duration-150 flex items-center justify-between group py-0.5" title="View Exclusive Promotions, Coupons & Special Offers">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap flex items-center gap-1.5">
+                                    <span>🏷️</span>
+                                    <span>Promotions & Offers</span>
+                                </span>
+                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">Offers</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -2319,16 +2328,9 @@
             
             <!-- Bottom Footer Bar -->
             <div class="pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
-                <div class="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-                    <p class="font-medium">
-                        {{ site_setting('footer.copyright', '© 2026 New Development Finance Group Pty Ltd. All rights reserved.') }}
-                    </p>
-                    <span class="hidden sm:inline text-zinc-600">•</span>
-                    <a href="/promotions" class="text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1">
-                        <span>🏷️</span>
-                        <span>Promotions & Offers</span>
-                    </a>
-                </div>
+                <p class="text-center md:text-left font-medium">
+                    {{ site_setting('footer.copyright', '© 2026 New Development Finance Group Pty Ltd. All rights reserved.') }}
+                </p>
                 
                 <div class="flex flex-wrap items-center justify-center gap-3">
                     <!-- Systems Operational Badge -->
