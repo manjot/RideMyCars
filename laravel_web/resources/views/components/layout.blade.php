@@ -1958,6 +1958,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/promotions" class="text-zinc-400 hover:text-amber-400 transition-colors duration-150 flex items-center justify-between group py-0.5" title="View Exclusive Promotions, Coupons & Deals">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Promotions & Deals</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">Deals</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="/membership" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Club Membership</span>
                                 <span class="text-[8px] sm:text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-brand-500/15 text-brand-400 border border-brand-500/30 shrink-0 ml-1">VIP</span>
@@ -2313,9 +2319,16 @@
             
             <!-- Bottom Footer Bar -->
             <div class="pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-400">
-                <p class="text-center md:text-left font-medium">
-                    {{ site_setting('footer.copyright', '© 2026 New Development Finance Group Pty Ltd. All rights reserved.') }}
-                </p>
+                <div class="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                    <p class="font-medium">
+                        {{ site_setting('footer.copyright', '© 2026 New Development Finance Group Pty Ltd. All rights reserved.') }}
+                    </p>
+                    <span class="hidden sm:inline text-zinc-600">•</span>
+                    <a href="/promotions" class="text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1">
+                        <span>🏷️</span>
+                        <span>Promotions & Offers</span>
+                    </a>
+                </div>
                 
                 <div class="flex flex-wrap items-center justify-center gap-3">
                     <!-- Systems Operational Badge -->
