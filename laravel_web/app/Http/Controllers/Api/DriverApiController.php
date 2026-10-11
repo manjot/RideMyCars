@@ -461,6 +461,8 @@ class DriverApiController extends Controller
             'service_area' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:100',
             'photo' => 'nullable|image|max:10240',
+            'driver_photo' => 'nullable|image|max:10240',
+            'base64_photo' => 'nullable|string',
         ]);
 
         if (!empty($validated['name'])) {
@@ -491,10 +493,31 @@ class DriverApiController extends Controller
         if (isset($validated['service_area'])) $profileUpdates['service_area'] = $validated['service_area'];
         if (isset($validated['country'])) $profileUpdates['country'] = $validated['country'];
 
+        $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('drivers/photos', 'public');
+        } elseif ($request->hasFile('driver_photo')) {
+            $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
+        } elseif ($request->filled('base64_photo')) {
+            $imageData = $request->input('base64_photo');
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                $type = strtolower($type[1]);
+            } else {
+                $type = 'jpg';
+            }
+            $imageData = base64_decode($imageData);
+            if ($imageData !== false) {
+                $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
+                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $imageData);
+                $photoPath = $fileName;
+            }
+        }
+
+        if ($photoPath) {
             $profileUpdates['image_url'] = $photoPath;
             $profileUpdates['photo_formality_status'] = 'verified';
+            $user->update(['avatar' => $photoPath]);
         }
 
         if (!empty($profileUpdates)) {
@@ -509,6 +532,8 @@ class DriverApiController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'avatar' => $user->fresh()->avatar,
+                'avatar_url' => $user->fresh()->avatar_url,
             ],
             'driver_profile' => $profile->fresh(),
             'photo_url' => $profile->fresh()->photo_url,
@@ -568,12 +593,21 @@ class DriverApiController extends Controller
             'image_url' => $photoPath,
             'photo_formality_status' => 'verified',
         ]);
+        $user->update(['avatar' => $photoPath]);
 
         return response()->json([
             'success' => true,
             'message' => 'Driver profile photo updated successfully.',
             'photo_url' => $profile->fresh()->photo_url,
+            'avatar_url' => $user->fresh()->avatar_url,
             'driver_profile' => $profile->fresh(),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->fresh()->avatar,
+                'avatar_url' => $user->fresh()->avatar_url,
+            ],
         ]);
     }
 

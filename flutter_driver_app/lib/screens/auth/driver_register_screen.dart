@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/countries_data.dart';
@@ -20,11 +24,35 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _photoController = TextEditingController();
+  XFile? _pickedPhoto;
   late final TextEditingController _mobileNumberController;
   late Country _selectedCountry;
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final img = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (img != null) {
+        final bytes = await img.readAsBytes();
+        final base64Str = base64Encode(bytes);
+        final mime = img.name.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+        setState(() {
+          _pickedPhoto = img;
+          _photoController.text = 'data:image/$mime;base64,$base64Str';
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking driver photo: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -665,21 +693,19 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                         Row(
                           children: [
                             Container(
-                              width: 48,
-                              height: 48,
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: AppColors.backgroundDark,
-                                border: Border.all(color: AppColors.primary, width: 1.5),
+                                border: Border.all(color: AppColors.primary, width: 2),
                               ),
                               child: ClipOval(
-                                child: _photoController.text.isNotEmpty
-                                    ? Image.network(
-                                        _photoController.text,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary),
-                                      )
-                                    : const Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 22),
+                                child: _pickedPhoto != null
+                                    ? (kIsWeb
+                                        ? Image.network(_pickedPhoto!.path, fit: BoxFit.cover)
+                                        : Image.file(File(_pickedPhoto!.path), fit: BoxFit.cover))
+                                    : const Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 28),
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -700,49 +726,56 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _photoController,
-                          onChanged: (_) => setState(() {}),
-                          style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-                          decoration: InputDecoration(
-                            hintText: 'Photo URL or select a preset below',
-                            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                            filled: true,
-                            fillColor: AppColors.backgroundDark,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text('Quick Select Preset Avatar:', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 14),
                         Row(
                           children: [
-                            'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400',
-                            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
-                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-                          ].map((url) => Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: GestureDetector(
-                              onTap: () => setState(() => _photoController.text = url),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: _photoController.text == url ? AppColors.primary : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(url, width: 38, height: 38, fit: BoxFit.cover),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _pickPhoto(ImageSource.camera),
+                                icon: const Icon(Icons.camera_alt_rounded, size: 16, color: AppColors.primary),
+                                label: const Text('Camera', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.textLight,
+                                  side: const BorderSide(color: AppColors.primary),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                               ),
                             ),
-                          )).toList(),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _pickPhoto(ImageSource.gallery),
+                                icon: const Icon(Icons.photo_library_rounded, size: 16, color: AppColors.backgroundDark),
+                                label: const Text('Gallery', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: AppColors.backgroundDark,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                        if (_pickedPhoto != null) ...[
+                          const SizedBox(height: 8),
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _pickedPhoto = null;
+                                  _photoController.clear();
+                                });
+                              },
+                              icon: const Icon(Icons.delete_outline_rounded, size: 14, color: AppColors.danger),
+                              label: const Text(
+                                'Remove selected photo',
+                                style: TextStyle(color: AppColors.danger, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

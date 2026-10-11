@@ -1153,8 +1153,12 @@
                                         {{ strtoupper(substr($user->name ?? 'D', 0, 1)) }}
                                     </div>
                                 @endif
-                                <button type="button" @click="showEditModal = true" class="absolute bottom-0 right-0 left-0 bg-black/80 hover:bg-amber-400 hover:text-black text-[10px] text-white py-0.5 text-center font-bold transition-colors cursor-pointer">
-                                    Edit
+                                <form action="/driver/photo/upload" method="POST" enctype="multipart/form-data" id="quickDriverPhotoForm" class="hidden">
+                                    @csrf
+                                    <input type="file" name="driver_photo" id="quickDriverPhotoInput" accept="image/*" onchange="document.getElementById('quickDriverPhotoForm').submit()">
+                                </form>
+                                <button type="button" onclick="document.getElementById('quickDriverPhotoInput').click()" class="absolute bottom-0 right-0 left-0 bg-black/80 hover:bg-amber-400 hover:text-black text-[10px] text-white py-0.5 text-center font-bold transition-colors cursor-pointer" title="Directly upload photo from your device">
+                                    📷 Upload
                                 </button>
                             </div>
                             <div class="flex-1 min-w-0">
@@ -1239,9 +1243,53 @@
                                     <!-- Modal Body (Scrollable Form) -->
                                     <form action="/driver/profile/update" method="POST" enctype="multipart/form-data" class="flex-1 overflow-y-auto px-6 py-5 space-y-6 text-left" @submit="isSaving = true">
                                         @csrf
+                                        <input type="file" name="driver_photo" id="driverPhotoEditInput" x-ref="driverPhotoInput" accept="image/*" class="hidden" @change="handleDriverPhoto($event.target.files[0])">
                                         
                                         <!-- TAB 1: PERSONAL & CONTACT -->
                                         <div x-show="activeTab === 'personal'" class="space-y-4">
+                                            <!-- Chauffeur Formal Photo Upload Section -->
+                                            <div class="p-4 rounded-2xl border-2 border-dashed border-amber-400/40 dark:border-amber-400/30 bg-amber-50/40 dark:bg-amber-950/20">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <label class="block text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                                        Formal Chauffeur Photo <span class="text-amber-500 font-semibold normal-case">(Upload from Device)</span>
+                                                    </label>
+                                                    <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium">JPG, PNG · Max 10MB</span>
+                                                </div>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Upload your real photo directly from your computer or phone gallery. No preset or URL needed.</p>
+
+                                                <div class="flex items-center gap-4">
+                                                    <div class="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-black/40 border-2 border-amber-400 shadow-md shrink-0">
+                                                        <template x-if="driverPhotoPreview">
+                                                            <img :src="driverPhotoPreview" alt="Preview" class="w-full h-full object-cover">
+                                                        </template>
+                                                        <template x-if="!driverPhotoPreview">
+                                                            @if($profile->image_url)
+                                                                <img src="{{ str_starts_with($profile->image_url, 'http') ? $profile->image_url : asset('storage/' . $profile->image_url) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                                            @elseif($user->avatar_url)
+                                                                <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                                            @else
+                                                                <div class="w-full h-full flex items-center justify-center text-3xl">👨‍✈️</div>
+                                                            @endif
+                                                        </template>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate" x-text="driverFileName ? driverFileName : 'Professional Driver Photo'"></h4>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Visible to customers when viewing your chauffeur profile and active bookings.</p>
+                                                        <div class="mt-2.5 flex items-center gap-2 flex-wrap">
+                                                            <button type="button" @click="$refs.driverPhotoInput.click()" class="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-[#102b54] font-black text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                <span>Upload Photo</span>
+                                                            </button>
+                                                            <template x-if="driverPhotoPreview">
+                                                                <button type="button" @click="driverPhotoPreview = null; driverFileName = ''; $refs.driverPhotoInput.value = ''" class="px-3 py-1.5 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-200 transition cursor-pointer">
+                                                                    ✕ Revert
+                                                                </button>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3 text-xs text-amber-800 dark:text-amber-200">
                                                 <span class="text-base">ℹ️</span>
                                                 <span>Personal and contact details entered during registration. These help passengers identify and contact their assigned chauffeur.</span>
@@ -1328,8 +1376,6 @@
                                                     </label>
                                                     <span class="text-[11px] text-gray-400">Max 10MB</span>
                                                 </div>
-                                                
-                                                <input type="file" name="driver_photo" id="driverPhotoEditInput" x-ref="driverPhotoInput" accept="image/*" class="hidden" @change="handleDriverPhoto($event.target.files[0])">
                                                 
                                                 <div class="flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-[#202020]">
                                                     <div class="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-black/40 border-2 border-amber-400 shadow-md shrink-0">

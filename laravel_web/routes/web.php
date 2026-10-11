@@ -2475,6 +2475,11 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             $profileUpdates['image_url'] = $photoPath;
             $profileUpdates['photo_formality_status'] = 'verified';
             $user->update(['avatar' => $photoPath]);
+        } elseif ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('drivers/photos', 'public');
+            $profileUpdates['image_url'] = $photoPath;
+            $profileUpdates['photo_formality_status'] = 'verified';
+            $user->update(['avatar' => $photoPath]);
         }
 
         if ($request->hasFile('license_front_image')) {
@@ -2493,7 +2498,53 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         $profile->update($profileUpdates);
         \App\Services\ActivityLogService::log('profile_update', 'Driver profile and registration credentials updated', $user->id);
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Driver profile, credentials, and rates updated successfully!',
+                'photo_url' => $profile->fresh()->photo_url,
+                'avatar_url' => $user->fresh()->avatar_url,
+                'profile' => $profile->fresh(),
+            ]);
+        }
+
         return back()->with('success', 'Driver profile, credentials, and rates updated successfully!');
+    });
+
+    Route::post('/photo/upload', function (\Illuminate\Http\Request $request) {
+        $user = auth()->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $request->validate([
+            'driver_photo' => 'nullable|image|max:10240',
+            'photo' => 'nullable|image|max:10240',
+        ]);
+
+        $file = $request->file('driver_photo') ?? $request->file('photo');
+        if (!$file) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'No image file provided.'], 422);
+            }
+            return back()->with('error', 'No image file selected.');
+        }
+
+        $photoPath = $file->store('drivers/photos', 'public');
+        $profile = $user->driverProfile ?? \App\Models\DriverProfile::firstOrCreate(['user_id' => $user->id]);
+        $profile->update([
+            'image_url' => $photoPath,
+            'photo_formality_status' => 'verified',
+        ]);
+        $user->update(['avatar' => $photoPath]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Driver profile photo updated successfully!',
+                'photo_url' => $profile->fresh()->photo_url,
+                'avatar_url' => $user->fresh()->avatar_url,
+            ]);
+        }
+        return back()->with('success', 'Driver profile photo updated successfully!');
     });
 });
 
@@ -2618,12 +2669,19 @@ Route::post('/account/update', function (\Illuminate\Http\Request $request) {
         $updates['city'] = $validated['city'];
     }
 
+    if ($request->hasFile('avatar')) {
+        $updates['avatar'] = $request->file('avatar')->store('avatars', 'public');
+    } elseif ($request->hasFile('photo')) {
+        $updates['avatar'] = $request->file('photo')->store('avatars', 'public');
+    }
+
     $user->update($updates);
 
     if ($user->driverProfile) {
         $driverUpdates = [];
         if (!empty($validated['country'])) $driverUpdates['country'] = $validated['country'];
         if (!empty($validated['city'])) $driverUpdates['service_area'] = $validated['city'];
+        if (isset($updates['avatar'])) $driverUpdates['image_url'] = $updates['avatar'];
         if (!empty($driverUpdates)) {
             $user->driverProfile->update($driverUpdates);
         }
@@ -2635,12 +2693,14 @@ Route::post('/account/update', function (\Illuminate\Http\Request $request) {
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully!',
+            'avatar_url' => $user->avatar_url,
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'country' => $user->country ?? 'USA',
                 'city' => $user->city ?? '',
+                'avatar_url' => $user->avatar_url,
             ]
         ]);
     }

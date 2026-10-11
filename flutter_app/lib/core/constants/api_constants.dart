@@ -14,6 +14,8 @@ class ApiConstants {
   static const String appleOAuthUrl = 'https://www.ridemycars.com/auth/apple';
   static const String me = '/me';
   static const String logout = '/logout';
+  static const String userProfile = '/user/profile';
+  static const String userAvatar = '/user/avatar';
 
   // Rides
   static const String rides = '/rides';

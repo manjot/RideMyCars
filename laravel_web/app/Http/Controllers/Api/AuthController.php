@@ -164,19 +164,27 @@ class AuthController extends Controller
                         $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
                     } elseif ($request->hasFile('photo')) {
                         $photoPath = $request->file('photo')->store('drivers/photos', 'public');
-                    } elseif ($request->filled('base64_photo')) {
-                        $imageData = $request->input('base64_photo');
-                        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
-                            $imageData = substr($imageData, strpos($imageData, ',') + 1);
-                            $type = strtolower($type[1]);
-                        } else {
-                            $type = 'jpg';
-                        }
-                        $decoded = base64_decode($imageData);
-                        if ($decoded !== false) {
-                            $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
-                            \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
-                            $photoPath = $fileName;
+                    } else {
+                        $imageData = $request->input('base64_photo') 
+                            ?? $request->input('driver_photo')
+                            ?? data_get($request->input('driver_details'), 'base64_photo')
+                            ?? data_get($request->input('driver_details'), 'driver_photo');
+
+                        if (!empty($imageData)) {
+                            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                                $type = strtolower($type[1]);
+                            } else {
+                                $type = 'jpg';
+                            }
+                            $decoded = base64_decode($imageData, true);
+                            if ($decoded !== false && strlen($decoded) > 100) {
+                                $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
+                                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                                $photoPath = $fileName;
+                            } elseif (!empty($imageData) && !str_starts_with($imageData, 'data:')) {
+                                $photoPath = $imageData;
+                            }
                         }
                     }
 
@@ -925,19 +933,27 @@ class AuthController extends Controller
                                     $photoPath = $request->file('driver_photo')->store('drivers/photos', 'public');
                                 } elseif ($request->hasFile('photo')) {
                                     $photoPath = $request->file('photo')->store('drivers/photos', 'public');
-                                } elseif ($request->filled('base64_photo')) {
-                                    $imageData = $request->input('base64_photo');
-                                    if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
-                                        $imageData = substr($imageData, strpos($imageData, ',') + 1);
-                                        $type = strtolower($type[1]);
-                                    } else {
-                                        $type = 'jpg';
-                                    }
-                                    $decoded = base64_decode($imageData);
-                                    if ($decoded !== false) {
-                                        $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
-                                        \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
-                                        $photoPath = $fileName;
+                                } else {
+                                    $imageData = $request->input('base64_photo') 
+                                        ?? $request->input('driver_photo')
+                                        ?? data_get($request->input('driver_details'), 'base64_photo')
+                                        ?? data_get($request->input('driver_details'), 'driver_photo');
+
+                                    if (!empty($imageData)) {
+                                        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                                            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                                            $type = strtolower($type[1]);
+                                        } else {
+                                            $type = 'jpg';
+                                        }
+                                        $decoded = base64_decode($imageData, true);
+                                        if ($decoded !== false && strlen($decoded) > 100) {
+                                            $fileName = 'drivers/photos/driver_' . $user->id . '_' . time() . '.' . $type;
+                                            \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                                            $photoPath = $fileName;
+                                        } elseif (!empty($imageData) && !str_starts_with($imageData, 'data:')) {
+                                            $photoPath = $imageData;
+                                        }
                                     }
                                 }
 
@@ -1225,6 +1241,140 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Logged out successfully.',
+        ]);
+    }
+
+    /**
+     * Upload or update user avatar / photo
+     */
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $photoPath = null;
+        if ($request->hasFile('avatar')) {
+            $request->validate(['avatar' => 'required|image|max:10240']);
+            $photoPath = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->hasFile('photo')) {
+            $request->validate(['photo' => 'required|image|max:10240']);
+            $photoPath = $request->file('photo')->store('avatars', 'public');
+        } elseif ($request->hasFile('driver_photo')) {
+            $request->validate(['driver_photo' => 'required|image|max:10240']);
+            $photoPath = $request->file('driver_photo')->store('avatars', 'public');
+        } elseif ($request->filled('base64_photo') || $request->filled('base64_avatar')) {
+            $imageData = $request->input('base64_photo') ?? $request->input('base64_avatar');
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                $type = strtolower($type[1]);
+            } else {
+                $type = 'jpg';
+            }
+            $imageData = base64_decode($imageData);
+            if ($imageData !== false) {
+                $fileName = 'avatars/avatar_' . $user->id . '_' . time() . '.' . $type;
+                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $imageData);
+                $photoPath = $fileName;
+            }
+        }
+
+        if (!$photoPath) {
+            return response()->json(['success' => false, 'message' => 'No image file or data provided.'], 422);
+        }
+
+        $user->update(['avatar' => $photoPath]);
+        if ($user->driverProfile) {
+            $user->driverProfile->update([
+                'image_url' => $photoPath,
+                'photo_formality_status' => 'verified',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile photo updated successfully.',
+            'avatar_url' => $user->fresh()->avatar_url,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'avatar' => $user->fresh()->avatar,
+                'avatar_url' => $user->fresh()->avatar_url,
+            ],
+        ]);
+    }
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'country' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'avatar' => 'nullable|image|max:10240',
+            'photo' => 'nullable|image|max:10240',
+            'base64_photo' => 'nullable|string',
+        ]);
+
+        if (!empty($validated['name'])) $user->name = $validated['name'];
+        if (!empty($validated['phone'])) $user->phone = $validated['phone'];
+        if (!empty($validated['country']) && \Illuminate\Support\Facades\Schema::hasColumn('users', 'country')) $user->country = $validated['country'];
+        if (!empty($validated['city']) && \Illuminate\Support\Facades\Schema::hasColumn('users', 'city')) $user->city = $validated['city'];
+
+        $photoPath = null;
+        if ($request->hasFile('avatar')) {
+            $photoPath = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('avatars', 'public');
+        } elseif ($request->filled('base64_photo')) {
+            $imageData = $request->input('base64_photo');
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                $type = strtolower($type[1]);
+            } else {
+                $type = 'jpg';
+            }
+            $imageData = base64_decode($imageData);
+            if ($imageData !== false) {
+                $fileName = 'avatars/avatar_' . $user->id . '_' . time() . '.' . $type;
+                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $imageData);
+                $photoPath = $fileName;
+            }
+        }
+
+        if ($photoPath) {
+            $user->avatar = $photoPath;
+            if ($user->driverProfile) {
+                $user->driverProfile->update([
+                    'image_url' => $photoPath,
+                    'photo_formality_status' => 'verified',
+                ]);
+            }
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully.',
+            'avatar_url' => $user->fresh()->avatar_url,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'country' => $user->country ?? null,
+                'city' => $user->city ?? null,
+                'avatar' => $user->fresh()->avatar,
+                'avatar_url' => $user->fresh()->avatar_url,
+            ],
         ]);
     }
 }

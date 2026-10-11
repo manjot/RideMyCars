@@ -150,6 +150,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Auth & User Profile
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/user/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
 
     // Rides Lifecycle
     Route::get('/rides/active', [RideController::class, 'active']);

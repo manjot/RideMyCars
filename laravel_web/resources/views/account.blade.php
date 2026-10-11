@@ -1318,6 +1318,38 @@
                     </div>
 
                     <form @submit.prevent="saveProfileData({ name: tempName, email: tempEmail, phone: tempPhone, country: tempCountry, city: tempCity })" class="space-y-4">
+                        <!-- Profile Photo Picker -->
+                        <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80">
+                            <div class="relative w-16 h-16 rounded-full overflow-hidden shrink-0 border-2 border-amber-400 bg-slate-900 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                                <template x-if="tempAvatarPreview">
+                                    <img :src="tempAvatarPreview" alt="Preview" class="w-full h-full object-cover">
+                                </template>
+                                <template x-if="!tempAvatarPreview">
+                                    @if(!empty($user->avatar_url))
+                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <span x-text="tempName ? tempName.charAt(0).toUpperCase() : 'U'"></span>
+                                    @endif
+                                </template>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Profile Photo</label>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Upload a photo directly from your device (JPG, PNG)</p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <input type="file" id="modalAvatarInput" accept="image/*" class="hidden" @change="handleModalAvatar($event.target.files[0])">
+                                    <button type="button" @click="document.getElementById('modalAvatarInput').click()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span>Choose Photo</span>
+                                    </button>
+                                    <template x-if="tempAvatarPreview">
+                                        <button type="button" @click="tempAvatarPreview = null; tempAvatarFile = null" class="px-2.5 py-1.5 text-xs text-red-500 hover:text-red-600 font-bold cursor-pointer">
+                                            ✕ Cancel
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Full Name *</label>
                             <input type="text" x-model="tempName" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500">
@@ -1482,8 +1514,23 @@
 
             async saveProfileData(fields) {
                 this.isSaving = true;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
                 try {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                    if (this.tempAvatarFile) {
+                        try {
+                            const fd = new FormData();
+                            fd.append('avatar', this.tempAvatarFile);
+                            if (csrfToken) fd.append('_token', csrfToken);
+                            await fetch('/account/avatar', { 
+                                method: 'POST', 
+                                headers: { 'X-CSRF-TOKEN': csrfToken || '' },
+                                body: fd 
+                            });
+                        } catch (err) {
+                            console.warn('Avatar upload warning:', err);
+                        }
+                    }
+
                     const res = await fetch('/account/update', {
                         method: 'POST',
                         headers: {
@@ -1511,12 +1558,17 @@
                         this.tempPhone = this.userPhone;
                         this.tempCountry = this.userCountry;
                         this.tempCity = this.userCity;
+                        this.tempAvatarPreview = null;
+                        this.tempAvatarFile = null;
                         this.showNameModal = false;
                         this.showPhoneModal = false;
                         this.showEmailModal = false;
                         this.showCountryModal = false;
                         this.showFullEditModal = false;
                         this.showToast(data.message || 'Profile updated successfully!');
+                        if (data.user.avatar_url) {
+                            setTimeout(() => window.location.reload(), 800);
+                        }
                     } else {
                         alert(data.message || (data.errors ? Object.values(data.errors).flat().join("\n") : 'Failed to update profile.'));
                     }
@@ -1528,6 +1580,16 @@
                 }
             },
             
+            tempAvatarPreview: null,
+            tempAvatarFile: null,
+            handleModalAvatar(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+                this.tempAvatarFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => { this.tempAvatarPreview = e.target.result; };
+                reader.readAsDataURL(file);
+            },
+
             // Security Modals
             showPasswordModal: false,
             showRecoveryPhoneModal: false,

@@ -31,6 +31,16 @@ class AuthProvider extends ChangeNotifier {
   String? get referredBy => _referredBy;
   String? get avatarUrl => _avatarUrl;
 
+  void setAvatarUrl(String? url) {
+    _avatarUrl = url;
+    notifyListeners();
+  }
+
+  void setUserName(String? name) {
+    _userName = name;
+    notifyListeners();
+  }
+
   bool get isDriver => _role == 'driver';
 
   Future<bool> loadSession() async {

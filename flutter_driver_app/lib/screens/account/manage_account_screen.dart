@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/api_constants.dart';
@@ -40,13 +43,15 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
           _userProfile = res.data['user'];
           _driverProfile = res.data['driver_profile'];
         });
-        final auth = Provider.of<AuthProvider>(context, listen: false);
-        final foundAvatar = _driverProfile?['image_url'] ?? _userProfile?['avatar_url'] ?? _userProfile?['avatar'];
-        if (foundAvatar != null && foundAvatar.toString().isNotEmpty) {
-          final resolved = foundAvatar.toString().startsWith('http')
-              ? foundAvatar.toString()
-              : '${ApiConstants.storageBaseUrl}/${foundAvatar.toString().replaceFirst(RegExp(r"^storage/"), "")}';
-          auth.setAvatarUrl(resolved);
+        if (mounted) {
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final foundAvatar = _driverProfile?['image_url'] ?? _userProfile?['avatar_url'] ?? _userProfile?['avatar'];
+          if (foundAvatar != null && foundAvatar.toString().isNotEmpty) {
+            final resolved = foundAvatar.toString().startsWith('http')
+                ? foundAvatar.toString()
+                : '${ApiConstants.storageBaseUrl}/${foundAvatar.toString().replaceFirst(RegExp(r"^storage/"), "")}';
+            auth.setAvatarUrl(resolved);
+          }
         }
       }
     } catch (e) {
@@ -71,12 +76,176 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     );
   }
 
+  Future<void> _uploadDirectPhoto(XFile file) async {
+    setState(() => _isLoading = true);
+    try {
+      final formData = FormData.fromMap({
+        'photo': await MultipartFile.fromFile(
+          file.path,
+          filename: file.name.isNotEmpty ? file.name : 'driver_photo.jpg',
+        ),
+        'driver_photo': await MultipartFile.fromFile(
+          file.path,
+          filename: file.name.isNotEmpty ? file.name : 'driver_photo.jpg',
+        ),
+      });
+
+      await _dio.post(ApiConstants.driverProfile, data: formData);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated successfully!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _fetchProfile();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload photo: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
+  void _showPhotoSourceSheet() {
+    final imagePicker = ImagePicker();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Change Profile Photo',
+                style: TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Take a new photo or select from your device storage',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+                ),
+                title: const Text('Take Photo', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold)),
+                subtitle: const Text('Use your device camera', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final photo = await imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
+                      maxWidth: 1200,
+                      maxHeight: 1200,
+                    );
+                    if (photo != null) {
+                      await _uploadDirectPhoto(photo);
+                    }
+                  } catch (e) {
+                    debugPrint('Camera error: $e');
+                  }
+                },
+              ),
+              const Divider(color: Colors.white10),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+                ),
+                title: const Text('Choose from Gallery', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold)),
+                subtitle: const Text('Select a photo from device gallery', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final photo = await imagePicker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 85,
+                      maxWidth: 1200,
+                      maxHeight: 1200,
+                    );
+                    if (photo != null) {
+                      await _uploadDirectPhoto(photo);
+                    }
+                  } catch (e) {
+                    debugPrint('Gallery error: $e');
+                  }
+                },
+              ),
+              const Divider(color: Colors.white10),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.edit_note_rounded, color: AppColors.textLight),
+                ),
+                title: const Text('Edit Full Profile & Details', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold)),
+                subtitle: const Text('Name, rate, bio, and contact details', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showEditProfileDialog();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showEditProfileDialog() {
     final nameCtrl = TextEditingController(text: _userProfile?['name'] ?? '');
     final phoneCtrl = TextEditingController(text: _userProfile?['phone'] ?? '');
-    final photoCtrl = TextEditingController(text: _driverProfile?['image_url'] ?? '');
     final hourlyCtrl = TextEditingController(text: (_driverProfile?['hourly_rate'] ?? 25.0).toString());
     final bioCtrl = TextEditingController(text: _driverProfile?['bio'] ?? '');
+    final rawPhoto = _driverProfile?['image_url'] ?? _userProfile?['avatar_url'] ?? _userProfile?['avatar'] ?? _userProfile?['profile_photo_path'];
+    final currentPhotoUrl = rawPhoto != null && rawPhoto.toString().isNotEmpty
+        ? (rawPhoto.toString().startsWith('http') ? rawPhoto.toString() : '${ApiConstants.storageBaseUrl}/${rawPhoto.toString().replaceFirst(RegExp(r"^storage/"), "")}')
+        : null;
+
+    XFile? pickedPhoto;
+    final ImagePicker imagePicker = ImagePicker();
     bool isSaving = false;
 
     showModalBottomSheet(
@@ -146,46 +315,183 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: photoCtrl,
-                  style: const TextStyle(color: AppColors.textLight),
-                  decoration: InputDecoration(
-                    labelText: 'Driver Photo URL',
-                    hintText: 'https://... or sample URL',
-                    hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                    labelStyle: const TextStyle(color: AppColors.textMuted),
-                    filled: true,
-                    fillColor: AppColors.backgroundDark,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                const SizedBox(height: 14),
+
+                // Direct Driver Photo Upload Card
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundDark,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: pickedPhoto != null ? AppColors.primary : Colors.white12,
+                      width: pickedPhoto != null ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Driver Profile Photo',
+                            style: TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Photo Upload',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          // Photo preview
+                          Stack(
+                            children: [
+                              Container(
+                                width: 68,
+                                height: 68,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.primary, width: 2),
+                                  color: AppColors.surfaceDark,
+                                ),
+                                child: ClipOval(
+                                  child: pickedPhoto != null
+                                      ? (kIsWeb
+                                          ? Image.network(pickedPhoto!.path, fit: BoxFit.cover)
+                                          : Image.file(File(pickedPhoto!.path), fit: BoxFit.cover))
+                                      : (currentPhotoUrl != null
+                                          ? Image.network(
+                                              currentPhotoUrl,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => _buildAvatarFallback(nameCtrl.text),
+                                            )
+                                          : _buildAvatarFallback(nameCtrl.text)),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded, color: AppColors.backgroundDark, size: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () async {
+                                          try {
+                                            final photo = await imagePicker.pickImage(
+                                              source: ImageSource.camera,
+                                              imageQuality: 85,
+                                              maxWidth: 1200,
+                                              maxHeight: 1200,
+                                            );
+                                            if (photo != null) {
+                                              setSheetState(() => pickedPhoto = photo);
+                                            }
+                                          } catch (e) {
+                                            debugPrint('Camera error: $e');
+                                          }
+                                        },
+                                        icon: const Icon(Icons.photo_camera_rounded, size: 14),
+                                        label: const Text('Camera', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.primary,
+                                          side: const BorderSide(color: AppColors.primary),
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: () async {
+                                          try {
+                                            final photo = await imagePicker.pickImage(
+                                              source: ImageSource.gallery,
+                                              imageQuality: 85,
+                                              maxWidth: 1200,
+                                              maxHeight: 1200,
+                                            );
+                                            if (photo != null) {
+                                              setSheetState(() => pickedPhoto = photo);
+                                            }
+                                          } catch (e) {
+                                            debugPrint('Gallery error: $e');
+                                          }
+                                        },
+                                        icon: const Icon(Icons.photo_library_rounded, size: 14),
+                                        label: const Text('Gallery', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: AppColors.backgroundDark,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (pickedPhoto != null) ...[
+                                  const SizedBox(height: 6),
+                                  GestureDetector(
+                                    onTap: () => setSheetState(() => pickedPhoto = null),
+                                    child: const Text(
+                                      '✕ Cancel new photo',
+                                      style: TextStyle(color: AppColors.danger, fontSize: 11, fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ] else ...[
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Take photo or choose from device gallery',
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Or pick a formal driver photo preset:',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400',
-                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-                  ].map((url) => Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        setSheetState(() => photoCtrl.text = url);
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(url, width: 44, height: 44, fit: BoxFit.cover),
-                      ),
-                    ),
-                  )).toList(),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 TextField(
                   controller: hourlyCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -216,18 +522,34 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   onPressed: isSaving ? null : () async {
                     setSheetState(() => isSaving = true);
                     try {
-                      await _dio.post(ApiConstants.driverProfile, data: {
+                      final Map<String, dynamic> dataMap = {
                         'name': nameCtrl.text.trim(),
                         'phone': phoneCtrl.text.trim(),
-                        'photo_url': photoCtrl.text.trim(),
-                        'driver_photo': photoCtrl.text.trim(),
                         'hourly_rate': double.tryParse(hourlyCtrl.text.trim()),
                         'bio': bioCtrl.text.trim(),
-                      });
+                      };
+
+                      if (pickedPhoto != null) {
+                        dataMap['photo'] = await MultipartFile.fromFile(
+                          pickedPhoto!.path,
+                          filename: pickedPhoto!.name.isNotEmpty ? pickedPhoto!.name : 'driver_photo.jpg',
+                        );
+                        dataMap['driver_photo'] = await MultipartFile.fromFile(
+                          pickedPhoto!.path,
+                          filename: pickedPhoto!.name.isNotEmpty ? pickedPhoto!.name : 'driver_photo.jpg',
+                        );
+                      }
+
+                      final formData = FormData.fromMap(dataMap);
+                      await _dio.post(ApiConstants.driverProfile, data: formData);
+
                       if (context.mounted) {
                         Navigator.pop(sheetContext);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Profile and photo updated successfully!'), backgroundColor: AppColors.success),
+                          const SnackBar(
+                            content: Text('Profile and photo updated successfully!'),
+                            backgroundColor: AppColors.success,
+                          ),
                         );
                         _fetchProfile();
                       }
@@ -304,7 +626,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   // Profile Avatar Banner
                   Center(
                     child: GestureDetector(
-                      onTap: _showEditProfileDialog,
+                      onTap: _showPhotoSourceSheet,
                       child: Stack(
                         children: [
                           Container(
