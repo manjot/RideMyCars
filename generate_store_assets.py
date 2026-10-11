@@ -7,6 +7,7 @@ ios_dir = os.path.join(out_dir, "ios")
 android_dir = os.path.join(out_dir, "android")
 
 os.makedirs(os.path.join(ios_dir, "iphone_6_7_inch"), exist_ok=True)
+os.makedirs(os.path.join(ios_dir, "iphone_6_1_inch"), exist_ok=True)
 os.makedirs(os.path.join(ios_dir, "iphone_6_5_inch"), exist_ok=True)
 os.makedirs(os.path.join(ios_dir, "iphone_5_5_inch"), exist_ok=True)
 os.makedirs(os.path.join(ios_dir, "ipad_12_9_inch"), exist_ok=True)
@@ -331,6 +332,7 @@ def create_framed_screenshot(src_path, target_size, badge_text, headline, subtit
 # Specifications:
 dimensions = [
     (os.path.join(ios_dir, "iphone_6_7_inch"), (1290, 2796), True, False, "iOS 6.7\" Display (1290x2796)"),
+    (os.path.join(ios_dir, "iphone_6_1_inch"), (1179, 2556), True, False, "iOS 6.1\" Dynamic Island Medium Display (1179x2556)"),
     (os.path.join(ios_dir, "iphone_6_5_inch"), (1242, 2688), True, False, "iOS 6.5\" Display (1242x2688)"),
     (os.path.join(ios_dir, "iphone_5_5_inch"), (1242, 2208), True, False, "iOS 5.5\" Display (1242x2208)"),
     (os.path.join(ios_dir, "ipad_12_9_inch"), (2048, 2732), True, True, "iOS 12.9\" iPad Pro (2048x2732)"),
