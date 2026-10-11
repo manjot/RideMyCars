@@ -61,7 +61,8 @@
                         </div>
                     </div>
 
-                    <!-- Right Hero Real Driver Photo & Official Campa                    <div class="lg:col-span-5 relative" x-data="{ viewMode: 'flyer-driver', showHeroFlyerModal: null }">
+                    <!-- Right Hero Real Driver Photo & Official Campaign Flyer -->
+                    <div class="lg:col-span-5 relative" x-data="{ viewMode: 'flyer-driver', showHeroFlyerModal: null }">
                         <!-- Toggle Pills -->
                         <div class="flex items-center justify-center gap-2 mb-3">
                             <button type="button" 
@@ -174,9 +175,7 @@
                                 </div>
                             </div>
                         </template>
-                    </div>                        </div>
                     </div>
-
                 </div>
             </div>
         </section>
