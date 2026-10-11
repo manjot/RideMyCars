@@ -3599,6 +3599,52 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['categories_explicit_migrate_err'] = $e->getMessage();
     }
 
+    // Purge legacy black-background banner images (hero-ride.png) and ensure Car, Bike, Scooti banners are active
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('banners')) {
+            \Illuminate\Support\Facades\DB::table('banners')
+                ->where('title', 'like', '%20% Off%')
+                ->update([
+                    'title' => 'Executive Car & Sedan Comfort',
+                    'description' => 'Travel in style with premium executive sedans, spacious legroom, and vetted top-rated chauffeurs.',
+                    'image' => 'images/vehicle-car-ride.jpg',
+                    'updated_at' => now(),
+                ]);
+
+            \Illuminate\Support\Facades\DB::table('banners')
+                ->where('image', 'images/hero-ride.png')
+                ->where('title', 'like', '%Sedan Comfort%')
+                ->update([
+                    'title' => 'Fast Bike & Motorbike City Hops',
+                    'description' => 'Zip through urban traffic fast and affordably with certified helmet-provided bike riders.',
+                    'image' => 'images/vehicle-bike-ride.jpg',
+                    'updated_at' => now(),
+                ]);
+
+            \Illuminate\Support\Facades\DB::table('banners')
+                ->where('image', 'images/hero-ride.png')
+                ->update(['image' => 'images/vehicle-car-ride.jpg', 'updated_at' => now()]);
+
+            $rideCatId = \Illuminate\Support\Facades\DB::table('categories')->where('slug', 'ride')->value('id') ?? 1;
+            \Illuminate\Support\Facades\DB::table('banners')->updateOrInsert(
+                ['category_id' => $rideCatId, 'title' => 'Eco-Friendly Scooti City Mobility'],
+                [
+                    'description' => 'Quick, quiet, and ultra-affordable short-distance rides with modern electric scootis.',
+                    'image' => 'images/vehicle-scooti-ride.jpg',
+                    'link' => '/ride',
+                    'status' => 'active',
+                    'updated_at' => now(),
+                ]
+            );
+
+            // Execute CategoryAndBannerSeeder
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CategoryAndBannerSeeder', '--force' => true]);
+            $output['banners_car_bike_scooti_synced'] = true;
+        }
+    } catch (\Throwable $e) {
+        $output['banner_sync_err'] = $e->getMessage();
+    }
+
     $quickSync = $request->boolean('quick_sync');
 
     if (!$quickSync) {

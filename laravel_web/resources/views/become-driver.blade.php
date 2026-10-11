@@ -398,13 +398,13 @@
                             </div>
 
                             <div class="flex flex-col sm:flex-row items-center gap-6">
-                                <div class="w-full sm:w-44 shrink-0 rounded-2xl overflow-hidden shadow-md border border-emerald-200 dark:border-emerald-700/40 bg-gray-950">
-                                    <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-full sm:w-44 shrink-0 rounded-2xl overflow-hidden shadow-md border border-emerald-200 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-white dark:bg-[#1a1a1a] p-1">
+                                    <img src="{{ asset('images/promo-driver-earn90.jpg') }}" alt="Drive With Us, Earn 90%" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl">
                                 </div>
                                 <div class="space-y-2">
                                     <h3 class="text-2xl font-black text-gray-900 dark:text-white">City Driver Partner</h3>
                                     <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
-                                        Ideal for owners of sedans and hatchbacks. Pick up daily riders across the city and complete parcel dispatches.
+                                        Ideal for owners of sedans, hatchbacks, and bikes. Pick up daily riders across the city and complete parcel dispatches.
                                     </p>
                                     <ul class="text-xs text-gray-700 dark:text-gray-300 space-y-1.5 pt-1 font-semibold">
                                         <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Keep 90% from your very first trip</li>
@@ -434,9 +434,9 @@
                             </div>
 
                             <div class="flex flex-col sm:flex-row items-center gap-6">
-                                <div class="w-full sm:w-48 shrink-0 rounded-2xl overflow-hidden shadow-lg border border-indigo-200 dark:border-indigo-700/40 bg-gray-950 cursor-pointer relative group/img"
+                                <div class="w-full sm:w-48 shrink-0 rounded-2xl overflow-hidden shadow-lg border border-indigo-200 dark:border-indigo-700/40 bg-gradient-to-br from-indigo-500/10 via-indigo-50 to-white dark:bg-[#1a1a1a] p-1 cursor-pointer relative group/img"
                                      @click="showChauffeurTierModal = true">
-                                    <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur - Earn 85%" class="w-full h-auto object-cover group-hover/img:scale-105 transition-transform duration-300">
+                                    <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur - Earn 85%" class="w-full h-auto object-cover group-hover/img:scale-105 transition-transform duration-300 rounded-xl">
                                     <div class="absolute inset-0 bg-black/20 group-hover/img:bg-transparent transition-colors flex items-center justify-center">
                                         <span class="px-2.5 py-1 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover/img:opacity-100 transition-opacity">
                                             🔍 Enlarge Flyer

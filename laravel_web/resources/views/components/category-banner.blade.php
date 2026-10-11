@@ -46,6 +46,17 @@
                         @if($banner->image)
                             @php
                                 $img = $banner->image;
+                                // Automatically replace obsolete black-background cutout with vibrant Car, Bike, or Scooti
+                                if ($img === 'images/hero-ride.png' || str_contains((string)$img, 'hero-ride.png')) {
+                                    if (stripos($banner->title, 'bike') !== false || stripos($banner->description, 'bike') !== false || $loop->iteration % 3 === 2) {
+                                        $img = 'images/vehicle-bike-ride.jpg';
+                                    } elseif (stripos($banner->title, 'scoot') !== false || stripos($banner->description, 'scoot') !== false || $loop->iteration % 3 === 0) {
+                                        $img = 'images/vehicle-scooti-ride.jpg';
+                                    } else {
+                                        $img = 'images/vehicle-car-ride.jpg';
+                                    }
+                                }
+
                                 if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
                                     $imageUrl = $img;
                                 } elseif ($img && file_exists(public_path($img))) {
@@ -56,11 +67,11 @@
                                     $imageUrl = asset($img);
                                 }
                             @endphp
-                            <div class="w-24 h-28 sm:w-28 sm:h-36 rounded-2xl overflow-hidden border border-amber-200/80 dark:border-amber-800/40 shrink-0 shadow-md bg-gray-950">
+                            <div class="w-24 h-28 sm:w-32 sm:h-36 rounded-2xl overflow-hidden border-2 border-amber-300 dark:border-amber-500/40 shrink-0 shadow-md bg-gradient-to-br from-amber-50 via-white to-amber-100/60 dark:from-[#222] dark:to-[#181818] p-1.5 flex items-center justify-center">
                                 <img src="{{ $imageUrl }}" 
                                      alt="{{ $banner->title }}"
-                                     class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                                     onError="this.onerror=null;this.src='{{ asset('images/hero-delivery.png') }}';">
+                                     class="w-full h-full object-contain rounded-xl group-hover:scale-105 transition-transform duration-300"
+                                     onError="this.onerror=null;this.src='{{ asset('images/vehicle-car-ride.jpg') }}';">
                             </div>
                         @endif
                     </div>

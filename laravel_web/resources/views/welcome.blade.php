@@ -51,12 +51,49 @@
                             <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 mb-2">⚡ Instant On-Demand</span>
                             
                             <h3 class="text-2xl font-black mb-1.5 text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">Ride</h3>
-                            <p class="text-gray-600 dark:text-gray-300 mb-5 max-w-[250px] text-xs font-medium leading-relaxed">On-demand executive transport with vetted city drivers.</p>
+                            <p class="text-gray-600 dark:text-gray-300 mb-3 max-w-[250px] text-xs font-medium leading-relaxed">On-demand city mobility: Cars, Bikes & Electric Scootis.</p>
                             
-                            <!-- Vehicle Image with Radiant Glow Behind -->
-                            <div class="relative w-[120%] h-40 -mx-[10%] mt-auto flex items-center justify-center overflow-visible mb-5">
-                                <div class="absolute w-28 h-28 rounded-full bg-amber-400/30 blur-2xl -z-10 pointer-events-none"></div>
-                                <img src="{{ asset('images/hero-ride.png') }}" alt="Ride" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105">
+                            <!-- Vehicle Fleet Switcher: Car • Bike • Scooti -->
+                            <div class="mt-auto w-full" x-data="{ rideFleetType: 'car' }">
+                                <div class="inline-flex items-center justify-center gap-1 p-1 bg-amber-50 dark:bg-white/5 border border-amber-300/60 dark:border-white/10 rounded-full mb-3 shadow-xs">
+                                    <button type="button" 
+                                            @click.stop="rideFleetType = 'car'" 
+                                            :class="rideFleetType === 'car' ? 'bg-orange-500 text-white font-black shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'"
+                                            class="px-2.5 py-0.5 rounded-full text-[10px] transition-all cursor-pointer">
+                                        🚗 Car
+                                    </button>
+                                    <button type="button" 
+                                            @click.stop="rideFleetType = 'bike'" 
+                                            :class="rideFleetType === 'bike' ? 'bg-orange-500 text-white font-black shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'"
+                                            class="px-2.5 py-0.5 rounded-full text-[10px] transition-all cursor-pointer">
+                                        🏍️ Bike
+                                    </button>
+                                    <button type="button" 
+                                            @click.stop="rideFleetType = 'scooti'" 
+                                            :class="rideFleetType === 'scooti' ? 'bg-orange-500 text-white font-black shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'"
+                                            class="px-2.5 py-0.5 rounded-full text-[10px] transition-all cursor-pointer">
+                                        🛵 Scooti
+                                    </button>
+                                </div>
+
+                                <!-- Vehicle Image Display with Soft Amber Ambient Glow -->
+                                <div class="relative w-[110%] h-36 -mx-[5%] flex items-center justify-center overflow-visible mb-4">
+                                    <div class="absolute w-28 h-28 rounded-full bg-amber-400/25 blur-2xl -z-10 pointer-events-none"></div>
+                                    <img x-show="rideFleetType === 'car'" 
+                                         src="{{ asset('images/vehicle-car-ride.jpg') }}" 
+                                         alt="Car Ride" 
+                                         class="w-full h-full object-contain rounded-2xl shadow-sm transition-transform duration-500 group-hover:scale-105">
+                                    <img x-show="rideFleetType === 'bike'" 
+                                         src="{{ asset('images/vehicle-bike-ride.jpg') }}" 
+                                         alt="Bike Ride" 
+                                         class="w-full h-full object-contain rounded-2xl shadow-sm transition-transform duration-500 group-hover:scale-105" 
+                                         style="display: none;">
+                                    <img x-show="rideFleetType === 'scooti'" 
+                                         src="{{ asset('images/vehicle-scooti-ride.jpg') }}" 
+                                         alt="Scooti Ride" 
+                                         class="w-full h-full object-contain rounded-2xl shadow-sm transition-transform duration-500 group-hover:scale-105" 
+                                         style="display: none;">
+                                </div>
                             </div>
                             
                             <!-- Button -->
@@ -668,7 +705,7 @@
                         </button>
 
                         <!-- Left: Poster Image -->
-                        <div class="lg:w-1/2 bg-gray-950 flex items-center justify-center p-4 sm:p-6">
+                        <div class="lg:w-1/2 bg-gradient-to-br from-amber-500/10 via-amber-50 to-white dark:from-[#222] dark:to-[#181818] border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/10 flex items-center justify-center p-4 sm:p-6">
                             <img :src="activePosterModal?.image" 
                                  :alt="activePosterModal?.title"
                                  class="max-h-[70vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl">

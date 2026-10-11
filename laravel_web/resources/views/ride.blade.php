@@ -49,13 +49,13 @@
                 <div class="flex items-center gap-4 w-full lg:w-auto">
                     <!-- Flyer Thumbnails with Active Indicator -->
                     <div class="flex items-center gap-2 shrink-0">
-                        <div class="w-14 h-18 sm:w-16 sm:h-22 rounded-2xl overflow-hidden shadow-md border-2 shrink-0 cursor-pointer group bg-gray-950 relative transition-all"
+                        <div class="w-14 h-18 sm:w-16 sm:h-22 rounded-2xl overflow-hidden shadow-md border-2 shrink-0 cursor-pointer group bg-gradient-to-br from-amber-50 to-white dark:bg-[#1a1a1a] relative transition-all"
                              :class="activeRideFlyer === 'hatchback' ? 'border-amber-500 ring-2 ring-amber-400/50 scale-105' : 'border-gray-300 dark:border-white/20 opacity-70 hover:opacity-100'"
                              @click="activeRideFlyer = 'hatchback'; showRideFlyerModal = true">
                             <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less - Hatchback" class="w-full h-full object-cover">
                             <span class="absolute bottom-0 inset-x-0 bg-amber-500 text-[8px] font-black text-center text-gray-950 uppercase py-0.5">Hatchback</span>
                         </div>
-                        <div class="w-14 h-18 sm:w-16 sm:h-22 rounded-2xl overflow-hidden shadow-md border-2 shrink-0 cursor-pointer group bg-gray-950 relative transition-all"
+                        <div class="w-14 h-18 sm:w-16 sm:h-22 rounded-2xl overflow-hidden shadow-md border-2 shrink-0 cursor-pointer group bg-gradient-to-br from-amber-50 to-white dark:bg-[#1a1a1a] relative transition-all"
                              :class="activeRideFlyer === 'sedan' ? 'border-amber-500 ring-2 ring-amber-400/50 scale-105' : 'border-gray-300 dark:border-white/20 opacity-70 hover:opacity-100'"
                              @click="activeRideFlyer = 'sedan'; showRideFlyerModal = true">
                             <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" alt="Ride More, Pay Less - Sedan" class="w-full h-full object-cover">
@@ -135,7 +135,7 @@
                             </button>
                         </div>
 
-                        <div class="w-full flex justify-center overflow-hidden rounded-2xl bg-gray-950 mb-3">
+                        <div class="w-full flex justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-50 to-white dark:from-[#222] dark:to-[#181818] p-2 mb-3">
                             <img x-show="activeRideFlyer === 'hatchback'"
                                  src="{{ asset('images/promo-ride-payless.jpg') }}" 
                                  alt="Ride More, Pay Less - Hatchback Flyer" 

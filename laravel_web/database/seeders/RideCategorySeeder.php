@@ -97,6 +97,20 @@ class RideCategorySeeder extends Seeder
                 'sort_order' => 6,
                 'is_active' => true,
             ],
+            [
+                'name' => 'Scooti',
+                'slug' => 'scooti',
+                'icon' => '🛵',
+                'capacity' => '1 seat',
+                'base_fare' => 2.50,
+                'per_km_rate' => 0.80,
+                'per_minute_rate' => 0.12,
+                'minimum_fare' => 4.00,
+                'multiplier' => 0.70,
+                'description' => 'Eco-friendly urban electric scooti for swift short-distance city trips',
+                'sort_order' => 7,
+                'is_active' => true,
+            ],
         ];
 
         foreach ($categories as $cat) {

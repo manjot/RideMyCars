@@ -31,8 +31,51 @@ class CategoryAndBannerSeeder extends Seeder
             );
         }
 
-        // Banners Data
+        // Clean up or migrate legacy black-background hero-ride.png records
+        Banner::where('title', 'like', '%20% Off%')
+            ->update([
+                'title' => 'Executive Car & Sedan Comfort',
+                'description' => 'Travel in style with premium executive sedans, spacious legroom, and vetted top-rated chauffeurs.',
+                'image' => 'images/vehicle-car-ride.jpg',
+            ]);
+
+        Banner::where('image', 'images/hero-ride.png')
+            ->where('title', 'like', '%Sedan Comfort%')
+            ->update([
+                'title' => 'Fast Bike & Motorbike City Hops',
+                'description' => 'Zip through urban traffic fast and affordably with certified helmet-provided bike riders.',
+                'image' => 'images/vehicle-bike-ride.jpg',
+            ]);
+
+        Banner::where('image', 'images/hero-ride.png')
+            ->update(['image' => 'images/vehicle-car-ride.jpg']);
+
+        // Banners Data (Cars, Bikes, Scootis, and Campaigns)
         $banners = [
+            [
+                'category_id' => $createdCategories['Ride']->id,
+                'title' => 'Executive Car & Sedan Comfort',
+                'description' => 'Travel in style with premium executive sedans, spacious legroom, and vetted top-rated chauffeurs.',
+                'image' => 'images/vehicle-car-ride.jpg',
+                'link' => '/ride',
+                'status' => 'active',
+            ],
+            [
+                'category_id' => $createdCategories['Ride']->id,
+                'title' => 'Fast Bike & Motorbike City Hops',
+                'description' => 'Zip through urban traffic fast and affordably with certified helmet-provided bike riders.',
+                'image' => 'images/vehicle-bike-ride.jpg',
+                'link' => '/ride',
+                'status' => 'active',
+            ],
+            [
+                'category_id' => $createdCategories['Ride']->id,
+                'title' => 'Eco-Friendly Scooti City Mobility',
+                'description' => 'Quick, quiet, and ultra-affordable short-distance rides with modern electric scootis.',
+                'image' => 'images/vehicle-scooti-ride.jpg',
+                'link' => '/ride',
+                'status' => 'active',
+            ],
             [
                 'category_id' => $createdCategories['Ride']->id,
                 'title' => 'Ride More, Pay Less — 50% Off First 3 Rides (Hatchback)',

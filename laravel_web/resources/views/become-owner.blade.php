@@ -372,10 +372,10 @@
                     <div class="lg:col-span-5 flex justify-center">
                         <div class="p-3 sm:p-4 rounded-3xl bg-white dark:bg-[#181818] border-2 border-blue-400 dark:border-blue-500/40 shadow-2xl max-w-md w-full group cursor-pointer"
                              @click="showFleetSectionModal = true">
-                            <div class="relative rounded-2xl overflow-hidden shadow-lg bg-gray-950">
+                            <div class="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-blue-500/10 via-blue-50 to-white dark:bg-[#1a1a1a] p-1.5">
                                 <img src="{{ asset('images/promo-fleet-owner.jpg') }}" 
                                      alt="Own Cars? Turn Them Into Monthly Income - Official Campaign Flyer" 
-                                     class="w-full h-auto object-contain group-hover:scale-[1.02] transition-transform duration-500">
+                                     class="w-full h-auto object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-500">
                                 <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors flex items-center justify-center">
                                     <span class="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg">
                                         🔍 Click to Enlarge Flyer

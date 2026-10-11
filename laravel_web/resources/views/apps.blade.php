@@ -432,8 +432,8 @@
                 <!-- Poster 1: Quick Register QR Poster -->
                 <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-yellow-400 dark:border-yellow-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                      @click="activePosterModal = { title: 'RideMyCars Official Registration & Download QR Poster', img: '{{ asset('images/promo-app-qr-register.jpg') }}', link: '/apps', cta: 'Download App' }">
-                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
-                        <img src="{{ asset('images/promo-app-qr-register.jpg') }}" alt="Official QR Register Poster" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-br from-amber-500/10 via-amber-50 to-white dark:bg-[#1f1f1f] h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-app-qr-register.jpg') }}" alt="Official QR Register Poster" class="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                             🔍 Zoom
                         </div>
@@ -450,8 +450,8 @@
                 <!-- Poster 2: 50% Off First 3 Rides Hatchback -->
                 <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-amber-300 dark:border-amber-500/30 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                      @click="activePosterModal = { title: 'Ride More, Pay Less — 50% Off (Hatchback Edition)', img: '{{ asset('images/promo-ride-payless.jpg') }}', link: '/ride', cta: 'Book Ride' }">
-                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
-                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less Hatchback" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-br from-amber-500/10 via-amber-50 to-white dark:bg-[#1f1f1f] h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-ride-payless.jpg') }}" alt="Ride More, Pay Less Hatchback" class="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                             🔍 Zoom
                         </div>
@@ -468,8 +468,8 @@
                 <!-- Poster 3: 50% Off First 3 Rides Sedan -->
                 <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-amber-400 dark:border-amber-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                      @click="activePosterModal = { title: 'Ride More, Pay Less — Executive Sedan Edition', img: '{{ asset('images/promo-ride-payless-sedan.jpg') }}', link: '/apps#rider-app', cta: 'Get Sedan App' }">
-                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
-                        <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" alt="Ride More, Pay Less Sedan" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-br from-amber-500/10 via-amber-50 to-white dark:bg-[#1f1f1f] h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-ride-payless-sedan.jpg') }}" alt="Ride More, Pay Less Sedan" class="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                             🔍 Zoom
                         </div>
@@ -486,8 +486,8 @@
                 <!-- Poster 4: Fleet Owner Income -->
                 <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-blue-400 dark:border-blue-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                      @click="activePosterModal = { title: 'Own Cars? Turn Them Into Monthly Income — List Your Fleet', img: '{{ asset('images/promo-fleet-owner.jpg') }}', link: '/become-owner', cta: 'List Fleet' }">
-                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
-                        <img src="{{ asset('images/promo-fleet-owner.jpg') }}" alt="Turn Cars Into Monthly Income" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-br from-blue-500/10 via-blue-50 to-white dark:bg-[#1f1f1f] h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-fleet-owner.jpg') }}" alt="Turn Cars Into Monthly Income" class="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                             🔍 Zoom
                         </div>
@@ -504,8 +504,8 @@
                 <!-- Poster 5: Become a Chauffeur -->
                 <div class="bg-gray-50 dark:bg-[#161616] p-4 rounded-3xl border-2 border-indigo-400 dark:border-indigo-500/40 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                      @click="activePosterModal = { title: 'Become a RideMyCars Chauffeur — Professional Chauffeurs Wanted (85%)', img: '{{ asset('images/promo-chauffeur-wanted.jpg') }}', link: '/driver-signup', cta: 'Apply Chauffeur' }">
-                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gray-950 h-64 flex items-center justify-center p-2 mb-3">
-                        <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md bg-gradient-to-br from-indigo-500/10 via-indigo-50 to-white dark:bg-[#1f1f1f] h-64 flex items-center justify-center p-2 mb-3">
+                        <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" alt="Become a RideMyCars Chauffeur" class="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition-transform duration-300">
                         <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/80 text-white font-bold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                             🔍 Zoom
                         </div>

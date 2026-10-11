@@ -236,11 +236,11 @@
 
                     <!-- Right: Poster Visual -->
                     <div class="lg:col-span-4 flex justify-center">
-                        <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-blue-400 dark:border-blue-500/40 bg-gray-950"
+                        <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-blue-400 dark:border-blue-500/40 bg-gradient-to-br from-blue-500/10 via-blue-50 to-white dark:bg-[#1a1a1a] p-1.5"
                              @click="showChauffeurModal = true">
                             <img src="{{ asset('images/promo-chauffeur-wanted.jpg') }}" 
                                  alt="Become a RideMyCars Chauffeur Flyer" 
-                                 class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
+                                 class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 rounded-xl">
                             <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                                 <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg">
                                     🔍 Click to Enlarge
