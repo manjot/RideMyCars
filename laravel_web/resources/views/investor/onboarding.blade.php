@@ -4,7 +4,8 @@
     <div class="min-h-screen bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-white relative overflow-hidden py-12 sm:py-16 transition-colors selection:bg-brand-500 selection:text-black"
          x-data="investorWizard({
              initialTranche: '{{ $selectedTranche ?? 'B' }}',
-             countryRules: {{ json_encode($countryRules) }}
+             countryRules: {{ json_encode($countryRules) }},
+             plans: {{ json_encode($plans) }}
          })">
 
         <!-- Background Ambient Accents -->
@@ -240,55 +241,64 @@
                             <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Select your desired investment tranche in the Ride My Cars Ghana single cohort.</p>
                         </div>
 
+                        @php
+                            $onboardingPlans = (isset($plans) && $plans->isNotEmpty()) ? $plans : collect([
+                                (object) [
+                                    'tranche_code' => 'A',
+                                    'tier_name' => 'Seed Tier',
+                                    'capital_commitment_ghc' => 720000.00,
+                                    'capital_commitment_usd' => 60000.00,
+                                    'equity_percentage' => 7.00,
+                                ],
+                                (object) [
+                                    'tranche_code' => 'D',
+                                    'tier_name' => 'Wealth builder',
+                                    'capital_commitment_ghc' => 120000.00,
+                                    'capital_commitment_usd' => 10000.00,
+                                    'equity_percentage' => 1.20,
+                                ],
+                                (object) [
+                                    'tranche_code' => 'B',
+                                    'tier_name' => 'Growth Tier',
+                                    'capital_commitment_ghc' => 1440000.00,
+                                    'capital_commitment_usd' => 120000.00,
+                                    'equity_percentage' => 14.00,
+                                ],
+                                (object) [
+                                    'tranche_code' => 'C',
+                                    'tier_name' => 'Venture Tier',
+                                    'capital_commitment_ghc' => 2640000.00,
+                                    'capital_commitment_usd' => 220000.00,
+                                    'equity_percentage' => 22.00,
+                                ],
+                            ]);
+                            $gridCols = count($onboardingPlans) >= 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3';
+                        @endphp
                         <!-- Tranche Radio Options with Uniform Solid Borders -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <!-- Tranche A -->
-                            <label class="p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between"
-                                   :class="form.selected_tranche === 'A' ? 'bg-amber-50 dark:bg-slate-800 border-2 border-amber-500 ring-2 ring-amber-500/20 shadow-md' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-400'">
-                                <div class="flex items-center justify-between mb-3">
-                                    <input type="radio" name="selected_tranche" value="A" x-model="form.selected_tranche" class="w-4 h-4 text-amber-500">
-                                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">Seed Tier</span>
-                                </div>
-                                <div class="font-black text-lg text-slate-900 dark:text-white">Tranche A</div>
-                                <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">720,000 GHC</div>
-                                <div class="text-xs text-slate-500 dark:text-slate-400">Approx. $60,000 USD</div>
-                                <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                                    7.0% Fixed Equity Stake
-                                </div>
-                            </label>
-
-                            <!-- Tranche B -->
-                            <label class="p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between relative"
-                                   :class="form.selected_tranche === 'B' ? 'bg-amber-50 dark:bg-slate-800 border-2 border-amber-500 ring-4 ring-amber-500/15 shadow-xl' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-400'">
-                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-500 text-black font-black text-[9px] uppercase tracking-wider shadow-xs">
-                                    Recommended
-                                </div>
-                                <div class="flex items-center justify-between mb-3 mt-1">
-                                    <input type="radio" name="selected_tranche" value="B" x-model="form.selected_tranche" class="w-4 h-4 text-amber-500">
-                                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300">Growth Tier</span>
-                                </div>
-                                <div class="font-black text-lg text-slate-900 dark:text-white">Tranche B</div>
-                                <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">1,440,000 GHC</div>
-                                <div class="text-xs text-slate-500 dark:text-slate-400">Approx. $120,000 USD</div>
-                                <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                                    14.0% Fixed Equity Stake
-                                </div>
-                            </label>
-
-                            <!-- Tranche C -->
-                            <label class="p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between"
-                                   :class="form.selected_tranche === 'C' ? 'bg-emerald-50 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-400'">
-                                <div class="flex items-center justify-between mb-3">
-                                    <input type="radio" name="selected_tranche" value="C" x-model="form.selected_tranche" class="w-4 h-4 text-emerald-500">
-                                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">Venture Tier</span>
-                                </div>
-                                <div class="font-black text-lg text-slate-900 dark:text-white">Tranche C</div>
-                                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">2,640,000 GHC</div>
-                                <div class="text-xs text-slate-500 dark:text-slate-400">Approx. $220,000 USD</div>
-                                <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                                    22.0% Fixed Equity Stake
-                                </div>
-                            </label>
+                        <div class="grid {{ $gridCols }} gap-4">
+                            @foreach($onboardingPlans as $plan)
+                                @php
+                                    $isRecommended = ($plan->tranche_code === 'B');
+                                @endphp
+                                <label class="p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between relative"
+                                       :class="form.selected_tranche === '{{ $plan->tranche_code }}' ? 'bg-amber-50 dark:bg-slate-800 border-2 border-amber-500 ring-4 ring-amber-500/15 shadow-xl' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-400'">
+                                    @if($isRecommended)
+                                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-500 text-black font-black text-[9px] uppercase tracking-wider shadow-xs">
+                                            Recommended
+                                        </div>
+                                    @endif
+                                    <div class="flex items-center justify-between mb-3 {{ $isRecommended ? 'mt-1' : '' }}">
+                                        <input type="radio" name="selected_tranche" value="{{ $plan->tranche_code }}" x-model="form.selected_tranche" class="w-4 h-4 text-amber-500">
+                                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded {{ $isRecommended ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300' }}">{{ $plan->tier_name }}</span>
+                                    </div>
+                                    <div class="font-black text-lg text-slate-900 dark:text-white">Tranche {{ $plan->tranche_code }}</div>
+                                    <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ number_format($plan->capital_commitment_ghc, 0) }} GHC</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">Approx. ${{ number_format($plan->capital_commitment_usd, 0) }} USD</div>
+                                    <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                                        {{ number_format($plan->equity_percentage, 2) }}% Fixed Equity Stake
+                                    </div>
+                                </label>
+                            @endforeach
                         </div>
 
                         <!-- Remittance Path Selection -->
@@ -405,7 +415,7 @@
                                 <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Confidential</span>
                             </div>
                             <p>
-                                <strong>Section 4.1 Cohort Architecture & Equity Governance:</strong> The participant agrees to commit capital to Ride My Cars New Development Finance Group (NDFG) LLC specifically designated for the Ride My Cars Ghana single cohort. The equity percentage locked herein (<span x-text="form.selected_tranche === 'A' ? '7.0%' : (form.selected_tranche === 'B' ? '14.0%' : '22.0%')"></span>) shall remain fixed and protected against subsequent phase dilution throughout the three (3) year initial lifecycle.
+                                <strong>Section 4.1 Cohort Architecture & Equity Governance:</strong> The participant agrees to commit capital to Ride My Cars New Development Finance Group (NDFG) LLC specifically designated for the Ride My Cars Ghana single cohort. The equity percentage locked herein (<span x-text="selectedEquityPercentage"></span>) shall remain fixed and protected against subsequent phase dilution throughout the three (3) year initial lifecycle.
                             </p>
                             <p>
                                 <strong>Section 6.3 Escrow Custody & Cross-Border Remittance:</strong> All capital remittances, local processing, and currency disbursements are conducted in direct coordination with Ride My Cars (Ghana). The participant covenants that funds transmitted are free of encumbrances and comply with applicable anti-money laundering and Bank of Ghana foreign exchange repatriation protocols.
@@ -468,6 +478,17 @@
             return {
                 step: 1,
                 countryRules: config.countryRules,
+                plans: config.plans || [],
+                get selectedEquityPercentage() {
+                    if (this.plans && this.plans.length) {
+                        const match = this.plans.find(p => p.tranche_code === this.form.selected_tranche);
+                        if (match) {
+                            return Number(match.equity_percentage).toFixed(2) + '%';
+                        }
+                    }
+                    const fallbackMap = { 'A': '7.00%', 'D': '1.20%', 'B': '14.00%', 'C': '22.00%' };
+                    return fallbackMap[this.form.selected_tranche] || '1.20%';
+                },
                 form: {
                     legal_name: '',
                     entity_type: 'individual',

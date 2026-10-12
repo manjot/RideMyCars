@@ -24,12 +24,7 @@ class InvestorRegistrationController extends Controller
      */
     public function create(Request $request)
     {
-        $selectedTranche = strtoupper($request->query('tranche', 'B'));
-        if (!in_array($selectedTranche, ['A', 'B', 'C'])) {
-            $selectedTranche = 'B';
-        }
-
-        $plans = InvestmentPlan::active()->get();
+        $plans = InvestmentPlan::active()->orderBy('display_order', 'asc')->get();
         if ($plans->isEmpty()) {
             $plans = collect([
                 (object) [
@@ -40,6 +35,15 @@ class InvestorRegistrationController extends Controller
                     'equity_percentage' => 7.00,
                     'formatted_ghc' => '720,000 GHC',
                     'formatted_usd' => '$60,000',
+                ],
+                (object) [
+                    'tranche_code' => 'D',
+                    'tier_name' => 'Wealth builder',
+                    'capital_commitment_ghc' => 120000.00,
+                    'capital_commitment_usd' => 10000.00,
+                    'equity_percentage' => 1.20,
+                    'formatted_ghc' => '120,000 GHC',
+                    'formatted_usd' => '$10,000',
                 ],
                 (object) [
                     'tranche_code' => 'B',
@@ -60,6 +64,12 @@ class InvestorRegistrationController extends Controller
                     'formatted_usd' => '$220,000',
                 ],
             ]);
+        }
+
+        $availableTranches = $plans->pluck('tranche_code')->toArray();
+        $selectedTranche = strtoupper($request->query('tranche', $availableTranches[0] ?? 'B'));
+        if (!in_array($selectedTranche, $availableTranches)) {
+            $selectedTranche = $availableTranches[0] ?? 'B';
         }
 
         $countryRules = [
@@ -107,7 +117,7 @@ class InvestorRegistrationController extends Controller
             'declarations' => 'nullable|array',
 
             // Step 3: Allocation Selection
-            'selected_tranche' => 'required|in:A,B,C',
+            'selected_tranche' => 'required|string|max:10',
             'remittance_method' => 'required|string|max:100',
 
             // Step 4: Documents
@@ -162,13 +172,23 @@ class InvestorRegistrationController extends Controller
                 }
             }
 
-            // 2. Map tranche financials
-            $trancheMap = [
-                'A' => ['ghc' => 720000.00, 'usd' => 60000.00, 'equity' => 10.00],
-                'B' => ['ghc' => 1440000.00, 'usd' => 120000.00, 'equity' => 14.00],
-                'C' => ['ghc' => 2640000.00, 'usd' => 220000.00, 'equity' => 22.00],
-            ];
-            $financials = $trancheMap[$validated['selected_tranche']] ?? $trancheMap['B'];
+            // 2. Fetch tranche financials directly from database
+            $plan = InvestmentPlan::where('tranche_code', $validated['selected_tranche'])->first();
+            if ($plan) {
+                $financials = [
+                    'ghc' => (float) $plan->capital_commitment_ghc,
+                    'usd' => (float) $plan->capital_commitment_usd,
+                    'equity' => (float) $plan->equity_percentage,
+                ];
+            } else {
+                $trancheMap = [
+                    'A' => ['ghc' => 720000.00, 'usd' => 60000.00, 'equity' => 7.00],
+                    'D' => ['ghc' => 120000.00, 'usd' => 10000.00, 'equity' => 1.20],
+                    'B' => ['ghc' => 1440000.00, 'usd' => 120000.00, 'equity' => 14.00],
+                    'C' => ['ghc' => 2640000.00, 'usd' => 220000.00, 'equity' => 22.00],
+                ];
+                $financials = $trancheMap[$validated['selected_tranche']] ?? ['ghc' => 120000.00, 'usd' => 10000.00, 'equity' => 1.20];
+            }
 
             // 3. Resolve regulatory tier based on country
             $countryRule = InvestorComplianceService::getCountryRules($validated['country_code']);

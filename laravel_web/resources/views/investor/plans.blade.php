@@ -118,168 +118,127 @@
                     </div>
                 </div>
 
+                @php
+                    $displayPlans = (isset($plans) && $plans->isNotEmpty()) ? $plans : collect([
+                        (object) [
+                            'tranche_code' => 'A',
+                            'tier_name' => 'Seed Tier',
+                            'capital_commitment_ghc' => 720000.00,
+                            'capital_commitment_usd' => 60000.00,
+                            'equity_percentage' => 7.00,
+                            'description' => 'Ideal for private individual angels entering early-stage West African technology and mobility infrastructure.',
+                            'perks' => [
+                                'Quarterly multi-currency dividend distributions',
+                                '24/7 Access to Live Micro-Transaction Ticker',
+                                'Quarterly financial and fleet operational updates',
+                                'Standard Year 3 structured buyout option',
+                            ],
+                        ],
+                        (object) [
+                            'tranche_code' => 'D',
+                            'tier_name' => 'Wealth builder',
+                            'capital_commitment_ghc' => 120000.00,
+                            'capital_commitment_usd' => 10000.00,
+                            'equity_percentage' => 1.20,
+                            'description' => 'Accessible entry for emerging wealth builders seeking steady micro-fleet yields with verified 1.20% equity stake.',
+                            'perks' => [
+                                '1.20% fixed non-dilutive single cohort equity stake',
+                                'Quarterly multi-currency dividend distributions',
+                                '24/7 Access to Live Micro-Transaction Ticker',
+                                'Standard Year 3 structured buyout option',
+                            ],
+                        ],
+                        (object) [
+                            'tranche_code' => 'B',
+                            'tier_name' => 'Growth Tier',
+                            'capital_commitment_ghc' => 1440000.00,
+                            'capital_commitment_usd' => 120000.00,
+                            'equity_percentage' => 14.00,
+                            'description' => 'Engineered for family offices and sophisticated syndicate leads seeking prime yield velocity with enhanced liquidity provisions.',
+                            'perks' => [
+                                'Accelerated priority quarterly dividend wires',
+                                'Full 3-Year Master Cash Ledger telemetry data',
+                                'Direct line to Ride My Cars (Ghana) compliance desk',
+                                'Enhanced Year 3 buyout formula with clawback reserve',
+                            ],
+                        ],
+                        (object) [
+                            'tranche_code' => 'C',
+                            'tier_name' => 'Venture Tier',
+                            'capital_commitment_ghc' => 2640000.00,
+                            'capital_commitment_usd' => 220000.00,
+                            'equity_percentage' => 22.00,
+                            'description' => 'Designed for venture funds, institutional syndicates, and strategic sovereign entities looking for substantial equity leverage.',
+                            'perks' => [
+                                'Highest quarterly dividend pool participation',
+                                'Advisory board observer seat consideration',
+                                'Direct wire SWIFT & MoMo escrow routing priority',
+                                'Institutional buyout multiple at Year 3 exit',
+                            ],
+                        ],
+                    ]);
+                    $plansGridClass = count($displayPlans) >= 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : (count($displayPlans) === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' : 'grid-cols-1 md:grid-cols-3');
+                @endphp
+
                 <!-- Ghana Tranche Comparison Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                    
-                    <!-- Tranche A: Seed Tier -->
-                    <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Seed Tier</span>
-                                <span class="text-[10px] font-bold text-slate-500">85% Subscribed</span>
-                            </div>
-                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-4">
-                                <div class="bg-amber-500 h-full rounded-full" style="width: 85%;"></div>
+                <div class="grid {{ $plansGridClass }} gap-8 mb-16">
+                    @foreach($displayPlans as $plan)
+                        @php
+                            $isFeatured = ($plan->tranche_code === 'B' || ($loop->count <= 3 && $loop->iteration === 2));
+                            $perks = is_array($plan->perks) ? $plan->perks : [
+                                'Quarterly multi-currency dividend distributions',
+                                '24/7 Access to Live Micro-Transaction Ticker',
+                                'Ride My Cars (Ghana) escrow custody',
+                                'Standard Year 3 structured buyout option',
+                            ];
+                        @endphp
+                        <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border {{ $isFeatured ? 'border-2 border-amber-500 ring-4 ring-amber-500/15 shadow-xl shadow-amber-500/15' : 'border-slate-200 dark:border-slate-700 shadow-sm' }} hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative">
+                            @if($isFeatured)
+                                <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider shadow-xs">
+                                    ★ Most Popular Growth Tier
+                                </div>
+                            @endif
+
+                            <div>
+                                <div class="flex items-center justify-between mb-2 {{ $isFeatured ? 'mt-1' : '' }}">
+                                    <span class="text-xs font-black uppercase tracking-wider {{ $isFeatured ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400' }}">{{ $plan->tier_name }}</span>
+                                    <span class="text-[10px] font-bold text-slate-500">Active Offering</span>
+                                </div>
+                                <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-4">
+                                    <div class="bg-amber-500 h-full rounded-full" style="width: {{ $plan->tranche_code === 'A' ? '85%' : ($plan->tranche_code === 'B' ? '62%' : ($plan->tranche_code === 'D' ? '78%' : '44%')) }};"></div>
+                                </div>
+
+                                <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Tranche {{ $plan->tranche_code }}</h2>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                    {{ $plan->description ?: ($plan->summary_headline ?: 'Participation in Ride My Cars fleet mobility infrastructure with verified equity allocation.') }}
+                                </p>
+
+                                <div class="p-4 rounded-2xl {{ $isFeatured ? 'bg-amber-50/50 dark:bg-slate-800/40 border border-amber-500/30' : 'bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700' }} mb-6">
+                                    <div class="text-3xl font-black text-slate-900 dark:text-white">{{ number_format($plan->capital_commitment_ghc, 0) }} GHC</div>
+                                    <div class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-0.5">Approx. ${{ number_format($plan->capital_commitment_usd, 0) }} USD</div>
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Single upfront commitment</div>
+                                </div>
+
+                                <div class="p-3.5 rounded-2xl {{ $isFeatured ? 'bg-amber-500 text-black shadow-xs' : 'bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30' }} text-center mb-6">
+                                    <span class="text-xs {{ $isFeatured ? 'font-bold opacity-80' : 'text-slate-600 dark:text-slate-300' }}">Equity Allocation:</span>
+                                    <div class="text-xl font-black {{ $isFeatured ? '' : 'text-amber-600 dark:text-amber-400' }}">{{ number_format($plan->equity_percentage, 2) }}% Fixed Stake</div>
+                                </div>
+
+                                <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
+                                    @foreach(array_slice($perks, 0, 4) as $perk)
+                                        <li class="flex items-start gap-2">
+                                            <span class="text-emerald-500 font-black">✓</span>
+                                            <span>{{ $perk }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             </div>
 
-                            <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Tranche A</h2>
-                            <p class="text-xs text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                Ideal for private individual angels entering early-stage West African technology and mobility infrastructure.
-                            </p>
-
-                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 mb-6">
-                                <div class="text-3xl font-black text-slate-900 dark:text-white">720,000 GHC</div>
-                                <div class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-0.5">Approx. $60,000 USD</div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Single upfront commitment</div>
-                            </div>
-
-                            <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-center mb-6">
-                                <span class="text-xs text-slate-600 dark:text-slate-300">Equity Allocation:</span>
-                                <div class="text-xl font-black text-amber-600 dark:text-amber-400">7.0% Fixed Stake</div>
-                            </div>
-
-                            <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Quarterly multi-currency dividend distributions</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>24/7 Access to Live Micro-Transaction Ticker</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Quarterly financial and fleet operational updates</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Standard Year 3 structured buyout option</span>
-                                </li>
-                            </ul>
+                            <a href="/investor/register?tranche={{ $plan->tranche_code }}" class="w-full py-3.5 text-center rounded-xl {{ $isFeatured ? 'bg-amber-500 hover:bg-brand-500 text-black shadow-lg shadow-amber-500/25' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white' }} font-black text-xs uppercase tracking-wider transition-all">
+                                Apply for Tranche {{ $plan->tranche_code }} →
+                            </a>
                         </div>
-
-                        <a href="/investor/register?tranche=A" class="w-full py-3.5 text-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-black text-xs uppercase tracking-wider transition-all">
-                            Apply for Tranche A →
-                        </a>
-                    </div>
-
-                    <!-- Tranche B: Growth Tier (Flagship) -->
-                    <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border-2 border-amber-500 ring-4 ring-amber-500/15 shadow-xl shadow-amber-500/15 transition-all duration-300 flex flex-col justify-between relative hover:-translate-y-1">
-                        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider shadow-xs">
-                            ★ Most Popular Growth Tier
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between mb-2 mt-1">
-                                <span class="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Growth Tier</span>
-                                <span class="text-[10px] font-bold text-slate-500">62% Subscribed</span>
-                            </div>
-                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-4">
-                                <div class="bg-amber-500 h-full rounded-full" style="width: 62%;"></div>
-                            </div>
-
-                            <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Tranche B</h2>
-                            <p class="text-xs text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                Engineered for family offices and sophisticated syndicate leads seeking prime yield velocity with enhanced liquidity provisions.
-                            </p>
-
-                            <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-slate-800/40 border border-amber-500/30 mb-6">
-                                <div class="text-3xl font-black text-slate-900 dark:text-white">1,440,000 GHC</div>
-                                <div class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-0.5">Approx. $120,000 USD</div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Priority single allocation</div>
-                            </div>
-
-                            <div class="p-3.5 rounded-2xl bg-amber-500 text-black text-center mb-6 shadow-xs">
-                                <span class="text-xs font-bold opacity-80">Equity Allocation:</span>
-                                <div class="text-xl font-black">14.0% Fixed Stake</div>
-                            </div>
-
-                            <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
-                                <li class="flex items-start gap-2">
-                                    <span class="text-amber-600 dark:text-amber-400 font-black">✓</span>
-                                    <span>Accelerated priority quarterly dividend wires</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-amber-600 dark:text-amber-400 font-black">✓</span>
-                                    <span>Full 3-Year Master Cash Ledger telemetry data</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-amber-600 dark:text-amber-400 font-black">✓</span>
-                                    <span>Direct line to Ride My Cars (Ghana) compliance desk</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-amber-600 dark:text-amber-400 font-black">✓</span>
-                                    <span>Enhanced Year 3 buyout formula with clawback reserve</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <a href="/investor/register?tranche=B" class="w-full py-3.5 text-center rounded-xl bg-amber-500 hover:bg-brand-500 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 transition-all">
-                            Apply for Tranche B →
-                        </a>
-                    </div>
-
-                    <!-- Tranche C: Venture Tier -->
-                    <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Venture Tier</span>
-                                <span class="text-[10px] font-bold text-slate-500">44% Subscribed</span>
-                            </div>
-                            <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-4">
-                                <div class="bg-emerald-500 h-full rounded-full" style="width: 44%;"></div>
-                            </div>
-
-                            <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Tranche C</h2>
-                            <p class="text-xs text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                Designed for venture funds, institutional syndicates, and strategic sovereign entities looking for substantial equity leverage.
-                            </p>
-
-                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 mb-6">
-                                <div class="text-3xl font-black text-slate-900 dark:text-white">2,640,000 GHC</div>
-                                <div class="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Approx. $220,000 USD</div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Maximum single allocation</div>
-                            </div>
-
-                            <div class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 text-center mb-6">
-                                <span class="text-xs text-slate-600 dark:text-slate-300">Equity Allocation:</span>
-                                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">22.0% Fixed Stake</div>
-                            </div>
-
-                            <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Highest quarterly dividend pool participation</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Advisory board observer seat consideration</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Direct wire SWIFT & MoMo escrow routing priority</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="text-emerald-500 font-black">✓</span>
-                                    <span>Institutional buyout multiple at Year 3 exit</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <a href="/investor/register?tranche=C" class="w-full py-3.5 text-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-black text-xs uppercase tracking-wider transition-all">
-                            Apply for Tranche C →
-                        </a>
-                    </div>
+                    @endforeach
                 </div>
 
                 <!-- Ghana Settlement Protocol -->

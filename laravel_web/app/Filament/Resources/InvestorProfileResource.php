@@ -74,11 +74,30 @@ class InvestorProfileResource extends Resource
                         ->schema([
                             Forms\Components\Select::make('selected_tranche')
                                 ->label('Tranche Tier')
-                                ->options([
-                                    'A' => 'Tranche A (Seed Tier - 7.0% Equity)',
-                                    'B' => 'Tranche B (Growth Tier - 14.0% Equity)',
-                                    'C' => 'Tranche C (Venture Tier - 22.0% Equity)',
-                                ])->required(),
+                                ->options(function () {
+                                    $plans = \App\Models\InvestmentPlan::orderBy('display_order')->get();
+                                    if ($plans->isEmpty()) {
+                                        return [
+                                            'A' => 'Tranche A (Seed Tier - 7.0% Equity)',
+                                            'D' => 'Tranche D (Wealth builder - 1.20% Equity)',
+                                            'B' => 'Tranche B (Growth Tier - 14.0% Equity)',
+                                            'C' => 'Tranche C (Venture Tier - 22.0% Equity)',
+                                        ];
+                                    }
+                                    return $plans->mapWithKeys(function ($plan) {
+                                        return [$plan->tranche_code => "Tranche {$plan->tranche_code} ({$plan->tier_name} - {$plan->equity_percentage}% Equity)"];
+                                    })->toArray();
+                                })
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $plan = \App\Models\InvestmentPlan::where('tranche_code', $state)->first();
+                                    if ($plan) {
+                                        $set('equity_percentage', $plan->equity_percentage);
+                                        $set('capital_commitment_ghc', $plan->capital_commitment_ghc);
+                                        $set('capital_commitment_usd', $plan->capital_commitment_usd);
+                                    }
+                                })
+                                ->required(),
                             Forms\Components\TextInput::make('equity_percentage')
                                 ->label('Fixed Equity Percentage (%)')
                                 ->numeric()
@@ -210,11 +229,15 @@ class InvestorProfileResource extends Resource
                         'REJECTED' => 'Rejected',
                     ]),
                 Tables\Filters\SelectFilter::make('selected_tranche')
-                    ->options([
-                        'A' => 'Tranche A',
-                        'B' => 'Tranche B',
-                        'C' => 'Tranche C',
-                    ]),
+                    ->options(function () {
+                        $plans = \App\Models\InvestmentPlan::orderBy('display_order')->get();
+                        if ($plans->isEmpty()) {
+                            return ['A' => 'Tranche A', 'D' => 'Tranche D', 'B' => 'Tranche B', 'C' => 'Tranche C'];
+                        }
+                        return $plans->mapWithKeys(function ($plan) {
+                            return [$plan->tranche_code => "Tranche {$plan->tranche_code} ({$plan->tier_name})"];
+                        })->toArray();
+                    }),
             ])
             ->actions([
                 // 1. Approve & Unlock Payment Action

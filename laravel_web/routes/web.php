@@ -4675,7 +4675,8 @@ Route::match(['get', 'post'], '/api-audit-system', function (\Illuminate\Http\Re
 
 // Public Marketing & Legal Pages
 Route::get('/investor', function () {
-    return view('investor.index');
+    $plans = \App\Models\InvestmentPlan::active()->orderBy('display_order', 'asc')->get();
+    return view('investor.index', compact('plans'));
 })->name('investor.index');
 
 Route::get('/investors', function () {
@@ -4691,7 +4692,8 @@ Route::get('/investor/opportunity', function () {
 })->name('investor.opportunity');
 
 Route::get('/investor/plans', function () {
-    return view('investor.plans');
+    $plans = \App\Models\InvestmentPlan::active()->orderBy('display_order', 'asc')->get();
+    return view('investor.plans', compact('plans'));
 })->name('investor.plans');
 
 Route::get('/investor/faq', function () {
@@ -4707,7 +4709,8 @@ Route::get('/investor/regulatory-notices', function () {
 })->name('investor.regulatory-notices');
 
 Route::get('/investor/contact', function () {
-    return view('investor.contact');
+    $plans = \App\Models\InvestmentPlan::active()->orderBy('display_order', 'asc')->get();
+    return view('investor.contact', compact('plans'));
 })->name('investor.contact');
 
 Route::post('/investor/contact', function (\Illuminate\Http\Request $request) {

@@ -33,7 +33,7 @@
                         </span>
                         <span class="text-xs font-bold text-slate-400 dark:text-slate-600">•</span>
                         <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            Tranche {{ $investor->selected_tranche }} ({{ $investor->equity_percentage }}% Equity)
+                            Tranche {{ $investor->selected_tranche }} ({{ $investor->investmentPlan?->tier_name ? $investor->investmentPlan->tier_name . ' • ' : '' }}{{ $investor->equity_percentage }}% Equity)
                         </span>
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -309,7 +309,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
                                 <div class="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">Allocation Tier</div>
-                                <div class="text-xl font-black text-slate-900 dark:text-white mt-1">Tranche {{ $investor->selected_tranche }}</div>
+                                <div class="text-xl font-black text-slate-900 dark:text-white mt-1">Tranche {{ $investor->selected_tranche }} {{ $investor->investmentPlan?->tier_name ? '• ' . $investor->investmentPlan->tier_name : '' }}</div>
                                 <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Fixed 3-Year Single Cohort</div>
                             </div>
                             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">

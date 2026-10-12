@@ -309,5 +309,38 @@ class InvestorPortalFeatureTest extends TestCase
         $response->assertSee('Nigeria');
         $response->assertSee('Kenya');
     }
+
+    public function test_investor_registration_with_tranche_d_wealth_builder(): void
+    {
+        Storage::fake('local');
+        $email = 'wealth.builder.' . time() . '@example.com';
+        $file = UploadedFile::fake()->create('accreditation.pdf', 500, 'application/pdf');
+
+        $payload = [
+            'legal_name' => 'Kofi Mensah',
+            'email' => $email,
+            'phone_number' => '+233 55 977 6761',
+            'country_code' => 'GHA',
+            'country_residence' => 'Ghana',
+            'entity_type' => 'individual',
+            'address' => 'Airport City',
+            'city' => 'Accra',
+            'selected_tranche' => 'D',
+            'remittance_method' => 'momo_pay',
+            'document_gh_card' => $file,
+            'governance_clause_accepted' => '1',
+            'signer_name' => 'Kofi Mensah',
+        ];
+
+        $response = $this->post('/investor/register', $payload);
+        $response->assertRedirect('/investor/dashboard');
+
+        $profile = InvestorProfile::where('email', $email)->first();
+        $this->assertNotNull($profile);
+        $this->assertEquals('D', $profile->selected_tranche);
+        $this->assertEquals(1.20, (float)$profile->equity_percentage);
+        $this->assertEquals(120000.00, (float)$profile->capital_commitment_ghc);
+        $this->assertEquals(10000.00, (float)$profile->capital_commitment_usd);
+    }
 }
 
