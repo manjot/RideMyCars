@@ -42,17 +42,19 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
       final bal = await WalletService.getBalance();
       if (bal != null) {
-        _walletBalance = (bal['wallet_balance'] as num?)?.toDouble() ?? 215.95;
+        _walletBalance = (bal['balance'] as num?)?.toDouble() ?? (bal['wallet_balance'] as num?)?.toDouble() ?? 215.95;
         _pendingWithdrawals = (bal['pending_withdrawals_sum'] as num?)?.toDouble() ?? 0.0;
-        _currency = bal['currency']?.toString() ?? '₹';
+        _currency = bal['currency']?.toString() ?? 'GH₵';
         final settings = bal['settings'] as Map<String, dynamic>?;
         if (settings != null) {
-          _minWithdrawal = (settings['min_withdrawal'] as num?)?.toDouble() ?? 50.0;
-          _maxWithdrawal = (settings['max_withdrawal'] as num?)?.toDouble() ?? 10000.0;
-          _withdrawalFeeType = settings['withdrawal_fee_type']?.toString() ?? 'fixed';
-          _withdrawalFee = (settings['withdrawal_fee'] as num?)?.toDouble() ?? 0.0;
-          _withdrawalsEnabled = settings['withdrawals_enabled'] == true || settings['withdrawals_enabled'] == 1 || settings['withdrawals_enabled'] == '1';
-          if (settings['allowed_payout_methods'] is List) {
+          _minWithdrawal = (settings['min_amount'] as num?)?.toDouble() ?? (settings['min_withdrawal'] as num?)?.toDouble() ?? 50.0;
+          _maxWithdrawal = (settings['max_amount'] as num?)?.toDouble() ?? (settings['max_withdrawal'] as num?)?.toDouble() ?? 10000.0;
+          _withdrawalFeeType = settings['fee_type']?.toString() ?? settings['withdrawal_fee_type']?.toString() ?? 'fixed';
+          _withdrawalFee = (settings['fee_value'] as num?)?.toDouble() ?? (settings['withdrawal_fee'] as num?)?.toDouble() ?? 0.0;
+          _withdrawalsEnabled = settings['enabled'] == true || settings['withdrawals_enabled'] == true || settings['enabled'] == 1 || settings['enabled'] == '1';
+          if (settings['allowed_methods'] is List) {
+            _allowedPayoutMethods = List<String>.from(settings['allowed_methods']);
+          } else if (settings['allowed_payout_methods'] is List) {
             _allowedPayoutMethods = List<String>.from(settings['allowed_payout_methods']);
           }
         }
@@ -88,6 +90,21 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     } finally {
       if (mounted) setState(() => _isLoadingWallet = false);
     }
+  }
+
+  void _openAddMoneyModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _DriverAddMoneyModal(
+        currency: _currency,
+        currentBalance: _walletBalance,
+        onSuccess: () {
+          _fetchData();
+        },
+      ),
+    );
   }
 
   void _openWithdrawModal() {
@@ -400,11 +417,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               children: [
                 Expanded(
                   child: InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Instant wallet top-up gateway ready.')),
-                      );
-                    },
+                    onTap: _openAddMoneyModal,
                     borderRadius: BorderRadius.circular(12),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
@@ -709,7 +722,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
     }
 
     Map<String, dynamic> payoutDetails = {};
-    if (_payoutMethod == 'bank') {
+    if (_payoutMethod == 'bank' || _payoutMethod == 'bank_account') {
       if (_bankNameController.text.trim().isEmpty || _accountNumberController.text.trim().isEmpty || _holderNameController.text.trim().isEmpty) {
         setState(() => _errorMessage = 'Please complete Bank Name, Account Number, and Account Holder Name.');
         return;
@@ -719,6 +732,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
         'account_number': _accountNumberController.text.trim(),
         'routing_code': _routingCodeController.text.trim(),
         'holder_name': _holderNameController.text.trim(),
+        'account_holder_name': _holderNameController.text.trim(),
       };
     } else {
       if (_momoPhoneController.text.trim().isEmpty || _momoNameController.text.trim().isEmpty) {
@@ -727,15 +741,18 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
       }
       payoutDetails = {
         'network': _momoNetworkController.text.trim(),
+        'momo_network': _momoNetworkController.text.trim(),
         'phone_number': _momoPhoneController.text.trim(),
+        'momo_phone': _momoPhoneController.text.trim(),
         'account_name': _momoNameController.text.trim(),
+        'momo_account_name': _momoNameController.text.trim(),
       };
     }
 
     setState(() => _isSubmitting = true);
     final res = await WalletService.submitWithdrawal(
       amount: amt,
-      payoutMethod: _payoutMethod,
+      payoutMethod: _payoutMethod == 'bank' ? 'bank_account' : _payoutMethod,
       payoutDetails: payoutDetails,
       savePayoutMethod: _savePayoutMethod,
     );
@@ -930,8 +947,8 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.amber.withOpacity(0.3)),
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         Icon(Icons.flash_on_rounded, color: Colors.amber, size: 14),
                         SizedBox(width: 6),
                         Expanded(
@@ -1143,6 +1160,473 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Driver Add Money / Wallet Top-Up Modal
+class _DriverAddMoneyModal extends StatefulWidget {
+  final String currency;
+  final double currentBalance;
+  final VoidCallback onSuccess;
+
+  const _DriverAddMoneyModal({
+    required this.currency,
+    required this.currentBalance,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_DriverAddMoneyModal> createState() => _DriverAddMoneyModalState();
+}
+
+class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
+  final _amountController = TextEditingController(text: '50.0');
+  final _momoPhoneController = TextEditingController();
+  final _momoNetworkController = TextEditingController(text: 'MTN');
+
+  String _paymentMethod = 'momo'; // 'momo' or 'stripe'
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _momoPhoneController.dispose();
+    _momoNetworkController.dispose();
+    super.dispose();
+  }
+
+  void _setAmount(double val) {
+    _amountController.text = val.toStringAsFixed(1);
+    setState(() => _errorMessage = null);
+  }
+
+  double get _enteredAmount => double.tryParse(_amountController.text.trim()) ?? 0.0;
+
+  Future<void> _submit() async {
+    setState(() => _errorMessage = null);
+    final amt = _enteredAmount;
+
+    if (amt <= 0) {
+      setState(() => _errorMessage = 'Please enter a valid top-up amount.');
+      return;
+    }
+
+    if (_paymentMethod == 'momo') {
+      if (_momoPhoneController.text.trim().isEmpty) {
+        setState(() => _errorMessage = 'Please enter your Mobile Money phone number.');
+        return;
+      }
+    }
+
+    setState(() => _isSubmitting = true);
+    final res = await WalletService.topupWallet(
+      amount: amt,
+      paymentMethod: _paymentMethod,
+      phoneNumber: _momoPhoneController.text.trim(),
+      network: _momoNetworkController.text.trim(),
+      paymentDetails: {
+        'phone_number': _momoPhoneController.text.trim(),
+        'momo_phone': _momoPhoneController.text.trim(),
+        'network': _momoNetworkController.text.trim(),
+        'momo_network': _momoNetworkController.text.trim(),
+      },
+    );
+    setState(() => _isSubmitting = false);
+
+    if (res['success'] == true) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onSuccess();
+
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
+              SizedBox(width: 10),
+              Text('Top-Up Successful', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Text(
+            '${widget.currency}${amt.toStringAsFixed(2)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF97316),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Great!', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = res['message'] ?? 'Failed to top-up wallet. Please try again.';
+      });
+    }
+  }
+
+  Widget _buildPresetChip(double val) {
+    final isSelected = _enteredAmount == val;
+    return InkWell(
+      onTap: () => _setAmount(val),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF97316) : AppColors.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFF97316) : Colors.white12,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          '${widget.currency}${val.toInt()}',
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textLight,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBrandIcon(String assetName, {double height = 20}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          'assets/images/payment-icons/$assetName',
+          height: height,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMomoNetworkChoice(String network, String iconFile) {
+    final isSelected = _momoNetworkController.text.trim().toLowerCase() == network.toLowerCase();
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _momoNetworkController.text = network),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFCC00).withOpacity(0.15) : AppColors.backgroundDark,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? const Color(0xFFFFCC00) : Colors.white12,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildBrandIcon(iconFile, height: 18),
+              const SizedBox(height: 4),
+              Text(
+                network,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white60,
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.only(
+        top: 14,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Add Funds to Wallet',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Top-up instantly via MoMo or Credit/Debit Card to accept bookings and unlock features.',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+
+              // Amount Input
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDark,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF97316).withOpacity(0.5), width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      widget.currency,
+                      style: const TextStyle(color: Color(0xFFF97316), fontSize: 24, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _amountController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+                        decoration: const InputDecoration(
+                          hintText: '0.00',
+                          hintStyle: TextStyle(color: AppColors.textMuted),
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                        onChanged: (_) => setState(() => _errorMessage = null),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Preset Amount Chips
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [50.0, 100.0, 200.0, 500.0].map(_buildPresetChip).toList(),
+              ),
+              const SizedBox(height: 18),
+
+              // Payment Method Choice: MoMo vs Stripe Card
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _paymentMethod = 'momo'),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _paymentMethod == 'momo' ? const Color(0xFFF97316).withOpacity(0.12) : AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _paymentMethod == 'momo' ? const Color(0xFFF97316) : Colors.white12,
+                            width: _paymentMethod == 'momo' ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.phone_android_rounded, color: Color(0xFFF97316), size: 20),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('MoMo Pay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text('MTN / Telecel / AT', style: TextStyle(color: AppColors.textMuted.withOpacity(0.8), fontSize: 10)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _paymentMethod = 'stripe'),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _paymentMethod == 'stripe' ? const Color(0xFFF97316).withOpacity(0.12) : AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _paymentMethod == 'stripe' ? const Color(0xFFF97316) : Colors.white12,
+                            width: _paymentMethod == 'stripe' ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.credit_card_rounded, color: Color(0xFFF97316), size: 20),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Card / Stripe', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text('Live Card Topup', style: TextStyle(color: AppColors.textMuted.withOpacity(0.8), fontSize: 10)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // If MoMo is selected, show network choices and phone number
+              if (_paymentMethod == 'momo') ...[
+                Row(
+                  children: [
+                    _buildMomoNetworkChoice('MTN', 'mtn_momo.png'),
+                    const SizedBox(width: 8),
+                    _buildMomoNetworkChoice('Telecel', 'telecel.png'),
+                    const SizedBox(width: 8),
+                    _buildMomoNetworkChoice('AirtelTigo', 'airteltigo.png'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: TextField(
+                    controller: _momoPhoneController,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                      hintText: 'MoMo Phone Number (e.g. 0244123456)',
+                      hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildBrandIcon('visa.png', height: 18),
+                      const SizedBox(width: 8),
+                      _buildBrandIcon('mastercard.png', height: 18),
+                      const SizedBox(width: 8),
+                      _buildBrandIcon('amex.png', height: 18),
+                      const SizedBox(width: 8),
+                      _buildBrandIcon('discover.png', height: 18),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.danger.withOpacity(0.4)),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF97316),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFF97316).withOpacity(0.4),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(
+                        'Top-Up Now (${widget.currency}${_enteredAmount.toStringAsFixed(2)})',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                      ),
+              ),
+              const SizedBox(height: 10),
             ],
           ),
         ),

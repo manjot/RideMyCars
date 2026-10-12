@@ -52,7 +52,7 @@
                    class="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
                 </a>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Wallet</h1>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Wallet & Payouts</h1>
             </div>
             <div class="flex items-center gap-2">
                 <button type="button" @click="activeTab = 'withdrawals'" 
@@ -533,23 +533,102 @@
         <!-- MODAL: ADD MONEY / TOP UP -->
         <template x-teleport="body">
             <div x-show="showAddMoneyModal" style="display: none;" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.away="showAddMoneyModal = false">
-                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10">
+                <div class="bg-white dark:bg-[#181818] w-full max-w-md rounded-3xl shadow-2xl p-6 relative border border-gray-100 dark:border-white/10" @click.stop>
                     <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-white/10 mb-4">
-                        <h3 class="text-base font-black text-gray-900 dark:text-white">Add Funds to Wallet</h3>
-                        <button type="button" @click="showAddMoneyModal = false" class="text-gray-500 hover:text-white">✕</button>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-base font-bold">💳</span>
+                            <h3 class="text-base font-black text-gray-900 dark:text-white">Add Funds to Wallet</h3>
+                        </div>
+                        <button type="button" @click="showAddMoneyModal = false" class="text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 text-base">✕</button>
                     </div>
-                    <p class="text-xs text-gray-500 mb-4">Top-up your wallet using Credit/Debit Card or instant Mobile Money.</p>
-                    <div class="space-y-3">
-                        <a href="/checkout?type=wallet_topup&amount=50" class="block w-full p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 hover:border-orange-500 text-center font-bold text-sm text-orange-600 dark:text-orange-400 transition-all">
-                            Add <span x-text="currency || '₹'"></span> 50.00
-                        </a>
-                        <a href="/checkout?type=wallet_topup&amount=100" class="block w-full p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 hover:border-orange-500 text-center font-bold text-sm text-orange-600 dark:text-orange-400 transition-all">
-                            Add <span x-text="currency || '₹'"></span> 100.00
-                        </a>
-                        <a href="/checkout?type=wallet_topup&amount=250" class="block w-full p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 hover:border-orange-500 text-center font-bold text-sm text-orange-600 dark:text-orange-400 transition-all">
-                            Add <span x-text="currency || '₹'"></span> 250.00
-                        </a>
-                    </div>
+
+                    <form @submit.prevent="submitTopup()">
+                        <!-- Amount Field -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Top-Up Amount</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-black text-lg text-gray-500" x-text="currency || 'GH₵'"></span>
+                                <input type="number" 
+                                       step="1" 
+                                       min="1" 
+                                       x-model="topupForm.amount" 
+                                       required
+                                       class="w-full pl-16 pr-4 py-3 bg-gray-50 dark:bg-[#121212] border-2 border-gray-200 dark:border-white/10 rounded-2xl text-xl font-black text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                            </div>
+                        </div>
+
+                        <!-- Quick Amount Preset Chips -->
+                        <div class="flex items-center gap-2 mb-5 flex-wrap">
+                            <template x-for="chip in [50, 100, 200, 500]" :key="chip">
+                                <button type="button" @click="setTopupAmount(chip)"
+                                        class="px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95"
+                                        :class="parseFloat(topupForm.amount) === chip ? 'bg-orange-500 text-gray-950 border-orange-500 font-black' : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 hover:border-orange-500/40'">
+                                    <span x-text="(currency || 'GH₵') + ' ' + chip"></span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <!-- Payment Method Selection -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Payment Method</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="topupForm.payment_method = 'momo'"
+                                        class="p-3 rounded-2xl border-2 flex items-center gap-2.5 transition-all text-left"
+                                        :class="topupForm.payment_method === 'momo' ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20 text-orange-950 dark:text-orange-200 font-bold' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'">
+                                    <span class="text-xl">📱</span>
+                                    <div>
+                                        <div class="text-xs font-black">MoMo Pay</div>
+                                        <div class="text-[10px] opacity-75">MTN / Telecel / AT</div>
+                                    </div>
+                                </button>
+
+                                <button type="button" @click="topupForm.payment_method = 'stripe'"
+                                        class="p-3 rounded-2xl border-2 flex items-center gap-2.5 transition-all text-left"
+                                        :class="topupForm.payment_method === 'stripe' ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20 text-orange-950 dark:text-orange-200 font-bold' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'">
+                                    <span class="text-xl">💳</span>
+                                    <div>
+                                        <div class="text-xs font-black">Debit/Credit Card</div>
+                                        <div class="text-[10px] opacity-75">Stripe / Live Card</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- MoMo Details Form -->
+                        <div x-show="topupForm.payment_method === 'momo'" class="space-y-3 mb-5 p-4 rounded-2xl bg-gray-50 dark:bg-[#202020] border border-gray-100 dark:border-white/10">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Mobile Money Provider</label>
+                                <select x-model="topupForm.momo_network"
+                                        class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                                    <option value="MTN">MTN Mobile Money</option>
+                                    <option value="Telecel">Telecel / Vodafone Cash</option>
+                                    <option value="AirtelTigo">AirtelTigo Money</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">MoMo Phone Number</label>
+                                <input type="tel" 
+                                       inputmode="tel"
+                                       pattern="[0-9+\s\-]*"
+                                       x-model="topupForm.momo_phone" 
+                                       placeholder="e.g. 0244123456"
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:border-orange-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button type="button" @click="showAddMoneyModal = false"
+                                    class="py-3 px-4 rounded-2xl border border-gray-300 dark:border-white/20 text-gray-800 dark:text-gray-200 font-bold text-xs hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-center">
+                                Cancel
+                            </button>
+
+                            <button type="submit" :disabled="topupSubmitting || !topupForm.amount || parseFloat(topupForm.amount) <= 0"
+                                    class="py-3 px-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 text-gray-950 font-black text-xs transition-all shadow-lg shadow-orange-500/25 active:scale-95 text-center flex items-center justify-center gap-2">
+                                <span x-show="!topupSubmitting">Top-Up Now</span>
+                                <span x-show="topupSubmitting">Processing...</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </template>
@@ -670,6 +749,57 @@
                 }
             },
 
+            topupForm: {
+                amount: '50',
+                payment_method: 'momo',
+                momo_network: 'MTN',
+                momo_phone: '{{ auth()->user()->phone ?? '' }}',
+            },
+            topupSubmitting: false,
+
+            setTopupAmount(amt) {
+                this.topupForm.amount = String(amt);
+            },
+
+            async submitTopup() {
+                const amt = parseFloat(this.topupForm.amount);
+                if (!amt || amt <= 0) {
+                    this.showToast('Please enter a valid top-up amount.', 'error');
+                    return;
+                }
+                this.topupSubmitting = true;
+                try {
+                    const res = await fetch('/wallet/topup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify({
+                            amount: amt,
+                            payment_method: this.topupForm.payment_method,
+                            momo_network: this.topupForm.momo_network,
+                            momo_phone: this.topupForm.momo_phone,
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.balance = data.data.balance;
+                        this.showAddMoneyModal = false;
+                        if (data.data.transaction) {
+                            this.transactions.unshift(data.data.transaction);
+                        }
+                        this.showToast(data.message || `Wallet topped up successfully! +${this.currency}${amt.toFixed(2)}`, 'success');
+                    } else {
+                        this.showToast(data.message || 'Top-up failed.', 'error');
+                    }
+                } catch (err) {
+                    this.showToast('Network error during top-up.', 'error');
+                } finally {
+                    this.topupSubmitting = false;
+                }
+            },
+
             newMethodForm: {
                 type: 'bank_account',
                 bank_name: '',
@@ -682,6 +812,16 @@
             },
 
             init() {
+                // Check if URL has ?topup=X
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('topup')) {
+                    const topupVal = parseFloat(urlParams.get('topup'));
+                    if (topupVal > 0) {
+                        this.topupForm.amount = String(topupVal);
+                    }
+                    this.showAddMoneyModal = true;
+                }
+
                 // If saved bank exists, preload into withdrawForm
                 const defaultBank = this.payoutMethods.find(m => m.type === 'bank_account' && m.is_default) || this.payoutMethods.find(m => m.type === 'bank_account');
                 if (defaultBank) {
@@ -731,8 +871,9 @@
 
             openWithdrawModal() {
                 this.showWithdrawModal = true;
+                const min = this.settings.min_amount || 50;
                 if (!this.withdrawForm.amount || parseFloat(this.withdrawForm.amount) <= 0) {
-                    this.withdrawForm.amount = Math.min(this.balance, 50).toFixed(2);
+                    this.withdrawForm.amount = Math.min(this.balance, Math.max(min, 50)).toFixed(2);
                 }
             },
 
@@ -759,8 +900,16 @@
                 this.submitting = true;
 
                 const details = this.withdrawForm.payout_method === 'momo'
-                    ? { ...this.withdrawForm.momo_details }
-                    : { ...this.withdrawForm.bank_details };
+                    ? { 
+                        ...this.withdrawForm.momo_details,
+                        phone_number: this.withdrawForm.momo_details.momo_phone,
+                        network: this.withdrawForm.momo_details.momo_network,
+                        account_name: this.withdrawForm.momo_details.momo_account_name 
+                      }
+                    : { 
+                        ...this.withdrawForm.bank_details,
+                        holder_name: this.withdrawForm.bank_details.account_holder_name 
+                      };
 
                 try {
                     const res = await fetch('/wallet/withdraw', {

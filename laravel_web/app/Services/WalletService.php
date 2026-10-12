@@ -17,13 +17,26 @@ class WalletService
      */
     public static function getSettings(): array
     {
+        $enabled = (bool) SettingService::get('wallet.withdrawals_enabled', true);
+        $min = (float) SettingService::get('wallet.min_withdrawal_amount', 50.00);
+        $max = (float) SettingService::get('wallet.max_withdrawal_amount', 10000.00);
+        $feeType = SettingService::get('wallet.withdrawal_fee_type', 'fixed');
+        $feeVal = (float) SettingService::get('wallet.withdrawal_fee_value', 0.00);
+        $methods = explode(',', SettingService::get('wallet.allowed_payout_methods', 'bank_account,momo'));
+
         return [
-            'enabled' => (bool) SettingService::get('wallet.withdrawals_enabled', true),
-            'min_amount' => (float) SettingService::get('wallet.min_withdrawal_amount', 50.00),
-            'max_amount' => (float) SettingService::get('wallet.max_withdrawal_amount', 10000.00),
-            'fee_type' => SettingService::get('wallet.withdrawal_fee_type', 'fixed'), // fixed, percentage
-            'fee_value' => (float) SettingService::get('wallet.withdrawal_fee_value', 0.00),
-            'allowed_methods' => explode(',', SettingService::get('wallet.allowed_payout_methods', 'bank_account,momo')),
+            'enabled' => $enabled,
+            'withdrawals_enabled' => $enabled,
+            'min_amount' => $min,
+            'min_withdrawal' => $min,
+            'max_amount' => $max,
+            'max_withdrawal' => $max,
+            'fee_type' => $feeType,
+            'withdrawal_fee_type' => $feeType,
+            'fee_value' => $feeVal,
+            'withdrawal_fee' => $feeVal,
+            'allowed_methods' => $methods,
+            'allowed_payout_methods' => $methods,
         ];
     }
 
@@ -67,6 +80,7 @@ class WalletService
 
         return [
             'balance' => (float) $user->wallet_balance,
+            'wallet_balance' => (float) $user->wallet_balance,
             'currency' => $currency,
             'pending_withdrawals_sum' => $pendingWithdrawalsSum,
             'approved_withdrawals_sum' => $approvedWithdrawalsSum,
@@ -99,19 +113,49 @@ class WalletService
             throw new \InvalidArgumentException('Withdrawal amount cannot exceed your available wallet balance.');
         }
 
-        if (!in_array($payoutMethod, ['bank_account', 'momo'])) {
+        if ($payoutMethod === 'bank') {
+            $payoutMethod = 'bank_account';
+        }
+
+        if (!in_array($payoutMethod, ['bank_account', 'momo'], true)) {
             throw new \InvalidArgumentException('Invalid payout method selected. Please choose Bank Account or Mobile Money (MoMo).');
         }
 
-        // Validate payout details
+        // Validate and normalize payout details
         if ($payoutMethod === 'bank_account') {
-            if (empty($payoutDetails['account_number']) || empty($payoutDetails['bank_name'])) {
+            $bankName = trim($payoutDetails['bank_name'] ?? '');
+            $accNumber = trim($payoutDetails['account_number'] ?? '');
+            $holderName = trim($payoutDetails['account_holder_name'] ?? ($payoutDetails['holder_name'] ?? $user->name));
+            $routing = trim($payoutDetails['routing_code'] ?? ($payoutDetails['routing'] ?? ''));
+
+            if (empty($bankName) || empty($accNumber)) {
                 throw new \InvalidArgumentException('Please provide valid bank name and account number.');
             }
+
+            $payoutDetails = [
+                'bank_name' => $bankName,
+                'account_number' => $accNumber,
+                'account_holder_name' => $holderName,
+                'holder_name' => $holderName,
+                'routing_code' => $routing,
+            ];
         } elseif ($payoutMethod === 'momo') {
-            if (empty($payoutDetails['momo_phone']) || empty($payoutDetails['momo_network'])) {
+            $phone = trim($payoutDetails['momo_phone'] ?? ($payoutDetails['phone_number'] ?? ($payoutDetails['phone'] ?? '')));
+            $network = trim($payoutDetails['momo_network'] ?? ($payoutDetails['network'] ?? 'MTN'));
+            $accName = trim($payoutDetails['momo_account_name'] ?? ($payoutDetails['account_name'] ?? $user->name));
+
+            if (empty($phone) || empty($network)) {
                 throw new \InvalidArgumentException('Please provide mobile money provider network and phone number.');
             }
+
+            $payoutDetails = [
+                'momo_phone' => $phone,
+                'phone_number' => $phone,
+                'momo_network' => $network,
+                'network' => $network,
+                'momo_account_name' => $accName,
+                'account_name' => $accName,
+            ];
         }
 
         // Calculate fee
@@ -308,6 +352,9 @@ class WalletService
     public static function savePayoutMethod(User $user, array $data): UserPayoutMethod
     {
         $type = $data['type'] ?? 'bank_account';
+        if ($type === 'bank') {
+            $type = 'bank_account';
+        }
         $isDefault = (bool) ($data['is_default'] ?? false);
 
         if ($isDefault) {
@@ -319,15 +366,93 @@ class WalletService
             'type' => $type,
             'is_default' => $isDefault,
             'bank_name' => $data['bank_name'] ?? null,
-            'account_holder_name' => $data['account_holder_name'] ?? $user->name,
+            'account_holder_name' => $data['account_holder_name'] ?? ($data['holder_name'] ?? $user->name),
             'account_number' => $data['account_number'] ?? null,
             'routing_code' => $data['routing_code'] ?? null,
             'branch_name' => $data['branch_name'] ?? null,
-            'momo_network' => $data['momo_network'] ?? null,
-            'momo_phone' => $data['momo_phone'] ?? null,
-            'momo_account_name' => $data['momo_account_name'] ?? $user->name,
+            'momo_network' => $data['momo_network'] ?? ($data['network'] ?? null),
+            'momo_phone' => $data['momo_phone'] ?? ($data['phone_number'] ?? null),
+            'momo_account_name' => $data['momo_account_name'] ?? ($data['account_name'] ?? $user->name),
             'metadata' => $data['metadata'] ?? null,
         ]);
+    }
+
+    /**
+     * Credit funds to a user's wallet (Add Money / Top-Up).
+     */
+    public static function creditWallet(User $user, float $amount, string $paymentMethod = 'momo', ?string $externalRef = null, array $metadata = []): array
+    {
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Top-up amount must be greater than zero.');
+        }
+
+        $currency = self::getUserCurrency($user);
+
+        return DB::transaction(function () use ($user, $amount, $paymentMethod, $externalRef, $metadata, $currency) {
+            $freshUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$freshUser) {
+                throw new \RuntimeException('User account not found.');
+            }
+
+            $balanceBefore = (float) ($freshUser->wallet_balance ?? 0.00);
+            $balanceAfter = round($balanceBefore + $amount, 2);
+
+            $freshUser->wallet_balance = $balanceAfter;
+            $freshUser->save();
+
+            $methodLabel = match (strtolower($paymentMethod)) {
+                'momo', 'mobile_money', 'mtn_momo' => 'Mobile Money (MoMo Pay)',
+                'stripe', 'card', 'credit_card' => 'Debit/Credit Card (Stripe)',
+                default => 'Instant Wallet Deposit',
+            };
+
+            $trxRef = 'WTX-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+
+            $transaction = WalletTransaction::create([
+                'user_id' => $freshUser->id,
+                'transaction_ref' => $trxRef,
+                'type' => 'deposit',
+                'amount' => $amount,
+                'currency' => $currency,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'description' => "Wallet Top-Up via {$methodLabel}",
+                'status' => 'completed',
+                'reference_id' => null,
+                'reference_type' => null,
+                'metadata' => array_merge([
+                    'payment_method' => $paymentMethod,
+                    'external_ref' => $externalRef,
+                    'credited_at' => now()->toIso8601String(),
+                ], $metadata),
+            ]);
+
+            // Send notification
+            NotificationService::send(
+                $freshUser->id,
+                'wallet_credited',
+                'Wallet Credited! 💳',
+                "Your wallet has been credited with {$currency}{$amount} via {$methodLabel}. Current balance: {$currency}{$balanceAfter}",
+                null,
+                '/wallet',
+                [
+                    'transaction_ref' => $trxRef,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'balance' => $balanceAfter,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'balance' => $balanceAfter,
+                'wallet_balance' => $balanceAfter,
+                'amount_added' => $amount,
+                'currency' => $currency,
+                'transaction' => $transaction,
+                'message' => "Successfully added {$currency}{$amount} to your wallet!",
+            ];
+        });
     }
 
     /**

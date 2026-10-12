@@ -19,6 +19,39 @@ class WalletService {
     return null;
   }
 
+  /// Top-up driver wallet
+  static Future<Map<String, dynamic>> topupWallet({
+    required double amount,
+    required String paymentMethod,
+    Map<String, dynamic>? paymentDetails,
+    String? phoneNumber,
+    String? network,
+  }) async {
+    try {
+      final res = await _dio.post(
+        ApiConstants.walletTopup,
+        data: {
+          'amount': amount,
+          'payment_method': paymentMethod,
+          if (paymentDetails != null) 'payment_details': paymentDetails,
+          if (phoneNumber != null && phoneNumber.isNotEmpty) 'phone_number': phoneNumber,
+          if (network != null && network.isNotEmpty) 'network': network,
+        },
+      );
+      if (res.data != null) {
+        return Map<String, dynamic>.from(res.data);
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map) {
+        return Map<String, dynamic>.from(e.response!.data);
+      }
+      return {'success': false, 'message': e.message ?? 'Network error topping up wallet.'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+    return {'success': false, 'message': 'Unknown error occurred.'};
+  }
+
   /// Submit a new withdrawal request
   static Future<Map<String, dynamic>> submitWithdrawal({
     required double amount,
@@ -27,11 +60,12 @@ class WalletService {
     bool savePayoutMethod = false,
   }) async {
     try {
+      final normalizedMethod = payoutMethod == 'bank' ? 'bank_account' : payoutMethod;
       final res = await _dio.post(
         ApiConstants.walletWithdraw,
         data: {
           'amount': amount,
-          'payout_method': payoutMethod,
+          'payout_method': normalizedMethod,
           'payout_details': payoutDetails,
           'save_payout_method': savePayoutMethod,
         },

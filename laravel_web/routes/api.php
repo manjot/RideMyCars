@@ -323,6 +323,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Wallet & Withdrawals Module (Customer, Driver & Owner)
     Route::get('/wallet/balance', [WalletApiController::class, 'getBalance']);
+    Route::post('/wallet/topup', [WalletApiController::class, 'topupWallet']);
     Route::post('/wallet/withdraw', [WalletApiController::class, 'submitWithdrawal']);
     Route::get('/wallet/withdrawals', [WalletApiController::class, 'getWithdrawalHistory']);
     Route::get('/wallet/withdrawals/{id}', [WalletApiController::class, 'getWithdrawalDetail']);

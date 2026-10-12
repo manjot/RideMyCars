@@ -48,7 +48,7 @@ class WalletApiController extends Controller
 
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:0.01',
-            'payout_method' => 'required|string|in:bank_account,momo',
+            'payout_method' => 'required|string|in:bank_account,bank,momo',
             'payout_details' => 'required|array',
             'save_payout_method' => 'nullable|boolean',
         ]);
@@ -95,6 +95,71 @@ class WalletApiController extends Controller
                 'success' => false,
                 'message' => 'Unable to submit withdrawal request: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Top-up / Add money to user wallet.
+     * POST /api/wallet/topup
+     */
+    public function topupWallet(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:1',
+            'payment_method' => 'required|string',
+            'payment_details' => 'nullable|array',
+            'phone_number' => 'nullable|string',
+            'network' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            $amount = (float) $request->input('amount');
+            $method = strtolower((string) $request->input('payment_method', 'momo'));
+            $details = $request->input('payment_details', []);
+            if (!is_array($details)) {
+                $details = [];
+            }
+
+            if ($request->filled('phone_number')) {
+                $details['phone_number'] = $request->input('phone_number');
+                $details['momo_phone'] = $request->input('phone_number');
+            }
+            if ($request->filled('network')) {
+                $details['network'] = $request->input('network');
+                $details['momo_network'] = $request->input('network');
+            }
+
+            $externalRef = $request->input('transaction_ref') ?: ('TOPUP-' . strtoupper(\Illuminate\Support\Str::random(8)));
+
+            $res = WalletService::creditWallet($user, $amount, $method, $externalRef, $details);
+
+            return response()->json([
+                'success' => true,
+                'message' => $res['message'],
+                'data' => [
+                    'balance' => $res['balance'],
+                    'wallet_balance' => $res['wallet_balance'],
+                    'currency' => $res['currency'],
+                    'amount_added' => $res['amount_added'],
+                    'transaction_ref' => $res['transaction']->transaction_ref,
+                ],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Top-up error: ' . $e->getMessage()], 500);
         }
     }
 

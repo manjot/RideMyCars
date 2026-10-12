@@ -41,6 +41,7 @@ class ApiConstants {
 
   // Wallet & Withdrawals
   static const String walletBalance = '/wallet/balance';
+  static const String walletTopup = '/wallet/topup';
   static const String walletWithdraw = '/wallet/withdraw';
   static const String walletWithdrawals = '/wallet/withdrawals';
   static const String walletPayoutMethods = '/wallet/payout-methods';
