@@ -86,13 +86,17 @@ class StripeService
             try {
                 $intent = \Stripe\PaymentIntent::retrieve($existingTxn->stripe_payment_intent_id);
                 if ($intent && in_array($intent->status, ['requires_payment_method', 'requires_confirmation', 'requires_action'])) {
+                    $pubKey = \App\Services\SettingService::getActiveStripePublishableKey() ?: (config('services.stripe.key') ?: env('STRIPE_PUBLISHABLE_KEY', ''));
+                    $stripeMode = \App\Services\SettingService::getStripeMode();
                     return [
                         'clientSecret' => $existingTxn->stripe_client_secret,
                         'paymentIntentId' => $existingTxn->stripe_payment_intent_id,
-                        'publishableKey' => config('services.stripe.key'),
+                        'publishableKey' => $pubKey,
                         'client_secret' => $existingTxn->stripe_client_secret,
-                        'publishable_key' => config('services.stripe.key'),
+                        'publishable_key' => $pubKey,
                         'payment_intent_id' => $existingTxn->stripe_payment_intent_id,
+                        'stripe_mode' => $stripeMode,
+                        'is_test_mode' => ($stripeMode === 'test'),
                         'transaction_ref' => $existingTxn->transaction_ref,
                         'amount' => $amount,
                         'currency' => strtoupper($currency),
@@ -161,6 +165,7 @@ class StripeService
         PaymentTransaction::create($txnData);
 
         $pubKey = \App\Services\SettingService::getActiveStripePublishableKey() ?: (config('services.stripe.key') ?: env('STRIPE_PUBLISHABLE_KEY', ''));
+        $stripeMode = \App\Services\SettingService::getStripeMode();
 
         return [
             'clientSecret' => $intent->client_secret,
@@ -169,6 +174,8 @@ class StripeService
             'client_secret' => $intent->client_secret,
             'publishable_key' => $pubKey,
             'payment_intent_id' => $intent->id,
+            'stripe_mode' => $stripeMode,
+            'is_test_mode' => ($stripeMode === 'test'),
             'transaction_ref' => $transactionRef,
             'amount' => $amount,
             'currency' => strtoupper($currency),

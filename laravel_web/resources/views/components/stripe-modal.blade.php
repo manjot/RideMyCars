@@ -101,9 +101,17 @@
                         <div id="stripe-card-element" class="p-4 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-900 shadow-sm transition-all focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white"></div>
                     </div>
 
-                    <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-xs text-blue-700 dark:text-blue-300 flex items-center justify-between border border-blue-100 dark:border-blue-900">
+                    <div x-show="isTestMode" class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-xs text-blue-700 dark:text-blue-300 flex items-center justify-between border border-blue-100 dark:border-blue-900">
                         <span>💡 Test Mode: Use test card <code class="font-mono font-bold bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">4242 4242 4242 4242</code></span>
                         <span class="font-mono">CVC: 123</span>
+                    </div>
+
+                    <div x-show="!isTestMode" class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between border border-emerald-100 dark:border-emerald-900">
+                        <span class="flex items-center gap-1.5 font-medium">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>🔒 Live Checkout: 256-Bit SSL Encrypted • Real-time bank authorization</span>
+                        </span>
+                        <span class="font-extrabold text-[11px] text-emerald-700 dark:text-emerald-400">Stripe Live</span>
                     </div>
                 </div>
 
@@ -124,7 +132,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span x-text="isProcessing ? 'Processing Payment...' : 'Pay $' + amount.toFixed(2) + ' Now'"></span>
+                    <span x-text="isProcessing ? 'Processing Payment...' : ('Pay ' + formatCurrency(amount, currency) + ' Now')"></span>
                 </button>
             </div>
         </div>
@@ -137,6 +145,7 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
         isOpen: false,
         isLoading: false,
         isProcessing: false,
+        isTestMode: false,
         errorMessage: '',
         loadingText: 'Initializing Stripe Security...',
         isAlreadyPaid: false,
@@ -149,6 +158,11 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
         cardElement: null,
         clientSecret: null,
         publishableKey: null,
+
+        formatCurrency(amt, curr) {
+            const sym = (curr === 'USD' ? '$' : (curr === 'INR' ? '₹' : (curr === 'GHS' ? 'GH₵' : (curr === 'ZAR' ? 'R' : (curr === 'EUR' ? '€' : (curr === 'GBP' ? '£' : (curr ? curr + ' ' : '$')))))));
+            return sym + Number(amt || 0).toFixed(2);
+        },
 
         async openModal(data = {}) {
             this.isOpen = true;
@@ -210,6 +224,7 @@ function stripePaymentHandler(defaultType, defaultId, defaultAmount, defaultCurr
 
                 this.clientSecret = result.data.client_secret;
                 this.publishableKey = result.data.publishable_key;
+                this.isTestMode = Boolean(result.is_test_mode ?? (result.data?.is_test_mode ?? (String(this.publishableKey || '').startsWith('pk_test'))));
                 this.stripe = Stripe(this.publishableKey);
 
                 const elements = this.stripe.elements();

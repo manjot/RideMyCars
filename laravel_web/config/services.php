@@ -68,6 +68,7 @@ return [
     ],
 
     'stripe' => [
+        'mode' => env('STRIPE_MODE', 'live'),
         'key' => env('STRIPE_PUBLISHABLE_KEY', env('STRIPE_KEY')),
         'secret' => env('STRIPE_SECRET_KEY', env('STRIPE_SECRET')),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
@@ -99,20 +100,20 @@ return [
         'api_user' => env('MOMO_API_USER'),
         'api_key' => env('MOMO_API_KEY'),
         'subscription_key' => env('MOMO_SUBSCRIPTION_KEY'),
-        'target_environment' => env('MOMO_TARGET_ENV', 'sandbox'),
+        'target_environment' => env('MOMO_TARGET_ENV', 'live'),
         'currency' => env('MOMO_CURRENCY', 'GHS'),
         'callback_url' => env('MOMO_CALLBACK_URL', 'https://ridemycars.com/api/payment/momo/callback'),
     ],
 
     'expresspay' => [
         'enabled' => env('EXPRESSPAY_ENABLED', true),
-        'mode' => env('EXPRESSPAY_MODE', 'sandbox'),
-        'merchant_id' => env('EXPRESSPAY_MERCHANT_ID', '562786243097'),
-        'api_key' => env('EXPRESSPAY_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'),
+        'mode' => env('EXPRESSPAY_MODE', 'live'),
+        'merchant_id' => env('EXPRESSPAY_MERCHANT_ID', '804968043952'),
+        'api_key' => env('EXPRESSPAY_API_KEY', 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2'),
         'sandbox_merchant_id' => env('EXPRESSPAY_SANDBOX_MERCHANT_ID', '562786243097'),
         'sandbox_api_key' => env('EXPRESSPAY_SANDBOX_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'),
-        'live_merchant_id' => env('EXPRESSPAY_LIVE_MERCHANT_ID', ''),
-        'live_api_key' => env('EXPRESSPAY_LIVE_API_KEY', ''),
+        'live_merchant_id' => env('EXPRESSPAY_LIVE_MERCHANT_ID', env('EXPRESSPAY_MERCHANT_ID', '804968043952')),
+        'live_api_key' => env('EXPRESSPAY_LIVE_API_KEY', env('EXPRESSPAY_API_KEY', 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2')),
         'currency' => env('EXPRESSPAY_CURRENCY', 'GHS'),
     ],
 

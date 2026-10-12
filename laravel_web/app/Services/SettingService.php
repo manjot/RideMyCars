@@ -333,15 +333,32 @@ class SettingService
     }
 
     /**
+     * Get active Stripe environment mode ('live' or 'test').
+     */
+    public static function getStripeMode(): string
+    {
+        $mode = trim((string) static::get('payment.stripe_mode', config('services.stripe.mode', env('STRIPE_MODE', 'live'))));
+        return strtolower($mode ?: 'live');
+    }
+
+    /**
+     * Check if Stripe is operating in live/production mode.
+     */
+    public static function isStripeLive(): bool
+    {
+        return static::getStripeMode() === 'live';
+    }
+
+    /**
      * Get active Stripe Publishable Key based on stripe_mode (test vs live).
      */
     public static function getActiveStripePublishableKey(): string
     {
-        $mode = trim((string) static::get('payment.stripe_mode', 'test'));
+        $mode = static::getStripeMode();
         if ($mode === 'live') {
-            return trim((string) (static::get('payment.stripe_live_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', ''))));
+            return trim((string) (static::get('payment.stripe_live_publishable_key') ?: (static::get('payment.stripe_publishable_key') ?: (config('services.stripe.key') ?: env('STRIPE_PUBLISHABLE_KEY', 'pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds')))));
         }
-        return trim((string) (static::get('payment.stripe_test_publishable_key') ?: static::get('payment.stripe_publishable_key', config('services.stripe.key', ''))));
+        return trim((string) (static::get('payment.stripe_test_publishable_key') ?: (static::get('payment.stripe_publishable_key') ?: config('services.stripe.key', ''))));
     }
 
     /**
@@ -349,11 +366,11 @@ class SettingService
      */
     public static function getActiveStripeSecretKey(): string
     {
-        $mode = trim((string) static::get('payment.stripe_mode', 'test'));
+        $mode = static::getStripeMode();
         if ($mode === 'live') {
-            return trim((string) (static::get('payment.stripe_live_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', ''))));
+            return trim((string) (static::get('payment.stripe_live_secret_key') ?: (static::get('payment.stripe_secret_key') ?: (config('services.stripe.secret') ?: env('STRIPE_SECRET_KEY', '')))));
         }
-        return trim((string) (static::get('payment.stripe_test_secret_key') ?: static::get('payment.stripe_secret_key', config('services.stripe.secret', ''))));
+        return trim((string) (static::get('payment.stripe_test_secret_key') ?: (static::get('payment.stripe_secret_key') ?: config('services.stripe.secret', ''))));
     }
 
     /**
@@ -361,7 +378,7 @@ class SettingService
      */
     public static function getActiveStripeWebhookSecret(): string
     {
-        $mode = static::get('payment.stripe_mode', 'test');
+        $mode = static::getStripeMode();
         if ($mode === 'live') {
             return (string) (static::get('payment.stripe_live_webhook_secret') ?: static::get('payment.stripe_webhook_secret', config('services.stripe.webhook_secret', '')));
         }
@@ -373,7 +390,8 @@ class SettingService
      */
     public static function getActiveExpressPayMode(): string
     {
-        return (string) static::get('payment.expresspay_mode', config('services.expresspay.mode', 'sandbox'));
+        $mode = trim((string) static::get('payment.expresspay_mode', config('services.expresspay.mode', env('EXPRESSPAY_MODE', 'live'))));
+        return strtolower($mode ?: 'live');
     }
 
     /**
@@ -392,9 +410,9 @@ class SettingService
     {
         $mode = static::getActiveExpressPayMode();
         if ($mode === 'live') {
-            return (string) (static::get('payment.expresspay_live_merchant_id') ?: static::get('payment.expresspay_merchant_id', config('services.expresspay.live_merchant_id', config('services.expresspay.merchant_id', ''))));
+            return (string) (static::get('payment.expresspay_live_merchant_id') ?: (static::get('payment.expresspay_merchant_id') ?: (config('services.expresspay.live_merchant_id') ?: (config('services.expresspay.merchant_id') ?: env('EXPRESSPAY_MERCHANT_ID', '804968043952')))));
         }
-        return (string) (static::get('payment.expresspay_sandbox_merchant_id') ?: static::get('payment.expresspay_merchant_id', config('services.expresspay.sandbox_merchant_id', config('services.expresspay.merchant_id', '562786243097'))));
+        return (string) (static::get('payment.expresspay_sandbox_merchant_id') ?: (static::get('payment.expresspay_merchant_id') ?: config('services.expresspay.sandbox_merchant_id', '562786243097')));
     }
 
     /**
@@ -404,9 +422,9 @@ class SettingService
     {
         $mode = static::getActiveExpressPayMode();
         if ($mode === 'live') {
-            return (string) (static::get('payment.expresspay_live_api_key') ?: static::get('payment.expresspay_api_key', config('services.expresspay.live_api_key', config('services.expresspay.api_key', ''))));
+            return (string) (static::get('payment.expresspay_live_api_key') ?: (static::get('payment.expresspay_api_key') ?: (config('services.expresspay.live_api_key') ?: (config('services.expresspay.api_key') ?: env('EXPRESSPAY_API_KEY', 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2')))));
         }
-        return (string) (static::get('payment.expresspay_sandbox_api_key') ?: static::get('payment.expresspay_api_key', config('services.expresspay.sandbox_api_key', config('services.expresspay.api_key', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'))));
+        return (string) (static::get('payment.expresspay_sandbox_api_key') ?: (static::get('payment.expresspay_api_key') ?: config('services.expresspay.sandbox_api_key', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm')));
     }
 
     /**

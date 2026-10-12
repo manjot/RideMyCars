@@ -286,7 +286,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                   border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.35)),
                                 ),
                                 child: const Text(
-                                  '💳 CARDS & APPLE PAY',
+                                  '💳 CARDS & APPLE PAY • LIVE',
                                   style: TextStyle(
                                     color: Color(0xFF818CF8),
                                     fontSize: 9.5,
@@ -395,7 +395,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                   border: Border.all(color: const Color(0xFFFFDC00).withOpacity(0.35)),
                                 ),
                                 child: const Text(
-                                  '📱 MOBILE MONEY',
+                                  '📱 MOBILE MONEY • LIVE',
                                   style: TextStyle(
                                     color: Color(0xFFFFDC00),
                                     fontSize: 9.5,

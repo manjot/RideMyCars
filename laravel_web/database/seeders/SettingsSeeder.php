@@ -48,14 +48,14 @@ class SettingsSeeder extends Seeder
 
             // Payment Gateways
             ['key' => 'payment.stripe_enabled', 'label' => 'Stripe Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_mode', 'label' => 'Active Stripe Mode (test / live)', 'value' => 'test', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_test_publishable_key', 'label' => 'Stripe Test Publishable Key', 'value' => env('STRIPE_TEST_PUBLISHABLE_KEY', env('STRIPE_PUBLISHABLE_KEY', '')), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_test_secret_key', 'label' => 'Stripe Test Secret Key', 'value' => env('STRIPE_TEST_SECRET_KEY', env('STRIPE_SECRET_KEY', '')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_mode', 'label' => 'Active Stripe Mode (test / live)', 'value' => env('STRIPE_MODE', 'live'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_test_publishable_key', 'label' => 'Stripe Test Publishable Key', 'value' => env('STRIPE_TEST_PUBLISHABLE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_test_secret_key', 'label' => 'Stripe Test Secret Key', 'value' => env('STRIPE_TEST_SECRET_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_test_webhook_secret', 'label' => 'Stripe Test Webhook Secret', 'value' => env('STRIPE_TEST_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_live_publishable_key', 'label' => 'Stripe Live Publishable Key', 'value' => env('STRIPE_LIVE_PUBLISHABLE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_live_secret_key', 'label' => 'Stripe Live Secret Key', 'value' => env('STRIPE_LIVE_SECRET_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_live_webhook_secret', 'label' => 'Stripe Live Webhook Secret', 'value' => env('STRIPE_LIVE_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.stripe_publishable_key', 'label' => 'Stripe Publishable Key (Active)', 'value' => env('STRIPE_PUBLISHABLE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_live_publishable_key', 'label' => 'Stripe Live Publishable Key', 'value' => env('STRIPE_LIVE_PUBLISHABLE_KEY', env('STRIPE_PUBLISHABLE_KEY', 'pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_live_secret_key', 'label' => 'Stripe Live Secret Key', 'value' => env('STRIPE_LIVE_SECRET_KEY', env('STRIPE_SECRET_KEY', '')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_live_webhook_secret', 'label' => 'Stripe Live Webhook Secret', 'value' => env('STRIPE_LIVE_WEBHOOK_SECRET', env('STRIPE_WEBHOOK_SECRET', '')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.stripe_publishable_key', 'label' => 'Stripe Publishable Key (Active)', 'value' => env('STRIPE_PUBLISHABLE_KEY', 'pk_live_51U3x2DC7C86Til8eExDWVNVpFP1zMH82CP43om2rhGnLFON3nJmbjTG492PllBjPINRDTT7lI212YgkJqrawe4TE00qxyrLmds'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_secret_key', 'label' => 'Stripe Secret Key (Active)', 'value' => env('STRIPE_SECRET_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.stripe_webhook_secret', 'label' => 'Stripe Webhook Secret (Active)', 'value' => env('STRIPE_WEBHOOK_SECRET', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.apple_pay_enabled', 'label' => 'Apple Pay Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
@@ -64,13 +64,13 @@ class SettingsSeeder extends Seeder
 
             // ExpressPay Ghana Gateway
             ['key' => 'payment.expresspay_enabled', 'label' => 'ExpressPay Ghana Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.expresspay_mode', 'label' => 'Active ExpressPay Mode (sandbox / live)', 'value' => env('EXPRESSPAY_MODE', 'sandbox'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_mode', 'label' => 'Active ExpressPay Mode (sandbox / live)', 'value' => env('EXPRESSPAY_MODE', 'live'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.expresspay_sandbox_merchant_id', 'label' => 'ExpressPay Sandbox Merchant ID', 'value' => env('EXPRESSPAY_SANDBOX_MERCHANT_ID', '562786243097'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.expresspay_sandbox_api_key', 'label' => 'ExpressPay Sandbox API Key', 'value' => env('EXPRESSPAY_SANDBOX_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.expresspay_live_merchant_id', 'label' => 'ExpressPay Live Merchant ID', 'value' => env('EXPRESSPAY_LIVE_MERCHANT_ID', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.expresspay_live_api_key', 'label' => 'ExpressPay Live API Key', 'value' => env('EXPRESSPAY_LIVE_API_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.expresspay_merchant_id', 'label' => 'ExpressPay Merchant ID (Active)', 'value' => env('EXPRESSPAY_MERCHANT_ID', '562786243097'), 'group' => 'Payment Gateways', 'type' => 'text'],
-            ['key' => 'payment.expresspay_api_key', 'label' => 'ExpressPay API Key (Active)', 'value' => env('EXPRESSPAY_API_KEY', 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_live_merchant_id', 'label' => 'ExpressPay Live Merchant ID', 'value' => env('EXPRESSPAY_LIVE_MERCHANT_ID', env('EXPRESSPAY_MERCHANT_ID', '804968043952')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_live_api_key', 'label' => 'ExpressPay Live API Key', 'value' => env('EXPRESSPAY_LIVE_API_KEY', env('EXPRESSPAY_API_KEY', 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2')), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_merchant_id', 'label' => 'ExpressPay Merchant ID (Active)', 'value' => env('EXPRESSPAY_MERCHANT_ID', '804968043952'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.expresspay_api_key', 'label' => 'ExpressPay API Key (Active)', 'value' => env('EXPRESSPAY_API_KEY', 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.expresspay_currency', 'label' => 'ExpressPay Default Currency', 'value' => env('EXPRESSPAY_CURRENCY', 'GHS'), 'group' => 'Payment Gateways', 'type' => 'text'],
 
             // SMS Gateway (Twilio)

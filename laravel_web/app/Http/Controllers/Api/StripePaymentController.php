@@ -35,6 +35,8 @@ class StripePaymentController extends Controller
                 'clientSecret' => $intentData['clientSecret'] ?? $intentData['client_secret'],
                 'paymentIntentId' => $intentData['paymentIntentId'] ?? $intentData['payment_intent_id'],
                 'publishableKey' => $intentData['publishableKey'] ?? $intentData['publishable_key'],
+                'stripe_mode' => $intentData['stripe_mode'] ?? \App\Services\SettingService::getStripeMode(),
+                'is_test_mode' => $intentData['is_test_mode'] ?? (\App\Services\SettingService::getStripeMode() === 'test'),
                 'data' => $intentData,
             ]);
         } catch (\InvalidArgumentException $e) {

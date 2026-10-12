@@ -74,8 +74,24 @@ class AppConfigApiController extends Controller
             'payment_gateways' => [
                 'stripe' => [
                     'enabled' => filter_var(SettingService::get('payment.stripe_enabled', true), FILTER_VALIDATE_BOOLEAN),
-                    'mode' => SettingService::get('payment.stripe_mode', 'test'),
+                    'mode' => SettingService::getStripeMode(),
+                    'is_live' => SettingService::isStripeLive(),
                     'publishable_key' => SettingService::getActiveStripePublishableKey(),
+                ],
+                'momo' => [
+                    'enabled' => SettingService::isExpressPayEnabled(),
+                    'mode' => SettingService::getActiveExpressPayMode(),
+                    'is_live' => (SettingService::getActiveExpressPayMode() === 'live'),
+                    'merchant_id' => SettingService::getActiveExpressPayMerchantId(),
+                    'currency' => SettingService::get('payment.expresspay_currency', 'GHS'),
+                    'supported_networks' => ['MTN', 'Telecel', 'AirtelTigo'],
+                ],
+                'expresspay' => [
+                    'enabled' => SettingService::isExpressPayEnabled(),
+                    'mode' => SettingService::getActiveExpressPayMode(),
+                    'is_live' => (SettingService::getActiveExpressPayMode() === 'live'),
+                    'merchant_id' => SettingService::getActiveExpressPayMerchantId(),
+                    'currency' => SettingService::get('payment.expresspay_currency', 'GHS'),
                 ],
                 'apple_pay' => [
                     'enabled' => filter_var(SettingService::get('payment.apple_pay_enabled', true), FILTER_VALIDATE_BOOLEAN),

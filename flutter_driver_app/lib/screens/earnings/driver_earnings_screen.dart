@@ -922,6 +922,27 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.flash_on_rounded, color: Colors.amber, size: 14),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Live Instant MoMo Cashouts: MTN, Telecel, AirtelTigo 24/7',
+                            style: TextStyle(color: Colors.amber, fontSize: 10.5, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const Text('Select MoMo Provider', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Row(

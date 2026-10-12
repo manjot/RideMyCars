@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\CountryService;
 use App\Services\NotificationService;
+use App\Services\RideAssignmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
