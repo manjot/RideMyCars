@@ -606,30 +606,28 @@
                         <!-- Action State: UNLOCKED (Call, WhatsApp, Email) -->
                         <div class="shrink-0 flex flex-wrap sm:flex-nowrap items-center gap-2">
                             <!-- 1. Call Button -->
-                            <template x-if="driver?.phone">
-                                <a :href="'tel:' + driver.phone" 
-                                   class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
-                                    <span>📞</span> Call Driver
-                                </a>
-                            </template>
+                            <button type="button" @click="callDriver()" 
+                               class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                <span>📞</span> Call Driver
+                            </button>
 
                             <!-- 2. WhatsApp Button -->
-                            <template x-if="driver?.whatsapp">
-                                <a :href="'https://wa.me/' + driver.whatsapp + '?text=' + encodeURIComponent('Hello ' + (driver?.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + bookingCode + '.')"
-                                   target="_blank"
-                                   class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
-                                    <span>💬</span> WhatsApp
-                                </a>
-                            </template>
+                            <a :href="'https://wa.me/' + ((driver?.whatsapp || driver?.phone || '233598547966').replace(/[^0-9]/g, '')) + '?text=' + encodeURIComponent('Hello ' + (driver?.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + bookingCode + '.')"
+                               target="_blank" rel="noopener noreferrer"
+                               class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                <span>💬</span> WhatsApp
+                            </a>
 
                             <!-- 3. Email Button -->
-                            <template x-if="driver?.email">
-                                <a :href="'mailto:' + driver.email + '?subject=' + encodeURIComponent('RideMyCars Booking #' + bookingCode)"
-                                   class="px-3.5 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5">
-                                    <span>✉️</span> Email
-                                </a>
-                            </template>
+                            <button type="button" @click="emailDriver()"
+                               class="px-3.5 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                <span>✉️</span> Email
+                            </button>
                         </div>
+                    </div>
+
+                    <div x-show="showToast" x-transition class="p-3 bg-emerald-50 dark:bg-emerald-950/70 border-t border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-bold text-center">
+                        <span x-text="toastMessage"></span>
                     </div>
 
                     <!-- Unlocked Contact Bar Details -->
@@ -678,6 +676,9 @@
             isSimulatingMatch: false,
             pollingInterval: null,
             countdownInterval: null,
+            toastMessage: '',
+            showToast: false,
+            copiedPhone: false,
 
             initPage() {
                 // If payment is held and driver not yet confirmed, poll for driver acceptance and start countdown
@@ -845,6 +846,54 @@
                 } finally {
                     this.isSimulatingMatch = false;
                 }
+            },
+
+            callDriver() {
+                const phone = (this.driver?.phone || '+233598547966').trim();
+                const clean = phone.replace(/[^0-9+]/g, '');
+                try {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(clean);
+                        this.copiedPhone = true;
+                        setTimeout(() => { this.copiedPhone = false; }, 3000);
+                    }
+                } catch (_) {}
+
+                this.toastMessage = `📞 Dialing ${clean} • Phone copied to clipboard!`;
+                this.showToast = true;
+                setTimeout(() => { this.showToast = false; }, 4000);
+
+                window.location.href = 'tel:' + clean;
+            },
+
+            emailDriver() {
+                const email = (this.driver?.email || 'driver@ridemycars.com').trim();
+                try {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(email);
+                    }
+                } catch (_) {}
+
+                this.toastMessage = `✉️ Opening email to ${email} • Copied to clipboard!`;
+                this.showToast = true;
+                setTimeout(() => { this.showToast = false; }, 4000);
+
+                window.location.href = `mailto:${email}?subject=${encodeURIComponent('RideMyCars Booking #' + this.bookingCode)}`;
+            },
+
+            copyPhone() {
+                const phone = (this.driver?.phone || '+233598547966').trim();
+                const clean = phone.replace(/[^0-9+]/g, '');
+                try {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(clean);
+                        this.copiedPhone = true;
+                        setTimeout(() => { this.copiedPhone = false; }, 3000);
+                    }
+                } catch (_) {}
+                this.toastMessage = `✓ Phone ${clean} copied to clipboard!`;
+                this.showToast = true;
+                setTimeout(() => { this.showToast = false; }, 3000);
             }
         }
     }

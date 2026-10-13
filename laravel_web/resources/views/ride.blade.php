@@ -1111,15 +1111,37 @@
 
                         <!-- Action Buttons: Direct Call, WhatsApp & Email (Unlocked upon driver acceptance) -->
                         <div class="grid grid-cols-3 gap-2">
-                            <a :href="'tel:' + driverPhone" class="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1">
+                            <a :href="'tel:' + (driverPhone || '+233598547966')" 
+                               @click="callDriverDirect($event)"
+                               class="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer">
                                 <span>📞 Call</span>
                             </a>
-                            <a :href="driverWhatsapp || ('https://wa.me/' + (driverPhone ? driverPhone.replace(/[^0-9]/g, '') : ''))" target="_blank" rel="noopener noreferrer" class="py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1">
+                            <a :href="driverWhatsapp || ('https://wa.me/' + (driverPhone ? driverPhone.replace(/[^0-9]/g, '') : '233598547966'))" 
+                               target="_blank" rel="noopener noreferrer" 
+                               class="py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer">
                                 <span>💬 WhatsApp</span>
                             </a>
-                            <a :href="'mailto:' + (driverEmail || 'driver@ridemycars.com')" class="py-3 bg-gray-900 dark:bg-white text-white dark:text-black font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1">
+                            <a :href="'mailto:' + (driverEmail || 'dispatch@ridemycars.com') + '?subject=' + encodeURIComponent('RideMyCars Booking #' + (currentRideId || ''))" 
+                               @click="emailDriverDirect($event)"
+                               class="py-3 bg-gray-900 dark:bg-white text-white dark:text-black font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer">
                                 <span>✉️ Email</span>
                             </a>
+                        </div>
+
+                        <!-- Chauffeur Direct Line Bar with One-Click Copy -->
+                        <div class="p-3 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-white/10 text-xs flex items-center justify-between text-gray-600 dark:text-gray-300">
+                            <div class="flex items-center gap-2 truncate">
+                                <span>📞</span>
+                                <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="driverPhone || '+233 59 854 7966'"></span>
+                                <span class="text-[10px] text-gray-400">• Chauffeur Direct Line</span>
+                            </div>
+                            <button type="button" @click="copyDriverPhone()" class="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline shrink-0 cursor-pointer">
+                                <span x-text="copiedDriverPhone ? '✓ Copied' : 'Copy'"></span>
+                            </button>
+                        </div>
+
+                        <div x-show="showContactToast" x-transition class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-bold text-center">
+                            <span x-text="contactToastMessage"></span>
                         </div>
 
                         <button type="button" @click="cancelRide()" class="w-full py-3 text-rose-600 font-extrabold text-xs hover:underline">Cancel Ride</button>
@@ -1612,6 +1634,9 @@
                 driverPhone: '',
                 driverEmail: '',
                 driverWhatsapp: '',
+                contactToastMessage: '',
+                showContactToast: false,
+                copiedDriverPhone: false,
                 driverLat: null,
                 driverLng: null,
                 rideLifecycleStatus: '',
@@ -1774,13 +1799,13 @@
                                         }
                                     }, 400);
                                 }
-                                if (data.driver) {
-                                    this.driverName = data.driver.name || 'Driver';
-                                    this.driverPlate = data.driver.vehicle_plate || '';
-                                    this.driverModel = data.driver.vehicle_model || 'Executive Sedan';
-                                    this.driverPhone = data.driver.phone || '';
-                                    this.driverEmail = data.driver.email || '';
-                                    this.driverWhatsapp = data.driver.whatsapp || '';
+                                if (data.driver || data.driver_name || data.driver_phone) {
+                                    this.driverName = (data.driver && data.driver.name) || data.driver_name || 'Driver';
+                                    this.driverPlate = (data.driver && data.driver.vehicle_plate) || data.driver_plate || 'REG-8899';
+                                    this.driverModel = (data.driver && data.driver.vehicle_model) || data.driver_model || 'Executive Sedan';
+                                    this.driverPhone = (data.driver && data.driver.phone) || data.driver_phone || '+233598547966';
+                                    this.driverEmail = (data.driver && data.driver.email) || data.driver_email || 'dispatch@ridemycars.com';
+                                    this.driverWhatsapp = (data.driver && data.driver.whatsapp) || data.driver_whatsapp || ('https://wa.me/' + this.driverPhone.replace(/[^0-9]/g, ''));
                                     this.bookingStep = 'driver_assigned';
                                 } else {
                                     this.remainingSeconds = typeof data.remaining_seconds === 'number' ? data.remaining_seconds : 300;
@@ -1864,14 +1889,14 @@
                                 if (typeof sData.remaining_seconds === 'number' && this.bookingStep === 'finding_driver') {
                                     this.remainingSeconds = sData.remaining_seconds;
                                 }
-                                if (['accepted', 'en_route', 'arrived', 'in_progress'].includes(sData.status)) {
+                                if (['accepted', 'en_route', 'arrived', 'in_progress', 'completed'].includes(sData.status) || sData.driver || sData.driver_name) {
                                     if (this.countdownInterval) clearInterval(this.countdownInterval);
-                                    this.driverName = (sData.driver && sData.driver.name) || sData.driver_name || 'Driver';
-                                    this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || 'REG-8899';
-                                    this.driverModel = (sData.driver && sData.driver.vehicle_model) || 'Executive Sedan';
-                                    this.driverPhone = (sData.driver && sData.driver.phone) || '';
-                                    this.driverEmail = (sData.driver && sData.driver.email) || sData.driver_email || '';
-                                    this.driverWhatsapp = (sData.driver && sData.driver.whatsapp) || sData.driver_whatsapp || '';
+                                    this.driverName = (sData.driver && sData.driver.name) || sData.driver_name || this.driverName || 'Driver';
+                                    this.driverPlate = (sData.driver && sData.driver.vehicle_plate) || sData.driver_plate || this.driverPlate || 'REG-8899';
+                                    this.driverModel = (sData.driver && sData.driver.vehicle_model) || sData.driver_model || this.driverModel || 'Executive Sedan';
+                                    this.driverPhone = (sData.driver && sData.driver.phone) || sData.driver_phone || this.driverPhone || '+233598547966';
+                                    this.driverEmail = (sData.driver && sData.driver.email) || sData.driver_email || this.driverEmail || 'dispatch@ridemycars.com';
+                                    this.driverWhatsapp = (sData.driver && sData.driver.whatsapp) || sData.driver_whatsapp || this.driverWhatsapp || ('https://wa.me/' + this.driverPhone.replace(/[^0-9]/g, ''));
                                     this.bookingStep = 'driver_assigned';
                                     this.updateLiveTrackingState(sData);
                                 } else if (sData.status === 'completed') {
@@ -2883,6 +2908,55 @@
                         }).catch(() => {});
                     }
                     this.bookingStep = 'find_trip';
+                },
+
+                callDriverDirect(e) {
+                    const phone = (this.driverPhone || '+233598547966').trim();
+                    const clean = phone.replace(/[^0-9+]/g, '');
+                    try {
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(clean);
+                            this.copiedDriverPhone = true;
+                            setTimeout(() => { this.copiedDriverPhone = false; }, 3000);
+                        }
+                    } catch (_) {}
+
+                    this.contactToastMessage = `📞 Dialing ${clean} • Phone copied to clipboard!`;
+                    this.showContactToast = true;
+                    setTimeout(() => { this.showContactToast = false; }, 4000);
+
+                    window.location.href = 'tel:' + clean;
+                },
+
+                emailDriverDirect(e) {
+                    const email = (this.driverEmail || 'dispatch@ridemycars.com').trim();
+                    try {
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(email);
+                        }
+                    } catch (_) {}
+
+                    this.contactToastMessage = `✉️ Opening email to ${email} • Copied to clipboard!`;
+                    this.showContactToast = true;
+                    setTimeout(() => { this.showContactToast = false; }, 4000);
+
+                    const subj = encodeURIComponent('RideMyCars Booking #' + (this.currentRideId || ''));
+                    window.location.href = `mailto:${email}?subject=${subj}`;
+                },
+
+                copyDriverPhone() {
+                    const phone = (this.driverPhone || '+233598547966').trim();
+                    const clean = phone.replace(/[^0-9+]/g, '');
+                    try {
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(clean);
+                            this.copiedDriverPhone = true;
+                            setTimeout(() => { this.copiedDriverPhone = false; }, 3000);
+                        }
+                    } catch (_) {}
+                    this.contactToastMessage = `✓ Phone ${clean} copied to clipboard!`;
+                    this.showContactToast = true;
+                    setTimeout(() => { this.showContactToast = false; }, 3000);
                 }
             }));
         });

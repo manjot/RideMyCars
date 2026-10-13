@@ -255,15 +255,15 @@ class StripeVerificationController extends Controller
             : 0;
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
-        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash']);
+        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
         $bookingStatus = strtolower($booking->booking_status ?? $booking->status ?? 'pending');
-        $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
+        $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
 
         $driverData = null;
-        if ($isPaymentConfirmed && $isDriverConfirmed) {
+        if (($isPaymentConfirmed || !empty($booking->driver_id)) && $isDriverConfirmed) {
             $driverId = $booking->driver_id ?? $booking->courier_id ?? null;
             if ($driverId) {
-                $driverUser = User::find($driverId);
+                $driverUser = User::with('driverProfile')->find($driverId);
                 if ($driverUser) {
                     $bCountry = \App\Services\CountryService::detectCountryFromLocation(
                         ($booking->pickup_location ?? '') . ' ' . ($booking->dropoff_location ?? ''),
@@ -272,15 +272,16 @@ class StripeVerificationController extends Controller
                     ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
                       ?? 'IND';
 
-                    $phone = $driverUser->phone ?? $this->getFallbackDriverPhone($bCountry);
-                    $email = $driverUser->email ?? 'driver@ridemycars.com';
+                    $phone = $driverUser->phone ?? ($driverUser->driverProfile?->phone ?? ($booking->driver_phone ?? $this->getFallbackDriverPhone($bCountry)));
+                    $email = $driverUser->email ?? ($driverUser->driverProfile?->email ?? ($booking->driver_email ?? 'driver@ridemycars.com'));
                     $cleanedWa = $this->formatWhatsAppPhone($phone, $bCountry);
 
                     $driverData = [
+                        'id' => $driverUser->id,
                         'name' => $driverUser->name,
-                        'rating' => 4.95,
-                        'vehicle' => $booking->car_make_model ?? 'Executive Vehicle',
-                        'photo_url' => 'https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true',
+                        'rating' => $driverUser->driverProfile ? floatval($driverUser->driverProfile->rating) : 4.95,
+                        'vehicle' => $booking->car_make_model ?? ($booking->vehicle_type ?? 'Executive Vehicle'),
+                        'photo_url' => $driverUser->driverProfile?->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
                         'phone' => $phone,
                         'email' => $email,
                         'whatsapp' => $cleanedWa,
@@ -951,9 +952,9 @@ class StripeVerificationController extends Controller
         $time = $booking->start_time ?? $booking->pickup_time ?? '09:00 AM';
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
-        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash']);
-        $bookingStatus = strtolower($booking->booking_status ?? 'pending');
-        $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
+        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
+        $bookingStatus = strtolower($booking->booking_status ?? $booking->status ?? 'pending');
+        $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
 
         $driver = null;
         $driverUser = null;
@@ -966,8 +967,9 @@ class StripeVerificationController extends Controller
             $driverProfile = $booking->driverProfile;
             $vehicleInfo = ($booking->car_make_model ?? 'Executive Vehicle');
         } elseif ($serviceType === 'ride' || $serviceType === 'rental') {
-            $booking->load(['driver', 'vehicle']);
+            $booking->load(['driver.driverProfile', 'vehicle']);
             $driverUser = $booking->driver;
+            $driverProfile = $booking->driver?->driverProfile;
             $vehicleInfo = $booking->vehicle ? ($booking->vehicle->make . ' ' . $booking->vehicle->model) : ($booking->vehicle_type ?? 'Standard Sedan');
         } else {
             $booking->load(['courier', 'courierProfile']);
@@ -977,16 +979,20 @@ class StripeVerificationController extends Controller
         }
 
         if (!$driverUser && ($booking->driver_id || $booking->courier_id)) {
-            $driverUser = User::find($booking->driver_id ?? $booking->courier_id);
+            $driverUser = User::with('driverProfile')->find($booking->driver_id ?? $booking->courier_id);
+            if ($driverUser) {
+                $driverProfile = $driverUser->driverProfile;
+            }
         }
 
-        if ($isPaymentConfirmed && $isDriverConfirmed && ($driverUser || $booking->driver_id)) {
-            $rawPhone = $driverUser->phone ?? $this->getFallbackDriverPhone($country);
-            $rawEmail = $driverUser->email ?? 'driver@ridemycars.com';
+        if (($isPaymentConfirmed || !empty($booking->driver_id)) && $isDriverConfirmed && ($driverUser || $booking->driver_id)) {
+            $rawPhone = $driverUser?->phone ?? ($driverProfile?->phone ?? ($booking->driver_phone ?? $this->getFallbackDriverPhone($country)));
+            $rawEmail = $driverUser?->email ?? ($driverProfile?->email ?? ($booking->driver_email ?? 'driver@ridemycars.com'));
             $cleanedWa = $this->formatWhatsAppPhone($rawPhone, $country);
 
             $driver = [
-                'name' => $driverUser->name ?? 'Michael Scott',
+                'id' => $driverUser?->id,
+                'name' => $driverUser?->name ?? 'Michael Vance',
                 'phone' => $rawPhone,
                 'email' => $rawEmail,
                 'whatsapp' => $cleanedWa,
@@ -994,7 +1000,7 @@ class StripeVerificationController extends Controller
                 'masked_email' => substr($rawEmail, 0, 2) . '••••••@' . (explode('@', $rawEmail)[1] ?? 'ridemycars.com'),
                 'rating' => $driverProfile->rating ?? 4.95,
                 'vehicle' => $vehicleInfo,
-                'photo_url' => $driverProfile->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser->name ?? 'Michael Scott') . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
+                'photo_url' => $driverProfile->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser?->name ?? 'Michael Vance') . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
             ];
         }
 

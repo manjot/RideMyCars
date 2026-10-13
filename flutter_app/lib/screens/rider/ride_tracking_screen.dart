@@ -149,11 +149,96 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   Future<void> _callDriver([String? overridePhone]) async {
     final rideProv = Provider.of<RideProvider>(context, listen: false);
     final currentRide = rideProv.activeRide ?? widget.ride;
-    final phone = overridePhone ?? currentRide['driver']?['phone'] ?? widget.ride['driver']?['phone'];
-    if (phone != null && phone.toString().isNotEmpty) {
-      final uri = Uri.parse('tel:$phone');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+    final phone = (overridePhone 
+        ?? currentRide['driver']?['phone'] 
+        ?? currentRide['driver_phone'] 
+        ?? widget.ride['driver']?['phone'] 
+        ?? widget.ride['driver_phone'] 
+        ?? '+233598547966').toString().trim();
+    if (phone.isNotEmpty) {
+      final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+      final uri = Uri.parse('tel:$clean');
+      try {
+        final launched = await launchUrl(uri);
+        if (!launched) {
+          await Clipboard.setData(ClipboardData(text: clean));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('✓ Driver phone $clean copied to clipboard'), backgroundColor: AppColors.success),
+            );
+          }
+        }
+      } catch (_) {
+        await Clipboard.setData(ClipboardData(text: clean));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✓ Driver phone $clean copied to clipboard'), backgroundColor: AppColors.success),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _emailDriver([String? overrideEmail]) async {
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
+    final currentRide = rideProv.activeRide ?? widget.ride;
+    final email = (overrideEmail 
+        ?? currentRide['driver']?['email'] 
+        ?? currentRide['driver_email'] 
+        ?? widget.ride['driver']?['email'] 
+        ?? widget.ride['driver_email'] 
+        ?? 'dispatch@ridemycars.com').toString().trim();
+    if (email.isNotEmpty) {
+      final rideId = currentRide['id'] ?? widget.ride['id'] ?? '';
+      final uri = Uri.parse('mailto:$email?subject=RideMyCars%20Ride%20%23$rideId');
+      try {
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) {
+          await Clipboard.setData(ClipboardData(text: email));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('✓ Driver email $email copied to clipboard'), backgroundColor: AppColors.primary),
+            );
+          }
+        }
+      } catch (_) {
+        await Clipboard.setData(ClipboardData(text: email));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✓ Driver email $email copied to clipboard'), backgroundColor: AppColors.primary),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _whatsappDriver([String? overridePhone]) async {
+    final rideProv = Provider.of<RideProvider>(context, listen: false);
+    final currentRide = rideProv.activeRide ?? widget.ride;
+    final waUrl = currentRide['driver']?['whatsapp'] ?? currentRide['driver']?['whatsapp_url'] ?? currentRide['driver_whatsapp'];
+    if (waUrl != null && waUrl.toString().startsWith('http')) {
+      final uri = Uri.parse(waUrl.toString());
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      } catch (_) {}
+    }
+    final rawPhone = (overridePhone 
+        ?? currentRide['driver']?['phone'] 
+        ?? currentRide['driver_phone'] 
+        ?? widget.ride['driver']?['phone'] 
+        ?? widget.ride['driver_phone'] 
+        ?? '+233598547966').toString().trim();
+    final clean = rawPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    final uri = Uri.parse('https://wa.me/$clean');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: rawPhone));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✓ Driver WhatsApp number $rawPhone copied to clipboard'), backgroundColor: const Color(0xFF25D366)),
+        );
       }
     }
   }
@@ -808,50 +893,112 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                   ),
                                 ],
                               ),
-                              // Bottom Row: Phone number on single line & Call button
-                              if (driver['phone'] != null && driver['phone'].toString().isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                Container(
-                                  padding: const EdgeInsets.only(top: 8),
+                              // Bottom Row: Phone & Action Buttons (Call, WhatsApp, Email)
+                              Builder(builder: (_) {
+                                final phone = (driver['phone'] ?? currentRide['driver_phone'] ?? widget.ride['driver_phone'] ?? '+233598547966').toString();
+                                final email = (driver['email'] ?? currentRide['driver_email'] ?? widget.ride['driver_email'] ?? 'dispatch@ridemycars.com').toString();
+
+                                return Container(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  margin: const EdgeInsets.only(top: 10),
                                   decoration: const BoxDecoration(
                                     border: Border(top: BorderSide(color: Colors.white10)),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            driver['phone'].toString(),
-                                            style: const TextStyle(
-                                              color: AppColors.primary,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.3,
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                phone,
+                                                style: const TextStyle(
+                                                  color: AppColors.primary,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          InkWell(
+                                            onTap: () {
+                                              Clipboard.setData(ClipboardData(text: phone));
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('✓ Phone copied to clipboard!'), duration: Duration(seconds: 2)),
+                                              );
+                                            },
+                                            child: const Padding(
+                                              padding: EdgeInsets.all(4.0),
+                                              child: Text(
+                                                'Copy',
+                                                style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      ElevatedButton.icon(
-                                        onPressed: () => _callDriver(driver['phone'].toString()),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.success,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                          elevation: 2,
-                                          minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        icon: const Icon(Icons.phone_rounded, size: 14),
-                                        label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _callDriver(phone),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppColors.success,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                elevation: 2,
+                                                minimumSize: Size.zero,
+                                              ),
+                                              icon: const Icon(Icons.call_rounded, size: 14),
+                                              label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _whatsappDriver(phone),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF25D366),
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                elevation: 2,
+                                                minimumSize: Size.zero,
+                                              ),
+                                              icon: const Icon(Icons.chat_rounded, size: 14),
+                                              label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _emailDriver(email),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF1E293B),
+                                                foregroundColor: Colors.white,
+                                                side: const BorderSide(color: Colors.white24),
+                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                elevation: 2,
+                                                minimumSize: Size.zero,
+                                              ),
+                                              icon: const Icon(Icons.email_rounded, size: 14),
+                                              label: const Text('Email', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                );
+                              }),
                             ],
                           ),
                         ),

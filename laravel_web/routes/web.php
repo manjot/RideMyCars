@@ -1149,9 +1149,10 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         $ride->refresh();
     }
 
-    // GATED CONTACT RELEASE: Driver contact, email, and WhatsApp ONLY appear if payment is confirmed AND driver accepted
-    $isPaymentConfirmed = in_array(strtolower($ride->payment_status ?? ''), ['paid', 'hold', 'authorized']);
+    // GATED CONTACT RELEASE: Driver contact, email, and WhatsApp appear ONLY if driver has accepted AND payment is held/confirmed
+    $isPaymentConfirmed = in_array(strtolower($ride->payment_status ?? ''), ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || ($ride->payment_method === 'cash');
     $isDriverAccepted = !empty($ride->driver_id) && in_array($ride->status, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'], true);
+    $canReleaseDriver = $isDriverAccepted && $isPaymentConfirmed;
 
     $driverData = null;
     $driverName = null;
@@ -1159,11 +1160,23 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
     $driverEmail = null;
     $driverWhatsapp = null;
 
-    if ($isPaymentConfirmed && $isDriverAccepted && $ride->driver) {
+    if ($canReleaseDriver && $ride->driver) {
         $dp = $ride->driver->driverProfile;
         $driverName = $ride->driver->name;
-        $driverPhone = $ride->driver->phone;
-        $driverEmail = $ride->driver->email;
+        $driverPhone = $ride->driver->phone ?: ($dp?->phone ?: ($ride->driver_phone ?: null));
+        $driverEmail = $ride->driver->email ?: ($dp?->email ?: ($ride->driver_email ?: 'dispatch@ridemycars.com'));
+
+        // Fallback phone by operating country if driver profile phone is completely empty
+        if (empty($driverPhone)) {
+            $driverCountry = strtoupper($ride->driver_country ?? $ride->country ?? 'GHA');
+            $driverPhone = match ($driverCountry) {
+                'GHA', 'GH' => '+233598547966',
+                'ZAF', 'ZA' => '+27613329446',
+                'IND', 'IN' => '+919876543210',
+                'MWI', 'MW' => '+265991234567',
+                default => '+18005550199',
+            };
+        }
 
         $rawPhone = $driverPhone ?: '';
         $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
@@ -1175,6 +1188,7 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         $driverWhatsapp = !empty($cleanPhone) ? "https://wa.me/{$cleanPhone}" : null;
 
         $driverData = [
+            'id' => $ride->driver->id,
             'name' => $driverName,
             'phone' => $driverPhone,
             'email' => $driverEmail,
