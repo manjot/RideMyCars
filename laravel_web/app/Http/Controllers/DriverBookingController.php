@@ -434,49 +434,72 @@ class DriverBookingController extends Controller
     }
 
     /**
-     * Client submits review for completed booking.
+     * Driver submits National ID Card verification documents.
      */
-    public function storeReview(DriverBooking $booking, Request $request)
+    public function submitIdCardVerification(Request $request)
     {
-        if ($booking->booking_status !== 'completed') {
-            return back()->withErrors(['review' => 'Ratings can only be submitted for completed bookings.']);
-        }
-
-        if ($booking->review) {
-            return back()->withErrors(['review' => 'You have already reviewed this booking.']);
+        $user = Auth::user();
+        if (!$user || !$user->driverProfile) {
+            return back()->withErrors(['verification' => 'Driver profile not found.']);
         }
 
         $validated = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'review_text' => 'required|string|min:5|max:1000',
+            'id_card_type' => 'nullable|string|max:100',
+            'id_card_number' => 'required|string|max:100',
+            'id_card_expiry' => 'nullable|date',
+            'id_card_front' => 'nullable|image|max:5120',
+            'id_card_back' => 'nullable|image|max:5120',
         ]);
 
-        $review = DriverReview::create([
-            'driver_booking_id' => $booking->id,
-            'driver_profile_id' => $booking->driver_profile_id,
-            'client_id' => Auth::id() ?? $booking->client_id,
-            'rating' => $validated['rating'],
-            'review_text' => $validated['review_text'],
-        ]);
+        $frontPath = $request->hasFile('id_card_front')
+            ? $request->file('id_card_front')->store('id_card_documents', 'public')
+            : null;
+
+        $backPath = $request->hasFile('id_card_back')
+            ? $request->file('id_card_back')->store('id_card_documents', 'public')
+            : null;
+
+        $updateData = [
+            'id_card_type' => $validated['id_card_type'] ?? 'National ID Card',
+            'id_card_number' => $validated['id_card_number'],
+            'id_card_expiry' => $validated['id_card_expiry'] ?? null,
+            'id_card_status' => 'submitted',
+            'id_card_rejection_reason' => null,
+        ];
+
+        if ($frontPath) {
+            $updateData['id_card_front_image'] = $frontPath;
+            $updateData['ghana_card_front_url'] = $frontPath;
+        }
+        if ($backPath) {
+            $updateData['id_card_back_image'] = $backPath;
+            $updateData['ghana_card_back_url'] = $backPath;
+        }
+
+        $user->driverProfile->update($updateData);
 
         ActivityLogService::log(
-            'review',
-            "Client submitted a {$review->rating}-star review for driver #{$booking->driver_id}",
-            Auth::id() ?? $booking->client_id,
-            ['booking_id' => $booking->id, 'rating' => $review->rating]
+            'id_card_submitted',
+            "Driver {$user->name} submitted National ID #{$user->driverProfile->id_card_number} for verification",
+            $user->id
         );
 
-        return back()->with('success', 'Thank you! Your review has been submitted.');
+        return back()->with('success', 'National ID card verification documents submitted successfully for admin review.');
     }
 
     /**
      * Driver submits guarantor verification information & documents.
+     * STRICT REQUIREMENT: ONLY made available for CHAUFFEUR role!
      */
     public function submitGuarantorVerification(Request $request)
     {
         $user = Auth::user();
         if (!$user || !$user->driverProfile) {
             return back()->withErrors(['guarantor' => 'Driver profile not found. Please complete driver signup first.']);
+        }
+
+        if (!$user->driverProfile->is_chauffeur) {
+            return back()->withErrors(['guarantor' => 'Guarantor verification information is strictly reserved and required only for Chauffeur role.']);
         }
 
         $validated = $request->validate([
@@ -534,6 +557,42 @@ class DriverBookingController extends Controller
         );
 
         return back()->with('success', "Guarantor information for {$guarantor->full_name} submitted successfully! Support team will review the documents.");
+    }
+
+    /**
+     * Client submits review for completed booking.
+     */
+    public function storeReview(DriverBooking $booking, Request $request)
+    {
+        if ($booking->booking_status !== 'completed') {
+            return back()->withErrors(['review' => 'Ratings can only be submitted for completed bookings.']);
+        }
+
+        if ($booking->review) {
+            return back()->withErrors(['review' => 'You have already reviewed this booking.']);
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'review_text' => 'required|string|min:5|max:1000',
+        ]);
+
+        $review = DriverReview::create([
+            'driver_booking_id' => $booking->id,
+            'driver_profile_id' => $booking->driver_profile_id,
+            'client_id' => Auth::id() ?? $booking->client_id,
+            'rating' => $validated['rating'],
+            'review_text' => $validated['review_text'],
+        ]);
+
+        ActivityLogService::log(
+            'review',
+            "Client submitted a {$review->rating}-star review for driver #{$booking->driver_id}",
+            Auth::id() ?? $booking->client_id,
+            ['booking_id' => $booking->id, 'rating' => $review->rating]
+        );
+
+        return back()->with('success', 'Thank you! Your review has been submitted.');
     }
 
     /**

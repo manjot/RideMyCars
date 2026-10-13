@@ -15,7 +15,9 @@ import '../auth/driver_login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
 import 'payout_methods_screen.dart';
+import 'verification_documents_screen.dart';
 import '../../services/wallet_service.dart';
+import '../../services/verification_service.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -30,6 +32,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
   Map<String, dynamic>? _userProfile;
   Map<String, dynamic>? _driverProfile;
   Map<String, dynamic>? _activePayoutMethod;
+  Map<String, dynamic>? _verificationData;
 
   @override
   void initState() {
@@ -72,6 +75,16 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
           }
         });
       }
+
+      // Fetch live verification status for badges
+      try {
+        final vData = await VerificationService.getVerificationStatus();
+        if (vData != null && mounted) {
+          setState(() {
+            _verificationData = vData;
+          });
+        }
+      } catch (_) {}
     } catch (e) {
       debugPrint('Error fetching driver profile: $e');
     } finally {
@@ -105,6 +118,20 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
     final num = _activePayoutMethod!['account_number']?.toString() ?? '';
     final last4 = num.length >= 4 ? num.substring(num.length - 4) : num;
     return '$bank (•••• $last4) (Active)';
+  }
+
+  String _getStatusBadge(String? status) {
+    if (status == 'verified' || status == 'active') return 'VERIFIED';
+    if (status == 'rejected') return 'ACTION REQ.';
+    if (status == 'under_review' || status == 'pending') return 'UNDER REVIEW';
+    return 'SUBMIT';
+  }
+
+  Color _getStatusColor(String? status) {
+    if (status == 'verified' || status == 'active') return AppColors.success;
+    if (status == 'rejected') return AppColors.danger;
+    if (status == 'under_review' || status == 'pending') return AppColors.warning;
+    return AppColors.primary;
   }
 
   Widget _buildAvatarFallback(String name) {
@@ -782,17 +809,153 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Driver Details Section
-                  const Text(
-                    'Driver & Verification Details',
-                    style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
+                  // Verification & Compliance Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Verification & Compliance',
+                        style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const VerificationDocumentsScreen()),
+                          );
+                          _fetchProfile();
+                        },
+                        icon: const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.primary),
+                        label: const Text('View All', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  _buildInfoTile(Icons.badge_outlined, 'Driver License Number', license),
+                  const SizedBox(height: 8),
+
+                  // 1. Vehicle Certificates Verification
+                  _buildActionTile(
+                    Icons.security_rounded,
+                    'Vehicle Certificates Verification',
+                    'Insurance Policy & Roadworthiness Inspection',
+                    badge: _getStatusBadge(
+                      _verificationData?['verifications']?['vehicle_certificates']?['status'] ??
+                          _driverProfile?['insurance_status'],
+                    ),
+                    iconColor: _getStatusColor(
+                      _verificationData?['verifications']?['vehicle_certificates']?['status'] ??
+                          _driverProfile?['insurance_status'],
+                    ),
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const VerificationDocumentsScreen(initialTabIndex: 0),
+                        ),
+                      );
+                      _fetchProfile();
+                    },
+                  ),
                   const SizedBox(height: 10),
+
+                  // 2. National ID Card Verification
+                  _buildActionTile(
+                    Icons.badge_rounded,
+                    'National ID Card Verification',
+                    'Ghana Card, Passport, or National ID',
+                    badge: _getStatusBadge(
+                      _verificationData?['verifications']?['id_card']?['status'] ??
+                          _driverProfile?['id_card_status'],
+                    ),
+                    iconColor: _getStatusColor(
+                      _verificationData?['verifications']?['id_card']?['status'] ??
+                          _driverProfile?['id_card_status'],
+                    ),
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const VerificationDocumentsScreen(initialTabIndex: 1),
+                        ),
+                      );
+                      _fetchProfile();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 3. Driver License Verification
+                  _buildActionTile(
+                    Icons.airline_seat_recline_extra_rounded,
+                    'Driver License Verification',
+                    'License: $license • Professional Driver ID',
+                    badge: _getStatusBadge(
+                      _verificationData?['verifications']?['driver_license']?['status'] ??
+                          _driverProfile?['license_status'],
+                    ),
+                    iconColor: _getStatusColor(
+                      _verificationData?['verifications']?['driver_license']?['status'] ??
+                          _driverProfile?['license_status'],
+                    ),
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const VerificationDocumentsScreen(initialTabIndex: 2),
+                        ),
+                      );
+                      _fetchProfile();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 4. Guarantor Verification (Strictly Chauffeur Only)
+                  if (_driverProfile?['is_chauffeur'] == true ||
+                      _driverProfile?['driver_type'] == 'chauffeur' ||
+                      _verificationData?['is_chauffeur'] == true) ...[
+                    _buildActionTile(
+                      Icons.person_pin_rounded,
+                      'Guarantor Verification (Chauffeur)',
+                      _verificationData?['verifications']?['guarantor']?['full_name'] != null
+                          ? 'Guarantor: ${_verificationData!['verifications']['guarantor']['full_name']} (${_verificationData!['verifications']['guarantor']['relationship'] ?? 'Reference'})'
+                          : 'Character & integrity reference for VIP Chauffeur',
+                      badge: _getStatusBadge(
+                        _verificationData?['verifications']?['guarantor']?['status'],
+                      ),
+                      iconColor: _getStatusColor(
+                        _verificationData?['verifications']?['guarantor']?['status'],
+                      ),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const VerificationDocumentsScreen(initialTabIndex: 3),
+                          ),
+                        );
+                        _fetchProfile();
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ] else ...[
+                    // For standard driver, a prompt / unlock tile for Chauffeur Status
+                    _buildActionTile(
+                      Icons.stars_rounded,
+                      'VIP Chauffeur Program',
+                      'Guarantor verification required to unlock high-tier rides',
+                      badge: 'APPLY',
+                      iconColor: AppColors.primary,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const VerificationDocumentsScreen(initialTabIndex: 3),
+                          ),
+                        );
+                        _fetchProfile();
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
                   _buildInfoTile(Icons.email_outlined, 'Registered Email', email),
-                  const SizedBox(height: 10),
-                  _buildInfoTile(Icons.verified_user_outlined, 'KYC & Background Check', isVerified ? 'Verified & Approved' : 'Pending Verification'),
                   const SizedBox(height: 10),
                   _buildInfoTile(Icons.directions_car_outlined, 'Assigned Vehicle', 'Standard Executive Sedan'),
                   const SizedBox(height: 24),

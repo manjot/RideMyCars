@@ -1067,71 +1067,178 @@
                         </form>
                     </div>
 
-                    <!-- Guarantor Information & Document Submission Section -->
+                    <!-- National ID Card Verification Section -->
                     <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Guarantor Verification Information</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Submit your guarantor's identity and signed liability agreement to unlock vehicle hiring opportunities.</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <span>🪪</span>
+                                    <span>National ID Card Verification</span>
+                                </h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Submit your official National ID Card, Ghana Card, or Passport for identity verification.</p>
+                            </div>
+                            <div>
+                                @php
+                                    $idStatus = $profile->id_card_status ?? 'pending';
+                                @endphp
+                                <span class="px-3 py-1 rounded-full text-xs font-black uppercase
+                                    {{ $idStatus === 'verified' || $idStatus === 'approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                                      ($idStatus === 'submitted' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
+                                      ($idStatus === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300')) }}">
+                                    {{ ucfirst($idStatus) }}
+                                </span>
+                            </div>
+                        </div>
 
-                        <form action="/driver/submit-guarantor" method="POST" enctype="multipart/form-data" class="space-y-4">
+                        @if($profile->id_card_front_url || $profile->id_card_back_url)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                                @if($profile->id_card_front_url)
+                                    <div class="p-3 bg-gray-50 dark:bg-black/30 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between">
+                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Front Scan Uploaded</span>
+                                        <a href="{{ $profile->id_card_front_url }}" target="_blank" class="text-xs font-bold text-brand-500 hover:underline">View Front ↗</a>
+                                    </div>
+                                @endif
+                                @if($profile->id_card_back_url)
+                                    <div class="p-3 bg-gray-50 dark:bg-black/30 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-between">
+                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Back Scan Uploaded</span>
+                                        <a href="{{ $profile->id_card_back_url }}" target="_blank" class="text-xs font-bold text-brand-500 hover:underline">View Back ↗</a>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
+                        <form action="/driver/verify-id-card" method="POST" enctype="multipart/form-data" class="space-y-4">
                             @csrf
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Guarantor Legal Full Name *</label>
-                                    <input type="text" name="full_name" required placeholder="e.g. Kwame Mensah" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">ID Card Type *</label>
+                                    <select name="id_card_type" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                        <option value="National ID Card" {{ ($profile->id_card_type ?? '') === 'National ID Card' ? 'selected' : '' }}>National ID Card</option>
+                                        <option value="Ghana Card" {{ ($profile->id_card_type ?? '') === 'Ghana Card' ? 'selected' : '' }}>Ghana Card (NIA)</option>
+                                        <option value="Passport" {{ ($profile->id_card_type ?? '') === 'Passport' ? 'selected' : '' }}>International Passport</option>
+                                        <option value="Voter ID" {{ ($profile->id_card_type ?? '') === 'Voter ID' ? 'selected' : '' }}>Voter's ID Card</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card Number (NIA) *</label>
-                                    <input type="text" name="ghana_card_number" required placeholder="GHA-712345678-9" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">ID Card Number *</label>
+                                    <input type="text" name="id_card_number" required value="{{ $profile->id_card_number ?? '' }}" placeholder="e.g. GHA-712345678-9" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Relationship to Driver *</label>
-                                    <input type="text" name="relationship" required placeholder="e.g. Sibling / Employer / Parent" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Primary Phone Number *</label>
-                                    <input type="text" name="primary_phone" required placeholder="+233 24 123 4567" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Alternative Phone Number</label>
-                                    <input type="text" name="alt_phone" placeholder="+233 20 987 6543" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Post GPS Address</label>
-                                    <input type="text" name="digital_address" placeholder="GA-123-4567" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">ID Expiry Date</label>
+                                    <input type="date" name="id_card_expiry" value="{{ $profile->id_card_expiry ? \Carbon\Carbon::parse($profile->id_card_expiry)->format('Y-m-d') : '' }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Physical Residential Address</label>
-                                    <input type="text" name="physical_address" placeholder="House No 14, East Legon, Accra" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">ID Card Front Image</label>
+                                    <input type="file" name="id_card_front" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Employer / Business Name & Occupation</label>
-                                    <input type="text" name="employer_business" placeholder="Business / Employer Name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card Front Image</label>
-                                    <input type="file" name="ghana_card_front" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card Back Image</label>
-                                    <input type="file" name="ghana_card_back" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Signed Liability Agreement</label>
-                                    <input type="file" name="signed_liability_agreement" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">ID Card Back Image</label>
+                                    <input type="file" name="id_card_back" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
                                 </div>
                             </div>
 
-                            <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all">
-                                Submit Guarantor Details
+                            <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all">
+                                Submit ID Card Verification
                             </button>
                         </form>
                     </div>
+
+                    <!-- Guarantor Information & Document Submission Section (EXCLUSIVELY FOR CHAUFFEUR) -->
+                    @if($profile->is_chauffeur)
+                        <div class="bg-white dark:bg-white/5 border border-indigo-200/60 dark:border-indigo-500/20 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <span>🛡️</span>
+                                    <span>Guarantor Verification Information</span>
+                                </h2>
+                                <span class="px-3 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 rounded-full text-[11px] font-black uppercase tracking-wider">
+                                    CHAUFFEUR ONLY
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">As a private Chauffeur partner, please submit your guarantor's identity and signed liability agreement to unlock high-value vehicle hiring jobs.</p>
+
+                            <form action="/driver/submit-guarantor" method="POST" enctype="multipart/form-data" class="space-y-4">
+                                @csrf
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Guarantor Legal Full Name *</label>
+                                        <input type="text" name="full_name" required placeholder="e.g. Kwame Mensah" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card / ID Number *</label>
+                                        <input type="text" name="ghana_card_number" required placeholder="GHA-712345678-9" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Relationship to Driver *</label>
+                                        <input type="text" name="relationship" required placeholder="e.g. Sibling / Employer / Parent" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Primary Phone Number *</label>
+                                        <input type="text" name="primary_phone" required placeholder="+233 24 123 4567" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Alternative Phone Number</label>
+                                        <input type="text" name="alt_phone" placeholder="+233 20 987 6543" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Digital Address (GPS)</label>
+                                        <input type="text" name="digital_address" placeholder="GA-123-4567" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Physical Residential Address</label>
+                                        <input type="text" name="physical_address" placeholder="House No 14, East Legon, Accra" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Employer / Business Name & Occupation</label>
+                                        <input type="text" name="employer_business" placeholder="Business / Employer Name" class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card / ID Front Image</label>
+                                        <input type="file" name="ghana_card_front" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ghana Card / ID Back Image</label>
+                                        <input type="file" name="ghana_card_back" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Signed Liability Agreement</label>
+                                        <input type="file" name="signed_liability_agreement" accept="image/*,.pdf" class="w-full text-xs text-gray-500">
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-2">
+                                    <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm transition-all">
+                                        Submit Guarantor Details
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    @else
+                        <!-- Guarantor Verification Exclusively Reserved For Chauffeur -->
+                        <div class="bg-gray-50/70 dark:bg-white/[0.03] border border-dashed border-gray-300 dark:border-white/10 rounded-3xl p-6 text-center">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-2xl mx-auto mb-3">🛡️</div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white">Guarantor Verification (Chauffeurs Only)</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-1 mb-4">
+                                Guarantor verification is only required for <strong>Private Chauffeur</strong> bookings. Standard drivers only need Vehicle Certificates, ID Card, and Driver License.
+                            </p>
+                            <form action="/driver/toggle-chauffeur" method="POST" class="inline-block">
+                                @csrf
+                                <input type="hidden" name="is_chauffeur" value="1">
+                                <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all">
+                                    Apply as Chauffeur & Unlock Guarantor Verification
+                                </button>
+                            </form>
+                        </div>
+                    @endif
 
                 </div>
 

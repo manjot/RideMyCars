@@ -678,26 +678,63 @@ class DriverApiController extends Controller
     }
 
     /**
+     * Helper to store uploaded file or base64 encoded document image.
+     */
+    private static function storeUploadedDoc(Request $request, string $fieldName, string $folder): ?string
+    {
+        if ($request->hasFile($fieldName)) {
+            return $request->file($fieldName)->store($folder, 'public');
+        }
+
+        $base64Candidates = [
+            'base64_' . $fieldName,
+            $fieldName . '_base64',
+            $fieldName,
+        ];
+
+        foreach ($base64Candidates as $key) {
+            if ($request->filled($key) && is_string($request->input($key))) {
+                $val = $request->input($key);
+                if (str_starts_with($val, 'data:image') || strlen($val) > 200) {
+                    $ext = 'jpg';
+                    if (preg_match('/^data:image\/(\w+);base64,/', $val, $type)) {
+                        $val = substr($val, strpos($val, ',') + 1);
+                        $ext = strtolower($type[1]);
+                    }
+                    $decoded = base64_decode($val);
+                    if ($decoded !== false && strlen($decoded) > 50) {
+                        $fileName = $folder . '/' . uniqid('doc_') . '_' . time() . '.' . $ext;
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                        return $fileName;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Upload vehicle insurance and fitness (roadworthy) certificates picture scans.
      */
     public function uploadVehicleCertificates(Request $request)
     {
-        $user = $request->user();
+        $user = self::resolveUser($request);
         if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
 
         $request->validate([
-            'vehicle_insurance' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'vehicle_insurance' => 'nullable',
             'vehicle_insurance_expiry' => 'nullable|date',
-            'vehicle_fitness' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'vehicle_fitness' => 'nullable',
             'vehicle_fitness_expiry' => 'nullable|date',
         ]);
 
         $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
         $updatedFields = [];
 
-        if ($request->hasFile('vehicle_insurance')) {
-            $path = $request->file('vehicle_insurance')->store('driver_certificates/insurance', 'public');
-            $updatedFields['vehicle_insurance_image'] = $path;
+        $insPath = self::storeUploadedDoc($request, 'vehicle_insurance', 'driver_certificates/insurance');
+        if ($insPath) {
+            $updatedFields['vehicle_insurance_image'] = $insPath;
             $updatedFields['vehicle_insurance_status'] = 'submitted';
             $updatedFields['vehicle_insurance_rejection_reason'] = null;
         }
@@ -705,9 +742,9 @@ class DriverApiController extends Controller
             $updatedFields['vehicle_insurance_expiry'] = $request->vehicle_insurance_expiry;
         }
 
-        if ($request->hasFile('vehicle_fitness')) {
-            $path = $request->file('vehicle_fitness')->store('driver_certificates/fitness', 'public');
-            $updatedFields['vehicle_fitness_image'] = $path;
+        $fitPath = self::storeUploadedDoc($request, 'vehicle_fitness', 'driver_certificates/fitness');
+        if ($fitPath) {
+            $updatedFields['vehicle_fitness_image'] = $fitPath;
             $updatedFields['vehicle_fitness_status'] = 'submitted';
             $updatedFields['vehicle_fitness_rejection_reason'] = null;
         }
@@ -717,7 +754,7 @@ class DriverApiController extends Controller
 
         if (!empty($updatedFields)) {
             $profile->update($updatedFields);
-            ActivityLogService::log('document_upload', 'Driver uploaded vehicle certificates via API', $user->id);
+            ActivityLogService::log('document_upload', 'Driver uploaded vehicle certificates', $user->id);
             return response()->json([
                 'success' => true,
                 'message' => 'Vehicle certificates uploaded successfully. Admin will review and activate your account.',
@@ -727,8 +764,264 @@ class DriverApiController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'No certificate files were provided for upload.',
+            'message' => 'No certificate files or dates were provided for upload.',
         ], 422);
+    }
+
+    /**
+     * Upload / Update Driver License Verification documents & details.
+     */
+    public function uploadDriverLicense(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $request->validate([
+            'license_number' => 'required|string|max:100',
+            'license_country' => 'nullable|string|max:100',
+            'license_expiry' => 'required|date',
+            'license_front' => 'nullable',
+            'license_back' => 'nullable',
+        ]);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
+
+        $frontPath = self::storeUploadedDoc($request, 'license_front', 'license_documents');
+        $backPath = self::storeUploadedDoc($request, 'license_back', 'license_documents');
+
+        $updateData = [
+            'license_number' => $request->license_number,
+            'license_country' => $request->license_country ?? ($profile->country ?? 'USA'),
+            'license_expiry' => $request->license_expiry,
+            'verification_status' => 'submitted',
+        ];
+
+        if ($frontPath) {
+            $updateData['license_front_image'] = $frontPath;
+        }
+        if ($backPath) {
+            $updateData['license_back_image'] = $backPath;
+        }
+
+        $profile->update($updateData);
+
+        ActivityLogService::log(
+            'driver_verification_submitted',
+            "Driver {$user->name} submitted license #{$profile->license_number} for verification",
+            $user->id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Driver license verification documents submitted successfully for admin review.',
+            'data' => $profile->fresh(),
+        ]);
+    }
+
+    /**
+     * Upload / Update National ID Card Verification documents & details.
+     */
+    public function uploadIdCard(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $request->validate([
+            'id_card_type' => 'nullable|string|max:100',
+            'id_card_number' => 'required|string|max:100',
+            'id_card_expiry' => 'nullable|date',
+            'id_card_front' => 'nullable',
+            'id_card_back' => 'nullable',
+        ]);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
+
+        $frontPath = self::storeUploadedDoc($request, 'id_card_front', 'id_card_documents');
+        $backPath = self::storeUploadedDoc($request, 'id_card_back', 'id_card_documents');
+
+        $updateData = [
+            'id_card_type' => $request->input('id_card_type', 'National ID Card'),
+            'id_card_number' => $request->id_card_number,
+            'id_card_expiry' => $request->id_card_expiry,
+            'id_card_status' => 'submitted',
+            'id_card_rejection_reason' => null,
+        ];
+
+        if ($frontPath) {
+            $updateData['id_card_front_image'] = $frontPath;
+            $updateData['ghana_card_front_url'] = $frontPath;
+        }
+        if ($backPath) {
+            $updateData['id_card_back_image'] = $backPath;
+            $updateData['ghana_card_back_url'] = $backPath;
+        }
+
+        $profile->update($updateData);
+
+        ActivityLogService::log(
+            'id_card_submitted',
+            "Driver {$user->name} submitted National ID #{$profile->id_card_number} for verification",
+            $user->id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'National ID Card verification documents submitted successfully for admin review.',
+            'data' => $profile->fresh(),
+        ]);
+    }
+
+    /**
+     * Submit Guarantor Verification information & documents.
+     * STRICT REQUIREMENT: ONLY made available for CHAUFFEUR role!
+     */
+    public function submitGuarantor(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
+
+        // STRICT ENFORCEMENT: Guarantor verification is exclusively for Chauffeur role!
+        if (!$profile->is_chauffeur) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Guarantor verification information is strictly reserved and required only for Chauffeur drivers.',
+                'is_chauffeur' => false,
+            ], 403);
+        }
+
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'ghana_card_number' => 'required|string|max:100',
+            'relationship' => 'required|string|max:100',
+            'primary_phone' => 'required|string|max:50',
+            'alt_phone' => 'nullable|string|max:50',
+            'digital_address' => 'nullable|string|max:100',
+            'physical_address' => 'nullable|string|max:255',
+            'employer_business' => 'nullable|string|max:255',
+            'job_title' => 'nullable|string|max:100',
+            'dob' => 'nullable|date',
+            'ghana_card_front' => 'nullable',
+            'ghana_card_back' => 'nullable',
+            'signed_liability_agreement' => 'nullable',
+        ]);
+
+        $frontPath = self::storeUploadedDoc($request, 'ghana_card_front', 'guarantor_docs');
+        $backPath = self::storeUploadedDoc($request, 'ghana_card_back', 'guarantor_docs');
+        $agreementPath = self::storeUploadedDoc($request, 'signed_liability_agreement', 'guarantor_docs');
+
+        $guarantorData = [
+            'driver_profile_id' => $profile->id,
+            'full_name' => $request->full_name,
+            'ghana_card_number' => $request->ghana_card_number,
+            'dob' => $request->dob,
+            'relationship' => $request->relationship,
+            'primary_phone' => $request->primary_phone,
+            'alt_phone' => $request->alt_phone,
+            'digital_address' => $request->digital_address,
+            'physical_address' => $request->physical_address,
+            'employer_business' => $request->employer_business,
+            'job_title' => $request->job_title,
+            'status' => 'pending_additional_proof',
+        ];
+
+        if ($frontPath) $guarantorData['ghana_card_front_url'] = $frontPath;
+        if ($backPath) $guarantorData['ghana_card_back_url'] = $backPath;
+        if ($agreementPath) $guarantorData['signed_liability_agreement_url'] = $agreementPath;
+
+        $guarantor = \App\Models\GuarantorVerification::updateOrCreate(
+            ['driver_profile_id' => $profile->id],
+            $guarantorData
+        );
+
+        ActivityLogService::log(
+            'guarantor_submitted',
+            "Chauffeur {$user->name} submitted guarantor information for {$guarantor->full_name}",
+            $user->id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Guarantor information for {$guarantor->full_name} submitted successfully! Admin will review the documents.",
+            'data' => $guarantor,
+        ]);
+    }
+
+    /**
+     * Toggle or update driver role (Chauffeur vs Standard Driver).
+     */
+    public function toggleChauffeurRole(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
+        $isChauffeur = $request->boolean('is_chauffeur', !$profile->is_chauffeur);
+
+        $profile->update([
+            'is_chauffeur' => $isChauffeur,
+            'driver_type' => $isChauffeur ? 'chauffeur' : 'standard',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'is_chauffeur' => (bool)$profile->is_chauffeur,
+            'driver_type' => $profile->driver_type,
+            'message' => $isChauffeur 
+                ? 'Chauffeur partner mode enabled. Guarantor verification is now unlocked.' 
+                : 'Standard driver mode selected. Guarantor verification is not required.',
+            'profile' => $profile->fresh(),
+        ]);
+    }
+
+    /**
+     * Get full verification status across Vehicle Certificates, ID Card, Driver License, and Chauffeur Guarantor.
+     */
+    public function getVerificationStatus(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+
+        $profile = $user->driverProfile ?? DriverProfile::firstOrCreate(['user_id' => $user->id]);
+        $guarantor = $profile->guarantor;
+
+        return response()->json([
+            'success' => true,
+            'is_chauffeur' => (bool)$profile->is_chauffeur,
+            'driver_type' => $profile->driver_type ?? ($profile->is_chauffeur ? 'chauffeur' : 'standard'),
+            'vehicle_certificates' => [
+                'insurance_status' => $profile->vehicle_insurance_status ?? 'pending',
+                'insurance_expiry' => $profile->vehicle_insurance_expiry ? \Carbon\Carbon::parse($profile->vehicle_insurance_expiry)->format('Y-m-d') : null,
+                'insurance_image_url' => $profile->insurance_certificate_url,
+                'insurance_rejection_reason' => $profile->vehicle_insurance_rejection_reason,
+                'fitness_status' => $profile->vehicle_fitness_status ?? 'pending',
+                'fitness_expiry' => $profile->vehicle_fitness_expiry ? \Carbon\Carbon::parse($profile->vehicle_fitness_expiry)->format('Y-m-d') : null,
+                'fitness_image_url' => $profile->fitness_certificate_url,
+                'fitness_rejection_reason' => $profile->vehicle_fitness_rejection_reason,
+                'is_approved' => (bool)$profile->is_certificates_approved,
+            ],
+            'license' => [
+                'number' => $profile->license_number,
+                'country' => $profile->license_country ?? $profile->country,
+                'expiry' => $profile->license_expiry ? \Carbon\Carbon::parse($profile->license_expiry)->format('Y-m-d') : null,
+                'front_url' => $profile->license_front_url,
+                'back_url' => $profile->license_back_url,
+                'status' => $profile->verification_status ?? 'pending',
+                'notes' => $profile->verification_notes,
+            ],
+            'id_card' => [
+                'type' => $profile->id_card_type ?? 'National ID Card',
+                'number' => $profile->id_card_number,
+                'expiry' => $profile->id_card_expiry ? \Carbon\Carbon::parse($profile->id_card_expiry)->format('Y-m-d') : null,
+                'front_url' => $profile->id_card_front_url,
+                'back_url' => $profile->id_card_back_url,
+                'status' => $profile->id_card_status ?? 'pending',
+                'rejection_reason' => $profile->id_card_rejection_reason,
+            ],
+            'guarantor' => $profile->is_chauffeur ? $guarantor : null,
+            'guarantor_available' => (bool)$profile->is_chauffeur,
+        ]);
     }
 
     /**

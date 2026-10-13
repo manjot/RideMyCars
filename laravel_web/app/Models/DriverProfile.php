@@ -46,11 +46,22 @@ class DriverProfile extends Model
         'vehicle_fitness_expiry',
         'vehicle_fitness_rejection_reason',
         'is_live',
+        'is_chauffeur',
+        'driver_type',
+        'id_card_type',
+        'id_card_number',
+        'id_card_expiry',
+        'id_card_front_image',
+        'id_card_back_image',
+        'id_card_status',
+        'id_card_rejection_reason',
     ];
 
     protected $casts = [
         'is_available' => 'boolean',
         'is_live' => 'boolean',
+        'is_chauffeur' => 'boolean',
+        'id_card_expiry' => 'date',
         'vehicle_insurance_expiry' => 'date',
         'vehicle_fitness_expiry' => 'date',
         'last_location_update' => 'datetime',
@@ -62,9 +73,14 @@ class DriverProfile extends Model
         'photo_url',
         'masked_license',
         'is_verified',
+        'is_chauffeur',
         'insurance_certificate_url',
         'fitness_certificate_url',
         'is_certificates_approved',
+        'license_front_url',
+        'license_back_url',
+        'id_card_front_url',
+        'id_card_back_url',
     ];
 
     /**
@@ -176,6 +192,84 @@ class DriverProfile extends Model
     public function getCanGoLiveAttribute(): bool
     {
         return $this->is_certificates_approved;
+    }
+
+    /**
+     * Determine if driver is qualified / acting as Chauffeur.
+     */
+    public function getIsChauffeurAttribute(): bool
+    {
+        if (isset($this->attributes['is_chauffeur']) && (bool)$this->attributes['is_chauffeur']) {
+            return true;
+        }
+        if (isset($this->attributes['driver_type']) && strtolower($this->attributes['driver_type']) === 'chauffeur') {
+            return true;
+        }
+        if ($this->user && in_array(strtolower($this->user->role ?? ''), ['chauffeur', 'private_chauffeur', 'hire_driver'])) {
+            return true;
+        }
+        if (!empty($this->bio) && str_contains(strtolower($this->bio), 'chauffeur')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * License front scan URL
+     */
+    public function getLicenseFrontUrlAttribute(): ?string
+    {
+        if (empty($this->license_front_image)) return null;
+        if (str_starts_with($this->license_front_image, 'http://') || str_starts_with($this->license_front_image, 'https://')) {
+            return $this->license_front_image;
+        }
+        return asset('storage/' . ltrim($this->license_front_image, '/'));
+    }
+
+    /**
+     * License back scan URL
+     */
+    public function getLicenseBackUrlAttribute(): ?string
+    {
+        if (empty($this->license_back_image)) return null;
+        if (str_starts_with($this->license_back_image, 'http://') || str_starts_with($this->license_back_image, 'https://')) {
+            return $this->license_back_image;
+        }
+        return asset('storage/' . ltrim($this->license_back_image, '/'));
+    }
+
+    /**
+     * ID Card front scan URL
+     */
+    public function getIdCardFrontUrlAttribute(): ?string
+    {
+        $img = $this->id_card_front_image ?: ($this->ghana_card_front_url ?? null);
+        if (empty($img)) return null;
+        if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+            return $img;
+        }
+        return asset('storage/' . ltrim($img, '/'));
+    }
+
+    /**
+     * ID Card back scan URL
+     */
+    public function getIdCardBackUrlAttribute(): ?string
+    {
+        $img = $this->id_card_back_image ?: ($this->ghana_card_back_url ?? null);
+        if (empty($img)) return null;
+        if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+            return $img;
+        }
+        return asset('storage/' . ltrim($img, '/'));
+    }
+
+    /**
+     * Driver Guarantor Verification relationship
+     */
+    public function guarantor()
+    {
+        return $this->hasOne(GuarantorVerification::class, 'driver_profile_id')->latestOfMany();
     }
 
     /**

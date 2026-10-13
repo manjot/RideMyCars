@@ -547,9 +547,21 @@ Route::post('/hire-driver/calculate-price', [DriverBookingController::class, 'ca
 Route::post('/hire-driver/book', [DriverBookingController::class, 'storeBooking']);
 Route::get('/driver-booking/{booking}', [DriverBookingController::class, 'confirmation'])->name('driver-booking.confirmation');
 Route::post('/driver-booking/{booking}/update-status', [DriverBookingController::class, 'updateBookingStatus']);
-Route::post('/driver-booking/{booking}/review', [DriverBookingController::class, 'storeReview']);
 Route::post('/driver/verify-license', [DriverBookingController::class, 'submitLicenseVerification']);
+Route::post('/driver/verify-id-card', [DriverBookingController::class, 'submitIdCardVerification']);
 Route::post('/driver/submit-guarantor', [DriverBookingController::class, 'submitGuarantorVerification']);
+Route::post('/driver/toggle-chauffeur', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    if (!$user || !$user->driverProfile) return back()->withErrors(['chauffeur' => 'Driver profile not found.']);
+    $isChauffeur = $request->boolean('is_chauffeur', !$user->driverProfile->is_chauffeur);
+    $user->driverProfile->update([
+        'is_chauffeur' => $isChauffeur,
+        'driver_type' => $isChauffeur ? 'chauffeur' : 'standard',
+    ]);
+    return back()->with('success', $isChauffeur 
+        ? 'Chauffeur partner status activated! You can now submit your Guarantor Verification information.' 
+        : 'Standard driver mode active. Guarantor verification is not required.');
+})->middleware('auth');
 Route::post('/rental-inspection/upload', [DriverBookingController::class, 'storeRentalInspection']);
 
 // Vehicle Rentals & Rides
@@ -3747,6 +3759,18 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['package_categories_count'] = \Illuminate\Support\Facades\Schema::hasTable('package_categories') ? \App\Models\PackageCategory::count() : 0;
     } catch (\Throwable $e) {
         $output['categories_explicit_migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'id_card_number') || !\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'is_chauffeur')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', [
+                '--path' => 'database/migrations/2026_10_13_000001_add_id_card_and_chauffeur_to_driver_profiles.php',
+                '--force' => true,
+            ]);
+            $output['driver_id_card_and_chauffeur_migrate'] = \Illuminate\Support\Facades\Artisan::output();
+        }
+    } catch (\Throwable $e) {
+        $output['driver_id_card_and_chauffeur_migrate_err'] = $e->getMessage();
     }
 
     // Purge and sync 4 unique Ride category banner cards with distinct headings & descriptions

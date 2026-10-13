@@ -32,6 +32,12 @@ class ApiConstants {
   static const String driverEarnings = '/driver/earnings';
   static const String driverProfile = '/driver/profile';
   static const String driverPhoto = '/driver/photo';
+  static const String driverVehicleCertificates = '/driver/vehicle-certificates';
+  static const String driverVerifyLicense = '/driver/verify-license';
+  static const String driverVerifyIdCard = '/driver/verify-id-card';
+  static const String driverSubmitGuarantor = '/driver/submit-guarantor';
+  static const String driverToggleChauffeur = '/driver/toggle-chauffeur';
+  static const String driverVerificationStatus = '/driver/verification-status';
   static const String driverIncentives = '/driver/incentives';
   static const String driverIncentivesHistory = '/driver/incentives/history';
 

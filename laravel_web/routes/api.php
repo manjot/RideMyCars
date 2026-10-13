@@ -194,6 +194,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/driver/profile', [DriverApiController::class, 'updateProfile']);
     Route::post('/driver/photo', [DriverApiController::class, 'uploadPhoto']);
     Route::post('/driver/vehicle-certificates', [DriverApiController::class, 'uploadVehicleCertificates']);
+    Route::post('/driver/verify-license', [DriverApiController::class, 'uploadDriverLicense']);
+    Route::post('/driver/verify-id-card', [DriverApiController::class, 'uploadIdCard']);
+    Route::post('/driver/submit-guarantor', [DriverApiController::class, 'submitGuarantor']);
+    Route::post('/driver/toggle-chauffeur', [DriverApiController::class, 'toggleChauffeurRole']);
+    Route::get('/driver/verification-status', [DriverApiController::class, 'getVerificationStatus']);
     Route::get('/driver/incentives', [\App\Http\Controllers\Api\IncentiveApiController::class, 'getIncentives']);
     Route::get('/driver/incentives/history', [\App\Http\Controllers\Api\IncentiveApiController::class, 'getHistory']);
 
