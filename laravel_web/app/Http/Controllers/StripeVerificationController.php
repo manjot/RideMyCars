@@ -382,6 +382,17 @@ class StripeVerificationController extends Controller
                 ]
             );
 
+            // Immediately dispatch to nearby drivers for Cash on Drop-off
+            if (in_array($serviceType, ['ride', 'rental'], true)) {
+                try {
+                    \App\Services\RideAssignmentService::assignNextDriver($booking);
+                } catch (\Throwable $e) {}
+            } elseif (in_array($serviceType, ['package_delivery', 'delivery'], true)) {
+                try {
+                    \App\Services\PackageDeliveryAssignmentService::assignNextCourier($booking);
+                } catch (\Throwable $e) {}
+            }
+
             ActivityLogService::log(
                 'payment_cash_selected',
                 "Cash on drop-off selected for {$serviceType} #{$serviceId} ({$currency} {$amount}). Searching for available drivers.",
@@ -399,105 +410,48 @@ class StripeVerificationController extends Controller
             ]);
         }
 
-        // Update booking to payment hold state & ensure search is active
+        // For electronic payments (MoMo / Stripe / Card / Apple Pay), payment status remains strictly 'pending'
+        // until gateway confirmation.
         $booking->update([
-            'payment_status' => 'hold',
+            'payment_status' => 'pending',
             'payment_method' => $paymentMethod,
-            'booking_status' => ($booking->booking_status === 'accepted') ? 'accepted' : 'pending',
         ]);
 
-        // Route to ExpressPay Ghana Gateway if MoMo selected and ExpressPay enabled
-        if ($paymentMethod === 'momo' && \App\Services\SettingService::isExpressPayEnabled()) {
-            $user = Auth::user() ?? (auth('sanctum')->check() ? auth('sanctum')->user() : null);
-            $custName = $user?->name ?? 'Customer';
-            $custEmail = $user?->email ?? 'customer@ridemycars.com';
-            $custPhone = $momoPhone ?: ($user?->phone ?? '0244444444');
-
-            $epRes = \App\Services\ExpressPayService::createPayment([
-                'service_type' => $serviceType,
-                'service_id' => $serviceId,
-                'amount' => $amount,
-                'currency' => 'GHS',
-                'customer_name' => $custName,
-                'customer_email' => $custEmail,
-                'customer_phone' => $custPhone,
-                'user_id' => $userId,
-                'order_desc' => "RideMyCars " . ucwords(str_replace('_', ' ', $serviceType)) . " #{$serviceId}",
-                'redirect_url' => url("/payment/expresspay/callback"),
-                'post_url' => url("/api/payment/expresspay/ipn"),
-            ]);
-
-            if (!empty($epRes['success'])) {
+        if ($paymentMethod === 'momo') {
+            $momoRes = \App\Services\MomoPaymentService::requestToPay($booking, $momoPhone ?: '0240000000', $momoNetwork ?: 'MTN');
+            if (!empty($momoRes['checkout_url'])) {
                 return response()->json([
                     'success' => true,
                     'payment_status' => 'pending',
                     'payment_method' => 'momo',
-                    'token' => $epRes['token'],
-                    'order_id' => $epRes['order_id'],
-                    'checkout_url' => $epRes['checkout_url'],
-                    'redirect_url' => $epRes['checkout_url'],
-                    'requires_redirect' => true,
+                    'checkout_url' => $momoRes['checkout_url'],
+                    'redirect_url' => $momoRes['checkout_url'],
+                    'transaction_ref' => $momoRes['transaction_ref'] ?? null,
                     'is_payment_confirmed' => false,
                     'message' => 'ExpressPay Ghana checkout ready. Redirecting...',
                 ]);
             }
-
             return response()->json([
-                'success' => false,
-                'message' => $epRes['message'] ?? 'ExpressPay Ghana initialization failed. Please check your phone number and try again.',
-            ], 400);
+                'success' => true,
+                'payment_status' => 'pending',
+                'payment_method' => 'momo',
+                'transaction_ref' => $momoRes['transaction_ref'] ?? null,
+                'is_payment_confirmed' => false,
+                'message' => $momoRes['message'] ?? 'Prompt sent to your phone. Please approve on your mobile device to complete payment.',
+            ]);
         }
 
-        // Create or update PaymentTransaction record
-        $foreignKey = match ($serviceType) {
-            'ride', 'rental' => 'ride_id',
-            'driver_booking', 'hire-driver' => 'driver_booking_id',
-            'package_delivery', 'delivery' => 'package_delivery_id',
-            default => 'driver_booking_id',
-        };
-
-        $providerName = match ($paymentMethod) {
-            'momo' => ($momoNetwork . '_MoMo_Ghana'),
-            'apple_pay' => 'Apple_Pay_Stripe',
-            default => 'Stripe_Escrow_Hold',
-        };
-
-        $transaction = PaymentTransaction::updateOrCreate(
-            [$foreignKey => $serviceId],
-            [
-                'transaction_ref' => 'TXN-HOLD-' . strtoupper(\Illuminate\Support\Str::random(10)),
-                'user_id' => $userId,
-                'country' => $booking->country ?? 'Ghana',
-                'currency' => $currency,
-                'amount' => $amount,
-                'payment_method' => $paymentMethod,
-                'provider' => $providerName,
-                'status' => 'authorized',
-                'service_vertical' => $serviceType,
-                'gateway_response' => [
-                    'held_at' => now()->toIso8601String(),
-                    'method' => $paymentMethod,
-                    'momo_phone' => $momoPhone,
-                    'momo_network' => $momoNetwork,
-                    'status' => 'held_in_escrow',
-                ],
-            ]
-        );
-
-        ActivityLogService::log(
-            'payment_hold_authorized',
-            "Payment of {$currency} {$amount} placed on escrow hold via {$paymentMethod} for {$serviceType} #{$serviceId}. Searching for available drivers.",
-            $userId
-        );
-
+        // Stripe / Card / Apple Pay
+        $intentData = \App\Services\StripeService::createPaymentIntent($serviceType, $booking->id, $userId);
         return response()->json([
             'success' => true,
-            'payment_status' => 'hold',
+            'payment_status' => 'pending',
             'payment_method' => $paymentMethod,
-            'transaction_ref' => $transaction->transaction_ref,
-            'booking_status' => $booking->booking_status,
-            'is_payment_confirmed' => true,
-            'message' => "Payment of {$currency} " . number_format($amount, 2) . " securely held in escrow. Searching for available driver...",
+            'stripe_client_secret' => $intentData['client_secret'] ?? null,
+            'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
+            'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
+            'is_payment_confirmed' => false,
+            'message' => 'Please complete card payment in the checkout modal.',
         ]);
     }
 

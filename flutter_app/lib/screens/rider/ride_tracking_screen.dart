@@ -45,7 +45,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       final rideProv = Provider.of<RideProvider>(context, listen: false);
       final currentRide = rideProv.activeRide ?? widget.ride;
       final status = currentRide['status'] ?? 'pending';
-      if (status == 'pending') {
+      if (status == 'pending' && !_isUnpaidElectronic(currentRide)) {
         if (_remainingSeconds > 0) {
           if (mounted) {
             setState(() {
@@ -492,7 +492,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                 ),
                               ],
                             ),
-                            if (status == 'pending') ...[
+                            if (status == 'pending' && !_isUnpaidElectronic(currentRide)) ...[
                               const SizedBox(height: 10),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -522,6 +522,31 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                         fontWeight: FontWeight.w900,
                                         fontFamily: 'monospace',
                                         letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else if (status == 'pending' && _isUnpaidElectronic(currentRide)) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.amber.withOpacity(0.4)),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.payment_rounded, color: Colors.amber, size: 18),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Payment Hold / Confirmation Required',
+                                      style: TextStyle(
+                                        color: Colors.amber,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ],
@@ -837,6 +862,15 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     );
   }
 
+  bool _isUnpaidElectronic(Map<String, dynamic>? currentRide) {
+    if (currentRide == null) return false;
+    final method = (currentRide['payment_method'] ?? '').toString().toLowerCase();
+    final status = (currentRide['payment_status'] ?? '').toString().toLowerCase();
+    final isElectronic = method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
+    final isPaid = ['hold', 'authorized', 'paid', 'completed'].contains(status);
+    return isElectronic && !isPaid;
+  }
+
   String _statusDescription(String status, String? driverName, [Map<String, dynamic>? currentRide]) {
     final d = driverName ?? 'Driver';
     final backupStatus = currentRide?['backup_status'];
@@ -856,7 +890,11 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     }
 
     switch (status) {
-      case 'pending': return 'Contacting nearby verified drivers...';
+      case 'pending':
+        if (_isUnpaidElectronic(currentRide)) {
+          return 'Awaiting payment confirmation... Driver dispatch begins once payment is verified.';
+        }
+        return 'Contacting nearby verified drivers...';
       case 'accepted': return '$d has accepted your ride!';
       case 'en_route': return '$d is on the way to your pickup.';
       case 'arrived': return '$d has arrived! Please meet your driver.';

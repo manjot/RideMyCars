@@ -5,16 +5,22 @@
           x-data="{
               deliveryStatus: '{{ $delivery->delivery_status }}',
               paymentStatus: '{{ strtolower($delivery->payment_status ?? 'pending') }}',
+              paymentMethod: '{{ strtolower($delivery->payment_method ?? '') }}',
               isPaymentConfirmed: {{ in_array(strtolower($delivery->payment_status ?? ''), ['paid', 'hold', 'authorized']) ? 'true' : 'false' }},
               courierData: null,
               otpInput: '',
               remainingSeconds: {{ $delivery->remaining_seconds ?? 300 }},
               cancellationReason: @json($delivery->cancellation_reason ?? null),
               countdownInterval: null,
+              get isUnpaidElectronic() {
+                  const method = (this.paymentMethod || '').toLowerCase();
+                  const isElec = ['stripe', 'momo', 'card', 'mobile_money', 'apple_pay', 'pay'].some(m => method.includes(m));
+                  return isElec && !['paid', 'hold', 'authorized', 'completed'].includes((this.paymentStatus || '').toLowerCase());
+              },
               startCountdown() {
                   if (this.countdownInterval) clearInterval(this.countdownInterval);
                   this.countdownInterval = setInterval(() => {
-                      if (['pending', 'searching', 'created'].includes(this.deliveryStatus)) {
+                      if (['pending', 'searching', 'created'].includes(this.deliveryStatus) && !this.isUnpaidElectronic) {
                           if (this.remainingSeconds > 0) {
                               this.remainingSeconds--;
                           } else {
@@ -46,6 +52,9 @@
                           if (data.payment_status) {
                               this.paymentStatus = data.payment_status;
                               this.isPaymentConfirmed = ['paid', 'hold', 'authorized'].includes(data.payment_status.toLowerCase());
+                          }
+                          if (data.payment_method) {
+                              this.paymentMethod = data.payment_method;
                           }
                           if (data.courier) {
                               this.courierData = data.courier;
@@ -89,17 +98,26 @@
                     <div class="relative w-28 h-28 mx-auto flex items-center justify-center">
                         <div class="absolute inset-0 rounded-full bg-amber-500/20 animate-ping"></div>
                         <div class="absolute inset-2 rounded-full bg-amber-500/30 animate-pulse"></div>
-                        <div class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg z-10">
+                        <div class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg z-10" x-text="isUnpaidElectronic ? '💳' : '🛵'">
                             🛵
                         </div>
                     </div>
-                    <div>
+                    <div x-show="isUnpaidElectronic">
+                        <h3 class="text-xl font-black text-amber-500">Awaiting Payment Confirmation</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Courier dispatch will begin immediately once your payment is confirmed.</p>
+                        <div class="pt-3">
+                            <a href="/payment/verify-details/delivery/{{ $delivery->id }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs rounded-xl shadow transition-all">
+                                <span>Complete Payment Now &rarr;</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div x-show="!isUnpaidElectronic">
                         <h3 class="text-xl font-black text-gray-900 dark:text-white">Finding Nearest Available Courier</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Matching couriers within 3 km $\rightarrow$ 5 km $\rightarrow$ 10 km from pickup address...</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Matching couriers within 3 km &rarr; 5 km &rarr; 10 km from pickup address...</p>
                     </div>
 
                     <!-- Live Countdown Timer -->
-                    <div class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-black/5 dark:bg-white/10 border border-amber-500/30 shadow-inner">
+                    <div x-show="!isUnpaidElectronic" class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-black/5 dark:bg-white/10 border border-amber-500/30 shadow-inner">
                         <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></div>
                         <div class="flex items-center gap-2 font-mono">
                             <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Courier Waiting Time:</span>
@@ -150,7 +168,7 @@
                             </div>
                             <div>
                                 <h4 class="font-bold text-gray-900 dark:text-white">Courier Assigned & Accepted</h4>
-                                <p class="text-gray-400" x-text="courierData ? (courierData.name + ' accepted your parcel delivery request.') : 'Searching nearby couriers...'"></p>
+                                <p class="text-gray-400" x-text="courierData ? (courierData.name + ' accepted your parcel delivery request.') : (isUnpaidElectronic ? 'Awaiting payment confirmation before searching couriers...' : 'Searching nearby couriers...')"></p>
                             </div>
                         </div>
 

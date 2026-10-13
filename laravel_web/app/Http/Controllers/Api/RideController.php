@@ -594,9 +594,6 @@ class RideController extends Controller
                 'transaction_ref' => $momoRes['transaction_ref'] ?? null,
                 'message' => $momoRes['message'] ?? 'Please confirm USSD prompt on your phone.',
             ];
-            try {
-                \App\Services\RideAssignmentService::assignNextDriver($ride);
-            } catch (\Throwable $e) {}
         } else {
             // Stripe or Apple Pay pre-authorization hold
             $intentData = \App\Services\StripeService::createPaymentIntent('ride', $ride->id, $user->id);
@@ -607,9 +604,6 @@ class RideController extends Controller
                 'stripe_publishable_key' => $intentData['publishable_key'] ?? null,
                 'payment_intent_id' => $intentData['payment_intent_id'] ?? null,
             ];
-            try {
-                \App\Services\RideAssignmentService::assignNextDriver($ride);
-            } catch (\Throwable $e) {}
         }
 
         $freshRide = $ride->fresh(['stops']);
@@ -619,9 +613,13 @@ class RideController extends Controller
         $rideData['waiting_time_seconds'] = $waitingMinutes * 60;
         $rideData['remaining_seconds'] = $freshRide->remainingSeconds();
 
+        $bookingMessage = $isCash
+            ? 'Ride booking created. Searching for nearby drivers.'
+            : 'Ride booking created. Complete payment to find nearby drivers.';
+
         return response()->json(array_merge([
             'success' => true,
-            'message' => 'Ride booking created. Searching for nearby drivers.',
+            'message' => $bookingMessage,
             'ride' => $rideData,
             'expires_at' => $rideData['expires_at'],
             'waiting_time_minutes' => $waitingMinutes,

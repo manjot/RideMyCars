@@ -311,11 +311,17 @@ class PackageDeliveryController extends Controller
                 \Illuminate\Support\Facades\Log::warning("Payment processing warning for delivery {$delivery->id}: " . $pe->getMessage());
             }
 
-            // Initiate proximity courier assignment safely
-            try {
-                PackageDeliveryAssignmentService::assignNextCourier($delivery);
-            } catch (\Throwable $ae) {
-                \Illuminate\Support\Facades\Log::warning("Courier assignment warning for delivery {$delivery->id}: " . $ae->getMessage());
+            // Initiate proximity courier assignment only if cash or already paid/held
+            $rawMethod = strtolower($validated['payment_method'] ?? '');
+            $isCashMethod = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment', 'cash_on_delivery'], true) || str_contains($rawMethod, 'cash');
+            $isPaidOrHold = in_array(strtolower($delivery->payment_status ?? ''), ['hold', 'authorized', 'paid', 'pending_cash', 'successful'], true);
+
+            if ($isCashMethod || $isPaidOrHold) {
+                try {
+                    PackageDeliveryAssignmentService::assignNextCourier($delivery);
+                } catch (\Throwable $ae) {
+                    \Illuminate\Support\Facades\Log::warning("Courier assignment warning for delivery {$delivery->id}: " . $ae->getMessage());
+                }
             }
 
             try {

@@ -44,12 +44,21 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   String? _cancellationReason;
   String _deliveryStatus = 'pending';
   String _paymentStatus = 'pending';
+  late String _paymentMethod;
   Map<String, dynamic>? _courierData;
   late String _otp;
   String? _requestedTime;
   String? _scheduledPickup;
   List<Map<String, dynamic>> _prescriptions = [];
   bool _hasPrescription = false;
+
+  bool get _isUnpaidElectronic {
+    final method = _paymentMethod.toLowerCase();
+    final status = _paymentStatus.toLowerCase();
+    final isElectronic = method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
+    final isPaid = ['hold', 'authorized', 'paid', 'completed'].contains(status);
+    return isElectronic && !isPaid;
+  }
 
   final List<String> _stages = [
     'Order Confirmed',
@@ -62,6 +71,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   @override
   void initState() {
     super.initState();
+    _paymentMethod = widget.paymentMethod;
     _otp = widget.initialOtp;
     _hasPrescription = widget.packageCategory == 'Pharmeasy';
     _startCountdownTimer();
@@ -72,7 +82,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   void _startCountdownTimer() {
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (['pending', 'searching', 'created'].contains(_deliveryStatus)) {
+      if (['pending', 'searching', 'created'].contains(_deliveryStatus) && !_isUnpaidElectronic) {
         if (_remainingSeconds > 0) {
           if (mounted) {
             setState(() {
@@ -109,6 +119,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
           setState(() {
             _deliveryStatus = data['status']?.toString() ?? _deliveryStatus;
             _paymentStatus = data['payment_status']?.toString() ?? _paymentStatus;
+            _paymentMethod = data['payment_method']?.toString() ?? _paymentMethod;
             if (data['remaining_seconds'] != null) {
               _remainingSeconds = int.tryParse(data['remaining_seconds'].toString()) ?? _remainingSeconds;
             }
@@ -465,54 +476,77 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                           color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
-                          child: Text('🛵', style: TextStyle(fontSize: 32)),
+                        child: Center(
+                          child: Text(_isUnpaidElectronic ? '💳' : '🛵', style: const TextStyle(fontSize: 32)),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Dispatching Nearest Courier...',
-                        style: TextStyle(
+                      Text(
+                        _isUnpaidElectronic ? 'Awaiting Payment Confirmation' : 'Dispatching Nearest Courier...',
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Matching vetted drivers within 5km radius',
-                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      Text(
+                        _isUnpaidElectronic
+                            ? 'Courier dispatch begins immediately once payment is verified.'
+                            : 'Matching vetted drivers within 5km radius',
+                        style: const TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                       const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black26,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.timer_outlined, color: Colors.white, size: 18),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Courier Waiting Time: ',
-                              style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600),
-                            ),
-                            Text(
-                              _formatCountdown(_remainingSeconds),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                fontFamily: 'monospace',
-                                letterSpacing: 1.2,
+                      if (!_isUnpaidElectronic)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.timer_outlined, color: Colors.white, size: 18),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Courier Waiting Time: ',
+                                style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600),
                               ),
-                            ),
-                          ],
+                              Text(
+                                _formatCountdown(_remainingSeconds),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  fontFamily: 'monospace',
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.payment_rounded, color: Colors.amber, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'Payment Status: Pending Verification',
+                                style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),

@@ -12,10 +12,23 @@ class FloatingRideWidget extends StatelessWidget {
     required this.onTap,
   });
 
+  bool get _isUnpaidElectronic {
+    final method = (ride['payment_method'] ?? '').toString().toLowerCase();
+    final status = (ride['payment_status'] ?? '').toString().toLowerCase();
+    final isElectronic = method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
+    final isPaid = ['hold', 'authorized', 'paid', 'completed'].contains(status);
+    return isElectronic && !isPaid;
+  }
+
   String get _statusText {
     final s = ride['status'];
     final d = ride['driver']?['name'] ?? 'Driver';
-    if (s == 'pending') return 'Looking for drivers...';
+    if (s == 'pending') {
+      if (_isUnpaidElectronic) {
+        return 'Awaiting payment confirmation...';
+      }
+      return 'Looking for drivers...';
+    }
     if (s == 'accepted') return '$d accepted your ride';
     if (s == 'en_route') return '$d is on the way';
     if (s == 'arrived') return '$d has arrived at pickup';
@@ -108,7 +121,7 @@ class FloatingRideWidget extends StatelessWidget {
                           width: 12,
                           height: 12,
                           decoration: BoxDecoration(
-                            color: AppColors.success,
+                            color: (_isUnpaidElectronic && ride['status'] == 'pending') ? AppColors.warning : AppColors.success,
                             shape: BoxShape.circle,
                             border: Border.all(color: AppColors.backgroundDark, width: 2),
                           ),
@@ -125,9 +138,11 @@ class FloatingRideWidget extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '$driverName · ★ ${driverRating.toString()}',
-                          style: const TextStyle(
-                            color: AppColors.primary,
+                          (_isUnpaidElectronic && ride['status'] == 'pending')
+                              ? 'Payment Required'
+                              : '$driverName · ★ ${driverRating.toString()}',
+                          style: TextStyle(
+                            color: (_isUnpaidElectronic && ride['status'] == 'pending') ? AppColors.warning : AppColors.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.3,

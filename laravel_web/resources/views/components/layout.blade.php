@@ -2744,6 +2744,17 @@
                             <span>→</span>
                         </a>
 
+                        <!-- Complete Payment Button (if unpaid electronic) -->
+                        <template x-if="isUnpaidElectronic">
+                            <a :href="'/payment/verify-details/ride/' + (ride ? ride.id : '')"
+                               class="block w-full text-center py-3.5 bg-[#635BFF] hover:bg-[#5349e0] text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                               style="background-color: #635BFF !important; color: #ffffff !important;">
+                                <span>💳</span>
+                                <span>Complete Payment to Dispatch Driver</span>
+                                <span>→</span>
+                            </a>
+                        </template>
+
                         <!-- Dedicated Full Live GPS Tracking Page -->
                         <a :href="'/ride/track/' + (ride ? ride.id : '')" 
                            @click="openDedicatedTracker($event)"
@@ -2764,7 +2775,7 @@
         </div>
 
         <!-- Uber-Style Floating App Bubble Widget -->
-        <div x-show="ride && !dismissed && !expanded" 
+        <div x-show="ride && !dismissed && !expanded && !isCurrentPaymentPage" 
              x-transition:enter="transition ease-out duration-300 transform"
              x-transition:enter-start="opacity-0 translate-y-8 scale-75"
              x-transition:enter-end="opacity-100 translate-y-0 scale-100"
@@ -2786,7 +2797,8 @@
                     
                     <div class="relative w-11 h-11 rounded-full flex items-center justify-center font-black text-xl shadow-lg border-2 border-white/30"
                          style="background: linear-gradient(135deg, #ffdc00 0%, #eab308 100%); color: #0f172a !important;">
-                        <span x-show="ride && ride.status === 'pending'" class="animate-spin text-sm">🔍</span>
+                        <span x-show="ride && ride.status === 'pending' && isUnpaidElectronic" class="text-base">💳</span>
+                        <span x-show="ride && ride.status === 'pending' && !isUnpaidElectronic" class="animate-spin text-sm">🔍</span>
                         <span x-show="ride && ride.status === 'accepted'">🚗</span>
                         <span x-show="ride && ride.status === 'en_route'" class="animate-bounce text-base">🚘</span>
                         <span x-show="ride && ride.status === 'arrived'" class="text-base">📍</span>
@@ -2802,7 +2814,7 @@
                 <!-- Info Preview -->
                 <div class="flex flex-col min-w-0 max-w-[170px] sm:max-w-[220px]">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-400" x-text="ride && ride.driver_name ? (ride.driver_name + ' · ' + (ride.driver_rating ? '★ ' + parseFloat(ride.driver_rating).toFixed(1) : 'Driver')) : 'Trip in Progress'"></span>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-400" x-text="headerText"></span>
                     </div>
                     <p class="font-extrabold text-xs truncate text-white leading-tight" x-text="statusText"></p>
                 </div>
@@ -2841,11 +2853,38 @@
             boostError: '',
             boostSuccess: false,
             cancelling: false,
+            get isCurrentPaymentPage() {
+                const p = window.location.pathname || '';
+                return p.includes('/payment/verify-details') || p.includes('/payment/stripe') || p.includes('/payment/momo');
+            },
+            get isUnpaidElectronic() {
+                if (!this.ride) return false;
+                const pMethod = (this.ride.payment_method || '').toLowerCase();
+                const pStatus = (this.ride.payment_status || '').toLowerCase();
+                const isCash = pMethod.includes('cash');
+                const isPaidOrHold = ['hold', 'authorized', 'paid', 'pending_cash', 'successful'].includes(pStatus);
+                return !isCash && !isPaidOrHold;
+            },
+            get headerText() {
+                if (!this.ride) return 'Trip in Progress';
+                if (this.ride.driver_name) {
+                    return this.ride.driver_name + ' · ' + (this.ride.driver_rating ? '★ ' + parseFloat(this.ride.driver_rating).toFixed(1) : 'Driver');
+                }
+                if (this.ride.status === 'pending' && this.isUnpaidElectronic) {
+                    return 'Payment Required';
+                }
+                return 'Trip in Progress';
+            },
             get statusText() {
                 if (!this.ride) return '';
                 const s = this.ride.status;
                 const d = this.ride.driver_name || 'Driver';
-                if (s === 'pending') return 'Looking for drivers...';
+                if (s === 'pending') {
+                    if (this.isUnpaidElectronic) {
+                        return 'Complete payment to find drivers';
+                    }
+                    return 'Looking for drivers...';
+                }
                 if (s === 'accepted') return `${d} accepted your ride`;
                 if (s === 'en_route') return `${d} is on the way`;
                 if (s === 'arrived') return `${d} has arrived at pickup`;

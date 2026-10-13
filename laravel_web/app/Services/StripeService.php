@@ -336,6 +336,21 @@ class StripeService
                 // Payment is now verified and held in escrow -> trigger driver proximity dispatch!
                 \App\Services\RideAssignmentService::assignNextDriver($ride);
             }
+        } elseif ($transaction->package_delivery_id) {
+            $delivery = PackageDelivery::find($transaction->package_delivery_id);
+            if ($delivery) {
+                $delivery->update([
+                    'payment_status' => 'authorized',
+                    'payment_method' => 'stripe',
+                ]);
+
+                // Payment is now verified and held in escrow -> trigger courier proximity dispatch!
+                try {
+                    \App\Services\PackageDeliveryAssignmentService::assignNextCourier($delivery);
+                } catch (\Throwable $e) {
+                    Log::warning("Stripe hold assignNextCourier error: " . $e->getMessage());
+                }
+            }
         }
 
         ActivityLogService::log(
@@ -400,6 +415,11 @@ class StripeService
             $delivery = PackageDelivery::find($transaction->package_delivery_id);
             if ($delivery) {
                 $delivery->update(['payment_status' => 'paid', 'payment_method' => 'stripe']);
+                if (in_array($delivery->delivery_status, ['pending', 'courier_searching', 'order_placed', 'draft', 'created', 'searching'], true) && is_null($delivery->courier_id)) {
+                    try {
+                        \App\Services\PackageDeliveryAssignmentService::assignNextCourier($delivery);
+                    } catch (\Throwable $e) {}
+                }
             }
         }
 

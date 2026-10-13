@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\PaymentTransaction;
 use App\Models\Ride;
+use App\Models\PackageDelivery;
+use App\Models\DriverBooking;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -30,25 +32,31 @@ class MomoPaymentService
     /**
      * Initiate a Mobile Money payment collection request.
      */
-    public static function requestToPay(Ride $ride, string $phoneNumber, ?string $providerNetwork = 'MTN'): array
+    public static function requestToPay($booking, string $phoneNumber, ?string $providerNetwork = 'MTN'): array
     {
+        $isDelivery = $booking instanceof PackageDelivery;
+        $isDriverBooking = $booking instanceof DriverBooking;
+
         $phone = static::normalizePhoneNumber($phoneNumber);
-        $amount = (float) ($ride->fare ?: $ride->total_amount ?: 25.00);
-        $currency = config('services.momo.currency', 'GHS');
+        $amount = (float) ($booking->fare ?: $booking->total_price ?: $booking->total_amount ?: 25.00);
+        $currency = $booking->currency ?: config('services.momo.currency', 'GHS');
         $transactionRef = 'MOMO-' . strtoupper(Str::random(10));
-        $externalId = (string) $ride->id;
+        $externalId = (string) $booking->id;
+        $userId = $isDelivery ? $booking->customer_id : ($booking->rider_id ?? $booking->client_id ?? (auth()->id() ?: 1));
+
+        $vertical = $isDelivery ? 'package_delivery' : ($isDriverBooking ? 'driver_hiring' : 'RIDE_HAILING');
+        $serviceType = $isDelivery ? 'package_delivery' : ($isDriverBooking ? 'driver_booking' : 'ride');
 
         $txnData = [
             'transaction_ref' => $transactionRef,
-            'user_id' => $ride->rider_id ?: (auth()->id() ?: 1),
-            'ride_id' => $ride->id,
+            'user_id' => $userId,
             'country' => 'GHA',
             'currency' => $currency,
             'amount' => $amount,
             'payment_method' => 'momo',
             'provider' => 'MoMo_' . strtoupper($providerNetwork ?: 'GHANA'),
             'status' => 'pending',
-            'service_vertical' => 'RIDE_HAILING',
+            'service_vertical' => $vertical,
             'gateway_response' => [
                 'phone' => $phone,
                 'network' => $providerNetwork,
@@ -57,10 +65,18 @@ class MomoPaymentService
             ],
         ];
 
+        if ($isDelivery) {
+            $txnData['package_delivery_id'] = $booking->id;
+        } elseif ($isDriverBooking) {
+            $txnData['driver_booking_id'] = $booking->id;
+        } else {
+            $txnData['ride_id'] = $booking->id;
+        }
+
         $txn = PaymentTransaction::create($txnData);
 
-        // Keep ride payment status pending until customer approves USSD prompt
-        $ride->update([
+        // Keep payment status pending until customer approves USSD prompt
+        $booking->update([
             'payment_method' => 'momo',
             'payment_status' => 'pending',
             'hold_authorization_code' => $transactionRef,
@@ -68,16 +84,18 @@ class MomoPaymentService
 
         // Prioritize ExpressPay Ghana Gateway if enabled
         if (SettingService::isExpressPayEnabled()) {
+            $custName = $isDelivery ? ($booking->customer?->name ?? $booking->sender_name ?? 'Customer') : ($booking->passenger_name ?: ($booking->rider?->name ?: ($booking->client?->name ?: 'Customer')));
+            $custEmail = $isDelivery ? ($booking->customer?->email ?? 'customer@ridemycars.com') : ($booking->passenger_email ?: ($booking->rider?->email ?: ($booking->client?->email ?: 'customer@ridemycars.com')));
             $epRes = ExpressPayService::createPayment([
-                'service_type' => 'ride',
-                'service_id' => $ride->id,
+                'service_type' => $serviceType,
+                'service_id' => $booking->id,
                 'amount' => $amount,
                 'currency' => $currency,
-                'customer_name' => $ride->passenger_name ?: ($ride->rider?->name ?: 'Customer'),
-                'customer_email' => $ride->passenger_email ?: ($ride->rider?->email ?: 'customer@ridemycars.com'),
+                'customer_name' => $custName,
+                'customer_email' => $custEmail,
                 'customer_phone' => $phone,
-                'user_id' => $ride->rider_id ?: (auth()->id() ?: 1),
-                'order_desc' => "RideMyCars Ride #{$ride->id}",
+                'user_id' => $userId,
+                'order_desc' => "RideMyCars " . ucwords(str_replace('_', ' ', $serviceType)) . " #{$booking->id}",
             ]);
 
             if (!empty($epRes['success'])) {
@@ -117,8 +135,8 @@ class MomoPaymentService
                         'partyIdType' => 'MSISDN',
                         'partyId' => $phone,
                     ],
-                    'payerMessage' => 'Payment for RideMyCars #' . $ride->id,
-                    'payeeNote' => 'Ride booking #' . $ride->id,
+                    'payerMessage' => 'Payment for RideMyCars #' . $booking->id,
+                    'payeeNote' => 'Booking #' . $booking->id,
                 ]);
 
                 if ($response->successful() || $response->status() === 202) {
@@ -169,6 +187,7 @@ class MomoPaymentService
                     'status' => 'paid',
                     'transaction_ref' => $transactionRef,
                     'ride_id' => $transaction->ride_id,
+                    'package_delivery_id' => $transaction->package_delivery_id,
                     'message' => 'ExpressPay Ghana payment confirmed. Dispatching nearby drivers...',
                 ];
             } elseif ($resultCode === 4) {
@@ -188,9 +207,12 @@ class MomoPaymentService
             }
         }
 
-        $ride = Ride::find($transaction->ride_id);
-        if (!$ride) {
-            return ['success' => false, 'message' => 'Associated ride not found.'];
+        $ride = $transaction->ride_id ? Ride::find($transaction->ride_id) : null;
+        $delivery = $transaction->package_delivery_id ? PackageDelivery::find($transaction->package_delivery_id) : null;
+        $driverBooking = $transaction->driver_booking_id ? DriverBooking::find($transaction->driver_booking_id) : null;
+
+        if (!$ride && !$delivery && !$driverBooking) {
+            return ['success' => false, 'message' => 'Associated booking not found.'];
         }
 
         $now = now();
@@ -203,19 +225,44 @@ class MomoPaymentService
             ]),
         ]);
 
-        $ride->update([
-            'payment_status' => 'paid',
-            'payment_held_at' => $now,
-            'paid_amount' => $transaction->amount,
-            'remaining_balance' => 0.00,
-        ]);
+        if ($ride) {
+            $ride->update([
+                'payment_status' => 'paid',
+                'payment_held_at' => $now,
+                'paid_amount' => $transaction->amount,
+                'remaining_balance' => 0.00,
+            ]);
 
-        // NOW payment is confirmed -> dispatch to nearby drivers!
-        RideAssignmentService::assignNextDriver($ride);
+            // NOW payment is confirmed -> dispatch to nearby drivers!
+            RideAssignmentService::assignNextDriver($ride);
+        }
+
+        if ($delivery) {
+            $delivery->update([
+                'payment_status' => 'paid',
+            ]);
+
+            // NOW payment is confirmed -> dispatch to nearby couriers!
+            try {
+                PackageDeliveryAssignmentService::assignNextCourier($delivery);
+            } catch (\Throwable $e) {
+                Log::warning("MoMo confirm assignNextCourier: " . $e->getMessage());
+            }
+        }
+
+        if ($driverBooking) {
+            $driverBooking->update([
+                'payment_status' => 'paid',
+            ]);
+
+            try {
+                DriverBookingAssignmentService::assignNextDriver($driverBooking);
+            } catch (\Throwable $e) {}
+        }
 
         ActivityLogService::log(
             'payment_completed',
-            "MoMo payment confirmed for Ride #{$ride->id} (Ref: {$transactionRef})",
+            "MoMo payment confirmed (Ref: {$transactionRef})",
             $transaction->user_id
         );
 
@@ -223,7 +270,8 @@ class MomoPaymentService
             'success' => true,
             'status' => 'paid',
             'transaction_ref' => $transactionRef,
-            'ride_id' => $ride->id,
+            'ride_id' => $ride?->id,
+            'package_delivery_id' => $delivery?->id,
             'message' => 'MoMo payment confirmed. Dispatching nearby drivers...',
         ];
     }

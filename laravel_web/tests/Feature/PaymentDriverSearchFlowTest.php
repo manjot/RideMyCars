@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\CountryPricing;
 use App\Models\DriverProfile;
+use App\Models\PackageDelivery;
 use App\Models\Ride;
 use App\Models\RideAssignment;
 use App\Models\User;
+use App\Services\PackageDeliveryAssignmentService;
 use App\Services\RideAssignmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -60,6 +62,7 @@ class PaymentDriverSearchFlowTest extends TestCase
             'user_id' => $driver->id,
             'license_number' => 'DL-TEST-001',
             'is_available' => true,
+            'is_live' => true,
             'current_lat' => 5.6037,
             'current_lng' => -0.1870,
             'last_location_update' => now(),
@@ -88,15 +91,18 @@ class PaymentDriverSearchFlowTest extends TestCase
 
     public function test_paid_or_authorized_ride_triggers_driver_assignment()
     {
-        $rider = User::factory()->create(['role' => 'rider']);
+        $rider = User::factory()->create(['role' => 'rider', 'country' => 'GHA']);
         $driver = User::factory()->create([
             'role' => 'driver',
             'phone' => '+233240005678',
+            'country' => 'GHA',
         ]);
         DriverProfile::create([
             'user_id' => $driver->id,
             'license_number' => 'DL-TEST-002',
             'is_available' => true,
+            'is_live' => true,
+            'country' => 'GHA',
             'current_lat' => 5.6201,
             'current_lng' => -0.1701,
             'last_location_update' => now(),
@@ -104,6 +110,8 @@ class PaymentDriverSearchFlowTest extends TestCase
 
         $ride = Ride::create([
             'rider_id' => $rider->id,
+            'country' => 'GHA',
+            'currency' => 'GHS',
             'pickup_location' => 'Accra Mall',
             'dropoff_location' => 'Kotoka Airport',
             'pickup_lat' => 5.6200,
@@ -138,6 +146,7 @@ class PaymentDriverSearchFlowTest extends TestCase
             'user_id' => $driver->id,
             'license_number' => 'DL-TEST-003',
             'is_available' => true,
+            'is_live' => true,
             'current_lat' => 5.6200,
             'current_lng' => -0.1700,
             'last_location_update' => now(),
@@ -200,6 +209,7 @@ class PaymentDriverSearchFlowTest extends TestCase
             'user_id' => $driver->id,
             'license_number' => 'DL-TEST-004',
             'is_available' => true,
+            'is_live' => true,
             'current_lat' => 5.6200,
             'current_lng' => -0.1700,
             'last_location_update' => now(),
@@ -306,5 +316,157 @@ class PaymentDriverSearchFlowTest extends TestCase
         $this->assertContains($ride->payment_status, ['hold', 'paid']);
         $this->assertNotNull($ride->payment_held_at);
         $this->assertNotNull($ride->driver_search_started_at);
+    }
+
+    public function test_unpaid_package_delivery_cannot_trigger_courier_assignment()
+    {
+        $sender = User::factory()->create(['role' => 'rider', 'country' => 'GHA']);
+        $courier = User::factory()->create(['role' => 'driver', 'phone' => '+233240003333', 'country' => 'GHA']);
+        DriverProfile::create([
+            'user_id' => $courier->id,
+            'license_number' => 'DL-DELIV-001',
+            'is_available' => true,
+            'is_live' => true,
+            'country' => 'GHA',
+            'current_lat' => 5.6201,
+            'current_lng' => -0.1701,
+            'last_location_update' => now(),
+        ]);
+
+        $delivery = PackageDelivery::create([
+            'customer_id' => $sender->id,
+            'country' => 'GHA',
+            'currency' => 'GHS',
+            'delivery_code' => 'DEL-UNPAID-01',
+            'pickup_location' => 'Accra Mall',
+            'dropoff_location' => 'Kotoka Airport',
+            'pickup_lat' => 5.6200,
+            'pickup_lng' => -0.1700,
+            'delivery_type' => 'Instant',
+            'schedule_mode' => 'now',
+            'sender_name' => 'Sender Test',
+            'sender_phone' => '+233240001111',
+            'recipient_name' => 'Recipient Test',
+            'recipient_phone' => '+233240002222',
+            'package_category' => 'Documents',
+            'package_size' => 'Small',
+            'package_weight_kg' => 1.0,
+            'quantity' => 1,
+            'delivery_otp' => '1234',
+            'delivery_status' => 'pending',
+            'subtotal' => 30.00,
+            'total_price' => 30.00,
+            'payment_method' => 'stripe',
+            'payment_status' => 'pending', // Unpaid electronic
+        ]);
+
+        $assignment = PackageDeliveryAssignmentService::assignNextCourier($delivery);
+
+        $this->assertNull($assignment, 'Unpaid package delivery must return null when attempting courier assignment.');
+        $this->assertDatabaseMissing('ride_assignments', ['package_delivery_id' => $delivery->id]);
+    }
+
+    public function test_paid_package_delivery_triggers_courier_assignment()
+    {
+        $sender = User::factory()->create(['role' => 'rider', 'country' => 'GHA']);
+        $courier = User::factory()->create(['role' => 'driver', 'phone' => '+233240004444', 'country' => 'GHA']);
+        DriverProfile::create([
+            'user_id' => $courier->id,
+            'license_number' => 'DL-DELIV-002',
+            'is_available' => true,
+            'is_live' => true,
+            'country' => 'GHA',
+            'current_lat' => 5.6201,
+            'current_lng' => -0.1701,
+            'last_location_update' => now(),
+        ]);
+
+        $delivery = PackageDelivery::create([
+            'customer_id' => $sender->id,
+            'country' => 'GHA',
+            'currency' => 'GHS',
+            'delivery_code' => 'DEL-PAID-02',
+            'pickup_location' => 'Accra Mall',
+            'dropoff_location' => 'Kotoka Airport',
+            'pickup_lat' => 5.6200,
+            'pickup_lng' => -0.1700,
+            'delivery_type' => 'Instant',
+            'schedule_mode' => 'now',
+            'sender_name' => 'Sender Test',
+            'sender_phone' => '+233240001111',
+            'recipient_name' => 'Recipient Test',
+            'recipient_phone' => '+233240002222',
+            'package_category' => 'Documents',
+            'package_size' => 'Small',
+            'package_weight_kg' => 1.0,
+            'quantity' => 1,
+            'delivery_otp' => '5678',
+            'delivery_status' => 'pending',
+            'subtotal' => 35.00,
+            'total_price' => 35.00,
+            'payment_method' => 'stripe',
+            'payment_status' => 'paid', // Paid electronic
+        ]);
+
+        $assignment = PackageDeliveryAssignmentService::assignNextCourier($delivery);
+
+        $this->assertNotNull($assignment, 'Paid package delivery must successfully assign nearby courier.');
+        $this->assertDatabaseHas('ride_assignments', [
+            'package_delivery_id' => $delivery->id,
+            'driver_id' => $courier->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_cash_package_delivery_triggers_courier_assignment_immediately()
+    {
+        $sender = User::factory()->create(['role' => 'rider', 'country' => 'GHA']);
+        $courier = User::factory()->create(['role' => 'driver', 'phone' => '+233240005555', 'country' => 'GHA']);
+        DriverProfile::create([
+            'user_id' => $courier->id,
+            'license_number' => 'DL-DELIV-003',
+            'is_available' => true,
+            'is_live' => true,
+            'country' => 'GHA',
+            'current_lat' => 5.6201,
+            'current_lng' => -0.1701,
+            'last_location_update' => now(),
+        ]);
+
+        $delivery = PackageDelivery::create([
+            'customer_id' => $sender->id,
+            'country' => 'GHA',
+            'currency' => 'GHS',
+            'delivery_code' => 'DEL-CASH-03',
+            'pickup_location' => 'Accra Mall',
+            'dropoff_location' => 'Kotoka Airport',
+            'pickup_lat' => 5.6200,
+            'pickup_lng' => -0.1700,
+            'delivery_type' => 'Instant',
+            'schedule_mode' => 'now',
+            'sender_name' => 'Sender Test',
+            'sender_phone' => '+233240001111',
+            'recipient_name' => 'Recipient Test',
+            'recipient_phone' => '+233240002222',
+            'package_category' => 'Documents',
+            'package_size' => 'Small',
+            'package_weight_kg' => 1.0,
+            'quantity' => 1,
+            'delivery_otp' => '9999',
+            'delivery_status' => 'pending',
+            'subtotal' => 25.00,
+            'total_price' => 25.00,
+            'payment_method' => 'cash',
+            'payment_status' => 'pending_cash', // Cash trip
+        ]);
+
+        $assignment = PackageDeliveryAssignmentService::assignNextCourier($delivery);
+
+        $this->assertNotNull($assignment, 'Cash package delivery must immediately assign nearby courier.');
+        $this->assertDatabaseHas('ride_assignments', [
+            'package_delivery_id' => $delivery->id,
+            'driver_id' => $courier->id,
+            'status' => 'pending',
+        ]);
     }
 }

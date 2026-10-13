@@ -1670,8 +1670,12 @@ Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request
 
     if (!$ride) return response()->json(['ride' => null]);
 
-    // If ride is pending with no driver, ensure an active assignment exists
-    if ($ride->status === 'pending' && is_null($ride->driver_id)) {
+    // If ride is pending with no driver, ensure an active assignment exists (only if cash or payment confirmed)
+    $rawMethod = strtolower((string)($ride->payment_method ?? ''));
+    $isCash = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'], true) || str_contains($rawMethod, 'cash');
+    $isPaidOrHold = in_array(strtolower((string)($ride->payment_status ?? '')), ['hold', 'authorized', 'paid', 'pending_cash'], true);
+
+    if ($ride->status === 'pending' && is_null($ride->driver_id) && ($isCash || $isPaidOrHold)) {
         $hasActiveOffer = \App\Models\RideAssignment::where('ride_id', $ride->id)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
@@ -1696,6 +1700,7 @@ Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request
         'fare' => floatval($ride->fare ?: $ride->total_amount),
         'vehicle_type' => $ride->vehicle_type ?? 'Standard',
         'payment_method' => $ride->payment_method ?? 'stripe',
+        'payment_status' => $ride->payment_status ?? 'pending',
         'created_at' => $ride->created_at->toIso8601String(),
         'driver_name' => $ride->driver ? $ride->driver->name : null,
         'driver_phone' => $ride->driver ? $ride->driver->phone : null,

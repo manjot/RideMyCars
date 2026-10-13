@@ -1201,6 +1201,13 @@ class DriverApiController extends Controller
 
         foreach ($assignments as $a) {
             if ($a->ride && $a->ride->status === 'pending' && !$a->ride->isExpired()) {
+                $rawMethod = strtolower((string)($a->ride->payment_method ?? ''));
+                $isCash = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'], true) || str_contains($rawMethod, 'cash');
+                $isPaidOrHold = in_array(strtolower((string)($a->ride->payment_status ?? '')), ['hold', 'authorized', 'paid', 'pending_cash'], true);
+                if (!$isCash && !$isPaidOrHold) {
+                    continue;
+                }
+
                 $processedRideIds[] = $a->ride->id;
 
                 $rPricing = \App\Models\CountryPricing::forCountry($a->ride->driver_country ?? $a->ride->country ?? $driverCountry);
@@ -1283,6 +1290,12 @@ class DriverApiController extends Controller
                     'waiting_time_seconds' => 300,
                 ];
             } elseif ($a->packageDelivery && in_array($a->packageDelivery->delivery_status, ['pending', 'created', 'searching']) && !$a->packageDelivery->isExpired()) {
+                $rawPdMethod = strtolower((string)($a->packageDelivery->payment_method ?? ''));
+                $isPdCash = in_array($rawPdMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment', 'cash_on_delivery'], true) || str_contains($rawPdMethod, 'cash');
+                $isPdPaidOrHold = in_array(strtolower((string)($a->packageDelivery->payment_status ?? '')), ['hold', 'authorized', 'paid', 'pending_cash', 'successful'], true);
+                if (!$isPdCash && !$isPdPaidOrHold) {
+                    continue;
+                }
                 $pdCountry = $a->packageDelivery->currency === 'GHS' ? 'GHA' : ($a->packageDelivery->currency === 'INR' ? 'IND' : ($a->packageDelivery->country ?? $driverCountry));
                 $pPricing = \App\Models\CountryPricing::forCountry($pdCountry);
                 $custName = $a->packageDelivery->customer?->name ?? $a->packageDelivery->sender_name ?? 'Sender';
@@ -1347,10 +1360,14 @@ class DriverApiController extends Controller
             })
             ->where(function($q) {
                 $q->whereIn('payment_status', ['hold', 'authorized', 'paid'])
-                  ->orWhere('payment_method', 'cash')
-                  ->orWhereNull('payment_status')
-                  ->orWhere('payment_status', 'pending')
-                  ->orWhere('payment_status', 'pending_cash');
+                  ->orWhere(function($cashQ) {
+                      $cashQ->where(function($subQ) {
+                          $subQ->whereIn('payment_method', ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'])
+                               ->orWhere('payment_method', 'like', '%cash%');
+                      })->where(function($sq) {
+                          $sq->whereIn('payment_status', ['pending', 'pending_cash'])->orWhereNull('payment_status');
+                      });
+                  });
             })
             ->whereNotIn('id', array_unique(array_merge($processedRideIds, $rejectedRideIds)))
             ->latest()
@@ -1458,6 +1475,17 @@ class DriverApiController extends Controller
             ->whereNull('courier_id')
             ->where(function($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->where(function($q) {
+                $q->whereIn('payment_status', ['hold', 'authorized', 'paid', 'successful'])
+                  ->orWhere(function($cashQ) {
+                      $cashQ->where(function($subQ) {
+                          $subQ->whereIn('payment_method', ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment', 'cash_on_delivery'])
+                               ->orWhere('payment_method', 'like', '%cash%');
+                      })->where(function($sq) {
+                          $sq->whereIn('payment_status', ['pending', 'pending_cash'])->orWhereNull('payment_status');
+                      });
+                  });
             })
             ->whereNotIn('id', array_unique(array_merge($processedDeliveryIds, $rejectedDeliveryIds)))
             ->latest()

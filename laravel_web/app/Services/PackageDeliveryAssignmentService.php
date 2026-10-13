@@ -15,6 +15,35 @@ class PackageDeliveryAssignmentService
      */
     public static function assignNextCourier(PackageDelivery $delivery)
     {
+        // 0. PAYMENT GATE: Couriers cannot be searched or dispatched unless payment is confirmed, authorized, on hold, or cash
+        $rawMethod = strtolower((string)($delivery->payment_method ?? ''));
+        $isCashTrip = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment', 'cash_on_delivery'], true) || str_contains($rawMethod, 'cash');
+
+        $allowedPaymentStatuses = ['hold', 'authorized', 'paid', 'pending_cash', 'successful'];
+        if ($isCashTrip) {
+            $allowedPaymentStatuses[] = 'pending';
+        }
+
+        $currentPaymentStatus = strtolower((string) ($delivery->payment_status ?? ''));
+        if (!in_array($currentPaymentStatus, $allowedPaymentStatuses, true)) {
+            \Illuminate\Support\Facades\Log::info("PackageDeliveryAssignmentService: Courier matching blocked for delivery #{$delivery->id}. Payment method '{$rawMethod}' with status '{$currentPaymentStatus}' requires payment completion first.");
+            return null;
+        }
+
+        // Must still be an unassigned pending delivery
+        if (!in_array($delivery->delivery_status, ['pending', 'courier_searching', 'order_placed', 'draft', 'created', 'searching'], true) || !is_null($delivery->courier_id)) {
+            return null;
+        }
+
+        // Deduplication: If an active unexpired assignment is already running for this delivery, reuse it
+        $existingPendingAssignment = RideAssignment::where('package_delivery_id', $delivery->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->first();
+        if ($existingPendingAssignment) {
+            return $existingPendingAssignment;
+        }
+
         // 1. Get couriers already asked for this delivery
         $excludedCourierIds = RideAssignment::where('package_delivery_id', $delivery->id)
             ->pluck('driver_id')

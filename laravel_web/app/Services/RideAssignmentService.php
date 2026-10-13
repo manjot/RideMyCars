@@ -47,11 +47,8 @@ class RideAssignmentService
 
         $currentPaymentStatus = strtolower((string) ($ride->payment_status ?? ''));
         if (!in_array($currentPaymentStatus, $allowedPaymentStatuses, true)) {
-            // Allow recent pending rides (< 30 minutes old) to be dispatched to nearby drivers
-            if (!($ride->created_at && $ride->created_at->gt(now()->subMinutes(30)))) {
-                \Illuminate\Support\Facades\Log::warning("RideAssignmentService: Driver matching blocked for ride #{$ride->id}. Payment status '{$currentPaymentStatus}' is not authorized/held/paid.");
-                return null;
-            }
+            \Illuminate\Support\Facades\Log::info("RideAssignmentService: Driver matching blocked for ride #{$ride->id}. Payment method '{$rawMethod}' with status '{$currentPaymentStatus}' requires payment completion first.");
+            return null;
         }
 
         // Must still be an unassigned pending ride
