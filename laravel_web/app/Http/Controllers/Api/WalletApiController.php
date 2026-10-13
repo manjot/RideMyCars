@@ -263,16 +263,22 @@ class WalletApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
+        $type = $request->input('type', 'bank_account');
+        if ($type === 'bank') {
+            $type = 'bank_account';
+            $request->merge(['type' => 'bank_account']);
+        }
+
         $validator = Validator::make($request->all(), [
-            'type' => 'required|string|in:bank_account,momo',
+            'type' => 'required|string|in:bank_account,bank,momo,stripe,card,paypal,cashapp,zelle',
             'is_default' => 'nullable|boolean',
-            'bank_name' => 'required_if:type,bank_account|nullable|string|max:100',
+            'bank_name' => 'nullable|string|max:100',
             'account_holder_name' => 'nullable|string|max:120',
-            'account_number' => 'required_if:type,bank_account|nullable|string|max:50',
+            'account_number' => 'nullable|string|max:50',
             'routing_code' => 'nullable|string|max:50',
             'branch_name' => 'nullable|string|max:100',
-            'momo_network' => 'required_if:type,momo|nullable|string|max:50',
-            'momo_phone' => 'required_if:type,momo|nullable|string|max:50',
+            'momo_network' => 'nullable|string|max:50',
+            'momo_phone' => 'nullable|string|max:50',
             'momo_account_name' => 'nullable|string|max:120',
         ]);
 
@@ -291,6 +297,33 @@ class WalletApiController extends Controller
             'message' => 'Payout method saved successfully.',
             'data' => $method,
         ], 201);
+    }
+
+    /**
+     * Set default / active payout method.
+     * POST /api/wallet/payout-methods/{id}/default
+     */
+    public function setDefaultPayoutMethod(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $target = UserPayoutMethod::where('user_id', $user->id)->where('id', $id)->first();
+        if (!$target) {
+            return response()->json(['success' => false, 'message' => 'Payout method not found.'], 404);
+        }
+
+        UserPayoutMethod::where('user_id', $user->id)->update(['is_default' => false]);
+        $target->is_default = true;
+        $target->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Default payout method updated successfully.',
+            'data' => $target,
+        ]);
     }
 
     /**

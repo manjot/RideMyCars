@@ -14,6 +14,8 @@ import '../../core/services/sound_service.dart';
 import '../auth/driver_login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
+import 'payout_methods_screen.dart';
+import '../../services/wallet_service.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -27,6 +29,7 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
   bool _isLoading = false;
   Map<String, dynamic>? _userProfile;
   Map<String, dynamic>? _driverProfile;
+  Map<String, dynamic>? _activePayoutMethod;
 
   @override
   void initState() {
@@ -54,11 +57,54 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
           }
         }
       }
+
+      // Fetch saved payout methods to display active option
+      final methods = await WalletService.getPayoutMethods();
+      if (mounted) {
+        setState(() {
+          if (methods.isNotEmpty) {
+            _activePayoutMethod = methods.firstWhere(
+              (m) => m['is_default'] == true,
+              orElse: () => methods.first,
+            );
+          } else {
+            _activePayoutMethod = null;
+          }
+        });
+      }
     } catch (e) {
       debugPrint('Error fetching driver profile: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _formatPayoutSubtitle() {
+    if (_activePayoutMethod == null) {
+      return 'Select payment option (Bank, MoMo, Card)';
+    }
+
+    if (_activePayoutMethod!['display_title'] != null && _activePayoutMethod!['display_title'].toString().isNotEmpty) {
+      return '${_activePayoutMethod!['display_title']} (Active)';
+    }
+
+    final type = _activePayoutMethod!['type']?.toString() ?? 'bank_account';
+    if (type == 'momo') {
+      final net = _activePayoutMethod!['momo_network'] ?? _activePayoutMethod!['network'] ?? 'MoMo';
+      final phone = _activePayoutMethod!['momo_phone'] ?? _activePayoutMethod!['phone_number'] ?? '';
+      return '$net: $phone (Active)';
+    }
+
+    if (type == 'stripe' || type == 'card') {
+      final num = _activePayoutMethod!['account_number']?.toString() ?? '';
+      final last4 = num.length >= 4 ? num.substring(num.length - 4) : num;
+      return '${_activePayoutMethod!['bank_name'] ?? 'Debit Card'} (•••• $last4) (Active)';
+    }
+
+    final bank = _activePayoutMethod!['bank_name'] ?? 'Bank Account';
+    final num = _activePayoutMethod!['account_number']?.toString() ?? '';
+    final last4 = num.length >= 4 ? num.substring(num.length - 4) : num;
+    return '$bank (•••• $last4) (Active)';
   }
 
   Widget _buildAvatarFallback(String name) {
@@ -760,11 +806,14 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                   _buildActionTile(
                     Icons.account_balance_outlined,
                     'Payout Bank Account',
-                    'Stripe Connect / Direct Deposit',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Payout account verified & active.')),
+                    _formatPayoutSubtitle(),
+                    badge: _activePayoutMethod != null ? 'ACTIVE' : 'SELECT',
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PayoutMethodsScreen()),
                       );
+                      _fetchProfile();
                     },
                   ),
                   const SizedBox(height: 10),

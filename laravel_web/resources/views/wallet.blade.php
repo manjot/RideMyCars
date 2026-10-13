@@ -341,7 +341,12 @@
 
                         <div class="pt-3 mt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-xs">
                             <span class="text-gray-400 text-[11px]" x-text="pm.type === 'momo' ? 'Mobile Money' : (pm.routing_code ? 'IFSC: ' + pm.routing_code : 'Direct Transfer')"></span>
-                            <button type="button" @click="deletePayoutMethod(pm.id)" class="text-red-500 hover:text-red-700 font-bold text-xs">Remove</button>
+                            <div class="flex items-center gap-3">
+                                <template x-if="!pm.is_default">
+                                    <button type="button" @click="setDefaultPayoutMethod(pm.id)" class="text-orange-500 hover:text-orange-600 font-bold text-xs">Make Default</button>
+                                </template>
+                                <button type="button" @click="deletePayoutMethod(pm.id)" class="text-red-500 hover:text-red-700 font-bold text-xs">Remove</button>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -646,8 +651,12 @@
                         <div class="mb-4">
                             <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Type</label>
                             <select x-model="newMethodForm.type" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
-                                <option value="bank_account">Bank Account</option>
+                                <option value="bank_account">Bank Account (Direct Deposit)</option>
                                 <option value="momo">Mobile Money (MoMo)</option>
+                                <option value="stripe">Stripe Connect / Debit Card</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="cashapp">Cash App</option>
+                                <option value="zelle">Zelle</option>
                             </select>
                         </div>
 
@@ -698,6 +707,36 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Holder Name</label>
                                     <input type="text" x-model="newMethodForm.momo_account_name" required placeholder="Account Name" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="newMethodForm.type === 'stripe'">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Cardholder Full Name</label>
+                                    <input type="text" x-model="newMethodForm.account_holder_name" required placeholder="Name on Debit Card" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Card Number / Stripe Account</label>
+                                    <input type="text" x-model="newMethodForm.account_number" required placeholder="16-digit Card Number or Stripe Account" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Card Issuer / Bank</label>
+                                    <input type="text" x-model="newMethodForm.bank_name" placeholder="e.g. Visa Debit / Chase" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="newMethodForm.type === 'paypal' || newMethodForm.type === 'cashapp' || newMethodForm.type === 'zelle'">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Account Holder Full Name</label>
+                                    <input type="text" x-model="newMethodForm.account_holder_name" required placeholder="Legal full name" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1" x-text="newMethodForm.type.toUpperCase() + ' Handle / Email / Phone'"></label>
+                                    <input type="text" x-model="newMethodForm.account_number" required placeholder="e.g. $yourtag or user@email.com" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white">
                                 </div>
                             </div>
                         </template>
@@ -964,6 +1003,24 @@
                     }
                 } catch(e) {
                     this.showToast('Error saving payout method.', 'error');
+                }
+            },
+
+            async setDefaultPayoutMethod(id) {
+                try {
+                    const res = await fetch('/wallet/payout-methods/' + id + '/default', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.payoutMethods.forEach(m => m.is_default = (m.id === id));
+                        this.showToast('Default payout method updated!');
+                    }
+                } catch(e) {
+                    this.showToast('Error updating default payout method.', 'error');
                 }
             },
 

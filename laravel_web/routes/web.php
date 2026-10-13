@@ -2620,7 +2620,11 @@ Route::get('/account', function () {
     $receipts = \App\Models\Receipt::where('user_id', $user->id)
         ->latest()
         ->paginate(20);
-    return view('account', compact('user', 'vehicles', 'driverProfile', 'receipts'));
+    $payoutMethods = \App\Models\UserPayoutMethod::where('user_id', $user->id)
+        ->orderBy('is_default', 'desc')
+        ->latest()
+        ->get();
+    return view('account', compact('user', 'vehicles', 'driverProfile', 'receipts', 'payoutMethods'));
 })->middleware('auth')->name('account');
 
 Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {
@@ -2880,6 +2884,24 @@ Route::post('/wallet/payout-methods', function (\Illuminate\Http\Request $reques
     } catch (\Throwable $e) {
         return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
     }
+})->middleware('auth');
+
+Route::post('/wallet/payout-methods/{id}/default', function ($id) {
+    $user = auth()->user();
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'Please sign in.'], 401);
+    }
+
+    $method = \App\Models\UserPayoutMethod::where('user_id', $user->id)->where('id', $id)->first();
+    if (!$method) {
+        return response()->json(['success' => false, 'message' => 'Payout method not found.'], 404);
+    }
+
+    \App\Models\UserPayoutMethod::where('user_id', $user->id)->update(['is_default' => false]);
+    $method->is_default = true;
+    $method->save();
+
+    return response()->json(['success' => true, 'message' => 'Default payout method updated.', 'data' => $method]);
 })->middleware('auth');
 
 Route::delete('/wallet/payout-methods/{id}', function ($id) {
@@ -3521,7 +3543,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 'wallet.max_withdrawal_amount' => ['value' => '10000.00', 'label' => 'Maximum Withdrawal Amount'],
                 'wallet.withdrawal_fee_type' => ['value' => 'fixed', 'label' => 'Withdrawal Fee Type (fixed/percentage)'],
                 'wallet.withdrawal_fee_value' => ['value' => '0.00', 'label' => 'Withdrawal Fee Value'],
-                'wallet.allowed_payout_methods' => ['value' => 'bank_account,momo', 'label' => 'Allowed Payout Methods'],
+                'wallet.allowed_payout_methods' => ['value' => 'bank_account,momo,stripe,card,paypal,cashapp,zelle', 'label' => 'Allowed Payout Methods'],
             ];
             foreach ($walletSettings as $sKey => $sVal) {
                 \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(

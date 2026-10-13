@@ -329,6 +329,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wallet/withdrawals/{id}', [WalletApiController::class, 'getWithdrawalDetail']);
     Route::get('/wallet/payout-methods', [WalletApiController::class, 'getPayoutMethods']);
     Route::post('/wallet/payout-methods', [WalletApiController::class, 'savePayoutMethod']);
+    Route::post('/wallet/payout-methods/{id}/default', [WalletApiController::class, 'setDefaultPayoutMethod']);
     Route::delete('/wallet/payout-methods/{id}', [WalletApiController::class, 'deletePayoutMethod']);
     Route::get('/wallet/transactions', [WalletApiController::class, 'getTransactions']);
 

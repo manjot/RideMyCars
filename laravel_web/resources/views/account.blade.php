@@ -1,7 +1,7 @@
 <x-layout :robots="'noindex, nofollow'">
     <x-slot:title>Customer Account & Profile — RideMyCars</x-slot>
 
-    <main x-data="accountManager('{{ request('tab', 'home') }}')" 
+    <main x-data="accountManager('{{ request('tab', 'home') }}', {{ json_encode($payoutMethods ?? []) }})" 
           x-init="initTab()"
           class="flex-1 w-full max-w-[1240px] mx-auto px-4 py-8 sm:px-6 lg:px-8">
         
@@ -84,6 +84,18 @@
                                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                 <span>Personal Info</span>
                             </div>
+                        </button>
+
+                        <!-- Payout Bank Account -->
+                        <button type="button" @click="setTab('payout_methods')" 
+                                :style="currentTab === 'payout_methods' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                :class="currentTab === 'payout_methods' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                            <div class="flex items-center gap-3">
+                                <span class="text-base">🏦</span>
+                                <span>Payout Bank Account</span>
+                            </div>
+                            <span :class="currentTab === 'payout_methods' ? 'bg-slate-950 text-amber-400' : 'bg-emerald-500 text-slate-950'" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm" x-text="activePayoutMethod ? 'ACTIVE' : 'SELECT'"></span>
                         </button>
 
                         <!-- 4. Booking History & Receipts -->
@@ -282,6 +294,34 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Preferences & Payouts Card in Overview -->
+                    <div class="mb-8 p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#141824] border border-amber-400/40 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-500 flex items-center justify-center font-black text-2xl shrink-0 border border-amber-400/30">
+                                🏦
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                                        Preferences & Payouts
+                                    </span>
+                                    <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400" x-text="activePayoutMethod ? '● Active: ' + getMethodTitle(activePayoutMethod) : '● Action Required'">
+                                    </span>
+                                </div>
+                                <h3 class="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+                                    Payout Bank Account & Payment Options
+                                </h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                    Select Direct Bank Deposit, Mobile Money (MoMo), Stripe Card, or Digital Wallet for trip earnings.
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" @click="setTab('payout_methods')" class="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-400/25 shrink-0 flex items-center gap-2 hover:scale-[1.02] cursor-pointer">
+                            <span x-text="activePayoutMethod ? 'Manage Payouts' : 'Select Payment Option'"></span>
+                            <span>&rarr;</span>
+                        </button>
                     </div>
 
                     <!-- Emergency SOS Safety Banner in Profile -->
@@ -763,6 +803,279 @@
                                 </div>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 group-hover:text-amber-500 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== PAYOUT BANK ACCOUNT TAB ==================== -->
+                <div x-show="currentTab === 'payout_methods'" 
+                     x-transition:enter="transition ease-out duration-200" 
+                     x-transition:enter-start="opacity-0 translate-y-2" 
+                     x-transition:enter-end="opacity-100 translate-y-0" 
+                     style="display: none;">
+                    
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm mb-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Payout Bank Account & Payment Options</h2>
+                                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Configure and select how you receive driver earnings, incentives, and trip payouts.</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                256-bit Bank Grade Security
+                            </span>
+                        </div>
+
+                        <!-- Active Payout Destination Banner -->
+                        <div class="p-5 sm:p-6 rounded-2xl mb-8 border relative overflow-hidden"
+                             :class="activePayoutMethod ? 'bg-gradient-to-br from-amber-500/15 via-slate-900/5 to-slate-900/10 dark:from-amber-500/10 dark:to-slate-900/40 border-amber-400/40' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700'">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+                                      :class="activePayoutMethod ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'bg-amber-400 text-slate-950'">
+                                    <span x-text="activePayoutMethod ? '● Active Payout Destination' : '● Setup Required'"></span>
+                                </span>
+                                <template x-if="activePayoutMethod">
+                                    <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                        ✓ Verified & Ready
+                                    </span>
+                                </template>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black shrink-0 border"
+                                     :class="activePayoutMethod ? 'bg-amber-400/20 text-amber-500 border-amber-400/30' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-700'">
+                                    <span x-text="activePayoutMethod ? (activePayoutMethod.type === 'momo' ? '📱' : (activePayoutMethod.type === 'stripe' || activePayoutMethod.type === 'card' ? '💳' : (activePayoutMethod.type === 'paypal' || activePayoutMethod.type === 'cashapp' || activePayoutMethod.type === 'zelle' ? '⚡' : '🏦'))) : '🏦'"></span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate"
+                                        x-text="activePayoutMethod ? getMethodTitle(activePayoutMethod) : 'No Payout Account Selected'"></h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"
+                                       x-text="activePayoutMethod ? ('Account Holder: ' + (activePayoutMethod.account_holder_name || activePayoutMethod.momo_account_name || userName)) : 'Select a payment option below to receive your weekly earnings and instant cashouts.'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Saved Accounts Section (If Any) -->
+                        <template x-if="payoutMethods && payoutMethods.length > 0">
+                            <div class="mb-8">
+                                <h3 class="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white mb-3">Saved Payout Accounts</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    <template x-for="(pm, idx) in payoutMethods" :key="pm.id || idx">
+                                        <div class="p-4 rounded-2xl border transition-all flex flex-col justify-between"
+                                             :class="pm.is_default ? 'bg-amber-400/5 dark:bg-amber-400/10 border-amber-400/50 shadow-sm' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'">
+                                            <div>
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <span class="text-lg" x-text="pm.type === 'momo' ? '📱' : (pm.type === 'stripe' || pm.type === 'card' ? '💳' : (pm.type === 'paypal' || pm.type === 'cashapp' || pm.type === 'zelle' ? '⚡' : '🏦'))"></span>
+                                                    <template x-if="pm.is_default">
+                                                        <span class="text-[9px] font-black uppercase px-2 py-0.5 bg-emerald-500 text-slate-950 rounded-full">ACTIVE</span>
+                                                    </template>
+                                                </div>
+                                                <h4 class="font-bold text-sm text-slate-900 dark:text-white truncate" x-text="getMethodTitle(pm)"></h4>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" x-text="'Holder: ' + (pm.account_holder_name || pm.momo_account_name || userName)"></p>
+                                            </div>
+                                            <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-200/60 dark:border-slate-700/60 text-xs">
+                                                <template x-if="!pm.is_default">
+                                                    <button type="button" @click="setDefaultMethod(pm.id)" class="font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                                                        Make Active
+                                                    </button>
+                                                </template>
+                                                <template x-if="pm.is_default">
+                                                    <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Primary Payout</span>
+                                                </template>
+                                                <button type="button" @click="deleteMethod(pm.id)" class="text-red-500 hover:text-red-600 font-bold ml-auto">
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Select Payout Payment Option -->
+                        <div>
+                            <h3 class="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white mb-2">Select Options of Payment</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Choose which payment option you want to configure and activate:</p>
+
+                            <!-- 4 Selectable Payment Option Cards -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                                <!-- Option 1: Bank Account -->
+                                <button type="button" @click="selectedPaymentOption = 'bank_account'" 
+                                        class="p-4 rounded-2xl border-2 text-left transition-all flex items-start gap-3 cursor-pointer"
+                                        :class="selectedPaymentOption === 'bank_account' ? 'border-amber-400 bg-amber-400/10 dark:bg-amber-400/15 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#161a28]'">
+                                    <span class="text-2xl">🏦</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-black text-sm text-slate-900 dark:text-white">Direct Bank Deposit</span>
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-700 dark:text-amber-300">RECOMMENDED</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Wire / ACH / IBAN checking or savings account.</p>
+                                    </div>
+                                </button>
+
+                                <!-- Option 2: Mobile Money -->
+                                <button type="button" @click="selectedPaymentOption = 'momo'" 
+                                        class="p-4 rounded-2xl border-2 text-left transition-all flex items-start gap-3 cursor-pointer"
+                                        :class="selectedPaymentOption === 'momo' ? 'border-amber-400 bg-amber-400/10 dark:bg-amber-400/15 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#161a28]'">
+                                    <span class="text-2xl">📱</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-black text-sm text-slate-900 dark:text-white">Mobile Money (MoMo)</span>
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-700 dark:text-emerald-300">INSTANT 24/7</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">MTN MoMo, Telecel Cash, or AirtelTigo.</p>
+                                    </div>
+                                </button>
+
+                                <!-- Option 3: Stripe / Debit Card -->
+                                <button type="button" @click="selectedPaymentOption = 'stripe'" 
+                                        class="p-4 rounded-2xl border-2 text-left transition-all flex items-start gap-3 cursor-pointer"
+                                        :class="selectedPaymentOption === 'stripe' ? 'border-amber-400 bg-amber-400/10 dark:bg-amber-400/15 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#161a28]'">
+                                    <span class="text-2xl">💳</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-black text-sm text-slate-900 dark:text-white">Stripe / Debit Card</span>
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-400/20 text-indigo-700 dark:text-indigo-300">FAST CARD</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Direct deposit to Visa or Mastercard debit card.</p>
+                                    </div>
+                                </button>
+
+                                <!-- Option 4: Digital Wallet -->
+                                <button type="button" @click="selectedPaymentOption = 'digital_wallet'" 
+                                        class="p-4 rounded-2xl border-2 text-left transition-all flex items-start gap-3 cursor-pointer"
+                                        :class="selectedPaymentOption === 'digital_wallet' ? 'border-amber-400 bg-amber-400/10 dark:bg-amber-400/15 shadow-md' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#161a28]'">
+                                    <span class="text-2xl">⚡</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-black text-sm text-slate-900 dark:text-white">Digital Wallet</span>
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-400/20 text-purple-700 dark:text-purple-300">PAYPAL / ZELLE</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Direct transfer to PayPal, Cash App, or Zelle.</p>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Selected Payment Option Form -->
+                            <form @submit.prevent="submitNewPayoutMethod()" class="p-5 sm:p-6 rounded-2xl border border-amber-400/40 bg-slate-50/50 dark:bg-slate-900/50">
+                                <h4 class="font-black text-sm text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <span>⚙️</span>
+                                    <span x-text="getFormHeading()"></span>
+                                </h4>
+
+                                <!-- Bank Account Fields -->
+                                <div x-show="selectedPaymentOption === 'bank_account'" class="space-y-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Account Holder Full Name</label>
+                                            <input type="text" x-model="payoutForm.bank.account_holder_name" required placeholder="Full Name as on Bank Account" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Bank Name</label>
+                                            <input type="text" x-model="payoutForm.bank.bank_name" required placeholder="e.g. Chase, Wells Fargo, HDFC, Barclays" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Account Number / IBAN</label>
+                                            <input type="text" x-model="payoutForm.bank.account_number" required placeholder="Account Number or IBAN" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Routing / IFSC / Sort Code</label>
+                                            <input type="text" x-model="payoutForm.bank.routing_code" placeholder="Routing, IFSC, or Swift code" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- MoMo Fields -->
+                                <div x-show="selectedPaymentOption === 'momo'" class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Select MoMo Network Provider</label>
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <button type="button" @click="payoutForm.momo.momo_network = 'MTN'" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer"
+                                                    :class="payoutForm.momo.momo_network === 'MTN' ? 'border-amber-400 bg-amber-400 text-slate-950 font-black' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-700 dark:text-slate-300'">
+                                                ⚡ MTN MoMo
+                                            </button>
+                                            <button type="button" @click="payoutForm.momo.momo_network = 'Telecel'" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer"
+                                                    :class="payoutForm.momo.momo_network === 'Telecel' ? 'border-amber-400 bg-amber-400 text-slate-950 font-black' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-700 dark:text-slate-300'">
+                                                🔴 Telecel Cash
+                                            </button>
+                                            <button type="button" @click="payoutForm.momo.momo_network = 'AirtelTigo'" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer"
+                                                    :class="payoutForm.momo.momo_network === 'AirtelTigo' ? 'border-amber-400 bg-amber-400 text-slate-950 font-black' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-700 dark:text-slate-300'">
+                                                🔵 AirtelTigo
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Registered MoMo Phone Number</label>
+                                            <input type="tel" x-model="payoutForm.momo.momo_phone" required placeholder="e.g. 0244123456" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Account Holder Full Name</label>
+                                            <input type="text" x-model="payoutForm.momo.momo_account_name" required placeholder="Name on MoMo SIM Registration" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Stripe / Debit Card Fields -->
+                                <div x-show="selectedPaymentOption === 'stripe'" class="space-y-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Cardholder Full Name</label>
+                                            <input type="text" x-model="payoutForm.stripe.account_holder_name" required placeholder="Name on Debit Card" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Card Issuer / Bank</label>
+                                            <input type="text" x-model="payoutForm.stripe.bank_name" placeholder="e.g. Visa Debit / Chase" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Debit Card Number / Stripe ID</label>
+                                        <input type="text" x-model="payoutForm.stripe.account_number" required placeholder="16-digit debit card number or Stripe account" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                    </div>
+                                </div>
+
+                                <!-- Digital Wallet Fields -->
+                                <div x-show="selectedPaymentOption === 'digital_wallet'" class="space-y-4">
+                                    <div class="grid grid-cols-3 gap-3 mb-2">
+                                        <button type="button" @click="payoutForm.wallet.type = 'paypal'; payoutForm.wallet.bank_name = 'PayPal'" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer"
+                                                :class="payoutForm.wallet.type === 'paypal' ? 'border-amber-400 bg-amber-400 text-slate-950 font-black' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-700 dark:text-slate-300'">
+                                            PayPal
+                                        </button>
+                                        <button type="button" @click="payoutForm.wallet.type = 'cashapp'; payoutForm.wallet.bank_name = 'Cash App'" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer"
+                                                :class="payoutForm.wallet.type === 'cashapp' ? 'border-amber-400 bg-amber-400 text-slate-950 font-black' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-700 dark:text-slate-300'">
+                                            Cash App
+                                        </button>
+                                        <button type="button" @click="payoutForm.wallet.type = 'zelle'; payoutForm.wallet.bank_name = 'Zelle'" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer"
+                                                :class="payoutForm.wallet.type === 'zelle' ? 'border-amber-400 bg-amber-400 text-slate-950 font-black' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-700 dark:text-slate-300'">
+                                            Zelle
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1" x-text="payoutForm.wallet.bank_name + ' Handle / Email / Phone'"></label>
+                                            <input type="text" x-model="payoutForm.wallet.account_number" required placeholder="e.g. $yourtag or user@email.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Account Holder Full Name</label>
+                                            <input type="text" x-model="payoutForm.wallet.account_holder_name" required placeholder="Legal full name" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#141824] text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-amber-400 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Set as primary toggle -->
+                                <div class="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                        <input type="checkbox" x-model="payoutForm.is_default" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-400">
+                                        <span>Set as primary active payout method</span>
+                                    </label>
+                                    <button type="submit" :disabled="isSavingPayout" class="px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer">
+                                        <span x-show="!isSavingPayout">Save & Activate Payout Option</span>
+                                        <span x-show="isSavingPayout">Saving...</span>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -1460,10 +1773,174 @@
 
     <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('accountManager', (initialTab = 'home') => ({
+        Alpine.data('accountManager', (initialTab = 'home', initialPayoutMethods = []) => ({
             currentTab: (new URLSearchParams(window.location.search).get('tab')) || initialTab || 'home',
             toast: '',
             isSaving: false,
+            
+            payoutMethods: initialPayoutMethods || [],
+            get activePayoutMethod() {
+                if (!this.payoutMethods || this.payoutMethods.length === 0) return null;
+                return this.payoutMethods.find(m => m.is_default) || this.payoutMethods[0];
+            },
+            selectedPaymentOption: 'bank_account',
+            isSavingPayout: false,
+            payoutForm: {
+                is_default: true,
+                bank: {
+                    bank_name: '',
+                    account_number: '',
+                    account_holder_name: '{{ addslashes($user->name ?? '') }}',
+                    routing_code: ''
+                },
+                momo: {
+                    momo_network: 'MTN',
+                    momo_phone: '{{ addslashes($user->phone ?? '') }}',
+                    momo_account_name: '{{ addslashes($user->name ?? '') }}'
+                },
+                stripe: {
+                    bank_name: 'Visa Debit',
+                    account_number: '',
+                    account_holder_name: '{{ addslashes($user->name ?? '') }}'
+                },
+                wallet: {
+                    type: 'paypal',
+                    bank_name: 'PayPal',
+                    account_number: '',
+                    account_holder_name: '{{ addslashes($user->name ?? '') }}'
+                }
+            },
+            getMethodTitle(method) {
+                if (!method) return 'Payout Account';
+                if (method.display_title) return method.display_title;
+                if (method.type === 'momo') {
+                    return (method.momo_network || 'MoMo') + ': ' + (method.momo_phone || '');
+                }
+                if (method.type === 'stripe' || method.type === 'card') {
+                    const last4 = method.account_number ? method.account_number.slice(-4) : '••••';
+                    return (method.bank_name || 'Debit Card') + ' (•••• ' + last4 + ')';
+                }
+                if (method.type === 'paypal' || method.type === 'cashapp' || method.type === 'zelle') {
+                    return (method.bank_name || method.type.toUpperCase()) + ': ' + (method.account_number || '');
+                }
+                const last4 = method.account_number ? method.account_number.slice(-4) : '••••';
+                return (method.bank_name || 'Bank Account') + ' (•••• ' + last4 + ')';
+            },
+            getFormHeading() {
+                switch(this.selectedPaymentOption) {
+                    case 'bank_account': return 'Direct Bank Deposit Details';
+                    case 'momo': return 'Mobile Money (MoMo) Details';
+                    case 'stripe': return 'Stripe / Debit Card Details';
+                    case 'digital_wallet': return 'Digital Wallet Details (' + this.payoutForm.wallet.bank_name + ')';
+                    default: return 'Payout Details';
+                }
+            },
+            async submitNewPayoutMethod() {
+                this.isSavingPayout = true;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                let payload = {};
+                if (this.selectedPaymentOption === 'bank_account') {
+                    payload = {
+                        type: 'bank_account',
+                        bank_name: this.payoutForm.bank.bank_name,
+                        account_number: this.payoutForm.bank.account_number,
+                        account_holder_name: this.payoutForm.bank.account_holder_name,
+                        routing_code: this.payoutForm.bank.routing_code,
+                        is_default: this.payoutForm.is_default
+                    };
+                } else if (this.selectedPaymentOption === 'momo') {
+                    payload = {
+                        type: 'momo',
+                        momo_network: this.payoutForm.momo.momo_network,
+                        momo_phone: this.payoutForm.momo.momo_phone,
+                        momo_account_name: this.payoutForm.momo.momo_account_name,
+                        is_default: this.payoutForm.is_default
+                    };
+                } else if (this.selectedPaymentOption === 'stripe') {
+                    payload = {
+                        type: 'stripe',
+                        bank_name: this.payoutForm.stripe.bank_name,
+                        account_number: this.payoutForm.stripe.account_number,
+                        account_holder_name: this.payoutForm.stripe.account_holder_name,
+                        is_default: this.payoutForm.is_default
+                    };
+                } else if (this.selectedPaymentOption === 'digital_wallet') {
+                    payload = {
+                        type: this.payoutForm.wallet.type,
+                        bank_name: this.payoutForm.wallet.bank_name,
+                        account_number: this.payoutForm.wallet.account_number,
+                        account_holder_name: this.payoutForm.wallet.account_holder_name,
+                        is_default: this.payoutForm.is_default
+                    };
+                }
+
+                try {
+                    const res = await fetch('/wallet/payout-methods', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken || ''
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (payload.is_default) {
+                            this.payoutMethods.forEach(m => m.is_default = false);
+                        }
+                        this.payoutMethods.unshift(data.data);
+                        this.showToast('Payout method saved and activated successfully!');
+                        this.payoutForm.bank.account_number = '';
+                        this.payoutForm.stripe.account_number = '';
+                        this.payoutForm.wallet.account_number = '';
+                    } else {
+                        this.showToast(data.message || 'Failed to save payout method.');
+                    }
+                } catch(err) {
+                    this.showToast('Network error saving payout method.');
+                } finally {
+                    this.isSavingPayout = false;
+                }
+            },
+            async setDefaultMethod(id) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                try {
+                    const res = await fetch('/wallet/payout-methods/' + id + '/default', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken || ''
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.payoutMethods.forEach(m => {
+                            m.is_default = (m.id === id);
+                        });
+                        this.showToast('Active payout account updated!');
+                    }
+                } catch(e) {
+                    this.showToast('Error setting default payout account.');
+                }
+            },
+            async deleteMethod(id) {
+                if (!confirm('Are you sure you want to remove this payout account?')) return;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                try {
+                    const res = await fetch('/wallet/payout-methods/' + id, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken || ''
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.payoutMethods = this.payoutMethods.filter(m => m.id !== id);
+                        this.showToast('Payout account removed.');
+                    }
+                } catch(e) {
+                    this.showToast('Error removing method.');
+                }
+            },
             
             initTab() {
                 const param = new URLSearchParams(window.location.search).get('tab');

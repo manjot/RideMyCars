@@ -22,7 +22,7 @@ class WalletService
         $max = (float) SettingService::get('wallet.max_withdrawal_amount', 10000.00);
         $feeType = SettingService::get('wallet.withdrawal_fee_type', 'fixed');
         $feeVal = (float) SettingService::get('wallet.withdrawal_fee_value', 0.00);
-        $methods = explode(',', SettingService::get('wallet.allowed_payout_methods', 'bank_account,momo'));
+        $methods = explode(',', SettingService::get('wallet.allowed_payout_methods', 'bank_account,momo,stripe,card,paypal,cashapp,zelle'));
 
         return [
             'enabled' => $enabled,
@@ -356,6 +356,11 @@ class WalletService
             $type = 'bank_account';
         }
         $isDefault = (bool) ($data['is_default'] ?? false);
+
+        $existingCount = UserPayoutMethod::where('user_id', $user->id)->count();
+        if ($existingCount === 0) {
+            $isDefault = true;
+        }
 
         if ($isDefault) {
             UserPayoutMethod::where('user_id', $user->id)->update(['is_default' => false]);

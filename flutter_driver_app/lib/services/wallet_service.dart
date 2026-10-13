@@ -127,6 +127,28 @@ class WalletService {
     }
   }
 
+  /// Set a payout method as default / active
+  static Future<bool> setDefaultPayoutMethod(dynamic id) async {
+    try {
+      final res = await _dio.post('${ApiConstants.walletPayoutMethods}/$id/default');
+      return res.statusCode == 200 && res.data['success'] == true;
+    } catch (e) {
+      debugPrint('Error setting default driver payout method: $e');
+      return false;
+    }
+  }
+
+  /// Delete a saved payout method
+  static Future<bool> deletePayoutMethod(dynamic id) async {
+    try {
+      final res = await _dio.delete('${ApiConstants.walletPayoutMethods}/$id');
+      return res.statusCode == 200 && (res.data['success'] == true || res.statusCode == 200);
+    } catch (e) {
+      debugPrint('Error deleting driver payout method: $e');
+      return false;
+    }
+  }
+
   /// Get recent wallet transactions
   static Future<List<Map<String, dynamic>>> getTransactions() async {
     try {

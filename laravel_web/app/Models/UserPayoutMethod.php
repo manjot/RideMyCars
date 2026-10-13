@@ -32,6 +32,11 @@ class UserPayoutMethod extends Model
         'metadata' => 'array',
     ];
 
+    protected $appends = [
+        'display_title',
+        'formatted_details',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -41,6 +46,15 @@ class UserPayoutMethod extends Model
     {
         if ($this->type === 'momo') {
             return ($this->momo_network ? strtoupper($this->momo_network) . ' MoMo: ' : 'MoMo: ') . ($this->momo_phone ?? '');
+        }
+
+        if ($this->type === 'stripe' || $this->type === 'card') {
+            $last4 = $this->account_number ? substr($this->account_number, -4) : '••••';
+            return ($this->bank_name ?? 'Debit Card') . ' (•••• ' . $last4 . ')';
+        }
+
+        if ($this->type === 'paypal' || $this->type === 'cashapp' || $this->type === 'zelle') {
+            return strtoupper($this->type) . ': ' . ($this->account_number ?? $this->account_holder_name ?? '');
         }
 
         $last4 = $this->account_number ? substr($this->account_number, -4) : '••••';
@@ -55,6 +69,23 @@ class UserPayoutMethod extends Model
                 'network' => $this->momo_network,
                 'phone' => $this->momo_phone,
                 'account_name' => $this->momo_account_name,
+            ];
+        }
+
+        if ($this->type === 'stripe' || $this->type === 'card') {
+            return [
+                'type' => $this->type,
+                'bank_name' => $this->bank_name,
+                'card_holder_name' => $this->account_holder_name,
+                'last4' => $this->account_number ? substr($this->account_number, -4) : '••••',
+            ];
+        }
+
+        if ($this->type === 'paypal' || $this->type === 'cashapp' || $this->type === 'zelle') {
+            return [
+                'type' => $this->type,
+                'handle' => $this->account_number,
+                'account_name' => $this->account_holder_name,
             ];
         }
 
