@@ -2879,16 +2879,26 @@
                 if (!this.ride) return '';
                 const s = this.ride.status;
                 const d = this.ride.driver_name || 'Driver';
+                const liveEta = this.ride.live_eta;
                 if (s === 'pending') {
                     if (this.isUnpaidElectronic) {
                         return 'Complete payment to find drivers';
                     }
                     return 'Looking for drivers...';
                 }
-                if (s === 'accepted') return `${d} accepted your ride`;
-                if (s === 'en_route') return `${d} is on the way`;
-                if (s === 'arrived') return `${d} has arrived at pickup`;
-                if (s === 'in_progress') return 'Trip in progress';
+                if (s === 'accepted' || s === 'en_route') {
+                    if (liveEta && liveEta.eta_minutes) {
+                        return `${d} arriving in ~${liveEta.eta_minutes} mins (${liveEta.eta_arrival_time})`;
+                    }
+                    return `${d} is on the way to pickup`;
+                }
+                if (s === 'arrived') return `${d} has arrived at pickup!`;
+                if (s === 'in_progress') {
+                    if (liveEta && liveEta.eta_minutes) {
+                        return `Reaching destination in ~${liveEta.eta_minutes} mins (${liveEta.eta_arrival_time})`;
+                    }
+                    return 'Trip in progress to destination';
+                }
                 return '';
             },
             get googleMapsUrl() {

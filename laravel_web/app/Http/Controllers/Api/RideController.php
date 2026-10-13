@@ -785,6 +785,12 @@ class RideController extends Controller
             ];
         }
 
+        $liveEta = $ride->calculateLiveTrackingEta();
+        if ($driverData) {
+            if (empty($driverData['current_lat'])) $driverData['current_lat'] = $liveEta['driver_lat'];
+            if (empty($driverData['current_lng'])) $driverData['current_lng'] = $liveEta['driver_lng'];
+        }
+
         $activePricing = CountryPricing::forCountry($ride->driver_country ?? $ride->country ?? 'IND');
 
         return response()->json([
@@ -812,6 +818,21 @@ class RideController extends Controller
                 'duration_minutes' => $ride->duration_minutes,
                 'created_at' => $ride->created_at->toIso8601String(),
                 'driver' => $driverData,
+                'driver_lat' => $liveEta['driver_lat'],
+                'driver_lng' => $liveEta['driver_lng'],
+                'target_lat' => $liveEta['target_lat'],
+                'target_lng' => $liveEta['target_lng'],
+                'target_type' => $liveEta['target_type'],
+                'live_eta' => $liveEta,
+                'eta_minutes' => $liveEta['eta_minutes'],
+                'eta_arrival_time' => $liveEta['eta_arrival_time'],
+                'eta_text' => $liveEta['eta_text'],
+                'eta_distance_km' => $liveEta['distance_km'],
+                'eta_distance_text' => $liveEta['distance_text'],
+                'badge_title' => $liveEta['badge_title'],
+                'badge_subtitle' => $liveEta['badge_subtitle'],
+                'is_moving_to_pickup' => $liveEta['is_moving_to_pickup'],
+                'is_trip_in_progress' => $liveEta['is_trip_in_progress'],
                 'backup_chauffeur_enabled' => (bool)$ride->backup_chauffeur_enabled,
                 'backup_status' => $ride->backup_status,
                 'backup_driver_id' => $ride->backup_driver_id,

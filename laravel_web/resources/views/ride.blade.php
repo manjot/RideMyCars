@@ -1023,6 +1023,45 @@
                             <span class="text-xs font-bold text-gray-400" x-text="driverPlate || 'ABC-1234'"></span>
                         </div>
 
+                        <!-- Real-time Live Driver Moving ETA Card (Stage 1: Driving to Pickup | Stage 2: Driving to Destination) -->
+                        <div class="rounded-2xl p-4.5 border transition-all duration-300 shadow-sm"
+                             :class="{
+                                 'bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent border-emerald-500/40 text-emerald-950 dark:text-emerald-100': isMovingToPickup,
+                                 'bg-gradient-to-br from-amber-500/20 via-amber-500/5 to-transparent border-amber-500/40 text-amber-950 dark:text-amber-100': isTripInProgress,
+                                 'bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent border-blue-500/40 text-blue-950 dark:text-blue-100': rideLifecycleStatus === 'arrived',
+                                 'bg-gray-50 dark:bg-[#1a1a1a] border-gray-200 dark:border-white/10': !isMovingToPickup && !isTripInProgress && rideLifecycleStatus !== 'arrived'
+                             }">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider"
+                                      :class="{
+                                          'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30': isMovingToPickup,
+                                          'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30': isTripInProgress,
+                                          'bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-500/30': rideLifecycleStatus === 'arrived',
+                                          'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300': !isMovingToPickup && !isTripInProgress && rideLifecycleStatus !== 'arrived'
+                                      }">
+                                    <span class="w-2 h-2 rounded-full animate-ping"
+                                          :class="isTripInProgress ? 'bg-amber-500' : (rideLifecycleStatus === 'arrived' ? 'bg-blue-500' : 'bg-emerald-500')"></span>
+                                    <span x-text="isTripInProgress ? '⚡ Trip in Progress' : (rideLifecycleStatus === 'arrived' ? '📍 Driver Arrived' : '🚗 Driving to Pickup')"></span>
+                                </span>
+                                <span class="text-xs font-mono font-black"
+                                      :class="isTripInProgress ? 'text-amber-600 dark:text-amber-400' : (rideLifecycleStatus === 'arrived' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400')"
+                                      x-text="etaArrivalTime ? ('Est. ' + etaArrivalTime) : ''"></span>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 shadow-sm transition-transform"
+                                     :class="isTripInProgress ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 animate-pulse' : (rideLifecycleStatus === 'arrived' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300' : 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 animate-pulse')">
+                                    <span x-text="isTripInProgress ? '⚡' : (rideLifecycleStatus === 'arrived' ? '📍' : '🚗')"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-base font-black text-gray-900 dark:text-white leading-tight truncate"
+                                        x-text="badgeTitle || (isTripInProgress ? 'Heading to Destination' : 'Driver is on the way')"></h4>
+                                    <p class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-0.5"
+                                       x-text="badgeSubtitle || etaText || (isTripInProgress ? 'Calculating arrival at dropoff...' : 'Calculating arrival at pickup...')"></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Driver Info Card -->
                         <div class="flex items-center gap-4 bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-200 dark:border-white/10">
                             <div class="w-14 h-14 rounded-full bg-black text-white dark:bg-white dark:text-black font-black text-xl flex items-center justify-center shrink-0 shadow-md">
@@ -1119,8 +1158,40 @@
                         </button>
                     </div>
 
-                    <!-- Floating Map Guide / Hint Badge -->
-                    <div class="absolute top-4 left-4 z-[1000] pointer-events-none">
+                    <!-- Floating Map Live Tracking ETA Badge (Visible when driver assigned / trip active) -->
+                    <div x-show="['driver_assigned', 'en_route', 'arrived', 'in_progress'].includes(bookingStep)" 
+                         style="display: none;"
+                         class="absolute top-4 left-4 z-[1000] pointer-events-none transition-all duration-300">
+                        <div class="px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md border flex items-center gap-3 text-xs font-black"
+                             :class="{
+                                 'bg-slate-950/90 text-white border-emerald-500/50 shadow-emerald-500/20': isMovingToPickup,
+                                 'bg-slate-950/90 text-white border-amber-500/50 shadow-amber-500/20': isTripInProgress,
+                                 'bg-slate-950/90 text-white border-blue-500/50 shadow-blue-500/20': rideLifecycleStatus === 'arrived',
+                                 'bg-slate-900/90 text-white border-white/20': !isMovingToPickup && !isTripInProgress && rideLifecycleStatus !== 'arrived'
+                             }">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-lg shrink-0"
+                                 :class="isTripInProgress ? 'bg-amber-500 text-slate-950' : (rideLifecycleStatus === 'arrived' ? 'bg-blue-500 text-white' : 'bg-emerald-500 text-slate-950')">
+                                <span x-text="isTripInProgress ? '⚡' : (rideLifecycleStatus === 'arrived' ? '📍' : '🚗')"></span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="uppercase tracking-wider text-[10px] text-gray-300"
+                                          x-text="isTripInProgress ? 'Trip Destination ETA' : (rideLifecycleStatus === 'arrived' ? 'Driver Arrived' : 'Driver Arrival ETA')"></span>
+                                    <span class="w-1.5 h-1.5 rounded-full animate-ping"
+                                          :class="isTripInProgress ? 'bg-amber-400' : (rideLifecycleStatus === 'arrived' ? 'bg-blue-400' : 'bg-emerald-400')"></span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-sm font-black text-white">
+                                    <span x-text="etaMinutes !== null ? ('~' + etaMinutes + ' min' + (etaMinutes === 1 ? '' : 's')) : 'En route'"></span>
+                                    <span class="text-amber-400 text-xs font-mono font-bold" x-text="etaArrivalTime ? ('(' + etaArrivalTime + ')') : ''"></span>
+                                </div>
+                                <div class="text-[10px] text-gray-300 font-medium truncate"
+                                     x-text="etaDistanceText ? (etaDistanceText + (isTripInProgress ? ' remaining' : ' away')) : (isTripInProgress ? 'Driving to dropoff' : 'Driving to pickup')"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Map Guide / Hint Badge (Booking Stage) -->
+                    <div x-show="bookingStep === 'find_trip'" class="absolute top-4 left-4 z-[1000] pointer-events-none">
                         <div class="bg-white/95 dark:bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/60 dark:border-white/10 shadow-lg text-[11px] font-extrabold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>Click map or drag pin to adjust pickup</span>
@@ -1541,6 +1612,19 @@
                 driverPhone: '',
                 driverEmail: '',
                 driverWhatsapp: '',
+                driverLat: null,
+                driverLng: null,
+                rideLifecycleStatus: '',
+                liveEta: null,
+                etaMinutes: null,
+                etaArrivalTime: '',
+                etaText: '',
+                etaDistanceKm: null,
+                etaDistanceText: '',
+                badgeTitle: '',
+                badgeSubtitle: '',
+                isMovingToPickup: false,
+                isTripInProgress: false,
                 momoPhone: '{{ auth()->user()->phone ?? "" }}',
                 momoNetwork: 'MTN',
                 isAuthorizingPayment: false,
@@ -1706,6 +1790,7 @@
                                         this.startCountdown();
                                     }
                                 }
+                                this.updateLiveTrackingState(data);
                                 this.startRideStatusPolling(resumeId);
                             } else if (data.status === 'cancelled') {
                                 localStorage.removeItem('rmc_active_ride_id');
@@ -1716,6 +1801,57 @@
                             }
                         }
                     } catch(e) {}
+                },
+
+                updateLiveTrackingState(data) {
+                    if (!data) return;
+                    this.rideLifecycleStatus = data.status || '';
+                    if (data.live_eta) {
+                        this.liveEta = data.live_eta;
+                        this.etaMinutes = data.live_eta.eta_minutes;
+                        this.etaArrivalTime = data.live_eta.eta_arrival_time;
+                        this.etaText = data.live_eta.eta_text;
+                        this.etaDistanceKm = data.live_eta.distance_km;
+                        this.etaDistanceText = data.live_eta.distance_text;
+                        this.badgeTitle = data.live_eta.badge_title;
+                        this.badgeSubtitle = data.live_eta.badge_subtitle;
+                        this.isMovingToPickup = !!data.live_eta.is_moving_to_pickup;
+                        this.isTripInProgress = !!data.live_eta.is_trip_in_progress;
+                    } else if (typeof data.eta_minutes !== 'undefined') {
+                        this.etaMinutes = data.eta_minutes;
+                        this.etaArrivalTime = data.eta_arrival_time || '';
+                        this.etaText = data.eta_text || '';
+                        this.etaDistanceKm = data.eta_distance_km || null;
+                        this.etaDistanceText = data.eta_distance_text || '';
+                        this.badgeTitle = data.badge_title || '';
+                        this.badgeSubtitle = data.badge_subtitle || '';
+                        this.isMovingToPickup = !!data.is_moving_to_pickup;
+                        this.isTripInProgress = !!data.is_trip_in_progress;
+                    }
+
+                    if (data.driver_lat && data.driver_lng) {
+                        this.driverLat = parseFloat(data.driver_lat);
+                        this.driverLng = parseFloat(data.driver_lng);
+                    } else if (data.driver && data.driver.current_lat && data.driver.current_lng) {
+                        this.driverLat = parseFloat(data.driver.current_lat);
+                        this.driverLng = parseFloat(data.driver.current_lng);
+                    }
+
+                    if (this.driverLat && this.driverLng) {
+                        window.dispatchEvent(new CustomEvent('update-driver-live-location', {
+                            detail: {
+                                lat: this.driverLat,
+                                lng: this.driverLng,
+                                status: data.status,
+                                driverName: this.driverName || 'Driver',
+                                liveEta: this.liveEta,
+                                pickupLat: this.pickupLat,
+                                pickupLng: this.pickupLng,
+                                dropoffLat: this.dropoffLat,
+                                dropoffLng: this.dropoffLng,
+                            }
+                        }));
+                    }
                 },
 
                 startRideStatusPolling(rideId) {
@@ -1737,6 +1873,7 @@
                                     this.driverEmail = (sData.driver && sData.driver.email) || sData.driver_email || '';
                                     this.driverWhatsapp = (sData.driver && sData.driver.whatsapp) || sData.driver_whatsapp || '';
                                     this.bookingStep = 'driver_assigned';
+                                    this.updateLiveTrackingState(sData);
                                 } else if (sData.status === 'completed') {
                                     clearInterval(this.pollTimer);
                                     if (this.countdownInterval) clearInterval(this.countdownInterval);
@@ -2762,6 +2899,8 @@
 
         // Leaflet layers
         let lDriverMarkers = [];
+        let lLiveDriverMarker = null;
+        let lLiveTrackingPolyline = null;
         let lAccuracyCircle = null;
         let lBeaconMarker = null;
         let lRoutePolyline = null;
@@ -2769,6 +2908,8 @@
 
         // Google layers
         let gDriverMarkers = [];
+        let gLiveDriverMarker = null;
+        let gLiveTrackingPolyline = null;
         let gAccuracyCircle = null;
         let gBeaconMarker = null;
         let gRoutePolyline = null;
@@ -3207,6 +3348,139 @@
             } else if (pathCoordinates.length === 1) {
                 gMapInstance.panTo(pathCoordinates[0]);
                 gMapInstance.setZoom(16);
+            }
+        });
+
+        function renderDriverLocationGoogle(detail) {
+            if (!gMapInstance) return;
+            const { lat, lng, status, driverName, pickupLat, pickupLng, dropoffLat, dropoffLng } = detail;
+            const driverPos = { lat: Number(lat), lng: Number(lng) };
+
+            const carSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="22" fill="#0f172a" stroke="#f59e0b" stroke-width="2.5"/>
+                    <circle cx="24" cy="24" r="18" fill="#1e293b"/>
+                    <path d="M15 28 L17 21 C17.5 19.5 19 18.5 20.5 18.5 L27.5 18.5 C29 18.5 30.5 19.5 31 21 L33 28" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+                    <rect x="14" y="27" width="20" height="7" rx="3.5" fill="#f59e0b"/>
+                    <circle cx="17.5" cy="33.5" r="2" fill="#0f172a"/>
+                    <circle cx="30.5" cy="33.5" r="2" fill="#0f172a"/>
+                    <circle cx="17" cy="29" r="1.2" fill="#ffffff"/>
+                    <circle cx="31" cy="29" r="1.2" fill="#ffffff"/>
+                    <rect x="19" y="21" width="10" height="4.5" rx="1.5" fill="#38bdf8" fill-opacity="0.9"/>
+                </svg>
+            `);
+
+            if (!gLiveDriverMarker) {
+                gLiveDriverMarker = new google.maps.Marker({
+                    position: driverPos,
+                    map: gMapInstance,
+                    zIndex: 2500,
+                    title: (driverName || 'Driver') + ' (Live GPS)',
+                    icon: {
+                        url: carSvg,
+                        scaledSize: new google.maps.Size(46, 46),
+                        anchor: new google.maps.Point(23, 23)
+                    }
+                });
+            } else {
+                gLiveDriverMarker.setPosition(driverPos);
+            }
+
+            // Draw connected route polyline from moving driver to target (pickup or dropoff)
+            if (gLiveTrackingPolyline) {
+                gLiveTrackingPolyline.setMap(null);
+                gLiveTrackingPolyline = null;
+            }
+
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(driverPos);
+
+            if (['accepted', 'en_route'].includes(status) && pickupLat && pickupLng) {
+                const targetPos = { lat: Number(pickupLat), lng: Number(pickupLng) };
+                bounds.extend(targetPos);
+                gLiveTrackingPolyline = new google.maps.Polyline({
+                    path: [driverPos, targetPos],
+                    geodesic: true,
+                    strokeColor: '#10b981',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 5,
+                    map: gMapInstance
+                });
+                gMapInstance.fitBounds(bounds, { top: 70, right: 70, bottom: 70, left: 70 });
+            } else if (status === 'in_progress' && dropoffLat && dropoffLng) {
+                const targetPos = { lat: Number(dropoffLat), lng: Number(dropoffLng) };
+                bounds.extend(targetPos);
+                gLiveTrackingPolyline = new google.maps.Polyline({
+                    path: [driverPos, targetPos],
+                    geodesic: true,
+                    strokeColor: '#f59e0b',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 5,
+                    map: gMapInstance
+                });
+                gMapInstance.fitBounds(bounds, { top: 70, right: 70, bottom: 70, left: 70 });
+            }
+        }
+
+        function renderDriverLocationLeaflet(detail) {
+            if (!lMapInstance) return;
+            const { lat, lng, status, driverName, pickupLat, pickupLng, dropoffLat, dropoffLng } = detail;
+            const driverLatLng = [Number(lat), Number(lng)];
+
+            if (!lLiveDriverMarker) {
+                const driverIcon = L.divIcon({
+                    html: `
+                        <div class="relative flex items-center justify-center w-11 h-11">
+                            <span class="absolute w-11 h-11 rounded-full bg-amber-500/35 animate-ping"></span>
+                            <div class="relative w-10 h-10 rounded-full bg-slate-900 border-2 border-amber-400 shadow-xl flex items-center justify-center text-lg select-none">
+                                🚗
+                            </div>
+                        </div>
+                    `,
+                    className: 'live-driver-icon',
+                    iconSize: [44, 44],
+                    iconAnchor: [22, 22]
+                });
+                lLiveDriverMarker = L.marker(driverLatLng, { icon: driverIcon, zIndexOffset: 2500 })
+                    .addTo(lMapInstance)
+                    .bindPopup(`<b>${driverName || 'Driver'}</b><br><span style="font-size:11px;color:#f59e0b;">Live GPS Moving</span>`);
+            } else {
+                lLiveDriverMarker.setLatLng(driverLatLng);
+            }
+
+            if (lLiveTrackingPolyline) {
+                lMapInstance.removeLayer(lLiveTrackingPolyline);
+                lLiveTrackingPolyline = null;
+            }
+
+            if (['accepted', 'en_route'].includes(status) && pickupLat && pickupLng) {
+                const targetLatLng = [Number(pickupLat), Number(pickupLng)];
+                lLiveTrackingPolyline = L.polyline([driverLatLng, targetLatLng], {
+                    color: '#10b981',
+                    weight: 5,
+                    opacity: 0.9,
+                    dashArray: '10, 6'
+                }).addTo(lMapInstance);
+                lMapInstance.fitBounds(L.latLngBounds([driverLatLng, targetLatLng]), { padding: [60, 60] });
+            } else if (status === 'in_progress' && dropoffLat && dropoffLng) {
+                const targetLatLng = [Number(dropoffLat), Number(dropoffLng)];
+                lLiveTrackingPolyline = L.polyline([driverLatLng, targetLatLng], {
+                    color: '#f59e0b',
+                    weight: 5,
+                    opacity: 0.9,
+                    dashArray: '10, 6'
+                }).addTo(lMapInstance);
+                lMapInstance.fitBounds(L.latLngBounds([driverLatLng, targetLatLng]), { padding: [60, 60] });
+            }
+        }
+
+        window.addEventListener('update-driver-live-location', function(e) {
+            if (currentMapEngine === 'leaflet') {
+                renderDriverLocationLeaflet(e.detail);
+                return;
+            }
+            if (gMapInstance) {
+                renderDriverLocationGoogle(e.detail);
             }
         });
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -25,6 +26,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   bool _isRespondingToBackup = false;
   Timer? _countdownTimer;
   int _remainingSeconds = 300;
+  BitmapDescriptor? _carMarkerIcon;
 
   @override
   void initState() {
@@ -33,10 +35,48 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     if (initRem != null) {
       _remainingSeconds = int.tryParse(initRem.toString()) ?? 300;
     }
+    _loadCustomCarMarker();
     _startCountdownTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<RideProvider>(context, listen: false).startActiveRidePolling();
     });
+  }
+
+  Future<void> _loadCustomCarMarker() async {
+    try {
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, 96, 96));
+
+      // Glow & border ring
+      final glowPaint = Paint()
+        ..color = const Color(0xFFF59E0B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5.0;
+      canvas.drawCircle(const Offset(48, 48), 44, glowPaint);
+
+      // Dark background
+      final bgPaint = Paint()..color = const Color(0xFF0F172A);
+      canvas.drawCircle(const Offset(48, 48), 41, bgPaint);
+
+      // Car icon text
+      final textPainter = TextPainter(
+        text: const TextSpan(text: '🚗', style: TextStyle(fontSize: 40)),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(48 - textPainter.width / 2, 48 - textPainter.height / 2));
+
+      final picture = recorder.endRecording();
+      final img = await picture.toImage(96, 96);
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData != null && mounted) {
+        setState(() {
+          _carMarkerIcon = BitmapDescriptor.fromBytes(byteData.buffer.asUint8List());
+        });
+      }
+    } catch (e) {
+      debugPrint('Error generating custom car marker: $e');
+    }
   }
 
   void _startCountdownTimer() {
@@ -297,8 +337,20 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     final pickupLng = currentRide['pickup_lng'] != null ? double.tryParse(currentRide['pickup_lng'].toString()) : null;
     final dropoffLat = currentRide['dropoff_lat'] != null ? double.tryParse(currentRide['dropoff_lat'].toString()) : null;
     final dropoffLng = currentRide['dropoff_lng'] != null ? double.tryParse(currentRide['dropoff_lng'].toString()) : null;
-    final driverLat = driver?['current_lat'] != null ? double.tryParse(driver['current_lat'].toString()) : null;
-    final driverLng = driver?['current_lng'] != null ? double.tryParse(driver['current_lng'].toString()) : null;
+    final driverLat = driver?['current_lat'] != null
+        ? double.tryParse(driver['current_lat'].toString())
+        : (currentRide['driver_lat'] != null ? double.tryParse(currentRide['driver_lat'].toString()) : null);
+    final driverLng = driver?['current_lng'] != null
+        ? double.tryParse(driver['current_lng'].toString())
+        : (currentRide['driver_lng'] != null ? double.tryParse(currentRide['driver_lng'].toString()) : null);
+
+    // Live ETA and Real-Time Driver Movement Data
+    final liveEta = currentRide['live_eta'] is Map ? Map<String, dynamic>.from(currentRide['live_eta']) : null;
+    final etaMinutes = liveEta?['eta_minutes'] ?? currentRide['eta_minutes'];
+    final etaArrivalTime = liveEta?['eta_arrival_time'] ?? currentRide['eta_arrival_time'];
+    final etaDistanceText = liveEta?['distance_text'] ?? currentRide['eta_distance_text'];
+    final badgeTitle = liveEta?['badge_title'] ?? currentRide['badge_title'];
+    final badgeSubtitle = liveEta?['badge_subtitle'] ?? currentRide['badge_subtitle'];
 
     final initialPos = LatLng(pickupLat ?? 28.6448, pickupLng ?? 77.2167);
 
@@ -308,18 +360,22 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
         Polyline(
           polylineId: const PolylineId('driver_to_pickup'),
           points: [LatLng(driverLat, driverLng), LatLng(pickupLat, pickupLng)],
-          color: AppColors.primary,
+          color: AppColors.success,
           width: 5,
-          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+          patterns: [PatternItem.dash(18), PatternItem.gap(8)],
         ),
-      if (pickupLat != null && pickupLng != null && dropoffLat != null && dropoffLng != null)
+      if (driverLat != null && driverLng != null && dropoffLat != null && dropoffLng != null && status == 'in_progress')
+        Polyline(
+          polylineId: const PolylineId('driver_to_dropoff'),
+          points: [LatLng(driverLat, driverLng), LatLng(dropoffLat, dropoffLng)],
+          color: const Color(0xFFF59E0B),
+          width: 5,
+        )
+      else if (pickupLat != null && pickupLng != null && dropoffLat != null && dropoffLng != null)
         Polyline(
           polylineId: const PolylineId('trip_route'),
           points: [
-            if (status == 'in_progress' && driverLat != null && driverLng != null)
-              LatLng(driverLat, driverLng)
-            else
-              LatLng(pickupLat, pickupLng),
+            LatLng(pickupLat, pickupLng),
             LatLng(dropoffLat, dropoffLng),
           ],
           color: AppColors.primary,
@@ -361,8 +417,13 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                 Marker(
                   markerId: const MarkerId('driver'),
                   position: LatLng(driverLat, driverLng),
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
-                  infoWindow: InfoWindow(title: driver?['name'] ?? 'Driver'),
+                  icon: _carMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+                  infoWindow: InfoWindow(
+                    title: driver?['name'] ?? 'Driver Live GPS',
+                    snippet: status == 'in_progress'
+                        ? 'Heading to Destination${etaMinutes != null ? " • ~$etaMinutes mins ($etaArrivalTime)" : ""}'
+                        : 'Driving to Pickup${etaMinutes != null ? " • ~$etaMinutes mins ($etaArrivalTime)" : ""}',
+                  ),
                 ),
             },
           ),
@@ -416,10 +477,120 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             ),
           ),
 
+          // Floating Real-Time Driver Moving ETA Badge (Top overlay)
+          if (['accepted', 'en_route', 'arrived', 'in_progress'].contains(status))
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 54,
+              left: 16,
+              right: 80,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceDark.withOpacity(0.96),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: status == 'in_progress'
+                        ? const Color(0xFFF59E0B)
+                        : (status == 'arrived' ? const Color(0xFF3B82F6) : AppColors.success),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (status == 'in_progress' ? const Color(0xFFF59E0B) : AppColors.success).withOpacity(0.25),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: (status == 'in_progress'
+                                ? const Color(0xFFF59E0B)
+                                : (status == 'arrived' ? const Color(0xFF3B82F6) : AppColors.success))
+                            .withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        status == 'in_progress' ? '⚡' : (status == 'arrived' ? '📍' : '🚗'),
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                status == 'in_progress'
+                                    ? 'DESTINATION ETA'
+                                    : (status == 'arrived' ? 'DRIVER ARRIVED' : 'PICKUP ETA'),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                  color: status == 'in_progress'
+                                      ? const Color(0xFFF59E0B)
+                                      : (status == 'arrived' ? const Color(0xFF60A5FA) : AppColors.success),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: status == 'in_progress' ? const Color(0xFFF59E0B) : AppColors.success,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            status == 'arrived'
+                                ? 'Driver waiting at pickup'
+                                : (etaMinutes != null
+                                    ? 'Arriving in ~$etaMinutes mins${etaArrivalTime != null ? ' ($etaArrivalTime)' : ''}'
+                                    : (status == 'in_progress' ? 'Heading to destination' : 'Driver on the way')),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (etaDistanceText != null && etaDistanceText.toString().isNotEmpty)
+                            Text(
+                              status == 'in_progress'
+                                  ? '$etaDistanceText remaining to destination'
+                                  : (status == 'arrived' ? 'Ready to board' : '$etaDistanceText away from pickup'),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Map Corner SOS Emergency Button (Positioned safely below top bar)
           Positioned(
             right: 16,
-            top: 96,
+            top: ['accepted', 'en_route', 'arrived', 'in_progress'].contains(status) ? 128 : 96,
             child: SosFloatingButton(
               rideId: currentRide['id'] as int?,
               role: 'rider',
@@ -557,6 +728,20 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Real-Time Moving Driver & ETA Hero Card (Stage 1 Pickup & Stage 2 Dropoff)
+                      if (['accepted', 'en_route', 'arrived', 'in_progress'].contains(status)) ...[
+                        _buildLiveTrackingEtaHeroCard(
+                          currentRide: currentRide,
+                          status: status,
+                          etaMinutes: etaMinutes,
+                          etaArrivalTime: etaArrivalTime,
+                          etaDistanceText: etaDistanceText,
+                          badgeTitle: badgeTitle,
+                          badgeSubtitle: badgeSubtitle,
+                          driverName: driver?['name'],
+                        ),
+                      ],
 
                       // 4-Digit Secure Ride PIN Verification Card
                       _buildSecurePinCard(currentRide, status),
@@ -1145,6 +1330,277 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveTrackingEtaHeroCard({
+    required Map<String, dynamic> currentRide,
+    required String status,
+    required dynamic etaMinutes,
+    required dynamic etaArrivalTime,
+    required dynamic etaDistanceText,
+    required dynamic badgeTitle,
+    required dynamic badgeSubtitle,
+    String? driverName,
+  }) {
+    final isDropoff = status == 'in_progress';
+    final isArrived = status == 'arrived';
+    final accentColor = isDropoff
+        ? const Color(0xFFF59E0B)
+        : (isArrived ? const Color(0xFF3B82F6) : const Color(0xFF10B981));
+
+    final stageTitle = badgeTitle?.toString() ??
+        (isDropoff
+            ? 'EN ROUTE TO DESTINATION'
+            : (isArrived ? 'DRIVER ARRIVED AT PICKUP' : 'DRIVER MOVING TO PICKUP'));
+
+    final stageSubtitle = badgeSubtitle?.toString() ??
+        (isDropoff
+            ? (etaDistanceText != null ? '$etaDistanceText remaining to destination' : 'Heading directly to dropoff point')
+            : (isArrived
+                ? 'Your driver is waiting outside'
+                : (etaDistanceText != null ? '$etaDistanceText away from your location' : 'Driver on the way')));
+
+    final etaMainDisplay = isArrived
+        ? 'Driver Arrived'
+        : (etaMinutes != null ? '~$etaMinutes min' : (isDropoff ? 'Trip Ongoing' : 'Approaching'));
+
+    final etaArrivalClock = etaArrivalTime != null && etaArrivalTime.toString().isNotEmpty
+        ? (isDropoff ? 'Est. Dropoff: $etaArrivalTime' : 'Est. Pickup: $etaArrivalTime')
+        : (isArrived ? 'Waiting for passenger' : 'GPS Tracking Active');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accentColor.withOpacity(0.45), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Top Status Ribbon
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.14),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withOpacity(0.8),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    stageTitle,
+                    style: TextStyle(
+                      color: accentColor,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: accentColor.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.gps_fixed_rounded, color: accentColor, size: 11),
+                      const SizedBox(width: 4),
+                      Text(
+                        isDropoff ? 'TRIP GPS' : 'PICKUP GPS',
+                        style: TextStyle(
+                          color: accentColor,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Main ETA Body
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: accentColor.withOpacity(0.25)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        isDropoff
+                            ? Icons.navigation_rounded
+                            : (isArrived ? Icons.pin_drop_rounded : Icons.directions_car_filled_rounded),
+                        color: accentColor,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                etaMainDisplay,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              if (etaMinutes != null && !isArrived) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: accentColor.withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'LIVE',
+                                    style: TextStyle(
+                                      color: accentColor,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            stageSubtitle,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.75),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+                const Divider(color: Colors.white10, height: 1),
+                const SizedBox(height: 10),
+
+                // Arrival Clock Time & Distance details row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.schedule_rounded, color: accentColor, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                etaArrivalClock,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (etaDistanceText != null && etaDistanceText.toString().isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.route_rounded, color: Colors.white70, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              etaDistanceText.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

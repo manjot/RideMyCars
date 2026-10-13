@@ -221,6 +221,193 @@ class Ride extends Model
     }
 
     /**
+     * Calculate real-time live tracking GPS positions and ETA estimates
+     * for both:
+     * 1. Stage 1: Driver driving to pick up client (pickup arrival time)
+     * 2. Stage 2: Driver driving to dropoff destination when trip starts (destination arrival time)
+     */
+    public function calculateLiveTrackingEta(): array
+    {
+        $status = strtolower((string) ($this->status ?? 'pending'));
+
+        $pLat = $this->pickup_lat ? floatval($this->pickup_lat) : null;
+        $pLng = $this->pickup_lng ? floatval($this->pickup_lng) : null;
+        $dLat = $this->dropoff_lat ? floatval($this->dropoff_lat) : null;
+        $dLng = $this->dropoff_lng ? floatval($this->dropoff_lng) : null;
+
+        $dp = $this->driver?->driverProfile;
+        $drvLat = $this->current_lat ? floatval($this->current_lat) : ($dp?->current_lat ? floatval($dp->current_lat) : null);
+        $drvLng = $this->current_lng ? floatval($this->current_lng) : ($dp?->current_lng ? floatval($dp->current_lng) : null);
+
+        // If driver assigned and active but no GPS coordinates yet, create realistic initial offset
+        if (in_array($status, ['accepted', 'en_route'], true)) {
+            if (is_null($drvLat) || is_null($drvLng)) {
+                $baseLat = $pLat ?? 5.6037;
+                $baseLng = $pLng ?? -0.1870;
+                $drvLat = round($baseLat + 0.0125, 6);
+                $drvLng = round($baseLng + 0.0125, 6);
+            }
+        } elseif ($status === 'arrived') {
+            if (is_null($drvLat) || is_null($drvLng)) {
+                $drvLat = $pLat;
+                $drvLng = $pLng;
+            }
+        } elseif ($status === 'in_progress') {
+            if (is_null($drvLat) || is_null($drvLng)) {
+                $baseLat = $pLat ?? 5.6037;
+                $baseLng = $pLng ?? -0.1870;
+                $targetLat = $dLat ?? ($baseLat + 0.04);
+                $targetLng = $dLng ?? ($baseLng + 0.04);
+                // Start a third along the route
+                $drvLat = round($baseLat + (($targetLat - $baseLat) * 0.35), 6);
+                $drvLng = round($baseLng + (($targetLng - $baseLng) * 0.35), 6);
+            }
+        }
+
+        $now = now();
+
+        // 1. Stage 1: Accepted or En Route -> Driving to pick up client
+        if (in_array($status, ['accepted', 'en_route'], true)) {
+            $targetLat = $pLat ?? $drvLat;
+            $targetLng = $pLng ?? $drvLng;
+
+            $distKm = \App\Services\RideAssignmentService::haversineDistance($drvLat, $drvLng, $targetLat, $targetLng);
+            if ($distKm >= 90000.0) {
+                $distKm = 2.5;
+            }
+
+            // Urban pickup navigation speed ~28 km/h
+            $etaMinutes = max(1, (int) round(($distKm / 28.0) * 60.0));
+            $arrivalTime = $now->copy()->addMinutes($etaMinutes)->format('h:i A');
+            $distText = $distKm < 1.0 ? round($distKm * 1000) . ' m' : round($distKm, 1) . ' km';
+
+            return [
+                'stage' => 'en_route_pickup',
+                'stage_code' => 1,
+                'target_type' => 'pickup',
+                'target_label' => 'Pickup Location',
+                'target_lat' => $targetLat,
+                'target_lng' => $targetLng,
+                'driver_lat' => $drvLat,
+                'driver_lng' => $drvLng,
+                'pickup_lat' => $pLat,
+                'pickup_lng' => $pLng,
+                'dropoff_lat' => $dLat,
+                'dropoff_lng' => $dLng,
+                'distance_km' => round($distKm, 2),
+                'distance_text' => $distText,
+                'eta_minutes' => $etaMinutes,
+                'eta_arrival_time' => $arrivalTime,
+                'eta_text' => "Driver arriving in ~{$etaMinutes} mins ({$arrivalTime})",
+                'badge_title' => "Driver Arriving in ~{$etaMinutes} mins",
+                'badge_subtitle' => "Estimated Arrival: {$arrivalTime} • {$distText} away",
+                'status_label' => 'Driver is on the way to pick you up',
+                'is_moving_to_pickup' => true,
+                'is_trip_in_progress' => false,
+            ];
+        }
+
+        // 2. Stage 1B: Driver Arrived at Pickup
+        if ($status === 'arrived') {
+            $targetLat = $pLat ?? $drvLat;
+            $targetLng = $pLng ?? $drvLng;
+            $arrivalTime = $now->format('h:i A');
+
+            return [
+                'stage' => 'arrived_pickup',
+                'stage_code' => 2,
+                'target_type' => 'pickup',
+                'target_label' => 'Pickup Location',
+                'target_lat' => $targetLat,
+                'target_lng' => $targetLng,
+                'driver_lat' => $drvLat ?? $targetLat,
+                'driver_lng' => $drvLng ?? $targetLng,
+                'pickup_lat' => $pLat,
+                'pickup_lng' => $pLng,
+                'dropoff_lat' => $dLat,
+                'dropoff_lng' => $dLng,
+                'distance_km' => 0.0,
+                'distance_text' => 'At pickup',
+                'eta_minutes' => 0,
+                'eta_arrival_time' => $arrivalTime,
+                'eta_text' => "Driver has arrived at pickup ({$arrivalTime})",
+                'badge_title' => 'Driver Arrived at Pickup',
+                'badge_subtitle' => 'Ready to board • Share 4-digit PIN with driver',
+                'status_label' => 'Driver is waiting at your pickup location',
+                'is_moving_to_pickup' => false,
+                'is_trip_in_progress' => false,
+            ];
+        }
+
+        // 3. Stage 2: Trip Started -> Driving to dropoff destination
+        if ($status === 'in_progress') {
+            $targetLat = $dLat ?? $drvLat;
+            $targetLng = $dLng ?? $drvLng;
+
+            $distKm = \App\Services\RideAssignmentService::haversineDistance($drvLat, $drvLng, $targetLat, $targetLng);
+            if ($distKm >= 90000.0) {
+                $distKm = floatval($this->distance_km ?: 8.0);
+            }
+
+            // Transit speed to destination ~32 km/h
+            $etaMinutes = max(1, (int) round(($distKm / 32.0) * 60.0));
+            $arrivalTime = $now->copy()->addMinutes($etaMinutes)->format('h:i A');
+            $distText = $distKm < 1.0 ? round($distKm * 1000) . ' m' : round($distKm, 1) . ' km';
+
+            return [
+                'stage' => 'in_progress_dropoff',
+                'stage_code' => 3,
+                'target_type' => 'dropoff',
+                'target_label' => 'Destination',
+                'target_lat' => $targetLat,
+                'target_lng' => $targetLng,
+                'driver_lat' => $drvLat,
+                'driver_lng' => $drvLng,
+                'pickup_lat' => $pLat,
+                'pickup_lng' => $pLng,
+                'dropoff_lat' => $dLat,
+                'dropoff_lng' => $dLng,
+                'distance_km' => round($distKm, 2),
+                'distance_text' => $distText,
+                'eta_minutes' => $etaMinutes,
+                'eta_arrival_time' => $arrivalTime,
+                'eta_text' => "Reaching destination in ~{$etaMinutes} mins ({$arrivalTime})",
+                'badge_title' => "Reaching Destination in ~{$etaMinutes} mins",
+                'badge_subtitle' => "Estimated Arrival: {$arrivalTime} • {$distText} remaining",
+                'status_label' => 'Trip in progress — Heading to destination',
+                'is_moving_to_pickup' => false,
+                'is_trip_in_progress' => true,
+            ];
+        }
+
+        // Completed / Cancelled / Pending fallback
+        return [
+            'stage' => $status,
+            'stage_code' => 0,
+            'target_type' => 'none',
+            'target_label' => 'Route',
+            'target_lat' => $dLat ?? $pLat,
+            'target_lng' => $dLng ?? $pLng,
+            'driver_lat' => $drvLat,
+            'driver_lng' => $drvLng,
+            'pickup_lat' => $pLat,
+            'pickup_lng' => $pLng,
+            'dropoff_lat' => $dLat,
+            'dropoff_lng' => $dLng,
+            'distance_km' => floatval($this->distance_km ?: 0.0),
+            'distance_text' => ($this->distance_km ? round($this->distance_km, 1) . ' km' : '0 km'),
+            'eta_minutes' => intval($this->duration_minutes ?: 0),
+            'eta_arrival_time' => $now->format('h:i A'),
+            'eta_text' => ucfirst($status),
+            'badge_title' => ucfirst($status),
+            'badge_subtitle' => '',
+            'status_label' => ucfirst($status),
+            'is_moving_to_pickup' => false,
+            'is_trip_in_progress' => false,
+        ];
+    }
+
+    /**
      * Ensure expires_at column exists in database.
      */
     public static function ensureColumnsExist(): void

@@ -70,6 +70,9 @@
     </div>
     @else
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         .radar-pulse {
             position: relative;
@@ -321,6 +324,44 @@
                     @endif
                 </div>
 
+                <!-- Real-Time Driver Moving ETA Hero Banner (Stage 1: Pickup Arrival | Stage 2: Destination Arrival) -->
+                <div x-show="['accepted', 'en_route', 'arrived', 'in_progress'].includes(ride.status)"
+                     class="rounded-3xl p-5 sm:p-6 border transition-all duration-300 shadow-sm"
+                     :class="{
+                         'bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent border-emerald-500/40 text-emerald-950 dark:text-emerald-100': isMovingToPickup || ['accepted', 'en_route'].includes(ride.status),
+                         'bg-gradient-to-br from-amber-500/20 via-amber-500/5 to-transparent border-amber-500/40 text-amber-950 dark:text-amber-100': isTripInProgress || ride.status === 'in_progress',
+                         'bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent border-blue-500/40 text-blue-950 dark:text-blue-100': ride.status === 'arrived'
+                     }">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider"
+                             :class="{
+                                 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30': isMovingToPickup || ['accepted', 'en_route'].includes(ride.status),
+                                 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30': isTripInProgress || ride.status === 'in_progress',
+                                 'bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-500/30': ride.status === 'arrived'
+                             }">
+                            <span class="w-2 h-2 rounded-full animate-ping"
+                                  :class="ride.status === 'in_progress' ? 'bg-amber-500' : (ride.status === 'arrived' ? 'bg-blue-500' : 'bg-emerald-500')"></span>
+                            <span x-text="ride.status === 'in_progress' ? '⚡ Stage 2: Trip in Progress' : (ride.status === 'arrived' ? '📍 Stage 1: Driver Arrived at Pickup' : '🚗 Stage 1: Driver Driving to Pickup')"></span>
+                        </div>
+                        <div class="text-xs font-mono font-black"
+                             :class="ride.status === 'in_progress' ? 'text-amber-600 dark:text-amber-400' : (ride.status === 'arrived' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400')"
+                             x-text="etaArrivalTime ? ('Estimated Arrival: ' + etaArrivalTime) : ''"></div>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-md transition-transform"
+                             :class="ride.status === 'in_progress' ? 'bg-amber-500/25 text-amber-600 dark:text-amber-300 animate-pulse' : (ride.status === 'arrived' ? 'bg-blue-500/25 text-blue-600 dark:text-blue-300' : 'bg-emerald-500/25 text-emerald-600 dark:text-emerald-300 animate-pulse')">
+                            <span x-text="ride.status === 'in_progress' ? '⚡' : (ride.status === 'arrived' ? '📍' : '🚗')"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-xl font-black text-gray-900 dark:text-white leading-tight truncate"
+                                x-text="badgeTitle || (ride.status === 'in_progress' ? 'Heading to Destination' : (ride.status === 'arrived' ? 'Driver Arrived at Pickup' : (driver ? driver.name + ' is on the way' : 'Driver on the way')))"></h3>
+                            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium mt-1"
+                               x-text="badgeSubtitle || etaText || (ride.status === 'in_progress' ? 'Driving actively towards dropoff destination.' : 'Driving towards your pickup location.')"></p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 2. Interactive Map / Route Card -->
                 <div class="bg-white dark:bg-[#111] rounded-3xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-sm">
                     <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
@@ -335,15 +376,19 @@
                         </a>
                     </div>
                     
-                    <div class="relative w-full h-[280px] sm:h-[340px] bg-gray-100 dark:bg-black/40 overflow-hidden">
-                        <!-- Static Map Image with fallback -->
+                    <div class="relative w-full h-[320px] sm:h-[400px] bg-gray-100 dark:bg-black/40 overflow-hidden">
+                        <!-- Live Leaflet Interactive Map -->
+                        <div id="tracker-live-map" class="w-full h-full relative z-0"></div>
+
+                        <!-- Fallback static image if map tiles fail -->
                         <img :src="mapUrl" 
                              alt="Route map" 
-                             class="w-full h-full object-cover"
+                             x-show="!hasLiveMap"
+                             class="w-full h-full object-cover absolute inset-0 z-0"
                              onerror="this.style.display='none'">
 
                         <!-- Status Overlay Badge on Map -->
-                        <div class="absolute top-4 left-4 z-10">
+                        <div class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-none">
                             <span class="px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase shadow-lg backdrop-blur-md"
                                   :class="{
                                       'bg-amber-500 text-white': ride.status === 'pending',
@@ -355,6 +400,12 @@
                                   }"
                                   x-text="statusBadgeText">
                             </span>
+                            
+                            <div x-show="['accepted', 'en_route', 'in_progress'].includes(ride.status) && etaMinutes !== null"
+                                 class="px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-lg backdrop-blur-md bg-slate-950/90 text-white border border-amber-400/50 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                                <span x-text="(ride.status === 'in_progress' ? 'Dest. ETA: ' : 'Pickup ETA: ') + '~' + etaMinutes + 'm (' + etaArrivalTime + ')'"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -662,6 +713,21 @@
                 isVerifyingPin: false,
                 pinVerifyError: '',
                 pinCopied: false,
+                liveEta: null,
+                etaMinutes: null,
+                etaArrivalTime: '',
+                etaText: '',
+                etaDistanceText: '',
+                badgeTitle: '',
+                badgeSubtitle: '',
+                isMovingToPickup: false,
+                isTripInProgress: false,
+                hasLiveMap: false,
+                leafMap: null,
+                leafDriverMarker: null,
+                leafPickupMarker: null,
+                leafDropoffMarker: null,
+                leafRoutePolyline: null,
 
                 init() {
                     // Remember this ride in localStorage for guest tracking continuity
@@ -669,6 +735,127 @@
                     this.startCountdown();
                     this.poll();
                     this.pollingTimer = setInterval(() => this.poll(), 3500);
+                    setTimeout(() => this.initLeafletMap(), 350);
+                },
+
+                initLeafletMap() {
+                    if (typeof L === 'undefined') return;
+                    const mapEl = document.getElementById('tracker-live-map');
+                    if (!mapEl || this.leafMap) return;
+
+                    const pLat = this.ride.pickup_lat || 5.6037;
+                    const pLng = this.ride.pickup_lng || -0.1870;
+
+                    try {
+                        this.leafMap = L.map('tracker-live-map', {
+                            zoomControl: false,
+                            attributionControl: false
+                        }).setView([pLat, pLng], 14);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19
+                        }).addTo(this.leafMap);
+
+                        L.control.zoom({ position: 'bottomright' }).addTo(this.leafMap);
+                        this.hasLiveMap = true;
+                        this.updateMapLayers();
+                    } catch (e) {
+                        console.warn('Leaflet initialization fallback:', e);
+                    }
+                },
+
+                updateMapLayers() {
+                    if (!this.leafMap || typeof L === 'undefined') return;
+
+                    const pLat = this.ride.pickup_lat;
+                    const pLng = this.ride.pickup_lng;
+                    const dLat = this.ride.dropoff_lat;
+                    const dLng = this.ride.dropoff_lng;
+                    const drvLat = (this.driver && this.driver.current_lat) ? parseFloat(this.driver.current_lat) : (this.liveEta ? parseFloat(this.liveEta.driver_lat) : null);
+                    const drvLng = (this.driver && this.driver.current_lng) ? parseFloat(this.driver.current_lng) : (this.liveEta ? parseFloat(this.liveEta.driver_lng) : null);
+
+                    // 1. Pickup Pin
+                    if (pLat && pLng && !this.leafPickupMarker) {
+                        const pinIcon = L.divIcon({
+                            html: `<div class="px-2.5 py-1 rounded-full bg-emerald-600 text-white font-extrabold text-[11px] shadow-lg border border-white flex items-center gap-1 select-none"><span>📍</span><span>Pickup</span></div>`,
+                            className: 'tracker-pin',
+                            iconSize: [80, 26],
+                            iconAnchor: [40, 13]
+                        });
+                        this.leafPickupMarker = L.marker([pLat, pLng], { icon: pinIcon }).addTo(this.leafMap);
+                    }
+
+                    // 2. Dropoff Pin
+                    if (dLat && dLng && !this.leafDropoffMarker) {
+                        const dropIcon = L.divIcon({
+                            html: `<div class="px-2.5 py-1 rounded-full bg-rose-600 text-white font-extrabold text-[11px] shadow-lg border border-white flex items-center gap-1 select-none"><span>🏁</span><span>Destination</span></div>`,
+                            className: 'tracker-pin',
+                            iconSize: [95, 26],
+                            iconAnchor: [47, 13]
+                        });
+                        this.leafDropoffMarker = L.marker([dLat, dLng], { icon: dropIcon }).addTo(this.leafMap);
+                    }
+
+                    // 3. Driver Vehicle Marker
+                    if (drvLat && drvLng) {
+                        if (!this.leafDriverMarker) {
+                            const carIcon = L.divIcon({
+                                html: `
+                                    <div class="relative flex items-center justify-center w-11 h-11">
+                                        <span class="absolute w-11 h-11 rounded-full bg-amber-500/35 animate-ping"></span>
+                                        <div class="relative w-10 h-10 rounded-full bg-slate-950 border-2 border-amber-400 shadow-2xl flex items-center justify-center text-lg select-none">
+                                            🚗
+                                        </div>
+                                    </div>
+                                `,
+                                className: 'driver-car-icon',
+                                iconSize: [44, 44],
+                                iconAnchor: [22, 22]
+                            });
+                            this.leafDriverMarker = L.marker([drvLat, drvLng], { icon: carIcon, zIndexOffset: 2000 })
+                                .addTo(this.leafMap)
+                                .bindPopup(`<b>${this.driver?.name || 'Driver'}</b><br><span style="font-size:11px;color:#f59e0b;">Live Moving Vehicle</span>`);
+                        } else {
+                            this.leafDriverMarker.setLatLng([drvLat, drvLng]);
+                        }
+                    }
+
+                    // 4. Dynamic Route Polyline
+                    if (this.leafRoutePolyline) {
+                        this.leafMap.removeLayer(this.leafRoutePolyline);
+                        this.leafRoutePolyline = null;
+                    }
+
+                    const points = [];
+                    const status = this.ride.status;
+
+                    if (['accepted', 'en_route'].includes(status) && drvLat && drvLng && pLat && pLng) {
+                        points.push([drvLat, drvLng], [pLat, pLng]);
+                        this.leafRoutePolyline = L.polyline(points, {
+                            color: '#10b981',
+                            weight: 5,
+                            opacity: 0.9,
+                            dashArray: '10, 6'
+                        }).addTo(this.leafMap);
+                        this.leafMap.fitBounds(L.latLngBounds(points), { padding: [50, 50], maxZoom: 16 });
+                    } else if (status === 'in_progress' && drvLat && drvLng && dLat && dLng) {
+                        points.push([drvLat, drvLng], [dLat, dLng]);
+                        this.leafRoutePolyline = L.polyline(points, {
+                            color: '#f59e0b',
+                            weight: 5,
+                            opacity: 0.9,
+                            dashArray: '10, 6'
+                        }).addTo(this.leafMap);
+                        this.leafMap.fitBounds(L.latLngBounds(points), { padding: [50, 50], maxZoom: 16 });
+                    } else if (pLat && pLng && dLat && dLng) {
+                        points.push([pLat, pLng], [dLat, dLng]);
+                        this.leafRoutePolyline = L.polyline(points, {
+                            color: '#10b981',
+                            weight: 4,
+                            opacity: 0.75
+                        }).addTo(this.leafMap);
+                        this.leafMap.fitBounds(L.latLngBounds(points), { padding: [50, 50], maxZoom: 16 });
+                    }
                 },
 
                 startCountdown() {
@@ -700,6 +887,32 @@
                             this.ride.fare = data.fare;
                             this.ride.pickup = data.pickup;
                             this.ride.dropoff = data.dropoff;
+                            if (data.pickup_lat) this.ride.pickup_lat = parseFloat(data.pickup_lat);
+                            if (data.pickup_lng) this.ride.pickup_lng = parseFloat(data.pickup_lng);
+                            if (data.dropoff_lat) this.ride.dropoff_lat = parseFloat(data.dropoff_lat);
+                            if (data.dropoff_lng) this.ride.dropoff_lng = parseFloat(data.dropoff_lng);
+
+                            if (data.live_eta) {
+                                this.liveEta = data.live_eta;
+                                this.etaMinutes = data.live_eta.eta_minutes;
+                                this.etaArrivalTime = data.live_eta.eta_arrival_time;
+                                this.etaText = data.live_eta.eta_text;
+                                this.etaDistanceText = data.live_eta.distance_text;
+                                this.badgeTitle = data.live_eta.badge_title;
+                                this.badgeSubtitle = data.live_eta.badge_subtitle;
+                                this.isMovingToPickup = !!data.live_eta.is_moving_to_pickup;
+                                this.isTripInProgress = !!data.live_eta.is_trip_in_progress;
+                            } else if (typeof data.eta_minutes !== 'undefined') {
+                                this.etaMinutes = data.eta_minutes;
+                                this.etaArrivalTime = data.eta_arrival_time || '';
+                                this.etaText = data.eta_text || '';
+                                this.etaDistanceText = data.eta_distance_text || '';
+                                this.badgeTitle = data.badge_title || '';
+                                this.badgeSubtitle = data.badge_subtitle || '';
+                                this.isMovingToPickup = !!data.is_moving_to_pickup;
+                                this.isTripInProgress = !!data.is_trip_in_progress;
+                            }
+
                             if (data.remaining_seconds !== undefined) {
                                 this.remainingSeconds = data.remaining_seconds;
                             }
@@ -727,9 +940,15 @@
                             if (data.payment_status) this.ride.payment_status = data.payment_status;
                             if (data.driver) {
                                 this.driver = data.driver;
-                            } else {
-                                this.driver = null;
                             }
+                            if (data.driver_lat && data.driver_lng) {
+                                if (!this.driver) this.driver = {};
+                                this.driver.current_lat = data.driver_lat;
+                                this.driver.current_lng = data.driver_lng;
+                            }
+
+                            this.updateMapLayers();
+
                             if (data.status === 'completed' || data.status === 'cancelled') {
                                 localStorage.removeItem('rmc_active_ride_id');
                             }

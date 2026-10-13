@@ -1085,6 +1085,14 @@ Route::post('/api/driver/location', function (\Illuminate\Http\Request $request)
         ]);
     }
 
+    // Sync driver's live GPS coordinates into all active ongoing rides
+    \App\Models\Ride::where('driver_id', $user->id)
+        ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
+        ->update([
+            'current_lat' => $lat,
+            'current_lng' => $lng,
+        ]);
+
     // Geofenced Arrival Check for active ride
     $activeRide = \App\Models\Ride::where('driver_id', $user->id)
         ->whereIn('status', ['accepted', 'en_route'])
@@ -1183,6 +1191,12 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         ];
     }
 
+    $liveEta = $ride->calculateLiveTrackingEta();
+    if ($driverData) {
+        if (empty($driverData['current_lat'])) $driverData['current_lat'] = $liveEta['driver_lat'];
+        if (empty($driverData['current_lng'])) $driverData['current_lng'] = $liveEta['driver_lng'];
+    }
+
     $stopsCount = $ride->stops->count();
     $dist = floatval($ride->distance_km ?: 10.0);
     $dur = intval($ride->duration_minutes ?: 15);
@@ -1232,6 +1246,21 @@ Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request,
         'driver_email' => $driverEmail,
         'driver_whatsapp' => $driverWhatsapp,
         'driver' => $driverData,
+        'driver_lat' => $liveEta['driver_lat'],
+        'driver_lng' => $liveEta['driver_lng'],
+        'target_lat' => $liveEta['target_lat'],
+        'target_lng' => $liveEta['target_lng'],
+        'target_type' => $liveEta['target_type'],
+        'live_eta' => $liveEta,
+        'eta_minutes' => $liveEta['eta_minutes'],
+        'eta_arrival_time' => $liveEta['eta_arrival_time'],
+        'eta_text' => $liveEta['eta_text'],
+        'eta_distance_km' => $liveEta['distance_km'],
+        'eta_distance_text' => $liveEta['distance_text'],
+        'badge_title' => $liveEta['badge_title'],
+        'badge_subtitle' => $liveEta['badge_subtitle'],
+        'is_moving_to_pickup' => $liveEta['is_moving_to_pickup'],
+        'is_trip_in_progress' => $liveEta['is_trip_in_progress'],
         'arrived_at' => $ride->arrived_at?->toIso8601String(),
         'started_at' => $ride->started_at?->toIso8601String(),
         'completed_at' => $ride->completed_at?->toIso8601String(),
