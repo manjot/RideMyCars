@@ -7,6 +7,7 @@ import '../../providers/country_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../account/manage_account_screen.dart';
+import '../account/verification_documents_screen.dart';
 import '../auth/driver_login_screen.dart';
 import '../earnings/driver_earnings_screen.dart';
 import '../earnings/incentives_screen.dart';
@@ -484,7 +485,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
               // Incentive Quick Banner
               _buildIncentiveQuickBanner(context),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+
+              // Document Verification Quick Banner
+              _buildVerificationQuickBanner(context),
+              const SizedBox(height: 18),
 
               // Active Rides Section (PRIORITY #1 AT TOP OF CONSOLE)
               if (driver.activeRides.isNotEmpty) ...[
@@ -1561,6 +1566,94 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 children: [
                   Text(
                     'VIEW',
+                    style: TextStyle(
+                      color: AppColors.backgroundDark,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(width: 3),
+                  Icon(Icons.arrow_forward_ios_rounded, color: AppColors.backgroundDark, size: 9),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationQuickBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VerificationDocumentsScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.primary.withOpacity(0.35), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Document Verification',
+                    style: TextStyle(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Vehicle Certs, ID Card & Driver License',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'VERIFY',
                     style: TextStyle(
                       color: AppColors.backgroundDark,
                       fontSize: 10,
@@ -3161,6 +3254,24 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageAccountScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.verified_user_rounded, color: AppColors.primary),
+                    title: const Text('Verification Documents', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Vehicle Certs, ID Card & License', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                      ),
+                      child: const Text('VERIFY', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationDocumentsScreen()));
                     },
                   ),
                   ListTile(

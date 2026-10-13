@@ -841,6 +841,7 @@
 
                     <!-- Vehicle Insurance & Vehicle Fitness (Roadworthy) Certificate Upload Section -->
                     <div id="vehicle-certificates-section" class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-sm mb-8">
+                        <span id="vehicleCertificatesSection" class="relative -top-28"></span>
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-gray-100 dark:border-white/10">
                             <div>
                                 <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">

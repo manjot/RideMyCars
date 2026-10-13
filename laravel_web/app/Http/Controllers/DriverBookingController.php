@@ -560,6 +560,86 @@ class DriverBookingController extends Controller
     }
 
     /**
+     * Driver submits Vehicle Certificates (Insurance & Roadworthy/Fitness) verification.
+     */
+    public function submitVehicleCertificates(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !$user->driverProfile) {
+            return back()->withErrors(['verification' => 'Driver profile not found.']);
+        }
+
+        $request->validate([
+            'insurance_policy_number' => 'nullable|string|max:100',
+            'vehicle_insurance_expiry' => 'nullable|date',
+            'insurance_expiry' => 'nullable|date',
+            'vehicle_insurance' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'insurance_certificate' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'roadworthy_number' => 'nullable|string|max:100',
+            'vehicle_fitness_expiry' => 'nullable|date',
+            'roadworthy_expiry' => 'nullable|date',
+            'vehicle_fitness' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'roadworthy_certificate' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+        ]);
+
+        $updateData = [];
+
+        if ($request->filled('insurance_policy_number')) {
+            $updateData['insurance_policy_number'] = $request->input('insurance_policy_number');
+        }
+
+        $insExpiry = $request->input('vehicle_insurance_expiry') ?? $request->input('insurance_expiry');
+        if ($insExpiry) {
+            $updateData['vehicle_insurance_expiry'] = $insExpiry;
+            $updateData['insurance_expiry'] = $insExpiry;
+        }
+
+        $rwExpiry = $request->input('vehicle_fitness_expiry') ?? $request->input('roadworthy_expiry');
+        if ($rwExpiry) {
+            $updateData['vehicle_fitness_expiry'] = $rwExpiry;
+            $updateData['roadworthy_expiry'] = $rwExpiry;
+        }
+
+        if ($request->filled('roadworthy_number')) {
+            $updateData['roadworthy_number'] = $request->input('roadworthy_number');
+        }
+
+        $insFile = $request->file('vehicle_insurance') ?? $request->file('insurance_certificate');
+        if ($insFile) {
+            $path = $insFile->store('driver_certificates/insurance', 'public');
+            $updateData['vehicle_insurance_image'] = $path;
+            $updateData['insurance_certificate'] = $path;
+            $updateData['vehicle_insurance_status'] = 'submitted';
+            $updateData['insurance_status'] = 'submitted';
+            $updateData['vehicle_insurance_rejection_reason'] = null;
+            $updateData['insurance_rejection_reason'] = null;
+        }
+
+        $rwFile = $request->file('vehicle_fitness') ?? $request->file('roadworthy_certificate');
+        if ($rwFile) {
+            $path = $rwFile->store('driver_certificates/fitness', 'public');
+            $updateData['vehicle_fitness_image'] = $path;
+            $updateData['roadworthy_certificate'] = $path;
+            $updateData['vehicle_fitness_status'] = 'submitted';
+            $updateData['roadworthy_status'] = 'submitted';
+            $updateData['vehicle_fitness_rejection_reason'] = null;
+            $updateData['roadworthy_rejection_reason'] = null;
+        }
+
+        if (!empty($updateData)) {
+            $user->driverProfile->update($updateData);
+
+            ActivityLogService::log(
+                'vehicle_certificates_submitted',
+                "Driver {$user->name} submitted vehicle insurance & roadworthiness certificates for verification",
+                $user->id
+            );
+        }
+
+        return back()->with('success', 'Vehicle insurance & roadworthiness certificates submitted successfully for admin review.');
+    }
+
+    /**
      * Client submits review for completed booking.
      */
     public function storeReview(DriverBooking $booking, Request $request)

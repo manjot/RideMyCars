@@ -547,6 +547,8 @@ Route::post('/hire-driver/calculate-price', [DriverBookingController::class, 'ca
 Route::post('/hire-driver/book', [DriverBookingController::class, 'storeBooking']);
 Route::get('/driver-booking/{booking}', [DriverBookingController::class, 'confirmation'])->name('driver-booking.confirmation');
 Route::post('/driver-booking/{booking}/update-status', [DriverBookingController::class, 'updateBookingStatus']);
+Route::post('/driver/upload-vehicle-certificates', [DriverBookingController::class, 'submitVehicleCertificates']);
+Route::post('/driver/vehicle-certificates', [DriverBookingController::class, 'submitVehicleCertificates']);
 Route::post('/driver/verify-license', [DriverBookingController::class, 'submitLicenseVerification']);
 Route::post('/driver/verify-id-card', [DriverBookingController::class, 'submitIdCardVerification']);
 Route::post('/driver/submit-guarantor', [DriverBookingController::class, 'submitGuarantorVerification']);
@@ -2629,6 +2631,14 @@ Route::get('/account', function () {
     $user = auth()->user();
     $vehicles = $user->vehicles()->latest()->get();
     $driverProfile = $user->driverProfile;
+    if (!$driverProfile && (in_array($user->role, ['driver', 'chauffeur']) || request('as_driver') == 1)) {
+        $driverProfile = \App\Models\DriverProfile::firstOrCreate(['user_id' => $user->id], [
+            'license_number' => 'DL-' . strtoupper(\Illuminate\Support\Str::random(6)),
+            'hourly_rate' => 25.00,
+            'country' => $user->country ?? 'USA',
+            'is_chauffeur' => ($user->role === 'chauffeur'),
+        ]);
+    }
     $receipts = \App\Models\Receipt::where('user_id', $user->id)
         ->latest()
         ->paginate(20);

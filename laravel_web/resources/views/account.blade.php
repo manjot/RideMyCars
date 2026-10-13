@@ -127,12 +127,35 @@
                             </button>
                         @endif
 
-                        @if($user->role === 'driver' || isset($driverProfile))
+                        @php
+                            $dProf = $driverProfile ?? $user->driverProfile;
+                        @endphp
+
+                        @if($user->role === 'driver' || $user->role === 'chauffeur' || $dProf)
+                            <!-- Driver Verification Documents Tab -->
+                            @php
+                                $isAllVerified = $dProf && ($dProf->is_verified || $dProf->verification_status === 'verified');
+                                $isPending = $dProf && ($dProf->verification_status === 'pending' || $dProf->insurance_status === 'submitted' || $dProf->id_card_status === 'submitted');
+                            @endphp
+                            <button type="button" @click="setTab('verification_documents')" 
+                                    :style="currentTab === 'verification_documents' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
+                                    :class="currentTab === 'verification_documents' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                    class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    <span>Verification Documents</span>
+                                </div>
+                                <span :class="currentTab === 'verification_documents' ? 'bg-slate-950 text-amber-400' : '{{ $isAllVerified ? 'bg-emerald-500 text-slate-950' : ($isPending ? 'bg-amber-400 text-slate-950' : 'bg-rose-500 text-white') }}'" 
+                                      class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+                                    {{ $isAllVerified ? 'VERIFIED' : ($isPending ? 'PENDING' : 'VERIFY') }}
+                                </span>
+                            </button>
+
                             <!-- Driver Dashboard Link -->
                             <a href="/driver/dashboard" 
                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl hover:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-between font-bold">
                                 <div class="flex items-center gap-3">
-                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
                                     <span>Driver Portal</span>
                                 </div>
                                 <span>&rarr;</span>
@@ -1406,6 +1429,327 @@
                             </a>
                         </div>
                     </div>
+                <!-- 8. DRIVER & CHAUFFEUR VERIFICATION DOCUMENTS TAB -->
+                @php
+                    $dp = $driverProfile ?? $user->driverProfile;
+                @endphp
+                <div x-show="currentTab === 'verification_documents'" 
+                     x-transition:enter="transition ease-out duration-200" 
+                     x-transition:enter-start="opacity-0 translate-y-2" 
+                     x-transition:enter-end="opacity-100 translate-y-0" 
+                     style="display: none;"
+                     class="space-y-8">
+
+                    <!-- Header Summary Card -->
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800 mb-6">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                                    <span>🪪</span>
+                                    <span>Driver Verification & Compliance</span>
+                                </h1>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Submit mandatory identity, driver license, and vehicle inspection certificates to receive trip requests.</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase
+                                {{ $dp && ($dp->is_verified || $dp->verification_status === 'verified') ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30' }}">
+                                <span class="w-2 h-2 rounded-full {{ $dp && ($dp->is_verified || $dp->verification_status === 'verified') ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                                {{ $dp && ($dp->is_verified || $dp->verification_status === 'verified') ? 'FULLY VERIFIED' : 'VERIFICATION IN PROGRESS' }}
+                            </span>
+                        </div>
+
+                        <!-- Status Cards Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block mb-1">Vehicle Insurance</span>
+                                <span class="text-xs font-black uppercase {{ $dp && $dp->vehicle_insurance_status === 'approved' ? 'text-emerald-500' : ($dp && $dp->vehicle_insurance_status === 'submitted' ? 'text-amber-500' : 'text-slate-400') }}">
+                                    {{ $dp ? ucfirst(str_replace('_', ' ', $dp->vehicle_insurance_status ?? 'not submitted')) : 'Not set' }}
+                                </span>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block mb-1">Roadworthiness</span>
+                                <span class="text-xs font-black uppercase {{ $dp && $dp->vehicle_fitness_status === 'approved' ? 'text-emerald-500' : ($dp && $dp->vehicle_fitness_status === 'submitted' ? 'text-amber-500' : 'text-slate-400') }}">
+                                    {{ $dp ? ucfirst(str_replace('_', ' ', $dp->vehicle_fitness_status ?? 'not submitted')) : 'Not set' }}
+                                </span>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block mb-1">National ID Card</span>
+                                <span class="text-xs font-black uppercase {{ $dp && ($dp->id_card_status === 'verified' || $dp->id_card_status === 'approved') ? 'text-emerald-500' : ($dp && $dp->id_card_status === 'submitted' ? 'text-amber-500' : 'text-slate-400') }}">
+                                    {{ $dp ? ucfirst($dp->id_card_status ?? 'pending') : 'Pending' }}
+                                </span>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block mb-1">Driver License</span>
+                                <span class="text-xs font-black uppercase {{ $dp && ($dp->license_status === 'verified' || $dp->verification_status === 'verified') ? 'text-emerald-500' : 'text-amber-500' }}">
+                                    {{ $dp ? ucfirst($dp->license_status ?? $dp->verification_status ?? 'pending') : 'Pending' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1. VEHICLE CERTIFICATES VERIFICATION -->
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>🛡️</span>
+                                    <span>Vehicle Certificates Verification</span>
+                                </h2>
+                                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Motor Insurance Policy and Vehicle Roadworthy / Fitness Certificates.</p>
+                            </div>
+                        </div>
+
+                        <form action="/driver/vehicle-certificates" method="POST" enctype="multipart/form-data" class="space-y-6">
+                            @csrf
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Motor Insurance Card -->
+                                <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="font-extrabold text-sm text-slate-900 dark:text-white">Motor Insurance Policy</h3>
+                                        @if($dp && $dp->insurance_certificate_url)
+                                            <a href="{{ $dp->insurance_certificate_url }}" target="_blank" class="text-xs font-bold text-amber-500 hover:underline">View Scan ↗</a>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Policy Number</label>
+                                        <input type="text" name="insurance_policy_number" value="{{ $dp->insurance_policy_number ?? '' }}" placeholder="e.g. POL-849204-GH" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Insurance Expiry Date</label>
+                                        <input type="date" name="vehicle_insurance_expiry" value="{{ $dp && $dp->vehicle_insurance_expiry ? \Carbon\Carbon::parse($dp->vehicle_insurance_expiry)->format('Y-m-d') : '' }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Upload Insurance Certificate Scan</label>
+                                        <input type="file" name="vehicle_insurance" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                    </div>
+                                </div>
+
+                                <!-- Roadworthy Fitness Card -->
+                                <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="font-extrabold text-sm text-slate-900 dark:text-white">Roadworthy / Fitness Certificate</h3>
+                                        @if($dp && $dp->fitness_certificate_url)
+                                            <a href="{{ $dp->fitness_certificate_url }}" target="_blank" class="text-xs font-bold text-amber-500 hover:underline">View Scan ↗</a>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Roadworthy Certificate Number</label>
+                                        <input type="text" name="roadworthy_number" value="{{ $dp->roadworthy_number ?? '' }}" placeholder="e.g. RW-2026-99120" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Roadworthy Expiry Date</label>
+                                        <input type="date" name="vehicle_fitness_expiry" value="{{ $dp && $dp->vehicle_fitness_expiry ? \Carbon\Carbon::parse($dp->vehicle_fitness_expiry)->format('Y-m-d') : '' }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Upload Roadworthy Certificate Scan</label>
+                                        <input type="file" name="vehicle_fitness" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow transition cursor-pointer">
+                                Submit Vehicle Certificates
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 2. NATIONAL ID CARD VERIFICATION -->
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>🪪</span>
+                                    <span>National ID Card Verification</span>
+                                </h2>
+                                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Government photo identification (Ghana Card, Passport, or National ID).</p>
+                            </div>
+                            @if($dp && ($dp->id_card_front_url || $dp->id_card_back_url))
+                                <div class="flex gap-2">
+                                    @if($dp->id_card_front_url)
+                                        <a href="{{ $dp->id_card_front_url }}" target="_blank" class="text-xs font-bold text-amber-500 hover:underline">Front ↗</a>
+                                    @endif
+                                    @if($dp->id_card_back_url)
+                                        <a href="{{ $dp->id_card_back_url }}" target="_blank" class="text-xs font-bold text-amber-500 hover:underline">Back ↗</a>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+
+                        <form action="/driver/verify-id-card" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ID Card Type *</label>
+                                    <select name="id_card_type" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                        <option value="National ID Card" {{ ($dp->id_card_type ?? '') === 'National ID Card' ? 'selected' : '' }}>National ID Card</option>
+                                        <option value="Ghana Card" {{ ($dp->id_card_type ?? '') === 'Ghana Card' ? 'selected' : '' }}>Ghana Card (NIA)</option>
+                                        <option value="Passport" {{ ($dp->id_card_type ?? '') === 'Passport' ? 'selected' : '' }}>International Passport</option>
+                                        <option value="Voter ID" {{ ($dp->id_card_type ?? '') === 'Voter ID' ? 'selected' : '' }}>Voter's ID Card</option>
+                                        <option value="Driver Residence Permit" {{ ($dp->id_card_type ?? '') === 'Driver Residence Permit' ? 'selected' : '' }}>Driver Residence Permit</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ID Card Number *</label>
+                                    <input type="text" name="id_card_number" required value="{{ $dp->id_card_number ?? '' }}" placeholder="e.g. GHA-712345678-9" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ID Expiry Date</label>
+                                    <input type="date" name="id_card_expiry" value="{{ $dp && $dp->id_card_expiry ? \Carbon\Carbon::parse($dp->id_card_expiry)->format('Y-m-d') : '' }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ID Card Front Image</label>
+                                    <input type="file" name="id_card_front" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ID Card Back Image</label>
+                                    <input type="file" name="id_card_back" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow transition cursor-pointer">
+                                Submit ID Card Verification
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 3. DRIVER LICENSE VERIFICATION -->
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>🪪</span>
+                                    <span>Driver License Verification</span>
+                                </h2>
+                                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Commercial or private driver license credentials.</p>
+                            </div>
+                            @if($dp && ($dp->license_front_url || $dp->license_back_url))
+                                <div class="flex gap-2">
+                                    @if($dp->license_front_url)
+                                        <a href="{{ $dp->license_front_url }}" target="_blank" class="text-xs font-bold text-amber-500 hover:underline">Front ↗</a>
+                                    @endif
+                                    @if($dp->license_back_url)
+                                        <a href="{{ $dp->license_back_url }}" target="_blank" class="text-xs font-bold text-amber-500 hover:underline">Back ↗</a>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+
+                        <form action="/driver/verify-license" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Driver License Number *</label>
+                                    <input type="text" name="license_number" required value="{{ $dp->license_number ?? '' }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-slate-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Country / Jurisdiction *</label>
+                                    <input type="text" name="license_country" required value="{{ $dp->license_country ?? $dp->country ?? $user->country ?? 'Ghana' }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">License Expiry Date *</label>
+                                    <input type="date" name="license_expiry" required value="{{ $dp && $dp->license_expiry ? \Carbon\Carbon::parse($dp->license_expiry)->format('Y-m-d') : '' }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">License Front Image</label>
+                                    <input type="file" name="license_front" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">License Back Image</label>
+                                    <input type="file" name="license_back" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow transition cursor-pointer">
+                                Submit Driver License
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 4. GUARANTOR VERIFICATION INFORMATION (CHAUFFEUR ONLY) -->
+                    @if($dp && $dp->is_chauffeur)
+                        <div class="bg-white dark:bg-[#141824] rounded-3xl border-2 border-amber-400/40 dark:border-amber-400/30 p-6 sm:p-8 shadow-sm">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                                <div>
+                                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>🛡️</span>
+                                        <span>Guarantor Verification Information</span>
+                                    </h2>
+                                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Mandatory character and financial guarantor for VIP private Chauffeur bookings.</p>
+                                </div>
+                                <span class="px-3 py-1 bg-amber-400 text-slate-950 rounded-full text-xs font-black uppercase tracking-wider">
+                                    CHAUFFEUR ONLY
+                                </span>
+                            </div>
+
+                            <form action="/driver/submit-guarantor" method="POST" enctype="multipart/form-data" class="space-y-4">
+                                @csrf
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Guarantor Legal Full Name *</label>
+                                        <input type="text" name="full_name" required placeholder="e.g. Dr. Kwame Mensah" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">National ID / Ghana Card *</label>
+                                        <input type="text" name="ghana_card_number" required placeholder="GHA-712345678-9" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Relationship to Driver *</label>
+                                        <input type="text" name="relationship" required placeholder="e.g. Sibling / Employer / Mentor" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Primary Phone Number *</label>
+                                        <input type="text" name="primary_phone" required placeholder="+233 24 123 4567" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Alternative Phone</label>
+                                        <input type="text" name="alt_phone" placeholder="+233 20 987 6543" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Residential Address *</label>
+                                        <input type="text" name="physical_address" required placeholder="House No 14, East Legon, Accra" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Employer / Business Name & Role</label>
+                                        <input type="text" name="employer_business" placeholder="Company Name & Occupation" class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Guarantor ID Scan / Reference Letter</label>
+                                        <input type="file" name="ghana_card_front" accept="image/*,.pdf" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 cursor-pointer">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow transition cursor-pointer">
+                                    Submit Chauffeur Guarantor Information
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <!-- Guarantor Verification Reserved For Chauffeur Banner -->
+                        <div class="bg-slate-50/80 dark:bg-slate-800/20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 text-center">
+                            <div class="w-14 h-14 rounded-2xl bg-amber-400/15 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+                                🛡️
+                            </div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white">Guarantor Verification (Chauffeurs Only)</h3>
+                            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto mt-1 mb-5 leading-relaxed">
+                                Guarantor verification is exclusively required for <strong>VIP Private Chauffeurs</strong> who accept hourly and private executive bookings. Standard drivers only need Vehicle Certificates, National ID, and Driver License.
+                            </p>
+                            <form action="/driver/toggle-chauffeur" method="POST" class="inline-block">
+                                @csrf
+                                <input type="hidden" name="is_chauffeur" value="1">
+                                <button type="submit" class="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-400/20 transition cursor-pointer">
+                                    Apply as Professional Chauffeur & Unlock Guarantor Verification
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
                 </div>
 
             </div>
