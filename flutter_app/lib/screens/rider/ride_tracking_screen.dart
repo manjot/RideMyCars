@@ -748,6 +748,31 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                 ),
                               ],
                             ),
+                            if (status == 'cancelled' && (currentRide['payment_status'] == 'refunded' || currentRide['refund_status'] == 'refunded')) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.success.withOpacity(0.4)),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.account_balance_wallet_rounded, color: AppColors.success, size: 16),
+                                    SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Ride cancelled because no driver was available. Amount refunded to your wallet.',
+                                        style: TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.bold),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             if (status == 'pending' && !_isUnpaidElectronic(currentRide)) ...[
                               const SizedBox(height: 10),
                               Container(

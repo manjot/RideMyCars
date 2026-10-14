@@ -75,6 +75,13 @@ class RequestExpirationService
                 Log::warning("Hold release failed for expired ride #{$ride->id}: " . $pe->getMessage());
             }
 
+            // Process customer virtual wallet refund if prepaid via Stripe/MoMo
+            try {
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'No driver was available within the waiting period.');
+            } catch (\Throwable $rfe) {
+                Log::warning("RequestExpirationService wallet refund notice for ride #{$ride->id}: " . $rfe->getMessage());
+            }
+
             Log::info("RequestExpirationService: Ride #{$ride->id} automatically cancelled after driver waiting time expired.");
             return true;
         } catch (\Throwable $e) {
@@ -135,6 +142,13 @@ class RequestExpirationService
                 NotificationService::notifyDeliveryExpiredNoDriver($delivery);
             } catch (\Throwable $ne) {
                 Log::warning("Notification failed for expired delivery #{$delivery->id}: " . $ne->getMessage());
+            }
+
+            // Process customer virtual wallet refund if prepaid via Stripe/MoMo
+            try {
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($delivery, 'package_delivery', 'No courier was available within the waiting period.');
+            } catch (\Throwable $rfe) {
+                Log::warning("RequestExpirationService wallet refund notice for delivery #{$delivery->id}: " . $rfe->getMessage());
             }
 
             Log::info("RequestExpirationService: Delivery #{$delivery->id} automatically cancelled after courier waiting time expired.");

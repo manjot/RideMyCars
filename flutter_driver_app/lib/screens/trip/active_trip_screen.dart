@@ -310,13 +310,24 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     }
 
     if (newStatus == 'completed') {
+      final currentStatus = (_ride['status'] ?? '').toString().toLowerCase();
+      if (currentStatus != 'in_progress' && currentStatus != 'started') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Cannot end trip before it has started. Please verify the rider PIN first.'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+        return;
+      }
+
       final fareAmount = double.tryParse((_ride['fare'] ?? _ride['total_price'] ?? '0').toString()) ?? 0.0;
       final countryProv = Provider.of<CountryProvider>(context, listen: false);
       final currSym = (_ride['currency_symbol'] ?? countryProv.currencySymbol).toString();
       final rawMethod = (_ride['payment_method'] ?? 'cash').toString().toLowerCase();
       final isCash = rawMethod.contains('cash');
       final confirmMsg = isCash
-          ? 'Are you sure you want to end this trip and collect $currSym${fareAmount.toStringAsFixed(2)} cash from rider?'
+          ? 'Are you sure you want to end this trip and collect $currSym${fareAmount.toStringAsFixed(2)} cash from rider? (Collect directly in cash; no digital wallet credit).'
           : 'Are you sure you want to end this trip? Fare of $currSym${fareAmount.toStringAsFixed(2)} was prepaid digitally and will be credited to your earnings.';
 
       final confirmed = await showDialog<bool>(
@@ -368,11 +379,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       });
 
       if (newStatus == 'completed') {
+        final rawMethod = (_ride['payment_method'] ?? 'cash').toString().toLowerCase();
+        final isCash = rawMethod.contains('cash');
+        final completionMsg = isCash
+            ? '🎉 Trip Completed! Cash collected directly from rider.'
+            : '🎉 Trip Completed! Fare has been added to your earnings.';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🎉 Trip Completed! Fare has been added to your earnings.'),
+          SnackBar(
+            content: Text(completionMsg),
             backgroundColor: AppColors.success,
-            duration: Duration(seconds: 4),
+            duration: const Duration(seconds: 4),
           ),
         );
         Navigator.pop(context);
@@ -1515,16 +1531,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             child: SizedBox(
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () => _advanceStatus('completed'),
+                onPressed: () => _showCancelDialog(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.danger,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(Icons.check_circle_rounded, size: 16),
+                icon: const Icon(Icons.close_rounded, size: 16),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
             ),
@@ -1559,16 +1575,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             child: SizedBox(
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () => _advanceStatus('completed'),
+                onPressed: () => _showCancelDialog(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.danger,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(Icons.check_circle_rounded, size: 16),
+                icon: const Icon(Icons.close_rounded, size: 16),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
             ),
@@ -1603,16 +1619,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             child: SizedBox(
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () => _advanceStatus('completed'),
+                onPressed: () => _showCancelDialog(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.danger,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(Icons.check_circle_rounded, size: 16),
+                icon: const Icon(Icons.close_rounded, size: 16),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text('End Ride', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
             ),

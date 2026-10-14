@@ -493,6 +493,12 @@ class PackageDeliveryController extends Controller
             $delivery->courierProfile->increment('total_trips');
         }
 
+        // Credit courier earnings via BookingRefundService (zero wallet credit for cash payments)
+        $courierUser = $delivery->courier ?? ($delivery->courier_id ? \App\Models\User::find($delivery->courier_id) : Auth::user());
+        if ($courierUser) {
+            \App\Services\BookingRefundService::creditDriverEarningsForCompletedBooking($delivery, 'package_delivery', $courierUser);
+        }
+
         ActivityLogService::log(
             'package_delivered',
             "Package delivery #{$delivery->delivery_code} completed via PIN verification",
@@ -518,6 +524,13 @@ class PackageDeliveryController extends Controller
         ]);
 
         $newStatus = $validated['status'];
+
+        if ($newStatus === 'delivered') {
+            if (!in_array($delivery->delivery_status, ['parcel_picked_up', 'in_transit', 'arrived_at_destination'])) {
+                return back()->withErrors(['status' => 'Cannot mark delivery completed before the parcel has been picked up.']);
+            }
+        }
+
         $updates = ['delivery_status' => $newStatus];
 
         if ($newStatus === 'arrived_at_pickup') $updates['arrived_at_pickup_at'] = now();
@@ -531,12 +544,19 @@ class PackageDeliveryController extends Controller
                 $delivery->courierProfile->update(['is_available' => true]);
                 $delivery->courierProfile->increment('total_trips');
             }
+
+            // Credit courier earnings via BookingRefundService
+            $courierUser = $delivery->courier ?? ($delivery->courier_id ? \App\Models\User::find($delivery->courier_id) : Auth::user());
+            if ($courierUser) {
+                \App\Services\BookingRefundService::creditDriverEarningsForCompletedBooking($delivery, 'package_delivery', $courierUser);
+            }
         }
 
         if ($newStatus === 'cancelled') {
             if ($delivery->courierProfile) {
                 $delivery->courierProfile->update(['is_available' => true]);
             }
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($delivery, 'package_delivery', 'Delivery cancelled');
         }
 
         $delivery->update($updates);

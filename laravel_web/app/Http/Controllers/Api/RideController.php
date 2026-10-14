@@ -1147,11 +1147,15 @@ class RideController extends Controller
                 }
             }
 
-            $updates = ['status' => $newStatus];
-            if ($newStatus === 'en_route') $updates['en_route_at'] = now();
-            if ($newStatus === 'arrived') $updates['arrived_at'] = now();
-            if ($newStatus === 'in_progress') $updates['started_at'] = now();
             if ($newStatus === 'completed') {
+                if (!in_array($ride->status, ['in_progress', 'started'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Trip cannot be completed before it has started. Please verify the customer PIN and start the trip first.',
+                        'error_code' => 'TRIP_NOT_STARTED',
+                    ], 422);
+                }
+
                 $updates['completed_at'] = now();
                 $updates['payment_status'] = 'paid';
                 try {
@@ -1168,10 +1172,9 @@ class RideController extends Controller
                             $user->driverProfile->increment('total_trips');
                         }
                     }
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
-                        $driverFareEarned = floatval($ride->fare ?: $ride->total_amount) * 0.85;
-                        $user->increment('wallet_balance', $driverFareEarned);
-                    }
+                    // Credit driver earnings via BookingRefundService:
+                    // Only non-cash rides are credited. Driver receives zero wallet credit for cash rides.
+                    \App\Services\BookingRefundService::creditDriverEarningsForCompletedBooking($ride, $ride->ride_type ?: 'ride', $user);
                 }
             }
             if ($newStatus === 'cancelled') {
@@ -1186,6 +1189,9 @@ class RideController extends Controller
                 if ($user && $user->driverProfile) {
                     $user->driverProfile->update(['is_available' => true]);
                 }
+
+                // Process customer wallet refund if prepaid via Stripe or MoMo
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, $ride->ride_type ?: 'ride', $request->input('reason', 'Ride cancelled'));
             }
 
             $ride->update($updates);
@@ -1265,6 +1271,17 @@ class RideController extends Controller
      */
     protected function handlePackageDeliveryUpdate($delivery, string $newStatus, $user)
     {
+        // Prevent completing delivery before pickup / in_transit
+        if (in_array($newStatus, ['completed', 'delivered'])) {
+            if (!in_array($delivery->delivery_status, ['in_transit', 'picked_up', 'in_progress', 'arrived_at_destination'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Delivery cannot be marked delivered before the package has been picked up.',
+                    'error_code' => 'PACKAGE_NOT_PICKED_UP',
+                ], 422);
+            }
+        }
+
         $delStatus = $newStatus;
         if ($newStatus === 'completed' || $newStatus === 'delivered') $delStatus = 'delivered';
         if ($newStatus === 'in_progress') $delStatus = 'in_transit';
@@ -1288,9 +1305,10 @@ class RideController extends Controller
                         $user->driverProfile->increment('total_trips');
                     }
                 }
-                if ($newStatus !== 'cancelled' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
-                    $courierFareEarned = floatval($delivery->total_price) * 0.85;
-                    $user->increment('wallet_balance', $courierFareEarned);
+                if ($newStatus === 'cancelled') {
+                    \App\Services\BookingRefundService::refundCustomerForCancelledBooking($delivery, 'package_delivery', 'Delivery cancelled');
+                } else {
+                    \App\Services\BookingRefundService::creditDriverEarningsForCompletedBooking($delivery, 'package_delivery', $user);
                 }
             }
         } else {
@@ -1318,6 +1336,16 @@ class RideController extends Controller
      */
     protected function handleDriverBookingUpdate($booking, string $newStatus, $user)
     {
+        if ($newStatus === 'completed') {
+            if (!in_array($booking->booking_status, ['in_progress', 'started'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Driver booking cannot be completed before service duty has started.',
+                    'error_code' => 'DUTY_NOT_STARTED',
+                ], 422);
+            }
+        }
+
         $bookStatus = $newStatus;
         if ($newStatus === 'completed') {
             $booking->update([
@@ -1342,9 +1370,10 @@ class RideController extends Controller
                         $user->driverProfile->increment('total_trips');
                     }
                 }
-                if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('users', 'wallet_balance')) {
-                    $driverFareEarned = floatval($booking->total_amount ?: $booking->estimated_cost) * 0.85;
-                    $user->increment('wallet_balance', $driverFareEarned);
+                if ($newStatus === 'completed') {
+                    \App\Services\BookingRefundService::creditDriverEarningsForCompletedBooking($booking, 'driver_booking', $user);
+                } elseif ($newStatus === 'cancelled') {
+                    \App\Services\BookingRefundService::refundCustomerForCancelledBooking($booking, 'driver_booking', 'Driver booking cancelled');
                 }
             }
         }
@@ -1623,6 +1652,13 @@ class RideController extends Controller
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning("Ride cancel hold release notice for #{$ride->id}: " . $e->getMessage());
+        }
+
+        // Process customer wallet refund if prepaid via Stripe or MoMo
+        try {
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, $ride->ride_type ?: 'ride', $reason);
+        } catch (\Throwable $re) {
+            \Illuminate\Support\Facades\Log::warning("Ride cancel wallet refund notice for #{$ride->id}: " . $re->getMessage());
         }
 
         try {

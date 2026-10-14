@@ -482,7 +482,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
             final title = tx['description'] ?? (type == 'credit' ? 'Wallet Credit' : 'Wallet Debit');
             final date = tx['formatted_created_at'] ?? tx['created_at'] ?? '';
             final amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
-            final isCredit = type == 'credit' || (tx['direction'] == 'in');
+            final isCredit = type == 'credit' || type == 'refund' || type == 'earnings' || type == 'topup' || type == 'deposit' || (tx['direction'] == 'in');
 
             return _buildTransactionItem(title, date, amount, isCredit);
           },

@@ -402,6 +402,17 @@ class BackupChauffeurService
                 ];
             }
 
+            $lockedRide->update([
+                'status' => 'cancelled',
+                'cancellation_reason' => 'No nearby chauffeur is currently available.',
+            ]);
+
+            try {
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($lockedRide, 'ride', 'No nearby chauffeur is currently available.');
+            } catch (\Throwable $re) {
+                Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
+            }
+
             return [
                 'success' => true,
                 'message' => 'No nearby chauffeur is currently available.',
@@ -466,6 +477,12 @@ class BackupChauffeurService
 
         NotificationService::notifyCustomerNoBackupDriverAvailable($ride);
 
+        try {
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'No nearby chauffeur is currently available.');
+        } catch (\Throwable $re) {
+            Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
+        }
+
         Log::info("BackupChauffeurService: No backup chauffeurs available for Ride #{$ride->id}. Ride cancelled.");
 
         return null;
@@ -491,6 +508,13 @@ class BackupChauffeurService
                 'cancellation_reason' => 'Primary chauffeur unavailable and backup chauffeur was disabled.',
             ]);
             RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
+
+            try {
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'Primary chauffeur unavailable and backup chauffeur was disabled.');
+            } catch (\Throwable $re) {
+                Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
+            }
+
             Log::info("BackupChauffeurService: Backup disabled for Ride #{$ride->id}. Ride cancelled.");
         }
     }

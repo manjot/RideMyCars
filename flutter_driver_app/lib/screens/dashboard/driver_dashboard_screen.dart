@@ -1135,15 +1135,17 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
-  Future<void> _confirmEndTrip(BuildContext context, int rideId, double fare, DriverProvider driver, {String currencySymbol = '\$', String type = 'ride'}) async {
+  Future<void> _confirmEndTrip(BuildContext context, int rideId, double fare, DriverProvider driver, {String currencySymbol = '\$', String type = 'ride', String paymentMethod = 'cash'}) async {
     final isDelivery = type.contains('delivery') || type.contains('package');
     final isBooking = type.contains('booking') || type.contains('chauffeur');
+    final isCash = paymentMethod.toLowerCase().contains('cash');
     final dialogTitle = isDelivery ? 'Complete Delivery?' : (isBooking ? 'Complete Booking?' : 'End Ride?');
+    final cashNotice = isCash ? ' (Collected directly in physical cash; no digital wallet credit).' : ' (Prepaid digitally; earnings will be credited to your in-app wallet).';
     final dialogContent = isDelivery
-        ? 'Are you sure you want to mark this package delivered and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?'
+        ? 'Are you sure you want to mark this package delivered and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?$cashNotice'
         : (isBooking
-            ? 'Are you sure you want to finish this chauffeur booking and collect $currencySymbol${fare.toStringAsFixed(2)}?'
-            : 'Are you sure you want to end this trip and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?');
+            ? 'Are you sure you want to finish this chauffeur booking and collect $currencySymbol${fare.toStringAsFixed(2)}?$cashNotice'
+            : 'Are you sure you want to end this trip and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?$cashNotice');
     final confirmBtnText = isDelivery ? '✓ Complete Delivery Now' : (isBooking ? '✓ End Booking Now' : '✓ End Trip Now');
 
     final confirmed = await showDialog<bool>(
@@ -1188,7 +1190,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               children: [
                 SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                 SizedBox(width: 12),
-                Text('Completing & collecting fare...'),
+                Text('Completing & processing fare...'),
               ],
             ),
             duration: Duration(seconds: 4),
@@ -1199,17 +1201,20 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         if (ok) {
+          final completionMsg = isCash
+              ? '🎉 Completed! Cash collected directly from rider.'
+              : '🎉 Completed! Fare added to your wallet earnings.';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎉 Completed! Fare added to your earnings.'),
+            SnackBar(
+              content: Text(completionMsg),
               backgroundColor: AppColors.success,
-              duration: Duration(seconds: 4),
+              duration: const Duration(seconds: 4),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('⚠️ Could not complete. Please check connection and retry.'),
+              content: Text('⚠️ Could not complete trip. Ensure the trip was started first.'),
               backgroundColor: AppColors.danger,
               duration: Duration(seconds: 3),
             ),
@@ -1999,18 +2004,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               const SizedBox(height: 8),
               SizedBox(
                 height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym, type: rideType),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showCancelTripDialog(context, ride, driver),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  icon: const Icon(Icons.check_circle_rounded, size: 18),
-                  label: Text(
-                    isDelivery ? '✓ Complete & Deliver Now' : (isBooking ? '✓ End Booking Now' : '✓ End / Complete Ride Now'),
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: const Text('Cancel Booking', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ] else if (rawStatus == 'en_route') ...[
@@ -2040,14 +2042,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym, type: rideType),
+                        onPressed: () => _showCancelTripDialog(context, ride, driver),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.success,
+                          backgroundColor: AppColors.danger,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        icon: const Icon(Icons.check_circle_rounded, size: 16),
-                        label: Text(isDelivery ? '✓ Complete' : '✓ End Ride', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
                     ),
                   ),
@@ -2084,14 +2086,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym, type: rideType),
+                        onPressed: () => _showCancelTripDialog(context, ride, driver),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.success,
+                          backgroundColor: AppColors.danger,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        icon: const Icon(Icons.check_circle_rounded, size: 16),
-                        label: Text(isDelivery ? '✓ Complete' : '✓ End Ride', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
                     ),
                   ),
@@ -2101,7 +2103,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym, type: rideType),
+                  onPressed: () => _confirmEndTrip(context, rideId, fare, driver, currencySymbol: currSym, type: rideType, paymentMethod: (ride['payment_method'] ?? 'cash').toString()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,

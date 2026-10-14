@@ -324,6 +324,12 @@ class DriverBookingController extends Controller
                 $booking->driverProfile->increment('total_trips');
             }
 
+            // Credit driver earnings via BookingRefundService (zero wallet credit for cash payments)
+            $driverUser = $booking->driver ?? ($booking->driver_id ? \App\Models\User::find($booking->driver_id) : Auth::user());
+            if ($driverUser) {
+                \App\Services\BookingRefundService::creditDriverEarningsForCompletedBooking($booking, 'driver_booking', $driverUser);
+            }
+
             if ($booking->client_id) {
                 \App\Services\NotificationService::send(
                     $booking->client_id,
@@ -350,10 +356,17 @@ class DriverBookingController extends Controller
                 $updates['driver_id'] = null;
                 $updates['driver_profile_id'] = null;
                 $updates['booking_status'] = 'pending';
+                $nextAssignment = null;
                 try {
-                    \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+                    $nextAssignment = \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
                 } catch (\Throwable $e) {}
+
+                if (!$nextAssignment) {
+                    $updates['booking_status'] = 'cancelled';
+                    \App\Services\BookingRefundService::refundCustomerForCancelledBooking($booking, 'driver_booking', 'No replacement driver was available.');
+                }
             } else {
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($booking, 'driver_booking', 'Driver booking cancelled');
                 if ($booking->client_id) {
                     \App\Services\NotificationService::send(
                         $booking->client_id,

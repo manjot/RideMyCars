@@ -403,9 +403,20 @@ class VehicleRentalController extends Controller
             'cancellation_reason' => $request->input('cancellation_reason', 'Cancelled by customer'),
         ]);
 
+        // Process customer wallet refund if prepaid via Stripe, MoMo, Card, Wallet
+        try {
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking(
+                $ride,
+                'rental',
+                $request->input('cancellation_reason', 'Cancelled by customer')
+            );
+        } catch (\Throwable $re) {
+            \Illuminate\Support\Facades\Log::warning("Rental refund error for #{$ride->id}: " . $re->getMessage());
+        }
+
         ActivityLogService::log('rental_cancelled', "Cancelled vehicle rental booking #{$ride->id} (Code: {$ride->digital_receipt_code})", Auth::id() ?? 1);
 
-        return back()->with('success', 'Rental booking cancelled successfully. Free cancellation refund policy applied.');
+        return back()->with('success', 'Rental booking cancelled successfully. Free cancellation refund policy applied to your wallet.');
     }
 
     /**

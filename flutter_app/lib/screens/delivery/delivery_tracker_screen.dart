@@ -423,6 +423,31 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 13, color: Colors.white70),
                       ),
+                      if (_paymentStatus == 'refunded') ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.withOpacity(0.35)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.account_balance_wallet_rounded, color: Colors.greenAccent, size: 16),
+                              SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'Delivery cancelled because no driver was available. Amount refunded to your wallet.',
+                                  style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {

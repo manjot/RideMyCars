@@ -326,9 +326,20 @@ class RideResource extends Resource
                                 'status' => 'rejected',
                                 'cancellation_reason' => $data['reason'] ?? 'Declined by administrator',
                             ]);
+
+                            try {
+                                \App\Services\BookingRefundService::refundCustomerForCancelledBooking(
+                                    $record,
+                                    'rental',
+                                    $data['reason'] ?? 'Declined by administrator'
+                                );
+                            } catch (\Throwable $re) {
+                                \Illuminate\Support\Facades\Log::warning("RideResource reject_rental refund error: " . $re->getMessage());
+                            }
+
                             \Filament\Notifications\Notification::make()
                                 ->title('Rental Booking Rejected')
-                                ->body("Booking #{$record->id} has been marked as rejected.")
+                                ->body("Booking #{$record->id} has been marked as rejected and refunded to customer wallet.")
                                 ->warning()
                                 ->send();
                         }),

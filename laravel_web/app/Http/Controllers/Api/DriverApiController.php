@@ -1909,7 +1909,7 @@ class DriverApiController extends Controller
                 ]);
             }
         } else {
-            // Reject action
+            // Reject / Cancel action by driver
             if ($assignment->assignment_type === 'backup') {
                 \App\Services\BackupChauffeurService::handleDriverDeclinedBackup($assignment);
                 return response()->json(['success' => true, 'message' => 'Backup job declined.']);
@@ -1918,27 +1918,14 @@ class DriverApiController extends Controller
             $assignment->update(['status' => 'rejected', 'expires_at' => now()]);
 
             if ($assignment->ride) {
-                if ($assignment->ride->driver_id === $user->id) {
-                    $assignment->ride->update([
-                        'driver_id' => null,
-                        'status' => 'pending',
-                    ]);
-                }
-
-                if ($assignment->ride->backup_chauffeur_enabled && \App\Services\BackupChauffeurService::isFeatureEnabled()) {
-                    try {
-                        \App\Services\BackupChauffeurService::dispatchBackupOffer($assignment->ride);
-                    } catch (\Throwable $e) {}
-                } else {
-                    $assignment->ride->update([
-                        'status' => 'cancelled',
-                        'cancellation_reason' => 'Primary chauffeur declined and backup chauffeur was disabled.',
-                    ]);
-                    \App\Models\RideAssignment::where('ride_id', $assignment->ride->id)->update(['status' => 'expired']);
-                }
+                \App\Services\BookingRefundService::handleDriverCancelledBooking($assignment->ride, 'ride', $user->id);
+            } elseif ($assignment->packageDelivery) {
+                \App\Services\BookingRefundService::handleDriverCancelledBooking($assignment->packageDelivery, 'package_delivery', $user->id);
+            } elseif ($assignment->driverBooking) {
+                \App\Services\BookingRefundService::handleDriverCancelledBooking($assignment->driverBooking, 'driver_booking', $user->id);
             }
 
-            return response()->json(['success' => true, 'message' => 'Job declined successfully.']);
+            return response()->json(['success' => true, 'message' => 'Job declined/cancelled successfully.']);
         }
 
         return response()->json(['success' => true]);
@@ -2194,17 +2181,34 @@ class DriverApiController extends Controller
             ]);
         }
         $completedRides = \App\Models\Ride::where('driver_id', $user->id)->where('status', 'completed');
+        $completedDeliveries = \App\Models\PackageDelivery::where('courier_id', $user->id)->whereIn('delivery_status', ['delivered', 'completed']);
+        $completedBookings = \App\Models\DriverBooking::where('driver_id', $user->id)->where('booking_status', 'completed');
 
-        $today = (clone $completedRides)->whereDate('created_at', today())->sum('fare');
-        $week = (clone $completedRides)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('fare');
-        $month = (clone $completedRides)->whereMonth('created_at', now()->month)->sum('fare');
+        // Sum earnings (net 85% of fare/price) across completed jobs
+        $rideToday = (clone $completedRides)->whereDate('completed_at', today())->orWhere(fn($q) => $q->whereNull('completed_at')->whereDate('created_at', today())->where('driver_id', $user->id)->where('status', 'completed'))->sum('fare');
+        $delToday = (clone $completedDeliveries)->whereDate('delivered_at', today())->orWhere(fn($q) => $q->whereNull('delivered_at')->whereDate('created_at', today())->where('courier_id', $user->id)->whereIn('delivery_status', ['delivered', 'completed']))->sum('total_price');
+        $bkToday = (clone $completedBookings)->whereDate('completed_at', today())->orWhere(fn($q) => $q->whereNull('completed_at')->whereDate('created_at', today())->where('driver_id', $user->id)->where('booking_status', 'completed'))->sum('total_price');
+
+        $rideWeek = (clone $completedRides)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('fare');
+        $delWeek = (clone $completedDeliveries)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('total_price');
+        $bkWeek = (clone $completedBookings)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('total_price');
+
+        $rideMonth = (clone $completedRides)->whereMonth('created_at', now()->month)->sum('fare');
+        $delMonth = (clone $completedDeliveries)->whereMonth('created_at', now()->month)->sum('total_price');
+        $bkMonth = (clone $completedBookings)->whereMonth('created_at', now()->month)->sum('total_price');
+
+        $totalTrips = $completedRides->count() + $completedDeliveries->count() + $completedBookings->count();
+
+        $today = round(($rideToday + $delToday + $bkToday) * 0.85, 2);
+        $week = round(($rideWeek + $delWeek + $bkWeek) * 0.85, 2);
+        $month = round(($rideMonth + $delMonth + $bkMonth) * 0.85, 2);
 
         return response()->json([
             'success' => true,
             'today' => floatval($today),
             'week' => floatval($week),
             'month' => floatval($month),
-            'total_trips' => $completedRides->count(),
+            'total_trips' => $totalTrips,
             'currency_symbol' => $driverPricing->currency_symbol,
             'currency_code' => $driverPricing->currency_code,
         ]);
