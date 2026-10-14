@@ -8,6 +8,7 @@ class ApiConstants {
   static const String register = '/register';
   static const String sendOtp = '/otp/send';
   static const String verifyOtp = '/otp/verify';
+  static const String resetPassword = '/auth/reset-password';
   static const String googleAuth = '/auth/social/google';
   static const String appleAuth = '/auth/social/apple';
   static const String googleOAuthUrl = 'https://www.ridemycars.com/auth/google';

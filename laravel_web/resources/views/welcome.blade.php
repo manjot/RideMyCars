@@ -119,9 +119,10 @@
                             </div>
 
                             <!-- Badge -->
+                            <!-- Badge -->
                             <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 mb-2">🔑 Luxury Fleet</span>
 
-                            <h3 class="text-2xl font-black mb-1.5 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">Rent</h3>
+                            <h3 class="text-2xl font-black mb-1.5 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">Rent A Vehicle</h3>
                             <p class="text-gray-600 dark:text-gray-300 mb-5 max-w-[250px] text-xs font-medium leading-relaxed">Tier-one luxury vehicles for self-drive or extended trips.</p>
                             
                             <!-- Vehicle Image with Radiant Glow Behind -->
@@ -133,7 +134,7 @@
                             <!-- Button -->
                             <a href="/rent" class="mt-auto w-full inline-flex items-center justify-center text-white font-extrabold py-3.5 px-6 rounded-full transition-all bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/35 hover:shadow-lg hover:shadow-blue-500/50 hover:scale-[1.02]">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                Rent Now
+                                Rent A Vehicle
                             </a>
                         </div>
                     </div>
@@ -158,7 +159,7 @@
                             <!-- Badge -->
                             <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 mb-2">🛡️ Vetted Chauffeur</span>
 
-                            <h3 class="text-2xl font-black mb-1.5 text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors">Driver</h3>
+                            <h3 class="text-2xl font-black mb-1.5 text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors">Hire A Chauffeur</h3>
                             <p class="text-gray-600 dark:text-gray-300 mb-5 max-w-[250px] text-xs font-medium leading-relaxed">Secure an elite, background-verified chauffeur for your car.</p>
                             
                             <!-- Vehicle Image with Radiant Glow Behind -->
@@ -170,7 +171,7 @@
                             <!-- Button -->
                             <a href="/hire-driver" class="mt-auto w-full inline-flex items-center justify-center text-white font-extrabold py-3.5 px-6 rounded-full transition-all bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/35 hover:shadow-lg hover:shadow-emerald-500/50 hover:scale-[1.02]">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                                Hire Driver
+                                Hire A Chauffeur
                             </a>
                         </div>
                     </div>

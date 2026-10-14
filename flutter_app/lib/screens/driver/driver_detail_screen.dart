@@ -583,7 +583,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Hire a Driver',
+          'Hire A Chauffeur',
           style: TextStyle(
             color: Colors.white,
             fontSize: 17,

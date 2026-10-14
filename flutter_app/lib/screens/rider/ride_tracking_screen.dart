@@ -279,6 +279,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       _showingCancelNotif = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        final isCompleted = notif['type'] == 'ride_completed' || notif['title'] == 'Ride Completed';
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -287,18 +288,22 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
               children: [
-                const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 28),
+                Icon(
+                  isCompleted ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                  color: isCompleted ? AppColors.success : AppColors.danger,
+                  size: 28,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    notif['title']?.toString() ?? 'Ride Notice',
+                    isCompleted ? 'Ride Completed' : (notif['title']?.toString() ?? 'Ride Canceled'),
                     style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 17),
                   ),
                 ),
               ],
             ),
             content: Text(
-              notif['message']?.toString() ?? 'The driver was unable to accept your request or cancelled.',
+              notif['message']?.toString() ?? (isCompleted ? 'Your trip has ended successfully. Thank you for riding with RideMyCars!' : 'Ride Canceled'),
               style: const TextStyle(color: AppColors.textMuted, fontSize: 14, height: 1.4),
             ),
             actions: [
@@ -737,7 +742,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                 Expanded(
                                   child: Text(
                                     status == 'cancelled'
-                                        ? (currentRide['cancellation_reason']?.toString() ?? 'Ride Cancelled — No driver was available within the waiting period.')
+                                        ? (currentRide['cancellation_reason']?.toString() ?? 'Ride Canceled')
                                         : _statusDescription(status, driver?['name'], currentRide),
                                     style: TextStyle(
                                       color: status == 'cancelled' ? AppColors.danger : AppColors.primary,

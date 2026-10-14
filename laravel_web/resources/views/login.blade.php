@@ -592,7 +592,12 @@
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Password</label>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Password</label>
+                            <button type="button" @click="openForgotPassword()" class="text-xs font-bold text-amber-600 dark:text-brand-400 hover:underline cursor-pointer">
+                                Forgot Password?
+                            </button>
+                        </div>
                         <div x-data="{ show: false }" class="relative">
                             <input :type="show ? 'text' : 'password'" name="password" x-model="loginPassword" required placeholder="Enter your password" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 pr-12 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
                             <div @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer">
@@ -615,6 +620,69 @@
                     </button>
                     <button type="button" @click="view = 'mobile'" class="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors block w-full py-1">
                         ← Back to mobile number
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5. Forgot Password View -->
+            <div x-show="view === 'forgot_password'" x-transition.opacity.duration.300ms style="display: none;">
+                <h1 class="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white tracking-tight">Reset Password</h1>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">Enter your registered email address to receive a 4-digit reset code.</p>
+
+                <div x-show="forgotSuccessMsg" class="mb-4 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm font-semibold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <span x-text="forgotSuccessMsg"></span>
+                </div>
+
+                <div x-show="forgotErrorMsg" class="mb-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-xs sm:text-sm font-semibold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span x-text="forgotErrorMsg"></span>
+                </div>
+
+                <!-- Step 1: Request OTP -->
+                <div x-show="forgotStep === 1" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Registered Email Address</label>
+                        <input type="email" x-model="forgotEmail" placeholder="you@example.com" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
+                    </div>
+
+                    <button type="button" @click="handleSendForgotOtp()" :disabled="isLoading" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all shadow-md shadow-black/10 dark:shadow-brand-500/20 active:scale-[0.99] cursor-pointer disabled:opacity-50">
+                        <span x-show="!isLoading">Send Verification Code</span>
+                        <span x-show="isLoading" style="display: none;">Sending code...</span>
+                    </button>
+                </div>
+
+                <!-- Step 2: Enter OTP & New Password -->
+                <div x-show="forgotStep === 2" class="space-y-4" style="display: none;">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 text-center">Enter 4-Digit Code</label>
+                        <div class="flex gap-2.5 justify-center my-2">
+                            <input type="text" maxlength="1" x-model="fc1" @input="$event.target.value.length === 1 && $refs.fc2.focus()" class="w-12 h-14 text-center text-xl font-bold bg-gray-100 dark:bg-white/5 rounded-xl border border-transparent dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <input type="text" maxlength="1" x-model="fc2" x-ref="fc2" @input="$event.target.value.length === 1 && $refs.fc3.focus()" @keydown.backspace="!fc2 && $refs.fc1.focus()" class="w-12 h-14 text-center text-xl font-bold bg-gray-100 dark:bg-white/5 rounded-xl border border-transparent dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <input type="text" maxlength="1" x-model="fc3" x-ref="fc3" @input="$event.target.value.length === 1 && $refs.fc4.focus()" @keydown.backspace="!fc3 && $refs.fc2.focus()" class="w-12 h-14 text-center text-xl font-bold bg-gray-100 dark:bg-white/5 rounded-xl border border-transparent dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <input type="text" maxlength="1" x-model="fc4" x-ref="fc4" @keydown.backspace="!fc4 && $refs.fc3.focus()" class="w-12 h-14 text-center text-xl font-bold bg-gray-100 dark:bg-white/5 rounded-xl border border-transparent dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">New Password</label>
+                        <input type="password" x-model="forgotNewPassword" placeholder="Minimum 6 characters" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Confirm New Password</label>
+                        <input type="password" x-model="forgotConfirmPassword" placeholder="Re-enter new password" class="w-full bg-gray-100 dark:bg-white/5 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-brand-500 border border-transparent dark:border-white/10 text-base">
+                    </div>
+
+                    <button type="button" @click="handleResetPassword()" :disabled="isLoading" class="w-full bg-black hover:bg-gray-900 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-black font-extrabold py-3.5 rounded-xl text-base transition-all shadow-md shadow-black/10 dark:shadow-brand-500/20 active:scale-[0.99] cursor-pointer disabled:opacity-50">
+                        <span x-show="!isLoading">Reset Password & Sign In</span>
+                        <span x-show="isLoading" style="display: none;">Updating password...</span>
+                    </button>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button type="button" @click="view = 'email'" class="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors block w-full py-1">
+                        ← Back to Sign In
                     </button>
                 </div>
             </div>
@@ -915,6 +983,102 @@
                             this.isLoading = false;
                             this.otpError = 'Network error during verification. Please try again.';
                         });
+                    },
+
+                    // Forgot Password Flow
+                    forgotEmail: '',
+                    forgotNewPassword: '',
+                    forgotConfirmPassword: '',
+                    forgotStep: 1,
+                    forgotSuccessMsg: '',
+                    forgotErrorMsg: '',
+                    fc1: '', fc2: '', fc3: '', fc4: '',
+                    openForgotPassword() {
+                        this.view = 'forgot_password';
+                        this.forgotEmail = this.loginEmail || '';
+                        this.forgotStep = 1;
+                        this.forgotSuccessMsg = '';
+                        this.forgotErrorMsg = '';
+                        this.fc1 = this.fc2 = this.fc3 = this.fc4 = '';
+                        this.forgotNewPassword = '';
+                        this.forgotConfirmPassword = '';
+                    },
+                    async handleSendForgotOtp() {
+                        if (!this.forgotEmail || !this.forgotEmail.includes('@')) {
+                            this.forgotErrorMsg = 'Please enter a valid email address.';
+                            return;
+                        }
+                        this.isLoading = true;
+                        this.forgotErrorMsg = '';
+                        this.forgotSuccessMsg = '';
+                        try {
+                            const res = await fetch('/api/otp/send', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ email: this.forgotEmail, action: 'forgot_password' })
+                            });
+                            const data = await res.json();
+                            this.isLoading = false;
+                            if (res.ok && data.success) {
+                                this.forgotStep = 2;
+                                this.forgotSuccessMsg = data.message || 'Verification code sent to your email!';
+                            } else {
+                                this.forgotErrorMsg = data.message || data.error || 'Could not send verification code.';
+                            }
+                        } catch (e) {
+                            this.isLoading = false;
+                            this.forgotErrorMsg = 'Network error. Please try again.';
+                        }
+                    },
+                    async handleResetPassword() {
+                        const code = `${this.fc1}${this.fc2}${this.fc3}${this.fc4}`.trim();
+                        if (code.length < 4) {
+                            this.forgotErrorMsg = 'Please enter the 4-digit verification code.';
+                            return;
+                        }
+                        if (!this.forgotNewPassword || this.forgotNewPassword.length < 6) {
+                            this.forgotErrorMsg = 'New password must be at least 6 characters.';
+                            return;
+                        }
+                        if (this.forgotNewPassword !== this.forgotConfirmPassword) {
+                            this.forgotErrorMsg = 'Passwords do not match.';
+                            return;
+                        }
+                        this.isLoading = true;
+                        this.forgotErrorMsg = '';
+                        try {
+                            const res = await fetch('/api/auth/reset-password', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    email: this.forgotEmail,
+                                    otp: code,
+                                    password: this.forgotNewPassword,
+                                    password_confirmation: this.forgotConfirmPassword
+                                })
+                            });
+                            const data = await res.json();
+                            this.isLoading = false;
+                            if (res.ok && data.success) {
+                                this.loginEmail = this.forgotEmail;
+                                this.loginPassword = this.forgotNewPassword;
+                                this.view = 'email';
+                                alert('Password reset successfully! Please sign in with your new password.');
+                            } else {
+                                this.forgotErrorMsg = data.message || data.error || 'Failed to reset password.';
+                            }
+                        } catch (e) {
+                            this.isLoading = false;
+                            this.forgotErrorMsg = 'Network error. Please try again.';
+                        }
                     }
                 }));
             }

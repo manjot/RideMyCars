@@ -44,6 +44,8 @@ Route::post('/auth/google', [\App\Http\Controllers\Auth\SocialAuthController::cl
 Route::post('/auth/apple', [\App\Http\Controllers\Auth\SocialAuthController::class, 'apiAppleAuth']);
 Route::post('/auth/email/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:10,1');
 Route::post('/auth/email/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:15,1');
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:10,1');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:10,1');
 
 use App\Http\Controllers\StripeVerificationController;
 

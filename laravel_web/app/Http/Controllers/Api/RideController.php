@@ -686,6 +686,33 @@ class RideController extends Controller
         }
 
         if (!$ride) {
+            // Check if there is a recently completed ride (completed within last 90 seconds)
+            $recentCompleted = Ride::with(['driver.driverProfile', 'rider'])
+                ->where('rider_id', $user->id)
+                ->where('status', 'completed')
+                ->where('updated_at', '>=', now()->subSeconds(90))
+                ->latest('updated_at')
+                ->first();
+
+            if ($recentCompleted) {
+                return response()->json([
+                    'success' => true,
+                    'ride' => [
+                        'id' => $recentCompleted->id,
+                        'status' => 'completed',
+                        'pickup_location' => $recentCompleted->pickup_location,
+                        'dropoff_location' => $recentCompleted->dropoff_location,
+                        'fare' => floatval($recentCompleted->fare ?: $recentCompleted->total_amount),
+                        'updated_at' => $recentCompleted->updated_at->toIso8601String(),
+                    ],
+                    'notification' => [
+                        'type' => 'ride_completed',
+                        'title' => 'Ride Completed',
+                        'message' => 'Your trip has ended successfully. Thank you for riding with RideMyCars!',
+                    ],
+                ]);
+            }
+
             $recentCancelled = Ride::with(['driver.driverProfile', 'rider'])
                 ->where('rider_id', $user->id)
                 ->where('status', 'cancelled')
@@ -694,14 +721,26 @@ class RideController extends Controller
                 ->first();
 
             if ($recentCancelled) {
-                $reason = $recentCancelled->cancellation_reason ?: 'No driver was available within the waiting period.';
-                $isExpiredReason = str_contains(strtolower($reason), 'waiting') || str_contains(strtolower($reason), 'expire');
+                $cancelledByDriver = ($recentCancelled->cancelled_by === 'driver') || str_contains(strtolower($recentCancelled->cancellation_reason ?? ''), 'driver');
+                $isExpired = str_contains(strtolower($recentCancelled->cancellation_reason ?? ''), 'waiting') || str_contains(strtolower($recentCancelled->cancellation_reason ?? ''), 'expire') || $recentCancelled->isExpired();
+
+                if ($cancelledByDriver) {
+                    $title = 'Ride Canceled';
+                    $message = $recentCancelled->cancellation_reason ?: 'Your ride was cancelled by the driver.';
+                } elseif ($isExpired) {
+                    $title = 'No Driver Available';
+                    $message = $recentCancelled->cancellation_reason ?: 'No driver was available within the waiting period.';
+                } else {
+                    $title = 'Ride Canceled';
+                    $message = $recentCancelled->cancellation_reason ?: 'Your ride has been cancelled.';
+                }
+
                 return response()->json([
                     'success' => true,
                     'ride' => [
                         'id' => $recentCancelled->id,
                         'status' => 'cancelled',
-                        'cancellation_reason' => $reason,
+                        'cancellation_reason' => $message,
                         'pickup_location' => $recentCancelled->pickup_location,
                         'dropoff_location' => $recentCancelled->dropoff_location,
                         'fare' => floatval($recentCancelled->fare ?: $recentCancelled->total_amount),
@@ -709,8 +748,8 @@ class RideController extends Controller
                     ],
                     'notification' => [
                         'type' => 'ride_cancelled',
-                        'title' => $isExpiredReason ? 'No Driver Available' : 'Ride Request Cancelled',
-                        'message' => $reason,
+                        'title' => $title,
+                        'message' => $message,
                     ],
                 ]);
             }
@@ -1179,6 +1218,9 @@ class RideController extends Controller
             }
             if ($newStatus === 'cancelled') {
                 $updates['cancelled_at'] = now();
+                $updates['cancelled_by'] = 'driver';
+                $driverReason = $request->input('reason') ?: $request->input('cancellation_reason') ?: 'Your ride was cancelled by the driver.';
+                $updates['cancellation_reason'] = $driverReason;
                 $updates['payment_status'] = 'released';
                 try {
                     \App\Services\StripeService::releaseRideHold($ride);
@@ -1191,7 +1233,13 @@ class RideController extends Controller
                 }
 
                 // Process customer wallet refund if prepaid via Stripe or MoMo
-                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, $ride->ride_type ?: 'ride', $request->input('reason', 'Ride cancelled'));
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, $ride->ride_type ?: 'ride', $driverReason);
+
+                if ($ride->rider_id) {
+                    try {
+                        \App\Services\NotificationService::send($ride->rider_id, 'ride_cancelled', 'Ride Canceled', $driverReason, $ride->id);
+                    } catch (\Throwable $e) {}
+                }
             }
 
             $ride->update($updates);

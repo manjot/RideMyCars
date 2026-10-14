@@ -166,13 +166,26 @@ class RideProvider extends ChangeNotifier {
       if (res.statusCode == 200 && res.data['success'] == true) {
         final r = res.data['ride'];
 
+        final notif = res.data['notification'] is Map ? Map<String, dynamic>.from(res.data['notification']) : null;
+
+        if (r != null && r['status'] == 'completed') {
+          _cancellationNotification = notif ?? {
+            'type': 'ride_completed',
+            'title': 'Ride Completed',
+            'message': 'Your trip has ended successfully. Thank you for riding with RideMyCars!',
+          };
+          _activeRide = null;
+          stopActiveRidePolling();
+          notifyListeners();
+          return;
+        }
+
         if (r != null && r['status'] == 'cancelled') {
-          _cancellationNotification = res.data['notification'] is Map
-              ? Map<String, dynamic>.from(res.data['notification'])
-              : {
-                  'title': 'Ride Request Cancelled',
-                  'message': r['cancellation_reason']?.toString() ?? 'Driver was unable to accept your request or cancelled.',
-                };
+          _cancellationNotification = notif ?? {
+            'type': 'ride_cancelled',
+            'title': 'Ride Canceled',
+            'message': r['cancellation_reason']?.toString() ?? 'Ride Canceled',
+          };
           _activeRide = null;
           stopActiveRidePolling();
           notifyListeners();
@@ -181,10 +194,20 @@ class RideProvider extends ChangeNotifier {
 
         final newRide = r != null ? Map<String, dynamic>.from(r) : null;
         if (_activeRide != null && newRide == null) {
-          _cancellationNotification = {
-            'title': 'Ride Cancelled',
-            'message': 'Your ride request has been cancelled or completed.',
-          };
+          final lastStatus = _activeRide?['status']?.toString();
+          if (lastStatus == 'in_progress' || lastStatus == 'started' || lastStatus == 'completed') {
+            _cancellationNotification = notif ?? {
+              'type': 'ride_completed',
+              'title': 'Ride Completed',
+              'message': 'Your trip has ended successfully. Thank you for riding with RideMyCars!',
+            };
+          } else {
+            _cancellationNotification = notif ?? {
+              'type': 'ride_cancelled',
+              'title': 'Ride Canceled',
+              'message': 'Ride Canceled',
+            };
+          }
           stopActiveRidePolling();
         }
 

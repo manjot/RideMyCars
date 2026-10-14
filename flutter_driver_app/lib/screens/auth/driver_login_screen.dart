@@ -575,6 +575,266 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
     );
   }
 
+  void _showForgotPasswordSheet() {
+    final emailController = TextEditingController(text: _emailController.text.trim());
+    final otpController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    int resetStep = 1;
+    bool isProcessing = false;
+    String? sheetError;
+    String? sheetSuccess;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceDark,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Reset Driver Password',
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'Verify your registered email to set a new password',
+                              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (sheetSuccess != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                      ),
+                      child: Text(sheetSuccess!, style: const TextStyle(color: AppColors.success, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (sheetError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                      ),
+                      child: Text(sheetError!, style: const TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (resetStep == 1) ...[
+                    TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: AppColors.textLight),
+                      decoration: InputDecoration(
+                        labelText: 'Registered Driver Email',
+                        labelStyle: const TextStyle(color: AppColors.textMuted),
+                        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.backgroundDark,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isProcessing
+                            ? null
+                            : () async {
+                                final em = emailController.text.trim();
+                                if (em.isEmpty || !em.contains('@')) {
+                                  setSheetState(() => sheetError = 'Please enter a valid email address.');
+                                  return;
+                                }
+                                setSheetState(() {
+                                  isProcessing = true;
+                                  sheetError = null;
+                                  sheetSuccess = null;
+                                });
+                                final auth = Provider.of<AuthProvider>(context, listen: false);
+                                final res = await auth.sendEmailOtp(email: em, action: 'forgot_password');
+                                setSheetState(() {
+                                  isProcessing = false;
+                                  if (res['success'] == true) {
+                                    resetStep = 2;
+                                    sheetSuccess = res['message']?.toString() ?? 'Verification code sent to $em';
+                                  } else {
+                                    sheetError = res['message']?.toString() ?? res['error']?.toString() ?? 'Failed to send verification code.';
+                                  }
+                                });
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.backgroundDark,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: isProcessing
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.backgroundDark))
+                            : const Text('Send Verification Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                  ] else ...[
+                    TextField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 4,
+                      style: const TextStyle(color: AppColors.textLight, letterSpacing: 4, fontSize: 18, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        labelText: '4-Digit Code',
+                        labelStyle: const TextStyle(color: AppColors.textMuted),
+                        prefixIcon: const Icon(Icons.pin_rounded, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.backgroundDark,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: newPasswordController,
+                      obscureText: true,
+                      style: const TextStyle(color: AppColors.textLight),
+                      decoration: InputDecoration(
+                        labelText: 'New Password (min 6 chars)',
+                        labelStyle: const TextStyle(color: AppColors.textMuted),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.backgroundDark,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: confirmPasswordController,
+                      obscureText: true,
+                      style: const TextStyle(color: AppColors.textLight),
+                      decoration: InputDecoration(
+                        labelText: 'Confirm New Password',
+                        labelStyle: const TextStyle(color: AppColors.textMuted),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.backgroundDark,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isProcessing
+                            ? null
+                            : () async {
+                                final code = otpController.text.trim();
+                                final pwd = newPasswordController.text;
+                                final confirm = confirmPasswordController.text;
+                                if (code.length < 4) {
+                                  setSheetState(() => sheetError = 'Please enter the 4-digit verification code.');
+                                  return;
+                                }
+                                if (pwd.length < 6) {
+                                  setSheetState(() => sheetError = 'Password must be at least 6 characters.');
+                                  return;
+                                }
+                                if (pwd != confirm) {
+                                  setSheetState(() => sheetError = 'Passwords do not match.');
+                                  return;
+                                }
+                                setSheetState(() {
+                                  isProcessing = true;
+                                  sheetError = null;
+                                });
+                                final auth = Provider.of<AuthProvider>(context, listen: false);
+                                final res = await auth.resetPassword(
+                                  identifier: emailController.text.trim(),
+                                  otp: code,
+                                  newPassword: pwd,
+                                );
+                                setSheetState(() => isProcessing = false);
+                                if (res['success'] == true) {
+                                  Navigator.pop(bCtx);
+                                  _emailController.text = emailController.text.trim();
+                                  _passwordController.text = pwd;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(res['message']?.toString() ?? 'Password reset successfully! Please sign in.'),
+                                      backgroundColor: AppColors.success,
+                                    ),
+                                  );
+                                } else {
+                                  setSheetState(() => sheetError = res['message']?.toString() ?? 'Failed to reset password.');
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.backgroundDark,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: isProcessing
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.backgroundDark))
+                            : const Text('Update Password & Sign In', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
@@ -874,7 +1134,26 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                       ),
                       validator: (val) => (val == null || val.isEmpty) ? 'Please enter your password' : null,
                     ),
-                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _showForgotPasswordSheet,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
 
                     SizedBox(
                       height: 52,

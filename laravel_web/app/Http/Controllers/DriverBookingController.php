@@ -224,11 +224,11 @@ class DriverBookingController extends Controller
         // Process payment transaction
         PaymentService::processBookingPayment($booking, $validated['payment_method'], $request->all());
 
-        // Initiate proximity driver assignment or direct notification
-        if ($booking->driver_id) {
-            \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $booking->driver_id);
-        } else {
-            \App\Services\DriverBookingAssignmentService::assignNextDriver($booking);
+        // Initiate proximity driver assignment or direct notification ONLY after payment is confirmed, or immediately for cash
+        $isCash = in_array(strtolower($validated['payment_method'] ?? ''), ['cash', 'pay_on_pickup', 'cod']);
+        $isAlreadyPaid = in_array(strtolower($booking->payment_status ?? ''), ['paid', 'completed', 'authorized', 'hold']);
+        if ($isCash || $isAlreadyPaid) {
+            \App\Services\DriverBookingAssignmentService::assignDriverForBooking($booking);
         }
 
         // Activity log

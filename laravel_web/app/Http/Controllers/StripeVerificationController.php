@@ -161,10 +161,7 @@ class StripeVerificationController extends Controller
                             ['status' => 'accepted']
                         );
                     } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
-                        \App\Models\RideAssignment::updateOrCreate(
-                            ['driver_booking_id' => $booking->id, 'driver_id' => $driverId],
-                            ['status' => 'accepted']
-                        );
+                        \App\Services\DriverBookingAssignmentService::assignDriverForBooking($booking);
                     } elseif ($serviceType === 'package_delivery' || $serviceType === 'delivery') {
                         \App\Models\RideAssignment::updateOrCreate(
                             ['package_delivery_id' => $booking->id, 'driver_id' => $driverId],

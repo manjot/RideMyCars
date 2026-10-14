@@ -270,18 +270,58 @@ class NotificationService
 
     /**
      * Notify Driver of incoming hiring request.
+     * Includes: Client's Name, Book Now Status or Schedule For Later, Estimated Fare.
      */
     public static function notifyDriverHiringAssigned(DriverBooking $booking, int $driverId): void
     {
         $total = number_format($booking->total_price ?? 0, 2);
+        $clientName = $booking->client?->name ?? 'Client';
+
+        $isImmediate = false;
+        if (!$booking->start_date || $booking->start_date === now()->format('Y-m-d')) {
+            if (!$booking->start_time) {
+                $isImmediate = true;
+            } else {
+                try {
+                    $bookingStart = \Carbon\Carbon::parse($booking->start_date . ' ' . $booking->start_time);
+                    $diffMins = $bookingStart->diffInMinutes(now(), false);
+                    $isImmediate = abs($diffMins) <= 60;
+                } catch (\Throwable $e) {
+                    $isImmediate = true;
+                }
+            }
+        }
+
+        $scheduleStatus = $isImmediate 
+            ? 'Book Now (Immediate)' 
+            : ('Schedule For Later (' . \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') . ($booking->start_time ? ' at ' . $booking->start_time : '') . ')');
+
+        $estimatedFare = "{$booking->currency} {$total}";
+        $title = "New Chauffeur Request: {$scheduleStatus}";
+        $message = "Client: {$clientName} | Status: {$scheduleStatus} | Estimated Fare: {$estimatedFare}. Tap to view and accept.";
+
         self::send(
             $driverId,
             'driver_booking',
-            'New Hiring Request',
-            "New {$booking->service_category} driver hiring request for {$booking->start_date} ({$booking->currency} {$total}).",
+            $title,
+            $message,
             null,
             '/driver/dashboard',
-            ['booking_id' => $booking->id, 'type' => 'driver_booking', 'icon' => 'user', 'color' => 'emerald']
+            [
+                'booking_id' => $booking->id,
+                'driver_booking_id' => $booking->id,
+                'type' => 'driver_booking',
+                'client_name' => $clientName,
+                'customer_name' => $clientName,
+                'schedule_status' => $scheduleStatus,
+                'book_now_status' => $scheduleStatus,
+                'estimated_fare' => $estimatedFare,
+                'fare' => floatval($booking->total_price ?? 0),
+                'total_price' => floatval($booking->total_price ?? 0),
+                'currency' => $booking->currency,
+                'icon' => 'user',
+                'color' => 'emerald',
+            ]
         );
     }
 

@@ -406,7 +406,7 @@
                                             </div>
                                             <div class="flex flex-col text-left min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Rent Vehicle</span>
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Rent A Vehicle (Self-Drive)</span>
                                                     <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Fleet</span>
                                                 </div>
                                                 <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Self-drive & luxury fleet rentals</span>
@@ -424,7 +424,7 @@
                                             </div>
                                             <div class="flex flex-col text-left min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Hire Driver</span>
+                                                    <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Hire A Chauffeur</span>
                                                     <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Verified</span>
                                                 </div>
                                                 <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Private chauffeurs for your car</span>
@@ -759,7 +759,7 @@
                                         </div>
                                         <div class="flex flex-col text-left min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Rent Vehicle</span>
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Rent A Vehicle (Self-Drive)</span>
                                                 <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">Self-Drive</span>
                                             </div>
                                             <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Daily & weekly self-drive rentals</span>
@@ -778,7 +778,7 @@
                                         </div>
                                         <div class="flex flex-col text-left min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Hire Chauffeur</span>
+                                                <span class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Hire A Chauffeur</span>
                                                 <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Verified</span>
                                             </div>
                                             <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Professional drivers for your own car</span>
@@ -1630,7 +1630,7 @@
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Rent Vehicle</div>
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Rent A Vehicle (Self-Drive)</div>
                             <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Self-drive & car rentals</div>
                         </div>
                     </a>
@@ -1645,7 +1645,7 @@
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Hire Driver</div>
+                            <div class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Hire A Chauffeur</div>
                             <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Verified private chauffeurs</div>
                         </div>
                     </a>

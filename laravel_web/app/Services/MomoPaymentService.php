@@ -256,7 +256,7 @@ class MomoPaymentService
             ]);
 
             try {
-                DriverBookingAssignmentService::assignNextDriver($driverBooking);
+                DriverBookingAssignmentService::assignDriverForBooking($driverBooking);
             } catch (\Throwable $e) {}
         }
 

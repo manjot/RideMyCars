@@ -410,6 +410,9 @@ class StripeService
             $booking = DriverBooking::find($transaction->driver_booking_id);
             if ($booking) {
                 $booking->update(['payment_status' => 'paid', 'payment_method' => 'stripe']);
+                try {
+                    \App\Services\DriverBookingAssignmentService::assignDriverForBooking($booking);
+                } catch (\Throwable $e) {}
             }
         } elseif ($transaction->package_delivery_id) {
             $delivery = PackageDelivery::find($transaction->package_delivery_id);

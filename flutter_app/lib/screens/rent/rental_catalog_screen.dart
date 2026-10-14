@@ -127,7 +127,7 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text(
-          'Rent a Car',
+          'Rent A Vehicle (Self-Drive)',
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
         ),
         centerTitle: true,

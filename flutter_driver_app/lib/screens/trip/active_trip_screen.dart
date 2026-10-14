@@ -1635,8 +1635,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           ),
         ],
       );
-    } else {
-      // in_progress / started / or any other active status
+    } else if (normalized == 'in_progress' || normalized == 'started' || normalized == 'on_trip' || normalized == 'picked_up' || normalized == 'in_transit') {
+      // in_progress / started / or any other active trip status
       return SizedBox(
         height: 54,
         child: ElevatedButton.icon(
@@ -1651,6 +1651,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           label: const Text('Complete & End Trip', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
       );
+    } else {
+      return const SizedBox.shrink();
     }
   }
 }

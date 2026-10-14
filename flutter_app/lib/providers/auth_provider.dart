@@ -494,6 +494,53 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
+  Future<Map<String, dynamic>> resetPassword({
+    required String identifier,
+    required String otp,
+    required String newPassword,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final payload = <String, dynamic>{
+        'otp': otp.trim(),
+        'password': newPassword,
+        'password_confirmation': newPassword,
+      };
+      if (identifier.contains('@')) {
+        payload['email'] = identifier.trim().toLowerCase();
+      } else {
+        payload['phone'] = identifier.trim();
+      }
+
+      final res = await _dio.post(ApiConstants.resetPassword, data: payload);
+      _isLoading = false;
+      notifyListeners();
+
+      if (res.data is Map) {
+        return Map<String, dynamic>.from(res.data);
+      }
+      return {'success': true, 'message': 'Password reset successfully!'};
+    } on DioException catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      if (e.response?.data is Map) {
+        final data = Map<String, dynamic>.from(e.response!.data);
+        _errorMessage = _extractErrorMessage(data, 'Failed to reset password.');
+        return data;
+      }
+      _errorMessage = 'Unable to connect to server. Please try again.';
+      return {'success': false, 'message': _errorMessage};
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      _errorMessage = 'An error occurred while resetting password.';
+      return {'success': false, 'message': _errorMessage};
+    }
+  }
+
   Future<bool> loginWithGoogle({
     String? idToken,
     String? accessToken,

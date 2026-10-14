@@ -338,6 +338,13 @@ Route::post('/otp/verify', function (\Illuminate\Http\Request $request) {
     return $res;
 });
 
+Route::post('/forgot-password', function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\Api\AuthController::class)->resetPassword($request);
+});
+Route::post('/api/auth/reset-password', function (\Illuminate\Http\Request $request) {
+    return app(\App\Http\Controllers\Api\AuthController::class)->resetPassword($request);
+});
+
 Route::get('/signup', function () {
     return view('signup');
 })->name('signup');

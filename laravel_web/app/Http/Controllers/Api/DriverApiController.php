@@ -1254,6 +1254,12 @@ class DriverApiController extends Controller
                     'pickup_time' => $a->ride->pickup_time ?? null,
                 ];
             } elseif ($a->driverBooking && $a->driverBooking->booking_status === 'pending') {
+                $rawDbMethod = strtolower((string)($a->driverBooking->payment_method ?? ''));
+                $isDbCash = in_array($rawDbMethod, ['cash', 'pay_on_pickup', 'cod'], true) || str_contains($rawDbMethod, 'cash');
+                $isDbPaidOrHold = in_array(strtolower((string)($a->driverBooking->payment_status ?? '')), ['hold', 'authorized', 'paid', 'successful'], true);
+                if (!$isDbCash && !$isDbPaidOrHold) {
+                    continue;
+                }
                 $bPricing = \App\Models\CountryPricing::forCountry($a->driverBooking->country ?? $driverCountry);
                 $clientName = $a->driverBooking->client?->name ?? 'Client';
                 $clientPhone = $a->driverBooking->client?->phone;
@@ -1349,6 +1355,58 @@ class DriverApiController extends Controller
                     'waiting_time_seconds' => \App\Services\SettingService::getDeliveryWaitingTimeSeconds(),
                 ];
             }
+        }
+
+        // 1.5 Also load any direct pending driver bookings assigned to this driver where payment is confirmed
+        $processedBookingIds = collect($requests)->where('type', 'driver_booking')->pluck('booking_id')->toArray();
+        $directBookings = \App\Models\DriverBooking::with('client')
+            ->whereIn('driver_id', $userIds)
+            ->where('booking_status', 'pending')
+            ->where(function ($q) {
+                $q->whereIn('payment_status', ['paid', 'hold', 'authorized', 'successful'])
+                  ->orWhereIn('payment_method', ['cash', 'pay_on_pickup', 'cod']);
+            })
+            ->whereNotIn('id', $rejectedBookingIds)
+            ->whereNotIn('id', $processedBookingIds)
+            ->latest()
+            ->get();
+
+        foreach ($directBookings as $db) {
+            $bPricing = \App\Models\CountryPricing::forCountry($db->country ?? $driverCountry);
+            $clientName = $db->client?->name ?? 'Client';
+            $clientPhone = $db->client?->phone;
+
+            $requests[] = [
+                'assignment_id' => 0,
+                'type' => 'driver_booking',
+                'booking_id' => $db->id,
+                'driver_booking_id' => $db->id,
+                'pickup_location' => $db->pickup_location,
+                'dropoff_location' => $db->dropoff_location ?? 'As Directed',
+                'service_category' => $db->service_category,
+                'duration_type' => $db->duration_type,
+                'duration_count' => $db->duration_count,
+                'total_price' => floatval($db->total_price),
+                'fare' => floatval($db->total_price),
+                'currency_symbol' => $bPricing->currency_symbol,
+                'currency_code' => $bPricing->currency_code,
+                'country' => $bPricing->country_code,
+                'customer_name' => $clientName,
+                'customer_phone' => $clientPhone,
+                'client_name' => $clientName,
+                'client_phone' => $clientPhone,
+                'poc_name' => null,
+                'poc_phone' => null,
+                'start_date' => $db->start_date,
+                'pickup_date' => $db->start_date ? \Carbon\Carbon::parse($db->start_date)->format('M d, Y') : null,
+                'pickup_time' => $db->start_time ?? null,
+                'created_at' => $db->created_at?->toIso8601String(),
+                'request_time_formatted' => $db->created_at?->format('M d, Y • h:i A'),
+                'request_time_human' => $db->created_at?->diffForHumans(),
+                'expires_at' => now()->addMinutes(10)->toIso8601String(),
+                'remaining_seconds' => 600,
+                'waiting_time_seconds' => 600,
+            ];
         }
 
         // 2. Also populate available pending unassigned rides in driver's country & vicinity

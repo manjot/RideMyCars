@@ -1310,13 +1310,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                 ),
                                 _buildBottomTabItem(
                                   type: ServiceType.rent,
-                                  label: 'Rent',
+                                  label: 'Rent (Self-Drive)',
                                   icon: Icons.vpn_key_rounded,
                                   activeColor: const Color(0xFF3B82F6),
                                 ),
                                 _buildBottomTabItem(
                                   type: ServiceType.driver,
-                                  label: 'Driver',
+                                  label: 'Hire Chauffeur',
                                   icon: Icons.person_pin_circle_rounded,
                                   activeColor: const Color(0xFF10B981),
                                 ),
@@ -2788,7 +2788,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.4)),
                 ),
                 child: const Text(
-                  'RIDEMYCARS PREMIUM CAR RENTAL',
+                  'RIDEMYCARS RENT A VEHICLE (SELF-DRIVE)',
                   style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.w900, fontSize: 9.5),
                 ),
               ),
@@ -3294,7 +3294,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
                 ),
                 child: const Text(
-                  'RIDEMYCARS DRIVER HIRING',
+                  'RIDEMYCARS HIRE A CHAUFFEUR',
                   style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 9.5),
                 ),
               ),
@@ -3308,7 +3308,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
             height: 32,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: ['Hire Driver', 'Outstation Trip', 'City Run', 'Valet Service'].map((srv) {
+              children: ['Hire A Chauffeur', 'Outstation Trip', 'City Run', 'Valet Service'].map((srv) {
                 final isSelected = _driverServiceType == srv;
                 return GestureDetector(
                   onTap: () => setState(() => _driverServiceType = srv),

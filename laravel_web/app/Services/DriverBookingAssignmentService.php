@@ -10,6 +10,41 @@ use App\Models\Ride;
 class DriverBookingAssignmentService
 {
     /**
+     * Assign driver for DriverBooking after payment or for cash.
+     */
+    public static function assignDriverForBooking(DriverBooking $booking)
+    {
+        if (in_array($booking->booking_status, ['accepted', 'in_progress', 'completed', 'cancelled'])) {
+            return null;
+        }
+
+        $targetDriverUserId = $booking->driver_id;
+        if (!$targetDriverUserId && $booking->driver_profile_id) {
+            $dp = DriverProfile::find($booking->driver_profile_id);
+            $targetDriverUserId = $dp?->user_id;
+        }
+
+        if ($targetDriverUserId) {
+            $assignment = RideAssignment::updateOrCreate(
+                [
+                    'driver_booking_id' => $booking->id,
+                    'driver_id' => $targetDriverUserId,
+                ],
+                [
+                    'ride_id' => null,
+                    'status' => 'pending',
+                    'expires_at' => now()->addMinutes(15),
+                ]
+            );
+
+            \App\Services\NotificationService::notifyDriverHiringAssigned($booking, (int)$targetDriverUserId);
+            return $assignment;
+        }
+
+        return self::assignNextDriver($booking);
+    }
+
+    /**
      * Proximity-based driver matching for DriverBookings.
      */
     public static function assignNextDriver(DriverBooking $booking)

@@ -2099,7 +2099,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ),
                 ],
               ),
-            ] else ...[
+            ] else if (rawStatus == 'in_progress' || rawStatus == 'started' || rawStatus == 'on_trip' || rawStatus == 'picked_up' || rawStatus == 'in_transit') ...[
               SizedBox(
                 height: 52,
                 child: ElevatedButton.icon(
