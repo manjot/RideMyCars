@@ -163,6 +163,22 @@ class InvestorProfileResource extends Resource
                                 ->label('Signed Agreement Version')
                                 ->content(fn ($record) => $record?->esignatureLog ? "Signed {$record->esignatureLog->agreement_version} by {$record->esignatureLog->signer_name} (IP: {$record->esignatureLog->ip_address})" : 'Not signed yet'),
                         ]),
+
+                    Forms\Components\Section::make('Internal Policy & Supervisor Clearance')
+                        ->schema([
+                            Forms\Components\Placeholder::make('policy_notice')
+                                ->label('Compliance Rule')
+                                ->content('Per RideMyCars Internal Policy: Before an Admin can edit an Investor Profile, approval must be granted by the Supervisor.'),
+                            Forms\Components\TextInput::make('edit_approval_status')
+                                ->label('Clearance Status')
+                                ->disabled(),
+                            Forms\Components\TextInput::make('edit_approval_reason')
+                                ->label('Edit Request Reason')
+                                ->disabled(),
+                            Forms\Components\TextInput::make('edit_approval_supervisor_notes')
+                                ->label('Supervisor Clearance Notes')
+                                ->disabled(),
+                        ])->columns(2),
                 ])->columnSpan(1),
             ])->columns(3);
     }
@@ -213,6 +229,21 @@ class InvestorProfileResource extends Resource
                         'NEED_MORE_DOCS' => 'danger',
                         'REJECTED' => 'gray',
                         default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('edit_approval_status')
+                    ->label('Edit Clearance')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'APPROVED' => 'success',
+                        'PENDING_APPROVAL' => 'warning',
+                        'REJECTED' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'APPROVED' => 'Approved to Edit',
+                        'PENDING_APPROVAL' => 'Pending Supervisor Approval',
+                        'REJECTED' => 'Edit Request Rejected',
+                        default => 'Edit Locked',
                     }),
                 Tables\Columns\IconColumn::make('payment_unlocked')
                     ->label('Payment Open')
@@ -369,8 +400,123 @@ class InvestorProfileResource extends Resource
                             ->send();
                     }),
 
-                Tables\Actions\EditAction::make(),
+                // 4. Request Edit Approval Action (Point 13: Internal Policy)
+                Tables\Actions\Action::make('request_edit_approval')
+                    ->label('Request Edit Approval')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('warning')
+                    ->visible(fn (InvestorProfile $record) => 
+                        !InvestorProfile::isUserSupervisor(auth()->user()) && 
+                        $record->edit_approval_status !== 'PENDING_APPROVAL' && 
+                        $record->edit_approval_status !== 'APPROVED'
+                    )
+                    ->form([
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Reason / Justification for Modifying Profile *')
+                            ->placeholder('Specify why changes are needed (e.g. Investor submitted updated passport or proof of address).')
+                            ->required(),
+                    ])
+                    ->modalHeading('Request Supervisor Approval to Edit Investor Profile')
+                    ->modalDescription('Internal Policy: All modifications to accredited investor profiles must be reviewed and approved by a supervisor before editing.')
+                    ->action(function (InvestorProfile $record, array $data) {
+                        $record->edit_approval_status = 'PENDING_APPROVAL';
+                        $record->edit_approval_requested_by = auth()->id();
+                        $record->edit_approval_reason = $data['reason'];
+                        $record->save();
+
+                        InvestorComplianceService::logAction(
+                            $record->id,
+                            auth()->id(),
+                            'EDIT_REQUESTED',
+                            "Admin requested supervisor clearance to modify profile. Reason: {$data['reason']}"
+                        );
+
+                        Notification::make()
+                            ->title('Edit Request Submitted')
+                            ->body('Your request has been routed to the supervisor for review and approval.')
+                            ->warning()
+                            ->send();
+                    }),
+
+                // 5. Authorize Edit Action (For Supervisors)
+                Tables\Actions\Action::make('approve_edit_request')
+                    ->label('Authorize Edit')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn (InvestorProfile $record) => 
+                        InvestorProfile::isUserSupervisor(auth()->user()) && 
+                        $record->edit_approval_status === 'PENDING_APPROVAL'
+                    )
+                    ->form([
+                        Forms\Components\Textarea::make('supervisor_notes')
+                            ->label('Supervisor Review / Clearance Notes')
+                            ->placeholder('e.g. Verified supporting documents and investor written request. Authorized.')
+                            ->default('Verified and approved for administrative modification.'),
+                    ])
+                    ->modalHeading('Authorize Investor Profile Modification')
+                    ->action(function (InvestorProfile $record, array $data) {
+                        $record->edit_approval_status = 'APPROVED';
+                        $record->edit_approved_by = auth()->id();
+                        $record->edit_approved_at = now();
+                        $record->edit_approval_supervisor_notes = $data['supervisor_notes'] ?? null;
+                        $record->save();
+
+                        InvestorComplianceService::logAction(
+                            $record->id,
+                            auth()->id(),
+                            'EDIT_APPROVED',
+                            "Supervisor authorized admin modification. Notes: " . ($data['supervisor_notes'] ?? 'Approved.')
+                        );
+
+                        Notification::make()
+                            ->title('Edit Authorization Granted')
+                            ->body('The admin is now cleared to modify this investor profile.')
+                            ->success()
+                            ->send();
+                    }),
+
+                // 6. Decline Edit Action (For Supervisors)
+                Tables\Actions\Action::make('reject_edit_request')
+                    ->label('Decline Edit')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('danger')
+                    ->visible(fn (InvestorProfile $record) => 
+                        InvestorProfile::isUserSupervisor(auth()->user()) && 
+                        $record->edit_approval_status === 'PENDING_APPROVAL'
+                    )
+                    ->form([
+                        Forms\Components\Textarea::make('rejection_notes')
+                            ->label('Reason for Declining Edit Request *')
+                            ->required(),
+                    ])
+                    ->modalHeading('Decline Investor Profile Edit Request')
+                    ->action(function (InvestorProfile $record, array $data) {
+                        $record->edit_approval_status = 'REJECTED';
+                        $record->edit_approval_supervisor_notes = $data['rejection_notes'];
+                        $record->save();
+
+                        InvestorComplianceService::logAction(
+                            $record->id,
+                            auth()->id(),
+                            'EDIT_REJECTED',
+                            "Supervisor declined edit request. Reason: {$data['rejection_notes']}"
+                        );
+
+                        Notification::make()
+                            ->title('Edit Request Declined')
+                            ->danger()
+                            ->send();
+                    }),
+
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (InvestorProfile $record) => $record->isEditAuthorized(auth()->user())),
             ]);
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        /** @var InvestorProfile $record */
+        return $record->isEditAuthorized(auth()->user());
     }
 
     public static function getRelations(): array

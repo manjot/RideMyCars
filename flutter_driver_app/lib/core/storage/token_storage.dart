@@ -15,6 +15,7 @@ class TokenStorage {
   static const _currencyCodeKey = 'selected_currency_code';
   static const _currencySymbolKey = 'selected_currency_symbol';
   static const _isCountryManualKey = 'is_country_manual';
+  static const _referralCodeKey = 'referral_code';
 
   // In-memory cache for instant (0ms) access and immunity against Android Keystore freezes
   static String? _cachedToken;
@@ -23,6 +24,7 @@ class TokenStorage {
   static String? _cachedUserEmail;
   static String? _cachedSavedPassword;
   static String? _cachedAvatarUrl;
+  static String? _cachedReferralCode;
   static String? _cachedCountryCode;
   static String? _cachedCountryName;
   static String? _cachedCurrencyCode;
@@ -122,6 +124,7 @@ class TokenStorage {
     required String email,
     String? password,
     String? avatarUrl,
+    String? referralCode,
   }) async {
     _cachedRole = role;
     _cachedUserName = name;
@@ -131,6 +134,9 @@ class TokenStorage {
     }
     if (avatarUrl != null && avatarUrl.isNotEmpty) {
       _cachedAvatarUrl = avatarUrl;
+    }
+    if (referralCode != null && referralCode.isNotEmpty) {
+      _cachedReferralCode = referralCode;
     }
 
     try {
@@ -143,7 +149,29 @@ class TokenStorage {
       if (avatarUrl != null && avatarUrl.isNotEmpty) {
         await _storage.write(key: _avatarUrlKey, value: avatarUrl).timeout(const Duration(seconds: 2));
       }
+      if (referralCode != null && referralCode.isNotEmpty) {
+        await _storage.write(key: _referralCodeKey, value: referralCode).timeout(const Duration(seconds: 2));
+      }
     } catch (_) {}
+  }
+
+  static Future<void> saveReferralCode(String? referralCode) async {
+    _cachedReferralCode = referralCode;
+    try {
+      if (referralCode != null && referralCode.isNotEmpty) {
+        await _storage.write(key: _referralCodeKey, value: referralCode).timeout(const Duration(seconds: 2));
+      } else {
+        await _storage.delete(key: _referralCodeKey).timeout(const Duration(seconds: 2));
+      }
+    } catch (_) {}
+  }
+
+  static Future<String?> getReferralCode() async {
+    if (_cachedReferralCode != null) return _cachedReferralCode;
+    try {
+      _cachedReferralCode = await _storage.read(key: _referralCodeKey).timeout(const Duration(seconds: 2));
+    } catch (_) {}
+    return _cachedReferralCode;
   }
 
   static Future<void> saveAvatarUrl(String? avatarUrl) async {
@@ -220,6 +248,7 @@ class TokenStorage {
     _cachedUserName = null;
     _cachedSavedPassword = null;
     _cachedAvatarUrl = null;
+    _cachedReferralCode = null;
 
     try {
       // Completely clear auth token, saved password, roles, etc. from storage
@@ -247,6 +276,7 @@ class TokenStorage {
     _cachedUserEmail = null;
     _cachedSavedPassword = null;
     _cachedAvatarUrl = null;
+    _cachedReferralCode = null;
     try {
       await _storage.deleteAll().timeout(const Duration(seconds: 2));
     } catch (_) {}

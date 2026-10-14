@@ -29,6 +29,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   late Country _selectedCountry;
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _referralCodeController = TextEditingController();
   bool _obscurePassword = true;
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -78,6 +79,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     _mobileNumberController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -378,6 +380,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                                     email: _emailController.text.trim(),
                                     password: _passwordController.text,
                                     role: 'driver',
+                                    referralCode: _referralCodeController.text.trim().isNotEmpty
+                                        ? _referralCodeController.text.trim().toUpperCase()
+                                        : null,
                                     driverDetails: _photoController.text.trim().isNotEmpty
                                         ? {
                                             'driver_photo': _photoController.text.trim(),
@@ -676,6 +681,35 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                       ),
                     ),
                     validator: (val) => (val != _passwordController.text) ? 'Passwords do not match' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Referral Code (Optional) Field
+                  TextFormField(
+                    controller: _referralCodeController,
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(
+                      color: AppColors.textLight,
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Referral Code (Optional)',
+                      labelStyle: const TextStyle(color: AppColors.textMuted),
+                      hintText: 'e.g. RMC7K9A2',
+                      hintStyle: const TextStyle(color: AppColors.textMuted, letterSpacing: 1),
+                      prefixIcon: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary),
+                      filled: true,
+                      fillColor: AppColors.surfaceDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
 

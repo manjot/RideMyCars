@@ -14,6 +14,7 @@ class AuthProvider extends ChangeNotifier {
   String? _userEmail;
   int? _userId;
   String? _avatarUrl;
+  String? _referralCode;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
@@ -23,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
   String? get userEmail => _userEmail;
   int? get userId => _userId;
   String? get avatarUrl => _avatarUrl;
+  String? get referralCode => _referralCode;
   String? get errorMessage => _errorMessage;
 
   void setAvatarUrl(String? url) {
@@ -36,6 +38,7 @@ class AuthProvider extends ChangeNotifier {
     _userName = await TokenStorage.getUserName();
     _userEmail = await TokenStorage.getUserEmail();
     _avatarUrl = await TokenStorage.getAvatarUrl();
+    _referralCode = await TokenStorage.getReferralCode();
     final savedPassword = await TokenStorage.getSavedPassword();
 
     if (_token != null && _token!.isNotEmpty) {
@@ -50,12 +53,14 @@ class AuthProvider extends ChangeNotifier {
           _userId = u['id'];
           _userName = u['name'];
           _avatarUrl = u['avatar_url']?.toString();
+          _referralCode = u['referral_code']?.toString() ?? _referralCode;
           await TokenStorage.saveUserData(
             role: 'driver',
             name: _userName!,
             email: _userEmail!,
             password: savedPassword,
             avatarUrl: _avatarUrl,
+            referralCode: _referralCode,
           );
         }
       } catch (_) {
@@ -129,6 +134,7 @@ class AuthProvider extends ChangeNotifier {
         _userName = u['name'];
         _userEmail = u['email'];
         _avatarUrl = u['avatar_url']?.toString();
+        _referralCode = u['referral_code']?.toString();
         _isAuthenticated = true;
 
         if (_token != null) {
@@ -140,6 +146,7 @@ class AuthProvider extends ChangeNotifier {
           email: _userEmail ?? email,
           password: password,
           avatarUrl: _avatarUrl,
+          referralCode: _referralCode,
         );
 
         _isLoading = false;
@@ -172,19 +179,25 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String? referralCode,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final res = await _dio.post(ApiConstants.register, data: {
+      final payload = <String, dynamic>{
         'name': name.trim(),
         'email': email.trim(),
         'password': password,
         'password_confirmation': passwordConfirmation,
         'role': 'driver',
-      });
+      };
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        payload['referral_code'] = referralCode.trim().toUpperCase();
+      }
+
+      final res = await _dio.post(ApiConstants.register, data: payload);
 
       if ((res.statusCode == 200 || res.statusCode == 201) && res.data is Map && res.data['success'] == true) {
         _token = res.data['token'];
@@ -192,12 +205,18 @@ class AuthProvider extends ChangeNotifier {
         _userId = u['id'];
         _userName = u['name'];
         _userEmail = u['email'];
+        _referralCode = u['referral_code']?.toString();
         _isAuthenticated = true;
 
         if (_token != null) {
           await TokenStorage.saveToken(_token!);
         }
-        await TokenStorage.saveUserData(role: 'driver', name: _userName ?? name, email: _userEmail ?? email);
+        await TokenStorage.saveUserData(
+          role: 'driver',
+          name: _userName ?? name,
+          email: _userEmail ?? email,
+          referralCode: _referralCode,
+        );
 
         _isLoading = false;
         notifyListeners();
@@ -273,6 +292,7 @@ class AuthProvider extends ChangeNotifier {
     String? email,
     String? password,
     String role = 'driver',
+    String? referralCode,
     Map<String, dynamic>? driverDetails,
   }) async {
     _isLoading = true;
@@ -291,6 +311,9 @@ class AuthProvider extends ChangeNotifier {
       if (name != null && name.isNotEmpty) payload['name'] = name.trim();
       if (email != null && email.isNotEmpty) payload['email'] = email.trim();
       if (password != null && password.isNotEmpty) payload['password'] = password;
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        payload['referral_code'] = referralCode.trim().toUpperCase();
+      }
       if (driverDetails != null) payload.addAll(driverDetails);
 
       Response res;
@@ -316,6 +339,7 @@ class AuthProvider extends ChangeNotifier {
           _userId = u['id'] is int ? u['id'] : int.tryParse(u['id']?.toString() ?? '');
           _userName = u['name']?.toString();
           _userEmail = u['email']?.toString();
+          _referralCode = u['referral_code']?.toString();
         }
         _isAuthenticated = true;
 
@@ -327,6 +351,7 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? (name ?? 'Driver'),
           email: _userEmail ?? (email ?? cleanPhone),
           password: password ?? '',
+          referralCode: _referralCode,
         );
 
         _isLoading = false;
@@ -401,6 +426,7 @@ class AuthProvider extends ChangeNotifier {
     String? name,
     String? password,
     String role = 'driver',
+    String? referralCode,
     Map<String, dynamic>? driverDetails,
   }) async {
     _isLoading = true;
@@ -415,6 +441,9 @@ class AuthProvider extends ChangeNotifier {
       };
       if (name != null && name.isNotEmpty) payload['name'] = name.trim();
       if (password != null && password.isNotEmpty) payload['password'] = password;
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        payload['referral_code'] = referralCode.trim().toUpperCase();
+      }
       if (driverDetails != null) payload.addAll(driverDetails);
 
       final res = await _dio.post(ApiConstants.verifyOtp, data: payload);
@@ -427,6 +456,7 @@ class AuthProvider extends ChangeNotifier {
           _userName = u['name'];
           _userEmail = u['email'];
           _avatarUrl = u['avatar_url']?.toString();
+          _referralCode = u['referral_code']?.toString();
         }
         _isAuthenticated = true;
 
@@ -439,6 +469,7 @@ class AuthProvider extends ChangeNotifier {
           email: _userEmail ?? email,
           password: password ?? '',
           avatarUrl: _avatarUrl,
+          referralCode: _referralCode,
         );
 
         _isLoading = false;
@@ -539,6 +570,7 @@ class AuthProvider extends ChangeNotifier {
           _userName = u['name'];
           _userEmail = u['email'];
           _avatarUrl = u['avatar_url']?.toString();
+          _referralCode = u['referral_code']?.toString();
         }
         _isAuthenticated = true;
 
@@ -550,6 +582,7 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? 'Driver',
           email: _userEmail ?? (email ?? 'driver@ridemycars.com'),
           avatarUrl: _avatarUrl,
+          referralCode: _referralCode,
         );
 
         _isLoading = false;
@@ -601,6 +634,7 @@ class AuthProvider extends ChangeNotifier {
           _userName = u['name'];
           _userEmail = u['email'];
           _avatarUrl = u['avatar_url']?.toString();
+          _referralCode = u['referral_code']?.toString();
         }
         _isAuthenticated = true;
 
@@ -612,6 +646,7 @@ class AuthProvider extends ChangeNotifier {
           name: _userName ?? 'Driver',
           email: _userEmail ?? (email ?? 'driver@ridemycars.com'),
           avatarUrl: _avatarUrl,
+          referralCode: _referralCode,
         );
 
         _isLoading = false;
@@ -644,6 +679,7 @@ class AuthProvider extends ChangeNotifier {
     _userName = null;
     _userEmail = null;
     _avatarUrl = null;
+    _referralCode = null;
     _isAuthenticated = false;
     _isLoading = false;
 

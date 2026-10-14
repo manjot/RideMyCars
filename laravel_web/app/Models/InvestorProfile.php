@@ -40,6 +40,12 @@ class InvestorProfile extends Model
         'document_request_notes',
         'verified_at',
         'verified_by',
+        'edit_approval_status',
+        'edit_approval_requested_by',
+        'edit_approval_reason',
+        'edit_approved_by',
+        'edit_approved_at',
+        'edit_approval_supervisor_notes',
     ];
 
     protected $casts = [
@@ -49,6 +55,7 @@ class InvestorProfile extends Model
         'capital_commitment_usd' => 'decimal:2',
         'payment_unlocked' => 'boolean',
         'verified_at' => 'datetime',
+        'edit_approved_at' => 'datetime',
     ];
 
     protected static function booted()
@@ -93,6 +100,41 @@ class InvestorProfile extends Model
     public function investmentPlan()
     {
         return $this->belongsTo(InvestmentPlan::class, 'selected_tranche', 'tranche_code');
+    }
+
+    public function editRequester()
+    {
+        return $this->belongsTo(User::class, 'edit_approval_requested_by');
+    }
+
+    public function editApprover()
+    {
+        return $this->belongsTo(User::class, 'edit_approved_by');
+    }
+
+    public static function isUserSupervisor(?User $user): bool
+    {
+        if (!$user) return false;
+        if (in_array(strtolower(trim($user->email ?? '')), [
+            'admin@ridemycars.com',
+            'ridemycars1@gmail.com',
+            'ridemycars@gmail.com',
+            'supervisor@ridemycars.com',
+        ])) {
+            return true;
+        }
+        return in_array($user->role, ['supervisor', 'super_admin']);
+    }
+
+    public function isEditAuthorized(?User $user): bool
+    {
+        if (!$user) return false;
+        // Supervisors can always edit
+        if (static::isUserSupervisor($user)) {
+            return true;
+        }
+        // Standard admins must have an approved edit status
+        return $this->edit_approval_status === 'APPROVED';
     }
 
     // Scopes

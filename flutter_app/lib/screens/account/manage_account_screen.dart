@@ -16,6 +16,7 @@ import 'receipts_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
 import '../rides/my_rides_screen.dart';
+import '../referral/referral_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -806,6 +807,28 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                             ],
                           ),
                         ],
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const ReferralScreen()),
+                              );
+                            },
+                            icon: const Icon(Icons.share_rounded, size: 15, color: AppColors.primary),
+                            label: const Text(
+                              'View Referral Rewards & Share Code',
+                              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

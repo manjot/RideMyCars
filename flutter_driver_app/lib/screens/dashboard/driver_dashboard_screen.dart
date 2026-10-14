@@ -13,6 +13,7 @@ import '../earnings/driver_earnings_screen.dart';
 import '../earnings/incentives_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../support/help_support_screen.dart';
+import '../referral/driver_referral_screen.dart';
 import '../safety/sos_contacts_screen.dart';
 import '../safety/widgets/sos_floating_button.dart';
 import '../trip/active_trip_screen.dart';
@@ -3298,6 +3299,24 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const IncentivesScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.share_rounded, color: AppColors.primary),
+                    title: const Text('Refer & Earn / Referral Code', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Invite drivers or riders & earn bonus cash', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                      ),
+                      child: const Text('BONUS', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverReferralScreen()));
                     },
                   ),
                   ListTile(

@@ -26,6 +26,7 @@ import '../rent/rental_catalog_screen.dart';
 import '../rent/rental_detail_screen.dart';
 import '../rides/my_rides_screen.dart';
 import '../support/help_support_screen.dart';
+import '../referral/referral_screen.dart';
 import '../wallet/wallet_screen.dart';
 import 'ride_tracking_screen.dart';
 import 'widgets/floating_ride_widget.dart';
@@ -4290,6 +4291,24 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary),
+                    title: const Text('Refer & Earn / Referral Code', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Share code & earn ride bonuses', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                      ),
+                      child: const Text('REWARD', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
                     },
                   ),
                   ListTile(

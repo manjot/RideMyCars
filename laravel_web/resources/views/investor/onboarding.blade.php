@@ -88,6 +88,56 @@
                 </div>
             </div>
 
+            <!-- In-App Notification / Validation Modal (Replacing browser alert) -->
+            <div x-show="modal.show"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-xs flex items-center justify-center p-4"
+                 style="display: none;"
+                 @keydown.escape.window="closeModal()">
+                <div class="relative bg-white dark:bg-[#131926] border-2 border-amber-400 dark:border-amber-500 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl text-left"
+                     @click.away="closeModal()">
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-2xl font-black shrink-0 border border-amber-300 dark:border-amber-500/30">
+                            ⚠️
+                        </div>
+                        <div>
+                            <div class="inline-block px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 text-[10px] font-black uppercase tracking-wider mb-1">
+                                Action Required
+                            </div>
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white" x-text="modal.title"></h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Please address the required missing item(s) below to continue.</p>
+                        </div>
+                    </div>
+
+                    <!-- Missing Fields Listing (Point 3) -->
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 mb-6">
+                        <div class="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                            Missing Required Field(s):
+                        </div>
+                        <ul class="space-y-2">
+                            <template x-for="(item, idx) in modal.items" :key="idx">
+                                <li class="flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-400 font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0"></span>
+                                    <span x-text="item" class="leading-snug"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="button" @click="closeModal()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-500/30 hover:scale-[1.02] flex items-center justify-center gap-2">
+                            <span>Acknowledge & Complete Missing Fields</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Form Card with Solid Borders -->
             <div class="rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-xl p-6 sm:p-10">
                 
@@ -102,7 +152,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="/investor/register" enctype="multipart/form-data" id="investorOnboardingForm">
+                <form method="POST" action="/investor/register" enctype="multipart/form-data" id="investorOnboardingForm" @submit="validateFinalSubmit($event)">
                     @csrf
 
                     <!-- STEP 1: IDENTITY & LOCATION -->
@@ -121,7 +171,8 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Entity Type *</label>
-                                <select name="entity_type" x-model="form.entity_type" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
+                                <select name="entity_type" x-model="form.entity_type" required class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
+                                    <option value="" disabled selected>-- Select Entity Type --</option>
                                     <option value="individual">Natural Person / Individual</option>
                                     <option value="corporate">Corporate Entity / LLC / Ltd</option>
                                     <option value="institutional">Institutional Fund / Family Office</option>
@@ -130,7 +181,8 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Country of Residence / Incorporation *</label>
-                                <select name="country_code" x-model="form.country_code" @change="onCountryChange()" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
+                                <select name="country_code" x-model="form.country_code" @change="onCountryChange()" required class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
+                                    <option value="" disabled selected>-- Select Country of Residence / Incorporation --</option>
                                     <option value="USA">United States (SEC Rule 506(c))</option>
                                     <option value="GHA">Ghana (SEC Ghana / Ride My Cars (Ghana))</option>
                                     <option value="CAN">Canada (NI 45-106 Exemptions)</option>
@@ -149,16 +201,44 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Authorized Phone Number *</label>
-                                <input type="text" name="phone_number" x-model="form.phone_number" required placeholder="+1 (555) 000-0000" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 transition-colors">
+                                <div class="flex gap-2">
+                                    <select x-model="form.phone_country_code" class="w-28 sm:w-32 px-2.5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-none focus:bg-white focus:border-brand-500">
+                                        <option value="+1">+1 (US/CA)</option>
+                                        <option value="+233">+233 (GH)</option>
+                                        <option value="+44">+44 (UK)</option>
+                                        <option value="+234">+234 (NG)</option>
+                                        <option value="+254">+254 (KE)</option>
+                                        <option value="+27">+27 (ZA)</option>
+                                        <option value="+49">+49 (DE)</option>
+                                        <option value="+33">+33 (FR)</option>
+                                        <option value="+971">+971 (AE)</option>
+                                        <option value="+86">+86 (CN)</option>
+                                        <option value="+91">+91 (IN)</option>
+                                        <option value="+61">+61 (AU)</option>
+                                        <option value="+41">+41 (CH)</option>
+                                    </select>
+                                    <input type="text" x-model="form.phone_number" @input="form.phone_number = form.phone_number.replace(/[^0-9]/g, '')" required placeholder="Digits only (e.g. 244123456)" class="flex-1 px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 transition-colors">
+                                </div>
+                                <input type="hidden" name="phone_number" :value="fullPhoneNumber">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Numbers only. Select country dial code from selector. Letters or symbols are rejected.</span>
                             </div>
 
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Physical / Registered Address</label>
-                                <input type="text" name="address" x-model="form.address" placeholder="Street Address" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 mb-3">
-                                <div class="grid grid-cols-3 gap-3">
-                                    <input type="text" name="city" x-model="form.city" placeholder="City" class="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
-                                    <input type="text" name="state" x-model="form.state" placeholder="State/Province" class="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
-                                    <input type="text" name="postal_code" x-model="form.postal_code" placeholder="Postal Code" class="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Physical / Registered Address *</label>
+                                <input type="text" name="address" x-model="form.address" required placeholder="Street Address *" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 mb-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">City *</label>
+                                        <input type="text" name="city" x-model="form.city" required placeholder="City *" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">State / Province *</label>
+                                        <input type="text" name="state" x-model="form.state" required placeholder="State / Province *" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Postal Code *</label>
+                                        <input type="text" name="postal_code" x-model="form.postal_code" required placeholder="Postal Code *" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm">
+                                    </div>
                                 </div>
                             </div>
 
@@ -166,7 +246,7 @@
                             <div class="sm:col-span-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Create Investor Portal Password *</label>
                                 <input type="password" name="password" x-model="form.password" required placeholder="Choose a secure password (min 6 characters)" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 transition-colors">
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Used to log in to your secure investor dashboard and payment vault.</span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Used to log in to your secure investor dashboard and payment vault (required, minimum 6 characters).</span>
                             </div>
                             @endguest
                         </div>
@@ -210,11 +290,11 @@
 
                         <!-- Dynamic Accreditation Declarations Checkboxes with Solid Borders -->
                         <div class="space-y-3">
-                            <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Required Legal Declarations & Certifications:</div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">Required Legal Declarations & Certifications (All required) *:</div>
 
                             <template x-for="(decl, idx) in activeRule.declarations" :key="idx">
                                 <label class="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer transition-colors">
-                                    <input type="checkbox" :name="'declarations[' + (decl.id || idx) + ']'" value="1" class="mt-0.5 w-4 h-4 rounded text-brand-500 focus:ring-brand-400 border-slate-300 dark:border-slate-600" checked>
+                                    <input type="checkbox" :name="'declarations[' + (decl.id || idx) + ']'" value="1" class="declaration-checkbox mt-0.5 w-4 h-4 rounded text-brand-500 focus:ring-brand-400 border-slate-300 dark:border-slate-600">
                                     <span class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium" x-text="decl.label"></span>
                                 </label>
                             </template>
@@ -226,7 +306,7 @@
                             <button type="button" @click="step = 1" class="px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-xs font-bold transition-colors">
                                 ← Back to Step 1
                             </button>
-                            <button type="button" @click="step = 3" class="px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-500/25 flex items-center gap-2 hover:scale-105">
+                            <button type="button" @click="validateStep2() && (step = 3)" class="px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-500/25 flex items-center gap-2 hover:scale-105">
                                 <span>Continue to Allocation Selection</span>
                                 <span>→</span>
                             </button>
@@ -301,10 +381,12 @@
                             @endforeach
                         </div>
 
-                        <!-- Remittance Path Selection -->
+                        <!-- Remittance Path Selection (Point 8) -->
                         <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Preferred Capital Remittance Path *</label>
                             <select name="remittance_method" x-model="form.remittance_method" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500">
+                                <option value="ndfg_usa_wire">New Development Finance Group LLC (USA) - Bank Wire / ACH</option>
+                                <option value="rmc_ghana_wire">Ride My Cars LLC - Commercial Operating Wire</option>
                                 <option value="stripe">Stripe (Cards & Apple Pay Gateway)</option>
                                 <option value="momo_pay">MoMo Pay (MTN MoMo / Telecel Cash Gateway)</option>
                                 <option value="wire_swift">Bank Wire (USD / EUR / GBP / CAD SWIFT)</option>
@@ -324,7 +406,7 @@
                         </div>
                     </div>
 
-                    <!-- STEP 4: DOCUMENT UPLOAD -->
+                    <!-- STEP 4: DOCUMENT UPLOAD (Points 9 & 10) -->
                     <div x-show="step === 4" x-transition:enter="transition duration-200" class="space-y-6" style="display: none;">
                         <div>
                             <span class="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-brand-400">Step 4 of 5</span>
@@ -337,10 +419,19 @@
                             <!-- USA: Certified CPA Letter / Wealth Statement -->
                             <div x-show="form.country_code === 'USA'" class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
                                 <label class="block text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-                                    Certified CPA Letter / Wealth Statement (SEC Rule 506(c)) *
+                                    Certified CPA Letter / Wealth Statement (SEC Rule 506(c))
                                 </label>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Upload signed letter from licensed CPA, registered attorney, broker-dealer, or qualified wealth verification certificate (PDF, JPG, PNG up to 10MB).</p>
-                                <input type="file" name="document_cpa_letter" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Upload signed letter from licensed CPA, registered attorney, broker-dealer, or qualified wealth verification certificate (PDF, JPG, PNG up to 12MB).</p>
+                                <input type="file" name="document_cpa_letter" @change="onFileChange($event, 'document_cpa_letter')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                            </div>
+
+                            <!-- Annual Tax Returns File Upload Option (Point 9) -->
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <label class="block text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
+                                    Annual Tax Returns (Form 1040 / W-2 / Corporate Return)
+                                </label>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Upload signed copy of recent annual tax returns, IRS Form 1040, W-2, or corporate tax return filing (PDF, JPG, PNG up to 12MB).</p>
+                                <input type="file" name="document_tax_returns" @change="onFileChange($event, 'document_tax_returns')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
                             </div>
 
                             <!-- Ghana: Ghana Card / National ID -->
@@ -349,7 +440,7 @@
                                     Ghana Card / Government Photo ID *
                                 </label>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Upload clear front and back copy of ECOWAS Ghana Card or Ghanaian Passport.</p>
-                                <input type="file" name="document_gh_card" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                                <input type="file" name="document_gh_card" @change="onFileChange($event, 'document_gh_card')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
                             </div>
 
                             <!-- Ghana / Africa: Tax TIN Proof -->
@@ -358,7 +449,7 @@
                                     Corporate Tax Identification Certificate (TIN)
                                 </label>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Tax Identification certificate issued by national revenue authority (GRA or regional authority).</p>
-                                <input type="file" name="document_tax_tin" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                                <input type="file" name="document_tax_tin" @change="onFileChange($event, 'document_tax_tin')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
                             </div>
 
                             <!-- Canada: Risk Acknowledgement Form -->
@@ -367,7 +458,7 @@
                                     Accredited Investor Risk Acknowledgement Schedule (NI 45-106)
                                 </label>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Executed Form 45-106F9 Risk Acknowledgement schedule for Canadian purchasers.</p>
-                                <input type="file" name="document_risk_ack" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                                <input type="file" name="document_risk_ack" @change="onFileChange($event, 'document_risk_ack')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
                             </div>
 
                             <!-- General Valid Government Photo ID -->
@@ -376,7 +467,7 @@
                                     Valid Passport / Driver License / National ID *
                                 </label>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Official government issued photo identification showing legal entity representative identity.</p>
-                                <input type="file" name="document_passport" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                                <input type="file" name="document_passport" @change="onFileChange($event, 'document_passport')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
                             </div>
 
                             <!-- Proof of Address / Corporate Docs -->
@@ -385,7 +476,7 @@
                                     Proof of Address / Corporate Registration
                                 </label>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Recent utility bill (under 90 days) or Articles of Incorporation (if participating as an entity).</p>
-                                <input type="file" name="document_address_proof" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
+                                <input type="file" name="document_address_proof" @change="onFileChange($event, 'document_address_proof')" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 hover:file:bg-slate-300 dark:file:bg-slate-700 dark:hover:file:bg-slate-600 file:text-slate-900 dark:file:text-white cursor-pointer">
                             </div>
                         </div>
 
@@ -393,7 +484,7 @@
                             <button type="button" @click="step = 3" class="px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-xs font-bold transition-colors">
                                 ← Back to Step 3
                             </button>
-                            <button type="button" @click="step = 5" class="px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-500/25 flex items-center gap-2 hover:scale-105">
+                            <button type="button" @click="validateStep4() && (step = 5)" class="px-7 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-brand-500/25 flex items-center gap-2 hover:scale-105">
                                 <span>Continue to Mandatory Agreement</span>
                                 <span>→</span>
                             </button>
@@ -438,7 +529,7 @@
                             </label>
                         </div>
 
-                        <!-- Digital e-Signature Input -->
+                        <!-- Digital e-Signature Input (Point 11: Letters & spaces only) -->
                         <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-4">
                             <div class="flex items-center justify-between">
                                 <label class="block text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Digital e-Signature *</label>
@@ -446,8 +537,10 @@
                             </div>
 
                             <div>
-                                <input type="text" name="signer_name" x-model="form.signer_name" required placeholder="Type your full legal name to execute electronic signature" class="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-500 text-slate-900 dark:text-white font-serif text-base tracking-wide focus:outline-none focus:border-brand-400">
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Typing your legal name constitutes a legally binding electronic signature under the U.S. Electronic Signatures in Global and National Commerce Act (E-SIGN) and UNCITRAL model law.</span>
+                                <input type="text" name="signer_name" x-model="form.signer_name"
+                                       @input="form.signer_name = form.signer_name.replace(/[^a-zA-Z\s]/g, '')"
+                                       required placeholder="Type your full legal name to execute electronic signature" class="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-500 text-slate-900 dark:text-white font-serif text-base tracking-wide focus:outline-none focus:border-brand-400">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Letters and spaces only. Numbers or special characters are strictly not accepted.</span>
                             </div>
 
                             <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
@@ -479,6 +572,27 @@
                 step: 1,
                 countryRules: config.countryRules,
                 plans: config.plans || [],
+                uploadedDocs: {},
+                modal: {
+                    show: false,
+                    title: '',
+                    items: [],
+                },
+                showModal(title, items) {
+                    this.modal.title = title;
+                    this.modal.items = Array.isArray(items) ? items : [items];
+                    this.modal.show = true;
+                },
+                closeModal() {
+                    this.modal.show = false;
+                },
+                onFileChange(e, docKey) {
+                    if (e.target && e.target.files && e.target.files.length > 0) {
+                        this.uploadedDocs[docKey] = e.target.files[0].name;
+                    } else {
+                        delete this.uploadedDocs[docKey];
+                    }
+                },
                 get selectedEquityPercentage() {
                     if (this.plans && this.plans.length) {
                         const match = this.plans.find(p => p.tranche_code === this.form.selected_tranche);
@@ -491,8 +605,9 @@
                 },
                 form: {
                     legal_name: '',
-                    entity_type: 'individual',
-                    country_code: 'USA',
+                    entity_type: '',
+                    country_code: '',
+                    phone_country_code: '+1',
                     email: '',
                     phone_number: '',
                     address: '',
@@ -502,8 +617,14 @@
                     password: '',
                     tax_id_or_national_id: '',
                     selected_tranche: config.initialTranche || 'B',
-                    remittance_method: 'wire_swift',
+                    remittance_method: 'ndfg_usa_wire',
                     signer_name: '',
+                },
+
+                get fullPhoneNumber() {
+                    const dial = (this.form.phone_country_code || '').trim();
+                    const num = (this.form.phone_number || '').trim();
+                    return num ? `${dial} ${num}`.trim() : '';
                 },
 
                 get currentCountryName() {
@@ -533,14 +654,22 @@
                 },
 
                 get activeRule() {
-                    return this.countryRules[this.form.country_code] || this.countryRules['ROW'] || {};
+                    return this.countryRules[this.form.country_code] || this.countryRules['ROW'] || { declarations: [] };
                 },
 
                 onCountryChange() {
-                    if (this.form.country_code === 'GHA' || this.form.country_code === 'AFRICA') {
+                    if (this.form.country_code === 'GHA') {
+                        this.form.phone_country_code = '+233';
+                        this.form.remittance_method = 'rmc_ghana_wire';
+                    } else if (this.form.country_code === 'AFRICA') {
+                        this.form.phone_country_code = '+233';
                         this.form.remittance_method = 'momo_pay';
-                    } else if (this.form.country_code === 'USA') {
-                        this.form.remittance_method = 'stripe';
+                    } else if (this.form.country_code === 'GBR') {
+                        this.form.phone_country_code = '+44';
+                        this.form.remittance_method = 'wire_swift';
+                    } else if (this.form.country_code === 'USA' || this.form.country_code === 'CAN') {
+                        this.form.phone_country_code = '+1';
+                        this.form.remittance_method = 'ndfg_usa_wire';
                     } else {
                         this.form.remittance_method = 'wire_swift';
                     }
@@ -548,17 +677,123 @@
 
                 canNavigateTo(targetStep) {
                     if (targetStep < this.step) return true;
-                    if (this.step === 1) return this.validateStep1();
+                    if (this.step === 1 && !this.validateStep1()) return false;
+                    if (this.step === 2 && !this.validateStep2()) return false;
+                    if (this.step === 3 && targetStep > 3) return true;
+                    if (this.step === 4 && !this.validateStep4()) return false;
                     return true;
                 },
 
                 validateStep1() {
-                    if (!this.form.legal_name || !this.form.email || !this.form.phone_number) {
-                        alert('Please fill in your Legal Name, Email, and Phone Number before proceeding.');
+                    const missing = [];
+                    if (!this.form.legal_name || !this.form.legal_name.trim()) {
+                        missing.push('Legal Entity or Individual Name');
+                    }
+                    if (!this.form.entity_type) {
+                        missing.push('Entity Type (Select from dropdown)');
+                    }
+                    if (!this.form.country_code) {
+                        missing.push('Country of Residence / Incorporation (Select from dropdown)');
+                    }
+                    if (!this.form.email || !this.form.email.trim()) {
+                        missing.push('Primary Contact Email');
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim())) {
+                        missing.push('Primary Contact Email (Enter a valid email address)');
+                    }
+                    if (!this.form.phone_number || !this.form.phone_number.trim()) {
+                        missing.push('Authorized Phone Number (Numbers only)');
+                    }
+                    if (!this.form.address || !this.form.address.trim()) {
+                        missing.push('Physical / Registered Address (Street Address)');
+                    }
+                    if (!this.form.city || !this.form.city.trim()) {
+                        missing.push('City');
+                    }
+                    if (!this.form.state || !this.form.state.trim()) {
+                        missing.push('State / Province');
+                    }
+                    if (!this.form.postal_code || !this.form.postal_code.trim()) {
+                        missing.push('Postal Code');
+                    }
+                    @guest
+                    if (!this.form.password || this.form.password.length < 6) {
+                        missing.push('Create Investor Portal Password (Minimum 6 characters required)');
+                    }
+                    @endguest
+
+                    if (missing.length > 0) {
+                        this.showModal('Identity & Location Verification Required', missing);
                         return false;
                     }
+
                     if (!this.form.signer_name) {
-                        this.form.signer_name = this.form.legal_name;
+                        this.form.signer_name = this.form.legal_name.replace(/[^a-zA-Z\s]/g, '');
+                    }
+                    return true;
+                },
+
+                validateStep2() {
+                    const missing = [];
+                    if ((this.form.country_code === 'GHA' || this.form.country_code === 'AFRICA') && (!this.form.tax_id_or_national_id || !this.form.tax_id_or_national_id.trim())) {
+                        missing.push('National ID / Ghana Card Number / Corporate TIN');
+                    }
+
+                    const declarations = document.querySelectorAll('.declaration-checkbox');
+                    let allChecked = declarations.length > 0;
+                    declarations.forEach(chk => {
+                        if (!chk.checked) allChecked = false;
+                    });
+                    if (!allChecked) {
+                        missing.push('All Legal Declarations & Certifications must be reviewed and checked');
+                    }
+
+                    if (missing.length > 0) {
+                        this.showModal('Legal Declarations Incomplete', missing);
+                        return false;
+                    }
+                    return true;
+                },
+
+                validateStep4() {
+                    const missing = [];
+                    if (this.form.country_code === 'USA') {
+                        if (!this.uploadedDocs['document_cpa_letter'] && !this.uploadedDocs['document_tax_returns']) {
+                            missing.push('Certified CPA Letter OR Annual Tax Returns (Required for SEC Rule 506(c))');
+                        }
+                    } else if (this.form.country_code === 'GHA') {
+                        if (!this.uploadedDocs['document_gh_card'] && !this.uploadedDocs['document_passport']) {
+                            missing.push('Ghana Card / Government Photo ID or Ghanaian Passport');
+                        }
+                    }
+
+                    if (!this.uploadedDocs['document_passport'] && !this.uploadedDocs['document_gh_card']) {
+                        missing.push('Valid Passport / Driver License / National ID Photo');
+                    }
+
+                    if (missing.length > 0) {
+                        this.showModal('Mandatory Verification Documents Required', missing);
+                        return false;
+                    }
+                    return true;
+                },
+
+                validateFinalSubmit(e) {
+                    const missing = [];
+                    const governanceAccepted = document.querySelector('input[name="governance_clause_accepted"]');
+                    if (governanceAccepted && !governanceAccepted.checked) {
+                        missing.push('Acceptance of NDFG LLC Operating Agreement Governance Clause (v3.1)');
+                    }
+                    if (!this.form.signer_name || !this.form.signer_name.trim()) {
+                        missing.push('Digital e-Signature (Type your legal name)');
+                    } else if (/[^a-zA-Z\s]/.test(this.form.signer_name)) {
+                        this.form.signer_name = this.form.signer_name.replace(/[^a-zA-Z\s]/g, '');
+                        missing.push('Digital e-Signature cannot contain numbers or special characters');
+                    }
+
+                    if (missing.length > 0) {
+                        e.preventDefault();
+                        this.showModal('e-Signature Submission Incomplete', missing);
+                        return false;
                     }
                     return true;
                 }

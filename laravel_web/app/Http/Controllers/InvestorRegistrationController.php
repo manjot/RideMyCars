@@ -106,11 +106,11 @@ class InvestorRegistrationController extends Controller
             'country_code' => 'required|string|max:10',
             'country_residence' => 'required|string|max:100',
             'entity_type' => 'required|string|in:individual,corporate,institutional',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:50',
-            'password' => 'nullable|string|min:6',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:50',
+            'password' => auth()->check() ? 'nullable|string|min:6' : 'required|string|min:6',
 
             // Step 2: Accreditation & Declarations
             'tax_id_or_national_id' => 'nullable|string|max:100',
@@ -122,6 +122,7 @@ class InvestorRegistrationController extends Controller
 
             // Step 4: Documents
             'document_cpa_letter' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:12288',
+            'document_tax_returns' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:12288',
             'document_gov_id' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:12288',
             'document_passport' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:12288',
             'document_gh_card' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:12288',
@@ -132,7 +133,7 @@ class InvestorRegistrationController extends Controller
 
             // Step 5: e-Signature
             'governance_clause_accepted' => 'required|accepted',
-            'signer_name' => 'required|string|max:255',
+            'signer_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
         ]);
 
         $email = strtolower(trim($validated['email']));
@@ -222,6 +223,7 @@ class InvestorRegistrationController extends Controller
             // 5. Store uploaded documents in private vault
             $docTypes = [
                 'document_cpa_letter' => 'CPA_LETTER',
+                'document_tax_returns' => 'TAX_RETURNS',
                 'document_gov_id' => 'GOV_ID',
                 'document_passport' => 'PASSPORT',
                 'document_gh_card' => 'GH_CARD',

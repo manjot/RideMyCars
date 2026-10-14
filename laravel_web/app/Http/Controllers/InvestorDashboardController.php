@@ -59,21 +59,39 @@ class InvestorDashboardController extends Controller
             default => 'International Private Placement Framework',
         };
 
-        // Escrow coordinates (managed by Ride My Cars (Ghana))
+        // Escrow coordinates (Guaranty Trust Bank Ghana Limited & JPMorgan Chase Bank N.A)
         $escrowDetails = [
-            'swift_bank_name' => 'First National Bank / Standard Chartered Bank (Escrow Trust)',
-            'swift_account_name' => 'Ride My Cars (Ghana) - Escrow Custody',
-            'swift_account_usd' => 'USD-990823410294-RMC',
-            'swift_iban' => 'GH29FNBG0000009908234102',
-            'swift_code' => 'FIRNGHACXXX',
-            'local_bank_ghc' => 'Ride My Cars (Ghana) (Ghana Operations Rail)',
-            'local_account_number' => '1029384756102',
-            'local_branch' => 'Airport City Branch, Accra',
+            // Bank 1: Guaranty Trust Bank Ghana Limited
+            'gtb_bank_name' => 'GUARANTY TRUST BANK GHANA LIMITED',
+            'gtb_account_name' => 'RIDE MY CARS (GHANA)',
+            'gtb_bank_address' => '25A CASTLE ROAD, AMBASSADORIAL AREA. RIDGE PMB CT 416 CANTOMENT-ACCRA. GHANA',
+            'gtb_swift_code' => 'GTBIGHAC',
+            'gtb_acc_cedis' => '3202001005777',
+            'gtb_acc_usd' => '3202002006422',
+            'gtb_acc_pounds' => '3202003002530',
+
+            // Bank 2: JPMorgan Chase Bank N.A
+            'chase_bank_name' => 'JPMORGAN CHASE BANK N.A',
+            'chase_account_name' => 'NEW DEVELOPMENT FINANCE GROUP LLC',
+            'chase_swift_code' => 'CHASUS33XXX',
+            'chase_acc_usd' => '2911538135',
+
+            // Payment Gateways
             'momo_merchant_id' => 'RMC-GHANA-ESCROW',
             'momo_number' => '+233 24 000 8899 (MTN MoMo / Telecel Cash)',
             'stripe_merchant_name' => 'Ride My Cars LLC (Stripe Verified)',
             'stripe_support' => 'Visa, MasterCard, American Express, Apple Pay',
             'reference_code' => $investor->payment_reference_code,
+
+            // Backwards compatibility mappings
+            'swift_bank_name' => 'GUARANTY TRUST BANK GHANA LIMITED / JPMORGAN CHASE BANK N.A',
+            'swift_account_name' => 'RIDE MY CARS (GHANA) / NEW DEVELOPMENT FINANCE GROUP LLC',
+            'swift_account_usd' => '3202002006422',
+            'swift_iban' => 'GTBIGHAC-3202002006422',
+            'swift_code' => 'GTBIGHAC / CHASUS33XXX',
+            'local_bank_ghc' => 'GUARANTY TRUST BANK GHANA LIMITED (RIDE MY CARS (GHANA))',
+            'local_account_number' => '3202001005777',
+            'local_branch' => '25A Castle Road, Ridge, Accra',
         ];
 
         return view('investor.dashboard', compact('investor', 'regulatoryTierName', 'escrowDetails'));

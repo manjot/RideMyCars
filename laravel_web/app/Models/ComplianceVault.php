@@ -57,6 +57,7 @@ class ComplianceVault extends Model
     {
         return match ($this->document_type) {
             'CPA_LETTER' => 'Certified CPA Verification Letter / Wealth Statement',
+            'TAX_RETURNS' => 'Annual Tax Returns (Form 1040 / W-2 / Corporate Return)',
             'GH_CARD' => 'National ID / Ghana Card / Gov ID',
             'TAX_TIN' => 'Corporate Tax Identification Number (TIN)',
             'PASSPORT' => 'International Passport Photo Identification',
