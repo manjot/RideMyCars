@@ -98,7 +98,22 @@
                             <span :class="currentTab === 'payout_methods' ? 'bg-slate-950 text-amber-400' : 'bg-emerald-500 text-slate-950'" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm" x-text="activePayoutMethod ? 'ACTIVE' : 'SELECT'"></span>
                         </button>
 
-                        <!-- 4. Booking History & Receipts -->
+                        <!-- 4. Rented Fleet (Booked Vehicles) -->
+                        <button type="button" @click="setTab('rented_fleet')" 
+                                :style="currentTab === 'rented_fleet' ? 'background: #3b82f6; color: #ffffff; font-weight: 800; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);' : ''"
+                                :class="currentTab === 'rented_fleet' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
+                                class="w-full text-left py-3 px-4 text-sm transition-all rounded-xl cursor-pointer flex items-center justify-between group">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 0 1 2 2m4 0a6 6 0 0 1-7.743 5.743L11 17H9v2H7v2H4a1 1 0 0 1-1-1v-2.586a1 1 0 0 1 .293-.707l5.964-5.964A6 6 0 1 1 21 9z"/></svg>
+                                <span>🔑 Rented Fleet</span>
+                            </div>
+                            <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full" 
+                                  :class="currentTab === 'rented_fleet' ? 'bg-white text-blue-700' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'">
+                                {{ isset($rentals) ? count($rentals) : 0 }}
+                            </span>
+                        </button>
+
+                        <!-- 5. Booking History & Receipts -->
                         <button type="button" @click="setTab('receipts')" 
                                 :style="currentTab === 'receipts' ? 'background: #f59e0b; color: #020617; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);' : ''"
                                 :class="currentTab === 'receipts' ? '' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold'" 
@@ -279,7 +294,16 @@
                             </div>
 
                             <!-- Executive Stats Grid with Dedicated Icons & Rich Badges -->
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-5 border-t border-slate-100 dark:border-slate-800">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 pt-5 border-t border-slate-100 dark:border-slate-800">
+                                <div @click="setTab('rented_fleet')" class="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 hover:bg-blue-100/80 hover:border-blue-400 transition cursor-pointer border border-blue-200/60 dark:border-blue-900/40 group">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs text-blue-700 dark:text-blue-300 font-bold">Rented Fleet</span>
+                                        <span class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs">🔑</span>
+                                    </div>
+                                    <span class="text-2xl font-black text-blue-600 dark:text-blue-400 block group-hover:text-blue-500 transition-colors">{{ isset($rentals) ? count($rentals) : 0 }}</span>
+                                    <span class="text-[11px] text-blue-500 group-hover:text-blue-600 dark:group-hover:text-blue-300 font-semibold mt-1 block">My vehicles &rarr;</span>
+                                </div>
+
                                 <div @click="setTab('receipts')" class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 hover:bg-amber-400/10 hover:border-amber-400/50 transition cursor-pointer border border-slate-200/70 dark:border-slate-800 group">
                                     <div class="flex items-center justify-between mb-2">
                                         <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Bookings</span>
@@ -1103,7 +1127,199 @@
                     </div>
                 </div>
 
-                <!-- 4. BOOKING HISTORY & RECEIPTS TAB -->
+                <!-- 4. RENTED FLEET TAB (BOOKED VEHICLES) -->
+                <div x-show="currentTab === 'rented_fleet'" 
+                     x-transition:enter="transition ease-out duration-200" 
+                     x-transition:enter-start="opacity-0 translate-y-2" 
+                     x-transition:enter-end="opacity-100 translate-y-0" 
+                     style="display: none;" 
+                     class="space-y-6">
+                    
+                    <div class="bg-white dark:bg-[#141824] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 mb-6 gap-4">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                                    <span class="text-blue-500">🔑</span>
+                                    <span>My Rented Fleet</span>
+                                </h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Review your booked rental vehicles, pickup & return schedules, official vouchers, and balance receipts.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="/rent" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-blue-500/20 flex items-center gap-1.5 shrink-0">
+                                    <span>+ Rent a Vehicle</span>
+                                </a>
+                                <a href="/my-rides?tab=rentals" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition shrink-0">
+                                    Full Activity &rarr;
+                                </a>
+                            </div>
+                        </div>
+
+                        @if(!isset($rentals) || $rentals->isEmpty())
+                            <div class="text-center py-16 px-4">
+                                <div class="w-16 h-16 mx-auto mb-4 bg-blue-50 dark:bg-blue-950/40 rounded-full flex items-center justify-center text-blue-500">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 0 1 2 2m4 0a6 6 0 0 1-7.743 5.743L11 17H9v2H7v2H4a1 1 0 0 1-1-1v-2.586a1 1 0 0 1 .293-.707l5.964-5.964A6 6 0 1 1 21 9z"/></svg>
+                                </div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white">No Rented Vehicles Found</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">You have not booked any rental cars yet. Browse our verified self-drive fleet, reserve a car with 20% deposit escrow, and enjoy full comprehensive coverage.</p>
+                                <div class="mt-6">
+                                    <a href="/rent" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl transition shadow-md shadow-blue-500/25">
+                                        <span>🔑 Explore Rental Vehicles</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            <div class="grid grid-cols-1 gap-6">
+                                @foreach($rentals as $rental)
+                                    @php
+                                        $rVehicle = $rental->vehicle;
+                                        $paymentStatus = strtolower($rental->payment_status ?? 'pending');
+                                        $isPaid = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
+                                        $rentalCurrency = \App\Services\CountryService::resolveItemCurrency($rental, $currentCurrencySymbol ?? '$');
+                                        $pickupDateFormatted = $rental->pickup_date ? \Carbon\Carbon::parse($rental->pickup_date)->format('D, M d, Y') : 'Date Pending';
+                                        $returnDateFormatted = $rental->return_date ? \Carbon\Carbon::parse($rental->return_date)->format('D, M d, Y') : 'Return Pending';
+                                        $rentalReceipt = $rental->receipt ?? \App\Models\Receipt::where('booking_type', 'rental')->where('booking_id', $rental->id)->first();
+                                        
+                                        $days = 1;
+                                        if ($rental->pickup_date && $rental->return_date) {
+                                            try {
+                                                $pD = \Carbon\Carbon::parse($rental->pickup_date);
+                                                $rD = \Carbon\Carbon::parse($rental->return_date);
+                                                $days = max(1, $pD->diffInDays($rD));
+                                            } catch (\Throwable $e) {}
+                                        }
+                                    @endphp
+
+                                    <div class="p-5 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 hover:border-blue-400/50 transition">
+                                        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 pb-5 border-b border-slate-200/60 dark:border-slate-700/60">
+                                            <!-- Car image + Name -->
+                                            <div class="flex items-center gap-4 min-w-0">
+                                                <div class="w-20 h-16 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-sm">
+                                                    @if($rVehicle && !empty($rVehicle->image_url))
+                                                        <img src="{{ $rVehicle->image_url }}" alt="{{ $rVehicle->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                        <div style="display:none;" class="text-3xl">🚘</div>
+                                                    @else
+                                                        <span class="text-3xl">🚘</span>
+                                                    @endif
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
+                                                            🔑 RENTED FLEET
+                                                        </span>
+                                                        <span class="text-xs font-mono font-bold text-slate-400">
+                                                            #{{ $rental->digital_receipt_code ?: ('RNT-' . $rental->id) }}
+                                                        </span>
+                                                    </div>
+                                                    <h3 class="text-lg font-black text-slate-900 dark:text-white truncate">
+                                                        {{ $rVehicle ? ($rVehicle->year . ' ' . $rVehicle->make . ' ' . $rVehicle->model) : ($rental->vehicle_type ?? 'Rented Vehicle') }}
+                                                    </h3>
+                                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        Booked on {{ $rental->created_at ? $rental->created_at->format('M d, Y • h:i A') : 'Recent' }}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Status + Total -->
+                                            <div class="flex flex-wrap items-center lg:flex-col lg:items-end gap-2 shrink-0">
+                                                <span class="text-xs font-extrabold uppercase px-3 py-1.5 rounded-xl shadow-sm
+                                                    @if($rental->status === 'completed') bg-emerald-500 text-white
+                                                    @elseif($rental->status === 'cancelled') bg-red-500 text-white
+                                                    @elseif(in_array($rental->status, ['accepted', 'in_progress'])) bg-blue-600 text-white
+                                                    @else bg-amber-500 text-slate-950
+                                                    @endif">
+                                                    @if($rental->status === 'completed') ✓ RETURNED & COMPLETED
+                                                    @elseif($rental->status === 'in_progress') 🚗 CURRENTLY ACTIVE
+                                                    @elseif($rental->status === 'accepted') 🛡️ RESERVED & CONFIRMED
+                                                    @elseif($rental->status === 'cancelled') ✕ CANCELLED
+                                                    @else ⏳ PENDING CONFIRMATION
+                                                    @endif
+                                                </span>
+                                                <div class="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                    Total: <span class="text-slate-900 dark:text-white font-black text-sm">{{ $rentalCurrency }}{{ number_format($rental->total_amount, 2) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Details Grid -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-4 text-xs">
+                                            <!-- Pickup -->
+                                            <div>
+                                                <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-0.5">
+                                                    Pickup
+                                                </div>
+                                                <p class="font-black text-slate-900 dark:text-white">{{ $pickupDateFormatted }}</p>
+                                                <p class="text-slate-500 dark:text-slate-400">Time: {{ $rental->pickup_time ?: '10:00 AM' }}</p>
+                                                <p class="text-slate-600 dark:text-slate-300 mt-1 truncate">📍 {{ $rental->pickup_location ?: 'Designated Hub' }}</p>
+                                            </div>
+
+                                            <!-- Return -->
+                                            <div>
+                                                <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-0.5">
+                                                    Return
+                                                </div>
+                                                <p class="font-black text-slate-900 dark:text-white">{{ $returnDateFormatted }}</p>
+                                                <p class="text-slate-500 dark:text-slate-400">Time: {{ $rental->return_time ?: '10:00 AM' }}</p>
+                                                <p class="text-slate-600 dark:text-slate-300 mt-1 truncate">🏁 {{ $rental->dropoff_location ?: $rental->pickup_location }}</p>
+                                            </div>
+
+                                            <!-- Specs -->
+                                            <div>
+                                                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                                    Vehicle Specs
+                                                </div>
+                                                <p class="text-slate-700 dark:text-slate-300">⚙️ {{ ucfirst($rVehicle->transmission ?? 'Automatic') }}</p>
+                                                <p class="text-slate-700 dark:text-slate-300">⛽ {{ $rental->fuel_policy ?: ($rVehicle->fuel_type ?? 'Full to Full') }}</p>
+                                                <p class="text-slate-700 dark:text-slate-300">🛡️ {{ $rental->protection_option ?: 'Full Coverage' }}</p>
+                                            </div>
+
+                                            <!-- Payment Balance -->
+                                            <div>
+                                                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                                    Financials
+                                                </div>
+                                                <p class="text-emerald-600 dark:text-emerald-400 font-bold">Paid: {{ $rentalCurrency }}{{ number_format($rental->paid_amount ?? ($rental->total_amount * 0.2), 2) }}</p>
+                                                @if(($rental->remaining_balance ?? 0) > 0)
+                                                    <p class="text-amber-600 dark:text-amber-400 font-bold">Due: {{ $rentalCurrency }}{{ number_format($rental->remaining_balance, 2) }}</p>
+                                                @else
+                                                    <p class="text-emerald-600 dark:text-emerald-400 font-semibold">Balance: Cleared</p>
+                                                @endif
+                                                <p class="mt-1">
+                                                    @if($isPaid)
+                                                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">✓ Escrow Paid</span>
+                                                    @else
+                                                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">⏳ Pending</span>
+                                                    @endif
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Card Footer Action Buttons -->
+                                        <div class="pt-4 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3">
+                                            <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                                                Duration: {{ $days }} {{ \Illuminate\Support\Str::plural('Day', $days) }}
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <a href="/rent/booking/{{ $rental->id }}/voucher" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5">
+                                                    <span>📄 Rental Voucher</span>
+                                                </a>
+                                                <a href="{{ $rentalReceipt ? $rentalReceipt->view_url : ('/receipts/' . ($rental->digital_receipt_code ?: $rental->id)) }}" target="_blank" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-black font-black text-xs rounded-xl transition flex items-center gap-1">
+                                                    <span>🧾 Receipt</span>
+                                                </a>
+                                                @if($rentalReceipt)
+                                                    <a href="{{ $rentalReceipt->download_url }}" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs rounded-xl transition" title="Download PDF">
+                                                        <span>📥 PDF</span>
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- 5. BOOKING HISTORY & RECEIPTS TAB -->
                 <div x-show="currentTab === 'receipts'" 
                      x-transition:enter="transition ease-out duration-200" 
                      x-transition:enter-start="opacity-0 translate-y-2" 

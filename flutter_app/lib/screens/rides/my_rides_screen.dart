@@ -91,15 +91,24 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
 
   String _getItemType(Map<String, dynamic> r) {
     final type = (r['type'] ?? 'ride').toString().toLowerCase();
-    final rawType = (r['raw_vehicle_type'] ?? r['vehicle_type'] ?? '').toString();
-    final dropoff = (r['dropoff_location'] ?? '').toString();
-    if (type == 'rental' || rawType.startsWith('RENTAL_') || dropoff.contains('Rental')) {
+    final rawType = (r['raw_vehicle_type'] ?? r['vehicle_type'] ?? '').toString().toLowerCase();
+    final dropoff = (r['dropoff_location'] ?? '').toString().toLowerCase();
+    final bCode = (r['booking_code'] ?? r['digital_receipt_code'] ?? '').toString().toUpperCase();
+    if (type == 'rental' ||
+        type == 'car_rental' ||
+        rawType.contains('rental') ||
+        rawType.startsWith('rental_') ||
+        dropoff.contains('rental') ||
+        bCode.startsWith('RENT-') ||
+        bCode.startsWith('RNT-') ||
+        r['vehicle_id'] != null ||
+        r['vehicle'] != null) {
       return 'rental';
     }
-    if (type == 'chauffeur' || type == 'driver_booking' || rawType.startsWith('CHAUFFEUR_') || dropoff.contains('Duty')) {
+    if (type == 'chauffeur' || type == 'driver_booking' || rawType.startsWith('chauffeur_') || dropoff.contains('duty')) {
       return 'chauffeur';
     }
-    if (type == 'delivery' || rawType.startsWith('DELIVERY_')) {
+    if (type == 'delivery' || rawType.startsWith('delivery_') || type == 'package_delivery') {
       return 'delivery';
     }
     return 'ride';

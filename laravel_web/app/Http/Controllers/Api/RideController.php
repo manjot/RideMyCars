@@ -86,7 +86,12 @@ class RideController extends Controller
 
         foreach ($rides as $r) {
             $rawVehicleType = (string)($r->vehicle_type ?? 'Standard');
-            $isRental = $r->ride_type === 'rental' || $r->vehicle_id !== null || str_starts_with($rawVehicleType, 'RENTAL_');
+            $isRental = $r->ride_type === 'rental' 
+                || $r->vehicle_id !== null 
+                || str_starts_with($rawVehicleType, 'RENTAL_')
+                || str_contains(strtolower($rawVehicleType), 'rental')
+                || str_starts_with($r->digital_receipt_code ?? '', 'RENT-')
+                || str_starts_with($r->digital_receipt_code ?? '', 'RNT-');
             $isChauffeur = str_starts_with($rawVehicleType, 'CHAUFFEUR_');
             $isDelivery = str_starts_with($rawVehicleType, 'DELIVERY_');
 
@@ -136,9 +141,9 @@ class RideController extends Controller
                 'dropoff_location' => $r->dropoff_location,
                 'vehicle_type' => $cleanVehicleType,
                 'raw_vehicle_type' => $rawVehicleType,
-                'pickup_date' => $r->pickup_date ? $r->pickup_date->format('Y-m-d') : null,
+                'pickup_date' => $r->pickup_date ? (\Carbon\Carbon::parse($r->pickup_date)->format('Y-m-d')) : null,
                 'pickup_time' => $r->pickup_time,
-                'return_date' => $r->return_date ? $r->return_date->format('Y-m-d') : null,
+                'return_date' => $r->return_date ? (\Carbon\Carbon::parse($r->return_date)->format('Y-m-d')) : null,
                 'return_time' => $r->return_time,
                 'protection_option' => $r->protection_option,
                 'fuel_policy' => $r->fuel_policy,
@@ -150,6 +155,10 @@ class RideController extends Controller
                     'category' => $r->vehicle->category,
                     'image_url' => $r->vehicle->image_url,
                     'daily_rate' => (float)$r->vehicle->daily_rate,
+                    'transmission' => $r->vehicle->transmission,
+                    'fuel_type' => $r->vehicle->fuel_type,
+                    'seats' => $r->vehicle->seats,
+                    'license_plate' => $r->vehicle->license_plate,
                 ] : null,
                 'created_at' => $r->created_at ? $r->created_at->toIso8601String() : null,
                 'request_time_formatted' => $r->created_at ? $r->created_at->format('M d, Y • h:i A') : null,

@@ -15,6 +15,7 @@ import '../../widgets/country_picker_modal.dart';
 import 'receipts_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../safety/sos_contacts_screen.dart';
+import '../rides/my_rides_screen.dart';
 
 class ManageAccountScreen extends StatefulWidget {
   const ManageAccountScreen({super.key});
@@ -815,6 +816,30 @@ class _ManageAccountScreenState extends State<ManageAccountScreen> {
                     style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 12),
+                  _buildActionTile(
+                    Icons.vpn_key_rounded,
+                    '🔑 My Rented Fleet',
+                    'View your reserved and booked rental vehicles, pickup dates & vouchers',
+                    iconColor: const Color(0xFF3B82F6),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MyRidesScreen(initialCategoryFilter: 'rental')),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildActionTile(
+                    Icons.directions_car_filled_rounded,
+                    '🚗 My Activity & Bookings',
+                    'View all rides, car rentals, private chauffeurs & delivery history',
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MyRidesScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
                   _buildActionTile(
                     Icons.receipt_long_rounded,
                     'Receipts & Tax Invoices',

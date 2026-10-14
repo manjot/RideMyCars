@@ -3256,6 +3256,28 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MyRidesScreen(initialCategoryFilter: 'rental'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.vpn_key_rounded, size: 15, color: Color(0xFF60A5FA)),
+                label: const Text(
+                  '📋 View My Rented Fleet & Active Reservations',
+                  style: TextStyle(
+                    color: Color(0xFF60A5FA),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
           ],
         ],
       ),
@@ -4251,6 +4273,15 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRidesScreen()));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.vpn_key_rounded, color: Color(0xFF3B82F6)),
+                    title: const Text('My Rented Fleet', style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('View booked vehicles & rental vouchers', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRidesScreen(initialCategoryFilter: 'rental')));
                     },
                   ),
                   ListTile(

@@ -22,16 +22,25 @@
         <div class="flex items-center gap-2 border-b border-gray-200 dark:border-white/10 mb-8 overflow-x-auto pb-2">
             <button @click="activeTab = 'rides'"
                 :class="activeTab === 'rides' ? 'border-brand-500 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/30' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all">
-                <span>🚗 Rides & Rentals</span>
+                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all cursor-pointer">
+                <span>🚗 Taxi Rides</span>
                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300">
                     {{ $rides->total() ?? $rides->count() }}
                 </span>
             </button>
 
+            <button @click="activeTab = 'rentals'"
+                :class="activeTab === 'rentals' ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all cursor-pointer">
+                <span>🔑 Rented Fleet</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
+                    {{ $rentals->total() ?? $rentals->count() }}
+                </span>
+            </button>
+
             <button @click="activeTab = 'chauffeurs'"
                 :class="activeTab === 'chauffeurs' ? 'border-brand-500 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/30' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all">
+                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all cursor-pointer">
                 <span>👔 Hire a Driver</span>
                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300">
                     {{ count($driverBookings ?? []) }}
@@ -40,7 +49,7 @@
 
             <button @click="activeTab = 'deliveries'"
                 :class="activeTab === 'deliveries' ? 'border-brand-500 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/30' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all">
+                class="px-4 py-2.5 rounded-xl font-bold text-sm border flex items-center gap-2 shrink-0 transition-all cursor-pointer">
                 <span>📦 Deliveries</span>
                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300">
                     {{ count($packageDeliveries ?? []) }}
@@ -219,7 +228,7 @@
                                         <div class="flex flex-wrap items-center gap-2">
                                             @if($ride->pickup_date && $ride->pickup_time)
                                                 <span class="px-2.5 py-1 rounded-md bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 font-medium">
-                                                    ⏰ Pickup: {{ $ride->pickup_date->format('M d, Y') }} at {{ $ride->pickup_time }}
+                                                    ⏰ Pickup: {{ \Carbon\Carbon::parse($ride->pickup_date)->format('M d, Y') }} at {{ $ride->pickup_time }}
                                                 </span>
                                             @endif
                                             @if($ride->fuel_policy)
@@ -396,7 +405,221 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 2: HIRE A DRIVER (CHAUFFEUR BOOKINGS)  -->
+        <!-- TAB 2: RENTED FLEET (CAR RENTALS)          -->
+        <!-- ========================================== -->
+        <div x-show="activeTab === 'rentals'" class="space-y-6" style="display: none;">
+            @if($rentals->isEmpty())
+                <div class="text-center py-16 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-blue-50 dark:bg-blue-950/40 rounded-full flex items-center justify-center text-blue-500">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 0 1 2 2m4 0a6 6 0 0 1-7.743 5.743L11 17H9v2H7v2H4a1 1 0 0 1-1-1v-2.586a1 1 0 0 1 .293-.707l5.964-5.964A6 6 0 1 1 21 9z"/></svg>
+                    </div>
+                    <p class="text-gray-900 dark:text-white font-extrabold text-xl">No Rented Vehicles Found</p>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-md mx-auto">You haven't reserved or rented any vehicles yet. Explore our verified self-drive fleet, book instantly with escrow protection, and hit the road!</p>
+                    <div class="mt-6 flex justify-center gap-3">
+                        <a href="/rent" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-all shadow-md shadow-blue-500/20 text-sm flex items-center gap-2">
+                            <span>🔑 Browse Rental Fleet</span>
+                        </a>
+                    </div>
+                </div>
+            @else
+                <div class="space-y-6">
+                    @foreach($rentals as $rental)
+                        @php
+                            $rVehicle = $rental->vehicle;
+                            $paymentStatus = strtolower($rental->payment_status ?? 'pending');
+                            $isPaid = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'completed', 'deposit_paid', 'partially_paid']);
+                            $rentalCurrency = \App\Services\CountryService::resolveItemCurrency($rental, $currentCurrencySymbol ?? '$');
+                            $pickupDateFormatted = $rental->pickup_date ? \Carbon\Carbon::parse($rental->pickup_date)->format('D, M d, Y') : 'Date Pending';
+                            $returnDateFormatted = $rental->return_date ? \Carbon\Carbon::parse($rental->return_date)->format('D, M d, Y') : 'Return Pending';
+                            $rentalReceipt = $rental->receipt ?? \App\Models\Receipt::where('booking_type', 'rental')->where('booking_id', $rental->id)->first();
+                            
+                            $days = 1;
+                            if ($rental->pickup_date && $rental->return_date) {
+                                try {
+                                    $pD = \Carbon\Carbon::parse($rental->pickup_date);
+                                    $rD = \Carbon\Carbon::parse($rental->return_date);
+                                    $days = max(1, $pD->diffInDays($rD));
+                                } catch (\Throwable $e) {}
+                            }
+                        @endphp
+
+                        <div class="bg-white dark:bg-[#131d33] border border-blue-100 dark:border-blue-900/40 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <!-- Top Banner with Vehicle info & Status -->
+                            <div class="p-6 pb-4 border-b border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-20 h-16 rounded-2xl bg-gray-100 dark:bg-white/5 overflow-hidden shrink-0 border border-gray-200 dark:border-white/10 flex items-center justify-center">
+                                        @if($rVehicle && !empty($rVehicle->image_url))
+                                            <img src="{{ $rVehicle->image_url }}" alt="{{ $rVehicle->name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                            <div style="display:none;" class="text-3xl">🚘</div>
+                                        @else
+                                            <span class="text-3xl">🚘</span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
+                                                🔑 RENTED FLEET
+                                            </span>
+                                            <span class="text-xs font-mono font-bold text-gray-400">
+                                                #{{ $rental->digital_receipt_code ?: ('RNT-' . $rental->id) }}
+                                            </span>
+                                        </div>
+                                        <h3 class="text-lg font-black text-gray-900 dark:text-white leading-tight">
+                                            {{ $rVehicle ? ($rVehicle->year . ' ' . $rVehicle->make . ' ' . $rVehicle->model) : ($rental->vehicle_type ?? 'Rented Vehicle') }}
+                                        </h3>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                            Booked on {{ $rental->created_at ? $rental->created_at->format('M d, Y • h:i A') : 'Recent' }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center md:flex-col md:items-end gap-2 shrink-0">
+                                    <span class="text-xs font-extrabold uppercase px-3 py-1.5 rounded-xl shadow-sm
+                                        @if($rental->status === 'completed') bg-emerald-500 text-white
+                                        @elseif($rental->status === 'cancelled') bg-red-500 text-white
+                                        @elseif(in_array($rental->status, ['accepted', 'in_progress'])) bg-blue-600 text-white
+                                        @else bg-amber-500 text-slate-950
+                                        @endif">
+                                        @if($rental->status === 'completed') ✓ RETURNED & COMPLETED
+                                        @elseif($rental->status === 'in_progress') 🚗 CURRENTLY ACTIVE
+                                        @elseif($rental->status === 'accepted') 🛡️ RESERVED & CONFIRMED
+                                        @elseif($rental->status === 'cancelled') ✕ CANCELLED
+                                        @else ⏳ PENDING CONFIRMATION
+                                        @endif
+                                    </span>
+                                    <div class="text-xs font-bold text-gray-500 dark:text-gray-400">
+                                        Duration: <span class="text-gray-900 dark:text-white font-black">{{ $days }} {{ \Illuminate\Support\Str::plural('Day', $days) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vehicle Specs & Rental Details -->
+                            <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <!-- Col 1: Schedule & Locations -->
+                                <div class="space-y-4 lg:col-span-2">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 dark:bg-white/[0.02] p-4 rounded-2xl border border-gray-100 dark:border-white/5">
+                                        <!-- Pickup -->
+                                        <div>
+                                            <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Pickup Schedule
+                                            </div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">{{ $pickupDateFormatted }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Time: {{ $rental->pickup_time ?: '10:00 AM' }}</p>
+                                            <div class="mt-2 text-xs text-gray-700 dark:text-gray-300 flex items-start gap-1">
+                                                <span class="text-gray-400">📍</span>
+                                                <span class="font-medium break-words">{{ $rental->pickup_location ?: 'Designated Hub' }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Return -->
+                                        <div>
+                                            <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">
+                                                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Return Schedule
+                                            </div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">{{ $returnDateFormatted }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Time: {{ $rental->return_time ?: '10:00 AM' }}</p>
+                                            <div class="mt-2 text-xs text-gray-700 dark:text-gray-300 flex items-start gap-1">
+                                                <span class="text-gray-400">🏁</span>
+                                                <span class="font-medium break-words">{{ $rental->dropoff_location ?: $rental->pickup_location }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Specs Pills -->
+                                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                                        @if($rVehicle && $rVehicle->category)
+                                            <span class="px-3 py-1 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 font-bold">
+                                                🏷️ {{ ucfirst($rVehicle->category) }}
+                                            </span>
+                                        @endif
+                                        @if($rVehicle && $rVehicle->transmission)
+                                            <span class="px-3 py-1 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 font-medium">
+                                                ⚙️ {{ ucfirst($rVehicle->transmission) }}
+                                            </span>
+                                        @endif
+                                        @if($rental->fuel_policy || ($rVehicle && $rVehicle->fuel_type))
+                                            <span class="px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-medium">
+                                                ⛽ Fuel: {{ $rental->fuel_policy ?: $rVehicle->fuel_type }}
+                                            </span>
+                                        @endif
+                                        @if($rental->insurance_accepted || $rental->protection_option)
+                                            <span class="px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-medium">
+                                                🛡️ {{ $rental->protection_option ?: 'Full Insurance Protection' }}
+                                            </span>
+                                        @endif
+                                        @if($rVehicle && $rVehicle->license_plate)
+                                            <span class="px-3 py-1 rounded-xl bg-gray-100 dark:bg-white/10 font-mono font-bold text-gray-700 dark:text-gray-300">
+                                                🔢 {{ $rVehicle->license_plate }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Col 2: Pricing & Actions -->
+                                <div class="bg-gray-50 dark:bg-white/[0.02] p-5 rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col justify-between">
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Rental Fare</p>
+                                        <p class="text-3xl font-black text-gray-900 dark:text-white mt-0.5">
+                                            {{ $rentalCurrency }}{{ number_format($rental->total_amount, 2) }}
+                                        </p>
+                                        
+                                        <div class="mt-3 space-y-1.5 text-xs">
+                                            <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
+                                                <span>Paid (Deposit):</span>
+                                                <span>{{ $rentalCurrency }}{{ number_format($rental->paid_amount ?? ($rental->total_amount * 0.2), 2) }}</span>
+                                            </div>
+                                            @if(($rental->remaining_balance ?? 0) > 0)
+                                                <div class="flex justify-between text-amber-600 dark:text-amber-400 font-bold">
+                                                    <span>Due at Pickup:</span>
+                                                    <span>{{ $rentalCurrency }}{{ number_format($rental->remaining_balance, 2) }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <div class="mt-3">
+                                            @if($isPaid)
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                                    ✓ Deposit Escrow Paid
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                                                    ⚠️ Payment Pending
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="mt-6 space-y-2">
+                                        <a href="/rent/booking/{{ $rental->id }}/voucher" target="_blank" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
+                                            <span>📄 Official Rental Voucher</span>
+                                        </a>
+
+                                        <div class="flex gap-2">
+                                            <a href="{{ $rentalReceipt ? $rentalReceipt->view_url : ('/receipts/' . ($rental->digital_receipt_code ?: $rental->id)) }}" target="_blank" class="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-black font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1">
+                                                <span>🧾 Receipt</span>
+                                            </a>
+                                            @if($rentalReceipt)
+                                                <a href="{{ $rentalReceipt->download_url }}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center" title="Download PDF">
+                                                    <span>📥 PDF</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-8">
+                    {{ $rentals->appends(['tab' => 'rentals'])->links() }}
+                </div>
+            @endif
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: HIRE A DRIVER (CHAUFFEUR BOOKINGS)  -->
         <!-- ========================================== -->
         <div x-show="activeTab === 'chauffeurs'" class="space-y-6" style="display: none;">
             @if(empty($driverBookings) || count($driverBookings) === 0)

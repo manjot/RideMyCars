@@ -1599,16 +1599,42 @@ Route::post('/api/notifications/test', function (\Illuminate\Http\Request $reque
 Route::get('/my-rides', function () {
     $user = auth()->user();
     
-    // 1. Rides & Car Rentals
+    // 1. Dedicated Rented Fleet (Vehicles booked/rented by this user)
+    $rentals = \App\Models\Ride::where(function ($q) use ($user) {
+            $q->where('rider_id', $user->id)
+              ->orWhere('driver_id', $user->id);
+        })
+        ->where(function ($q) {
+            $q->where('ride_type', 'rental')
+              ->orWhereNotNull('vehicle_id')
+              ->orWhere('digital_receipt_code', 'like', 'RENT-%')
+              ->orWhere('digital_receipt_code', 'like', 'RNT-%')
+              ->orWhere('vehicle_type', 'like', '%Rental%')
+              ->orWhere('vehicle_type', 'like', 'RENTAL_%');
+        })
+        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'receipt'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(15, ['*'], 'rentals_page');
+
+    // 2. Taxi Rides (Standard ride-hailing trips)
     $rides = \App\Models\Ride::where(function ($q) use ($user) {
             $q->where('rider_id', $user->id)
               ->orWhere('driver_id', $user->id);
         })
-        ->with(['driver', 'driver.driverProfile', 'vehicle', 'rider', 'riderReview', 'driverReview', 'receipt', 'stops'])
+        ->where(function ($q) {
+            $q->where(function ($sq) {
+                $sq->whereNull('ride_type')->orWhere('ride_type', '!=', 'rental');
+            })
+            ->whereNull('vehicle_id')
+            ->where('digital_receipt_code', 'not like', 'RENT-%')
+            ->where('digital_receipt_code', 'not like', 'RNT-%')
+            ->where('vehicle_type', 'not like', '%Rental%');
+        })
+        ->with(['driver', 'driver.driverProfile', 'rider', 'riderReview', 'driverReview', 'receipt', 'stops'])
         ->orderBy('created_at', 'desc')
-        ->paginate(15);
+        ->paginate(15, ['*'], 'rides_page');
 
-    // 2. Hire a Driver (Chauffeur Bookings)
+    // 3. Hire a Driver (Chauffeur Bookings)
     $driverBookings = \App\Models\DriverBooking::where(function ($q) use ($user) {
             $q->where('client_id', $user->id)
               ->orWhere('driver_id', $user->id);
@@ -1618,7 +1644,7 @@ Route::get('/my-rides', function () {
         ->take(15)
         ->get();
 
-    // 3. Package Deliveries
+    // 4. Package Deliveries
     $packageDeliveries = \App\Models\PackageDelivery::where(function ($q) use ($user) {
             $q->where('customer_id', $user->id)
               ->orWhere('courier_id', $user->id);
@@ -1628,7 +1654,7 @@ Route::get('/my-rides', function () {
         ->take(15)
         ->get();
 
-    return view('my-rides', compact('user', 'rides', 'driverBookings', 'packageDeliveries'));
+    return view('my-rides', compact('user', 'rides', 'rentals', 'driverBookings', 'packageDeliveries'));
 })->middleware('auth');
 
 // Automatic Receipt System Routes
@@ -2685,6 +2711,21 @@ Route::middleware('auth')->prefix('owner')->group(function () {
 Route::get('/account', function () {
     $user = auth()->user();
     $vehicles = $user->vehicles()->latest()->get();
+    
+    // Customer's Rented Fleet (Vehicles booked/rented by this user)
+    $rentals = \App\Models\Ride::where('rider_id', $user->id)
+        ->where(function ($q) {
+            $q->where('ride_type', 'rental')
+              ->orWhereNotNull('vehicle_id')
+              ->orWhere('digital_receipt_code', 'like', 'RENT-%')
+              ->orWhere('digital_receipt_code', 'like', 'RNT-%')
+              ->orWhere('vehicle_type', 'like', '%Rental%')
+              ->orWhere('vehicle_type', 'like', 'RENTAL_%');
+        })
+        ->with(['vehicle', 'receipt', 'driver'])
+        ->latest()
+        ->get();
+
     $driverProfile = $user->driverProfile;
     if (!$driverProfile && (in_array($user->role, ['driver', 'chauffeur']) || request('as_driver') == 1)) {
         $driverProfile = \App\Models\DriverProfile::firstOrCreate(['user_id' => $user->id], [
@@ -2701,7 +2742,7 @@ Route::get('/account', function () {
         ->orderBy('is_default', 'desc')
         ->latest()
         ->get();
-    return view('account', compact('user', 'vehicles', 'driverProfile', 'receipts', 'payoutMethods'));
+    return view('account', compact('user', 'vehicles', 'rentals', 'driverProfile', 'receipts', 'payoutMethods'));
 })->middleware('auth')->name('account');
 
 Route::post('/account/avatar', function (\Illuminate\Http\Request $request) {

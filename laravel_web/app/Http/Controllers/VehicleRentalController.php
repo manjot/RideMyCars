@@ -242,6 +242,7 @@ class VehicleRentalController extends Controller
 
         $ride = Ride::create([
             'rider_id' => $riderId,
+            'ride_type' => 'rental',
             'vehicle_id' => $vehicle->id,
             'passenger_name' => $request->customer_name ?? $request->passenger_name ?? (Auth::check() ? Auth::user()->name : 'Customer'),
             'passenger_phone' => $request->driver_phone ?? $request->customer_phone ?? (Auth::check() ? Auth::user()->phone : null),
@@ -598,6 +599,7 @@ class VehicleRentalController extends Controller
 
         $ride = Ride::create([
             'rider_id' => $riderId,
+            'ride_type' => 'rental',
             'vehicle_id' => $vehicle->id,
             'passenger_name' => $request->customer_name ?? $request->passenger_name ?? ($user ? $user->name : 'Customer'),
             'passenger_phone' => $request->driver_phone ?? $request->customer_phone ?? ($user ? $user->phone : null),
