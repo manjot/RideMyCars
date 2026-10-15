@@ -195,25 +195,52 @@
                     </div>
 
                     <!-- Pickup Address -->
-                    <div class="space-y-2 relative" x-data="{
+                    <div class="space-y-2 relative z-30" x-data="{
                         suggestions: [],
                         showSuggestions: false,
+                        selectedLocation: '',
+                        searchTimer: null,
                         search() {
-                            if (!pickupLocation || pickupLocation.trim().length < 2) {
+                            clearTimeout(this.searchTimer);
+                            const inputVal = (pickupLocation || '').trim();
+                            if (inputVal.length < 2) {
                                 this.suggestions = [];
                                 this.showSuggestions = false;
                                 return;
                             }
-                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(pickupLocation.trim())}`)
-                                .then(r => r.json())
-                                .then(data => {
-                                    this.suggestions = data.predictions || [];
-                                    this.showSuggestions = this.suggestions.length > 0;
-                                }).catch(() => {});
+                            if (this.selectedLocation && inputVal === this.selectedLocation.trim()) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            const inputEl = document.getElementById('pickup_location_input');
+                            if (document.activeElement !== inputEl) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            this.searchTimer = setTimeout(() => {
+                                fetch(`/api/places/autocomplete?input=${encodeURIComponent(inputVal)}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (document.activeElement !== inputEl) {
+                                            this.showSuggestions = false;
+                                            return;
+                                        }
+                                        this.suggestions = data.predictions || [];
+                                        this.showSuggestions = this.suggestions.length > 0;
+                                    }).catch(() => {
+                                        this.suggestions = [];
+                                        this.showSuggestions = false;
+                                    });
+                            }, 250);
                         },
                         async select(item) {
-                            pickupLocation = item.description || item.main_text;
+                            const val = item.description || item.main_text;
+                            this.selectedLocation = val;
+                            pickupLocation = val;
                             this.showSuggestions = false;
+                            this.suggestions = [];
                             if (item.lat && item.lng) {
                                 if (window.setDeliveryPickupLocation) window.setDeliveryPickupLocation(parseFloat(item.lat), parseFloat(item.lng), false);
                                 return;
@@ -224,7 +251,9 @@
                                     if (res.ok) {
                                         const data = await res.json();
                                         if (data && data.place) {
-                                            pickupLocation = data.place.formatted_address || data.place.name || pickupLocation;
+                                            const formatted = data.place.formatted_address || data.place.name || val;
+                                            this.selectedLocation = formatted;
+                                            pickupLocation = formatted;
                                             if (window.setDeliveryPickupLocation) {
                                                 window.setDeliveryPickupLocation(parseFloat(data.place.lat), parseFloat(data.place.lng), false);
                                             }
@@ -240,14 +269,16 @@
                                 📍 Use My Location
                             </button>
                         </div>
-                        <div class="relative">
+                        <div class="relative" @click.outside="showSuggestions = false; suggestions = []">
                             <input type="text" 
                                    id="pickup_location_input" 
                                    name="pickup_location" 
                                    x-model="pickupLocation" 
-                                   @input="search()"
-                                   @focus="if(suggestions.length) showSuggestions = true"
-                                   @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                                   @input="if ($event && $event.isTrusted) { search(); } else { suggestions = []; showSuggestions = false; }"
+                                   @focus="if(suggestions.length > 0) showSuggestions = true"
+                                   @blur="setTimeout(() => { showSuggestions = false; }, 200)"
+                                   @keydown.escape="showSuggestions = false; suggestions = []; $el.blur()"
+                                   autocomplete="off"
                                    required 
                                    placeholder="Enter street address, building, or landmark..." 
                                    class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
@@ -272,25 +303,52 @@
                     </div>
 
                     <!-- Drop-off Address -->
-                    <div class="space-y-2 relative" x-data="{
+                    <div class="space-y-2 relative z-20" x-data="{
                         suggestions: [],
                         showSuggestions: false,
+                        selectedLocation: '',
+                        searchTimer: null,
                         search() {
-                            if (!dropoffLocation || dropoffLocation.trim().length < 2) {
+                            clearTimeout(this.searchTimer);
+                            const inputVal = (dropoffLocation || '').trim();
+                            if (inputVal.length < 2) {
                                 this.suggestions = [];
                                 this.showSuggestions = false;
                                 return;
                             }
-                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(dropoffLocation.trim())}`)
-                                .then(r => r.json())
-                                .then(data => {
-                                    this.suggestions = data.predictions || [];
-                                    this.showSuggestions = this.suggestions.length > 0;
-                                }).catch(() => {});
+                            if (this.selectedLocation && inputVal === this.selectedLocation.trim()) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            const inputEl = document.getElementById('dropoff_location_input');
+                            if (document.activeElement !== inputEl) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            this.searchTimer = setTimeout(() => {
+                                fetch(`/api/places/autocomplete?input=${encodeURIComponent(inputVal)}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (document.activeElement !== inputEl) {
+                                            this.showSuggestions = false;
+                                            return;
+                                        }
+                                        this.suggestions = data.predictions || [];
+                                        this.showSuggestions = this.suggestions.length > 0;
+                                    }).catch(() => {
+                                        this.suggestions = [];
+                                        this.showSuggestions = false;
+                                    });
+                            }, 250);
                         },
                         async select(item) {
-                            dropoffLocation = item.description || item.main_text;
+                            const val = item.description || item.main_text;
+                            this.selectedLocation = val;
+                            dropoffLocation = val;
                             this.showSuggestions = false;
+                            this.suggestions = [];
                             if (item.lat && item.lng) {
                                 if (window.setDeliveryDropoffLocation) window.setDeliveryDropoffLocation(parseFloat(item.lat), parseFloat(item.lng), false);
                                 return;
@@ -301,7 +359,9 @@
                                     if (res.ok) {
                                         const data = await res.json();
                                         if (data && data.place) {
-                                            dropoffLocation = data.place.formatted_address || data.place.name || dropoffLocation;
+                                            const formatted = data.place.formatted_address || data.place.name || val;
+                                            this.selectedLocation = formatted;
+                                            dropoffLocation = formatted;
                                             if (window.setDeliveryDropoffLocation) {
                                                 window.setDeliveryDropoffLocation(parseFloat(data.place.lat), parseFloat(data.place.lng), false);
                                             }
@@ -312,14 +372,16 @@
                         }
                     }">
                         <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Drop-off / Destination Address *</label>
-                        <div class="relative">
+                        <div class="relative" @click.outside="showSuggestions = false; suggestions = []">
                             <input type="text" 
                                    id="dropoff_location_input" 
                                    name="dropoff_location" 
                                    x-model="dropoffLocation" 
-                                   @input="search()"
-                                   @focus="if(suggestions.length) showSuggestions = true"
-                                   @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                                   @input="if ($event && $event.isTrusted) { search(); } else { suggestions = []; showSuggestions = false; }"
+                                   @focus="if(suggestions.length > 0) showSuggestions = true"
+                                   @blur="setTimeout(() => { showSuggestions = false; }, 200)"
+                                   @keydown.escape="showSuggestions = false; suggestions = []; $el.blur()"
+                                   autocomplete="off"
                                    required 
                                    placeholder="Enter recipient delivery address..." 
                                    class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
@@ -1430,31 +1492,7 @@
                 fetchIpLocation();
             }
 
-            // Google Places Autocomplete if available
-            window.addEventListener('load', () => {
-                if (window.google && google.maps && google.maps.places) {
-                    try {
-                        if (pInput) {
-                            const acP = new google.maps.places.Autocomplete(pInput);
-                            acP.addListener('place_changed', () => {
-                                const place = acP.getPlace();
-                                if (place.geometry && place.geometry.location) {
-                                    setPickup(place.geometry.location.lat(), place.geometry.location.lng(), false);
-                                }
-                            });
-                        }
-                        if (dInput) {
-                            const acD = new google.maps.places.Autocomplete(dInput);
-                            acD.addListener('place_changed', () => {
-                                const place = acD.getPlace();
-                                if (place.geometry && place.geometry.location) {
-                                    setDropoff(place.geometry.location.lat(), place.geometry.location.lng(), false);
-                                }
-                            });
-                        }
-                    } catch (e) {}
-                }
-            });
+            // Note: Places autocomplete is handled natively and cleanly by the Alpine components above
 
             // Geolocation Button ("Use My Location")
             if (locBtn) {
