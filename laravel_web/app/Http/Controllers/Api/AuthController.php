@@ -477,6 +477,53 @@ class AuthController extends Controller
     }
 
     /**
+     * Find a user by phone number using exact, cleaned, and normalized digit matching
+     */
+    public static function findUserByPhone(?string $phone): ?User
+    {
+        if (empty($phone)) {
+            return null;
+        }
+
+        $smsService = app(\App\Services\TwilioSmsService::class);
+        $formattedPhone = $smsService->formatE164($phone);
+        $cleanPhone = preg_replace('/\s+/', '', $phone);
+        $cleanDigits = preg_replace('/\D/', '', $phone);
+
+        // 1. Exact string matches
+        $user = User::where('phone', $formattedPhone)
+            ->orWhere('phone', $phone)
+            ->orWhere('phone', $cleanPhone)
+            ->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        $nationalNumber = (strlen($cleanDigits) >= 9) ? substr($cleanDigits, -9) : $cleanDigits;
+
+        // 2. National digits match with SQL regex / replace of formatting
+        if (!empty($nationalNumber) && strlen($nationalNumber) >= 7) {
+            $user = User::where('phone', 'LIKE', '%' . $nationalNumber)
+                ->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') LIKE ?", ['%' . $nationalNumber])
+                ->first();
+
+            if ($user) {
+                return $user;
+            }
+        }
+
+        // 3. Clean digits match
+        if (!empty($cleanDigits) && strlen($cleanDigits) >= 7) {
+            $user = User::whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?", [$cleanDigits])
+                ->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') LIKE ?", ['%' . $cleanDigits])
+                ->first();
+        }
+
+        return $user;
+    }
+
+    /**
      * Send Phone or Email OTP (valid for 5 minutes)
      */
     public function sendOtp(Request $request): JsonResponse
@@ -504,11 +551,8 @@ class AuthController extends Controller
                             || str_starts_with($formattedPhone, '+1800')
                             || str_starts_with($formattedPhone, '+1000');
 
-                // Check if phone number exists in database
-                $user = User::where('phone', $formattedPhone)
-                    ->orWhere('phone', $phone)
-                    ->orWhere('phone', $cleanPhone)
-                    ->first();
+                // Check if phone number exists in database using robust digit matching
+                $user = self::findUserByPhone($phone);
 
                 if ($isTestPhone) {
                     if (!$user) {
@@ -818,10 +862,7 @@ class AuthController extends Controller
                         \Illuminate\Support\Facades\Cache::forget('otp_email_' . $cleanEmail);
                     }
 
-                    $user = User::where('phone', $formattedPhone)
-                        ->orWhere('phone', $phone)
-                        ->orWhere('phone', $cleanPhone)
-                        ->first();
+                    $user = self::findUserByPhone($phone);
 
                     if (!$user && $isTestPhone) {
                         $targetEmail = ($formattedPhone === '+19876543211' || str_contains($cleanDigits, '9876543211'))
@@ -1453,10 +1494,7 @@ class AuthController extends Controller
 
                 $isOtpValid = ($cachedOtp && (string)$cachedOtp === $otp) || $isTestOtp || $isTestPhone;
 
-                $user = User::where('phone', $formattedPhone)
-                    ->orWhere('phone', $phone)
-                    ->orWhere('phone', $cleanPhone)
-                    ->first();
+                $user = self::findUserByPhone($phone);
             }
 
             if (!$isOtpValid) {

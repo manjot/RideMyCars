@@ -162,20 +162,115 @@
                 <!-- Locations & Date Pickers Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Pickup Location -->
-                    <div class="relative">
+                    <div class="relative" x-data="{
+                        query: '{{ addslashes($pickupLocation) }}',
+                        suggestions: [],
+                        showSuggestions: false,
+                        search() {
+                            if (!this.query || this.query.trim().length < 2) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.query.trim())}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    this.suggestions = data.predictions || [];
+                                    this.showSuggestions = this.suggestions.length > 0;
+                                }).catch(() => {});
+                        },
+                        select(item) {
+                            this.query = item.description || item.main_text;
+                            this.showSuggestions = false;
+                            const inp = document.getElementById('pickup_location_main');
+                            if (inp) inp.value = this.query;
+                        }
+                    }">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Pick-up Location *</label>
-                            <button type="button" id="use_my_location_rent_main" class="text-amber-700 dark:text-brand-400 hover:text-amber-800 text-[11px] font-bold flex items-center gap-0.5">
+                            <button type="button" id="use_my_location_rent_main" class="text-amber-700 dark:text-brand-400 hover:text-amber-800 text-[11px] font-bold flex items-center gap-0.5 cursor-pointer">
                                 📍 Use My Location
                             </button>
                         </div>
-                        <input type="text" id="pickup_location_main" name="pickup_location" value="{{ $pickupLocation }}" required placeholder="City, Airport, or Address..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20">
+                        <input type="text" 
+                               id="pickup_location_main" 
+                               name="pickup_location" 
+                               x-model="query"
+                               @input="search()"
+                               @focus="if(suggestions.length) showSuggestions = true"
+                               @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                               required 
+                               placeholder="City, Airport, or Address..." 
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/20">
+
+                        <!-- Autocomplete dropdown -->
+                        <div x-show="showSuggestions && suggestions.length > 0" 
+                             style="display: none;"
+                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f23] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                            <template x-for="(sug, sIdx) in suggestions" :key="sIdx">
+                                <div @mousedown.prevent="select(sug)"
+                                     class="p-2.5 px-3 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer transition text-left flex items-center gap-2">
+                                    <span class="text-amber-500 text-xs shrink-0">📍</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="sug.main_text || sug.description"></div>
+                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="sug.secondary_text || sug.description"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <!-- Dropoff Location (Conditional) -->
-                    <div x-show="differentDropoff" class="relative">
+                    <div x-show="differentDropoff" class="relative" x-data="{
+                        query: '{{ addslashes($dropoffLocation) }}',
+                        suggestions: [],
+                        showSuggestions: false,
+                        search() {
+                            if (!this.query || this.query.trim().length < 2) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.query.trim())}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    this.suggestions = data.predictions || [];
+                                    this.showSuggestions = this.suggestions.length > 0;
+                                }).catch(() => {});
+                        },
+                        select(item) {
+                            this.query = item.description || item.main_text;
+                            this.showSuggestions = false;
+                            const inp = document.getElementById('dropoff_location_main');
+                            if (inp) inp.value = this.query;
+                        }
+                    }">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Drop-off Location *</label>
-                        <input type="text" id="dropoff_location_main" name="dropoff_location" value="{{ $dropoffLocation }}" placeholder="Return city or location..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                        <input type="text" 
+                               id="dropoff_location_main" 
+                               name="dropoff_location" 
+                               x-model="query"
+                               @input="search()"
+                               @focus="if(suggestions.length) showSuggestions = true"
+                               @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                               placeholder="Return city or location..." 
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+
+                        <!-- Autocomplete dropdown -->
+                        <div x-show="showSuggestions && suggestions.length > 0" 
+                             style="display: none;"
+                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f23] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                            <template x-for="(sug, sIdx) in suggestions" :key="sIdx">
+                                <div @mousedown.prevent="select(sug)"
+                                     class="p-2.5 px-3 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer transition text-left flex items-center gap-2">
+                                    <span class="text-amber-500 text-xs shrink-0">📍</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="sug.main_text || sug.description"></div>
+                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="sug.secondary_text || sug.description"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <!-- Pickup Date & Time -->
@@ -565,6 +660,7 @@
                                     const data = await res.json();
                                     if (data && data.place) {
                                         pInput.value = data.place.formatted_address || data.place.name;
+                                        pInput.dispatchEvent(new Event('input'));
                                     }
                                 }
                             } catch (e) {}

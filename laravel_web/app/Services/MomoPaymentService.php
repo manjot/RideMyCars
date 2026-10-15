@@ -38,8 +38,15 @@ class MomoPaymentService
         $isDriverBooking = $booking instanceof DriverBooking;
 
         $phone = static::normalizePhoneNumber($phoneNumber);
-        $amount = (float) ($booking->fare ?: $booking->total_price ?: $booking->total_amount ?: 25.00);
-        $currency = $booking->currency ?: config('services.momo.currency', 'GHS');
+        $rawAmount = (float) ($booking->fare ?: $booking->total_price ?: $booking->total_amount ?: 25.00);
+        $rawCurrency = strtoupper($booking->currency ?: 'GHS');
+        if ($rawCurrency !== 'GHS') {
+            $amount = round(CurrencyExchangeService::convert($rawAmount, $rawCurrency, 'GHS'), 2);
+            $currency = 'GHS';
+        } else {
+            $amount = $rawAmount;
+            $currency = 'GHS';
+        }
         $transactionRef = 'MOMO-' . strtoupper(Str::random(10));
         $externalId = (string) $booking->id;
         $userId = $isDelivery ? $booking->customer_id : ($booking->rider_id ?? $booking->client_id ?? (auth()->id() ?: 1));

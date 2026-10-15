@@ -118,14 +118,65 @@
                     </h3>
 
                     <!-- Pickup Address -->
-                    <div>
+                    <div class="relative" x-data="{
+                        query: '',
+                        suggestions: [],
+                        showSuggestions: false,
+                        search() {
+                            if (!this.query || this.query.trim().length < 2) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.query.trim())}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    this.suggestions = data.predictions || [];
+                                    this.showSuggestions = this.suggestions.length > 0;
+                                }).catch(() => {});
+                        },
+                        select(item) {
+                            this.query = item.description || item.main_text;
+                            this.showSuggestions = false;
+                            const inp = document.getElementById('pickup_location_rmc');
+                            if (inp) {
+                                inp.value = this.query;
+                                inp.dispatchEvent(new Event('input'));
+                            }
+                        }
+                    }">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Pick-up Location *</label>
-                            <button type="button" id="use_my_location_btn_rmc" class="text-brand-500 hover:text-brand-600 text-xs font-bold flex items-center gap-1 transition-colors">
+                            <button type="button" id="use_my_location_btn_rmc" class="text-brand-500 hover:text-brand-600 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer">
                                 📍 Use My Location
                             </button>
                         </div>
-                        <input type="text" id="pickup_location_rmc" name="pickup_location" required placeholder="Enter pickup address, city, or airport..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                        <input type="text" 
+                               id="pickup_location_rmc" 
+                               name="pickup_location" 
+                               x-model="query"
+                               @input="search()"
+                               @focus="if(suggestions.length) showSuggestions = true"
+                               @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                               required 
+                               placeholder="Enter pickup address, city, or airport..." 
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+
+                        <!-- Autocomplete dropdown -->
+                        <div x-show="showSuggestions && suggestions.length > 0" 
+                             style="display: none;"
+                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f23] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                            <template x-for="(sug, sIdx) in suggestions" :key="sIdx">
+                                <div @mousedown.prevent="select(sug)"
+                                     class="p-2.5 px-3 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer transition text-left flex items-center gap-2">
+                                    <span class="text-amber-500 text-xs shrink-0">📍</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="sug.main_text || sug.description"></div>
+                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="sug.secondary_text || sug.description"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <!-- Additional Stops -->
@@ -144,12 +195,12 @@
                                 </div>
 
                                 <div class="relative flex items-center gap-2">
-                                    <div class="w-full relative">
+                                    <div class="w-full relative" @click.outside="stop.showSuggestions = false">
                                         <input type="text" 
                                                x-model="stop.location" 
                                                @input.debounce.300ms="onStopInputChange(stop)"
                                                @focus="if(stop.suggestions && stop.suggestions.length > 0) stop.showSuggestions = true"
-                                               @click.outside="stop.showSuggestions = false"
+                                               @blur="setTimeout(() => { stop.showSuggestions = false; }, 250)"
                                                x-init="initStopAutocomplete($el, stop)"
                                                placeholder="Search additional stop location (address, city, airport, landmark)..." 
                                                :class="stop.validationError ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/20' : (stop.isSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30' : 'border-amber-200 dark:border-amber-900/30')"
@@ -165,7 +216,7 @@
                                              class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-200 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
                                             <template x-for="item in stop.suggestions" :key="item.place_id || item.description">
                                                 <button type="button" 
-                                                        @click="selectStopSuggestion(stop, item)" 
+                                                        @mousedown.prevent="selectStopSuggestion(stop, item)" 
                                                         class="w-full px-3.5 py-2.5 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2 transition-colors cursor-pointer">
                                                     <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
                                                     <div>
@@ -234,9 +285,59 @@
 
 
                     <!-- Drop-off Address -->
-                    <div>
+                    <div class="relative" x-data="{
+                        query: '',
+                        suggestions: [],
+                        showSuggestions: false,
+                        search() {
+                            if (!this.query || this.query.trim().length < 2) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(this.query.trim())}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    this.suggestions = data.predictions || [];
+                                    this.showSuggestions = this.suggestions.length > 0;
+                                }).catch(() => {});
+                        },
+                        select(item) {
+                            this.query = item.description || item.main_text;
+                            this.showSuggestions = false;
+                            const inp = document.getElementById('dropoff_location_rmc');
+                            if (inp) {
+                                inp.value = this.query;
+                                inp.dispatchEvent(new Event('input'));
+                            }
+                        }
+                    }">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Final Destination (Optional)</label>
-                        <input type="text" id="dropoff_location_rmc" name="dropoff_location" placeholder="Enter final destination location..." class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                        <input type="text" 
+                               id="dropoff_location_rmc" 
+                               name="dropoff_location" 
+                               x-model="query"
+                               @input="search()"
+                               @focus="if(suggestions.length) showSuggestions = true"
+                               @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                               placeholder="Enter final destination location..." 
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+
+                        <!-- Autocomplete dropdown -->
+                        <div x-show="showSuggestions && suggestions.length > 0" 
+                             style="display: none;"
+                             class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f23] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                            <template x-for="(sug, sIdx) in suggestions" :key="sIdx">
+                                <div @mousedown.prevent="select(sug)"
+                                     class="p-2.5 px-3 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer transition text-left flex items-center gap-2">
+                                    <span class="text-amber-500 text-xs shrink-0">📍</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="sug.main_text || sug.description"></div>
+                                        <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="sug.secondary_text || sug.description"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
@@ -406,14 +507,14 @@
 
                 <p class="text-xs text-gray-500 dark:text-gray-400">Search and select your <span x-text="editingLabel"></span> address from the map. It will be saved for one-tap booking.</p>
 
-                <div class="relative space-y-2">
+                <div class="relative space-y-2" @click.outside="showModalSuggestions = false">
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Map Address Search</label>
                     <div class="relative">
                         <input type="text" 
                                x-model="modalTempLocation.location"
                                @input.debounce.300ms="searchModalLocation()"
                                @focus="if(modalSuggestions.length > 0) showModalSuggestions = true"
-                               @click.outside="showModalSuggestions = false"
+                               @blur="setTimeout(() => { showModalSuggestions = false; }, 250)"
                                x-init="initModalAutocomplete($el)"
                                placeholder="Search address, city, landmark..." 
                                class="w-full pl-9 pr-8 py-3 bg-gray-50 dark:bg-[#222] border rounded-xl text-xs font-bold text-gray-900 dark:text-white transition-colors"
@@ -434,7 +535,7 @@
                          class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f1f] border border-amber-300 dark:border-white/20 rounded-2xl shadow-2xl z-[999999999] overflow-hidden divide-y divide-gray-100 dark:divide-white/5 max-h-56 overflow-y-auto">
                         <template x-for="item in modalSuggestions" :key="item.place_id || item.description">
                             <button type="button" 
-                                    @click="selectModalSuggestion(item)" 
+                                    @mousedown.prevent="selectModalSuggestion(item)" 
                                     class="w-full px-3.5 py-3 text-left text-xs text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-start gap-2.5 transition-colors cursor-pointer">
                                 <span class="text-amber-500 shrink-0 mt-0.5">📍</span>
                                 <div>
@@ -450,6 +551,28 @@
                     <button type="button" @click="showSavedLocationModal = false" class="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-bold text-xs">Cancel</button>
                     <button type="button" @click="saveLocationFromModal()" :disabled="!modalTempLocation.isSelected" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer">Save & Apply</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- In-App Error Notification Modal -->
+        <div x-show="errorMessageModal.show" 
+             x-transition.opacity
+             style="display: none;" 
+             class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div @click.outside="closeAppErrorModal()" 
+                 class="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-2xl shadow-inner">
+                    ⚠️
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900 dark:text-white" x-text="errorMessageModal.title || 'Notice'"></h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-2 leading-relaxed" x-text="errorMessageModal.message"></p>
+                </div>
+                <button type="button" 
+                        @click="closeAppErrorModal()" 
+                        class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer">
+                    Understood
+                </button>
             </div>
         </div>
     </main>
@@ -500,6 +623,21 @@
                 modalTempLocation: { location: '', lat: null, lng: null, place_id: null, isSelected: false },
                 modalSuggestions: [],
                 showModalSuggestions: false,
+                errorMessageModal: {
+                    show: false,
+                    title: '',
+                    message: ''
+                },
+                showAppErrorModal(title, message) {
+                    this.errorMessageModal = {
+                        show: true,
+                        title: title || 'Notice',
+                        message: message || ''
+                    };
+                },
+                closeAppErrorModal() {
+                    this.errorMessageModal.show = false;
+                },
 
                 priceBreakdown: {
                     subtotal: 0,
@@ -550,7 +688,7 @@
                             });
                             this.validationErrorMessage = null;
                         } else {
-                            alert('Maximum 5 additional stops allowed.');
+                            this.showAppErrorModal('Stops Limit', 'Maximum 5 additional stops allowed.');
                         }
                     } else {
                         this.openSavedLocationModal(label);
@@ -627,7 +765,7 @@
 
                 async saveLocationFromModal() {
                     if (!this.modalTempLocation.location || !this.modalTempLocation.isSelected) {
-                        alert('Please select a valid location suggestion from the map dropdown.');
+                        this.showAppErrorModal('Location Required', 'Please select a valid location suggestion from the map dropdown.');
                         return;
                     }
                     try {
@@ -668,11 +806,11 @@
                                 }
                             }
                         } else {
-                            alert('Failed to save location. Please try again.');
+                            this.showAppErrorModal('Save Failed', 'Failed to save location. Please try again.');
                         }
                     } catch (e) {
                         console.error('Error saving location:', e);
-                        alert('An error occurred while saving the location.');
+                        this.showAppErrorModal('Error', 'An error occurred while saving the location.');
                     }
                 },
 
@@ -764,16 +902,28 @@
                         if (!s.location || s.location.trim().length === 0) {
                             s.validationError = `Additional Stop #${i + 1} location is required.`;
                             this.validationErrorMessage = `Additional Stop #${i + 1} location cannot be empty. Please search and select a valid map location.`;
+                            this.showAppErrorModal('Additional Stop Incomplete', this.validationErrorMessage);
                             e.preventDefault();
                             return false;
                         }
                         if (!s.isSelected) {
                             s.validationError = `Please select a location suggestion from the map dropdown.`;
                             this.validationErrorMessage = `Additional Stop #${i + 1} ("${s.location}") was not selected from map suggestions. Please pick a location from the dropdown list.`;
+                            this.showAppErrorModal('Additional Stop Incomplete', this.validationErrorMessage);
                             e.preventDefault();
                             return false;
                         }
                     }
+
+                    if (this.paymentMethod === 'momo') {
+                        const cleanPhone = (this.momoPhone || '').toString().replace(/\D/g, '');
+                        if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+                            this.showAppErrorModal('Mobile Money Phone Number Required', 'Please enter a valid 7 to 15 digit phone number for Mobile Money payment.');
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+
                     return true;
                 },
 
@@ -916,8 +1066,11 @@
 
             if (locBtn && pInput) {
                 locBtn.addEventListener("click", () => {
+                    const component = window.Alpine ? Alpine.$data(document.querySelector('[x-data="bookDriverBooking"]')) : null;
                     if (!navigator.geolocation) {
-                        alert("Geolocation is not supported by your browser.");
+                        if (component && component.showAppErrorModal) {
+                            component.showAppErrorModal('Geolocation Error', 'Geolocation is not supported by your browser.');
+                        }
                         return;
                     }
                     locBtn.disabled = true;
@@ -932,7 +1085,9 @@
                         () => {
                             locBtn.disabled = false;
                             locBtn.innerText = "📍 Use My Location";
-                            alert("Unable to detect location automatically.");
+                            if (component && component.showAppErrorModal) {
+                                component.showAppErrorModal('Location Detection Failed', 'Unable to detect your location automatically. Please enter your address manually.');
+                            }
                         }
                     );
                 });

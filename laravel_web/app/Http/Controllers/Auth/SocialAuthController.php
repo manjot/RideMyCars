@@ -23,8 +23,10 @@ class SocialAuthController extends Controller
         $clientId = \App\Services\SettingService::get('oauth.google_client_id') ?: config('services.google.client_id');
         $redirectUri = \App\Services\SettingService::get('oauth.google_redirect_uri') ?: config('services.google.redirect', url('/auth/google/callback'));
 
+        $targetUrl = $request->query('role') === 'driver' ? '/driver-signup' : '/login';
         if (empty($clientId)) {
-            return redirect('/login')->with('error', 'Google Sign-In is currently being initialized. Please configure GOOGLE_CLIENT_ID in your settings.');
+            Log::warning('Google Sign-In requested but Google Client ID is not configured.');
+            return redirect($targetUrl)->with('error', 'Google Sign-In is temporarily unavailable. Please sign in or register with your Phone Number or Email OTP.');
         }
 
         $state = Str::random(40);
@@ -226,13 +228,14 @@ class SocialAuthController extends Controller
             ?: config('services.apple.redirect')
             ?: url('/auth/apple/callback');
 
-        if (empty($clientId)) {
-            Log::warning('Apple Sign-In requested but APPLE_CLIENT_ID / oauth.apple_client_id is not set.');
-            return redirect('/login')->with('error', 'Apple Sign-In is being initialized. Please provide your Apple Services ID in settings.');
-        }
-
         $role = $request->query('role', 'customer');
         if ($role === 'rider') $role = 'customer';
+        $targetUrl = $role === 'driver' ? '/driver-signup' : '/login';
+
+        if (empty($clientId)) {
+            Log::warning('Apple Sign-In requested but APPLE_CLIENT_ID / oauth.apple_client_id is not set.');
+            return redirect($targetUrl)->with('error', 'Apple Sign-In is temporarily unavailable. Please sign in or register with your Phone Number or Email OTP.');
+        }
 
         $stateData = [
             'token' => Str::random(32),

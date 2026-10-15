@@ -1183,7 +1183,7 @@
                     if (raw.startsWith('0') && this.selectedCountry && this.selectedCountry.dial !== '+1') {
                         raw = raw.substring(1);
                     }
-                    this.phone = (this.selectedCountry ? this.selectedCountry.dial : '+233') + (raw ? ' ' + raw : '');
+                    this.phone = (this.selectedCountry ? this.selectedCountry.dial : '+233') + (raw ? raw : '');
                 },
 
                 startTimer(seconds = 300) {

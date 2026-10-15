@@ -254,18 +254,31 @@
                                     🇬🇭 +233
                                 </span>
                                 <input type="tel" 
-                                       inputmode="tel"
-                                       pattern="[0-9+\s\-]*"
+                                       inputmode="numeric"
+                                       maxlength="15"
+                                       pattern="[0-9]*"
                                        x-model="momoPhone" 
-                                       @input="momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, '')"
-                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
-                                       @paste="setTimeout(() => { momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
-                                       placeholder="024 123 4567 (digits only)"
+                                       @input="momoPhone = momoPhone.replace(/\D/g, '')"
+                                       @keypress="if (!/[0-9]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { momoPhone = momoPhone.replace(/\D/g, ''); }, 0)"
+                                       placeholder="0241234567 (7-15 digits)"
                                        class="flex-1 px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-white/15 rounded-r-xl text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
                             </div>
                             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                 A prompt will be triggered on your mobile handset to approve the {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} escrow authorization hold.
                             </p>
+
+                            <!-- MoMo USSD Manual Approval Guide -->
+                            <div class="mt-3 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs space-y-2">
+                                <div class="font-extrabold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                                    <span>💡</span> If push prompt does not appear automatically:
+                                </div>
+                                <ul class="text-[11px] text-amber-900/80 dark:text-amber-200/80 space-y-1 list-disc list-inside font-medium">
+                                    <li><strong>MTN MoMo:</strong> Dial <code>*170#</code> &rarr; 6. My Wallet &rarr; 3. My Approvals &rarr; Enter PIN</li>
+                                    <li><strong>Telecel Cash:</strong> Dial <code>*110#</code> &rarr; Approvals / Pending Transactions &rarr; Enter PIN</li>
+                                    <li><strong>AirtelTigo:</strong> Dial <code>*110#</code> &rarr; My Approvals &rarr; Enter PIN</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -772,6 +785,13 @@
             },
 
             async submitPaymentHold(method) {
+                if (method === 'momo') {
+                    const cleanPhone = (this.momoPhone || '').toString().replace(/\D/g, '');
+                    if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 15) {
+                        alert('Please enter a valid numeric Mobile Money phone number (between 7 and 15 digits).');
+                        return;
+                    }
+                }
                 this.isProcessing = true;
                 try {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';

@@ -3,7 +3,7 @@
     'value' => 'stripe'
 ])
 
-<div x-show="{{ $modelName }} === '{{ $value }}' || {{ $modelName }} === 'card' || {{ $modelName }} === 'credit_card' || {{ $modelName }} === 'Credit Card'" 
+<div x-show="{{ $modelName }} === '{{ $value }}' || {{ $modelName }} === 'card' || {{ $modelName }} === 'credit_card' || {{ $modelName }} === 'Credit Card' || (typeof paymentStep !== 'undefined' && paymentStep === 'card_form')" 
      x-transition.opacity
      style="display: none;"
      class="mt-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#161618] dark:to-[#1f1f23] rounded-2xl border-2 border-gray-200 dark:border-white/10 shadow-md space-y-4">
@@ -121,6 +121,23 @@
                        placeholder="10001" 
                        class="w-full px-3 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-bold text-gray-900 dark:text-white placeholder-gray-400 text-center focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition">
             </div>
+        </div>
+
+        <!-- Cardholder Billing Phone Number -->
+        <div>
+            <label class="block text-[11px] font-extrabold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">
+                Billing / Contact Phone Number <span class="text-red-500">*</span>
+            </label>
+            <input type="tel" 
+                   inputmode="tel"
+                   maxlength="15" 
+                   name="card_phone" 
+                   id="stripe_card_phone_input"
+                   placeholder="e.g. 024XXXXXXX (7 to 15 digits only)" 
+                   oninput="this.value = this.value.replace(/\D/g, '')"
+                   onkeypress="if (!/[0-9]/.test(event.key) && event.key.length === 1 && !event.ctrlKey && !event.metaKey) event.preventDefault();"
+                   class="w-full px-3.5 py-2.5 bg-white dark:bg-[#0d0d0f] border border-gray-300 dark:border-white/15 rounded-xl text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition">
+            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">Numeric digits only (7 to 15 digits).</p>
         </div>
     </div>
 

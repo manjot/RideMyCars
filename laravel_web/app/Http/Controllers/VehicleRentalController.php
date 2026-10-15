@@ -10,6 +10,7 @@ use App\Services\VehicleAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class VehicleRentalController extends Controller
@@ -198,13 +199,15 @@ class VehicleRentalController extends Controller
 
         $riderId = Auth::id() ?? User::first()->id ?? 1;
 
-        $startDate = Carbon::parse("{$request->start_date} {$pickupTime}");
-        $endDate = Carbon::parse("{$request->end_date} {$returnTime}");
-        $driverCountry = $request->driver_country ?? \App\Services\CountryService::getCurrentCountryCode($request);
-        $pricing = \App\Models\CountryPricing::forCountry($driverCountry);
-        $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
-        $dailyRate = round((float) $vehicle->daily_rate * $mult, 2);
-        $baseTotal = round($days * $dailyRate, 2);
+        try {
+            $startDate = Carbon::parse("{$request->start_date} {$pickupTime}");
+            $endDate = Carbon::parse("{$request->end_date} {$returnTime}");
+            $days = max(1, (int) ceil($startDate->floatDiffInDays($endDate) ?: 1));
+            $driverCountry = $request->driver_country ?? \App\Services\CountryService::getCurrentCountryCode($request);
+            $pricing = \App\Models\CountryPricing::forCountry($driverCountry);
+            $mult = (float) ($pricing->rental_price_multiplier ?: 1.0);
+            $dailyRate = round((float) $vehicle->daily_rate * $mult, 2);
+            $baseTotal = round($days * $dailyRate, 2);
 
         // Protection Fee calculation with country rate
         $protectionDaily = (float) ($pricing->rental_protection_daily_rate ?: 12.00);
@@ -378,7 +381,11 @@ class VehicleRentalController extends Controller
                 ->with('info', "Rental booking created! Please authorize secure payment hold.");
         }
 
-        return redirect()->route('rent.voucher', $ride->id)->with('success', "Vehicle rental created! Voucher Code: {$rentalCode}. Balance at Pickup: \${$remainingBalance}.");
+            return redirect()->route('rent.voucher', $ride->id)->with('success', "Vehicle rental created! Voucher Code: {$rentalCode}. Balance at Pickup: \${$remainingBalance}.");
+        } catch (\Throwable $e) {
+            Log::error("Rental booking exception: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withErrors(['error' => 'An error occurred while creating your rental booking: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**

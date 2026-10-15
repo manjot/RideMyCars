@@ -15,6 +15,31 @@
               paymentMethod: 'stripe',
               momoPhone: '{{ auth()->user()->phone ?? "" }}',
               momoNetwork: 'MTN',
+              errorMessageModal: {
+                  show: false,
+                  title: '',
+                  message: ''
+              },
+              showAppErrorModal(title, message) {
+                  this.errorMessageModal = {
+                      show: true,
+                      title: title || 'Notice',
+                      message: message || ''
+                  };
+              },
+              closeAppErrorModal() {
+                  this.errorMessageModal.show = false;
+              },
+              handleSubmit(e) {
+                  if (this.paymentMethod === 'momo') {
+                      const cleanPhone = (this.momoPhone || '').replace(/\D/g, '');
+                      if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 15) {
+                          e.preventDefault();
+                          this.showAppErrorModal('Invalid Mobile Money Phone', 'Please provide a valid phone number (7 to 15 digits) for Mobile Money payment.');
+                          return false;
+                      }
+                  }
+              },
               dailyRate: {{ $dailyRate ?? $vehicle->daily_rate }},
               currencySymbol: '{{ $pricing->currency_symbol ?? "$" }}',
               protectionRateDaily: {{ $pricing->rental_protection_daily_rate ?? 12.00 }},
@@ -108,7 +133,7 @@
             </ol>
         </nav>
 
-        <form action="/rent/{{ $vehicle->id }}/book" method="POST">
+        <form action="/rent/{{ $vehicle->id }}/book" method="POST" @submit="handleSubmit($event)">
             @csrf
             <input type="hidden" name="protection_option" x-model="protectionOption">
             <template x-for="extra in selectedExtras" :key="extra">
@@ -473,5 +498,27 @@
 
             </div>
         </form>
+
+        <!-- In-App Error Notification Modal -->
+        <div x-show="errorMessageModal.show" 
+             x-transition.opacity
+             style="display: none;" 
+             class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div @click.outside="closeAppErrorModal()" 
+                 class="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-2xl shadow-inner">
+                    ⚠️
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900 dark:text-white" x-text="errorMessageModal.title || 'Notice'"></h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-2 leading-relaxed" x-text="errorMessageModal.message"></p>
+                </div>
+                <button type="button" 
+                        @click="closeAppErrorModal()" 
+                        class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer">
+                    Understood
+                </button>
+            </div>
+        </div>
     </main>
 </x-layout>

@@ -328,6 +328,16 @@ class StripeVerificationController extends Controller
         $momoPhone = $request->input('momo_phone');
         $momoNetwork = $request->input('momo_network', 'MTN');
 
+        if ($paymentMethod === 'momo') {
+            $cleanMomo = preg_replace('/\D/', '', $momoPhone ?? '');
+            if (empty($cleanMomo) || strlen($cleanMomo) < 7 || strlen($cleanMomo) > 15) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please enter a valid numeric Mobile Money phone number between 7 and 15 digits.'
+                ], 422);
+            }
+        }
+
         // Strictly disallow cash payment for Vehicle Rental and Hire a Driver
         if ($paymentMethod === 'cash' && !in_array($serviceType, ['ride', 'package_delivery', 'delivery'], true)) {
             return response()->json([
@@ -945,7 +955,18 @@ class StripeVerificationController extends Controller
         ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
           ?? \App\Services\CountryService::getCurrentCountryCode(request())
           ?? 'IND';
-        $date = $booking->start_date ? $booking->start_date->format('Y-m-d') : ($booking->pickup_date ? $booking->pickup_date->format('Y-m-d') : date('Y-m-d'));
+        $rawStartDate = $booking->start_date ?? $booking->pickup_date;
+        if ($rawStartDate instanceof \DateTimeInterface) {
+            $date = $rawStartDate->format('Y-m-d');
+        } elseif (!empty($rawStartDate)) {
+            try {
+                $date = \Carbon\Carbon::parse($rawStartDate)->format('Y-m-d');
+            } catch (\Throwable $e) {
+                $date = (string) $rawStartDate;
+            }
+        } else {
+            $date = date('Y-m-d');
+        }
         $time = $booking->start_time ?? $booking->pickup_time ?? '09:00 AM';
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');

@@ -207,7 +207,10 @@
                             </a>
                         </div>
 
-                        <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Find a trip</h1>
+                        <div class="flex items-center justify-between">
+                            <h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Find a trip</h1>
+                            <span class="text-xs font-bold text-gray-400">Step 1 of 3</span>
+                        </div>
                         
                         @if($isUnsupportedRegion ?? false)
                         <div class="p-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-300">
@@ -300,6 +303,7 @@
                                                     <input type="date" 
                                                            x-model="scheduledDate" 
                                                            :min="minScheduleDate" 
+                                                           :max="maxScheduleDate"
                                                            class="w-full px-2.5 py-2 text-xs font-bold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
                                                 </div>
                                                 <div>
@@ -396,14 +400,14 @@
                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Rider Phone Number <span class="text-red-500">*</span></label>
                                                 <input type="tel" 
                                                        inputmode="tel"
-                                                       pattern="[0-9+\s\-]*"
+                                                       maxlength="15"
                                                        x-model="riderPhone" 
-                                                       @input="riderPhone = riderPhone.replace(/[^0-9+\s\-]/g, '')"
-                                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
-                                                       @paste="setTimeout(() => { riderPhone = riderPhone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
-                                                       placeholder="e.g. +1 555-0199 (digits only)" 
+                                                       @input="riderPhone = riderPhone.replace(/\D/g, '')"
+                                                       @keypress="if (!/[0-9]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                                       @paste="setTimeout(() => { riderPhone = riderPhone.replace(/\D/g, ''); }, 0)"
+                                                       placeholder="e.g. 024XXXXXXX (7 to 15 digits only)" 
                                                        class="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
-                                                <p class="text-[10px] text-gray-400 mt-1">We'll send driver arrival alerts via SMS to this phone.</p>
+                                                <p class="text-[10px] text-gray-400 mt-1">Digits only (7-15 digits). We'll send driver arrival alerts via SMS.</p>
                                             </div>
 
                                             <button type="button" 
@@ -440,7 +444,7 @@
                                                @input.debounce.250ms="onPickupInput()"
                                                @focus="if(pickupSuggestions.length > 0) showPickupSuggestions = true"
                                                @keydown.enter.prevent="autoSelectOrGeocodePickup()"
-                                               @blur="setTimeout(() => autoSelectOrGeocodePickup(), 300)"
+                                               @blur="setTimeout(() => { showPickupSuggestions = false; }, 250)"
                                                placeholder="Pickup location" 
                                                class="w-full bg-transparent text-sm font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none truncate">
                                     </div>
@@ -487,7 +491,7 @@
                                      style="display: none;"
                                      class="absolute left-0 right-0 top-14 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[99999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                     <template x-for="item in pickupSuggestions" :key="item.place_id || item.description">
-                                        <button type="button" @click="selectPickupSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
+                                        <button type="button" @mousedown.prevent="selectPickupSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
                                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-500/20"></span>
                                             <div class="min-w-0 flex-1">
                                                 <span class="font-bold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
@@ -499,7 +503,7 @@
 
                                 <!-- Dynamic Intermediate Stops -->
                                 <template x-for="(stop, index) in stops" :key="stop.id">
-                                    <div class="relative z-10">
+                                    <div class="relative" :style="stop.showSuggestions ? 'z-index: 99999;' : 'z-index: 10;'">
                                         <!-- Hairline Divider -->
                                         <div class="border-t border-gray-200/70 dark:border-white/5 ml-10 mr-2 my-0.5"></div>
 
@@ -516,6 +520,7 @@
                                                 <input type="text" x-model="stop.location" 
                                                        @input.debounce.250ms="searchStopLocation(stop)"
                                                        @focus="if(stop.suggestions && stop.suggestions.length > 0) stop.showSuggestions = true"
+                                                       @blur="setTimeout(() => { stop.showSuggestions = false; }, 250)"
                                                        :placeholder="'Stop ' + (index + 1) + ' location'"
                                                        class="w-full bg-transparent text-sm font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none truncate">
                                             </div>
@@ -530,7 +535,7 @@
                                              style="display: none;"
                                              class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[99999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                             <template x-for="item in stop.suggestions" :key="item.place_id || item.description">
-                                                <button type="button" @click="selectStopSuggestion(stop, item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
+                                                <button type="button" @mousedown.prevent="selectStopSuggestion(stop, item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
                                                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 ring-2 ring-amber-500/20"></span>
                                                     <div class="min-w-0 flex-1">
                                                         <span class="font-bold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
@@ -560,7 +565,7 @@
                                                @input.debounce.250ms="onDropoffInput()"
                                                @focus="if(dropoffSuggestions.length > 0) showDropoffSuggestions = true"
                                                @keydown.enter.prevent="autoSelectOrGeocodeDropoff()"
-                                               @blur="setTimeout(() => autoSelectOrGeocodeDropoff(), 300)"
+                                               @blur="setTimeout(() => { showDropoffSuggestions = false; }, 250)"
                                                placeholder="Where to? (Enter destination)" 
                                                class="w-full bg-transparent text-sm font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none truncate">
                                     </div>
@@ -581,7 +586,7 @@
                                      style="display: none;"
                                      class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[99999] max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
                                     <template x-for="item in dropoffSuggestions" :key="item.place_id || item.description">
-                                        <button type="button" @click="selectDropoffSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
+                                        <button type="button" @mousedown.prevent="selectDropoffSuggestion(item)" class="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex items-center gap-2.5 cursor-pointer">
                                             <span class="w-2.5 h-2.5 rounded-[2px] bg-gray-900 dark:bg-white shrink-0 ring-2 ring-gray-900/10 dark:ring-white/20"></span>
                                             <div class="min-w-0 flex-1">
                                                 <span class="font-bold block text-xs text-gray-900 dark:text-white truncate" x-text="item.main_text || item.description"></span>
@@ -657,17 +662,17 @@
                                 📞
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Number (Required)</div>
+                                <div class="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Number (Required) *</div>
                                 <input type="tel" 
                                        inputmode="tel"
-                                       pattern="[0-9+\s\-]*"
+                                       maxlength="15"
                                        name="phone_number" 
                                        x-model="phone" 
-                                       @input="phone = phone.replace(/[^0-9+\s\-]/g, ''); phoneError = '';"
-                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
-                                       @paste="setTimeout(() => { phone = phone.replace(/[^0-9+\s\-]/g, ''); phoneError = ''; }, 0)"
+                                       @input="phone = phone.replace(/\D/g, ''); phoneError = '';"
+                                       @keypress="if (!/[0-9]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { phone = phone.replace(/\D/g, ''); phoneError = ''; }, 0)"
                                        required 
-                                       placeholder="Enter mobile phone number (digits only)..." 
+                                       placeholder="Enter mobile phone number (7 to 15 digits only)..." 
                                        class="w-full bg-transparent text-xs sm:text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none">
                             </div>
                         </div>
@@ -695,7 +700,10 @@
                                 ← Back
                             </button>
                             <h2 class="text-base font-black text-gray-900 dark:text-white">Choose a ride</h2>
-                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">✓ Route Ready</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-400">Step 2 of 3</span>
+                                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">✓ Route Ready</span>
+                            </div>
                         </div>
 
                         <!-- Route & Itemized Fare Breakdown -->
@@ -1361,7 +1369,7 @@
                             </template>
 
                             <!-- + Add Payment Method Button -->
-                            <button type="button" @click="paymentStep = 'card_form'" class="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-[#222] dark:hover:bg-[#333] font-extrabold text-xs text-gray-900 dark:text-white rounded-2xl flex items-center justify-between transition-all cursor-pointer">
+                            <button type="button" @click="paymentMethod = 'stripe'; paymentStep = 'card_form'" class="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-[#222] dark:hover:bg-[#333] font-extrabold text-xs text-gray-900 dark:text-white rounded-2xl flex items-center justify-between transition-all cursor-pointer">
                                 <span class="flex items-center gap-2">
                                     <span>+</span>
                                     <span>Add new card</span>
@@ -1402,30 +1410,30 @@
                         <div>
                             <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Mobile Money Phone Number</label>
                             <input type="tel" 
-                                   inputmode="tel"
-                                   pattern="[0-9+\s\-]*"
+                                   inputmode="numeric"
+                                   maxlength="15"
                                    x-model="momoPhone" 
-                                   @input="momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, '')"
-                                   @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
-                                   @paste="setTimeout(() => { momoPhone = momoPhone.replace(/[^0-9+\s\-]/g, ''); }, 0)"
-                                   placeholder="024 XXX XXXX (digits only)"
+                                   @input="momoPhone = momoPhone.replace(/\D/g, '')"
+                                   @keypress="if (!/[0-9]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                   @paste="setTimeout(() => { momoPhone = momoPhone.replace(/\D/g, ''); }, 0)"
+                                   placeholder="024XXXXXXX (7 to 15 digits only)"
                                    class="w-full px-4 py-3 bg-gray-50 dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">
-                            <p class="text-[11px] text-gray-400 mt-1">A payment authorization prompt will be sent to this phone upon booking.</p>
+                            <p class="text-[11px] text-gray-400 mt-1">A payment authorization prompt will be sent to this phone upon booking (7–15 digits).</p>
                         </div>
                     </div>
                 </div>
                 <div class="p-4 bg-gray-50 dark:bg-[#111] border-t border-gray-100 dark:border-white/10 shrink-0">
                     <template x-if="paymentStep === 'card_form'">
                         <button type="button" 
-                                @click="paymentMethod = 'stripe'; paymentStep = 'select'; paymentModal = false; saveCardFromForm();" 
+                                @click="saveCardFromForm();" 
                                 class="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-black text-base rounded-2xl shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
-                            <span>Add Card</span>
+                            <span>Save &amp; Use Card</span>
                         </button>
                     </template>
 
                     <template x-if="paymentStep === 'momo_form'">
                         <button type="button" 
-                                @click="paymentMethod = 'momo'; paymentStep = 'select'; paymentModal = false;" 
+                                @click="confirmMomoInModal();" 
                                 class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
                             <span>Use Mobile Money</span>
                         </button>
@@ -1499,6 +1507,30 @@
                         <button type="button" @click="showSavedLocationModal = false" class="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#222] text-gray-700 dark:text-gray-300 font-bold text-xs">Cancel</button>
                         <button type="button" @click="saveLocationFromModal()" :disabled="!modalTempLocation.isSelected" class="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90 disabled:opacity-40 font-extrabold text-xs shadow-md transition-all cursor-pointer">Save & Apply</button>
                     </div>
+                </div>
+            </div>
+        </template>
+        
+        <!-- In-App Error Notification Modal (Teleported to Body) -->
+        <template x-teleport="body">
+            <div x-show="errorMessageModal.show" 
+                 x-transition.opacity
+                 style="display: none;" 
+                 class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                <div @click.outside="closeAppErrorModal()" 
+                     class="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+                    <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-2xl shadow-inner">
+                        ⚠️
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-gray-900 dark:text-white" x-text="errorMessageModal.title || 'Notice'"></h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-2 leading-relaxed" x-text="errorMessageModal.message"></p>
+                    </div>
+                    <button type="button" 
+                            @click="closeAppErrorModal()" 
+                            class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer">
+                        Understood
+                    </button>
                 </div>
             </div>
         </template>
@@ -1608,7 +1640,23 @@
                 showRiderDropdown: false,
                 scheduledDate: '',
                 minScheduleDate: '',
+                maxScheduleDate: '',
                 scheduledTime: '',
+                errorMessageModal: {
+                    show: false,
+                    title: '',
+                    message: ''
+                },
+                showAppErrorModal(title, message) {
+                    this.errorMessageModal = {
+                        show: true,
+                        title: title || 'Notice',
+                        message: message || ''
+                    };
+                },
+                closeAppErrorModal() {
+                    this.errorMessageModal.show = false;
+                },
                 riderName: '',
                 riderPhone: '',
                 savedCards: [],
@@ -1924,6 +1972,13 @@
                     this.scheduledDate = `${yyyy}-${mm}-${dd}`;
                     this.minScheduleDate = `${yyyy}-${mm}-${dd}`;
 
+                    const maxDate = new Date();
+                    maxDate.setDate(maxDate.getDate() + 30);
+                    const maxY = maxDate.getFullYear();
+                    const maxM = String(maxDate.getMonth() + 1).padStart(2, '0');
+                    const maxD = String(maxDate.getDate()).padStart(2, '0');
+                    this.maxScheduleDate = `${maxY}-${maxM}-${maxD}`;
+
                     now.setMinutes(now.getMinutes() + 30);
                     const hh = String(now.getHours()).padStart(2, '0');
                     const min = String(now.getMinutes()).padStart(2, '0');
@@ -1969,7 +2024,15 @@
 
                 confirmSchedule() {
                     if (!this.scheduledDate || !this.scheduledTime) {
-                        alert('Please select both a date and time.');
+                        this.showAppErrorModal('Incomplete Schedule', 'Please select both a date and time.');
+                        return;
+                    }
+                    if (this.minScheduleDate && this.scheduledDate < this.minScheduleDate) {
+                        this.showAppErrorModal('Invalid Schedule Date', 'The scheduled date cannot be in the past.');
+                        return;
+                    }
+                    if (this.maxScheduleDate && this.scheduledDate > this.maxScheduleDate) {
+                        this.showAppErrorModal('Invalid Schedule Date', 'Rides can only be scheduled up to 30 days in advance.');
                         return;
                     }
                     this.schedule_type = 'later';
@@ -1983,11 +2046,12 @@
 
                 confirmRiderSomeoneElse() {
                     if (!this.riderName || !this.riderName.trim()) {
-                        alert('Please enter the passenger\'s name.');
+                        this.showAppErrorModal('Missing Passenger Name', "Please enter the passenger's name.");
                         return;
                     }
-                    if (!this.riderPhone || !this.riderPhone.trim()) {
-                        alert('Please enter the passenger\'s phone number.');
+                    const cleanPhone = (this.riderPhone || '').replace(/\D/g, '');
+                    if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 15) {
+                        this.showAppErrorModal('Invalid Passenger Phone', "Please enter a valid passenger phone number (7 to 15 digits).");
                         return;
                     }
                     this.riderType = 'someone_else';
@@ -2081,7 +2145,7 @@
 
                 async useCurrentLocation() {
                     if (!navigator.geolocation) {
-                        alert("Geolocation is not supported by your browser.");
+                        this.showAppErrorModal('Geolocation Not Supported', 'Geolocation is not supported by your browser.');
                         return;
                     }
                     this.isDetectingLocation = true;
@@ -2130,7 +2194,7 @@
                         await this.setPickupFromCoordinates(lat, lng, this.locationAccuracyText);
                     } catch (err) {
                         console.error('Locate error:', err);
-                        alert('Could not determine your exact location. Please allow browser location permissions or click on the map to place your pin.');
+                        this.showAppErrorModal('Location Failed', 'Could not determine your exact location. Please allow browser location permissions or click on the map to place your pin.');
                         this.locationAccuracyText = '';
                     } finally {
                         this.isDetectingLocation = false;
@@ -2641,7 +2705,7 @@
 
                 async saveLocationFromModal() {
                     if (!this.modalTempLocation.location || !this.modalTempLocation.isSelected) {
-                        alert('Please select a valid location suggestion from the dropdown.');
+                        this.showAppErrorModal('Location Required', 'Please select a valid location suggestion from the dropdown.');
                         return;
                     }
                     try {
@@ -2684,22 +2748,66 @@
                     }
                 },
 
+                confirmMomoInModal() {
+                    const cleanPhone = (this.momoPhone || '').replace(/\D/g, '');
+                    if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 15) {
+                        this.showAppErrorModal('Invalid Mobile Money Number', 'Please enter a valid mobile money number (7 to 15 digits).');
+                        return;
+                    }
+                    this.paymentMethod = 'momo';
+                    this.paymentStep = 'select';
+                    this.paymentModal = false;
+                },
+
                 saveCardFromForm() {
-                    const cardNum = document.getElementById('stripe_card_number_input')?.value || '4242 4242 4242 4242';
-                    const cardHolder = document.getElementById('stripe_cardholder_name_input')?.value || '{{ auth()->user()->name ?? "Valued Customer" }}';
-                    const cardExpiry = document.getElementById('stripe_card_expiry_input')?.value || '12/29';
+                    const cardHolder = (document.getElementById('stripe_cardholder_name_input')?.value || '').trim();
+                    const cardNum = (document.getElementById('stripe_card_number_input')?.value || '').replace(/\s+/g, '');
+                    const cardExpiry = (document.getElementById('stripe_card_expiry_input')?.value || '').trim();
+                    const cardCvc = (document.getElementById('stripe_card_cvc_input')?.value || '').trim();
+                    const cardZip = (document.getElementById('stripe_card_zip_input')?.value || '').trim();
+                    const cardPhone = (document.getElementById('stripe_card_phone_input')?.value || '').replace(/\D/g, '');
 
-                    const cleanNum = cardNum.replace(/\s+/g, '');
-                    const last4 = cleanNum.slice(-4) || '4242';
-                    let brand = 'visa';
-                    if (/^4/.test(cleanNum)) brand = 'visa';
-                    else if (/^(5[1-5]|2[2-7])/.test(cleanNum)) brand = 'mastercard';
-                    else if (/^3[47]/.test(cleanNum)) brand = 'amex';
-                    else if (/^(6011|65|64[4-9])/.test(cleanNum)) brand = 'discover';
-
+                    if (!cardHolder || cardHolder.length < 2) {
+                        this.showAppErrorModal('Cardholder Name Required', 'Please enter the full cardholder name as printed on the card.');
+                        return;
+                    }
+                    if (!cardNum || !/^\d{15,19}$/.test(cardNum)) {
+                        this.showAppErrorModal('Invalid Card Number', 'Please enter a valid credit or debit card number (15–19 digits).');
+                        return;
+                    }
+                    if (!cardExpiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExpiry)) {
+                        this.showAppErrorModal('Invalid Expiration Date', 'Please enter a valid card expiration date in MM/YY format.');
+                        return;
+                    }
                     const parts = cardExpiry.split('/');
-                    const month = parseInt(parts[0], 10) || 12;
-                    const year = 2000 + (parseInt(parts[1], 10) || 29);
+                    const month = parseInt(parts[0], 10);
+                    const year = 2000 + parseInt(parts[1], 10);
+                    const now = new Date();
+                    const currentYear = now.getFullYear();
+                    const currentMonth = now.getMonth() + 1;
+                    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                        this.showAppErrorModal('Card Expired', 'The expiration date must be in the future.');
+                        return;
+                    }
+                    if (!cardCvc || !/^\d{3,4}$/.test(cardCvc)) {
+                        this.showAppErrorModal('Invalid CVC / CVV', 'Please enter a valid 3 or 4 digit security code.');
+                        return;
+                    }
+                    if (!cardZip || cardZip.length < 3) {
+                        this.showAppErrorModal('Invalid ZIP / Postal Code', 'Please enter a valid postal code.');
+                        return;
+                    }
+                    if (!cardPhone || cardPhone.length < 7 || cardPhone.length > 15) {
+                        this.showAppErrorModal('Invalid Contact Phone', 'Please enter a valid billing contact phone number (7 to 15 digits).');
+                        return;
+                    }
+
+                    const last4 = cardNum.slice(-4);
+                    let brand = 'visa';
+                    if (/^4/.test(cardNum)) brand = 'visa';
+                    else if (/^(5[1-5]|2[2-7])/.test(cardNum)) brand = 'mastercard';
+                    else if (/^3[47]/.test(cardNum)) brand = 'amex';
+                    else if (/^(6011|65|64[4-9])/.test(cardNum)) brand = 'discover';
 
                     // Instant UI update & modal close (0ms delay)
                     this.paymentMethod = 'stripe';
@@ -2721,6 +2829,8 @@
                             expiry_month: month,
                             expiry_year: year,
                             cardholder_name: cardHolder,
+                            billing_phone: cardPhone,
+                            postal_code: cardZip,
                             set_default: true
                         })
                     }).then(r => r.json()).then(data => {
@@ -2743,16 +2853,23 @@
 
                 goToChooseRide() {
                     this.phoneError = '';
-                    const cleanDigits = (this.phone || '').replace(/[^0-9]/g, '');
-                    if (!this.phone || cleanDigits.length < 6) {
-                        this.phoneError = 'Please enter a valid contact phone number with digits only.';
+                    if (!this.pickup || !this.pickup.trim()) {
+                        this.showAppErrorModal('Pickup Location Required', 'Please enter or pick a pickup address.');
+                        return;
+                    }
+                    if (!this.dropoff || !this.dropoff.trim()) {
+                        this.showAppErrorModal('Destination Required', 'Please enter or pick a destination address.');
+                        return;
+                    }
+                    const cleanDigits = (this.phone || '').replace(/\D/g, '');
+                    if (!this.phone || cleanDigits.length < 7 || cleanDigits.length > 15) {
+                        this.phoneError = 'Please enter a valid contact phone number with 7 to 15 digits.';
+                        this.showAppErrorModal('Invalid Phone Number', 'Please enter a valid contact phone number with 7 to 15 digits.');
                         const phoneInput = document.querySelector('input[name="phone_number"]');
                         if (phoneInput) phoneInput.focus();
                         return;
                     }
-                    if (this.pickup.trim() && this.dropoff.trim()) {
-                        this.bookingStep = 'choose_ride';
-                    }
+                    this.bookingStep = 'choose_ride';
                 },
                 async submitBooking() {
                     this.isAuthorizingPayment = true;
@@ -2794,7 +2911,7 @@
                         const data = await res.json();
 
                         if (!res.ok) {
-                            alert(data.error || 'Could not place ride request. Please check your details.');
+                            this.showAppErrorModal('Booking Error', data.error || 'Could not place ride request. Please check your details.');
                             this.bookingStep = 'confirm_ride';
                             this.isAuthorizingPayment = false;
                             return;
@@ -2882,7 +2999,7 @@
                             this.startRideStatusPolling(data.ride_id);
                         }
                     } catch (e) {
-                        alert('Network error while booking ride. Please try again.');
+                        this.showAppErrorModal('Network Error', 'Network error while booking ride. Please try again.');
                         this.bookingStep = 'confirm_ride';
                         this.isAuthorizingPayment = false;
                     }

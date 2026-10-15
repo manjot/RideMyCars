@@ -195,23 +195,151 @@
                     </div>
 
                     <!-- Pickup Address -->
-                    <div class="space-y-2">
+                    <div class="space-y-2 relative" x-data="{
+                        suggestions: [],
+                        showSuggestions: false,
+                        search() {
+                            if (!pickupLocation || pickupLocation.trim().length < 2) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(pickupLocation.trim())}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    this.suggestions = data.predictions || [];
+                                    this.showSuggestions = this.suggestions.length > 0;
+                                }).catch(() => {});
+                        },
+                        async select(item) {
+                            pickupLocation = item.description || item.main_text;
+                            this.showSuggestions = false;
+                            if (item.lat && item.lng) {
+                                if (window.setDeliveryPickupLocation) window.setDeliveryPickupLocation(parseFloat(item.lat), parseFloat(item.lng), false);
+                                return;
+                            }
+                            if (item.place_id) {
+                                try {
+                                    const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        if (data && data.place) {
+                                            pickupLocation = data.place.formatted_address || data.place.name || pickupLocation;
+                                            if (window.setDeliveryPickupLocation) {
+                                                window.setDeliveryPickupLocation(parseFloat(data.place.lat), parseFloat(data.place.lng), false);
+                                            }
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                        }
+                    }">
                         <div class="flex items-center justify-between">
                             <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pickup Address *</label>
-                            <button type="button" id="use_my_location_btn_delivery" class="text-amber-500 hover:text-amber-600 text-xs font-extrabold flex items-center gap-1 transition-colors">
+                            <button type="button" id="use_my_location_btn_delivery" class="text-amber-500 hover:text-amber-600 text-xs font-extrabold flex items-center gap-1 transition-colors cursor-pointer">
                                 📍 Use My Location
                             </button>
                         </div>
                         <div class="relative">
-                            <input type="text" id="pickup_location_input" name="pickup_location" x-model="pickupLocation" required placeholder="Enter street address, building, or landmark..." class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+                            <input type="text" 
+                                   id="pickup_location_input" 
+                                   name="pickup_location" 
+                                   x-model="pickupLocation" 
+                                   @input="search()"
+                                   @focus="if(suggestions.length) showSuggestions = true"
+                                   @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                                   required 
+                                   placeholder="Enter street address, building, or landmark..." 
+                                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+
+                            <!-- Autocomplete dropdown -->
+                            <div x-show="showSuggestions && suggestions.length > 0" 
+                                 @mousedown.prevent
+                                 style="display: none;"
+                                 class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f23] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                <template x-for="(sug, sIdx) in suggestions" :key="sIdx">
+                                    <div @mousedown.prevent="select(sug)"
+                                         class="p-2.5 px-3 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer transition text-left flex items-center gap-2">
+                                        <span class="text-amber-500 text-xs shrink-0">📍</span>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="sug.main_text || sug.description"></div>
+                                            <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="sug.secondary_text || sug.description"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Drop-off Address -->
-                    <div class="space-y-2">
+                    <div class="space-y-2 relative" x-data="{
+                        suggestions: [],
+                        showSuggestions: false,
+                        search() {
+                            if (!dropoffLocation || dropoffLocation.trim().length < 2) {
+                                this.suggestions = [];
+                                this.showSuggestions = false;
+                                return;
+                            }
+                            fetch(`/api/places/autocomplete?input=${encodeURIComponent(dropoffLocation.trim())}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    this.suggestions = data.predictions || [];
+                                    this.showSuggestions = this.suggestions.length > 0;
+                                }).catch(() => {});
+                        },
+                        async select(item) {
+                            dropoffLocation = item.description || item.main_text;
+                            this.showSuggestions = false;
+                            if (item.lat && item.lng) {
+                                if (window.setDeliveryDropoffLocation) window.setDeliveryDropoffLocation(parseFloat(item.lat), parseFloat(item.lng), false);
+                                return;
+                            }
+                            if (item.place_id) {
+                                try {
+                                    const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.place_id)}`);
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        if (data && data.place) {
+                                            dropoffLocation = data.place.formatted_address || data.place.name || dropoffLocation;
+                                            if (window.setDeliveryDropoffLocation) {
+                                                window.setDeliveryDropoffLocation(parseFloat(data.place.lat), parseFloat(data.place.lng), false);
+                                            }
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                        }
+                    }">
                         <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Drop-off / Destination Address *</label>
                         <div class="relative">
-                            <input type="text" id="dropoff_location_input" name="dropoff_location" x-model="dropoffLocation" required placeholder="Enter recipient delivery address..." class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+                            <input type="text" 
+                                   id="dropoff_location_input" 
+                                   name="dropoff_location" 
+                                   x-model="dropoffLocation" 
+                                   @input="search()"
+                                   @focus="if(suggestions.length) showSuggestions = true"
+                                   @blur="setTimeout(() => { showSuggestions = false; }, 250)"
+                                   required 
+                                   placeholder="Enter recipient delivery address..." 
+                                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+
+                            <!-- Autocomplete dropdown -->
+                            <div x-show="showSuggestions && suggestions.length > 0" 
+                                 @mousedown.prevent
+                                 style="display: none;"
+                                 class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#1f1f23] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 z-[99999] overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                                <template x-for="(sug, sIdx) in suggestions" :key="sIdx">
+                                    <div @mousedown.prevent="select(sug)"
+                                         class="p-2.5 px-3 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer transition text-left flex items-center gap-2">
+                                        <span class="text-amber-500 text-xs shrink-0">📍</span>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-gray-900 dark:text-white truncate" x-text="sug.main_text || sug.description"></div>
+                                            <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="sug.secondary_text || sug.description"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
 
@@ -313,21 +441,21 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div>
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Sender Full Name *</label>
-                                <input type="text" name="sender_name" x-model="senderName" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                <input type="text" name="sender_name" x-model="senderName" required placeholder="Enter sender full name..." class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white placeholder-gray-400">
                             </div>
                             <div>
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Sender Phone Number *</label>
                                 <input type="tel" 
-                                       inputmode="tel"
-                                       pattern="[0-9+\s\-]*"
+                                       inputmode="numeric"
+                                       maxlength="15"
                                        name="sender_phone" 
                                        x-model="senderPhone" 
-                                       @input="senderPhone = senderPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = '';"
-                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
-                                       @paste="setTimeout(() => { senderPhone = senderPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = ''; }, 0)"
-                                       placeholder="e.g. 024 XXX XXXX (digits only)"
+                                       @input="senderPhone = senderPhone.replace(/\D/g, ''); step3Error = '';"
+                                       @keypress="if (!/[0-9]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { senderPhone = senderPhone.replace(/\D/g, ''); step3Error = ''; }, 0)"
+                                       placeholder="e.g. 024XXXXXXX (7 to 15 digits only)"
                                        required 
-                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white placeholder-gray-400">
                             </div>
                         </div>
                     </div>
@@ -338,21 +466,21 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div>
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Recipient Full Name *</label>
-                                <input type="text" name="recipient_name" x-model="recipientName" required class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                <input type="text" name="recipient_name" x-model="recipientName" required placeholder="Enter recipient full name..." class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white placeholder-gray-400">
                             </div>
                             <div>
                                 <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Recipient Phone Number (For PIN SMS) *</label>
                                 <input type="tel" 
-                                       inputmode="tel"
-                                       pattern="[0-9+\s\-]*"
+                                       inputmode="numeric"
+                                       maxlength="15"
                                        name="recipient_phone" 
                                        x-model="recipientPhone" 
-                                       @input="recipientPhone = recipientPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = '';"
-                                       @keypress="if (!/[0-9+\s\-]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
-                                       @paste="setTimeout(() => { recipientPhone = recipientPhone.replace(/[^0-9+\s\-]/g, ''); step3Error = ''; }, 0)"
-                                       placeholder="e.g. 055 XXX XXXX (digits only)"
+                                       @input="recipientPhone = recipientPhone.replace(/\D/g, ''); step3Error = '';"
+                                       @keypress="if (!/[0-9]/.test($event.key) && $event.key.length === 1 && !$event.ctrlKey && !$event.metaKey) $event.preventDefault();"
+                                       @paste="setTimeout(() => { recipientPhone = recipientPhone.replace(/\D/g, ''); step3Error = ''; }, 0)"
+                                       placeholder="e.g. 055XXXXXXX (7 to 15 digits only)"
                                        required 
-                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                                       class="w-full px-3.5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white placeholder-gray-400">
                             </div>
                         </div>
 
@@ -539,11 +667,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div>
                             <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Package Description</label>
-                            <input type="text" name="package_description" x-model="packageDescription" placeholder="e.g. Legal documents & laptop" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            <input type="text" name="package_description" x-model="packageDescription" placeholder="Enter package contents description (e.g. Documents, gifts)..." class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white placeholder-gray-400">
                         </div>
                         <div>
                             <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Declared Value ($)</label>
-                            <input type="number" name="declared_value" min="0" x-model="declaredValue" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            <input type="number" name="declared_value" min="0" x-model="declaredValue" placeholder="e.g. 50.00 (optional)" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white placeholder-gray-400">
                         </div>
                     </div>
 
@@ -633,7 +761,7 @@
                         <button type="button" @click="currentStep = 4" class="px-5 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 font-extrabold text-xs rounded-xl">
                             ← Back
                         </button>
-                        <button type="button" @click="currentStep = 6" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
+                        <button type="button" @click="proceedFromStep5()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md">
                             Next: Summary & Confirmation →
                         </button>
                     </div>
@@ -770,6 +898,28 @@
             </div>
 
         </form>
+
+        <!-- In-App Error Notification Modal -->
+        <div x-show="errorMessageModal.show" 
+             x-transition.opacity
+             style="display: none;" 
+             class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div @click.outside="closeAppErrorModal()" 
+                 class="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-2xl shadow-inner">
+                    ⚠️
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900 dark:text-white" x-text="errorMessageModal.title || 'Notice'"></h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-2 leading-relaxed" x-text="errorMessageModal.message"></p>
+                </div>
+                <button type="button" 
+                        @click="closeAppErrorModal()" 
+                        class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer">
+                    Understood
+                </button>
+            </div>
+        </div>
     </main>
 
     <!-- Maps Integration with Resilient Auto-Fallback -->
@@ -1144,6 +1294,9 @@
                 window.dispatchEvent(new CustomEvent('delivery-location-changed', { detail: { type: 'dropoff', lat, lng } }));
             }
 
+            window.setDeliveryPickupLocation = setPickup;
+            window.setDeliveryDropoffLocation = setDropoff;
+
             function updateRouteAndBounds() {
                 const pLat = parseFloat(pLatInput?.value);
                 const pLng = parseFloat(pLngInput?.value);
@@ -1350,22 +1503,38 @@
                 pickupDate: @json(date('Y-m-d')),
                 pickupTime: '09:00',
 
-                senderName: @json(auth()->user()->name ?? 'Jane Sender'),
-                senderPhone: @json(auth()->user()->phone ?? '+1 855 203 3177'),
+                senderName: @json(auth()->user()->name ?? ''),
+                senderPhone: @json(auth()->user()->phone ?? ''),
                 senderAddress: '',
 
-                recipientName: 'Robert Johnson',
-                recipientPhone: '+1 855 203 3177',
+                recipientName: '',
+                recipientPhone: '',
                 recipientAddress: '',
                 deliveryInstructions: '',
 
                 packageCategory: 'Documents',
-                packageDescription: 'Important Legal Contracts & Office Supplies',
+                packageDescription: '',
                 packageSize: 'Small',
                 packageWeight: 1.5,
                 quantity: 1,
-                declaredValue: 150,
+                declaredValue: '',
                 specialHandling: ['signature_required'],
+
+                errorMessageModal: {
+                    show: false,
+                    title: '',
+                    message: ''
+                },
+                showAppErrorModal(title, message) {
+                    this.errorMessageModal = {
+                        show: true,
+                        title: title || 'Notice',
+                        message: message || ''
+                    };
+                },
+                closeAppErrorModal() {
+                    this.errorMessageModal.show = false;
+                },
 
                 // Pharmeasy Prescription State
                 prescriptionFiles: [],
@@ -1502,19 +1671,23 @@
                     const cleanSender = (this.senderPhone || '').replace(/\D/g, '');
                     if (!this.senderName || !this.senderName.trim()) {
                         this.step3Error = 'Please enter the Sender Full Name.';
+                        this.showAppErrorModal('Sender Name Required', this.step3Error);
                         return;
                     }
-                    if (!cleanSender || cleanSender.length < 6) {
-                        this.step3Error = 'Please enter a valid numeric Sender phone number (at least 6 digits).';
+                    if (!cleanSender || cleanSender.length < 6 || cleanSender.length > 15) {
+                        this.step3Error = 'Please enter a valid numeric Sender phone number (between 6 and 15 digits).';
+                        this.showAppErrorModal('Sender Phone Required', this.step3Error);
                         return;
                     }
                     const cleanRecipient = (this.recipientPhone || '').replace(/\D/g, '');
                     if (!this.recipientName || !this.recipientName.trim()) {
                         this.step3Error = 'Please enter the Recipient Full Name.';
+                        this.showAppErrorModal('Recipient Name Required', this.step3Error);
                         return;
                     }
-                    if (!cleanRecipient || cleanRecipient.length < 6) {
-                        this.step3Error = 'Please enter a valid numeric Recipient phone number (at least 6 digits).';
+                    if (!cleanRecipient || cleanRecipient.length < 6 || cleanRecipient.length > 15) {
+                        this.step3Error = 'Please enter a valid numeric Recipient phone number (between 6 and 15 digits).';
+                        this.showAppErrorModal('Recipient Phone Required', this.step3Error);
                         return;
                     }
                     this.currentStep = 4;
@@ -1525,12 +1698,24 @@
                     if (this.selectedCategoryRequiresRx) {
                         if (!this.prescriptionFiles || this.prescriptionFiles.length === 0) {
                             this.prescriptionError = 'Doctor prescription upload is mandatory for ' + this.packageCategory + ' delivery. Please upload at least one valid prescription (JPG, PNG, or PDF) to continue.';
+                            this.showAppErrorModal('Prescription Required', this.prescriptionError);
                             const el = document.getElementById('prescriptionFileInput');
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             return;
                         }
                     }
                     this.currentStep = 5;
+                },
+
+                proceedFromStep5() {
+                    if (this.paymentMethod === 'momo') {
+                        const cleanMomo = (this.momoPhone || '').toString().replace(/\D/g, '');
+                        if (!cleanMomo || cleanMomo.length < 7 || cleanMomo.length > 15) {
+                            this.showAppErrorModal('Mobile Money Number Required', 'Please enter a valid numeric Mobile Money phone number between 7 and 15 digits.');
+                            return;
+                        }
+                    }
+                    this.currentStep = 6;
                 },
 
                 handlePrescriptionFiles(event) {
@@ -1659,27 +1844,47 @@
                     if (!this.pickupLocation || !this.pickupLocation.trim()) {
                         this.currentStep = 1;
                         this.submitError = 'Please enter a valid Pickup Address.';
+                        this.showAppErrorModal('Pickup Address Missing', this.submitError);
                         return;
                     }
                     if (!this.dropoffLocation || !this.dropoffLocation.trim()) {
                         this.currentStep = 1;
                         this.submitError = 'Please enter a valid Drop-off / Destination Address.';
+                        this.showAppErrorModal('Destination Address Missing', this.submitError);
                         return;
                     }
 
-                    // Validate Step 3
+                    // Validate Step 3: Sender
                     const cleanSender = (this.senderPhone || '').replace(/\D/g, '');
-                    if (!this.senderName || !this.senderName.trim() || !cleanSender || cleanSender.length < 6) {
+                    if (!this.senderName || !this.senderName.trim()) {
                         this.currentStep = 3;
-                        this.submitError = 'Please enter a valid Sender Name and numeric phone number (at least 6 digits).';
+                        this.submitError = 'Sender Full Name is required before dispatching the parcel.';
                         this.step3Error = this.submitError;
+                        this.showAppErrorModal('Sender Name Required', this.submitError);
                         return;
                     }
-                    const cleanRecipient = (this.recipientPhone || '').replace(/\D/g, '');
-                    if (!this.recipientName || !this.recipientName.trim() || !cleanRecipient || cleanRecipient.length < 6) {
+                    if (!cleanSender || cleanSender.length < 6 || cleanSender.length > 15) {
                         this.currentStep = 3;
-                        this.submitError = 'Please enter a valid Recipient Name and numeric phone number (at least 6 digits).';
+                        this.submitError = 'Please enter a valid numeric Sender phone number (between 6 and 15 digits).';
                         this.step3Error = this.submitError;
+                        this.showAppErrorModal('Sender Phone Required', this.submitError);
+                        return;
+                    }
+
+                    // Validate Step 3: Recipient
+                    const cleanRecipient = (this.recipientPhone || '').replace(/\D/g, '');
+                    if (!this.recipientName || !this.recipientName.trim()) {
+                        this.currentStep = 3;
+                        this.submitError = 'Recipient Full Name is required before dispatching the parcel.';
+                        this.step3Error = this.submitError;
+                        this.showAppErrorModal('Recipient Name Required', this.submitError);
+                        return;
+                    }
+                    if (!cleanRecipient || cleanRecipient.length < 6 || cleanRecipient.length > 15) {
+                        this.currentStep = 3;
+                        this.submitError = 'Please enter a valid numeric Recipient phone number (between 6 and 15 digits).';
+                        this.step3Error = this.submitError;
+                        this.showAppErrorModal('Recipient Phone Required', this.submitError);
                         return;
                     }
 
@@ -1688,7 +1893,19 @@
                         this.currentStep = 4;
                         this.submitError = 'Doctor prescription upload is mandatory for ' + this.packageCategory + ' delivery. Please upload at least one valid prescription.';
                         this.prescriptionError = 'Doctor prescription upload is mandatory for ' + this.packageCategory + ' delivery.';
+                        this.showAppErrorModal('Prescription Required', this.submitError);
                         return;
+                    }
+
+                    // Validate Step 5 Mobile Money
+                    if (this.paymentMethod === 'momo') {
+                        const cleanMomo = (this.momoPhone || '').toString().replace(/\D/g, '');
+                        if (!cleanMomo || cleanMomo.length < 7 || cleanMomo.length > 15) {
+                            this.currentStep = 5;
+                            this.submitError = 'Please enter a valid numeric Mobile Money phone number between 7 and 15 digits.';
+                            this.showAppErrorModal('Mobile Money Number Required', this.submitError);
+                            return;
+                        }
                     }
 
                     // Validate Step 6 Checkbox
@@ -1696,6 +1913,7 @@
                     if (prohibitedCheckbox && !prohibitedCheckbox.checked) {
                         this.currentStep = 6;
                         this.submitError = 'Please confirm the Prohibited Consignment Declaration.';
+                        this.showAppErrorModal('Declaration Required', 'Please check the box confirming that this consignment contains no prohibited or hazardous items.');
                         return;
                     }
 
@@ -1727,12 +1945,14 @@
                             this.submitError = response.status >= 500
                                 ? `Server encountered an issue (${response.status}). Please try again or contact support.`
                                 : `Request failed with status ${response.status}. Please check your inputs.`;
+                            this.showAppErrorModal('Server Issue', this.submitError);
                             return;
                         }
 
                         if (!response.ok || !data.success) {
                             this.isSubmitting = false;
                             this.submitError = data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Failed to dispatch parcel. Please check form fields.');
+                            this.showAppErrorModal('Dispatch Error', this.submitError);
                             return;
                         }
 
@@ -1747,6 +1967,7 @@
                         console.error("Delivery submission error:", err);
                         this.isSubmitting = false;
                         this.submitError = err.message || 'An unexpected error occurred. Please try again.';
+                        this.showAppErrorModal('Submission Error', this.submitError);
                     }
                 }
             }));
