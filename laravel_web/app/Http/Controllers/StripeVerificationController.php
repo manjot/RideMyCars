@@ -911,6 +911,8 @@ class StripeVerificationController extends Controller
 
     /**
      * Helper to retrieve booking model.
+     *
+     * @return \App\Models\Ride|\App\Models\DriverBooking|\App\Models\PackageDelivery|object|null
      */
     protected function getBookingModel(string $serviceType, int $serviceId)
     {
@@ -946,16 +948,21 @@ class StripeVerificationController extends Controller
         $pLng = (float)($booking->pickup_lng ?? 0);
 
         $amount = (float) ($booking->total_price ?? $booking->fare ?? 0);
-        $currency = $booking->currency ?? \App\Services\CountryService::resolveItemCurrencyCode($booking);
-        $currencySymbol = \App\Services\CountryService::resolveItemCurrency($booking);
-        $country = \App\Services\CountryService::detectCountryFromLocation(
-            ($pickup ?: '') . ' ' . ($dropoff ?: ''),
+        $currency = $booking->currency ?? CountryService::resolveItemCurrencyCode($booking);
+        $currencySymbol = CountryService::resolveItemCurrency($booking);
+
+        $locationText = trim(($pickup ?: '') . ' ' . ($dropoff ?: ''));
+        $detectedCountry = CountryService::detectCountryFromLocation(
+            $locationText,
             $pLat != 0 ? $pLat : null,
             $pLng != 0 ? $pLng : null
-        ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
-          ?? \App\Services\CountryService::getCurrentCountryCode(request())
-          ?? 'IND';
-        $rawStartDate = $booking->start_date ?? $booking->pickup_date;
+        );
+        $country = $detectedCountry
+            ?: (CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
+            ?: (CountryService::getCurrentCountryCode()
+            ?: 'IND'));
+
+        $rawStartDate = $booking->start_date ?? $booking->pickup_date ?? null;
         if ($rawStartDate instanceof \DateTimeInterface) {
             $date = $rawStartDate->format('Y-m-d');
         } elseif (!empty($rawStartDate)) {
@@ -968,6 +975,7 @@ class StripeVerificationController extends Controller
             $date = date('Y-m-d');
         }
         $time = $booking->start_time ?? $booking->pickup_time ?? '09:00 AM';
+        $custPhone = $booking->passenger_phone ?? $booking->sender_phone ?? $booking->client_phone ?? ($booking->user?->phone ?? '');
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
         $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
