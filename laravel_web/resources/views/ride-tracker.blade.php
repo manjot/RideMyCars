@@ -525,8 +525,8 @@
 
                             <div class="space-y-2 pt-1">
                                 <template x-if="driver.phone">
-                                    <a :href="'tel:' + driver.phone" 
-                                       class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all">
+                                    <a :href="'tel:' + (driver.phone ? driver.phone.replace(/[^0-9+]/g, '') : '')" 
+                                       class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer no-underline">
                                         <span>📞</span>
                                         <span>Call Driver</span>
                                         <span class="font-mono font-bold" x-text="'(' + driver.phone + ')'"></span>
@@ -534,17 +534,17 @@
                                 </template>
 
                                 <template x-if="driver.whatsapp_url || driver.phone">
-                                    <a :href="driver.whatsapp_url || ('https://wa.me/' + (driver.phone ? driver.phone.replace(/[^0-9]/g, '') : ''))" 
+                                    <a :href="driver.whatsapp_url || ('https://wa.me/' + (driver.phone ? driver.phone.replace(/[^0-9]/g, '') : '') + '?text=' + encodeURIComponent('Hello ' + (driver.name || 'Driver') + ', I am your passenger for RideMyCars ride #' + (ride ? ride.id : '') + '.'))" 
                                        target="_blank" rel="noopener noreferrer"
-                                       class="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all">
+                                       class="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer no-underline">
                                         <span>💬</span>
                                         <span>Chat on WhatsApp</span>
                                     </a>
                                 </template>
 
                                 <template x-if="driver.email">
-                                    <a :href="'mailto:' + driver.email" 
-                                       class="w-full py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all">
+                                    <a :href="'mailto:' + driver.email + '?subject=' + encodeURIComponent('RideMyCars Ride #' + (ride ? ride.id : ''))" 
+                                       class="w-full py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer no-underline">
                                         <span>✉️</span>
                                         <span>Email Driver</span>
                                         <span class="font-mono text-[11px] truncate max-w-[150px]" x-text="'(' + driver.email + ')'"></span>

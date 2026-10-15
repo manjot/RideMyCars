@@ -159,14 +159,15 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
       final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
       final uri = Uri.parse('tel:$clean');
       try {
-        final launched = await launchUrl(uri);
+        bool launched = false;
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
         if (!launched) {
-          await Clipboard.setData(ClipboardData(text: clean));
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('✓ Driver phone $clean copied to clipboard'), backgroundColor: AppColors.success),
-            );
-          }
+          launched = await launchUrl(uri);
+        }
+        if (!launched) {
+          throw Exception('Dialer not handled');
         }
       } catch (_) {
         await Clipboard.setData(ClipboardData(text: clean));
@@ -190,16 +191,21 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
         ?? 'dispatch@ridemycars.com').toString().trim();
     if (email.isNotEmpty) {
       final rideId = currentRide['id'] ?? widget.ride['id'] ?? '';
-      final uri = Uri.parse('mailto:$email?subject=RideMyCars%20Ride%20%23$rideId');
+      final uri = Uri(
+        scheme: 'mailto',
+        path: email,
+        queryParameters: {'subject': 'RideMyCars Ride #$rideId'},
+      );
       try {
-        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        bool launched = false;
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
         if (!launched) {
-          await Clipboard.setData(ClipboardData(text: email));
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('✓ Driver email $email copied to clipboard'), backgroundColor: AppColors.primary),
-            );
-          }
+          launched = await launchUrl(uri);
+        }
+        if (!launched) {
+          throw Exception('Email app not handled');
         }
       } catch (_) {
         await Clipboard.setData(ClipboardData(text: email));
@@ -215,14 +221,6 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   Future<void> _whatsappDriver([String? overridePhone]) async {
     final rideProv = Provider.of<RideProvider>(context, listen: false);
     final currentRide = rideProv.activeRide ?? widget.ride;
-    final waUrl = currentRide['driver']?['whatsapp'] ?? currentRide['driver']?['whatsapp_url'] ?? currentRide['driver_whatsapp'];
-    if (waUrl != null && waUrl.toString().startsWith('http')) {
-      final uri = Uri.parse(waUrl.toString());
-      try {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return;
-      } catch (_) {}
-    }
     final rawPhone = (overridePhone 
         ?? currentRide['driver']?['phone'] 
         ?? currentRide['driver_phone'] 
@@ -230,16 +228,39 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
         ?? widget.ride['driver_phone'] 
         ?? '+233598547966').toString().trim();
     final clean = rawPhone.replaceAll(RegExp(r'[^0-9]'), '');
-    final uri = Uri.parse('https://wa.me/$clean');
+    final rideId = currentRide['id'] ?? widget.ride['id'] ?? '';
+    final driverName = currentRide['driver']?['name'] ?? 'Driver';
+    final text = Uri.encodeComponent('Hello $driverName, I am your passenger for RideMyCars ride #$rideId.');
+
+    // 1. Try native WhatsApp scheme directly
+    final nativeUri = Uri.parse('whatsapp://send?phone=$clean&text=$text');
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      await Clipboard.setData(ClipboardData(text: rawPhone));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('✓ Driver WhatsApp number $rawPhone copied to clipboard'), backgroundColor: const Color(0xFF25D366)),
-        );
+      if (await canLaunchUrl(nativeUri)) {
+        final ok = await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+        if (ok) return;
       }
+    } catch (_) {}
+
+    // 2. Try universal wa.me link
+    final waUri = Uri.parse('https://wa.me/$clean?text=$text');
+    try {
+      if (await canLaunchUrl(waUri)) {
+        final ok = await launchUrl(waUri, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      }
+      final ok = await launchUrl(waUri, mode: LaunchMode.externalApplication);
+      if (ok) return;
+    } catch (_) {}
+
+    // 3. Fallback: Copy to clipboard and notify user
+    await Clipboard.setData(ClipboardData(text: rawPhone));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ Driver WhatsApp number $rawPhone copied to clipboard'),
+          backgroundColor: const Color(0xFF25D366),
+        ),
+      );
     }
   }
 
@@ -940,20 +961,28 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Row(
-                                            children: [
-                                              const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                phone,
-                                                style: const TextStyle(
-                                                  color: AppColors.primary,
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
-                                                  letterSpacing: 0.3,
-                                                ),
+                                          InkWell(
+                                            onTap: () => _callDriver(phone),
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    phone,
+                                                    style: const TextStyle(
+                                                      color: AppColors.primary,
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w700,
+                                                      letterSpacing: 0.3,
+                                                      decoration: TextDecoration.underline,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                            ),
                                           ),
                                           InkWell(
                                             onTap: () {

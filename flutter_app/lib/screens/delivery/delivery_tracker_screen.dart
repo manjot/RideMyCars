@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_colors.dart';
@@ -188,14 +189,78 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   }
 
   Future<void> _launchCall(String phone) async {
-    final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final uri = Uri.parse('tel:$clean');
+    try {
+      bool launched = false;
+      if (await canLaunchUrl(uri)) {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      if (!launched) {
+        launched = await launchUrl(uri);
+      }
+      if (!launched) throw Exception('Could not launch call');
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: clean));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✓ Courier phone $clean copied to clipboard')),
+        );
+      }
+    }
   }
 
   Future<void> _launchWhatsApp(String phone) async {
     final cleaned = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    final uri = Uri.parse('https://wa.me/$cleaned?text=Hello,%20checking%20status%20of%20my%20parcel%20delivery%20${widget.deliveryCode}');
-    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final msg = Uri.encodeComponent('Hello, checking status of my parcel delivery ${widget.deliveryCode}');
+    final nativeUri = Uri.parse('whatsapp://send?phone=$cleaned&text=$msg');
+    final webUri = Uri.parse('https://wa.me/$cleaned?text=$msg');
+    try {
+      if (await canLaunchUrl(nativeUri)) {
+        final ok = await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      }
+    } catch (_) {}
+    try {
+      if (await canLaunchUrl(webUri)) {
+        final ok = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      }
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      return;
+    } catch (_) {}
+    await Clipboard.setData(ClipboardData(text: phone));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✓ Courier WhatsApp number $phone copied to clipboard')),
+      );
+    }
+  }
+
+  Future<void> _launchEmail([String? courierEmail]) async {
+    final email = (courierEmail ?? _courierData?['email'] ?? 'dispatch@ridemycars.com').toString().trim();
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email,
+      queryParameters: {'subject': 'RideMyCars Delivery #${widget.deliveryCode}'},
+    );
+    try {
+      bool launched = false;
+      if (await canLaunchUrl(uri)) {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      if (!launched) {
+        launched = await launchUrl(uri);
+      }
+      if (!launched) throw Exception('Could not launch email');
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: email));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✓ Courier email $email copied to clipboard')),
+        );
+      }
+    }
   }
 
   void _showPrescriptionViewer(Map<String, dynamic> rx) {
@@ -675,11 +740,18 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                       if (_courierData!['phone'] != null) ...[
                         IconButton(
                           icon: const Icon(Icons.phone, color: Colors.green),
+                          tooltip: 'Call Courier',
                           onPressed: () => _launchCall(_courierData!['phone'].toString()),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chat_bubble_outline, color: Colors.green),
+                          icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF25D366)),
+                          tooltip: 'WhatsApp Courier',
                           onPressed: () => _launchWhatsApp(_courierData!['phone'].toString()),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.email_outlined, color: Colors.blueAccent),
+                          tooltip: 'Email Courier',
+                          onPressed: () => _launchEmail(_courierData!['email']?.toString()),
                         ),
                       ],
                     ],

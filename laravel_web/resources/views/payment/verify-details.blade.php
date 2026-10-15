@@ -619,23 +619,29 @@
                         <!-- Action State: UNLOCKED (Call, WhatsApp, Email) -->
                         <div class="shrink-0 flex flex-wrap sm:flex-nowrap items-center gap-2">
                             <!-- 1. Call Button -->
-                            <button type="button" @click="callDriver()" 
-                               class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                            <a :href="'tel:' + getCleanPhone()" 
+                               @click="callDriver($event)"
+                               title="Call Driver"
+                               class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-slate-950 rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1.5 cursor-pointer no-underline">
                                 <span>📞</span> Call Driver
-                            </button>
+                            </a>
 
                             <!-- 2. WhatsApp Button -->
-                            <a :href="'https://wa.me/' + ((driver?.whatsapp || driver?.phone || '233598547966').replace(/[^0-9]/g, '')) + '?text=' + encodeURIComponent('Hello ' + (driver?.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + bookingCode + '.')"
+                            <a :href="getWhatsAppUrl()"
+                               @click="openWhatsApp($event)"
                                target="_blank" rel="noopener noreferrer"
-                               class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                               title="Chat on WhatsApp"
+                               class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1.5 cursor-pointer no-underline">
                                 <span>💬</span> WhatsApp
                             </a>
 
                             <!-- 3. Email Button -->
-                            <button type="button" @click="emailDriver()"
-                               class="px-3.5 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                            <a :href="getEmailUrl()"
+                               @click="emailDriver($event)"
+                               title="Email Driver"
+                               class="px-3.5 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 active:scale-95 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm transition-all flex items-center gap-1.5 cursor-pointer no-underline">
                                 <span>✉️</span> Email
-                            </button>
+                            </a>
                         </div>
                     </div>
 
@@ -644,13 +650,40 @@
                     </div>
 
                     <!-- Unlocked Contact Bar Details -->
-                    <div class="px-5 py-3 bg-emerald-500/10 border-t border-emerald-500/20 text-xs text-emerald-900 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center gap-4 text-[11px]">
-                            <span>📞 Phone: <strong class="font-mono text-gray-900 dark:text-white" x-text="driver?.phone"></strong></span>
-                            <span>💬 WhatsApp: <strong class="font-mono text-emerald-600 dark:text-emerald-400" x-text="driver?.phone"></strong></span>
-                            <span>✉️ Email: <strong class="text-gray-900 dark:text-white" x-text="driver?.email"></strong></span>
+                    <div class="px-5 py-3 bg-emerald-500/10 border-t border-emerald-500/20 text-xs text-emerald-900 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-3 sm:gap-5 text-[11px]">
+                            <!-- Clickable Phone Link -->
+                            <a :href="'tel:' + getCleanPhone()"
+                               @click="callDriver($event)"
+                               title="Click to call driver (or copy number)"
+                               class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer group text-emerald-950 dark:text-emerald-100 no-underline">
+                                <span>📞</span>
+                                <span class="text-gray-600 dark:text-gray-400">Phone:</span>
+                                <strong class="font-mono font-bold text-gray-900 dark:text-white group-hover:underline" x-text="driver?.phone"></strong>
+                            </a>
+
+                            <!-- Clickable WhatsApp Link -->
+                            <a :href="getWhatsAppUrl()"
+                               @click="openWhatsApp($event)"
+                               target="_blank" rel="noopener noreferrer"
+                               title="Click to chat on WhatsApp"
+                               class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer group text-emerald-950 dark:text-emerald-100 no-underline">
+                                <span>💬</span>
+                                <span class="text-gray-600 dark:text-gray-400">WhatsApp:</span>
+                                <strong class="font-mono font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline" x-text="driver?.phone"></strong>
+                            </a>
+
+                            <!-- Clickable Email Link -->
+                            <a :href="getEmailUrl()"
+                               @click="emailDriver($event)"
+                               title="Click to email driver"
+                               class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer group text-emerald-950 dark:text-emerald-100 no-underline">
+                                <span>✉️</span>
+                                <span class="text-gray-600 dark:text-gray-400">Email:</span>
+                                <strong class="font-bold text-gray-900 dark:text-white group-hover:underline" x-text="driver?.email"></strong>
+                            </a>
                         </div>
-                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300">
                             ✓ Direct Driver Communication Open
                         </span>
                     </div>
@@ -868,50 +901,111 @@
                 }
             },
 
-            callDriver() {
-                const phone = (this.driver?.phone || '+233598547966').trim();
-                const clean = phone.replace(/[^0-9+]/g, '');
+            copyToClipboard(text) {
+                if (!text) return;
                 try {
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(clean);
-                        this.copiedPhone = true;
-                        setTimeout(() => { this.copiedPhone = false; }, 3000);
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(text).catch(() => {
+                            this.fallbackCopyText(text);
+                        });
+                        return;
                     }
                 } catch (_) {}
+                this.fallbackCopyText(text);
+            },
 
-                this.toastMessage = `📞 Dialing ${clean} • Phone copied to clipboard!`;
+            fallbackCopyText(text) {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.focus();
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                } catch (_) {}
+            },
+
+            getCleanPhone() {
+                const phone = (this.driver?.phone || '+233598547966').toString().trim();
+                return phone.replace(/[^0-9+]/g, '');
+            },
+
+            getWhatsAppDigits() {
+                let raw = (this.driver?.whatsapp || this.driver?.phone || '233598547966').toString().trim();
+                let digits = raw.replace(/[^0-9]/g, '');
+                return digits || '233598547966';
+            },
+
+            getWhatsAppUrl() {
+                const digits = this.getWhatsAppDigits();
+                const name = this.driver?.name || 'Driver';
+                const code = this.bookingCode || '';
+                const text = encodeURIComponent(`Hello ${name}, I am your passenger for RideMyCars booking #${code}.`);
+                return `https://wa.me/${digits}?text=${text}`;
+            },
+
+            getEmailUrl() {
+                const email = (this.driver?.email || 'driver@ridemycars.com').toString().trim();
+                const code = this.bookingCode || '';
+                const subject = encodeURIComponent(`RideMyCars Booking #${code}`);
+                return `mailto:${email}?subject=${subject}`;
+            },
+
+            callDriver(e) {
+                const clean = this.getCleanPhone();
+                this.copyToClipboard(clean);
+                this.copiedPhone = true;
+                setTimeout(() => { this.copiedPhone = false; }, 3000);
+
+                this.toastMessage = `📞 Dialing ${clean} • Number copied to clipboard!`;
                 this.showToast = true;
                 setTimeout(() => { this.showToast = false; }, 4000);
 
-                window.location.href = 'tel:' + clean;
+                // If not naturally navigating through <a> href, trigger manually
+                if (!e || (e.currentTarget && e.currentTarget.tagName !== 'A')) {
+                    window.location.href = 'tel:' + clean;
+                }
             },
 
-            emailDriver() {
-                const email = (this.driver?.email || 'driver@ridemycars.com').trim();
-                try {
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(email);
-                    }
-                } catch (_) {}
+            openWhatsApp(e) {
+                const digits = this.getWhatsAppDigits();
+                this.copyToClipboard('+' + digits);
+                this.toastMessage = `💬 Opening WhatsApp for +${digits} • Copied to clipboard!`;
+                this.showToast = true;
+                setTimeout(() => { this.showToast = false; }, 4000);
 
+                // For mobile devices / apps, also trigger whatsapp:// scheme directly
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+                if (isMobile) {
+                    const name = this.driver?.name || 'Driver';
+                    const code = this.bookingCode || '';
+                    const text = encodeURIComponent(`Hello ${name}, I am your passenger for RideMyCars booking #${code}.`);
+                    setTimeout(() => {
+                        window.location.href = `whatsapp://send?phone=${digits}&text=${text}`;
+                    }, 50);
+                }
+            },
+
+            emailDriver(e) {
+                const email = (this.driver?.email || 'driver@ridemycars.com').toString().trim();
+                this.copyToClipboard(email);
                 this.toastMessage = `✉️ Opening email to ${email} • Copied to clipboard!`;
                 this.showToast = true;
                 setTimeout(() => { this.showToast = false; }, 4000);
 
-                window.location.href = `mailto:${email}?subject=${encodeURIComponent('RideMyCars Booking #' + this.bookingCode)}`;
+                if (!e || (e.currentTarget && e.currentTarget.tagName !== 'A')) {
+                    window.location.href = this.getEmailUrl();
+                }
             },
 
             copyPhone() {
-                const phone = (this.driver?.phone || '+233598547966').trim();
-                const clean = phone.replace(/[^0-9+]/g, '');
-                try {
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(clean);
-                        this.copiedPhone = true;
-                        setTimeout(() => { this.copiedPhone = false; }, 3000);
-                    }
-                } catch (_) {}
-                this.toastMessage = `✓ Phone ${clean} copied to clipboard!`;
+                const phone = this.getCleanPhone();
+                this.copyToClipboard(phone);
+                this.copiedPhone = true;
+                this.toastMessage = `✓ Phone ${phone} copied to clipboard!`;
                 this.showToast = true;
                 setTimeout(() => { this.showToast = false; }, 3000);
             }

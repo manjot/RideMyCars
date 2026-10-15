@@ -314,15 +314,20 @@
                     </div>
 
                     <!-- Direct Contact Buttons -->
-                    <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div class="grid grid-cols-3 gap-2 pt-1">
                         <template x-if="courierData?.phone">
-                            <a :href="'tel:' + courierData.phone" class="py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1">
-                                <span>📞 Call Courier</span>
+                            <a :href="'tel:' + (courierData.phone ? courierData.phone.replace(/[^0-9+]/g, '') : '')" class="py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1 cursor-pointer no-underline">
+                                <span>📞 Call</span>
                             </a>
                         </template>
                         <template x-if="courierData?.phone">
-                            <a :href="'https://wa.me/' + (courierData.phone ? courierData.phone.replace(/[^0-9]/g, '') : '')" target="_blank" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1">
+                            <a :href="'https://wa.me/' + (courierData.phone ? courierData.phone.replace(/[^0-9]/g, '') : '') + '?text=' + encodeURIComponent('Hello ' + (courierData.name || 'Courier') + ', I am contacting you regarding my RideMyCars package delivery #' + (deliveryCode || '{{ $delivery->delivery_code ?? '' }}') + '.')" target="_blank" rel="noopener noreferrer" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1 cursor-pointer no-underline">
                                 <span>💬 WhatsApp</span>
+                            </a>
+                        </template>
+                        <template x-if="courierData?.email || true">
+                            <a :href="'mailto:' + (courierData?.email || 'dispatch@ridemycars.com') + '?subject=' + encodeURIComponent('RideMyCars Delivery #' + (deliveryCode || '{{ $delivery->delivery_code ?? '' }}'))" class="py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 active:scale-95 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1 cursor-pointer no-underline">
+                                <span>✉️ Email</span>
                             </a>
                         </template>
                     </div>

@@ -197,15 +197,20 @@
                     </div>
 
                     <!-- Direct Contact Buttons -->
-                    <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div class="grid grid-cols-3 gap-2 pt-1">
                         <template x-if="driverData?.phone">
-                            <a :href="'tel:' + driverData.phone" class="py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1">
+                            <a :href="'tel:' + (driverData.phone ? driverData.phone.replace(/[^0-9+]/g, '') : '')" class="py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-slate-950 rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1 cursor-pointer no-underline">
                                 <span>📞 Call</span>
                             </a>
                         </template>
                         <template x-if="driverData?.phone">
-                            <a :href="'https://wa.me/' + (driverData.phone ? driverData.phone.replace(/[^0-9]/g, '') : '')" target="_blank" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1">
+                            <a :href="'https://wa.me/' + (driverData.phone ? driverData.phone.replace(/[^0-9]/g, '') : '') + '?text=' + encodeURIComponent('Hello ' + (driverData.name || 'Driver') + ', I am your passenger for RideMyCars booking #' + (bookingCode || '{{ $booking->booking_code ?? '' }}') + '.')" target="_blank" rel="noopener noreferrer" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1 cursor-pointer no-underline">
                                 <span>💬 WhatsApp</span>
+                            </a>
+                        </template>
+                        <template x-if="driverData?.email || true">
+                            <a :href="'mailto:' + (driverData?.email || 'driver@ridemycars.com') + '?subject=' + encodeURIComponent('RideMyCars Booking #' + (bookingCode || '{{ $booking->booking_code ?? '' }}'))" class="py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 active:scale-95 text-gray-900 dark:text-white rounded-xl text-xs font-black shadow-sm text-center flex items-center justify-center gap-1 cursor-pointer no-underline">
+                                <span>✉️ Email</span>
                             </a>
                         </template>
                     </div>

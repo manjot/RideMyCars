@@ -339,12 +339,17 @@
                                             <!-- Direct Contact Buttons -->
                                             <div class="flex items-center gap-2 shrink-0">
                                                 @if($ride->driver?->phone)
-                                                    <a href="tel:{{ $ride->driver->phone }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <a href="tel:{{ preg_replace('/[^0-9+]/', '', $ride->driver->phone) }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                                         <span>Call</span>
                                                     </a>
-                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $ride->driver->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $ride->driver->phone) }}?text={{ urlencode('Hello, I am your passenger for RideMyCars booking #' . ($ride->booking_code ?? $ride->id)) }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                         <span>WhatsApp</span>
+                                                    </a>
+                                                @endif
+                                                @if($ride->driver?->email)
+                                                    <a href="mailto:{{ $ride->driver->email }}?subject={{ urlencode('RideMyCars Booking #' . ($ride->booking_code ?? $ride->id)) }}" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                        <span>Email</span>
                                                     </a>
                                                 @endif
                                                 @if(!$isRental)
@@ -766,12 +771,17 @@
 
                                         <div class="flex items-center gap-2 shrink-0">
                                             @if($booking->driver?->phone)
-                                                <a href="tel:{{ $booking->driver->phone }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $booking->driver->phone) }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                                     <span>Call Chauffeur</span>
                                                 </a>
-                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $booking->driver->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $booking->driver->phone) }}?text={{ urlencode('Hello, I am contacting you regarding my RideMyCars chauffeur booking #' . ($booking->booking_code ?? $booking->id)) }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                     <span>WhatsApp</span>
+                                                </a>
+                                            @endif
+                                            @if($booking->driver?->email)
+                                                <a href="mailto:{{ $booking->driver->email }}?subject={{ urlencode('RideMyCars Booking #' . ($booking->booking_code ?? $booking->id)) }}" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <span>Email</span>
                                                 </a>
                                             @endif
                                             @php
@@ -943,12 +953,17 @@
 
                                         <div class="flex items-center gap-2 shrink-0">
                                             @if($delivery->courier?->phone)
-                                                <a href="tel:{{ $delivery->courier->phone }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $delivery->courier->phone) }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                                     <span>Call Courier</span>
                                                 </a>
-                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $delivery->courier->phone) }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $delivery->courier->phone) }}?text={{ urlencode('Hello, I am contacting you regarding my RideMyCars delivery #' . ($delivery->delivery_code ?? $delivery->id)) }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">
                                                     <span>WhatsApp</span>
+                                                </a>
+                                            @endif
+                                            @if($delivery->courier?->email)
+                                                <a href="mailto:{{ $delivery->courier->email }}?subject={{ urlencode('RideMyCars Delivery #' . ($delivery->delivery_code ?? $delivery->id)) }}" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                                    <span>Email</span>
                                                 </a>
                                             @endif
                                             @php

@@ -63,6 +63,7 @@
 		<string>mailto</string>
 		<string>https</string>
 		<string>http</string>
+		<string>whatsapp</string>
 		<string>comgooglemaps</string>
 		<string>waze</string>
 	</array>

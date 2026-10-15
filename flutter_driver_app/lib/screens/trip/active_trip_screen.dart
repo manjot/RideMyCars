@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -102,11 +103,90 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   }
 
   Future<void> _callRider([String? overridePhone]) async {
-    final phone = overridePhone ?? _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'];
-    if (phone != null && phone.toString().isNotEmpty) {
-      final uri = Uri.parse('tel:$phone');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+    final phone = (overridePhone ?? _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'])?.toString().trim();
+    if (phone != null && phone.isNotEmpty) {
+      final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+      final uri = Uri.parse('tel:$clean');
+      try {
+        bool launched = false;
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+        if (!launched) {
+          launched = await launchUrl(uri);
+        }
+        if (!launched) throw Exception('Dialer not handled');
+      } catch (_) {
+        await Clipboard.setData(ClipboardData(text: clean));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✓ Rider phone $clean copied to clipboard')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _whatsappRider([String? overridePhone]) async {
+    final phone = (overridePhone ?? _ride['customer_phone'] ?? _ride['rider']?['phone'] ?? _ride['rider_phone'] ?? _ride['passenger_phone'])?.toString().trim();
+    if (phone != null && phone.isNotEmpty) {
+      final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final rideId = _ride['id'] ?? '';
+      final riderName = _ride['rider']?['name'] ?? _ride['customer_name'] ?? 'Passenger';
+      final text = Uri.encodeComponent('Hello $riderName, this is your RideMyCars driver for trip #$rideId.');
+
+      final nativeUri = Uri.parse('whatsapp://send?phone=$clean&text=$text');
+      try {
+        if (await canLaunchUrl(nativeUri)) {
+          final ok = await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+          if (ok) return;
+        }
+      } catch (_) {}
+
+      final waUri = Uri.parse('https://wa.me/$clean?text=$text');
+      try {
+        if (await canLaunchUrl(waUri)) {
+          final ok = await launchUrl(waUri, mode: LaunchMode.externalApplication);
+          if (ok) return;
+        }
+        final ok = await launchUrl(waUri, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      } catch (_) {}
+
+      await Clipboard.setData(ClipboardData(text: phone));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✓ Rider WhatsApp number $phone copied to clipboard')),
+        );
+      }
+    }
+  }
+
+  Future<void> _emailRider([String? overrideEmail]) async {
+    final email = (overrideEmail ?? _ride['customer_email'] ?? _ride['rider']?['email'] ?? 'rider@ridemycars.com')?.toString().trim();
+    if (email != null && email.isNotEmpty) {
+      final rideId = _ride['id'] ?? '';
+      final uri = Uri(
+        scheme: 'mailto',
+        path: email,
+        queryParameters: {'subject': 'RideMyCars Trip #$rideId'},
+      );
+      try {
+        bool launched = false;
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+        if (!launched) {
+          launched = await launchUrl(uri);
+        }
+        if (!launched) throw Exception('Email not handled');
+      } catch (_) {
+        await Clipboard.setData(ClipboardData(text: email));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✓ Rider email $email copied to clipboard')),
+          );
+        }
       }
     }
   }
@@ -1022,34 +1102,76 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        customerPhone.toString(),
-                                        style: const TextStyle(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                          letterSpacing: 0.3,
+                                  InkWell(
+                                    onTap: () => _callRider(customerPhone.toString()),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.phone_rounded, color: AppColors.primary, size: 14),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          customerPhone.toString(),
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                            letterSpacing: 0.3,
+                                            decoration: TextDecoration.underline,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  ElevatedButton.icon(
-                                    onPressed: () => _callRider(customerPhone.toString()),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.success,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      elevation: 2,
-                                      minimumSize: Size.zero,
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ],
                                     ),
-                                    icon: const Icon(Icons.phone_rounded, size: 13),
-                                    label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () => _callRider(customerPhone.toString()),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.success,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          elevation: 2,
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        icon: const Icon(Icons.phone_rounded, size: 13),
+                                        label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      ElevatedButton.icon(
+                                        onPressed: () => _whatsappRider(customerPhone.toString()),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF25D366),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          elevation: 2,
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        icon: const Icon(Icons.chat_rounded, size: 13),
+                                        label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                      ),
+                                      if (_ride['customer_email'] != null || _ride['rider']?['email'] != null) ...[
+                                        const SizedBox(width: 6),
+                                        ElevatedButton.icon(
+                                          onPressed: () => _emailRider(),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF1E293B),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            elevation: 2,
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          icon: const Icon(Icons.email_rounded, size: 13),
+                                          label: const Text('Email', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),
@@ -1262,17 +1384,35 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                                 ),
                               ),
                               if (pocPhone != null && pocPhone.toString().isNotEmpty)
-                                ElevatedButton.icon(
-                                  onPressed: () => _callRider(pocPhone.toString()),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.amber.shade700,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    minimumSize: Size.zero,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  icon: const Icon(Icons.phone_rounded, size: 13),
-                                  label: const Text('Call POC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () => _callRider(pocPhone.toString()),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.amber.shade700,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        minimumSize: Size.zero,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.phone_rounded, size: 12),
+                                      label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    ElevatedButton.icon(
+                                      onPressed: () => _whatsappRider(pocPhone.toString()),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF25D366),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        minimumSize: Size.zero,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.chat_rounded, size: 12),
+                                      label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                    ),
+                                  ],
                                 ),
                             ],
                           ),
