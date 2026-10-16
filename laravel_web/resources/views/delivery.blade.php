@@ -36,22 +36,22 @@
                     <div class="lg:col-span-8 space-y-4">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-white/10 text-gray-900 dark:text-white font-bold text-xs shadow-xs border border-gray-200 dark:border-white/10">
                             <span class="text-base">🇬🇭</span>
-                            <span>Official Service: Accra & Tema Metropolitan Zone</span>
+                            <span>Official Service: Nationwide Ghana Express Zone</span>
                         </div>
 
                         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-950 dark:text-white tracking-tight leading-tight">
-                            Same Day Express Delivery across <span class="text-amber-600 dark:text-amber-400">Accra & Tema</span>
+                            Instant Express Delivery across <span class="text-amber-600 dark:text-amber-400">Ghana</span>
                         </h2>
 
                         <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                            Motorcycle couriers and branded delivery vans ready 24/7. Trusted by thousands across Greater Accra for business logistics, retail parcels, documents, and personal deliveries.
+                            Motorcycle couriers and branded delivery vans ready 24/7. Trusted by thousands across Ghana for business logistics, retail parcels, documents, and personal deliveries.
                         </p>
 
                         <!-- Key Pillars Grid from Flyer -->
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                             <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-amber-200/60 dark:border-white/10 text-center shadow-xs">
                                 <span class="text-xl block mb-1">⚡</span>
-                                <span class="text-xs font-black text-gray-900 dark:text-white block">Same Day</span>
+                                <span class="text-xs font-black text-gray-900 dark:text-white block">Instant Delivery</span>
                                 <span class="text-[10px] text-gray-500">Fast pickup</span>
                             </div>
                             <div class="p-3 rounded-2xl bg-white dark:bg-[#181818] border border-amber-200/60 dark:border-white/10 text-center shadow-xs">
@@ -88,8 +88,8 @@
                     <div class="lg:col-span-4 flex justify-center">
                         <div class="relative group cursor-pointer max-w-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-400 dark:border-amber-500/40"
                              @click="showDeliveryPosterModal = true">
-                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" 
-                                 alt="Fast Package Delivery Accra & Tema Flyer" 
+                            <img src="{{ asset('images/promo-delivery-ghana.jpg') }}" 
+                                 alt="Instant Package Delivery Ghana Flyer" 
                                  class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
                             <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                                 <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg">
@@ -113,8 +113,8 @@
                                     class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-bold shadow-lg">
                                 ✕
                             </button>
-                            <img src="{{ asset('images/promo-delivery-accra.jpg') }}" 
-                                 alt="Fast Package Delivery Accra & Tema" 
+                            <img src="{{ asset('images/promo-delivery-ghana.jpg') }}" 
+                                 alt="Instant Package Delivery Ghana" 
                                  class="w-full h-auto rounded-2xl object-contain max-h-[85vh]">
                         </div>
                     </div>
@@ -150,27 +150,27 @@
         <!-- 6-Step Wizard Navigation Tabs -->
         <div class="mb-8 overflow-x-auto pb-2">
             <div class="flex items-center gap-2 min-w-max bg-white dark:bg-[#111] p-2 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm text-xs font-extrabold">
-                <button type="button" @click="currentStep = 1" :class="currentStep === 1 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                <button type="button" @click="goToStep(1)" :class="currentStep === 1 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                     <span>1.</span> 📍 Pickup & Drop
                 </button>
                 <span class="text-gray-300 dark:text-gray-700">→</span>
-                <button type="button" @click="currentStep = 2" :class="currentStep === 2 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                <button type="button" @click="goToStep(2)" :class="currentStep === 2 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                     <span>2.</span> ⏱️ Delivery Type
                 </button>
                 <span class="text-gray-300 dark:text-gray-700">→</span>
-                <button type="button" @click="currentStep = 3" :class="currentStep === 3 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                <button type="button" @click="goToStep(3)" :class="currentStep === 3 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                     <span>3.</span> 👤 Sender & Recipient
                 </button>
                 <span class="text-gray-300 dark:text-gray-700">→</span>
-                <button type="button" @click="currentStep = 4" :class="currentStep === 4 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                <button type="button" @click="goToStep(4)" :class="currentStep === 4 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                     <span>4.</span> 📦 Package Specs
                 </button>
                 <span class="text-gray-300 dark:text-gray-700">→</span>
-                <button type="button" @click="currentStep = 5" :class="currentStep === 5 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                <button type="button" @click="goToStep(5)" :class="currentStep === 5 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                     <span>5.</span> 💳 Price & Payment
                 </button>
                 <span class="text-gray-300 dark:text-gray-700">→</span>
-                <button type="button" @click="currentStep = 6" :class="currentStep === 6 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                <button type="button" @click="goToStep(6)" :class="currentStep === 6 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'" class="px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                     <span>6.</span> 🚀 Confirmation
                 </button>
             </div>
@@ -274,14 +274,19 @@
                                    id="pickup_location_input" 
                                    name="pickup_location" 
                                    x-model="pickupLocation" 
-                                   @input="if ($event && $event.isTrusted) { search(); } else { suggestions = []; showSuggestions = false; }"
+                                   @input="step1Errors.pickup = false; if ($event && $event.isTrusted) { search(); } else { suggestions = []; showSuggestions = false; }"
                                    @focus="if(suggestions.length > 0) showSuggestions = true"
                                    @blur="setTimeout(() => { showSuggestions = false; }, 200)"
                                    @keydown.escape="showSuggestions = false; suggestions = []; $el.blur()"
                                    autocomplete="off"
                                    required 
                                    placeholder="Enter street address, building, or landmark..." 
-                                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+                                   :class="step1Errors.pickup ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20' : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1a1a1a]'"
+                                   class="w-full px-4 py-3.5 border rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition-all">
+
+                            <p x-show="step1Errors.pickup" class="text-[11px] font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+                                <span>⚠️</span> Pickup address is required before proceeding.
+                            </p>
 
                             <!-- Autocomplete dropdown -->
                             <div x-show="showSuggestions && suggestions.length > 0" 
@@ -377,14 +382,19 @@
                                    id="dropoff_location_input" 
                                    name="dropoff_location" 
                                    x-model="dropoffLocation" 
-                                   @input="if ($event && $event.isTrusted) { search(); } else { suggestions = []; showSuggestions = false; }"
+                                   @input="step1Errors.dropoff = false; if ($event && $event.isTrusted) { search(); } else { suggestions = []; showSuggestions = false; }"
                                    @focus="if(suggestions.length > 0) showSuggestions = true"
                                    @blur="setTimeout(() => { showSuggestions = false; }, 200)"
                                    @keydown.escape="showSuggestions = false; suggestions = []; $el.blur()"
                                    autocomplete="off"
                                    required 
                                    placeholder="Enter recipient delivery address..." 
-                                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-900 dark:text-white">
+                                   :class="step1Errors.dropoff ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20' : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1a1a1a]'"
+                                   class="w-full px-4 py-3.5 border rounded-2xl text-xs font-bold text-gray-900 dark:text-white transition-all">
+
+                            <p x-show="step1Errors.dropoff" class="text-[11px] font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+                                <span>⚠️</span> Drop-off destination address is required before proceeding.
+                            </p>
 
                             <!-- Autocomplete dropdown -->
                             <div x-show="showSuggestions && suggestions.length > 0" 
@@ -411,8 +421,8 @@
                     </div>
 
                     <div class="flex justify-end pt-2">
-                        <button type="button" @click="currentStep = 2" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md transition-all">
-                            Next: Delivery Type & Schedule →
+                        <button type="button" @click="proceedFromStep1()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer">
+                            <span>Next: Delivery Type & Schedule →</span>
                         </button>
                     </div>
                 </div>
@@ -437,7 +447,7 @@
                                 { name: 'Express', desc: '🚀 Priority Direct Route (< 2 hrs)' },
                                 { name: 'Instant', desc: '⚡ Immediate Courier Pickup (~30 mins)' }
                             ]" :key="dt.name">
-                                <div @click="deliveryType = dt.name"
+                                <div @click="deliveryType = dt.name; if (dt.name === 'Scheduled') { scheduleMode = 'later'; }"
                                      :class="deliveryType === dt.name ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20' : 'border-gray-200 dark:border-white/10 hover:border-amber-300'"
                                      class="border-2 rounded-2xl p-4 cursor-pointer transition-all flex items-start justify-between gap-2">
                                     <div>
@@ -451,32 +461,62 @@
                     </div>
 
                     <!-- Now vs Schedule Later -->
-                    <div class="space-y-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                    <div class="space-y-4 pt-3 border-t border-gray-100 dark:border-white/10">
                         <label class="block text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Dispatch Schedule *</label>
                         <input type="hidden" name="schedule_mode" x-model="scheduleMode">
 
                         <div class="grid grid-cols-2 gap-3">
-                            <button type="button" @click="scheduleMode = 'now'"
+                            <button type="button" @click="scheduleMode = 'now'; if (deliveryType === 'Scheduled') { deliveryType = 'Instant'; }"
                                     :class="scheduleMode === 'now' ? 'bg-amber-500 text-white font-extrabold shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 font-bold'"
-                                    class="py-3 px-4 rounded-xl text-xs transition-all text-center">
+                                    class="py-3 px-4 rounded-xl text-xs transition-all text-center cursor-pointer">
                                 ⚡ Deliver Now (Immediate)
                             </button>
-                            <button type="button" @click="scheduleMode = 'later'"
+                            <button type="button" @click="scheduleMode = 'later'; if (deliveryType !== 'Scheduled') { deliveryType = 'Scheduled'; }"
                                     :class="scheduleMode === 'later' ? 'bg-amber-500 text-white font-extrabold shadow-sm' : 'bg-gray-50 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 font-bold'"
-                                    class="py-3 px-4 rounded-xl text-xs transition-all text-center">
+                                    class="py-3 px-4 rounded-xl text-xs transition-all text-center cursor-pointer">
                                 📅 Schedule for Later
                             </button>
                         </div>
 
-                        <div x-show="scheduleMode === 'later'" class="grid grid-cols-2 gap-3 pt-2">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Pickup Date *</label>
-                                <input type="date" name="pickup_date" x-model="pickupDate" min="{{ date('Y-m-d') }}" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                        <!-- Scheduled Exact Time Window Inputs -->
+                        <div x-show="deliveryType === 'Scheduled' || scheduleMode === 'later'" x-transition class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wider">
+                                    🕒 Pick Your Exact Time Window *
+                                </label>
+                                <span class="text-[11px] font-extrabold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-md" x-text="pickupTimeWindow || 'Select Window'"></span>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Pickup Time *</label>
-                                <input type="time" name="pickup_time" x-model="pickupTime" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+
+                            <!-- Quick Preset Windows -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <template x-for="tw in [
+                                    { label: 'Morning', time: '09:00', window: '08:00 AM – 11:00 AM' },
+                                    { label: 'Midday', time: '12:00', window: '11:00 AM – 02:00 PM' },
+                                    { label: 'Afternoon', time: '15:00', window: '02:00 PM – 05:00 PM' },
+                                    { label: 'Evening', time: '18:00', window: '05:00 PM – 08:00 PM' }
+                                ]" :key="tw.label">
+                                    <button type="button" 
+                                            @click="pickupTime = tw.time; pickupTimeWindow = tw.window;"
+                                            :class="pickupTimeWindow === tw.window ? 'bg-amber-500 text-white font-extrabold shadow-sm border-amber-500' : 'bg-white dark:bg-[#181818] text-gray-800 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:border-amber-400 font-bold'"
+                                            class="p-2.5 rounded-xl border text-left transition-all cursor-pointer">
+                                        <div class="text-xs" x-text="tw.label"></div>
+                                        <div class="text-[10px] opacity-75 mt-0.5 truncate" x-text="tw.window"></div>
+                                    </button>
+                                </template>
                             </div>
+
+                            <!-- Custom Date and Time Inputs -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Pickup Date *</label>
+                                    <input type="date" name="pickup_date" x-model="pickupDate" min="{{ date('Y-m-d') }}" class="w-full px-3.5 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Exact Pickup Time / Window Start *</label>
+                                    <input type="time" name="pickup_time" x-model="pickupTime" @input="pickupTimeWindow = 'Exact Time: ' + $event.target.value" class="w-full px-3.5 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+                            <input type="hidden" name="pickup_time_window" x-model="pickupTimeWindow">
                         </div>
                     </div>
 
@@ -743,7 +783,7 @@
                         <input type="hidden" name="package_size" x-model="packageSize">
 
                         <div class="grid grid-cols-3 gap-3 text-center text-xs">
-                            <div @click="packageSize = 'Small'; packageWeight = 1.5;"
+                            <div @click="selectPackageSize('Small')"
                                  :class="packageSize === 'Small' ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 font-black' : 'border-gray-200 dark:border-white/10'"
                                  class="border-2 rounded-2xl p-4 cursor-pointer transition-all">
                                 <div class="text-3xl mb-1">✉️</div>
@@ -751,7 +791,7 @@
                                 <p class="text-[10px] text-gray-400">Up to 2 kg (Envelopes / Small Box)</p>
                             </div>
 
-                            <div @click="packageSize = 'Medium'; packageWeight = 5.0;"
+                            <div @click="selectPackageSize('Medium')"
                                  :class="packageSize === 'Medium' ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 font-black' : 'border-gray-200 dark:border-white/10'"
                                  class="border-2 rounded-2xl p-4 cursor-pointer transition-all">
                                 <div class="text-3xl mb-1">📦</div>
@@ -759,12 +799,12 @@
                                 <p class="text-[10px] text-gray-400">Up to 8 kg (Shoebox / Groceries)</p>
                             </div>
 
-                            <div @click="packageSize = 'Large'; packageWeight = 15.0;"
+                            <div @click="selectPackageSize('Large')"
                                  :class="packageSize === 'Large' ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 font-black' : 'border-gray-200 dark:border-white/10'"
                                  class="border-2 rounded-2xl p-4 cursor-pointer transition-all">
                                 <div class="text-3xl mb-1">🚚</div>
                                 <h4 class="font-extrabold text-sm text-gray-900 dark:text-white">Large</h4>
-                                <p class="text-[10px] text-gray-400">Up to 25 kg (Cartons / Heavy Items)</p>
+                                <p class="text-[10px] text-gray-400">from 9Kg and above (Cartons / Heavy Items)</p>
                             </div>
                         </div>
                     </div>
@@ -772,12 +812,26 @@
                     <!-- Weight & Quantity -->
                     <div class="grid grid-cols-2 gap-3 text-xs">
                         <div>
-                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Weight (kg) *</label>
-                            <input type="number" step="0.1" name="package_weight_kg" x-model="packageWeight" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                Weight (kg) <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500">(Auto-set by size)</span>
+                            </label>
+                            <input type="number" 
+                                   step="0.1" 
+                                   name="package_weight_kg" 
+                                   x-model="packageWeight" 
+                                   readonly 
+                                   class="w-full px-3.5 py-2.5 bg-gray-100 dark:bg-[#1f1f23] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-600 dark:text-gray-300 cursor-not-allowed select-none">
                         </div>
                         <div>
-                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Quantity *</label>
-                            <input type="number" min="1" name="quantity" x-model="quantity" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                Quantity <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500">(Optional)</span>
+                            </label>
+                            <input type="number" 
+                                   min="1" 
+                                   name="quantity" 
+                                   x-model="quantity" 
+                                   placeholder="1"
+                                   class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-900 dark:text-white">
                         </div>
                     </div>
 
@@ -1572,6 +1626,71 @@
                 },
                 closeAppErrorModal() {
                     this.errorMessageModal.show = false;
+                },
+
+                step1Errors: {
+                    pickup: false,
+                    dropoff: false
+                },
+                pickupTimeWindow: '08:00 AM – 11:00 AM',
+
+                selectPackageSize(size) {
+                    this.packageSize = size;
+                    if (size === 'Small') {
+                        this.packageWeight = 1.5;
+                    } else if (size === 'Medium') {
+                        this.packageWeight = 5.0;
+                    } else if (size === 'Large') {
+                        this.packageWeight = 10.0;
+                    }
+                    this.updatePrice();
+                },
+
+                proceedFromStep1() {
+                    const pickup = (this.pickupLocation || '').trim();
+                    const dropoff = (this.dropoffLocation || '').trim();
+                    this.step1Errors.pickup = !pickup;
+                    this.step1Errors.dropoff = !dropoff;
+
+                    if (!pickup || !dropoff) {
+                        let msg = 'Both Pickup Address and Drop-off Destination Address are required before continuing.';
+                        if (!pickup && !dropoff) {
+                            msg = 'Please enter both Pickup Address and Drop-off Destination Address.';
+                        } else if (!pickup) {
+                            msg = 'Please enter the Pickup Address.';
+                        } else {
+                            msg = 'Please enter the Drop-off Destination Address.';
+                        }
+                        this.showAppErrorModal('Pickup & Drop-off Required', msg);
+                        return false;
+                    }
+                    this.currentStep = 2;
+                    return true;
+                },
+
+                goToStep(targetStep) {
+                    if (targetStep > 1) {
+                        const pickup = (this.pickupLocation || '').trim();
+                        const dropoff = (this.dropoffLocation || '').trim();
+                        this.step1Errors.pickup = !pickup;
+                        this.step1Errors.dropoff = !dropoff;
+                        if (!pickup || !dropoff) {
+                            this.showAppErrorModal('Pickup & Drop-off Required', 'Both Pickup Address and Drop-off Destination Address must be filled before proceeding to subsequent steps.');
+                            this.currentStep = 1;
+                            return false;
+                        }
+                    }
+                    if (targetStep > 3) {
+                        const cleanSender = (this.senderPhone || '').replace(/\D/g, '');
+                        const cleanRecipient = (this.recipientPhone || '').replace(/\D/g, '');
+                        if (!this.senderName?.trim() || !cleanSender || !this.recipientName?.trim() || !cleanRecipient) {
+                            this.showAppErrorModal('Contact Details Required', 'Please complete the Sender and Recipient contact details in Step 3.');
+                            this.currentStep = 3;
+                            return false;
+                        }
+                    }
+                    this.currentStep = targetStep;
+                    return true;
                 },
 
                 // Pharmeasy Prescription State

@@ -465,10 +465,19 @@
                     </div>
 
                     <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                        <a href="{{ $serviceType === 'ride' ? url('/ride') : ($serviceType === 'driver_booking' ? url('/hire-driver') : url('/delivery')) }}"
-                           class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                            <span>🔄 Try Again (Fresh 5-Min Request)</span>
-                        </a>
+                        <button type="button"
+                                @click="retryDriverSearch()"
+                                :disabled="isRetryingSearch"
+                                class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-black text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                            <span x-show="!isRetryingSearch">🔄 Try Again (Fresh 5-Min Request)</span>
+                            <span x-show="isRetryingSearch" class="inline-flex items-center gap-2" style="display: none;">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Restarting Search...
+                            </span>
+                        </button>
                         <a href="{{ url('/') }}"
                            class="w-full sm:w-auto px-6 py-3.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-xl transition-all text-center">
                             Return Home
@@ -720,6 +729,7 @@
             cancellationReason: config.cancellationReason || '',
             isProcessing: false,
             isSimulatingMatch: false,
+            isRetryingSearch: false,
             pollingInterval: null,
             countdownInterval: null,
             toastMessage: '',
@@ -796,6 +806,7 @@
                             }
 
                             if (this.isDriverConfirmed) {
+                                this.isExpired = false;
                                 if (this.pollingInterval) clearInterval(this.pollingInterval);
                                 if (this.countdownInterval) clearInterval(this.countdownInterval);
                             }
@@ -898,6 +909,45 @@
                     console.error("Driver match error:", e);
                 } finally {
                     this.isSimulatingMatch = false;
+                }
+            },
+
+            async retryDriverSearch() {
+                if (this.isRetryingSearch) return;
+                this.isRetryingSearch = true;
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    const res = await fetch(`/api/payment/retry-driver-search/${this.serviceType}/${this.serviceId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    });
+
+                    const data = await res.json();
+                    if (data.success) {
+                        this.isExpired = false;
+                        this.bookingStatus = data.booking_status || 'pending';
+                        this.currentVerificationStatus = data.verification_status || 'pending';
+                        this.isDriverConfirmed = false;
+                        this.isPaymentConfirmed = true;
+                        this.remainingSeconds = data.remaining_seconds || 300;
+                        this.cancellationReason = '';
+                        this.toastMessage = '🔄 Search restarted! Broadcasting to nearby drivers for 5 minutes.';
+                        this.showToast = true;
+                        setTimeout(() => { this.showToast = false; }, 4000);
+                        this.startCountdown();
+                        this.startPolling();
+                    } else {
+                        alert(data.message || 'Unable to restart driver search. Please refresh or try again.');
+                    }
+                } catch (e) {
+                    console.error("Retry driver search error:", e);
+                    alert("Network error restarting driver search.");
+                } finally {
+                    this.isRetryingSearch = false;
                 }
             },
 

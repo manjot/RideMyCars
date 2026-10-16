@@ -6,6 +6,7 @@ use App\Models\UserNotification;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\DriverBooking;
+use App\Models\PackageDelivery;
 
 class NotificationService
 {
@@ -101,6 +102,52 @@ class NotificationService
     public static function notifyDriverRideAccepted(Ride $ride): void
     {
         self::notifyRideAccepted($ride);
+    }
+
+    /**
+     * Notify Customer and Courier when courier accepts a package delivery request.
+     */
+    public static function notifyDeliveryAccepted(PackageDelivery $delivery): void
+    {
+        $delivery->refresh();
+        $courier = $delivery->courier ?? ($delivery->courier_id ? User::find($delivery->courier_id) : null);
+        $courierName = $courier ? $courier->name : 'Your Courier';
+
+        // 1. Notify Customer / Client
+        if ($delivery->customer_id) {
+            self::send(
+                $delivery->customer_id,
+                'courier_accepted',
+                'Courier Confirmed & Assigned!',
+                "{$courierName} has accepted your parcel delivery request #{$delivery->delivery_code} and is heading to the pickup location.",
+                $delivery->id,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'courier_accepted',
+                    'icon' => 'truck',
+                    'color' => 'emerald'
+                ]
+            );
+        }
+
+        // 2. Notify Courier
+        if ($delivery->courier_id) {
+            self::send(
+                $delivery->courier_id,
+                'courier_accepted',
+                'Delivery Accepted',
+                "You accepted Parcel Delivery #{$delivery->delivery_code} for {$delivery->recipient_name}. Pickup: {$delivery->pickup_location}.",
+                $delivery->id,
+                '/driver/dashboard',
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'courier_accepted',
+                    'icon' => 'check',
+                    'color' => 'emerald'
+                ]
+            );
+        }
     }
 
     /**

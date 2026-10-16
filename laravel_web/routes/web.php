@@ -278,6 +278,8 @@ Route::post('/contact', function (\Illuminate\Http\Request $request) {
 });
 
 Route::get('/payment/verify-details/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'showDetails'])->name('payment.verify-details');
+Route::post('/payment/retry-driver-search/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'retryDriverSearch']);
+Route::post('/api/payment/retry-driver-search/{serviceType}/{serviceId}', [\App\Http\Controllers\StripeVerificationController::class, 'retryDriverSearch']);
 
 // ExpressPay Ghana Routes (Submit, Redirect Callback, IPN Webhook, Status)
 Route::post('/payment/expresspay/initiate', [\App\Http\Controllers\ExpressPayController::class, 'initiate'])->name('payment.expresspay.initiate');
@@ -2027,6 +2029,12 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
 
                 if ($user && $user->driverProfile) {
                     $user->driverProfile->update(['is_available' => false]);
+                }
+
+                try {
+                    \App\Services\NotificationService::notifyDeliveryAccepted($delivery);
+                } catch (\Throwable $ne) {
+                    \Illuminate\Support\Facades\Log::warning("Notification failed for delivery {$delivery->id}: " . $ne->getMessage());
                 }
 
                 \App\Models\RideAssignment::where('package_delivery_id', $assignment->package_delivery_id)

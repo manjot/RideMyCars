@@ -1525,6 +1525,12 @@ class DriverApiController extends Controller
                 $processedDeliveryIds[] = $a->package_delivery_id;
             }
         }
+        foreach ($requests as $r) {
+            if (($r['type'] ?? '') === 'package_delivery' && !empty($r['delivery_id'])) {
+                $processedDeliveryIds[] = (int) $r['delivery_id'];
+            }
+        }
+        $processedDeliveryIds = array_unique($processedDeliveryIds);
 
         $driverCurrency = $driverPricing->currency_code ?: 'INR';
 
@@ -1644,6 +1650,23 @@ class DriverApiController extends Controller
                 'waiting_time_seconds' => $deliveryWaitSecs,
             ];
         }
+
+        // Deduplicate requests by composite unique key (type + id) to prevent double notification
+        $uniqueRequests = [];
+        $seenRequestKeys = [];
+        foreach ($requests as $req) {
+            $rType = $req['type'] ?? 'unknown';
+            $rId = $req['delivery_id'] ?? $req['ride_id'] ?? $req['booking_id'] ?? $req['id'] ?? $req['assignment_id'] ?? null;
+            $compositeKey = "{$rType}_{$rId}";
+            if ($rId && isset($seenRequestKeys[$compositeKey])) {
+                continue;
+            }
+            if ($rId) {
+                $seenRequestKeys[$compositeKey] = true;
+            }
+            $uniqueRequests[] = $req;
+        }
+        $requests = $uniqueRequests;
 
         return response()->json(['success' => true, 'requests' => $requests, 'data' => $requests]);
     }
@@ -1888,6 +1911,12 @@ class DriverApiController extends Controller
 
                     if ($user->driverProfile) {
                         $user->driverProfile->update(['is_available' => false]);
+                    }
+
+                    try {
+                        \App\Services\NotificationService::notifyDeliveryAccepted($delivery);
+                    } catch (\Throwable $ne) {
+                        \Illuminate\Support\Facades\Log::warning("Notification failed for delivery {$delivery->id}: " . $ne->getMessage());
                     }
 
                     return response()->json([

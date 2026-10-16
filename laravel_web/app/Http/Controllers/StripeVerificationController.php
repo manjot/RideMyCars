@@ -253,12 +253,17 @@ class StripeVerificationController extends Controller
 
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
         $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
-        $bookingStatus = strtolower($booking->booking_status ?? $booking->status ?? 'pending');
-        $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
+        $bookingStatus = strtolower($booking->delivery_status ?? $booking->booking_status ?? $booking->status ?? 'pending');
+        $driverId = $booking->courier_id ?? $booking->driver_id ?? null;
+        $isDriverConfirmed = in_array($bookingStatus, [
+            'accepted', 'courier_accepted', 'courier_assigned', 'assigned', 'going_to_pickup', 
+            'arrived_at_pickup', 'parcel_picked_up', 'in_transit', 'arrived_at_destination', 
+            'delivered', 'en_route', 'arrived', 'in_progress', 'completed'
+        ]) || ($booking->verification_status === 'driver_verified' && !empty($driverId))
+           || (!empty($driverId) && !in_array($bookingStatus, ['pending', 'cancelled', 'expired', 'failed']));
 
         $driverData = null;
-        if (($isPaymentConfirmed || !empty($booking->driver_id)) && $isDriverConfirmed) {
-            $driverId = $booking->driver_id ?? $booking->courier_id ?? null;
+        if (($isPaymentConfirmed || !empty($driverId)) && $isDriverConfirmed) {
             if ($driverId) {
                 $driverUser = User::with('driverProfile')->find($driverId);
                 if ($driverUser) {
@@ -273,11 +278,15 @@ class StripeVerificationController extends Controller
                     $email = $driverUser->email ?? ($driverUser->driverProfile?->email ?? ($booking->driver_email ?? 'driver@ridemycars.com'));
                     $cleanedWa = $this->formatWhatsAppPhone($phone, $bCountry);
 
+                    $defaultVehicle = ($booking instanceof \App\Models\PackageDelivery || in_array($serviceType, ['package_delivery', 'delivery'], true))
+                        ? 'Express Delivery Motorcycle / Courier Van'
+                        : 'Executive Vehicle';
+
                     $driverData = [
                         'id' => $driverUser->id,
                         'name' => $driverUser->name,
                         'rating' => $driverUser->driverProfile ? floatval($driverUser->driverProfile->rating) : 4.95,
-                        'vehicle' => $booking->car_make_model ?? ($booking->vehicle_type ?? 'Executive Vehicle'),
+                        'vehicle' => $booking->car_make_model ?? ($booking->vehicle_type ?? $defaultVehicle),
                         'photo_url' => $driverUser->driverProfile?->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
                         'phone' => $phone,
                         'email' => $email,
@@ -305,6 +314,83 @@ class StripeVerificationController extends Controller
             'waiting_time_seconds' => $waitingMinutes * 60,
             'remaining_seconds' => $remainingSeconds,
             'is_expired' => $isExpired || ($bookingStatus === 'cancelled' && str_contains(strtolower($booking->cancellation_reason ?? ''), 'waiting period')),
+        ]);
+    }
+
+    /**
+     * Restart driver/courier search with a fresh 5-minute request window in place.
+     */
+    public function retryDriverSearch(string $serviceType, int $serviceId): JsonResponse
+    {
+        $booking = $this->getBookingModel($serviceType, $serviceId);
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+        }
+
+        $freshExpiresAt = now()->addMinutes(5);
+
+        if (in_array($serviceType, ['package_delivery', 'delivery'], true)) {
+            $booking->update([
+                'delivery_status' => 'pending',
+                'courier_id' => null,
+                'courier_profile_id' => null,
+                'cancellation_reason' => null,
+                'expires_at' => $freshExpiresAt,
+            ]);
+
+            // Re-arm assignments: expire old pending assignments and dispatch fresh courier
+            \App\Models\RideAssignment::where('package_delivery_id', $booking->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'expired']);
+
+            try {
+                \App\Services\PackageDeliveryAssignmentService::assignNextCourier($booking);
+            } catch (\Throwable $e) {
+                Log::warning("Retry courier assignment error: " . $e->getMessage());
+            }
+        } elseif (in_array($serviceType, ['ride', 'rental'], true)) {
+            $booking->update([
+                'status' => 'pending',
+                'driver_id' => null,
+                'cancellation_reason' => null,
+                'expires_at' => $freshExpiresAt,
+            ]);
+
+            \App\Models\RideAssignment::where('ride_id', $booking->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'expired']);
+
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($booking);
+            } catch (\Throwable $e) {
+                Log::warning("Retry driver assignment error: " . $e->getMessage());
+            }
+        } elseif (in_array($serviceType, ['driver_booking', 'hire-driver'], true)) {
+            $booking->update([
+                'booking_status' => 'pending',
+                'driver_id' => null,
+                'cancellation_reason' => null,
+            ]);
+        }
+
+        $booking->refresh();
+
+        ActivityLogService::log(
+            'driver_search_restarted',
+            "Restarted fresh 5-minute driver search for {$serviceType} #{$serviceId}",
+            $booking->customer_id ?? $booking->client_id ?? $booking->rider_id ?? Auth::id() ?? 1
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Driver search restarted successfully with a fresh 5-minute request window.',
+            'remaining_seconds' => 300,
+            'waiting_time_minutes' => 5,
+            'waiting_time_seconds' => 300,
+            'expires_at' => $freshExpiresAt->toIso8601String(),
+            'booking_status' => 'pending',
+            'is_driver_confirmed' => false,
+            'is_expired' => false,
         ]);
     }
 

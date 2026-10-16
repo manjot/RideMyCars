@@ -67,6 +67,7 @@ Route::post('/payment/authorize-hold', [StripeVerificationController::class, 'au
 Route::post('/payment/confirm-driver', [StripeVerificationController::class, 'confirmDriverAssignment']);
 Route::post('/driver/verify-booking', [StripeVerificationController::class, 'driverRespond']);
 Route::get('/payment/verification-status/{serviceType}/{serviceId}', [StripeVerificationController::class, 'getVerificationStatus']);
+Route::post('/payment/retry-driver-search/{serviceType}/{serviceId}', [StripeVerificationController::class, 'retryDriverSearch']);
 Route::get('/driver/pending-verifications', [StripeVerificationController::class, 'getPendingVerifications']);
 
 // Public Banners, Categories & Products

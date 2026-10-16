@@ -89,7 +89,13 @@ class PackageDeliveryController extends Controller
         };
 
         $perKgRate = (float) ($pricing->delivery_per_kg_rate ?: 0.75);
-        $weightAddon = max(0, ((float)($validated['package_weight_kg'] ?? 1.0) - 1.0)) * $perKgRate;
+        $defaultWeight = match ($validated['package_size'] ?? 'Small') {
+            'Medium' => 5.0,
+            'Large' => 10.0,
+            default => 1.5,
+        };
+        $effectiveWeight = (float)($validated['package_weight_kg'] ?? $defaultWeight);
+        $weightAddon = max(0, ($effectiveWeight - 1.0)) * $perKgRate;
 
         $packageCategory = trim((string)($validated['package_category'] ?? $request->input('package_category', '')));
         $serviceFeePercent = PackageCategory::getFeePercentFor($packageCategory);
@@ -160,13 +166,22 @@ class PackageDeliveryController extends Controller
                 'package_category' => 'required|string',
                 'package_description' => 'nullable|string|max:500',
                 'package_size' => 'required|string|in:Small,Medium,Large',
-                'package_weight_kg' => 'required|numeric|min:0.1',
-                'quantity' => 'required|integer|min:1',
+                'package_weight_kg' => 'nullable|numeric|min:0.1',
+                'quantity' => 'nullable|integer|min:1',
                 'declared_value' => 'nullable|numeric|min:0',
                 'special_handling' => 'nullable|array',
                 'payment_method' => 'required|string',
                 'prohibited_items_acknowledged' => 'required|accepted',
             ]);
+
+            // Default weight by package size if not provided
+            if (empty($validated['package_weight_kg'])) {
+                $sizeWeights = ['Small' => 1.5, 'Medium' => 5.0, 'Large' => 10.0];
+                $validated['package_weight_kg'] = $sizeWeights[$validated['package_size']] ?? 1.5;
+            }
+            if (empty($validated['quantity'])) {
+                $validated['quantity'] = 1;
+            }
 
             // Mandatory Doctor Prescription validation for categories requiring Rx (e.g. Pharmeasy)
             $isPrescriptionMandatory = PackageCategory::isPrescriptionMandatory($validated['package_category']);
