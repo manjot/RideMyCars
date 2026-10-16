@@ -1036,6 +1036,52 @@
                 </button>
             </div>
         </div>
+
+        <!-- Fullscreen Prescription Lightbox Modal (Inside Alpine scope) -->
+        <div x-show="previewModal" 
+             x-cloak
+             @click.self="previewModal = false"
+             class="fixed inset-0 z-[999999] bg-black/95 flex flex-col justify-between p-4"
+             @keydown.escape.window="previewModal = false">
+            <div class="flex items-center justify-between text-white border-b border-white/10 pb-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-sm font-black text-emerald-400 shrink-0">Rx Document:</span>
+                    <span class="text-sm font-bold truncate max-w-xs sm:max-w-md" x-text="previewItem?.name"></span>
+                    <span class="text-xs text-gray-400 shrink-0" x-text="'(' + previewItem?.size + ')'"></span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <template x-if="previewItem?.isImage">
+                        <div class="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1 mr-2 text-xs">
+                            <button type="button" @click="previewZoom = Math.min(previewZoom + 0.25, 3.5)" class="px-2 py-0.5 hover:text-emerald-400 font-bold">+</button>
+                            <span x-text="Math.round(previewZoom * 100) + '%'" class="px-1 text-[11px] font-mono"></span>
+                            <button type="button" @click="previewZoom = Math.max(previewZoom - 0.25, 0.5)" class="px-2 py-0.5 hover:text-emerald-400 font-bold">-</button>
+                            <button type="button" @click="previewZoom = 1" class="text-[10px] text-amber-400 ml-1">Reset</button>
+                        </div>
+                    </template>
+                    <a :href="previewItem?.viewUrl" target="_blank" class="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <span>↗ New Tab</span>
+                    </a>
+                    <a :href="previewItem?.downloadUrl || previewItem?.viewUrl" download target="_blank" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
+                        Download
+                    </a>
+                    <button type="button" @click="previewModal = false" class="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition">
+                        ✕ Close
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 flex flex-col items-center justify-center p-4 overflow-auto min-h-0" @click.self="previewModal = false">
+                <template x-if="previewItem?.isImage">
+                    <img :src="previewItem?.viewUrl" 
+                         :style="'transform: scale(' + previewZoom + '); transition: transform 0.2s ease-out;'"
+                         class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl">
+                </template>
+                <template x-if="previewItem?.isPdf">
+                    <div class="w-full h-full max-h-[85vh] flex flex-col items-center justify-center">
+                        <iframe :src="previewItem?.viewUrl" class="w-full h-full rounded-xl border border-gray-700 bg-white shadow-2xl"></iframe>
+                    </div>
+                </template>
+            </div>
+        </div>
     </main>
 
     <!-- Maps Integration with Resilient Auto-Fallback -->
@@ -2130,46 +2176,6 @@
             }));
         });
     </script>
-
-    <!-- Fullscreen Prescription Lightbox Modal -->
-    <div x-show="previewModal" 
-         x-cloak
-         class="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between p-4"
-         @keydown.escape.window="previewModal = false">
-        <div class="flex items-center justify-between text-white border-b border-white/10 pb-3">
-            <div class="flex items-center gap-2">
-                <span class="text-sm font-black text-emerald-400">Rx Document:</span>
-                <span class="text-sm font-bold truncate max-w-md" x-text="previewItem?.name"></span>
-                <span class="text-xs text-gray-400" x-text="'(' + previewItem?.size + ')'"></span>
-            </div>
-            <div class="flex items-center gap-2">
-                <template x-if="previewItem?.isImage">
-                    <div class="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1 mr-2 text-xs">
-                        <button type="button" @click="previewZoom = Math.min(previewZoom + 0.25, 3.5)" class="px-2 py-0.5 hover:text-emerald-400 font-bold">+</button>
-                        <span x-text="Math.round(previewZoom * 100) + '%'" class="px-1 text-[11px] font-mono"></span>
-                        <button type="button" @click="previewZoom = Math.max(previewZoom - 0.25, 0.5)" class="px-2 py-0.5 hover:text-emerald-400 font-bold">-</button>
-                        <button type="button" @click="previewZoom = 1" class="text-[10px] text-amber-400 ml-1">Reset</button>
-                    </div>
-                </template>
-                <a :href="previewItem?.downloadUrl" target="_blank" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
-                    Download
-                </a>
-                <button type="button" @click="previewModal = false" class="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition">
-                    ✕ Close
-                </button>
-            </div>
-        </div>
-        <div class="flex-1 flex items-center justify-center p-4 overflow-auto">
-            <template x-if="previewItem?.isImage">
-                <img :src="previewItem?.viewUrl" 
-                     :style="'transform: scale(' + previewZoom + '); transition: transform 0.2s ease-out;'"
-                     class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
-            </template>
-            <template x-if="previewItem?.isPdf">
-                <iframe :src="previewItem?.viewUrl" class="w-full h-full max-h-[85vh] rounded-xl border border-gray-700 bg-white"></iframe>
-            </template>
-        </div>
-    </div>
 
     <x-stripe-modal serviceType="package_delivery" />
 </x-layout>

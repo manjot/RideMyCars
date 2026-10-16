@@ -3060,7 +3060,16 @@
             },
             init() {
                 this.check();
-                this.timer = setInterval(() => this.check(), 12000);
+                this.timer = setInterval(() => this.check(), 10000);
+                window.addEventListener('active-ride-cancelled', () => {
+                    try {
+                        localStorage.removeItem('rmc_active_ride_id');
+                        sessionStorage.removeItem('rmc_active_ride_id');
+                    } catch(e) {}
+                    this.ride = null;
+                    this.expanded = false;
+                    this.dismissed = true;
+                });
             },
             async check() {
                 if (document.hidden) return;
@@ -3071,18 +3080,24 @@
                     if (res.ok) {
                         const data = await res.json();
                         const newRide = data.ride || null;
-                        if (newRide) {
+                        if (newRide && !['cancelled', 'completed'].includes(newRide.status)) {
                             if (this.lastStatus && this.lastStatus !== newRide.status) {
                                 this.dismissed = false; // re-show banner on new status
                             }
                             this.lastStatus = newRide.status;
                             localStorage.setItem('rmc_active_ride_id', newRide.id);
-                        } else if (guestRideId && !data.ride) {
-                            localStorage.removeItem('rmc_active_ride_id');
-                        }
-                        this.ride = newRide;
-                        if (this.ride && !this.boostFare) {
-                            this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(2);
+                            this.ride = newRide;
+                            if (this.ride && !this.boostFare) {
+                                this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(2);
+                            }
+                        } else {
+                            try {
+                                localStorage.removeItem('rmc_active_ride_id');
+                                sessionStorage.removeItem('rmc_active_ride_id');
+                            } catch(e) {}
+                            this.ride = null;
+                            this.expanded = false;
+                            this.dismissed = true;
                         }
                     }
                 } catch(e) {}
@@ -3136,11 +3151,14 @@
                     });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok || data.success || data.status === 'cancelled' || res.status === 404) {
-                        localStorage.removeItem('rmc_active_ride_id');
-                        sessionStorage.removeItem('rmc_active_ride_id');
+                        try {
+                            localStorage.removeItem('rmc_active_ride_id');
+                            sessionStorage.removeItem('rmc_active_ride_id');
+                        } catch(e) {}
                         this.ride = null;
                         this.expanded = false;
                         this.dismissed = true;
+                        window.dispatchEvent(new CustomEvent('active-ride-cancelled'));
                         alert('Ride request has been cancelled.');
                         window.location.reload();
                     } else {
@@ -3148,11 +3166,14 @@
                     }
                 } catch(e) { 
                     if (confirm('Could not connect to server. Would you like to clear this ride request from your screen?')) {
-                        localStorage.removeItem('rmc_active_ride_id');
-                        sessionStorage.removeItem('rmc_active_ride_id');
+                        try {
+                            localStorage.removeItem('rmc_active_ride_id');
+                            sessionStorage.removeItem('rmc_active_ride_id');
+                        } catch(e) {}
                         this.ride = null;
                         this.expanded = false;
                         this.dismissed = true;
+                        window.dispatchEvent(new CustomEvent('active-ride-cancelled'));
                         window.location.reload();
                     }
                 } finally {

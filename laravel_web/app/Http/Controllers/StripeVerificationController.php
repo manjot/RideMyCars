@@ -230,8 +230,15 @@ class StripeVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
         }
 
+        $paymentStatus = strtolower($booking->payment_status ?? 'pending');
+        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
+
+        $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+            ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
+            : \App\Services\SettingService::rideWaitingTimeMinutes();
+
         $isExpired = false;
-        if (in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
+        if ($isPaymentConfirmed && in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
             if (method_exists($booking, 'isExpired') && $booking->isExpired()) {
                 $isExpired = true;
                 if ($serviceType === 'ride' || $serviceType === 'rental') {
@@ -243,16 +250,9 @@ class StripeVerificationController extends Controller
             }
         }
 
-        $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
-            ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
-            : \App\Services\SettingService::rideWaitingTimeMinutes();
-
-        $remainingSeconds = method_exists($booking, 'remainingSeconds')
+        $remainingSeconds = ($isPaymentConfirmed && method_exists($booking, 'remainingSeconds'))
             ? $booking->remainingSeconds()
-            : 0;
-
-        $paymentStatus = strtolower($booking->payment_status ?? 'pending');
-        $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
+            : ($waitingMinutes * 60);
         $bookingStatus = strtolower($booking->delivery_status ?? $booking->booking_status ?? $booking->status ?? 'pending');
         $driverId = $booking->courier_id ?? $booking->driver_id ?? null;
         $isDriverConfirmed = in_array($bookingStatus, [
@@ -443,9 +443,15 @@ class StripeVerificationController extends Controller
 
         // Handle Cash on Drop-off (Exclusively for Ride & Delivery)
         if ($paymentMethod === 'cash') {
+            $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+                ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
+                : \App\Services\SettingService::rideWaitingTimeMinutes();
+            $freshExpiresAt = now()->addMinutes($waitingMinutes);
+
             $booking->update([
                 'payment_status' => 'pending_cash',
                 'payment_method' => 'cash',
+                'expires_at' => $freshExpiresAt,
                 'booking_status' => ($booking->booking_status === 'accepted') ? 'accepted' : 'pending',
             ]);
 
@@ -500,6 +506,9 @@ class StripeVerificationController extends Controller
                 'transaction_ref' => $transaction->transaction_ref,
                 'booking_status' => $booking->booking_status,
                 'is_payment_confirmed' => true,
+                'remaining_seconds' => $waitingMinutes * 60,
+                'waiting_time_minutes' => $waitingMinutes,
+                'expires_at' => $freshExpiresAt->toIso8601String(),
                 'message' => "Cash payment on drop-off confirmed. Searching for available driver...",
             ]);
         }
@@ -1142,7 +1151,7 @@ class StripeVerificationController extends Controller
         }
 
         $isExpired = false;
-        if (in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
+        if ($isPaymentConfirmed && in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
             if (method_exists($booking, 'isExpired') && $booking->isExpired()) {
                 $isExpired = true;
                 if ($serviceType === 'ride' || $serviceType === 'rental') {
@@ -1159,7 +1168,7 @@ class StripeVerificationController extends Controller
             ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
             : \App\Services\SettingService::rideWaitingTimeMinutes();
 
-        $remainingSeconds = method_exists($booking, 'remainingSeconds')
+        $remainingSeconds = ($isPaymentConfirmed && method_exists($booking, 'remainingSeconds'))
             ? $booking->remainingSeconds()
             : ($waitingMinutes * 60);
 

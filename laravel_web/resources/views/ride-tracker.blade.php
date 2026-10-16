@@ -302,8 +302,8 @@
                         </div>
                     </div>
 
-                    <!-- Driver PIN Verification Form (Visible to Assigned Driver or Driver Role on Web) -->
-                    @if(auth()->check() && (auth()->id() === $ride->driver_id || auth()->user()->role === 'driver' || auth()->user()->role === 'admin' || auth()->user()->driverProfile))
+                    <!-- Driver PIN Verification Form (Visible ONLY to the Assigned Driver, NEVER to the Rider/Passenger who requested the ride) -->
+                    @if(auth()->check() && $ride->driver_id && auth()->id() === $ride->driver_id && auth()->id() !== $ride->rider_id)
                     <div x-show="['accepted', 'en_route', 'arrived'].includes(ride.status)" class="mt-5 pt-4 border-t border-amber-500/20">
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                             <div class="text-xs">

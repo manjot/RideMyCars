@@ -1775,8 +1775,8 @@ Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request
 
     $ride = null;
 
-    if ($user && !$isDriverDashboard) {
-        // Check as rider first
+    if ($user) {
+        // Check as rider / customer
         $ride = \App\Models\Ride::where('rider_id', $user->id)
             ->whereIn('status', ['pending', 'accepted', 'en_route', 'arrived', 'in_progress'])
             ->latest()
@@ -1790,15 +1790,9 @@ Route::get('/api/user/ongoing-ride', function (\Illuminate\Http\Request $request
             ->first();
     }
 
-    // Check as driver only if not on driver dashboard
-    if (!$ride && $user && $user->role === 'driver' && !$isDriverDashboard) {
-        $ride = \App\Models\Ride::where('driver_id', $user->id)
-            ->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress'])
-            ->latest()
-            ->first();
+    if (!$ride) {
+        return response()->json(['ride' => null]);
     }
-
-    if (!$ride) return response()->json(['ride' => null]);
 
     // If ride is pending with no driver, ensure an active assignment exists (only if cash or payment confirmed)
     $rawMethod = strtolower((string)($ride->payment_method ?? ''));

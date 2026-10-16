@@ -1166,6 +1166,10 @@ class RideController extends Controller
         }
 
         if ($ride) {
+            $updates = [
+                'status' => $newStatus,
+            ];
+
             // Require and verify 4-digit PIN before starting the ride
             if ($newStatus === 'in_progress') {
                 $submittedPin = trim((string)($request->input('otp') ?? $request->input('pin') ?? $request->input('start_pin') ?? ''));
@@ -1226,10 +1230,12 @@ class RideController extends Controller
                 }
             }
             if ($newStatus === 'cancelled') {
+                $updates['status'] = 'cancelled';
                 $updates['cancelled_at'] = now();
-                $updates['cancelled_by'] = 'driver';
-                $driverReason = $request->input('reason') ?: $request->input('cancellation_reason') ?: 'Your ride was cancelled by the driver.';
-                $updates['cancellation_reason'] = $driverReason;
+                $isUserDriver = $user && ($user->id === $ride->driver_id || $user->role === 'driver');
+                $updates['cancelled_by'] = $request->input('cancelled_by') ?: ($isUserDriver ? 'driver' : 'rider');
+                $cancelReason = $request->input('reason') ?: $request->input('cancellation_reason') ?: ($isUserDriver ? 'Your ride was cancelled by the driver.' : 'Ride request was cancelled by customer.');
+                $updates['cancellation_reason'] = $cancelReason;
                 $updates['payment_status'] = 'released';
                 try {
                     \App\Services\StripeService::releaseRideHold($ride);
@@ -1242,11 +1248,11 @@ class RideController extends Controller
                 }
 
                 // Process customer wallet refund if prepaid via Stripe or MoMo
-                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, $ride->ride_type ?: 'ride', $driverReason);
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, $ride->ride_type ?: 'ride', $cancelReason);
 
                 if ($ride->rider_id) {
                     try {
-                        \App\Services\NotificationService::send($ride->rider_id, 'ride_cancelled', 'Ride Canceled', $driverReason, $ride->id);
+                        \App\Services\NotificationService::send($ride->rider_id, 'ride_cancelled', 'Ride Canceled', $cancelReason, $ride->id);
                     } catch (\Throwable $e) {}
                 }
             }

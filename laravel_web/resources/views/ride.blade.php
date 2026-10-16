@@ -189,7 +189,7 @@
                     <!-- STEP 1: FIND A TRIP (bookingStep === 'find_trip') -->
                     <div x-show="bookingStep === 'find_trip'" class="w-full bg-white dark:bg-[#111] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-[24px] border border-gray-100 dark:border-white/10 space-y-5">
                         <!-- Active Ongoing Ride Alert Banner -->
-                        <div x-show="currentRideId" style="display: none;" class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+                        <div x-show="currentRideId && !['cancelled', 'completed'].includes(rideLifecycleStatus)" style="display: none;" class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="relative flex h-2.5 w-2.5 shrink-0">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1866,11 +1866,22 @@
                                 this.updateLiveTrackingState(data);
                                 this.startRideStatusPolling(resumeId);
                             } else if (data.status === 'cancelled') {
-                                localStorage.removeItem('rmc_active_ride_id');
-                                this.cancelReason = data.cancellation_reason || 'No driver accepted the ride within the waiting period.';
-                                this.bookingStep = 'cancelled';
+                                this.currentRideId = null;
+                                this.rideLifecycleStatus = 'cancelled';
+                                try {
+                                    localStorage.removeItem('rmc_active_ride_id');
+                                    sessionStorage.removeItem('rmc_active_ride_id');
+                                } catch(e) {}
+                                this.cancelReason = data.cancellation_reason || 'This ride request was cancelled.';
+                                this.bookingStep = 'find_trip';
                             } else if (data.status === 'completed') {
-                                localStorage.removeItem('rmc_active_ride_id');
+                                this.currentRideId = null;
+                                this.rideLifecycleStatus = 'completed';
+                                try {
+                                    localStorage.removeItem('rmc_active_ride_id');
+                                    sessionStorage.removeItem('rmc_active_ride_id');
+                                } catch(e) {}
+                                this.bookingStep = 'find_trip';
                             }
                         }
                     } catch(e) {}
@@ -1950,12 +1961,22 @@
                                 } else if (sData.status === 'completed') {
                                     clearInterval(this.pollTimer);
                                     if (this.countdownInterval) clearInterval(this.countdownInterval);
-                                    localStorage.removeItem('rmc_active_ride_id');
+                                    this.currentRideId = null;
+                                    this.rideLifecycleStatus = 'completed';
+                                    try {
+                                        localStorage.removeItem('rmc_active_ride_id');
+                                        sessionStorage.removeItem('rmc_active_ride_id');
+                                    } catch(e) {}
                                     this.bookingStep = 'completed';
                                 } else if (sData.status === 'cancelled' || sData.is_expired) {
                                     clearInterval(this.pollTimer);
                                     if (this.countdownInterval) clearInterval(this.countdownInterval);
-                                    localStorage.removeItem('rmc_active_ride_id');
+                                    this.currentRideId = null;
+                                    this.rideLifecycleStatus = 'cancelled';
+                                    try {
+                                        localStorage.removeItem('rmc_active_ride_id');
+                                        sessionStorage.removeItem('rmc_active_ride_id');
+                                    } catch(e) {}
                                     this.cancelReason = sData.cancellation_reason || 'No nearby driver accepted the ride within the waiting period.';
                                     this.bookingStep = 'cancelled';
                                 }
@@ -3004,26 +3025,33 @@
                         this.isAuthorizingPayment = false;
                     }
                 },
+
                 cancelRide() {
                     if (this.pollTimer) clearInterval(this.pollTimer);
                     if (this.countdownInterval) clearInterval(this.countdownInterval);
-                    localStorage.removeItem('rmc_active_ride_id');
-                    sessionStorage.removeItem('rmc_active_ride_id');
-                    if (this.currentRideId) {
+                    const rideIdToCancel = this.currentRideId;
+                    this.currentRideId = null;
+                    this.rideLifecycleStatus = 'cancelled';
+                    try {
+                        localStorage.removeItem('rmc_active_ride_id');
+                        sessionStorage.removeItem('rmc_active_ride_id');
+                    } catch(e) {}
+                    if (rideIdToCancel) {
                         const csrfToken = document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                        fetch(`/api/ride/${this.currentRideId}/cancel`, {
+                        fetch(`/api/ride/${rideIdToCancel}/cancel`, {
                             method: 'POST',
                             headers: { 
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': csrfToken || '' 
                             },
-                            body: JSON.stringify({
+                            body: JSON.stringify({ 
                                 reason: 'Cancelled by user',
-                                guest_ride_id: this.currentRideId
+                                guest_ride_id: rideIdToCancel
                             })
                         }).catch(() => {});
                     }
+                    window.dispatchEvent(new CustomEvent('active-ride-cancelled'));
                     this.bookingStep = 'find_trip';
                 },
 

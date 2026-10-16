@@ -863,6 +863,8 @@
                         }
                         this.paymentMethod = method;
                         this.isPaymentConfirmed = true;
+                        this.isExpired = false;
+                        this.remainingSeconds = data.remaining_seconds || (this.waitingMinutes * 60);
                         this.currentPaymentStatus = data.payment_status || (method === 'cash' ? 'pending_cash' : 'hold');
                         this.startPolling();
                         this.startCountdown();
