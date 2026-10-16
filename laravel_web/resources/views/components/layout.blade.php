@@ -1437,6 +1437,13 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                                         <span class="font-medium text-black dark:text-white text-[14px]">Legal</span>
                                     </a>
+                                    <a href="/zero-tolerance-policy" class="flex items-center gap-3 py-2 px-2.5 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-colors group">
+                                        <div class="w-4.5 h-4.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[11px] font-black">
+                                            🛡️
+                                        </div>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Zero Tolerance Policy</span>
+                                        <span class="ml-auto text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400">GA/CA/MI</span>
+                                    </a>
                                 </div>
                                 @else
                                 <!-- Rider Action Buttons -->
@@ -1485,6 +1492,13 @@
                                     <a href="/legal" class="flex items-center gap-3 py-2 px-2.5 hover:bg-[#f8f8f8] dark:hover:bg-gray-800 rounded-lg transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="text-gray-900 dark:text-gray-300"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                                         <span class="font-medium text-black dark:text-white text-[14px]">Legal</span>
+                                    </a>
+                                    <a href="/zero-tolerance-policy" class="flex items-center gap-3 py-2 px-2.5 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-colors group">
+                                        <div class="w-4.5 h-4.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[11px] font-black">
+                                            🛡️
+                                        </div>
+                                        <span class="font-medium text-black dark:text-white text-[14px]">Zero Tolerance Policy</span>
+                                        <span class="ml-auto text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400">GA/CA/MI</span>
                                     </a>
                                 </div>
                                 @endif
@@ -1754,6 +1768,12 @@
                     </a>
                     <a href="/contact" class="col-span-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
                         <span>💬</span> <span>Contact Concierge</span>
+                    </a>
+                    <a href="/zero-tolerance-policy" class="col-span-2 px-2.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 font-extrabold hover:bg-amber-500/20 transition-all flex items-center justify-between text-xs">
+                        <span class="flex items-center gap-2">
+                            <span>🛡️</span> <span>Zero-Tolerance Policy</span>
+                        </span>
+                        <span class="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 text-[9px] font-black uppercase">GA • CA • MI</span>
                     </a>
                 </div>
             </div>
@@ -2172,6 +2192,27 @@
                         <li>
                             <a href="/driver-compliance" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Driver Compliance</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/zero-tolerance-policy" class="text-amber-400 hover:text-amber-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5" title="State Regulatory Zero-Tolerance Policies (Georgia, California, Michigan)">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Zero Tolerance Policy</span>
+                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">GA/CA/MI</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/compliance/georgia" class="text-zinc-400 hover:text-amber-300 transition-colors duration-150 flex items-center justify-between group py-0.5 pl-2 text-[12px]">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ Georgia (Atlanta DPS)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/compliance/california" class="text-zinc-400 hover:text-blue-300 transition-colors duration-150 flex items-center justify-between group py-0.5 pl-2 text-[12px]">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ California (CPUC TNC)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/compliance/michigan" class="text-zinc-400 hover:text-emerald-300 transition-colors duration-150 flex items-center justify-between group py-0.5 pl-2 text-[12px]">
+                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ Michigan (PA 345)</span>
                             </a>
                         </li>
                         <li>

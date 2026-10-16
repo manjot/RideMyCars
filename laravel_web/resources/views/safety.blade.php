@@ -345,6 +345,100 @@
             </div>
         </section>
 
+        <!-- Official State Zero-Tolerance Drug & Alcohol Policy Section (Georgia, California, Michigan) -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28">
+            <div class="bg-white dark:bg-[#141414] rounded-[2.5rem] p-8 sm:p-14 border-2 border-amber-300 dark:border-amber-700/50 shadow-2xl relative overflow-hidden">
+                <div class="max-w-3xl mb-10">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/20 text-amber-800 dark:text-amber-300 font-black text-xs uppercase tracking-wider border border-amber-400/40 mb-3">
+                        <span>⚖️</span> Statutory Mandates
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                        Zero-Tolerance Drug & Alcohol Policies
+                    </h2>
+                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-2 font-normal leading-relaxed">
+                        RideMyCars maintains an absolute zero-tolerance standard for drugs, alcohol, and impairing substances. Driver partners reasonably suspected of impairment face immediate automated platform lockout and permanent deactivation under state regulatory frameworks.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Georgia -->
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-4 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl">🍑</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-400 text-slate-950">Georgia DPS</span>
+                            </div>
+                            <h3 class="font-black text-base text-gray-900 dark:text-white">Georgia & Atlanta Metro</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-mono">
+                                O.C.G.A. § 40-1-193 • RMC-GA-ZTP-2026-V1
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                Immediate session termination on complaint. Compliance Office managed by Marilyn Watson. 3-year record archive for Georgia DPS Motor Carrier Division within 96 hours.
+                            </p>
+                        </div>
+                        <a href="/compliance/georgia" class="inline-flex items-center justify-between w-full py-2.5 px-4 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all">
+                            <span>Georgia Policy</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                    <!-- California -->
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-4 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl">🐻</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-blue-600 text-white">CPUC TNC</span>
+                            </div>
+                            <h3 class="font-black text-base text-gray-900 dark:text-white">California (CPUC)</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-mono">
+                                CPUC Dec. 13-09-045 • RMC-CA-ZTP-2026-V1
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                Mandated direct CPUC Consumer Affairs Hotline: <strong>1-800-894-9444</strong> & email <strong class="font-mono">CIU_intake@cpuc.ca.gov</strong>. Governed by PUCTRA fee & SB 1376 WAV fund.
+                            </p>
+                        </div>
+                        <a href="/compliance/california" class="inline-flex items-center justify-between w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-xs transition-all">
+                            <span>California Policy</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                    <!-- Michigan -->
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-4 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl">🚗</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-600 text-white">PA 345</span>
+                            </div>
+                            <h3 class="font-black text-base text-gray-900 dark:text-white">Michigan State</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-mono">
+                                PA 345 of 2016 (Sec. 37) • RMC-MI-001
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                                Statutory requirement to deactivate driver within <strong>two (2) minutes</strong> of complaint. 3-year minimum secure archive of telemetry and resolution profiles.
+                            </p>
+                        </div>
+                        <a href="/compliance/michigan" class="inline-flex items-center justify-between w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs transition-all">
+                            <span>Michigan Policy</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300">
+                            24/7 Safety Command Hotline for all jurisdictions: <a href="tel:+18552033177" class="text-amber-700 dark:text-amber-400 font-extrabold hover:underline">+1 855 203 3177</a>
+                        </span>
+                    </div>
+                    <a href="/zero-tolerance-policy" class="text-xs font-black text-amber-700 dark:text-amber-400 hover:underline">
+                        Explore Master State Compliance Hub &rarr;
+                    </a>
+                </div>
+            </div>
+        </section>
+
         <!-- 24/7 Dedicated Emergency Hotline Card -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="rounded-[2.5rem] p-8 sm:p-14 text-center text-white shadow-2xl relative overflow-hidden"

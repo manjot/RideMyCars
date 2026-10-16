@@ -177,11 +177,63 @@ Route::get('/driver-compliance', function () {
 });
 
 Route::get('/compliance', function () {
-    return redirect('/driver-compliance', 301);
+    return redirect('/zero-tolerance-policy', 301);
 });
 
 Route::get('/onboarding-compliance', function () {
     return redirect('/driver-compliance', 301);
+});
+
+// State Regulatory Compliance & Zero-Tolerance Policies (Georgia, California, Michigan)
+Route::get('/zero-tolerance-policy', function () {
+    return view('compliance.index');
+})->name('compliance.zero-tolerance');
+
+Route::get('/state-compliance', function () {
+    return view('compliance.index');
+})->name('compliance.states');
+
+Route::get('/compliance/zero-tolerance', function () {
+    return redirect('/zero-tolerance-policy', 301);
+});
+
+Route::get('/compliance/states', function () {
+    return redirect('/zero-tolerance-policy', 301);
+});
+
+// Georgia / Atlanta Zero-Tolerance Policy (O.C.G.A. § 40-1-193 & Georgia DPS)
+Route::get('/compliance/georgia', function () {
+    return view('compliance.georgia');
+})->name('compliance.georgia');
+
+Route::get('/compliance/atlanta', function () {
+    return redirect('/compliance/georgia', 301);
+});
+
+Route::get('/zero-tolerance-policy/georgia', function () {
+    return redirect('/compliance/georgia', 301);
+});
+
+Route::get('/zero-tolerance-policy/atlanta', function () {
+    return redirect('/compliance/georgia', 301);
+});
+
+// California Zero-Tolerance Policy & TNC Mandates (CPUC Decision 13-09-045)
+Route::get('/compliance/california', function () {
+    return view('compliance.california');
+})->name('compliance.california');
+
+Route::get('/zero-tolerance-policy/california', function () {
+    return redirect('/compliance/california', 301);
+});
+
+// Michigan Zero-Tolerance Policy (Michigan Public Act 345 of 2016, Sec. 37)
+Route::get('/compliance/michigan', function () {
+    return view('compliance.michigan');
+})->name('compliance.michigan');
+
+Route::get('/zero-tolerance-policy/michigan', function () {
+    return redirect('/compliance/michigan', 301);
 });
 
 Route::get('/privacy-requests', [\App\Http\Controllers\PrivacyRequestController::class, 'index'])->name('privacy-requests.index');

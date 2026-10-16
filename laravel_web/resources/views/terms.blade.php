@@ -82,6 +82,7 @@
                     <a href="#art-10" class="block px-3 py-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">Article X — Package Delivery Liability Waiver & Insurance Policy</a>
                     <a href="#art-11" class="block px-3 py-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">Article XI — Vehicle Rentals Damage & Security Agreement</a>
                     <a href="#art-12" class="block px-3 py-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">Article XII — Multi-Service Dispute Resolution Process</a>
+                    <a href="#art-13" class="block px-3 py-2 rounded-xl text-amber-700 dark:text-amber-400 font-bold hover:bg-amber-500/10 transition-colors">Article XIII — Zero-Tolerance Policy (GA, CA, MI)</a>
                 </nav>
             </aside>
 
@@ -255,6 +256,52 @@
                                 <p><strong>Contact Telephone:</strong> <a href="tel:+18552033177" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">+1 855 203 3177</a></p>
                                 <p><strong>Disputes Email:</strong> <a href="mailto:disputes@ridemycars.com" class="text-amber-700 dark:text-amber-400 hover:underline">disputes@ridemycars.com</a></p>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Article XIII -->
+                <section id="art-13" class="bg-white dark:bg-[#141414] border border-amber-300 dark:border-amber-700/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+                    <h2 class="text-xl font-extrabold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 font-mono font-bold text-xs flex items-center justify-center">XIII</span>
+                        <span>Article XIII — Official Zero-Tolerance Drug and Alcohol Policy</span>
+                    </h2>
+                    
+                    <div class="space-y-4 text-xs sm:text-sm">
+                        <p class="font-semibold text-gray-900 dark:text-white">
+                            RideMyCars maintains a strict, absolute zero-tolerance policy regarding the use of drugs, alcohol, cannabis, or any intoxicating substances by independent driver partners, chauffeurs, and couriers while logged into the platform network.
+                        </p>
+
+                        <div class="p-4 bg-red-50 dark:bg-red-950/20 border-l-4 border-red-500 rounded-xl space-y-1">
+                            <strong class="text-red-700 dark:text-red-300 block text-xs uppercase tracking-wider">Mandatory Suspension & Deactivation:</strong>
+                            <p class="text-xs text-red-900 dark:text-red-200">
+                                Any driver reasonably suspected of operating under the influence faces immediate and irreversible platform lockout. Confirmed violations result in permanent contractor agreement termination across all New Development Finance Group logistics platforms.
+                            </p>
+                        </div>
+
+                        <!-- 13.1 Georgia Addendum -->
+                        <div class="pt-2 space-y-1">
+                            <p class="font-bold text-gray-900 dark:text-white">13.1 State of Georgia Addendum (O.C.G.A. § 40-1-193):</p>
+                            <p>Complies with Georgia Department of Public Safety (DPS) regulations. Immediate automated dispatch lockout upon complaint. Impairment records archived for a minimum of 3 years and accessible to Georgia DPS Motor Carrier Division within 96 hours. See full policy: <a href="/compliance/georgia" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Georgia Zero-Tolerance Policy (RMC-GA-ZTP-2026-V1)</a>.</p>
+                        </div>
+
+                        <!-- 13.2 California CPUC Addendum -->
+                        <div class="pt-2 space-y-1">
+                            <p class="font-bold text-gray-900 dark:text-white">13.2 State of California Addendum (CPUC Decision 13-09-045):</p>
+                            <p>Pursuant to California Public Utilities Commission regulations, passengers may file complaints directly with CPUC via the Consumer Affairs Hotline (<a href="tel:18008949444" class="text-blue-600 dark:text-blue-400 font-bold">1-800-894-9444</a>) or email (<a href="mailto:CIU_intake@cpuc.ca.gov" class="text-blue-600 dark:text-blue-400 font-bold">CIU_intake@cpuc.ca.gov</a>). Governed by PUCTRA and SB 1376 ($0.10 WAV fee). See full policy: <a href="/compliance/california" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">California Zero-Tolerance Policy (RMC-CA-ZTP-2026-V1)</a>.</p>
+                        </div>
+
+                        <!-- 13.3 Michigan State Addendum -->
+                        <div class="pt-2 space-y-1">
+                            <p class="font-bold text-gray-900 dark:text-white">13.3 State of Michigan Addendum (Public Act 345 of 2016 Sec. 37):</p>
+                            <p>Policy Number RMC-MI-001. Flagged drivers are automatically suspended from the network within <strong>two (2) minutes</strong> of complaint receipt. Telemetry logs archived for a minimum of three (3) years pursuant to Michigan law. See full policy: <a href="/compliance/michigan" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Michigan Zero-Tolerance Policy (RMC-MI-001)</a>.</p>
+                        </div>
+
+                        <!-- Dual Reporting Channels -->
+                        <div class="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl space-y-1">
+                            <p><strong>Passenger Reporting Hotline (24/7):</strong> <a href="tel:+18552033177" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">+1 855 203 3177</a></p>
+                            <p><strong>Support Email:</strong> <a href="mailto:support@ridemycars.com" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">support@ridemycars.com</a> (Subject: "SAFETY COMPLIANCE: DRIVER IMPAIRMENT")</p>
+                            <p><strong>Master Compliance Directory:</strong> <a href="/zero-tolerance-policy" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">www.ridemycars.com/zero-tolerance-policy</a></p>
                         </div>
                     </div>
                 </section>

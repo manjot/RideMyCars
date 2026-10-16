@@ -87,6 +87,65 @@
                         </div>
                     </div>
 
+                    <!-- State Regulatory Compliance & Safety Directives (GA, CA, MI Mandated) -->
+                    <div class="bg-gradient-to-br from-amber-500/10 via-blue-500/5 to-emerald-500/5 p-7 rounded-3xl border border-amber-500/30 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">⚖️</span>
+                                <h3 class="text-sm font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                                    State Regulatory Contacts
+                                </h3>
+                            </div>
+                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-400 text-slate-950">Statutory</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                            Mandated public reporting channels and state agency direct contacts for passenger safety and zero-tolerance drug/alcohol enforcement:
+                        </p>
+                        
+                        <div class="space-y-2 pt-1 text-xs">
+                            <!-- California CPUC -->
+                            <div class="p-3 bg-white dark:bg-[#1a1a1c] rounded-xl border border-blue-200 dark:border-blue-900/40">
+                                <div class="flex items-center justify-between mb-1">
+                                    <strong class="font-extrabold text-blue-700 dark:text-blue-300">California (CPUC TNC)</strong>
+                                    <span class="text-[10px] text-gray-400">Dec 13-09-045</span>
+                                </div>
+                                <div class="text-[11px] space-y-0.5 text-gray-700 dark:text-gray-300">
+                                    <p>CPUC Hotline: <a href="tel:18008949444" class="font-bold text-blue-600 dark:text-blue-400 hover:underline">1-800-894-9444</a></p>
+                                    <p>CPUC Email: <a href="mailto:CIU_intake@cpuc.ca.gov" class="font-mono text-blue-600 dark:text-blue-400 hover:underline">CIU_intake@cpuc.ca.gov</a></p>
+                                </div>
+                            </div>
+
+                            <!-- Georgia DPS -->
+                            <div class="p-3 bg-white dark:bg-[#1a1a1c] rounded-xl border border-amber-200 dark:border-amber-900/40">
+                                <div class="flex items-center justify-between mb-1">
+                                    <strong class="font-extrabold text-amber-800 dark:text-amber-300">Georgia (Atlanta DPS)</strong>
+                                    <span class="text-[10px] text-gray-400">O.C.G.A. § 40-1-193</span>
+                                </div>
+                                <div class="text-[11px] text-gray-700 dark:text-gray-300">
+                                    <p>24/7 Safety Command: <a href="tel:+18552033177" class="font-bold text-amber-700 dark:text-amber-400 hover:underline">+1 855 203 3177</a></p>
+                                </div>
+                            </div>
+
+                            <!-- Michigan PA 345 -->
+                            <div class="p-3 bg-white dark:bg-[#1a1a1c] rounded-xl border border-emerald-200 dark:border-emerald-900/40">
+                                <div class="flex items-center justify-between mb-1">
+                                    <strong class="font-extrabold text-emerald-800 dark:text-emerald-300">Michigan State</strong>
+                                    <span class="text-[10px] text-gray-400">PA 345 Sec. 37</span>
+                                </div>
+                                <div class="text-[11px] text-gray-700 dark:text-gray-300">
+                                    <p>Statutory 2-min lockout • Policy: <strong class="font-mono text-emerald-700 dark:text-emerald-400">RMC-MI-001</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <a href="/zero-tolerance-policy" class="text-xs font-black text-amber-700 dark:text-amber-400 hover:underline flex items-center justify-between">
+                                <span>View Full Zero-Tolerance Policies</span>
+                                <span>&rarr;</span>
+                            </a>
+                        </div>
+                    </div>
+
                     <!-- Official Social Media Channels -->
                     <div class="bg-white dark:bg-[#121212] p-8 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm">
                         <div class="flex items-center gap-3 mb-4">

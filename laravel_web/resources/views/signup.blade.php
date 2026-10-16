@@ -982,6 +982,28 @@
                         </div>
                     </div>
 
+                    <!-- Driver Onboarding Compliance Digital Signature Block (Georgia DPS, California CPUC, Michigan PA 345 Mandated) -->
+                    <div x-show="currentRole === 'driver'" class="mt-4 p-4.5 bg-amber-500/10 dark:bg-amber-500/15 border-2 border-amber-500/30 rounded-2xl space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🛡️</span>
+                            <span class="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                                Mandatory Driver Zero-Tolerance Agreement
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                            Under statutory regulations of the <strong>Georgia Department of Public Safety (O.C.G.A. § 40-1-193)</strong>, the <strong>California Public Utilities Commission (CPUC Decision 13-09-045)</strong>, and <strong>Michigan Public Act 345 of 2016 (Sec. 37)</strong>:
+                        </p>
+                        <div class="p-3 bg-white dark:bg-black/40 rounded-xl border border-amber-500/20 text-xs text-gray-800 dark:text-gray-200 space-y-1 font-mono">
+                            "I hereby digitally sign and certify that I will never consume, possess open containers of, or be under the influence of alcohol, marijuana, illegal drugs, or unauthorized impairing substances while logged into RideMyCars as active, waiting for trips, or transporting passengers. I understand that any suspected or reported impairment triggers immediate automated platform lockout and permanent deactivation."
+                        </div>
+                        <label class="flex items-start gap-3 cursor-pointer select-none pt-1">
+                            <input type="checkbox" name="zero_tolerance_agreement" value="1" :required="currentRole === 'driver'" class="w-4 h-4 mt-0.5 rounded text-amber-500 border-gray-300 focus:ring-amber-500">
+                            <span class="text-xs text-gray-900 dark:text-white font-extrabold leading-normal">
+                                I digitally sign and strictly agree to the <a href="/zero-tolerance-policy" target="_blank" class="text-amber-700 dark:text-amber-400 underline hover:text-amber-600">Official Zero-Tolerance Drug and Alcohol Policy</a> (Georgia, California, Michigan).
+                            </span>
+                        </label>
+                    </div>
+
                     <!-- Terms & Conditions Acceptance Checkbox -->
                     <div class="mt-4 p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl">
                         <label class="flex items-start gap-3 cursor-pointer select-none">

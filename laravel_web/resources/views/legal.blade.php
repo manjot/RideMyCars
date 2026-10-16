@@ -9,7 +9,7 @@
         </div>
 
         <!-- Quick Navigation Bar -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-12">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-12">
             <a href="/terms" class="p-4 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-2xl text-center hover:border-black dark:hover:border-white transition-all group">
                 <span class="text-xl block mb-1">📜</span>
                 <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Terms of Service</span>
@@ -22,11 +22,15 @@
                 <span class="text-xl block mb-1">🛡️</span>
                 <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Safety Guidelines</span>
             </a>
+            <a href="/zero-tolerance-policy" class="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/40 rounded-2xl text-center hover:border-amber-500 transition-all group">
+                <span class="text-xl block mb-1">⚖️</span>
+                <span class="font-bold text-xs text-amber-700 dark:text-amber-400 group-hover:underline">Zero-Tolerance (GA, CA, MI)</span>
+            </a>
             <a href="/refund" class="p-4 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-2xl text-center hover:border-black dark:hover:border-white transition-all group">
                 <span class="text-xl block mb-1">💳</span>
                 <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Refund Policy</span>
             </a>
-            <a href="/driver-compliance" class="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-2xl text-center hover:border-amber-500 transition-all group">
+            <a href="/driver-compliance" class="p-4 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-white/10 rounded-2xl text-center hover:border-black dark:hover:border-white transition-all group">
                 <span class="text-xl block mb-1">⚡</span>
                 <span class="font-bold text-xs text-gray-900 dark:text-white group-hover:underline">Driver Onboarding</span>
             </a>
@@ -51,20 +55,70 @@
                     All drivers offering rides or hire services on the RideMyCars network undergo multi-tiered background verification prior to receiving dispatch authorization:
                 </p>
                 <ul class="list-disc pl-5 text-sm space-y-2 text-gray-600 dark:text-gray-400">
-                    <li>Comprehensive criminal history check (national and local court registers)</li>
+                    <li>Comprehensive criminal history check (national and local court registers with 7-year lookback)</li>
                     <li>Motor vehicle record (MVR) screening for zero major moving violations</li>
                     <li>Government-issued driver's license verification & identity audit</li>
                     <li>Annual commercial vehicle safety and emissions inspection verification</li>
                 </ul>
             </section>
 
-            <section class="bg-white dark:bg-[#111] p-6 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <span>3. Zero Tolerance for Discrimination & Harassment</span>
-                </h2>
+            <section class="bg-white dark:bg-[#111] p-6 sm:p-8 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>3. Zero Tolerance for Discrimination, Harassment, Drugs & Alcohol</span>
+                    </h2>
+                    <a href="/zero-tolerance-policy" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                        View State Policies Hub &rarr;
+                    </a>
+                </div>
                 <p class="leading-relaxed text-sm">
-                    RideMyCars maintains a strict zero-tolerance policy against any form of discrimination, bias, or harassment based on race, religion, gender identity, sexual orientation, disability, or national origin. Violation of this policy results in immediate and permanent account deactivation for both riders and drivers.
+                    RideMyCars maintains a strict, absolute zero-tolerance policy against any form of discrimination, bias, harassment, or operating under the influence of drugs, alcohol, cannabis, or impairing substances while logged into the platform. Any violation triggers immediate platform lockout and irreversible contractor deactivation.
                 </p>
+
+                <!-- State Statutory Mandates Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                    <!-- Georgia -->
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-gray-900 dark:text-white">🍑 Georgia (Atlanta)</span>
+                            <span class="text-[9px] uppercase px-1.5 py-0.2 rounded bg-amber-400 text-black font-black">DPS Mandate</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Pursuant to <strong>O.C.G.A. § 40-1-193</strong> and Georgia DPS. 24/7 Safety Command Center: <strong>+1 855 203 3177</strong>.
+                        </p>
+                        <a href="/compliance/georgia" class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline inline-block pt-1">
+                            Georgia Full Policy &rarr;
+                        </a>
+                    </div>
+
+                    <!-- California -->
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-gray-900 dark:text-white">🐻 California</span>
+                            <span class="text-[9px] uppercase px-1.5 py-0.2 rounded bg-blue-600 text-white font-black">CPUC TNC</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            CPUC Decision 13-09-045. Direct Hotline: <strong>1-800-894-9444</strong> • Email: <span class="font-mono text-[10px]">CIU_intake@cpuc.ca.gov</span>.
+                        </p>
+                        <a href="/compliance/california" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-block pt-1">
+                            California Full Policy &rarr;
+                        </a>
+                    </div>
+
+                    <!-- Michigan -->
+                    <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-extrabold text-xs text-gray-900 dark:text-white">🚗 Michigan</span>
+                            <span class="text-[9px] uppercase px-1.5 py-0.2 rounded bg-emerald-600 text-white font-black">PA 345</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Michigan Public Act 345 of 2016 (Sec. 37). Statutory immediate deactivation within <strong>two (2) minutes</strong> of report.
+                        </p>
+                        <a href="/compliance/michigan" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-block pt-1">
+                            Michigan Full Policy &rarr;
+                        </a>
+                    </div>
+                </div>
             </section>
 
             <section class="bg-white dark:bg-[#111] p-6 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm">

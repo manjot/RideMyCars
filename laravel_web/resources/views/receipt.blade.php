@@ -348,6 +348,26 @@
                 </div>
             </div>
 
+            <!-- Zero-Tolerance Drug and Alcohol Policy Bar (Mandatory State DPS & CPUC Requirement) -->
+            <div class="p-4 sm:p-5 bg-amber-500/10 dark:bg-amber-500/15 border-t border-b border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2.5 text-center sm:text-left">
+                    <span class="text-base shrink-0">🛡️</span>
+                    <div>
+                        <span class="font-extrabold text-gray-900 dark:text-white">Safety Compliance:</span>
+                        <span class="text-gray-600 dark:text-gray-300 ml-1">RideMyCars maintains a strict, absolute zero-tolerance drug and alcohol policy.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="/zero-tolerance-policy" class="font-black text-amber-700 dark:text-amber-400 hover:underline px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center gap-1">
+                        <span>Zero Tolerance Policy</span>
+                        <span>&rarr;</span>
+                    </a>
+                    <a href="tel:+18552033177" class="font-bold text-red-600 dark:text-red-400 hover:underline px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20" title="Report Driver Impairment">
+                        🚨 Safety Hotline
+                    </a>
+                </div>
+            </div>
+
             <!-- Grievance & Legal Footer -->
             <div class="p-6 sm:p-8 bg-gray-100/60 dark:bg-black/40 border-t border-gray-200 dark:border-white/10 text-center text-xs text-gray-500 dark:text-gray-400 space-y-3">
                 <div class="max-w-2xl mx-auto p-4 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 text-left text-[11px] space-y-1">
@@ -358,6 +378,16 @@
                         Email: <a href="mailto:{{ $snapshot['company_email'] ?? 'support@ridemycars.com' }}" class="text-amber-500">{{ $snapshot['company_email'] ?? 'support@ridemycars.com' }}</a>
                         &bull; Phone: {{ $snapshot['company_phone'] ?? '+1 (800) 555-RIDE' }}
                         &bull; GST/VAT: {{ $snapshot['company_gst_vat'] ?? 'N/A' }}
+                    </div>
+                    <div class="pt-2 mt-2 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-[10px] text-gray-500">
+                        <span>State Regulators:</span>
+                        <div class="flex items-center gap-3 font-semibold">
+                            <a href="/compliance/georgia" class="hover:text-amber-500">Georgia DPS</a>
+                            <span>&bull;</span>
+                            <a href="/compliance/california" class="hover:text-amber-500">CPUC (1-800-894-9444)</a>
+                            <span>&bull;</span>
+                            <a href="/compliance/michigan" class="hover:text-amber-500">Michigan PA 345</a>
+                        </div>
                     </div>
                 </div>
 
