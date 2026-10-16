@@ -2194,26 +2194,55 @@
                                 <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Driver Compliance</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="/zero-tolerance-policy" class="text-amber-400 hover:text-amber-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5" title="State Regulatory Zero-Tolerance Policies (Georgia, California, Michigan)">
+                        <li x-data="{ ztpOpen: false }">
+                            <button type="button" 
+                                    @click="ztpOpen = !ztpOpen" 
+                                    :aria-expanded="ztpOpen"
+                                    class="w-full text-amber-400 hover:text-amber-300 font-semibold transition-colors duration-150 flex items-center justify-between group py-0.5 cursor-pointer text-left focus:outline-none" 
+                                    title="Click to expand/collapse State Regulatory Zero-Tolerance Policies">
                                 <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">Zero Tolerance Policy</span>
-                                <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 ml-1">GA/CA/MI</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/compliance/georgia" class="text-zinc-400 hover:text-amber-300 transition-colors duration-150 flex items-center justify-between group py-0.5 pl-2 text-[12px]">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ Georgia (Atlanta DPS)</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/compliance/california" class="text-zinc-400 hover:text-blue-300 transition-colors duration-150 flex items-center justify-between group py-0.5 pl-2 text-[12px]">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ California (CPUC TNC)</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/compliance/michigan" class="text-zinc-400 hover:text-emerald-300 transition-colors duration-150 flex items-center justify-between group py-0.5 pl-2 text-[12px]">
-                                <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ Michigan (PA 345)</span>
-                            </a>
+                                <div class="flex items-center gap-1.5 shrink-0 ml-1">
+                                    <span class="text-[8px] sm:text-[8.5px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">GA/CA/MI</span>
+                                    <svg class="w-3 h-3 text-amber-400/90 group-hover:text-amber-300 transition-transform duration-200 shrink-0" 
+                                         :class="{'rotate-90': ztpOpen}" 
+                                         fill="none" 
+                                         viewBox="0 0 24 24" 
+                                         stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </div>
+                            </button>
+                            <ul x-show="ztpOpen" 
+                                x-transition:enter="transition ease-out duration-150"
+                                x-transition:enter-start="opacity-0 -translate-y-1"
+                                x-transition:enter-end="opacity-100 translate-y-0"
+                                x-transition:leave="transition ease-in duration-100"
+                                x-transition:leave-start="opacity-100 translate-y-0"
+                                x-transition:leave-end="opacity-0 -translate-y-1"
+                                class="mt-1 space-y-1 pl-2 border-l border-amber-500/25 ml-1"
+                                style="display: none;">
+                                <li>
+                                    <a href="/zero-tolerance-policy" class="text-amber-400/90 hover:text-amber-300 transition-colors duration-150 flex items-center justify-between group py-0.5 text-[12px]">
+                                        <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ All States Hub</span>
+                                        <span class="text-[8px] uppercase px-1 rounded bg-amber-500/15 text-amber-400 font-bold border border-amber-500/30">Hub</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/compliance/georgia" class="text-zinc-400 hover:text-amber-300 transition-colors duration-150 flex items-center justify-between group py-0.5 text-[12px]">
+                                        <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ Georgia (Atlanta DPS)</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/compliance/california" class="text-zinc-400 hover:text-blue-300 transition-colors duration-150 flex items-center justify-between group py-0.5 text-[12px]">
+                                        <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ California (CPUC TNC)</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/compliance/michigan" class="text-zinc-400 hover:text-emerald-300 transition-colors duration-150 flex items-center justify-between group py-0.5 text-[12px]">
+                                        <span class="group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">↳ Michigan (PA 345)</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         <li>
                             <a href="/legal" class="text-zinc-400 hover:text-white transition-colors duration-150 flex items-center justify-between group py-0.5">
