@@ -3995,39 +3995,51 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         $output['banner_sync_err'] = $e->getMessage();
     }
 
+    // Seed Investor Portal plans, rules, and demo accounts (Always run)
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'InvestorPortalSeeder', '--force' => true]);
+        $output['investor_portal_seeded'] = true;
+    } catch (\Throwable $e) {
+        $output['investor_portal_seed_err'] = $e->getMessage();
+    }
+
     $quickSync = $request->boolean('quick_sync');
 
     if (!$quickSync) {
         try {
             \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
             $output['seed'] = \Illuminate\Support\Facades\Artisan::output();
+        } catch (\Throwable $e) {
+            $output['seeding_err'] = $e->getMessage();
+        }
+
+        try {
             \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'VehicleSeeder', '--force' => true]);
             $output['vehicle_seed'] = \Illuminate\Support\Facades\Artisan::output();
+        } catch (\Throwable $e) {}
+
+        try {
             \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RideCategorySeeder', '--force' => true]);
             \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
             $output['ride_categories_seeded'] = true;
+        } catch (\Throwable $e) {}
+
+        try {
             \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'HireDriverSeeder', '--force' => true]);
             $output['hire_driver_seed'] = \Illuminate\Support\Facades\Artisan::output();
+        } catch (\Throwable $e) {}
 
-            // Seed Daily, Weekly, Monthly Incentive Programs
-            try {
-                \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
-                $output['incentive_programs_seeded'] = \App\Models\Incentive::count();
-            } catch (\Throwable $e) {
-                $output['incentive_programs_seed_err'] = $e->getMessage();
-            }
+        // Seed Daily, Weekly, Monthly Incentive Programs
+        try {
+            \App\Services\IncentiveService::seedDefaultIncentivesIfEmpty(true);
+            $output['incentive_programs_seeded'] = \App\Models\Incentive::count();
+        } catch (\Throwable $e) {
+            $output['incentive_programs_seed_err'] = $e->getMessage();
+        }
 
-            // Seed Investor Portal plans, rules, and demo accounts
-            try {
-                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'InvestorPortalSeeder', '--force' => true]);
-                $output['investor_portal_seeded'] = true;
-            } catch (\Throwable $e) {
-                $output['investor_portal_seed_err'] = $e->getMessage();
-            }
-
-            // Seed Customer Dummy Data for Receipts (shachisheh@gmail.com)
-            try {
-                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CustomerReceiptDummySeeder', '--force' => true]);
+        // Seed Customer Dummy Data for Receipts (shachisheh@gmail.com)
+        try {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CustomerReceiptDummySeeder', '--force' => true]);
                 $output['customer_receipt_dummy_seed'] = 'Seeded successfully for shachisheh@gmail.com';
                 
                 $testCust = \App\Models\User::where('email', 'shachisheh@gmail.com')->first();
@@ -4059,9 +4071,6 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                     $output['regenerate_receipt_pdfs_err'] = $e->getMessage();
                 }
             }
-        } catch (\Throwable $e) {
-            $output['seeding_err'] = $e->getMessage();
-        }
     }
 
         // Ensure all verified and active drivers are marked Live so they can go online

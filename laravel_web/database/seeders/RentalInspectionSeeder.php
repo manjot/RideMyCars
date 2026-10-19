@@ -31,11 +31,16 @@ class RentalInspectionSeeder extends Seeder
             ['make' => 'Mercedes-Benz', 'model' => 'E-Class', 'year' => '2023', 'category' => 'Luxury', 'type' => 'Sedan', 'daily_rate' => 120.00, 'is_available' => true, 'image_url' => 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=1200&q=80']
         );
 
+        $defaultUser = User::first();
+        $clientId = $defaultUser ? $defaultUser->id : 1;
+        $driverUser = User::where('id', '!=', $clientId)->first() ?? $defaultUser;
+        $driverId = $driverUser ? $driverUser->id : $clientId;
+
         $booking1 = DriverBooking::firstOrCreate(
             ['booking_code' => 'RMC-BK-9011'],
             [
-                'client_id' => 1,
-                'driver_id' => 1,
+                'client_id' => $clientId,
+                'driver_id' => $driverId,
                 'country' => 'Ghana',
                 'service_category' => 'private',
                 'car_type' => 'Toyota Camry',
@@ -61,8 +66,8 @@ class RentalInspectionSeeder extends Seeder
         $booking2 = DriverBooking::firstOrCreate(
             ['booking_code' => 'RMC-BK-9022'],
             [
-                'client_id' => 1,
-                'driver_id' => 2,
+                'client_id' => $clientId,
+                'driver_id' => $driverId,
                 'country' => 'Ghana',
                 'service_category' => 'private',
                 'car_type' => 'Honda Civic',
