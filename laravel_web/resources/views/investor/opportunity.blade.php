@@ -127,6 +127,169 @@
                 </div>
             </div>
 
+            <!-- ========================================================================= -->
+            <!-- UNITED STATES MULTI-STATE EXPANSION: CALIFORNIA, ATLANTA & GEORGIA         -->
+            <!-- ========================================================================= -->
+            <div class="mb-16">
+                <div class="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#131926] border-2 border-blue-500/30 dark:border-blue-500/40 shadow-xl space-y-8">
+                    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
+                        <div>
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/15 border border-blue-300 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 text-xs font-black uppercase tracking-wider mb-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span>United States Expansion Phase 1 • Now Live</span>
+                            </div>
+                            <h2 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                                California, Atlanta & Georgia Commercial Fleets
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 max-w-2xl leading-relaxed">
+                                Direct capital syndication across three premier US commercial corridors. Investment opportunities are officially open with standardized institutional entry points: <strong>starts with $200,000 USD (4%), $500,000 USD (11%), and $1,000,000 USD (22%)</strong>.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="/investor/plans?country=california" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-xs">
+                                🐻 California Hub
+                            </a>
+                            <a href="/investor/plans?country=atlanta" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider transition-all shadow-xs">
+                                🍑 Atlanta Metro
+                            </a>
+                            <a href="/investor/plans?country=georgia" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-xs">
+                                🏛️ Georgia State
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 3 State Hub Profiles -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- California -->
+                        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl">🐻</span>
+                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30">CPUC Authorized</span>
+                            </div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">California Fleet Hub</h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Operating under CPUC Decision 13-09-045 across high-density metro corridors (Los Angeles, San Francisco Bay Area, San Diego, and Silicon Valley).
+                            </p>
+                            <div class="pt-2 text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                                Direct Escrow: Delaware NDFG LLC Custody
+                            </div>
+                        </div>
+
+                        <!-- Atlanta -->
+                        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl">🍑</span>
+                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">Airport & Logistics</span>
+                            </div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">Atlanta Metro Fleet Hub</h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Anchored around Hartsfield-Jackson International (ATL), Midtown tech spine, and Buckhead commercial sectors with high-frequency airport transit.
+                            </p>
+                            <div class="pt-2 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                                High-Density Corridor Deployment
+                            </div>
+                        </div>
+
+                        <!-- Georgia -->
+                        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl">🏛️</span>
+                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">DPS O.C.G.A. § 40-1-193</span>
+                            </div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">Georgia Statewide Hub</h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Statewide commercial mobility network spanning Savannah logistics ports, Augusta, and Macon regional inter-city enterprise transit.
+                            </p>
+                            <div class="pt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                Southeast Distribution & Mobility Spine
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 Standardized US Investment Tiers -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <div class="text-center max-w-xl mx-auto mb-6">
+                            <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Standardized Commitment Tiers across California, Atlanta & Georgia</span>
+                            <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1">Select an Investment Allocation Tier</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Tier 1 -->
+                            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-black uppercase text-blue-600 dark:text-blue-400">Tier 1 • Seed</span>
+                                        <span class="text-[10px] font-bold text-slate-500">Live Offering</span>
+                                    </div>
+                                    <div class="text-3xl font-black text-slate-900 dark:text-white mb-1">$200,000 USD</div>
+                                    <div class="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-center font-black text-blue-700 dark:text-blue-300 text-xs mb-4">
+                                        4.0% Fixed Equity Stake
+                                    </div>
+                                    <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 mb-6">
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Direct state commercial fleet stake</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Quarterly USD dividend distributions</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Real-time state ledger dashboard</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Year 3 structured buyout option</li>
+                                    </ul>
+                                </div>
+                                <a href="/investor/contact?country=California&interested_tranche=California+Tranche+CA-1+($200,000+USD+•+4%+Equity)" class="w-full py-2.5 text-center rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white transition-all">
+                                    Apply for Tier 1 ($200k) →
+                                </a>
+                            </div>
+
+                            <!-- Tier 2 -->
+                            <div class="p-6 rounded-2xl bg-white dark:bg-[#131926] border-2 border-blue-500 ring-4 ring-blue-500/10 shadow-lg flex flex-col justify-between relative">
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-blue-600 text-white font-black text-[9px] uppercase tracking-wider shadow-xs">
+                                    ★ Most Selected
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2 mt-1">
+                                        <span class="text-xs font-black uppercase text-blue-600 dark:text-blue-400">Tier 2 • Growth</span>
+                                        <span class="text-[10px] font-bold text-slate-500">Live Offering</span>
+                                    </div>
+                                    <div class="text-3xl font-black text-slate-900 dark:text-white mb-1">$500,000 USD</div>
+                                    <div class="p-2.5 rounded-xl bg-blue-600 text-white text-center font-black text-xs mb-4 shadow-xs">
+                                        11.0% Fixed Equity Stake
+                                    </div>
+                                    <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 mb-6">
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Priority corridor allocation rights</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Accelerated quarterly distributions</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Full multi-hub telemetry visibility</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Enhanced Year 3 structured buyout terms</li>
+                                    </ul>
+                                </div>
+                                <a href="/investor/contact?country=California&interested_tranche=California+Tranche+CA-2+($500,000+USD+•+11%+Equity)" class="w-full py-2.5 text-center rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition-all">
+                                    Apply for Tier 2 ($500k) →
+                                </a>
+                            </div>
+
+                            <!-- Tier 3 -->
+                            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-black uppercase text-emerald-600 dark:text-emerald-400">Tier 3 • Venture</span>
+                                        <span class="text-[10px] font-bold text-slate-500">Live Offering</span>
+                                    </div>
+                                    <div class="text-3xl font-black text-slate-900 dark:text-white mb-1">$1,000,000 USD</div>
+                                    <div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-center font-black text-emerald-700 dark:text-emerald-300 text-xs mb-4">
+                                        22.0% Fixed Equity Stake
+                                    </div>
+                                    <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-2 mb-6">
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Flagship institutional allocation</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Maximum dividend disbursement stake</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Advisory Board observer seat consideration</li>
+                                        <li class="flex items-center gap-1.5"><span class="text-emerald-500 font-bold">✓</span> Premium Year 3 structured buyout return</li>
+                                    </ul>
+                                </div>
+                                <a href="/investor/contact?country=California&interested_tranche=California+Tranche+CA-3+($1,000,000+USD+•+22%+Equity)" class="w-full py-2.5 text-center rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white transition-all">
+                                    Apply for Tier 3 ($1M) →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Capital Remittance Channels Grid with Top Accent Stripes -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-indigo-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">

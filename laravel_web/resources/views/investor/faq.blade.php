@@ -19,13 +19,56 @@
 
             <!-- FAQ Accordion using Alpine.js with Solid Visible Borders -->
             <div class="space-y-4" x-data="{ active: 1 }">
-                <!-- Q1 -->
-                <div class="rounded-2xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all">
-                    <button @click="active = (active === 1 ? null : 1)" class="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                        <span>Why does Ride My Cars gate its investment opportunity behind dynamic accreditation?</span>
-                        <span class="text-amber-600 dark:text-brand-400 text-xl font-black" x-text="active === 1 ? '−' : '+'"></span>
+                <!-- Q1: US State Opportunities (California, Atlanta, Georgia) -->
+                <div class="rounded-2xl bg-white dark:bg-[#131926] border-2 border-blue-500/40 shadow-sm overflow-hidden transition-all">
+                    <button @click="active = (active === 1 ? null : 1)" class="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        <span class="flex items-center gap-2">
+                            <span>🇺🇸</span>
+                            <span>What are the investment terms for the open offerings in California, Atlanta, and Georgia?</span>
+                        </span>
+                        <span class="text-blue-600 dark:text-blue-400 text-xl font-black" x-text="active === 1 ? '−' : '+'"></span>
                     </button>
-                    <div x-show="active === 1" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+                    <div x-show="active === 1" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+                        <p>Investment opportunities are officially open across <strong>California</strong>, <strong>Atlanta</strong>, and <strong>Georgia</strong>. Each state offers three standardized institutional commitment tiers:</p>
+                        <ul class="space-y-2 pl-4 border-l-2 border-blue-500/30">
+                            <li>• <strong>Tier 1 (Seed)</strong>: Starts with <strong>$200,000 USD</strong> at <strong>4.0%</strong> fixed equity. Regional angel entry with quarterly USD dividend payouts and live fleet telemetry.</li>
+                            <li>• <strong>Tier 2 (Growth)</strong>: <strong>$500,000 USD</strong> at <strong>11.0%</strong> fixed equity (★ Primary Syndicate Choice). Priority multi-hub commercial corridor deployment with enhanced Year 3 liquidity terms.</li>
+                            <li>• <strong>Tier 3 (Venture)</strong>: <strong>$1,000,000 USD (1 Million USD)</strong> at <strong>22.0%</strong> fixed equity. Flagship institutional allocation with maximum dividend distribution and Advisory Board observer seat consideration.</li>
+                        </ul>
+                        <p>All allocations feature automated quarterly USD distributions through domestic US Fedwire and are governed under the Delaware NDFG LLC Operating Agreement.</p>
+                        <div class="pt-2">
+                            <a href="/investor/plans?country=california" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Explore US State Plans in Detail →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q2: Regulatory Framework for California, Atlanta, Georgia -->
+                <div class="rounded-2xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all">
+                    <button @click="active = (active === 2 ? null : 2)" class="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        <span class="flex items-center gap-2">
+                            <span>⚖️</span>
+                            <span>How are California, Atlanta, and Georgia state operations regulated?</span>
+                        </span>
+                        <span class="text-blue-600 dark:text-blue-400 text-xl font-black" x-text="active === 2 ? '−' : '+'"></span>
+                    </button>
+                    <div x-show="active === 2" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+                        <p>Capital syndication is conducted in compliance with <strong>SEC Regulation D, Rule 506(c)</strong>. Commercial fleet operations strictly adhere to local statutory authorities:</p>
+                        <ul class="space-y-1.5 pl-4 border-l-2 border-slate-300 dark:border-slate-700">
+                            <li>• <strong>California</strong>: Regulated under California Public Utilities Commission (CPUC Decision 13-09-045) across Los Angeles, Bay Area, San Diego, and Silicon Valley hubs.</li>
+                            <li>• <strong>Atlanta</strong>: Governed under municipal commercial transportation frameworks and Hartsfield-Jackson Atlanta International Airport (ATL) commercial carrier licensing.</li>
+                            <li>• <strong>Georgia</strong>: Operating under Georgia Department of Public Safety (DPS) Transportation Network Company compliance pursuant to O.C.G.A. § 40-1-193.</li>
+                        </ul>
+                        <p>Capital settlement executes into dedicated Delaware LLC escrow custody within 5 business days following investor accreditation.</p>
+                    </div>
+                </div>
+
+                <!-- Q3: Dynamic Accreditation -->
+                <div class="rounded-2xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all">
+                    <button @click="active = (active === 3 ? null : 3)" class="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                        <span>Why does Ride My Cars gate its investment opportunity behind dynamic accreditation?</span>
+                        <span class="text-amber-600 dark:text-brand-400 text-xl font-black" x-text="active === 3 ? '−' : '+'"></span>
+                    </button>
+                    <div x-show="active === 3" x-collapse class="px-6 pb-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
                         <p>International securities regulations differ significantly across sovereign jurisdictions. Because this offering is an exempt private placement under U.S. SEC Regulation D (Rule 506(c)), UK FCA FPO guidelines, Canadian NI 45-106, and Ghana SEC rules, we cannot present an open public offer.</p>
                         <p>Our dynamic onboarding gateway determines your regulatory tier based on your residency and requires appropriate documentation to protect both NDFG LLC and our investor partners from regulatory friction.</p>
                     </div>

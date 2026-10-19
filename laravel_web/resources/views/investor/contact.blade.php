@@ -13,7 +13,7 @@
                 </div>
                 <h1 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">Contact Investor Relations</h1>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mt-4 leading-relaxed font-medium">
-                    Direct communications channel with the NDFG LLC Compliance Framework Desk and Ride My Cars (Ghana) regional directors.
+                    Direct institutional communications channel for <strong>California</strong>, <strong>Atlanta</strong>, and <strong>Georgia</strong> offerings ($200k/4%, $500k/11%, $1M/22%) and Ride My Cars <strong>Ghana</strong> regional expansion.
                 </p>
             </div>
 
@@ -111,33 +111,74 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Primary Country *</label>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Primary Jurisdiction / State *</label>
+                                    @php
+                                        $reqCountry = strtolower(request('country', request('state', '')));
+                                    @endphp
                                     <select name="country" required class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 transition-colors">
-                                        <option value="USA">United States</option>
-                                        <option value="Ghana">Ghana</option>
-                                        <option value="Canada">Canada</option>
-                                        <option value="United Kingdom">United Kingdom</option>
-                                        <option value="European Union">European Union</option>
-                                        <option value="Other Africa">Other African Country</option>
-                                        <option value="Other">Rest of World</option>
+                                        <optgroup label="🇺🇸 US State Offerings (Live & Open)">
+                                            <option value="California" {{ $reqCountry === 'california' ? 'selected' : '' }}>🐻 California (Live Offering • $200k / $500k / $1M)</option>
+                                            <option value="Atlanta" {{ $reqCountry === 'atlanta' ? 'selected' : '' }}>🍑 Atlanta Metro (Live Offering • $200k / $500k / $1M)</option>
+                                            <option value="Georgia" {{ $reqCountry === 'georgia' ? 'selected' : '' }}>🏛️ Georgia (Live Offering • $200k / $500k / $1M)</option>
+                                            <option value="USA" {{ ($reqCountry === 'usa' || $reqCountry === 'united states') ? 'selected' : '' }}>🇺🇸 United States (Other / Multi-State)</option>
+                                        </optgroup>
+                                        <optgroup label="🌍 International Offerings">
+                                            <option value="Ghana" {{ ($reqCountry === 'ghana' || $reqCountry === 'gha') ? 'selected' : '' }}>🇬🇭 Ghana (Live Offering)</option>
+                                            <option value="Canada" {{ $reqCountry === 'canada' ? 'selected' : '' }}>🇨🇦 Canada</option>
+                                            <option value="United Kingdom" {{ ($reqCountry === 'united kingdom' || $reqCountry === 'uk') ? 'selected' : '' }}>🇬🇧 United Kingdom</option>
+                                            <option value="European Union" {{ $reqCountry === 'european union' ? 'selected' : '' }}>🇪🇺 European Union</option>
+                                            <option value="South Africa" {{ $reqCountry === 'south africa' ? 'selected' : '' }}>🇿🇦 South Africa</option>
+                                            <option value="Other Africa" {{ $reqCountry === 'other africa' ? 'selected' : '' }}>🌍 Other African Country</option>
+                                            <option value="Other">Rest of World</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Tranche of Interest</label>
+                                    @php
+                                        $reqTranche = request('interested_tranche', request('tranche', ''));
+                                    @endphp
                                     <select name="interested_tranche" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:bg-white focus:border-brand-500 transition-colors">
-                                        @if(isset($plans) && $plans->isNotEmpty())
-                                            @foreach($plans as $plan)
-                                                <option value="Tranche {{ $plan->tranche_code }} ({{ $plan->tier_name }} - {{ $plan->equity_percentage }}% Equity)" {{ (request('interested_tranche') == $plan->tranche_code || str_contains(request('interested_tranche', ''), $plan->tranche_code)) ? 'selected' : '' }}>
-                                                    Tranche {{ $plan->tranche_code }}: {{ number_format($plan->capital_commitment_ghc) }} GHC (${{ number_format($plan->capital_commitment_usd) }}) - {{ $plan->tier_name }} ({{ $plan->equity_percentage }}% Equity)
-                                                </option>
-                                            @endforeach
-                                        @else
-                                            <option value="Tranche B (Growth Tier - 14% Equity)">Tranche B: 1,440,000 GHC ($120k)</option>
-                                            <option value="Tranche D (Wealth builder - 1.20% Equity)">Tranche D: 120,000 GHC ($10k)</option>
-                                            <option value="Tranche A (Seed Tier - 7% Equity)">Tranche A: 720,000 GHC ($60k)</option>
-                                            <option value="Tranche C (Venture Tier - 22% Equity)">Tranche C: 2,640,000 GHC ($220k)</option>
-                                        @endif
-                                        <option value="General Inquiry">General Private Placement Inquiry</option>
+                                        <optgroup label="🐻 California Offerings ($200k / $500k / $1M)">
+                                            <option value="California Tranche CA-1 ($200,000 USD • 4% Equity)" {{ (str_contains($reqTranche, 'CA-1') || str_contains($reqTranche, 'California Tier 1')) ? 'selected' : '' }}>
+                                                California Tier 1: $200,000 USD (4% Fixed Equity)
+                                            </option>
+                                            <option value="California Tranche CA-2 ($500,000 USD • 11% Equity)" {{ (str_contains($reqTranche, 'CA-2') || str_contains($reqTranche, 'California Tier 2')) ? 'selected' : '' }}>
+                                                California Tier 2: $500,000 USD (11% Fixed Equity) ★
+                                            </option>
+                                            <option value="California Tranche CA-3 ($1,000,000 USD • 22% Equity)" {{ (str_contains($reqTranche, 'CA-3') || str_contains($reqTranche, 'California Tier 3')) ? 'selected' : '' }}>
+                                                California Tier 3: $1,000,000 USD (22% Fixed Equity)
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="🍑 Atlanta Metro Offerings ($200k / $500k / $1M)">
+                                            <option value="Atlanta Tranche ATL-1 ($200,000 USD • 4% Equity)" {{ (str_contains($reqTranche, 'ATL-1') || str_contains($reqTranche, 'Atlanta Tier 1')) ? 'selected' : '' }}>
+                                                Atlanta Tier 1: $200,000 USD (4% Fixed Equity)
+                                            </option>
+                                            <option value="Atlanta Tranche ATL-2 ($500,000 USD • 11% Equity)" {{ (str_contains($reqTranche, 'ATL-2') || str_contains($reqTranche, 'Atlanta Tier 2')) ? 'selected' : '' }}>
+                                                Atlanta Tier 2: $500,000 USD (11% Fixed Equity) ★
+                                            </option>
+                                            <option value="Atlanta Tranche ATL-3 ($1,000,000 USD • 22% Equity)" {{ (str_contains($reqTranche, 'ATL-3') || str_contains($reqTranche, 'Atlanta Tier 3')) ? 'selected' : '' }}>
+                                                Atlanta Tier 3: $1,000,000 USD (22% Fixed Equity)
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="🏛️ Georgia State Offerings ($200k / $500k / $1M)">
+                                            <option value="Georgia Tranche GA-1 ($200,000 USD • 4% Equity)" {{ (str_contains($reqTranche, 'GA-1') || str_contains($reqTranche, 'Georgia Tier 1')) ? 'selected' : '' }}>
+                                                Georgia Tier 1: $200,000 USD (4% Fixed Equity)
+                                            </option>
+                                            <option value="Georgia Tranche GA-2 ($500,000 USD • 11% Equity)" {{ (str_contains($reqTranche, 'GA-2') || str_contains($reqTranche, 'Georgia Tier 2')) ? 'selected' : '' }}>
+                                                Georgia Tier 2: $500,000 USD (11% Fixed Equity) ★
+                                            </option>
+                                            <option value="Georgia Tranche GA-3 ($1,000,000 USD • 22% Equity)" {{ (str_contains($reqTranche, 'GA-3') || str_contains($reqTranche, 'Georgia Tier 3')) ? 'selected' : '' }}>
+                                                Georgia Tier 3: $1,000,000 USD (22% Fixed Equity)
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="🇬🇭 Ghana Cohort Offerings">
+                                            <option value="Tranche B (Growth Tier - 14% Equity)" {{ ($reqTranche === 'B' || str_contains($reqTranche, 'Tranche B')) ? 'selected' : '' }}>Tranche B: 1,440,000 GHC ($120k • 14% Equity)</option>
+                                            <option value="Tranche A (Seed Tier - 7% Equity)" {{ ($reqTranche === 'A' || str_contains($reqTranche, 'Tranche A')) ? 'selected' : '' }}>Tranche A: 720,000 GHC ($60k • 7% Equity)</option>
+                                            <option value="Tranche C (Venture Tier - 22% Equity)" {{ ($reqTranche === 'C' || str_contains($reqTranche, 'Tranche C')) ? 'selected' : '' }}>Tranche C: 2,640,000 GHC ($220k • 22% Equity)</option>
+                                            <option value="Tranche D (Wealth builder - 1.20% Equity)" {{ ($reqTranche === 'D' || str_contains($reqTranche, 'Tranche D')) ? 'selected' : '' }}>Tranche D: 120,000 GHC ($10k • 1.2% Equity)</option>
+                                        </optgroup>
+                                        <option value="General Inquiry" {{ empty($reqTranche) ? 'selected' : '' }}>General Private Placement Inquiry</option>
                                     </select>
                                 </div>
                             </div>

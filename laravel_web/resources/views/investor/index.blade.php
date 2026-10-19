@@ -14,24 +14,45 @@
             <div class="max-w-7xl 2xl:max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
                 <div class="text-center max-w-4xl mx-auto space-y-6">
                     
-                    <!-- Compliance Badge -->
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-black uppercase tracking-wider shadow-xs">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Multi-Jurisdictional Private Placement Hub</span>
-                        <span class="text-slate-300 dark:text-slate-600">•</span>
-                        <span class="text-slate-700 dark:text-slate-300 font-bold">SEC / FCA / ESMA Compliant</span>
+                    <!-- Compliance Badge & Live State Offering Announcement -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-black uppercase tracking-wider shadow-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Multi-Jurisdictional Private Placement Hub</span>
+                            <span class="text-slate-300 dark:text-slate-600">•</span>
+                            <span class="text-slate-700 dark:text-slate-300 font-bold">SEC / FCA / ESMA Compliant</span>
+                        </div>
+                    </div>
+
+                    <!-- Direct US State Investment Alert Banner -->
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-amber-500/10 to-emerald-500/10 border-2 border-blue-500/30 dark:border-blue-500/40 shadow-sm max-w-3xl mx-auto text-left sm:text-center">
+                        <div class="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs">
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-600 text-white font-black uppercase text-[10px] tracking-wider shrink-0 shadow-xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                                <span>Now Open • 3 US States</span>
+                            </div>
+                            <span class="text-slate-900 dark:text-white font-bold">
+                                🐻 California • 🍑 Atlanta • 🏛️ Georgia
+                            </span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">
+                                Starts with <strong>$200,000 USD (4%)</strong> • <strong>$500,000 USD (11%)</strong> • <strong>$1M USD (22%)</strong>
+                            </span>
+                            <a href="/investor/plans?country=california" class="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] uppercase tracking-wider transition-all shrink-0">
+                                View Plans →
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Main Heading -->
                     <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-                        Powering West Africa's <br class="hidden sm:inline">
+                        Powering West Africa & US <br class="hidden sm:inline">
                         <span class="text-amber-500 dark:text-amber-400">
                             Highest-Yielding Super-App
                         </span> Fleet Engine
                     </h1>
 
                     <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-medium">
-                        Ride My Cars New Development Finance Group (NDFG) LLC invites accredited, institutional, and sophisticated private placement partners to participate in our single-cohort expansion offering backed by an elite <strong>92% net operating margin</strong>.
+                        Ride My Cars New Development Finance Group (NDFG) LLC invites accredited, institutional, and sophisticated private placement partners to participate in our active offerings across <strong>California, Atlanta, and Georgia</strong> starting at <strong>$200k (4%), $500k (11%), and $1M (22%)</strong>, alongside our high-velocity <strong>Ghana</strong> single cohort.
                     </p>
 
                     <!-- Real-Time Micro-Transaction Ticker Card -->
@@ -184,22 +205,41 @@
                          :class="{ 'ring-2 ring-blue-500 shadow-lg': activeRegion === 'us' }">
                         <div>
                             <div class="flex items-center justify-between mb-4">
-                                <span class="text-3xl">🇺🇸</span>
-                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40">
-                                    Rule 506(c) Reg D
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-3xl">🇺🇸</span>
+                                    <span class="text-sm font-black text-slate-900 dark:text-white">CA • ATL • GA</span>
+                                </div>
+                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40">
+                                    3 States Open Now
                                 </span>
                             </div>
-                            <h3 class="text-lg font-black text-slate-900 dark:text-white mb-2">United States</h3>
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white mb-1">United States (California, Atlanta & Georgia)</h3>
+                            <div class="text-[11px] font-black text-blue-600 dark:text-blue-400 mb-2">
+                                Starts at $200k (4%) • $500k (11%) • $1M (22%)
+                            </div>
                             <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                Regulation D, Rule 506(c) Accreditation Gate. Verified accredited investor status ($200k+ income or $1M+ net worth) with certified CPA or wealth manager letter verification.
+                                Active capital deployment into California (CPUC Decision 13-09-045), Atlanta Metro, and Georgia (DPS O.C.G.A. § 40-1-193) commercial corridors under Delaware NDFG LLC Operating Agreement and SEC Rule 506(c).
                             </p>
                             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
-                                <div>• <strong>Escrow Rail:</strong> International Fedwire / SWIFT</div>
-                                <div>• <strong>Required:</strong> Certified CPA Letter / Wealth Proof</div>
+                                <div>• <strong>Escrow Rail:</strong> Domestic US Fedwire / SWIFT Custody</div>
+                                <div>• <strong>3 States Open:</strong> 🐻 California • 🍑 Atlanta • 🏛️ Georgia</div>
+                                <div>• <strong>Entry Tiers:</strong> $200,000 | $500,000 | $1,000,000 USD</div>
+                            </div>
+                            <!-- State Direct Links -->
+                            <div class="grid grid-cols-3 gap-1.5 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <a href="/investor/plans?country=california" class="px-2 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[11px] font-bold text-center hover:bg-blue-600 hover:text-white transition-all">
+                                    🐻 CA Plans
+                                </a>
+                                <a href="/investor/plans?country=atlanta" class="px-2 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-[11px] font-bold text-center hover:bg-amber-500 hover:text-black transition-all">
+                                    🍑 Atlanta
+                                </a>
+                                <a href="/investor/plans?country=georgia" class="px-2 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold text-center hover:bg-emerald-600 hover:text-white transition-all">
+                                    🏛️ Georgia
+                                </a>
                             </div>
                         </div>
-                        <a href="/investor/register?country=USA" class="mt-6 inline-flex items-center justify-center w-full py-2.5 rounded-xl bg-slate-100 hover:bg-blue-600 hover:text-white dark:bg-slate-800 dark:hover:bg-blue-600 text-xs font-bold text-slate-800 dark:text-slate-200 transition-all border border-slate-200 dark:border-slate-700">
-                            Accredit under US SEC 506(c) →
+                        <a href="/investor/plans?country=california" class="mt-4 inline-flex items-center justify-center w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25">
+                            Explore All US State Offerings →
                         </a>
                     </div>
 
@@ -312,8 +352,16 @@
         <!-- ========================================================================= -->
         <section class="py-16 sm:py-20 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#0b0f17]"
                  x-data="{
-                    selectedTranche: 'B',
-                    tranches: {
+                    activeRegion: 'usa',
+                    activeState: 'California',
+                    selectedUsTier: 'T2',
+                    selectedGhTranche: 'B',
+                    usTiers: {
+                        'T1': { code: 'Tier 1', name: 'Seed Tier', usd: 200000, equity: 4.0, qDividendUsd: 14000, yr1Usd: 56000, yr3ExitUsd: 348000, desc: 'California CPUC / Atlanta Metro / Georgia DPS commercial mobility launch.' },
+                        'T2': { code: 'Tier 2', name: 'Growth Tier', usd: 500000, equity: 11.0, qDividendUsd: 38500, yr1Usd: 154000, yr3ExitUsd: 962000, desc: 'Prime multi-corridor syndicate allocation across CA, ATL, and GA.' },
+                        'T3': { code: 'Tier 3', name: 'Venture Tier', usd: 1000000, equity: 22.0, qDividendUsd: 77000, yr1Usd: 308000, yr3ExitUsd: 2024000, desc: 'Flagship institutional stake with advisory observer seat consideration.' }
+                    },
+                    ghTranches: {
                         'A': { name: 'Tranche A (Seed)', ghc: 720000, usd: 60000, equity: 7.0, qDividend: 146913, yr1: 587650, yr3Exit: 2938250 },
                         'B': { name: 'Tranche B (Growth)', ghc: 1440000, usd: 120000, equity: 14.0, qDividend: 293825, yr1: 1175300, yr3Exit: 5876500 },
                         'C': { name: 'Tranche C (Venture)', ghc: 2640000, usd: 220000, equity: 22.0, qDividend: 461725, yr1: 1846900, yr3Exit: 9234500 }
@@ -322,87 +370,204 @@
             <div class="max-w-7xl 2xl:max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
                 
                 <div class="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-xl space-y-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-800 pb-6">
                         <div>
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-brand-500/15 text-amber-700 dark:text-brand-400 border border-brand-500/30">
-                                📊 Interactive Financial Tool
-                            </span>
-                            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-brand-500/15 text-amber-700 dark:text-brand-400 border border-brand-500/30">
+                                    📊 Interactive Financial Tool
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30">
+                                    CA • ATL • GA Live
+                                </span>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
                                 Dynamic Tranche Yield & Dividend Simulator
                             </h2>
                             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                                Click an allocation tranche to dynamically calculate your projected quarterly automated dividend and 3-year structured exit buyout.
+                                Toggle between US State Expansion (California, Atlanta & Georgia) and Ghana Cohort to calculate quarterly distributions and 3-year buyout figures.
                             </p>
                         </div>
                         
-                        <!-- Tranche Pill Selector -->
-                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl shrink-0">
-                            <button type="button" @click="selectedTranche = 'A'"
-                                    :class="selectedTranche === 'A' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold'"
-                                    class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                                Tranche A (7%)
+                        <!-- Market Region Toggle -->
+                        <div class="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl shrink-0">
+                            <button type="button" @click="activeRegion = 'usa'"
+                                    :class="activeRegion === 'usa' ? 'bg-blue-600 text-white shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-white'"
+                                    class="px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5">
+                                <span>🇺🇸 US States (CA, ATL, GA)</span>
                             </button>
-                            <button type="button" @click="selectedTranche = 'B'"
-                                    :class="selectedTranche === 'B' ? 'bg-amber-500 text-black shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold'"
-                                    class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                                Tranche B (14%) ★
-                            </button>
-                            <button type="button" @click="selectedTranche = 'C'"
-                                    :class="selectedTranche === 'C' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold'"
-                                    class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
-                                Tranche C (22%)
+                            <button type="button" @click="activeRegion = 'ghana'"
+                                    :class="activeRegion === 'ghana' ? 'bg-amber-500 text-black shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-white'"
+                                    class="px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5">
+                                <span>🇬🇭 Ghana Cohort</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Simulator Breakdown Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                            <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Capital Commitment</div>
-                            <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">
-                                <span x-text="tranches[selectedTranche].ghc.toLocaleString()"></span> GHC
+                    <!-- US STATES SIMULATOR VIEW -->
+                    <div x-show="activeRegion === 'usa'" class="space-y-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/30">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Select Market:</span>
+                                <div class="inline-flex gap-1.5">
+                                    <button type="button" @click="activeState = 'California'"
+                                            :class="activeState === 'California' ? 'bg-blue-600 text-white shadow-xs font-black' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold'"
+                                            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                        🐻 California
+                                    </button>
+                                    <button type="button" @click="activeState = 'Atlanta'"
+                                            :class="activeState === 'Atlanta' ? 'bg-amber-500 text-black shadow-xs font-black' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold'"
+                                            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                        🍑 Atlanta
+                                    </button>
+                                    <button type="button" @click="activeState = 'Georgia'"
+                                            :class="activeState === 'Georgia' ? 'bg-emerald-600 text-white shadow-xs font-black' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold'"
+                                            class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                        🏛️ Georgia
+                                    </button>
+                                </div>
                             </div>
-                            <div class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-1">
-                                Approx. $<span x-text="tranches[selectedTranche].usd.toLocaleString()"></span> USD
+
+                            <!-- Tier Selector Buttons -->
+                            <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <button type="button" @click="selectedUsTier = 'T1'"
+                                        :class="selectedUsTier === 'T1' ? 'bg-blue-600 text-white font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
+                                        class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                    $200k (4%)
+                                </button>
+                                <button type="button" @click="selectedUsTier = 'T2'"
+                                        :class="selectedUsTier === 'T2' ? 'bg-blue-600 text-white font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
+                                        class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                    $500k (11%) ★
+                                </button>
+                                <button type="button" @click="selectedUsTier = 'T3'"
+                                        :class="selectedUsTier === 'T3' ? 'bg-blue-600 text-white font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
+                                        class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                    $1M (22%)
+                                </button>
                             </div>
                         </div>
 
-                        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                            <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Fixed Equity Allocation</div>
-                            <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                                <span x-text="tranches[selectedTranche].equity.toFixed(1)"></span>% Equity
+                        <!-- 4 Stat Metric Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Capital Commitment</div>
+                                <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                                    $<span x-text="usTiers[selectedUsTier].usd.toLocaleString()"></span> USD
+                                </div>
+                                <div class="text-xs text-blue-600 dark:text-blue-400 font-bold mt-1" x-text="activeState + ' Hub Allocation'"></div>
                             </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Non-dilutive cohort stake</div>
+
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Fixed Equity Allocation</div>
+                                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                                    <span x-text="usTiers[selectedUsTier].equity.toFixed(1)"></span>% Equity
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Direct state syndicate stake</div>
+                            </div>
+
+                            <div class="p-5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">Quarterly Cash Dividend</div>
+                                <div class="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">
+                                    $<span x-text="usTiers[selectedUsTier].qDividendUsd.toLocaleString()"></span> USD
+                                </div>
+                                <div class="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-bold mt-1">Automated domestic Fedwire</div>
+                            </div>
+
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">3-Yr Est. Yield + Buyout</div>
+                                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                                    $<span x-text="usTiers[selectedUsTier].yr3ExitUsd.toLocaleString()"></span> USD
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Includes structured buyout</div>
+                            </div>
                         </div>
 
-                        <div class="p-5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30">
-                            <div class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">Quarterly Cash Dividend</div>
-                            <div class="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">
-                                <span x-text="tranches[selectedTranche].qDividend.toLocaleString()"></span> GHC
+                        <!-- Direct State CTA Action Bar -->
+                        <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800">
+                            <div class="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
+                                Governed under Delaware NDFG LLC Operating Agreement and SEC Rule 506(c) with 5-day escrow clearing.
                             </div>
-                            <div class="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-bold mt-1">Automated wire distribution</div>
-                        </div>
-
-                        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                            <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">3-Year Cumulative Yield + Exit</div>
-                            <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
-                                <span x-text="tranches[selectedTranche].yr3Exit.toLocaleString()"></span> GHC
-                            </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Includes structured buyout</div>
+                            <a :href="'/investor/contact?country=' + encodeURIComponent(activeState) + '&interested_tranche=' + encodeURIComponent(activeState + ' Tier ' + (selectedUsTier === 'T1' ? '1 ($200k • 4%)' : (selectedUsTier === 'T2' ? '2 ($500k • 11%)' : '3 ($1M • 22%)')))" 
+                               class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-blue-500/25 transition-all flex items-center gap-2">
+                                <span>Apply for <span x-text="activeState + ' ' + usTiers[selectedUsTier].code + ' ($' + (usTiers[selectedUsTier].usd / 1000) + 'k)'"></span></span>
+                                <span>→</span>
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Direct Allocation Action Bar -->
-                    <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800">
-                        <div class="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
-                            All capital commitments are protected by Ride My Cars (Ghana) escrow protocols with mandatory 5-day settlement windows.
+                    <!-- GHANA COHORT SIMULATOR VIEW -->
+                    <div x-show="activeRegion === 'ghana'" class="space-y-6">
+                        <div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-500/30">
+                            <span class="text-xs font-bold text-amber-800 dark:text-amber-300">Ghana Single Cohort Tranches:</span>
+                            <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <button type="button" @click="selectedGhTranche = 'A'"
+                                        :class="selectedGhTranche === 'A' ? 'bg-amber-500 text-black font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
+                                        class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                    Tranche A (7%)
+                                </button>
+                                <button type="button" @click="selectedGhTranche = 'B'"
+                                        :class="selectedGhTranche === 'B' ? 'bg-amber-500 text-black font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
+                                        class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                    Tranche B (14%) ★
+                                </button>
+                                <button type="button" @click="selectedGhTranche = 'C'"
+                                        :class="selectedGhTranche === 'C' ? 'bg-amber-500 text-black font-black shadow-xs' : 'text-slate-600 dark:text-slate-400 font-bold'"
+                                        class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer">
+                                    Tranche C (22%)
+                                </button>
+                            </div>
                         </div>
-                        <a :href="'/investor/register?tranche=' + selectedTranche" 
-                           class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/25 transition-all flex items-center gap-2">
-                            <span>Proceed with <span x-text="'Tranche ' + selectedTranche"></span> Application</span>
-                            <span>→</span>
-                        </a>
+
+                        <!-- Breakdown Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Capital Commitment</div>
+                                <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                                    <span x-text="ghTranches[selectedGhTranche].ghc.toLocaleString()"></span> GHC
+                                </div>
+                                <div class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-1">
+                                    Approx. $<span x-text="ghTranches[selectedGhTranche].usd.toLocaleString()"></span> USD
+                                </div>
+                            </div>
+
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Fixed Equity Allocation</div>
+                                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                                    <span x-text="ghTranches[selectedGhTranche].equity.toFixed(1)"></span>% Equity
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Non-dilutive cohort stake</div>
+                            </div>
+
+                            <div class="p-5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">Quarterly Cash Dividend</div>
+                                <div class="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">
+                                    <span x-text="ghTranches[selectedGhTranche].qDividend.toLocaleString()"></span> GHC
+                                </div>
+                                <div class="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-bold mt-1">Automated wire distribution</div>
+                            </div>
+
+                            <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">3-Year Cumulative Yield + Exit</div>
+                                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                                    <span x-text="ghTranches[selectedGhTranche].yr3Exit.toLocaleString()"></span> GHC
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Includes structured buyout</div>
+                            </div>
+                        </div>
+
+                        <!-- Direct Allocation Action Bar -->
+                        <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800">
+                            <div class="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
+                                Protected by Ride My Cars (Ghana) escrow protocols with mandatory 5-day settlement windows.
+                            </div>
+                            <a :href="'/investor/register?tranche=' + selectedGhTranche" 
+                               class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/25 transition-all flex items-center gap-2">
+                                <span>Proceed with <span x-text="'Tranche ' + selectedGhTranche"></span> Application</span>
+                                <span>→</span>
+                            </a>
+                        </div>
                     </div>
+
                 </div>
 
             </div>
@@ -416,28 +581,37 @@
                 
                 <div class="text-center max-w-3xl mx-auto mb-14">
                     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
-                        Fixed 3-Year Single Cohort Engine
+                        Multi-Market Investment Engine
                     </span>
                     <h2 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white mt-3 tracking-tight">
                         Capital Allocation Tranches
                     </h2>
                     <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">
-                        Investment tranches are structured per country. Active capital allocation is currently open for <strong>Ghana</strong>. Select a region below:
+                        Active offerings are now open across <strong>California</strong>, <strong>Atlanta</strong>, <strong>Georgia</strong> ($200k/4%, $500k/11%, $1M/22%) and <strong>Ghana</strong>. Select a market below to view dedicated plan details:
                     </p>
 
-                    <!-- Country Selector Quick Tabs -->
+                    <!-- Country & State Selector Quick Tabs -->
                     <div class="flex justify-center mt-6">
                         <div class="inline-flex flex-wrap justify-center p-1.5 rounded-2xl bg-slate-100 dark:bg-[#131926] border border-slate-200 dark:border-slate-700 shadow-xs gap-1.5 sm:gap-2">
-                            <a href="/investor/plans?country=ghana" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-xs hover:bg-amber-400 transition-all">
-                                <span>🇬🇭 Ghana (Live Offering)</span>
+                            <a href="/investor/plans?country=california" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-wider shadow-xs hover:bg-blue-500 transition-all">
+                                <span>🐻 California (Open)</span>
                             </a>
-                            <a href="/investor/plans?country=south-africa" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                            <a href="/investor/plans?country=atlanta" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-xs hover:bg-amber-400 transition-all">
+                                <span>🍑 Atlanta (Open)</span>
+                            </a>
+                            <a href="/investor/plans?country=georgia" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase tracking-wider shadow-xs hover:bg-emerald-500 transition-all">
+                                <span>🏛️ Georgia (Open)</span>
+                            </a>
+                            <a href="/investor/plans?country=ghana" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                                <span>🇬🇭 Ghana (Open)</span>
+                            </a>
+                            <a href="/investor/plans?country=usa" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                                <span>🇺🇸 All USA States</span>
+                            </a>
+                            <a href="/investor/plans?country=south-africa" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
                                 <span>🇿🇦 South Africa</span>
                             </a>
-                            <a href="/investor/plans?country=usa" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
-                                <span>🇺🇸 USA</span>
-                            </a>
-                            <a href="/investor/plans?country=other" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                            <a href="/investor/plans?country=other" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
                                 <span>🌍 Other Countries</span>
                             </a>
                         </div>

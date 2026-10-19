@@ -32,7 +32,7 @@
                     </p>
                 </div>
 
-                <!-- Section 2 -->
+                <!-- Section 2: United States Investors (SEC Rule 506(c) Regulation D) -->
                 <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-blue-500 shadow-sm">
                     <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
@@ -44,6 +44,56 @@
                     <p>
                         Under Rule 506(c), NDFG LLC is required to take reasonable steps to verify that all natural persons and entities participating are "Accredited Investors" as defined in Rule 501(a). Verification necessitates independent third-party evidence, including letters from registered certified public accountants, FINRA-licensed broker-dealers, qualified attorneys, or verified tax records.
                     </p>
+                </div>
+
+                <!-- Section 2B: State-Specific Disclosures (California, Atlanta & Georgia) -->
+                <div class="p-8 rounded-3xl bg-white dark:bg-[#131926] border-2 border-blue-500/40 border-t-4 border-t-blue-600 shadow-md">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                            2B. State-Specific Statutory Notices: California, Atlanta & Georgia
+                        </h2>
+                        <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40">
+                            Active State Offerings
+                        </span>
+                    </div>
+
+                    <p class="mb-4">
+                        Investment opportunities in <strong>California</strong>, <strong>Atlanta</strong>, and <strong>Georgia</strong> are offered under Delaware NDFG LLC Operating Agreement and standardized commitment tiers: <strong>Tier 1 ($200,000 USD at 4.0% equity)</strong>, <strong>Tier 2 ($500,000 USD at 11.0% equity)</strong>, and <strong>Tier 3 ($1,000,000 USD at 22.0% equity)</strong>.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 text-xs">
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                            <div class="font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                                <span>🐻</span> <span>California Statutory Rule</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300">
+                                Governed under California Public Utilities Commission (CPUC Decision 13-09-045) and California Corporations Code § 25102(f). Capital deployed strictly into CPUC-authorized commercial mobility routes across Los Angeles, Bay Area, San Diego, and Silicon Valley.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                            <div class="font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                                <span>🍑</span> <span>Atlanta Commercial Code</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300">
+                                Governed under City of Atlanta commercial ground transportation permits and Hartsfield-Jackson Atlanta International Airport (ATL) operational rules with direct capital ring-fencing.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                            <div class="font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                                <span>🏛️</span> <span>Georgia DPS Compliance</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300">
+                                Registered under Georgia Department of Public Safety (DPS) Transportation Network Company framework pursuant to O.C.G.A. § 40-1-193 and Georgia Uniform Securities Act of 2008 (O.C.G.A. § 10-5-11).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-500/20 text-[11px] text-blue-900 dark:text-blue-300 font-medium">
+                        Escrow Custody: Capital allocations settle directly into Delaware NDFG LLC escrow custody accounts via domestic US Fedwire within five (5) business days following accreditation verification.
+                    </div>
                 </div>
 
                 <!-- Section 3 -->

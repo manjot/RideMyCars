@@ -66,10 +66,55 @@ class InvestorRegistrationController extends Controller
             ]);
         }
 
+        $targetCountry = strtolower($request->query('country', $request->query('state', '')));
+        $requestedTranche = strtoupper($request->query('tranche', ''));
+        $isUsState = in_array($targetCountry, ['california', 'atlanta', 'georgia', 'usa']) 
+            || str_starts_with($requestedTranche, 'CA') 
+            || str_starts_with($requestedTranche, 'ATL') 
+            || str_starts_with($requestedTranche, 'GA') 
+            || str_starts_with($requestedTranche, 'US');
+
+        if ($plans->isEmpty() || $isUsState) {
+            if ($isUsState) {
+                $prefix = (str_starts_with($requestedTranche, 'ATL') || $targetCountry === 'atlanta') ? 'ATL' : ((str_starts_with($requestedTranche, 'GA') || $targetCountry === 'georgia') ? 'GA' : 'CA');
+                $stateLabel = $prefix === 'ATL' ? 'Atlanta' : ($prefix === 'GA' ? 'Georgia' : 'California');
+                $plans = collect([
+                    (object) [
+                        'tranche_code' => $prefix . '1',
+                        'tier_name' => $stateLabel . ' Seed Tier (4% Equity)',
+                        'capital_commitment_ghc' => 2400000.00,
+                        'capital_commitment_usd' => 200000.00,
+                        'equity_percentage' => 4.00,
+                        'formatted_ghc' => '2,400,000 GHC',
+                        'formatted_usd' => '$200,000',
+                    ],
+                    (object) [
+                        'tranche_code' => $prefix . '2',
+                        'tier_name' => $stateLabel . ' Growth Tier (11% Equity)',
+                        'capital_commitment_ghc' => 6000000.00,
+                        'capital_commitment_usd' => 500000.00,
+                        'equity_percentage' => 11.00,
+                        'formatted_ghc' => '6,000,000 GHC',
+                        'formatted_usd' => '$500,000',
+                    ],
+                    (object) [
+                        'tranche_code' => $prefix . '3',
+                        'tier_name' => $stateLabel . ' Venture Tier (22% Equity)',
+                        'capital_commitment_ghc' => 12000000.00,
+                        'capital_commitment_usd' => 1000000.00,
+                        'equity_percentage' => 22.00,
+                        'formatted_ghc' => '12,000,000 GHC',
+                        'formatted_usd' => '$1,000,000',
+                    ],
+                ]);
+            }
+        }
+
         $availableTranches = $plans->pluck('tranche_code')->toArray();
-        $selectedTranche = strtoupper($request->query('tranche', $availableTranches[0] ?? 'B'));
+        $defaultTranche = $availableTranches[1] ?? ($availableTranches[0] ?? 'B');
+        $selectedTranche = strtoupper($request->query('tranche', $defaultTranche));
         if (!in_array($selectedTranche, $availableTranches)) {
-            $selectedTranche = $availableTranches[0] ?? 'B';
+            $selectedTranche = $availableTranches[0] ?? 'CA2';
         }
 
         $countryRules = [
@@ -183,12 +228,29 @@ class InvestorRegistrationController extends Controller
                 ];
             } else {
                 $trancheMap = [
+                    // Ghana Tranches
                     'A' => ['ghc' => 720000.00, 'usd' => 60000.00, 'equity' => 7.00],
                     'D' => ['ghc' => 120000.00, 'usd' => 10000.00, 'equity' => 1.20],
                     'B' => ['ghc' => 1440000.00, 'usd' => 120000.00, 'equity' => 14.00],
                     'C' => ['ghc' => 2640000.00, 'usd' => 220000.00, 'equity' => 22.00],
+                    // California Tranches ($200k @ 4%, $500k @ 11%, $1M @ 22%)
+                    'CA1' => ['ghc' => 2400000.00, 'usd' => 200000.00, 'equity' => 4.00],
+                    'CA2' => ['ghc' => 6000000.00, 'usd' => 500000.00, 'equity' => 11.00],
+                    'CA3' => ['ghc' => 12000000.00, 'usd' => 1000000.00, 'equity' => 22.00],
+                    // Atlanta Tranches ($200k @ 4%, $500k @ 11%, $1M @ 22%)
+                    'ATL1' => ['ghc' => 2400000.00, 'usd' => 200000.00, 'equity' => 4.00],
+                    'ATL2' => ['ghc' => 6000000.00, 'usd' => 500000.00, 'equity' => 11.00],
+                    'ATL3' => ['ghc' => 12000000.00, 'usd' => 1000000.00, 'equity' => 22.00],
+                    // Georgia Tranches ($200k @ 4%, $500k @ 11%, $1M @ 22%)
+                    'GA1' => ['ghc' => 2400000.00, 'usd' => 200000.00, 'equity' => 4.00],
+                    'GA2' => ['ghc' => 6000000.00, 'usd' => 500000.00, 'equity' => 11.00],
+                    'GA3' => ['ghc' => 12000000.00, 'usd' => 1000000.00, 'equity' => 22.00],
+                    // US General Tranches ($200k @ 4%, $500k @ 11%, $1M @ 22%)
+                    'US1' => ['ghc' => 2400000.00, 'usd' => 200000.00, 'equity' => 4.00],
+                    'US2' => ['ghc' => 6000000.00, 'usd' => 500000.00, 'equity' => 11.00],
+                    'US3' => ['ghc' => 12000000.00, 'usd' => 1000000.00, 'equity' => 22.00],
                 ];
-                $financials = $trancheMap[$validated['selected_tranche']] ?? ['ghc' => 120000.00, 'usd' => 10000.00, 'equity' => 1.20];
+                $financials = $trancheMap[$validated['selected_tranche']] ?? ['ghc' => 2400000.00, 'usd' => 200000.00, 'equity' => 4.00];
             }
 
             // 3. Resolve regulatory tier based on country

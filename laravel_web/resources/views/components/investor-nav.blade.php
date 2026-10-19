@@ -6,24 +6,26 @@
         <div class="max-w-7xl 2xl:max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 flex items-center justify-between gap-3">
             <div class="flex items-center gap-2 overflow-hidden">
                 <span class="relative flex h-2 w-2 shrink-0">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
                 <span class="font-black uppercase tracking-wider text-slate-200 shrink-0">
-                    Cohort 1: <span class="text-amber-400 font-bold">500 UPD (Users Per Day)</span>
+                    Now Open: <span class="text-blue-400 font-bold">🐻 California • 🍑 Atlanta • 🏛️ Georgia</span>
                 </span>
                 <span class="text-slate-600 shrink-0 hidden sm:inline">•</span>
                 <span class="text-emerald-400 font-bold shrink-0 hidden sm:inline">
-                    85–92% Targeted Margin
+                    Starts $200k (4%) • $500k (11%) • $1M (22%)
                 </span>
                 <span class="text-slate-600 shrink-0 hidden md:inline">•</span>
-                <span class="text-slate-300 font-mono font-bold shrink-0 hidden md:inline">
-                    25,000 GHC/day Target
+                <span class="text-amber-400 font-medium shrink-0 hidden lg:inline">
+                    🇬🇭 Ghana Single Cohort Active
                 </span>
             </div>
-            <div class="flex items-center gap-3 shrink-0 text-[10px] text-slate-400">
-                <span class="hidden sm:inline font-medium">⚖️ SEC Ghana & Global Sovereign Escrow</span>
-                <a href="/investor/contact" class="text-amber-400 hover:text-amber-300 font-bold transition-colors">Contact IR →</a>
+            <div class="flex items-center gap-3 shrink-0 text-[10px]">
+                <a href="/investor/plans?country=california" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold transition-colors">
+                    CA • ATL • GA Plans →
+                </a>
+                <a href="/investor/contact" class="text-amber-400 hover:text-amber-300 font-bold transition-colors hidden sm:inline">Contact IR →</a>
             </div>
         </div>
     </div>

@@ -609,7 +609,7 @@
                                         <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📊</span>
                                         <div class="min-w-0">
                                             <div class="font-bold">Investment Plans</div>
-                                            <div class="text-[10px] text-gray-500 truncate">Tranches A (10%), B (14%), C (22%)</div>
+                                            <div class="text-[10px] text-gray-500 truncate">CA, ATL, GA ($200k, $500k, $1M) & Ghana</div>
                                         </div>
                                     </a>
                                     <a href="/investor/faq" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/faq*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
@@ -958,7 +958,7 @@
                                         <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-xs">📊</span>
                                         <div class="min-w-0">
                                             <div class="font-bold">Investment Plans</div>
-                                            <div class="text-[10px] text-gray-500 truncate">Tranches A (10%), B (14%), C (22%)</div>
+                                            <div class="text-[10px] text-gray-500 truncate">CA, ATL, GA ($200k, $500k, $1M) & Ghana</div>
                                         </div>
                                     </a>
                                     <a href="/investor/faq" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-xl {{ request()->is('investor/faq*') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white' }} transition-colors">
