@@ -73,6 +73,26 @@ class SettingsSeeder extends Seeder
             ['key' => 'payment.expresspay_api_key', 'label' => 'ExpressPay API Key (Active)', 'value' => env('EXPRESSPAY_API_KEY', 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2'), 'group' => 'Payment Gateways', 'type' => 'text'],
             ['key' => 'payment.expresspay_currency', 'label' => 'ExpressPay Default Currency', 'value' => env('EXPRESSPAY_CURRENCY', 'GHS'), 'group' => 'Payment Gateways', 'type' => 'text'],
 
+            // Authorize.Net Gateway
+            ['key' => 'payment.authorizenet_enabled', 'label' => 'Authorize.Net Gateway Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_mode', 'label' => 'Active Authorize.Net Mode (sandbox / live)', 'value' => env('AUTHORIZENET_MODE', 'sandbox'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_username', 'label' => 'Authorize.Net Merchant Username', 'value' => 'ridemycars', 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_password', 'label' => 'Authorize.Net Merchant Password', 'value' => 'Rideme2026@#', 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_sandbox_api_login_id', 'label' => 'Authorize.Net Sandbox API Login ID', 'value' => env('AUTHORIZENET_SANDBOX_API_LOGIN_ID', '5KP3u95bQpv'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_sandbox_transaction_key', 'label' => 'Authorize.Net Sandbox Transaction Key', 'value' => env('AUTHORIZENET_SANDBOX_TRANSACTION_KEY', '4b6qZ4R8De274Q6n'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_sandbox_client_key', 'label' => 'Authorize.Net Sandbox Client Key', 'value' => env('AUTHORIZENET_SANDBOX_CLIENT_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_sandbox_signature_key', 'label' => 'Authorize.Net Sandbox Signature Key', 'value' => env('AUTHORIZENET_SANDBOX_SIGNATURE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_live_api_login_id', 'label' => 'Authorize.Net Live API Login ID', 'value' => env('AUTHORIZENET_LIVE_API_LOGIN_ID', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_live_transaction_key', 'label' => 'Authorize.Net Live Transaction Key', 'value' => env('AUTHORIZENET_LIVE_TRANSACTION_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_live_client_key', 'label' => 'Authorize.Net Live Client Key', 'value' => env('AUTHORIZENET_LIVE_CLIENT_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_live_signature_key', 'label' => 'Authorize.Net Live Signature Key', 'value' => env('AUTHORIZENET_LIVE_SIGNATURE_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_api_login_id', 'label' => 'Authorize.Net API Login ID (Active)', 'value' => env('AUTHORIZENET_API_LOGIN_ID', '5KP3u95bQpv'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_transaction_key', 'label' => 'Authorize.Net Transaction Key (Active)', 'value' => env('AUTHORIZENET_TRANSACTION_KEY', '4b6qZ4R8De274Q6n'), 'group' => 'Payment Gateways', 'type' => 'text'],
+            ['key' => 'payment.authorizenet_client_key', 'label' => 'Authorize.Net Client Key (Active)', 'value' => env('AUTHORIZENET_CLIENT_KEY', ''), 'group' => 'Payment Gateways', 'type' => 'text'],
+
+            // Cash on Delivery
+            ['key' => 'payment.cash_enabled', 'label' => 'Cash on Drop-off Enabled', 'value' => '1', 'group' => 'Payment Gateways', 'type' => 'text'],
+
             // SMS Gateway (Twilio)
             ['key' => 'sms.twilio_enabled', 'label' => 'Twilio SMS Gateway Enabled', 'value' => '1', 'group' => 'SMS Gateway', 'type' => 'text'],
             ['key' => 'sms.twilio_account_sid', 'label' => 'Twilio Account SID', 'value' => env('TWILIO_ACCOUNT_SID', ''), 'group' => 'SMS Gateway', 'type' => 'text'],

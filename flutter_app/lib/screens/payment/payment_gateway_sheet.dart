@@ -3,14 +3,19 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/country_provider.dart';
+import '../../services/payment_config_service.dart';
 import '../../services/wallet_service.dart';
 
 class PaymentSelectionResult {
-  final String paymentMethod; // 'stripe', 'momo', 'wallet', 'cash'
+  final String paymentMethod; // 'authorizenet', 'stripe', 'momo', 'wallet', 'cash'
   final String? momoPhone;
   final String? momoNetwork;
   final String? cardLast4;
   final String? cardHolder;
+  final String? cardNumber;
+  final String? cardExpiry;
+  final String? cardCvv;
+  final String? cardZip;
   final bool saveCard;
 
   PaymentSelectionResult({
@@ -19,6 +24,10 @@ class PaymentSelectionResult {
     this.momoNetwork,
     this.cardLast4,
     this.cardHolder,
+    this.cardNumber,
+    this.cardExpiry,
+    this.cardCvv,
+    this.cardZip,
     this.saveCard = false,
   });
 }
@@ -75,10 +84,21 @@ class PaymentGatewaySheet extends StatefulWidget {
 
 class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
   late String _selectedMethod;
+  PaymentGatewayConfig _config = PaymentConfigService.currentConfig;
+
+  // Stripe controllers
   final _cardNumberController = TextEditingController();
   final _cardExpiryController = TextEditingController();
   final _cardCvvController = TextEditingController();
   final _cardHolderController = TextEditingController();
+
+  // Authorize.Net dedicated controllers
+  final _anetCardNumberController = TextEditingController();
+  final _anetCardExpiryController = TextEditingController();
+  final _anetCardCvvController = TextEditingController();
+  final _anetCardHolderController = TextEditingController();
+  final _anetZipController = TextEditingController();
+
   final _momoPhoneController = TextEditingController();
   String _momoNetwork = 'MTN';
   bool _saveCard = true;
@@ -92,16 +112,30 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
   @override
   void initState() {
     super.initState();
-    _selectedMethod = widget.initialMethod ?? 'stripe';
+    _selectedMethod = widget.initialMethod ?? _config.firstActiveMethod;
     if (!_isCashAllowed && _selectedMethod == 'cash') {
-      _selectedMethod = 'stripe';
+      _selectedMethod = _config.firstActiveMethod;
     }
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     _cardHolderController.text = auth.userName ?? 'Cardholder Name';
+    _anetCardHolderController.text = auth.userName ?? 'Cardholder Name';
     _momoPhoneController.text = '';
 
+    _loadGatewaysConfig();
     _loadWallet();
+  }
+
+  Future<void> _loadGatewaysConfig() async {
+    final cfg = await PaymentConfigService.getPaymentGateways();
+    if (mounted) {
+      setState(() {
+        _config = cfg;
+        if (!_config.isMethodActive(_selectedMethod)) {
+          _selectedMethod = _config.firstActiveMethod;
+        }
+      });
+    }
   }
 
   @override
@@ -110,6 +144,11 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
     _cardExpiryController.dispose();
     _cardCvvController.dispose();
     _cardHolderController.dispose();
+    _anetCardNumberController.dispose();
+    _anetCardExpiryController.dispose();
+    _anetCardCvvController.dispose();
+    _anetCardHolderController.dispose();
+    _anetZipController.dispose();
     _momoPhoneController.dispose();
     super.dispose();
   }
@@ -129,7 +168,40 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
   }
 
   void _confirmSelection() {
-    if (_selectedMethod == 'stripe') {
+    if (_selectedMethod == 'authorizenet') {
+      final num = _anetCardNumberController.text.replaceAll(' ', '').replaceAll('-', '');
+      final expiry = _anetCardExpiryController.text.trim();
+      final cvv = _anetCardCvvController.text.trim();
+      final holder = _anetCardHolderController.text.trim();
+
+      if (num.length < 13 || num.length > 19) {
+        _showError('Please enter a valid card number');
+        return;
+      }
+      if (expiry.isEmpty || !expiry.contains('/')) {
+        _showError('Please enter card expiry in MM/YY format');
+        return;
+      }
+      if (cvv.length < 3) {
+        _showError('Please enter a valid card CVV');
+        return;
+      }
+
+      final last4 = num.length >= 4 ? num.substring(num.length - 4) : num;
+      Navigator.pop(
+        context,
+        PaymentSelectionResult(
+          paymentMethod: 'authorizenet',
+          cardLast4: last4,
+          cardHolder: holder.isNotEmpty ? holder : null,
+          cardNumber: num,
+          cardExpiry: expiry,
+          cardCvv: cvv,
+          cardZip: _anetZipController.text.trim().isNotEmpty ? _anetZipController.text.trim() : null,
+          saveCard: _saveCard,
+        ),
+      );
+    } else if (_selectedMethod == 'stripe') {
       final num = _cardNumberController.text.replaceAll(' ', '');
       if (num.isNotEmpty && num.length < 13) {
         _showError('Please enter a valid card number');
@@ -274,24 +346,45 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
             ),
             const SizedBox(height: 18),
 
-            // Payment Methods Tabs
-            _buildMethodTile(
-              id: 'stripe',
-              title: 'Credit / Debit Card',
-              subtitle: 'Visa, Mastercard, Amex via Stripe',
-              icon: Icons.credit_card_rounded,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 8),
+            // Payment Methods Tabs (Filtered dynamically based on Admin Active/Inactive Status)
+            if (_config.isAuthorizeNetActive) ...[
+              _buildMethodTile(
+                id: 'authorizenet',
+                title: 'Authorize.Net Card Pay',
+                subtitle: 'Visa, Mastercard, Discover, Amex',
+                icon: Icons.credit_card_rounded,
+                isDark: isDark,
+                badgeText: 'A Visa Solution',
+                badgeColor: const Color(0xFF003366),
+              ),
+              const SizedBox(height: 8),
+            ],
 
-            _buildMethodTile(
-              id: 'momo',
-              title: 'Mobile Money (Ghana)',
-              subtitle: 'MTN MoMo, Vodafone Cash, AirtelTigo',
-              icon: Icons.phone_android_rounded,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 8),
+            if (_config.isStripeActive) ...[
+              _buildMethodTile(
+                id: 'stripe',
+                title: 'Credit / Debit Card',
+                subtitle: 'Visa, Mastercard, Amex via Stripe',
+                icon: Icons.credit_card_rounded,
+                isDark: isDark,
+                badgeText: 'Stripe',
+                badgeColor: const Color(0xFF635BFF),
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            if (_config.isMomoActive) ...[
+              _buildMethodTile(
+                id: 'momo',
+                title: 'Mobile Money (Ghana)',
+                subtitle: 'MTN MoMo, Vodafone Cash, AirtelTigo',
+                icon: Icons.phone_android_rounded,
+                isDark: isDark,
+                badgeText: 'ExpressPay',
+                badgeColor: Colors.amber[800],
+              ),
+              const SizedBox(height: 8),
+            ],
 
             _buildMethodTile(
               id: 'wallet',
@@ -304,15 +397,16 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
             ),
             const SizedBox(height: 8),
 
-            if (_isCashAllowed)
+            if (_config.isCashActive && _isCashAllowed) ...[
               _buildMethodTile(
                 id: 'cash',
                 title: 'Cash on Service / Drop-off',
                 subtitle: 'Pay directly to your driver/courier',
                 icon: Icons.payments_rounded,
                 isDark: isDark,
-              )
-            else
+              ),
+              const SizedBox(height: 8),
+            ] else if (!_isCashAllowed) ...[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
@@ -333,10 +427,13 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
+            ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             // Dynamic Inputs based on selected method
+            if (_selectedMethod == 'authorizenet') _buildAuthorizeNetForm(isDark),
             if (_selectedMethod == 'stripe') _buildStripeForm(isDark),
             if (_selectedMethod == 'momo') _buildMomoForm(isDark),
             if (_selectedMethod == 'wallet') _buildWalletInfo(isDark),
@@ -376,6 +473,8 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
     required String subtitle,
     required IconData icon,
     required bool isDark,
+    String? badgeText,
+    Color? badgeColor,
   }) {
     final isSelected = _selectedMethod == id;
     return GestureDetector(
@@ -412,13 +511,36 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: isSelected ? AppColors.primary : null,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isSelected ? AppColors.primary : null,
+                        ),
+                      ),
+                      if (badgeText != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (badgeColor ?? AppColors.primary).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: (badgeColor ?? AppColors.primary).withOpacity(0.4)),
+                          ),
+                          child: Text(
+                            badgeText,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: badgeColor ?? AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     subtitle,
@@ -444,6 +566,140 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
     );
   }
 
+  Widget _buildAuthorizeNetForm(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black26 : Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF003366).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF003366).withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_user_rounded, color: Color(0xFF003366), size: 14),
+                const SizedBox(width: 6),
+                const Expanded(
+                  child: Text(
+                    'Authorize.Net (A Visa Solution) • 256-Bit TLS Bank Grade Security',
+                    style: TextStyle(color: Color(0xFF003366), fontSize: 10.5, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF003366),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'VISA SOLUTION',
+                    style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextField(
+            controller: _anetCardNumberController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Card Number',
+              hintText: '4000 0000 0000 0000',
+              prefixIcon: const Icon(Icons.credit_card, size: 20),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _anetCardExpiryController,
+                  decoration: InputDecoration(
+                    labelText: 'Expiry (MM/YY)',
+                    hintText: '12/28',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _anetCardCvvController,
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'CVV / CVC',
+                    hintText: '•••',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    isDense: true,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: _anetCardHolderController,
+                  decoration: InputDecoration(
+                    labelText: 'Cardholder Name',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: TextField(
+                  controller: _anetZipController,
+                  decoration: InputDecoration(
+                    labelText: 'ZIP / Postal',
+                    hintText: '10001',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    isDense: true,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Checkbox(
+                value: _saveCard,
+                activeColor: AppColors.primary,
+                onChanged: (v) => setState(() => _saveCard = v ?? true),
+              ),
+              const Expanded(
+                child: Text(
+                  'Authorize holding payment for service. Settled automatically upon completion.',
+                  style: TextStyle(fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStripeForm(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -459,18 +715,18 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.emerald.withOpacity(0.12),
+              color: const Color(0xFF10B981).withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.emerald.withOpacity(0.3)),
+              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
             ),
-            child: Row(
-              children: const [
-                Icon(Icons.lock_rounded, color: Colors.emerald, size: 14),
+            child: const Row(
+              children: [
+                Icon(Icons.lock_rounded, color: Color(0xFF10B981), size: 14),
                 SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Stripe Live: PCI-DSS Level 1 Encrypted • Real-time card verification',
-                    style: TextStyle(color: Colors.emerald, fontSize: 10.5, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: Color(0xFF10B981), fontSize: 10.5, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],

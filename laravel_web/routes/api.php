@@ -61,6 +61,13 @@ Route::post('/expresspay/initiate', [\App\Http\Controllers\ExpressPayController:
 Route::post('/payment/expresspay/ipn', [\App\Http\Controllers\ExpressPayController::class, 'handleIpn']);
 Route::get('/payment/expresspay/status/{token}', [\App\Http\Controllers\ExpressPayController::class, 'checkStatus']);
 
+// Authorize.Net Gateway & Active Gateways Discovery
+Route::get('/payment/gateways', [\App\Http\Controllers\AuthorizeNetController::class, 'getActiveGateways']);
+Route::post('/payment/authorizenet/charge', [\App\Http\Controllers\AuthorizeNetController::class, 'charge']);
+Route::post('/payment/authorizenet/authorize-hold', [\App\Http\Controllers\AuthorizeNetController::class, 'authorizeHold']);
+Route::post('/authorizenet/charge', [\App\Http\Controllers\AuthorizeNetController::class, 'charge']);
+Route::post('/authorizenet/authorize-hold', [\App\Http\Controllers\AuthorizeNetController::class, 'authorizeHold']);
+
 // Stripe Driver Verification & Multi-Payment Flow
 Route::post('/payment/submit-verification', [StripeVerificationController::class, 'submitForVerification']);
 Route::post('/payment/authorize-hold', [StripeVerificationController::class, 'authorizePaymentHold']);

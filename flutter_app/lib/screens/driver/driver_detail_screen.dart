@@ -7,6 +7,7 @@ import '../../services/driver_service.dart';
 import '../../services/places_service.dart';
 import '../payment/booking_confirmation_screen.dart';
 import '../rider/widgets/ride_payment_method_sheet.dart';
+import '../../services/payment_config_service.dart';
 
 class DriverDetailScreen extends StatefulWidget {
   final DriverModel? driver;
@@ -62,7 +63,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
   // Payment & Country
   String _selectedCountry = 'USA';
   String _currencySymbol = '\$';
-  String _paymentMethod = 'stripe';
+  String _paymentMethod = PaymentConfigService.currentConfig.isAuthorizeNetActive ? 'authorizenet' : PaymentConfigService.currentConfig.firstActiveMethod;
   String? _momoPhone;
   String _momoNetwork = 'MTN';
 
@@ -78,7 +79,9 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
     );
     if (result != null) {
       setState(() {
-        _paymentMethod = (result.method == 'cash' || result.method == 'wallet') ? 'stripe' : result.method;
+        _paymentMethod = (result.method == 'cash' || result.method == 'wallet')
+            ? (PaymentConfigService.currentConfig.isAuthorizeNetActive ? 'authorizenet' : 'stripe')
+            : result.method;
         _momoPhone = result.momoPhone;
         _momoNetwork = result.momoNetwork ?? 'MTN';
       });
@@ -102,8 +105,10 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (_paymentMethod == 'cash') {
-      _paymentMethod = 'stripe';
+    if (_paymentMethod == 'cash' || _paymentMethod == 'wallet') {
+      _paymentMethod = PaymentConfigService.currentConfig.isAuthorizeNetActive
+          ? 'authorizenet'
+          : PaymentConfigService.currentConfig.firstActiveMethod;
     }
     if (widget.initialPickupLocation != null &&
         widget.initialPickupLocation!.isNotEmpty) {
@@ -1969,7 +1974,42 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
             ),
           ),
 
-          if (_paymentMethod == 'stripe') ...[
+          if (_paymentMethod == 'authorizenet') ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF003366).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF00A4E4).withOpacity(0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified_user_rounded, color: Color(0xFF38BDF8), size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Authorize.Net (A Visa Solution) • PCI-DSS Level 1 Encrypted',
+                          style: TextStyle(
+                            color: Color(0xFF38BDF8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'Transactions processed with 256-bit TLS bank-grade card encryption.',
+                          style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (_paymentMethod == 'stripe') ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),

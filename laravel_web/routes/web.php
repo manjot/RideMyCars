@@ -869,14 +869,130 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         }
 
         // 1. PAYMENT GATE: Drivers are NOT dispatched upon initial booking request.
-        // Payment must be authorized/held via Stripe, Apple Pay, MoMo Pay, or Cash on drop-off.
+        // Payment must be authorized/held via Stripe, Authorize.Net, MoMo Pay, or Cash on drop-off.
         $method = strtolower($paymentMethod);
-        $allowedMethods = ['stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo', 'cash'];
+        $activeGateways = \App\Services\SettingService::getActivePaymentGateways();
+        $allowedMethods = ['authorizenet', 'authorize.net', 'anet', 'stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay', 'momo', 'mobile_money', 'momo_pay', 'mtn_momo', 'cash'];
 
         if (!in_array($method, $allowedMethods, true)) {
             return response()->json([
-                'error' => 'Unsupported payment method. Please select Stripe, MoMo Pay, or Cash on drop-off.'
+                'error' => 'Unsupported payment method. Please select an active payment gateway.'
             ], 422);
+        }
+
+        // Enforce active / inactive gateway status set in Admin Hub
+        if (in_array($method, ['authorizenet', 'authorize.net', 'anet'], true) && !isset($activeGateways['authorizenet'])) {
+            return response()->json(['error' => 'Authorize.Net is currently unavailable.'], 422);
+        }
+        if (in_array($method, ['stripe', 'card', 'credit card', 'credit_card', 'apple_pay', 'apple pay', 'applepay'], true) && !isset($activeGateways['stripe'])) {
+            return response()->json(['error' => 'Stripe is currently unavailable.'], 422);
+        }
+        if (in_array($method, ['momo', 'mobile_money', 'momo_pay', 'mtn_momo'], true) && !isset($activeGateways['momo'])) {
+            return response()->json(['error' => 'Mobile Money is currently unavailable.'], 422);
+        }
+        if ($method === 'cash' && !isset($activeGateways['cash'])) {
+            return response()->json(['error' => 'Cash on drop-off is currently unavailable.'], 422);
+        }
+
+        // Handle Authorize.Net (A Visa Solution - Pre-auth Hold)
+        if (in_array($method, ['authorizenet', 'authorize.net', 'anet'], true)) {
+            try {
+                $hasCardInput = $request->filled('card_number') || $request->filled('anet_card_number') || $request->filled('opaque_data_value');
+                if ($hasCardInput) {
+                    $refId = 'ANET-HOLD-' . strtoupper(\Illuminate\Support\Str::random(10));
+                    $rawExp = $request->input('anet_card_expiry') ?? $request->input('expiration_date');
+                    $expClean = preg_replace('/[^0-9]/', '', (string)$rawExp);
+                    $paymentParams = [
+                        'amount' => $amount,
+                        'currency' => $ride->currency ?? 'USD',
+                        'ref_id' => $refId,
+                        'order_id' => $ride->digital_receipt_code ?? ("RIDE-{$ride->id}"),
+                        'customer_id' => $riderId,
+                        'customer_email' => auth()->user()?->email ?? 'rider@ridemycars.com',
+                        'card_number' => $request->input('anet_card_number') ?? $request->input('card_number'),
+                        'expiration_date' => $expClean,
+                        'card_code' => $request->input('anet_card_cvv') ?? $request->input('card_code'),
+                        'card_holder' => $request->input('anet_card_holder') ?? $request->input('card_holder') ?? (auth()->user()?->name ?? 'Ride Customer'),
+                        'opaque_data_value' => $request->input('opaque_data_value'),
+                        'opaque_data_descriptor' => $request->input('opaque_data_descriptor'),
+                    ];
+
+                    $holdRes = \App\Services\AuthorizeNetService::authorizeHold($paymentParams);
+                    if (!$holdRes['success']) {
+                        return response()->json([
+                            'error' => $holdRes['message'] ?? 'Authorize.Net card pre-authorization hold failed. Please check your card details.'
+                        ], 422);
+                    }
+
+                    $ride->update([
+                        'payment_status' => 'authorized_hold',
+                        'payment_method' => 'authorizenet',
+                        'hold_authorization_code' => $holdRes['transaction_id'] ?? $refId,
+                        'expires_at' => $expiresAt,
+                    ]);
+
+                    \App\Models\PaymentTransaction::create([
+                        'transaction_ref' => $refId,
+                        'user_id' => $riderId,
+                        'country' => $country ?? 'USA',
+                        'currency' => $ride->currency ?? 'USD',
+                        'amount' => $amount,
+                        'gross_amount' => $amount,
+                        'payment_method' => 'authorizenet',
+                        'provider' => 'AuthorizeNet',
+                        'status' => 'authorized_hold',
+                        'service_vertical' => 'RIDE_HAILING',
+                        'ride_id' => $ride->id,
+                        'gateway_response' => $holdRes,
+                    ]);
+
+                    session(['active_guest_ride_id' => $ride->id]);
+
+                    try {
+                        \App\Services\NotificationService::notifyRideRequested($ride);
+                    } catch (\Throwable $e) {}
+
+                    return response()->json([
+                        'success' => true,
+                        'requires_payment_hold' => false,
+                        'is_payment_confirmed' => true,
+                        'ride_id' => $ride->id,
+                        'payment_method' => 'authorizenet',
+                        'payment_status' => 'authorized_hold',
+                        'transaction_ref' => $refId,
+                        'expires_at' => $expiresAt->toIso8601String(),
+                        'waiting_time_minutes' => $waitingMinutes,
+                        'waiting_time_seconds' => $waitingMinutes * 60,
+                        'remaining_seconds' => $waitingMinutes * 60,
+                        'redirect_url' => "/ride/track/{$ride->id}",
+                        'tracking_url' => "/ride/track/{$ride->id}",
+                        'polling_url' => "/api/ride/{$ride->id}/status",
+                        'message' => 'Authorize.Net pre-authorization hold verified. Driver dispatch active.',
+                    ]);
+                }
+
+                $ride->update([
+                    'payment_method' => 'authorizenet',
+                    'payment_status' => 'pending',
+                ]);
+                session(['active_guest_ride_id' => $ride->id]);
+
+                return response()->json([
+                    'success' => true,
+                    'requires_payment_hold' => true,
+                    'ride_id' => $ride->id,
+                    'payment_method' => 'authorizenet',
+                    'expires_at' => $expiresAt->toIso8601String(),
+                    'waiting_time_minutes' => $waitingMinutes,
+                    'waiting_time_seconds' => $waitingMinutes * 60,
+                    'remaining_seconds' => $waitingMinutes * 60,
+                    'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+                    'tracking_url' => "/ride/track/{$ride->id}",
+                    'polling_url' => "/api/ride/{$ride->id}/status",
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => $e->getMessage()], 400);
+            }
         }
 
         // Handle Stripe Card and Apple Pay
@@ -1056,6 +1172,84 @@ Route::post('/ride/confirm-hold', function (\Illuminate\Http\Request $request) {
             'tracking_url' => "/ride/track/{$ride->id}",
             'polling_url' => "/api/ride/{$ride->id}/status",
         ]);
+    }
+
+    // Verify Authorize.Net hold
+    if ($ride->payment_method === 'authorizenet' || in_array(strtolower((string)$request->input('payment_method')), ['authorizenet', 'anet'], true)) {
+        if ($ride->payment_status === 'authorized_hold') {
+            return response()->json([
+                'success' => true,
+                'status' => 'authorized_hold',
+                'message' => 'Authorize.Net payment hold verified. Driver search is active.',
+                'ride_id' => $ride->id,
+                'tracking_url' => "/ride/track/{$ride->id}",
+                'polling_url' => "/api/ride/{$ride->id}/status",
+            ]);
+        }
+
+        if ($request->filled('card_number') || $request->filled('anet_card_number') || $request->filled('opaque_data_value')) {
+            $refId = 'ANET-HOLD-' . strtoupper(\Illuminate\Support\Str::random(10));
+            $rawExp = $request->input('anet_card_expiry') ?? $request->input('expiration_date');
+            $expClean = preg_replace('/[^0-9]/', '', (string)$rawExp);
+            $holdRes = \App\Services\AuthorizeNetService::authorizeHold([
+                'amount' => (float)($ride->fare ?? $ride->total_amount ?? 25.0),
+                'currency' => $ride->currency ?? 'USD',
+                'ref_id' => $refId,
+                'order_id' => $ride->digital_receipt_code ?? ("RIDE-{$ride->id}"),
+                'customer_id' => $ride->rider_id,
+                'customer_email' => auth()->user()?->email ?? 'rider@ridemycars.com',
+                'card_number' => $request->input('anet_card_number') ?? $request->input('card_number'),
+                'expiration_date' => $expClean,
+                'card_code' => $request->input('anet_card_cvv') ?? $request->input('card_code'),
+                'card_holder' => $request->input('anet_card_holder') ?? $request->input('card_holder') ?? (auth()->user()?->name ?? 'Ride Customer'),
+                'opaque_data_value' => $request->input('opaque_data_value'),
+                'opaque_data_descriptor' => $request->input('opaque_data_descriptor'),
+            ]);
+
+            if ($holdRes['success']) {
+                $ride->update([
+                    'payment_status' => 'authorized_hold',
+                    'payment_method' => 'authorizenet',
+                    'hold_authorization_code' => $holdRes['transaction_id'] ?? $refId,
+                ]);
+
+                \App\Models\PaymentTransaction::create([
+                    'transaction_ref' => $refId,
+                    'user_id' => $ride->rider_id,
+                    'country' => $ride->driver_country ?? 'USA',
+                    'currency' => $ride->currency ?? 'USD',
+                    'amount' => (float)($ride->fare ?? $ride->total_amount ?? 25.0),
+                    'gross_amount' => (float)($ride->fare ?? $ride->total_amount ?? 25.0),
+                    'payment_method' => 'authorizenet',
+                    'provider' => 'AuthorizeNet',
+                    'status' => 'authorized_hold',
+                    'service_vertical' => 'RIDE_HAILING',
+                    'ride_id' => $ride->id,
+                    'gateway_response' => $holdRes,
+                ]);
+
+                try {
+                    \App\Services\NotificationService::notifyRideRequested($ride);
+                } catch (\Throwable $e) {}
+
+                return response()->json([
+                    'success' => true,
+                    'status' => 'authorized_hold',
+                    'message' => 'Authorize.Net payment hold verified. Driver search is active.',
+                    'ride_id' => $ride->id,
+                    'tracking_url' => "/ride/track/{$ride->id}",
+                    'polling_url' => "/api/ride/{$ride->id}/status",
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'requires_checkout' => true,
+                'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+                'ride_id' => $ride->id,
+                'error' => $holdRes['message'] ?? 'Authorize.Net hold failed. Please check your card.',
+            ]);
+        }
     }
 
     $paymentIntentId = $request->input('payment_intent_id') ?: $ride->hold_payment_intent_id;
@@ -3653,20 +3847,38 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 'payment.expresspay_merchant_id' => ['value' => $liveEpMerchant, 'label' => 'ExpressPay Merchant ID'],
                 'payment.expresspay_api_key' => ['value' => $liveEpKey, 'label' => 'ExpressPay API Key'],
                 'payment.expresspay_currency' => ['value' => 'GHS', 'label' => 'ExpressPay Currency'],
+                'payment.authorizenet_enabled' => ['value' => '1', 'label' => 'Authorize.Net Gateway Enabled'],
+                'payment.authorizenet_mode' => ['value' => 'sandbox', 'label' => 'Authorize.Net Active Mode'],
+                'payment.authorizenet_login_id' => ['value' => 'ridemycars', 'label' => 'Authorize.Net API Login ID'],
+                'payment.authorizenet_transaction_key' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Transaction Key'],
+                'payment.authorizenet_sandbox_login_id' => ['value' => 'ridemycars', 'label' => 'Authorize.Net Sandbox Login ID'],
+                'payment.authorizenet_sandbox_transaction_key' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Sandbox Transaction Key'],
+                'payment.authorizenet_live_login_id' => ['value' => 'ridemycars', 'label' => 'Authorize.Net Live Login ID'],
+                'payment.authorizenet_live_transaction_key' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Live Transaction Key'],
+                'payment.cash_enabled' => ['value' => '1', 'label' => 'Cash on Delivery/Trip Enabled'],
             ];
 
             foreach ($livePaymentSettings as $sKey => $sVal) {
-                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                    ['key' => $sKey],
-                    [
+                $existingSetting = \Illuminate\Support\Facades\DB::table('settings')->where('key', $sKey)->first();
+                if (!$existingSetting) {
+                    \Illuminate\Support\Facades\DB::table('settings')->insert([
+                        'key' => $sKey,
                         'value' => $sVal['value'],
                         'group' => 'Payment Gateways',
                         'type' => 'text',
                         'label' => $sVal['label'],
+                        'created_at' => now(),
                         'updated_at' => now(),
-                    ]
-                );
+                    ]);
+                } elseif (!str_ends_with($sKey, '_enabled')) {
+                    \Illuminate\Support\Facades\DB::table('settings')->where('key', $sKey)->update([
+                        'value' => $sVal['value'],
+                        'label' => $sVal['label'],
+                        'updated_at' => now(),
+                    ]);
+                }
             }
+            $output['authorizenet_settings_synced'] = true;
             $liveMailSettings = [
                 'mail.mailer' => ['value' => 'smtp', 'label' => 'Mail Mailer'],
                 'mail.host' => ['value' => 'mail.ridemycars.com', 'label' => 'Mail Host'],
@@ -4448,6 +4660,10 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                     'EXPRESSPAY_MERCHANT_ID' => '804968043952',
                     'EXPRESSPAY_API_KEY' => 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2',
                     'EXPRESSPAY_ENABLED' => 'true',
+                    'AUTHORIZENET_ENABLED' => 'true',
+                    'AUTHORIZENET_MODE' => 'sandbox',
+                    'AUTHORIZENET_API_LOGIN_ID' => 'ridemycars',
+                    'AUTHORIZENET_TRANSACTION_KEY' => 'Rideme2026@#',
                 ];
                 foreach ($livePaymentVars as $pKey => $pVal) {
                     if (preg_match("/^{$pKey}=.*$/m", $envContent)) {

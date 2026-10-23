@@ -2,6 +2,12 @@
     <x-slot:title>Book a Ride — RideMyCars</x-slot>
     <x-slot:head>
         @php
+            $activeGateways = \App\Services\SettingService::getActivePaymentGateways();
+            $stripeActive = isset($activeGateways['stripe']);
+            $anetActive = isset($activeGateways['authorizenet']);
+            $momoActive = isset($activeGateways['momo']);
+            $cashActive = isset($activeGateways['cash']);
+            $defaultGateway = array_key_first($activeGateways) ?? 'authorizenet';
             $gmapsKey = trim((string) config('services.google_maps.api_key'));
             if (empty($gmapsKey)) {
                 $gmapsKey = trim((string) env('GOOGLE_MAPS_API_KEY'));
@@ -759,14 +765,19 @@
                                     <template x-if="paymentMethod === 'momo'">
                                         <img src="/images/momo-icon.svg" alt="MoMo Pay" class="w-8 h-8 rounded-xl object-contain shrink-0">
                                     </template>
-                                    <template x-if="paymentMethod !== 'momo' && paymentMethod !== 'cash'">
+                                    <template x-if="paymentMethod === 'authorizenet'">
+                                        <div class="w-8 h-8 rounded-xl bg-[#002D62] p-1 border border-[#002D62]/40 flex items-center justify-center shrink-0 shadow-2xs">
+                                            <img src="/images/payment-icons/authorizenet.svg" alt="Authorize.Net" class="w-full h-full object-contain">
+                                        </div>
+                                    </template>
+                                    <template x-if="paymentMethod !== 'momo' && paymentMethod !== 'cash' && paymentMethod !== 'authorizenet'">
                                         <img src="/images/stripe-icon.svg" alt="Stripe" class="w-8 h-8 rounded-xl object-contain shrink-0">
                                     </template>
                                     <div class="text-left">
                                         <div class="text-xs font-black text-gray-900 dark:text-white" 
-                                             x-text="paymentMethod === 'cash' ? 'Cash Direct Pay' : (paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe (Cards & Apple Pay)'))"></div>
+                                             x-text="paymentMethod === 'cash' ? 'Cash Direct Pay' : (paymentMethod === 'momo' ? ('MoMo Pay (' + momoNetwork + ')') : (paymentMethod === 'authorizenet' ? 'Authorize.Net Card Pay' : (selectedCard ? (selectedCard.brand_name + ' •••• ' + selectedCard.card_last4) : 'Stripe (Cards & Apple Pay)')))"></div>
                                         <div class="text-[10px] font-bold text-gray-500 dark:text-gray-400" 
-                                             x-text="paymentMethod === 'cash' ? 'Pay driver directly on drop-off (No hold)' : (paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'mobile')) : 'Pre-authorization hold secured by Stripe')"></div>
+                                             x-text="paymentMethod === 'cash' ? 'Pay driver directly on drop-off (No hold)' : (paymentMethod === 'momo' ? ('Prompt to ' + (momoPhone || phone || 'mobile')) : (paymentMethod === 'authorizenet' ? 'Pre-authorization hold secured by Authorize.Net' : 'Pre-authorization hold secured by Stripe'))"></div>
                                     </div>
                                 </div>
                                 <span class="text-gray-400 font-bold text-xs">></span>
@@ -1242,12 +1253,45 @@
                     <template x-if="paymentStep !== 'select'">
                         <button type="button" @click="paymentStep = 'select'" class="px-2.5 py-1 bg-gray-100 dark:bg-white/10 rounded-full text-xs font-bold">← Back</button>
                     </template>
-                    <h2 class="text-base font-extrabold text-gray-900 dark:text-white" x-text="paymentStep === 'select' ? 'Payment method' : 'Add Card'"></h2>
+                    <h2 class="text-base font-extrabold text-gray-900 dark:text-white" x-text="paymentStep === 'select' ? 'Payment method' : (paymentStep === 'anet_form' ? 'Authorize.Net Card' : (paymentStep === 'momo_form' ? 'Mobile Money Details' : 'Add Card'))"></h2>
                     <span class="text-[11px] font-bold text-gray-400">🔒 SSL Encrypted</span>
                 </div>
                 <div class="p-5 overflow-y-auto flex-1 space-y-4">
                     <div x-show="paymentStep === 'select'" class="space-y-4">
-                        <!-- Option 1: Stripe (Cards & Apple Pay via Stripe) -->
+                        @if($anetActive)
+                        <!-- Option: Authorize.Net (A Visa Solution - Global Credit / Debit Cards) -->
+                        <div @click="paymentMethod = 'authorizenet'; if (!anetCard.number) { paymentStep = 'anet_form'; } else { paymentModal = false; }" 
+                             :class="paymentMethod === 'authorizenet' ? 'border-[#002C6C] dark:border-[#0080FF] ring-2 ring-[#002C6C] dark:ring-[#0080FF] bg-[#002C6C]/5 dark:bg-[#0080FF]/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
+                             class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 flex items-center justify-center p-1.5 shadow-xs shrink-0">
+                                    <img src="/images/authorizenet-icon.svg" alt="Authorize.Net" class="w-full h-full object-contain">
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-black text-sm text-gray-900 dark:text-white">Authorize.Net</h4>
+                                        <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#002C6C]/10 text-[#002C6C] dark:bg-[#0080FF]/20 dark:text-[#60a5fa]">
+                                            Visa Solution
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium" x-text="anetCard.number ? ('•••• ' + anetCard.number.slice(-4) + ' (Ready)') : 'Credit & Debit Cards (Global)'"></div>
+                                    <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                                        <img src="/images/payment-icons/visa.svg" alt="Visa" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/discover.svg" alt="Discover" class="h-4.5 w-auto rounded shadow-2xs">
+                                        <img src="/images/payment-icons/amex.svg" alt="Amex" class="h-4.5 w-auto rounded shadow-2xs">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span x-show="paymentMethod === 'authorizenet' && anetCard.number" class="text-emerald-500 font-extrabold text-sm">✓</span>
+                                <button type="button" @click.stop="paymentMethod = 'authorizenet'; paymentStep = 'anet_form';" class="text-xs font-black text-[#002C6C] dark:text-[#60a5fa] hover:underline" x-text="anetCard.number ? 'Edit' : 'Enter Card >'"></button>
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($stripeActive)
+                        <!-- Option: Stripe (Cards & Apple Pay via Stripe) -->
                         <div @click="paymentMethod = 'stripe'; paymentModal = false;" 
                              :class="paymentMethod === 'stripe' ? 'border-[#635BFF] dark:border-[#635BFF] ring-2 ring-[#635BFF] bg-[#635BFF]/5 dark:bg-[#635BFF]/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                              class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
@@ -1272,8 +1316,10 @@
                             </div>
                             <span x-show="paymentMethod === 'stripe'" class="text-emerald-500 font-extrabold text-sm">✓</span>
                         </div>
+                        @endif
 
-                        <!-- Option 2: MoMo Pay (Mobile Money) -->
+                        @if($momoActive)
+                        <!-- Option: MoMo Pay (Mobile Money) -->
                         <div @click="paymentMethod = 'momo'; paymentStep = 'momo_form';" 
                              :class="paymentMethod === 'momo' ? 'border-amber-500 dark:border-amber-500 ring-2 ring-amber-500 bg-amber-500/5 dark:bg-amber-500/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                              class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
@@ -1296,8 +1342,10 @@
                             </div>
                             <span class="text-gray-400 font-bold text-xs">></span>
                         </div>
+                        @endif
 
-                        <!-- Option 3: Cash (Direct Pay on Drop-off) -->
+                        @if($cashActive)
+                        <!-- Option: Cash (Direct Pay on Drop-off) -->
                         <div @click="paymentMethod = 'cash'; paymentModal = false;" 
                              :class="paymentMethod === 'cash' ? 'border-emerald-500 dark:border-emerald-500 ring-2 ring-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222]'"
                              class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-sm">
@@ -1315,8 +1363,10 @@
                             </div>
                             <span x-show="paymentMethod === 'cash'" class="text-emerald-500 font-extrabold text-sm">✓</span>
                         </div>
+                        @endif
 
-                        <!-- Option 2: Credit / Debit Cards Header & List -->
+                        @if($stripeActive)
+                        <!-- Option: Credit / Debit Cards Header & List (Stripe) -->
                         <div class="pt-2 border-t border-gray-100 dark:border-white/10 space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-black uppercase text-gray-400 tracking-wider">Credit / Debit Cards</span>
@@ -1377,11 +1427,63 @@
                                 <span class="text-gray-400 font-bold">></span>
                             </button>
                         </div>
+                        @endif
                     </div>
+
+                    @if($anetActive)
+                    <!-- Authorize.Net Card Entry Form -->
+                    <div x-show="paymentStep === 'anet_form'" class="space-y-4">
+                        <div class="p-4 bg-[#002C6C]/5 dark:bg-[#0080FF]/10 border border-[#002C6C]/20 dark:border-[#0080FF]/30 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <img src="/images/authorizenet-logo.svg" alt="Authorize.Net" class="h-6 w-auto">
+                                    <span class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Card Details</span>
+                                </div>
+                                <span class="text-[10px] font-extrabold text-[#002C6C] dark:text-[#60a5fa] bg-[#002C6C]/10 dark:bg-[#0080FF]/20 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                    <span>🔒</span> 256-Bit SSL
+                                </span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Cardholder Full Name <span class="text-rose-500">*</span></label>
+                                <input type="text" x-model="anetCard.name" placeholder="Name on card" id="anet_cardholder_name"
+                                       class="w-full px-4 py-3 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-[#002C6C]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Card Number <span class="text-rose-500">*</span></label>
+                                <input type="text" inputmode="numeric" maxlength="19" x-model="anetCard.number" id="anet_card_number"
+                                       @input="anetCard.number = anetCard.number.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim()"
+                                       placeholder="4000 0012 3456 7890"
+                                       class="w-full px-4 py-3 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-[#002C6C]">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Expires (MM/YY) <span class="text-rose-500">*</span></label>
+                                    <input type="text" maxlength="5" x-model="anetCard.expiry" id="anet_card_expiry"
+                                           @input="if (anetCard.expiry.length === 2 && !anetCard.expiry.includes('/')) anetCard.expiry = anetCard.expiry + '/'"
+                                           placeholder="MM/YY"
+                                           class="w-full px-4 py-3 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-[#002C6C]">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">CVV Code <span class="text-rose-500">*</span></label>
+                                    <input type="password" maxlength="4" inputmode="numeric" x-model="anetCard.cvv" id="anet_card_cvc"
+                                           placeholder="•••"
+                                           class="w-full px-4 py-3 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-[#002C6C]">
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                                Pre-authorization hold secured via Authorize.Net (A Visa Solution).
+                            </p>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($stripeActive)
                     <div x-show="paymentStep === 'card_form'" class="space-y-4">
                         <x-stripe-card-input modelName="paymentMethod" value="stripe" />
                     </div>
+                    @endif
 
+                    @if($momoActive)
                     <div x-show="paymentStep === 'momo_form'" class="space-y-4">
                         <div>
                             <label class="block text-xs font-black uppercase text-gray-500 dark:text-gray-400 mb-1.5">Select Mobile Network</label>
@@ -1421,8 +1523,20 @@
                             <p class="text-[11px] text-gray-400 mt-1">A payment authorization prompt will be sent to this phone upon booking (7–15 digits).</p>
                         </div>
                     </div>
+                    @endif
                 </div>
                 <div class="p-4 bg-gray-50 dark:bg-[#111] border-t border-gray-100 dark:border-white/10 shrink-0">
+                    @if($anetActive)
+                    <template x-if="paymentStep === 'anet_form'">
+                        <button type="button" 
+                                @click="saveAnetCardFromForm();" 
+                                class="w-full py-4 bg-[#002C6C] hover:bg-[#001f4d] text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                            <span>Save &amp; Use Authorize.Net Card</span>
+                        </button>
+                    </template>
+                    @endif
+
+                    @if($stripeActive)
                     <template x-if="paymentStep === 'card_form'">
                         <button type="button" 
                                 @click="saveCardFromForm();" 
@@ -1430,7 +1544,9 @@
                             <span>Save &amp; Use Card</span>
                         </button>
                     </template>
+                    @endif
 
+                    @if($momoActive)
                     <template x-if="paymentStep === 'momo_form'">
                         <button type="button" 
                                 @click="confirmMomoInModal();" 
@@ -1438,6 +1554,7 @@
                             <span>Use Mobile Money</span>
                         </button>
                     </template>
+                    @endif
 
                     <template x-if="paymentStep === 'select'">
                         <button type="button" 
@@ -1634,7 +1751,8 @@
 
                 paymentModal: false,
                 paymentStep: 'select',
-                paymentMethod: 'stripe',
+                paymentMethod: '{{ $defaultGateway }}',
+                anetCard: { number: '', expiry: '', cvv: '', name: '', zip: '', brand: 'visa', last4: '' },
                 riderType: 'me',
                 showScheduleDropdown: false,
                 showRiderDropdown: false,
@@ -2864,6 +2982,49 @@
                     }).catch(e => console.warn('Background card save notice:', e));
                 },
 
+                saveAnetCardFromForm() {
+                    const cardHolder = (this.anetCard?.name || document.getElementById('anet_cardholder_name')?.value || '').trim();
+                    const cardNum = (this.anetCard?.number || document.getElementById('anet_card_number')?.value || '').replace(/\s+/g, '');
+                    const cardExpiry = (this.anetCard?.expiry || document.getElementById('anet_card_expiry')?.value || '').trim();
+                    const cardCvc = (this.anetCard?.cvv || document.getElementById('anet_card_cvc')?.value || '').trim();
+
+                    if (!cardHolder || cardHolder.length < 2) {
+                        this.showAppErrorModal('Cardholder Name Required', 'Please enter the cardholder name as printed on the card.');
+                        return;
+                    }
+                    if (!cardNum || !/^\d{13,19}$/.test(cardNum)) {
+                        this.showAppErrorModal('Invalid Card Number', 'Please enter a valid credit or debit card number (13–19 digits).');
+                        return;
+                    }
+                    if (!cardExpiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExpiry)) {
+                        this.showAppErrorModal('Invalid Expiration Date', 'Please enter expiration date in MM/YY format.');
+                        return;
+                    }
+                    if (!cardCvc || !/^\d{3,4}$/.test(cardCvc)) {
+                        this.showAppErrorModal('Invalid Security Code', 'Please enter a valid 3 or 4 digit CVV code.');
+                        return;
+                    }
+
+                    let brand = 'visa';
+                    if (/^4/.test(cardNum)) brand = 'visa';
+                    else if (/^(5[1-5]|2[2-7])/.test(cardNum)) brand = 'mastercard';
+                    else if (/^3[47]/.test(cardNum)) brand = 'amex';
+                    else if (/^(6011|65|64[4-9])/.test(cardNum)) brand = 'discover';
+
+                    this.anetCard = {
+                        name: cardHolder,
+                        number: cardNum,
+                        expiry: cardExpiry,
+                        cvv: cardCvc,
+                        brand: brand,
+                        last4: cardNum.slice(-4)
+                    };
+
+                    this.paymentMethod = 'authorizenet';
+                    this.paymentStep = 'select';
+                    this.paymentModal = false;
+                },
+
                 getFormattedFare() {
                     if (this.selectedFare && this.selectedFare !== '') return this.selectedFare;
                     if (this.fareBreakdown && this.fareBreakdown.grand_total) {
@@ -2913,6 +3074,10 @@
                                 stops: this.stops.map(s => ({ location: s.location, lat: s.lat, lng: s.lng })),
                                 vehicle_type: this.vehicle_type, 
                                 payment_method: this.paymentMethod,
+                                anet_card_number: this.anetCard?.number || null,
+                                anet_card_expiry: this.anetCard?.expiry || null,
+                                anet_card_cvv: this.anetCard?.cvv || null,
+                                anet_card_holder: this.anetCard?.name || null,
                                 phone_number: this.phone || 'N/A',
                                 is_for_someone_else: this.riderType === 'someone_else',
                                 passenger_phone: this.riderType === 'me' ? (this.phone || 'N/A') : (this.riderPhone || this.phone || 'N/A'),
@@ -2947,9 +3112,13 @@
                             this.currentRideId = data.ride_id;
                             localStorage.setItem('rmc_active_ride_id', data.ride_id);
 
-                            // If customer selected Stripe without a pre-saved card, redirect immediately to the escrow checkout page
+                            // If customer selected Stripe without saved card or Authorize.Net without card, redirect immediately to verify page
                             const savedCardId = this.selectedCard?.provider_payment_method_id || this.selectedCard?.id;
                             if (this.paymentMethod === 'stripe' && !savedCardId) {
+                                window.location.href = data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
+                                return;
+                            }
+                            if (this.paymentMethod === 'authorizenet' && !this.anetCard?.number) {
                                 window.location.href = data.redirect_url || ('/payment/verify-details/ride/' + data.ride_id);
                                 return;
                             }
@@ -2965,9 +3134,14 @@
                                     },
                                     body: JSON.stringify({
                                         ride_id: data.ride_id,
+                                        payment_method: this.paymentMethod,
                                         payment_intent_id: data.payment_intent_id,
                                         transaction_ref: data.transaction_ref,
-                                        payment_method_id: savedCardId || null
+                                        payment_method_id: savedCardId || null,
+                                        card_number: this.anetCard?.number || null,
+                                        expiration_date: this.anetCard?.expiry || null,
+                                        card_code: this.anetCard?.cvv || null,
+                                        card_holder: this.anetCard?.name || null
                                     })
                                 });
 

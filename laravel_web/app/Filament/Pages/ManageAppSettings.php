@@ -60,6 +60,23 @@ class ManageAppSettings extends Page implements HasForms
             'payment_expresspay_api_key' => $all['payment.expresspay_api_key'] ?? 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm',
             'payment_expresspay_currency' => $all['payment.expresspay_currency'] ?? 'GHS',
 
+            // Authorize.Net Gateway
+            'payment_authorizenet_enabled' => (bool) ($all['payment.authorizenet_enabled'] ?? true),
+            'payment_authorizenet_mode' => $all['payment.authorizenet_mode'] ?? 'sandbox',
+            'payment_authorizenet_username' => $all['payment.authorizenet_username'] ?? 'ridemycars',
+            'payment_authorizenet_password' => $all['payment.authorizenet_password'] ?? 'Rideme2026@#',
+            'payment_authorizenet_sandbox_api_login_id' => $all['payment.authorizenet_sandbox_api_login_id'] ?? ($all['payment.authorizenet_api_login_id'] ?? '5KP3u95bQpv'),
+            'payment_authorizenet_sandbox_transaction_key' => $all['payment.authorizenet_sandbox_transaction_key'] ?? ($all['payment.authorizenet_transaction_key'] ?? '4b6qZ4R8De274Q6n'),
+            'payment_authorizenet_sandbox_client_key' => $all['payment.authorizenet_sandbox_client_key'] ?? ($all['payment.authorizenet_client_key'] ?? ''),
+            'payment_authorizenet_sandbox_signature_key' => $all['payment.authorizenet_sandbox_signature_key'] ?? '',
+            'payment_authorizenet_live_api_login_id' => $all['payment.authorizenet_live_api_login_id'] ?? '',
+            'payment_authorizenet_live_transaction_key' => $all['payment.authorizenet_live_transaction_key'] ?? '',
+            'payment_authorizenet_live_client_key' => $all['payment.authorizenet_live_client_key'] ?? '',
+            'payment_authorizenet_live_signature_key' => $all['payment.authorizenet_live_signature_key'] ?? '',
+
+            // Cash on Delivery / Drop-off
+            'payment_cash_enabled' => (bool) ($all['payment.cash_enabled'] ?? true),
+
             // SMS Gateway (Twilio Worldwide)
             'sms_twilio_enabled' => (bool) ($all['sms.twilio_enabled'] ?? true),
             'sms_twilio_account_sid' => $all['sms.twilio_account_sid'] ?? '',
@@ -151,6 +168,29 @@ class ManageAppSettings extends Page implements HasForms
                         Forms\Components\Tabs\Tab::make('Payment Gateways')
                             ->icon('heroicon-o-credit-card')
                             ->schema([
+                                Forms\Components\Section::make('Payment Gateways Active / Inactive Status (Website & App Visibility)')
+                                    ->description('Configure the active or inactive status for every payment gateway. Gateways with Active status are immediately shown on the website checkout and mobile applications. Gateways with Inactive status are automatically hidden.')
+                                    ->schema([
+                                        Forms\Components\Grid::make(4)->schema([
+                                            Forms\Components\Toggle::make('payment_stripe_enabled')
+                                                ->label('Stripe (Cards & Apple Pay)')
+                                                ->helperText('Active: Visible • Inactive: Hidden')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('payment_authorizenet_enabled')
+                                                ->label('Authorize.Net (A Visa Solution)')
+                                                ->helperText('Active: Visible • Inactive: Hidden')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('payment_expresspay_enabled')
+                                                ->label('ExpressPay MoMo (Mobile Money)')
+                                                ->helperText('Active: Visible • Inactive: Hidden')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('payment_cash_enabled')
+                                                ->label('Cash on Drop-off (Direct Pay)')
+                                                ->helperText('Active: Visible • Inactive: Hidden')
+                                                ->default(true),
+                                        ]),
+                                    ]),
+
                                 Forms\Components\Section::make('Stripe Gateway')
                                     ->description('Manage Credit/Debit Card payments with dedicated Test & Live credentials.')
                                     ->schema([
@@ -281,6 +321,107 @@ class ManageAppSettings extends Page implements HasForms
                                                 ->label('Gateway Endpoints')
                                                 ->content('Sandbox: sandbox.expresspaygh.com • Live: expresspaygh.com'),
                                         ]),
+                                    ]),
+
+                                Forms\Components\Section::make('Authorize.Net Gateway (A Visa Solution)')
+                                    ->description('Manage Authorize.Net Credit/Debit Card payments with dedicated Sandbox & Live API credentials.')
+                                    ->schema([
+                                        Forms\Components\Grid::make(3)->schema([
+                                            Forms\Components\Toggle::make('payment_authorizenet_enabled')
+                                                ->label('Enable Authorize.Net')
+                                                ->default(true),
+                                            Forms\Components\Select::make('payment_authorizenet_mode')
+                                                ->label('Active Environment Mode')
+                                                ->options([
+                                                    'sandbox' => '🧪 Sandbox / Test Mode',
+                                                    'live' => '🚀 Live / Production Mode',
+                                                ])
+                                                ->default('sandbox')
+                                                ->helperText('Select which key set to use dynamically for customer transactions.')
+                                                ->required(),
+                                            Forms\Components\TextInput::make('payment_authorizenet_currency')
+                                                ->label('Settlement Currency')
+                                                ->default('USD')
+                                                ->disabled(),
+                                        ]),
+
+                                        Forms\Components\Fieldset::make('Merchant Account Information')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_authorizenet_username')
+                                                    ->label('Merchant Username / ID')
+                                                    ->default('ridemycars')
+                                                    ->placeholder('ridemycars'),
+                                                Forms\Components\TextInput::make('payment_authorizenet_password')
+                                                    ->label('Merchant Password')
+                                                    ->default('Rideme2026@#')
+                                                    ->password()
+                                                    ->revealable(),
+                                                Forms\Components\Placeholder::make('anet_underwriting_notice')
+                                                    ->label('Merchant Account Underwriting Notice')
+                                                    ->content('Merchant: ridemycars (Paula) • Underwriting Status: Application under review for live processing. Use Sandbox mode for development/testing, and input live keys once approved.')
+                                                    ->columnSpanFull(),
+                                            ])->columns(2),
+
+                                        Forms\Components\Fieldset::make('🧪 Sandbox / Test Mode Keys')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_authorizenet_sandbox_api_login_id')
+                                                    ->label('Sandbox API Login ID')
+                                                    ->placeholder('5KP3u95bQpv')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('payment_authorizenet_sandbox_client_key')
+                                                    ->label('Sandbox Public Client Key (Accept.js)')
+                                                    ->placeholder('Public key for Accept.js in-app card tokenization')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('payment_authorizenet_sandbox_transaction_key')
+                                                    ->label('Sandbox Transaction Key')
+                                                    ->placeholder('4b6qZ4R8De274Q6n')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('payment_authorizenet_sandbox_signature_key')
+                                                    ->label('Sandbox Signature Key (Webhooks)')
+                                                    ->placeholder('Signature key')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpan(1),
+                                            ])->columns(2),
+
+                                        Forms\Components\Fieldset::make('🚀 Live / Production Mode Keys')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('payment_authorizenet_live_api_login_id')
+                                                    ->label('Live API Login ID')
+                                                    ->placeholder('Your production API Login ID')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('payment_authorizenet_live_client_key')
+                                                    ->label('Live Public Client Key (Accept.js)')
+                                                    ->placeholder('Your production public Client Key')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('payment_authorizenet_live_transaction_key')
+                                                    ->label('Live Transaction Key')
+                                                    ->placeholder('Your production Transaction Key')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('payment_authorizenet_live_signature_key')
+                                                    ->label('Live Signature Key (Webhooks)')
+                                                    ->placeholder('Your production Signature Key')
+                                                    ->password()
+                                                    ->revealable()
+                                                    ->columnSpan(1),
+                                            ])->columns(2),
+
+                                        Forms\Components\Placeholder::make('anet_endpoints_info')
+                                            ->label('Gateway Endpoints & Documentation')
+                                            ->content('Sandbox: apitest.authorize.net/xml/v1/request.api • Live: api.authorize.net/xml/v1/request.api • Accept.js: jstest.authorize.net / js.authorize.net'),
+                                    ]),
+
+                                Forms\Components\Section::make('Cash on Service / Drop-off')
+                                    ->description('Physical cash payments direct to chauffeur/courier on drop-off.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('payment_cash_enabled')
+                                            ->label('Enable Cash on Drop-off')
+                                            ->helperText('When enabled, passengers and delivery customers can choose physical cash at checkout on the website and app.')
+                                            ->default(true),
                                     ]),
                             ]),
 
@@ -705,6 +846,23 @@ class ManageAppSettings extends Page implements HasForms
             'payment_expresspay_live_api_key' => ['key' => 'payment.expresspay_live_api_key', 'group' => 'Payment Gateways'],
             'payment_expresspay_currency' => ['key' => 'payment.expresspay_currency', 'group' => 'Payment Gateways'],
 
+            // Authorize.Net Gateway
+            'payment_authorizenet_enabled' => ['key' => 'payment.authorizenet_enabled', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_mode' => ['key' => 'payment.authorizenet_mode', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_username' => ['key' => 'payment.authorizenet_username', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_password' => ['key' => 'payment.authorizenet_password', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_sandbox_api_login_id' => ['key' => 'payment.authorizenet_sandbox_api_login_id', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_sandbox_transaction_key' => ['key' => 'payment.authorizenet_sandbox_transaction_key', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_sandbox_client_key' => ['key' => 'payment.authorizenet_sandbox_client_key', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_sandbox_signature_key' => ['key' => 'payment.authorizenet_sandbox_signature_key', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_live_api_login_id' => ['key' => 'payment.authorizenet_live_api_login_id', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_live_transaction_key' => ['key' => 'payment.authorizenet_live_transaction_key', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_live_client_key' => ['key' => 'payment.authorizenet_live_client_key', 'group' => 'Payment Gateways'],
+            'payment_authorizenet_live_signature_key' => ['key' => 'payment.authorizenet_live_signature_key', 'group' => 'Payment Gateways'],
+
+            // Cash on Delivery / Drop-off
+            'payment_cash_enabled' => ['key' => 'payment.cash_enabled', 'group' => 'Payment Gateways'],
+
             // SMS - Twilio
             'sms_twilio_enabled' => ['key' => 'sms.twilio_enabled', 'group' => 'SMS Gateway'],
             'sms_twilio_account_sid' => ['key' => 'sms.twilio_account_sid', 'group' => 'SMS Gateway'],
@@ -814,6 +972,20 @@ class ManageAppSettings extends Page implements HasForms
             SettingService::set('payment.expresspay_api_key', $state['payment_expresspay_sandbox_api_key'] ?? '', 'Payment Gateways');
         }
 
+        // Dynamically assign active Authorize.Net keys based on authorizenet_mode
+        $authorizenetMode = $state['payment_authorizenet_mode'] ?? 'sandbox';
+        if ($authorizenetMode === 'live') {
+            SettingService::set('payment.authorizenet_api_login_id', $state['payment_authorizenet_live_api_login_id'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.authorizenet_transaction_key', $state['payment_authorizenet_live_transaction_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.authorizenet_client_key', $state['payment_authorizenet_live_client_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.authorizenet_signature_key', $state['payment_authorizenet_live_signature_key'] ?? '', 'Payment Gateways');
+        } else {
+            SettingService::set('payment.authorizenet_api_login_id', $state['payment_authorizenet_sandbox_api_login_id'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.authorizenet_transaction_key', $state['payment_authorizenet_sandbox_transaction_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.authorizenet_client_key', $state['payment_authorizenet_sandbox_client_key'] ?? '', 'Payment Gateways');
+            SettingService::set('payment.authorizenet_signature_key', $state['payment_authorizenet_sandbox_signature_key'] ?? '', 'Payment Gateways');
+        }
+
         // Synchronize Nalo and Twilio keys to .env if writable
         try {
             $envPath = base_path('.env');
@@ -850,7 +1022,7 @@ class ManageAppSettings extends Page implements HasForms
 
         Notification::make()
             ->title('Settings Saved Successfully!')
-            ->body('All configurations updated in database. Stripe mode: ' . strtoupper($stripeMode) . ' • ExpressPay mode: ' . strtoupper($expresspayMode))
+            ->body('All configurations updated in database. Stripe: ' . strtoupper($stripeMode) . ' • Authorize.Net: ' . strtoupper($authorizenetMode) . ' • ExpressPay: ' . strtoupper($expresspayMode))
             ->success()
             ->send();
     }
@@ -960,6 +1132,45 @@ class ManageAppSettings extends Page implements HasForms
                             ->body($e->getMessage())
                             ->danger()
                             ->duration(10000)
+                            ->send();
+                    }
+                }),
+
+            Action::make('testAuthorizeNet')
+                ->label('Test Authorize.Net')
+                ->icon('heroicon-o-shield-check')
+                ->color('info')
+                ->requiresConfirmation()
+                ->modalHeading('Test Authorize.Net API Connection')
+                ->modalDescription('Verify that your Authorize.Net API Login ID and Transaction Key authenticate with the Authorize.Net API endpoint.')
+                ->modalSubmitActionLabel('Run Authorize.Net Test')
+                ->action(function (): void {
+                    try {
+                        SettingService::syncToConfig();
+                        $result = \App\Services\AuthorizeNetService::authenticateTest();
+                        $modeLabel = strtoupper($result['mode'] ?? 'SANDBOX');
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title("Authorize.Net Connected ({$modeLabel})!")
+                                ->body($result['message'] . " • Login ID: {$result['login_id']}")
+                                ->success()
+                                ->duration(8000)
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title("Authorize.Net Connection Failed ({$modeLabel})")
+                                ->body($result['message'])
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                        }
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Authorize.Net Test Exception')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->persistent()
                             ->send();
                     }
                 }),

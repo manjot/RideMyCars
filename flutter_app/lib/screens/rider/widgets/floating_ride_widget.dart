@@ -15,8 +15,8 @@ class FloatingRideWidget extends StatelessWidget {
   bool get _isUnpaidElectronic {
     final method = (ride['payment_method'] ?? '').toString().toLowerCase();
     final status = (ride['payment_status'] ?? '').toString().toLowerCase();
-    final isElectronic = method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
-    final isPaid = ['hold', 'authorized', 'paid', 'completed'].contains(status);
+    final isElectronic = method.contains('authorizenet') || method.contains('anet') || method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
+    final isPaid = ['hold', 'authorized', 'authorized_hold', 'paid', 'completed'].contains(status);
     return isElectronic && !isPaid;
   }
 

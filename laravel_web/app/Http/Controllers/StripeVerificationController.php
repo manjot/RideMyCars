@@ -403,9 +403,15 @@ class StripeVerificationController extends Controller
         $request->validate([
             'service_type' => 'required|string|in:ride,rental,driver_booking,hire-driver,package_delivery,delivery',
             'service_id' => 'required|integer',
-            'payment_method' => 'required|string|in:stripe,apple_pay,momo,card,cash',
+            'payment_method' => 'required|string|in:stripe,apple_pay,momo,card,cash,authorizenet',
             'momo_phone' => 'nullable|string',
             'momo_network' => 'nullable|string',
+            'card_number' => 'nullable|string',
+            'expiration_date' => 'nullable|string',
+            'card_code' => 'nullable|string',
+            'card_holder' => 'nullable|string',
+            'opaque_data_value' => 'nullable|string',
+            'opaque_data_descriptor' => 'nullable|string',
         ]);
 
         $serviceType = $request->input('service_type');
@@ -413,6 +419,16 @@ class StripeVerificationController extends Controller
         $paymentMethod = $request->input('payment_method');
         $momoPhone = $request->input('momo_phone');
         $momoNetwork = $request->input('momo_network', 'MTN');
+
+        // Check gateway active status
+        $activeGateways = \App\Services\SettingService::getActivePaymentGateways();
+        $normalizedMethod = in_array($paymentMethod, ['card', 'apple_pay', 'stripe']) ? 'stripe' : $paymentMethod;
+        if (!array_key_exists($normalizedMethod, $activeGateways)) {
+            return response()->json([
+                'success' => false,
+                'message' => "The selected payment method ({$paymentMethod}) is currently disabled. Please select an active gateway.",
+            ], 422);
+        }
 
         if ($paymentMethod === 'momo') {
             $cleanMomo = preg_replace('/\D/', '', $momoPhone ?? '');
@@ -541,6 +557,88 @@ class StripeVerificationController extends Controller
                 'transaction_ref' => $momoRes['transaction_ref'] ?? null,
                 'is_payment_confirmed' => false,
                 'message' => $momoRes['message'] ?? 'Prompt sent to your phone. Please approve on your mobile device to complete payment.',
+            ]);
+        }
+
+        if ($paymentMethod === 'authorizenet') {
+            if ($request->filled('card_number') || $request->filled('opaque_data_value')) {
+                $refId = 'ANET-HOLD-' . strtoupper(\Illuminate\Support\Str::random(10));
+                $paymentParams = [
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'ref_id' => $refId,
+                    'order_id' => $booking->booking_code ?? $booking->delivery_code ?? ("BK-{$serviceId}"),
+                    'customer_id' => $userId,
+                    'customer_email' => $booking->customer_email ?? $booking->client_email ?? 'customer@ridemycars.com',
+                    'card_number' => $request->input('card_number'),
+                    'expiration_date' => $request->input('expiration_date'),
+                    'card_code' => $request->input('card_code'),
+                    'card_holder' => $request->input('card_holder'),
+                    'opaque_data_value' => $request->input('opaque_data_value'),
+                    'opaque_data_descriptor' => $request->input('opaque_data_descriptor'),
+                ];
+                $holdRes = \App\Services\AuthorizeNetService::authorizeHold($paymentParams);
+                if (!$holdRes['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $holdRes['message'] ?? 'Authorize.Net card pre-authorization hold failed.',
+                    ], 422);
+                }
+                $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+                    ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
+                    : \App\Services\SettingService::rideWaitingTimeMinutes();
+                $freshExpiresAt = now()->addMinutes($waitingMinutes);
+                $booking->update([
+                    'payment_status' => 'authorized_hold',
+                    'payment_method' => 'authorizenet',
+                    'expires_at' => $freshExpiresAt,
+                ]);
+
+                // Create transaction
+                $foreignKey = match ($serviceType) {
+                    'ride', 'rental' => 'ride_id',
+                    'driver_booking', 'hire-driver' => 'driver_booking_id',
+                    'package_delivery', 'delivery' => 'package_delivery_id',
+                    default => 'ride_id',
+                };
+                PaymentTransaction::create([
+                    'transaction_ref' => $refId,
+                    'user_id' => $userId,
+                    'country' => $booking->country ?? 'USA',
+                    'currency' => $currency,
+                    'amount' => $amount,
+                    'gross_amount' => $amount,
+                    'payment_method' => 'authorizenet',
+                    'provider' => 'AuthorizeNet',
+                    'status' => 'authorized_hold',
+                    'service_vertical' => in_array($serviceType, ['package_delivery', 'delivery']) ? 'package_delivery' : ($serviceType === 'ride' ? 'RIDE_HAILING' : 'driver_hiring'),
+                    $foreignKey => $booking->id,
+                    'gateway_response' => $holdRes,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'payment_status' => 'authorized_hold',
+                    'payment_method' => 'authorizenet',
+                    'transaction_id' => $holdRes['transaction_id'] ?? null,
+                    'transaction_ref' => $refId,
+                    'is_payment_confirmed' => true,
+                    'remaining_seconds' => $waitingMinutes * 60,
+                    'waiting_time_minutes' => $waitingMinutes,
+                    'expires_at' => $freshExpiresAt->toIso8601String(),
+                    'message' => 'Authorize.Net payment pre-authorization hold confirmed.',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'payment_status' => 'pending',
+                'payment_method' => 'authorizenet',
+                'authorizenet_client_key' => \App\Services\SettingService::getActiveAuthorizeNetClientKey(),
+                'authorizenet_api_login_id' => \App\Services\SettingService::getActiveAuthorizeNetApiLoginId(),
+                'authorizenet_mode' => \App\Services\SettingService::getActiveAuthorizeNetMode(),
+                'is_payment_confirmed' => false,
+                'message' => 'Please provide Authorize.Net card details to authorize hold.',
             ]);
         }
 
@@ -1200,6 +1298,10 @@ class StripeVerificationController extends Controller
             'waitingMinutes' => $waitingMinutes,
             'isExpired' => $isExpired || ($bookingStatus === 'cancelled'),
             'cancellationReason' => $booking->cancellation_reason ?? $booking->rejection_reason ?? null,
+            'activeGateways' => \App\Services\SettingService::getActivePaymentGateways(),
+            'anetClientKey' => \App\Services\SettingService::getActiveAuthorizeNetClientKey(),
+            'anetApiLoginId' => \App\Services\SettingService::getActiveAuthorizeNetApiLoginId(),
+            'anetMode' => \App\Services\SettingService::getActiveAuthorizeNetMode(),
         ];
     }
 

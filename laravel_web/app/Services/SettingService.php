@@ -109,6 +109,14 @@ class SettingService
     }
 
     /**
+     * Clear all settings caches (alias for flushCache).
+     */
+    public static function clearCache(): void
+    {
+        static::flushCache();
+    }
+
+    /**
      * Synchronize database settings into Laravel runtime configurations.
      * Invoked on application boot in AppServiceProvider.
      */
@@ -162,6 +170,25 @@ class SettingService
             }
             if ($expresspayCurrency) {
                 Config::set('services.expresspay.currency', $expresspayCurrency);
+            }
+
+            // Authorize.Net Gateway
+            $authorizenetEnabled = static::get('payment.authorizenet_enabled', true);
+            $authorizenetMode = static::getActiveAuthorizeNetMode();
+            $authorizenetLoginId = static::getActiveAuthorizeNetApiLoginId();
+            $authorizenetTransKey = static::getActiveAuthorizeNetTransactionKey();
+            $authorizenetClientKey = static::getActiveAuthorizeNetClientKey();
+
+            Config::set('services.authorizenet.enabled', filter_var($authorizenetEnabled, FILTER_VALIDATE_BOOLEAN));
+            Config::set('services.authorizenet.mode', $authorizenetMode);
+            if ($authorizenetLoginId) {
+                Config::set('services.authorizenet.api_login_id', $authorizenetLoginId);
+            }
+            if ($authorizenetTransKey) {
+                Config::set('services.authorizenet.transaction_key', $authorizenetTransKey);
+            }
+            if ($authorizenetClientKey) {
+                Config::set('services.authorizenet.client_key', $authorizenetClientKey);
             }
 
             // 2. SMS Gateway (Twilio)
@@ -459,6 +486,182 @@ class SettingService
         return ($mode === 'live')
             ? 'https://expresspaygh.com/api/query.php'
             : 'https://sandbox.expresspaygh.com/api/query.php';
+    }
+
+    /**
+     * Check if Stripe payments are active/enabled.
+     */
+    public static function isStripeEnabled(): bool
+    {
+        $enabled = static::get('payment.stripe_enabled', config('services.stripe.enabled', true));
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Check if Apple Pay is active/enabled.
+     */
+    public static function isApplePayEnabled(): bool
+    {
+        $enabled = static::get('payment.apple_pay_enabled', config('services.apple_pay.enabled', true));
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Check if Cash on Drop-off is active/enabled.
+     */
+    public static function isCashEnabled(): bool
+    {
+        $enabled = static::get('payment.cash_enabled', config('services.cash.enabled', true));
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Check if Mobile Money / ExpressPay is active/enabled.
+     */
+    public static function isMomoEnabled(): bool
+    {
+        return static::isExpressPayEnabled();
+    }
+
+    /**
+     * Check if Authorize.Net payment gateway is active/enabled.
+     */
+    public static function isAuthorizeNetEnabled(): bool
+    {
+        $enabled = static::get('payment.authorizenet_enabled', config('services.authorizenet.enabled', true));
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Get active Authorize.Net environment mode ('sandbox' or 'live').
+     */
+    public static function getActiveAuthorizeNetMode(): string
+    {
+        $mode = trim((string) static::get('payment.authorizenet_mode', config('services.authorizenet.mode', env('AUTHORIZENET_MODE', 'sandbox'))));
+        return strtolower($mode ?: 'sandbox');
+    }
+
+    /**
+     * Check if Authorize.Net is operating in live/production mode.
+     */
+    public static function isAuthorizeNetLive(): bool
+    {
+        return static::getActiveAuthorizeNetMode() === 'live';
+    }
+
+    /**
+     * Get active Authorize.Net API Login ID.
+     */
+    public static function getActiveAuthorizeNetApiLoginId(): string
+    {
+        $mode = static::getActiveAuthorizeNetMode();
+        if ($mode === 'live') {
+            return trim((string) (static::get('payment.authorizenet_live_api_login_id') ?: (static::get('payment.authorizenet_api_login_id') ?: (config('services.authorizenet.live_api_login_id') ?: env('AUTHORIZENET_LIVE_API_LOGIN_ID', '')))));
+        }
+        return trim((string) (static::get('payment.authorizenet_sandbox_api_login_id') ?: (static::get('payment.authorizenet_api_login_id') ?: (config('services.authorizenet.sandbox_api_login_id') ?: env('AUTHORIZENET_SANDBOX_API_LOGIN_ID', '5KP3u95bQpv')))));
+    }
+
+    /**
+     * Get active Authorize.Net Transaction Key.
+     */
+    public static function getActiveAuthorizeNetTransactionKey(): string
+    {
+        $mode = static::getActiveAuthorizeNetMode();
+        if ($mode === 'live') {
+            return trim((string) (static::get('payment.authorizenet_live_transaction_key') ?: (static::get('payment.authorizenet_transaction_key') ?: (config('services.authorizenet.live_transaction_key') ?: env('AUTHORIZENET_LIVE_TRANSACTION_KEY', '')))));
+        }
+        return trim((string) (static::get('payment.authorizenet_sandbox_transaction_key') ?: (static::get('payment.authorizenet_transaction_key') ?: (config('services.authorizenet.sandbox_transaction_key') ?: env('AUTHORIZENET_SANDBOX_TRANSACTION_KEY', '4b6qZ4R8De274Q6n')))));
+    }
+
+    /**
+     * Get active Authorize.Net Public Client Key (for Accept.js in-app tokenization).
+     */
+    public static function getActiveAuthorizeNetClientKey(): string
+    {
+        $mode = static::getActiveAuthorizeNetMode();
+        if ($mode === 'live') {
+            return trim((string) (static::get('payment.authorizenet_live_client_key') ?: (static::get('payment.authorizenet_client_key') ?: (config('services.authorizenet.live_client_key') ?: env('AUTHORIZENET_LIVE_CLIENT_KEY', '')))));
+        }
+        return trim((string) (static::get('payment.authorizenet_sandbox_client_key') ?: (static::get('payment.authorizenet_client_key') ?: (config('services.authorizenet.sandbox_client_key') ?: env('AUTHORIZENET_SANDBOX_CLIENT_KEY', '')))));
+    }
+
+    /**
+     * Get active Authorize.Net Webhook Signature Key.
+     */
+    public static function getActiveAuthorizeNetSignatureKey(): string
+    {
+        $mode = static::getActiveAuthorizeNetMode();
+        if ($mode === 'live') {
+            return trim((string) (static::get('payment.authorizenet_live_signature_key') ?: (static::get('payment.authorizenet_signature_key') ?: env('AUTHORIZENET_LIVE_SIGNATURE_KEY', ''))));
+        }
+        return trim((string) (static::get('payment.authorizenet_sandbox_signature_key') ?: (static::get('payment.authorizenet_signature_key') ?: env('AUTHORIZENET_SANDBOX_SIGNATURE_KEY', ''))));
+    }
+
+    /**
+     * Get all currently active payment gateways configured in admin.
+     * Gateways with inactive status are automatically omitted from website and mobile apps.
+     */
+    public static function getActivePaymentGateways(): array
+    {
+        $gateways = [];
+
+        if (static::isStripeEnabled()) {
+            $gateways['stripe'] = [
+                'id' => 'stripe',
+                'name' => 'Stripe',
+                'label' => 'Credit / Debit Card',
+                'badge' => 'Cards & Apple Pay',
+                'description' => 'Credit / Debit, Apple Pay',
+                'mode' => static::getStripeMode(),
+                'is_live' => static::isStripeLive(),
+                'publishable_key' => static::getActiveStripePublishableKey(),
+                'icon' => '/images/stripe-icon.svg',
+            ];
+        }
+
+        if (static::isAuthorizeNetEnabled()) {
+            $gateways['authorizenet'] = [
+                'id' => 'authorizenet',
+                'name' => 'Authorize.Net',
+                'label' => 'Authorize.Net Card Pay',
+                'badge' => 'A Visa Solution',
+                'description' => 'Credit / Debit Card (Authorize.Net)',
+                'mode' => static::getActiveAuthorizeNetMode(),
+                'is_live' => static::isAuthorizeNetLive(),
+                'client_key' => static::getActiveAuthorizeNetClientKey(),
+                'api_login_id' => static::getActiveAuthorizeNetApiLoginId(),
+                'icon' => '/images/payment-icons/authorizenet.svg',
+                'logo' => '/images/authorizenet-logo.svg',
+            ];
+        }
+
+        if (static::isExpressPayEnabled()) {
+            $gateways['momo'] = [
+                'id' => 'momo',
+                'name' => 'MoMo Pay',
+                'label' => 'Mobile Money (Ghana)',
+                'badge' => 'Mobile Money',
+                'description' => 'MTN, Telecel, AirtelTigo',
+                'mode' => static::getActiveExpressPayMode(),
+                'is_live' => (static::getActiveExpressPayMode() === 'live'),
+                'merchant_id' => static::getActiveExpressPayMerchantId(),
+                'currency' => static::get('payment.expresspay_currency', 'GHS'),
+                'icon' => '/images/momo-icon.svg',
+            ];
+        }
+
+        if (static::isCashEnabled()) {
+            $gateways['cash'] = [
+                'id' => 'cash',
+                'name' => 'Cash',
+                'label' => 'Cash on Drop-off',
+                'badge' => 'Direct Pay',
+                'description' => 'Pay upon drop-off (Exact Fare, No hold)',
+                'icon' => '💵',
+            ];
+        }
+
+        return $gateways;
     }
 
     /**

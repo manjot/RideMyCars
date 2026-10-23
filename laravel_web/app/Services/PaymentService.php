@@ -64,6 +64,33 @@ class PaymentService
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning("Stripe PaymentIntent creation warning in PaymentService: " . $e->getMessage());
             }
+        } elseif ($paymentMethod === 'authorizenet') {
+            $txnData['provider'] = 'AuthorizeNet';
+            if (!empty($paymentData['card_number']) || !empty($paymentData['opaque_data_value'])) {
+                try {
+                    $anetRes = AuthorizeNetService::createPayment([
+                        'amount' => $amount,
+                        'currency' => $currency,
+                        'ref_id' => $transactionRef,
+                        'customer_id' => $userId,
+                        'customer_email' => $booking->customer_email ?? $booking->client_email ?? 'customer@ridemycars.com',
+                        'card_number' => $paymentData['card_number'] ?? null,
+                        'expiration_date' => $paymentData['expiration_date'] ?? null,
+                        'card_code' => $paymentData['card_code'] ?? null,
+                        'card_holder' => $paymentData['card_holder'] ?? null,
+                        'opaque_data_value' => $paymentData['opaque_data_value'] ?? null,
+                        'opaque_data_descriptor' => $paymentData['opaque_data_descriptor'] ?? null,
+                    ]);
+                    $txnData['gateway_response'] = $anetRes;
+                    if ($anetRes['success']) {
+                        $initialStatus = 'paid';
+                        $txnData['status'] = 'paid';
+                        $txnData['paid_at'] = now();
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Authorize.Net charge warning in PaymentService: " . $e->getMessage());
+                }
+            }
         }
 
         $isRide = $booking instanceof \App\Models\Ride;
@@ -108,6 +135,7 @@ class PaymentService
 
     protected static function resolveProvider(string $country, string $method): string
     {
+        if ($method === 'authorizenet') return 'AuthorizeNet';
         if ($method === 'cash') return 'CashOnArrival';
 
         switch ($country) {

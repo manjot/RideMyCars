@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../services/payment_config_service.dart';
 
 class RidePaymentSelection {
-  final String method; // 'stripe', 'momo', 'cash', 'wallet'
+  final String method; // 'authorizenet', 'stripe', 'momo', 'cash', 'wallet'
   final String? momoPhone;
   final String? momoNetwork;
 
@@ -14,6 +15,8 @@ class RidePaymentSelection {
 
   String get displayName {
     switch (method) {
+      case 'authorizenet':
+        return 'Authorize.Net (A Visa Solution)';
       case 'stripe':
         return 'Stripe (Cards & Apple Pay)';
       case 'momo':
@@ -23,12 +26,14 @@ class RidePaymentSelection {
       case 'wallet':
         return 'RideMyCars Wallet';
       default:
-        return 'Stripe (Cards & Apple Pay)';
+        return 'Authorize.Net (A Visa Solution)';
     }
   }
 
   String get subtitle {
     switch (method) {
+      case 'authorizenet':
+        return 'Pre-authorization hold secured by Authorize.Net';
       case 'stripe':
         return 'Pre-authorization hold secured by Stripe';
       case 'momo':
@@ -38,7 +43,7 @@ class RidePaymentSelection {
       case 'wallet':
         return 'Pay directly with in-app balance';
       default:
-        return 'Pre-authorization hold secured by Stripe';
+        return 'Pre-authorization hold secured';
     }
   }
 }
@@ -72,7 +77,7 @@ class RidePaymentMethodSheet extends StatefulWidget {
 
   static Future<RidePaymentSelection?> show(
     BuildContext context, {
-    String currentMethod = 'stripe',
+    String currentMethod = 'authorizenet',
     String? currentMomoPhone,
     String? currentMomoNetwork,
     String serviceType = 'ride',
@@ -102,16 +107,33 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
   late String _selectedMethod;
   late TextEditingController _momoPhoneController;
   late String _momoNetwork;
+  PaymentGatewayConfig _config = PaymentConfigService.currentConfig;
 
   @override
   void initState() {
     super.initState();
     _selectedMethod = widget.currentMethod;
+    if (!_config.isMethodActive(_selectedMethod)) {
+      _selectedMethod = _config.firstActiveMethod;
+    }
     if (!widget.isCashAllowed && _selectedMethod == 'cash') {
-      _selectedMethod = 'stripe';
+      _selectedMethod = _config.firstActiveMethod;
     }
     _momoPhoneController = TextEditingController(text: widget.currentMomoPhone ?? '');
     _momoNetwork = widget.currentMomoNetwork ?? 'MTN';
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    final cfg = await PaymentConfigService.getPaymentGateways();
+    if (mounted) {
+      setState(() {
+        _config = cfg;
+        if (!_config.isMethodActive(_selectedMethod)) {
+          _selectedMethod = _config.firstActiveMethod;
+        }
+      });
+    }
   }
 
   @override
@@ -145,11 +167,14 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_config.isMethodActive(_selectedMethod)) {
+      _selectedMethod = _config.firstActiveMethod;
+    }
     if (!widget.isCashAllowed && _selectedMethod == 'cash') {
-      _selectedMethod = 'stripe';
+      _selectedMethod = _config.firstActiveMethod;
     }
     if (!widget.showWallet && _selectedMethod == 'wallet') {
-      _selectedMethod = 'stripe';
+      _selectedMethod = _config.firstActiveMethod;
     }
     return Container(
       padding: EdgeInsets.only(
@@ -215,274 +240,394 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
             ),
             const SizedBox(height: 16),
 
-            // 1. Stripe (Cards & Apple Pay)
-            GestureDetector(
-              onTap: () => setState(() => _selectedMethod = 'stripe'),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _selectedMethod == 'stripe'
-                      ? const Color(0xFF6366F1).withOpacity(0.12)
-                      : const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: _selectedMethod == 'stripe'
-                        ? const Color(0xFF6366F1)
-                        : Colors.white.withOpacity(0.08),
-                    width: _selectedMethod == 'stripe' ? 2 : 1,
+            // 1. Authorize.Net (A Visa Solution)
+            if (_config.isAuthorizeNetActive) ...[
+              GestureDetector(
+                onTap: () => setState(() => _selectedMethod = 'authorizenet'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _selectedMethod == 'authorizenet'
+                        ? const Color(0xFF003366).withOpacity(0.25)
+                        : const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _selectedMethod == 'authorizenet'
+                          ? const Color(0xFF00A4E4)
+                          : Colors.white.withOpacity(0.08),
+                      width: _selectedMethod == 'authorizenet' ? 2 : 1,
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF6366F1).withOpacity(0.35),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'S',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 24,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              const Text(
-                                'Stripe',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1).withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.35)),
-                                ),
-                                child: const Text(
-                                  '💳 CARDS & APPLE PAY • LIVE',
-                                  style: TextStyle(
-                                    color: Color(0xFF818CF8),
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_selectedMethod == 'stripe')
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
-                        else
-                          const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Crisp Brand Icons: VISA, Mastercard, Discover, Amex, Apple Pay
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _buildBrandIcon('visa.png'),
-                        _buildBrandIcon('mastercard.png'),
-                        _buildBrandIcon('discover.png'),
-                        _buildBrandIcon('amex.png'),
-                        _buildBrandIcon('apple_pay.png'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 2. MoMo Pay (Mobile Money)
-            GestureDetector(
-              onTap: () => setState(() => _selectedMethod = 'momo'),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _selectedMethod == 'momo'
-                      ? const Color(0xFFFFDC00).withOpacity(0.12)
-                      : const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: _selectedMethod == 'momo'
-                        ? const Color(0xFFFFDC00)
-                        : Colors.white.withOpacity(0.08),
-                    width: _selectedMethod == 'momo' ? 2 : 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFDC00),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFDC00).withOpacity(0.35),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'MoMo',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              const Text(
-                                'MoMo Pay',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFDC00).withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFFFDC00).withOpacity(0.35)),
-                                ),
-                                child: const Text(
-                                  '📱 MOBILE MONEY • LIVE',
-                                  style: TextStyle(
-                                    color: Color(0xFFFFDC00),
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_selectedMethod == 'momo')
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFFFFDC00), size: 22)
-                        else
-                          const Icon(Icons.chevron_right_rounded, color: Colors.white38, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Crisp Brand Icons: MTN MoMo, Telecel, AirtelTigo
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _buildBrandIcon('mtn_momo.png'),
-                        _buildBrandIcon('telecel.png'),
-                        _buildBrandIcon('airteltigo.png'),
-                      ],
-                    ),
-
-                    if (_selectedMethod == 'momo') ...[
-                      const SizedBox(height: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
                         children: [
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _momoNetwork,
-                                  dropdownColor: const Color(0xFF1E293B),
-                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                  items: ['MTN', 'Telecel', 'AirtelTigo'].map((n) {
-                                    return DropdownMenuItem(value: n, child: Text(n));
-                                  }).toList(),
-                                  onChanged: (val) {
-                                    if (val != null) setState(() => _momoNetwork = val);
-                                  },
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF003366),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF00A4E4).withOpacity(0.4)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF003366).withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'AN',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Expanded(
-                            flex: 3,
-                            child: TextField(
-                              controller: _momoPhoneController,
-                              keyboardType: TextInputType.phone,
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                              decoration: InputDecoration(
-                                hintText: 'MoMo Number',
-                                hintStyle: const TextStyle(color: Colors.white38, fontSize: 11),
-                                filled: true,
-                                fillColor: const Color(0xFF0F172A),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: Colors.white24),
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                const Text(
+                                  'Authorize.Net',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
                                 ),
-                              ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF003366).withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFF00A4E4).withOpacity(0.4)),
+                                  ),
+                                  child: const Text(
+                                    '💳 A VISA SOLUTION • LIVE',
+                                    style: TextStyle(
+                                      color: Color(0xFF38BDF8),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                          if (_selectedMethod == 'authorizenet')
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFF38BDF8), size: 22)
+                          else
+                            const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Brand Icons: Authorize.Net, Visa, Mastercard, Discover, Amex
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _buildBrandIcon('authorizenet.png', height: 20),
+                          _buildBrandIcon('visa.png'),
+                          _buildBrandIcon('mastercard.png'),
+                          _buildBrandIcon('discover.png'),
+                          _buildBrandIcon('amex.png'),
                         ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            if (widget.isCashAllowed) ...[
+              const SizedBox(height: 12),
+            ],
+
+            // 2. Stripe (Cards & Apple Pay)
+            if (_config.isStripeActive) ...[
+              GestureDetector(
+                onTap: () => setState(() => _selectedMethod = 'stripe'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _selectedMethod == 'stripe'
+                        ? const Color(0xFF6366F1).withOpacity(0.12)
+                        : const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _selectedMethod == 'stripe'
+                          ? const Color(0xFF6366F1)
+                          : Colors.white.withOpacity(0.08),
+                      width: _selectedMethod == 'stripe' ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF6366F1).withOpacity(0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'S',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                const Text(
+                                  'Stripe',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF6366F1).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.35)),
+                                  ),
+                                  child: const Text(
+                                    '💳 CARDS & APPLE PAY • LIVE',
+                                    style: TextStyle(
+                                      color: Color(0xFF818CF8),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_selectedMethod == 'stripe')
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                          else
+                            const Icon(Icons.radio_button_unchecked_rounded, color: Colors.white24, size: 20),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Crisp Brand Icons: VISA, Mastercard, Discover, Amex, Apple Pay
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _buildBrandIcon('visa.png'),
+                          _buildBrandIcon('mastercard.png'),
+                          _buildBrandIcon('discover.png'),
+                          _buildBrandIcon('amex.png'),
+                          _buildBrandIcon('apple_pay.png'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // 3. MoMo Pay (Mobile Money)
+            if (_config.isMomoActive) ...[
+              GestureDetector(
+                onTap: () => setState(() => _selectedMethod = 'momo'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _selectedMethod == 'momo'
+                        ? const Color(0xFFFFDC00).withOpacity(0.12)
+                        : const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _selectedMethod == 'momo'
+                          ? const Color(0xFFFFDC00)
+                          : Colors.white.withOpacity(0.08),
+                      width: _selectedMethod == 'momo' ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFDC00),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFFDC00).withOpacity(0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'MoMo',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                const Text(
+                                  'MoMo Pay',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFDC00).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFFFDC00).withOpacity(0.35)),
+                                  ),
+                                  child: const Text(
+                                    '📱 MOBILE MONEY • LIVE',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFDC00),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_selectedMethod == 'momo')
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFFFFDC00), size: 22)
+                          else
+                            const Icon(Icons.chevron_right_rounded, color: Colors.white38, size: 20),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Crisp Brand Icons: MTN MoMo, Telecel, AirtelTigo
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _buildBrandIcon('mtn_momo.png'),
+                          _buildBrandIcon('telecel.png'),
+                          _buildBrandIcon('airteltigo.png'),
+                        ],
+                      ),
+
+                      if (_selectedMethod == 'momo') ...[
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0F172A),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _momoNetwork,
+                                    dropdownColor: const Color(0xFF1E293B),
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    items: ['MTN', 'Telecel', 'AirtelTigo'].map((n) {
+                                      return DropdownMenuItem(value: n, child: Text(n));
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) setState(() => _momoNetwork = val);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 3,
+                              child: TextField(
+                                controller: _momoPhoneController,
+                                keyboardType: TextInputType.phone,
+                                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                decoration: InputDecoration(
+                                  hintText: 'MoMo Number',
+                                  hintStyle: const TextStyle(color: Colors.white38, fontSize: 11),
+                                  filled: true,
+                                  fillColor: const Color(0xFF0F172A),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(color: Colors.white24),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // 4. Cash Direct Pay
+            if (_config.isCashActive && widget.isCashAllowed) ...[
               const SizedBox(height: 12),
               // 3. Cash Direct Pay - Clean design, zero overflow
               GestureDetector(
@@ -690,11 +835,14 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
               child: ElevatedButton(
                 onPressed: () {
                   String finalMethod = _selectedMethod;
+                  if (!_config.isMethodActive(finalMethod)) {
+                    finalMethod = _config.firstActiveMethod;
+                  }
                   if (!widget.isCashAllowed && finalMethod == 'cash') {
-                    finalMethod = 'stripe';
+                    finalMethod = _config.firstActiveMethod;
                   }
                   if (!widget.showWallet && finalMethod == 'wallet') {
-                    finalMethod = 'stripe';
+                    finalMethod = _config.firstActiveMethod;
                   }
                   Navigator.pop(
                     context,

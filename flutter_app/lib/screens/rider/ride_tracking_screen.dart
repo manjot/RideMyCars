@@ -1257,8 +1257,8 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     if (currentRide == null) return false;
     final method = (currentRide['payment_method'] ?? '').toString().toLowerCase();
     final status = (currentRide['payment_status'] ?? '').toString().toLowerCase();
-    final isElectronic = method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
-    final isPaid = ['hold', 'authorized', 'paid', 'completed'].contains(status);
+    final isElectronic = method.contains('authorizenet') || method.contains('anet') || method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
+    final isPaid = ['hold', 'authorized', 'authorized_hold', 'paid', 'completed'].contains(status);
     return isElectronic && !isPaid;
   }
 

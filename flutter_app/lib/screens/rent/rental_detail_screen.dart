@@ -11,6 +11,7 @@ import '../../services/rental_service.dart';
 import '../payment/booking_confirmation_screen.dart';
 import '../rides/my_rides_screen.dart';
 import '../rider/widgets/ride_payment_method_sheet.dart';
+import '../../services/payment_config_service.dart';
 
 class RentalDetailScreen extends StatefulWidget {
   final VehicleModel vehicle;
@@ -53,7 +54,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
   String _protectionOption = 'basic'; // 'basic' or 'full_cover'
   final Set<String> _selectedExtras = {}; // 'additional_driver', 'child_seat', 'gps'
   String _paymentOption = 'part'; // 'part' (20%) or 'full' (100%)
-  String _paymentMethod = 'stripe';
+  String _paymentMethod = PaymentConfigService.currentConfig.isAuthorizeNetActive ? 'authorizenet' : PaymentConfigService.currentConfig.firstActiveMethod;
   String? _momoPhone;
   String _momoNetwork = 'MTN';
 
@@ -69,7 +70,9 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     );
     if (result != null) {
       setState(() {
-        _paymentMethod = (result.method == 'cash' || result.method == 'wallet') ? 'stripe' : result.method;
+        _paymentMethod = (result.method == 'cash' || result.method == 'wallet')
+            ? (PaymentConfigService.currentConfig.isAuthorizeNetActive ? 'authorizenet' : 'stripe')
+            : result.method;
         _momoPhone = result.momoPhone;
         _momoNetwork = result.momoNetwork ?? 'MTN';
       });
@@ -85,8 +88,10 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (_paymentMethod == 'cash') {
-      _paymentMethod = 'stripe';
+    if (_paymentMethod == 'cash' || _paymentMethod == 'wallet') {
+      _paymentMethod = PaymentConfigService.currentConfig.isAuthorizeNetActive
+          ? 'authorizenet'
+          : PaymentConfigService.currentConfig.firstActiveMethod;
     }
     _startDate = DateTime.now();
     _pickupTime = const TimeOfDay(hour: 10, minute: 0);
@@ -1823,9 +1828,11 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _paymentMethod == 'momo'
-                      ? const Color(0xFFFFDC00).withOpacity(0.4)
-                      : const Color(0xFF6366F1).withOpacity(0.4),
+                  color: _paymentMethod == 'authorizenet'
+                      ? const Color(0xFF00A4E4).withOpacity(0.4)
+                      : _paymentMethod == 'momo'
+                          ? const Color(0xFFFFDC00).withOpacity(0.4)
+                          : const Color(0xFF6366F1).withOpacity(0.4),
                   width: 1.2,
                 ),
               ),
@@ -1835,15 +1842,22 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: _paymentMethod == 'momo'
-                          ? const Color(0xFFFFDC00)
-                          : const Color(0xFF6366F1),
+                      color: _paymentMethod == 'authorizenet'
+                          ? const Color(0xFF003366)
+                          : _paymentMethod == 'momo'
+                              ? const Color(0xFFFFDC00)
+                              : const Color(0xFF6366F1),
                       borderRadius: BorderRadius.circular(10),
+                      border: _paymentMethod == 'authorizenet'
+                          ? Border.all(color: const Color(0xFF00A4E4).withOpacity(0.5))
+                          : null,
                       boxShadow: [
                         BoxShadow(
-                          color: (_paymentMethod == 'momo'
-                                  ? const Color(0xFFFFDC00)
-                                  : const Color(0xFF6366F1))
+                          color: (_paymentMethod == 'authorizenet'
+                                  ? const Color(0xFF003366)
+                                  : _paymentMethod == 'momo'
+                                      ? const Color(0xFFFFDC00)
+                                      : const Color(0xFF6366F1))
                               .withOpacity(0.35),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
@@ -1851,9 +1865,11 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: _paymentMethod == 'momo'
-                        ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
-                        : const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+                    child: _paymentMethod == 'authorizenet'
+                        ? const Text('AN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13))
+                        : _paymentMethod == 'momo'
+                            ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
+                            : const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1866,27 +1882,38 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                           runSpacing: 2,
                           children: [
                             Text(
-                              _paymentMethod == 'momo'
-                                  ? 'MoMo Pay'
-                                  : 'Stripe',
+                              _paymentMethod == 'authorizenet'
+                                  ? 'Authorize.Net'
+                                  : _paymentMethod == 'momo'
+                                      ? 'MoMo Pay'
+                                      : 'Stripe',
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _paymentMethod == 'momo'
-                                    ? const Color(0xFFFFDC00).withOpacity(0.2)
-                                    : const Color(0xFF6366F1).withOpacity(0.2),
+                                color: _paymentMethod == 'authorizenet'
+                                    ? const Color(0xFF003366).withOpacity(0.3)
+                                    : _paymentMethod == 'momo'
+                                        ? const Color(0xFFFFDC00).withOpacity(0.2)
+                                        : const Color(0xFF6366F1).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(5),
+                                border: _paymentMethod == 'authorizenet'
+                                    ? Border.all(color: const Color(0xFF00A4E4).withOpacity(0.4))
+                                    : null,
                               ),
                               child: Text(
-                                _paymentMethod == 'momo'
-                                    ? '📱 MOBILE MONEY'
-                                    : '💳 CARDS & APPLE PAY',
+                                _paymentMethod == 'authorizenet'
+                                    ? '💳 A VISA SOLUTION'
+                                    : _paymentMethod == 'momo'
+                                        ? '📱 MOBILE MONEY'
+                                        : '💳 CARDS & APPLE PAY',
                                 style: TextStyle(
-                                  color: _paymentMethod == 'momo'
-                                      ? const Color(0xFFFFDC00)
-                                      : const Color(0xFF818CF8),
+                                  color: _paymentMethod == 'authorizenet'
+                                      ? const Color(0xFF38BDF8)
+                                      : _paymentMethod == 'momo'
+                                          ? const Color(0xFFFFDC00)
+                                          : const Color(0xFF818CF8),
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -1896,9 +1923,11 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _paymentMethod == 'momo'
-                              ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
-                              : 'Secured pre-auth hold via Stripe',
+                          _paymentMethod == 'authorizenet'
+                              ? 'Secured pre-auth hold via Authorize.Net'
+                              : _paymentMethod == 'momo'
+                                  ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
+                                  : 'Secured pre-auth hold via Stripe',
                           style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

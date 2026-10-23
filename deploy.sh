@@ -116,6 +116,21 @@ if ! grep -q "EXPRESSPAY_MERCHANT_ID" .env; then
     echo "EXPRESSPAY_ENABLED=true" >> .env
 fi
 
+# Configure Authorize.Net Payment Gateway
+sed -i 's/^AUTHORIZENET_ENABLED=.*/AUTHORIZENET_ENABLED=true/' .env 2>/dev/null || true
+sed -i 's/^AUTHORIZENET_MODE=.*/AUTHORIZENET_MODE=sandbox/' .env 2>/dev/null || true
+sed -i 's/^AUTHORIZENET_API_LOGIN_ID=.*/AUTHORIZENET_API_LOGIN_ID=ridemycars/' .env 2>/dev/null || true
+sed -i 's/^AUTHORIZENET_TRANSACTION_KEY=.*/AUTHORIZENET_TRANSACTION_KEY="Rideme2026@#"/' .env 2>/dev/null || true
+if ! grep -q "AUTHORIZENET_API_LOGIN_ID" .env; then
+    echo "" >> .env
+    echo "# Authorize.Net Payment Gateway" >> .env
+    echo "AUTHORIZENET_ENABLED=true" >> .env
+    echo "AUTHORIZENET_MODE=sandbox" >> .env
+    echo "AUTHORIZENET_API_LOGIN_ID=ridemycars" >> .env
+    echo "AUTHORIZENET_TRANSACTION_KEY=\"Rideme2026@#\"" >> .env
+fi
+
+
 # Step 5: Install PHP dependencies
 echo "📦 Installing PHP composer dependencies (no-dev, optimized)..."
 $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction

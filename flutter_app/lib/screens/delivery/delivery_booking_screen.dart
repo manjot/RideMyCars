@@ -12,6 +12,7 @@ import '../../providers/country_provider.dart';
 import '../../services/delivery_service.dart';
 import '../../services/places_service.dart';
 import '../rider/widgets/ride_payment_method_sheet.dart';
+import '../../services/payment_config_service.dart';
 import 'delivery_tracker_screen.dart';
 
 class DeliveryBookingScreen extends StatefulWidget {
@@ -511,7 +512,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   bool _whiteGlove = false;
 
   // Step 5: Payment & Terms
-  String _paymentMethod = 'stripe';
+  String _paymentMethod = PaymentConfigService.currentConfig.isAuthorizeNetActive ? 'authorizenet' : PaymentConfigService.currentConfig.firstActiveMethod;
   String? _momoPhone;
   String _momoNetwork = 'MTN';
 
@@ -2444,11 +2445,13 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
               color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: _paymentMethod == 'stripe'
-                    ? const Color(0xFF6366F1).withOpacity(0.4)
-                    : (_paymentMethod == 'momo'
-                        ? const Color(0xFFFFDC00).withOpacity(0.4)
-                        : const Color(0xFF10B981).withOpacity(0.4)),
+                color: _paymentMethod == 'authorizenet'
+                    ? const Color(0xFF00A4E4).withOpacity(0.4)
+                    : (_paymentMethod == 'stripe'
+                        ? const Color(0xFF6366F1).withOpacity(0.4)
+                        : (_paymentMethod == 'momo'
+                            ? const Color(0xFFFFDC00).withOpacity(0.4)
+                            : const Color(0xFF10B981).withOpacity(0.4))),
                 width: 1.2,
               ),
             ),
@@ -2458,19 +2461,26 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _paymentMethod == 'stripe'
-                        ? const Color(0xFF6366F1)
-                        : (_paymentMethod == 'momo'
-                            ? const Color(0xFFFFDC00)
-                            : const Color(0xFF10B981)),
+                    color: _paymentMethod == 'authorizenet'
+                        ? const Color(0xFF003366)
+                        : (_paymentMethod == 'stripe'
+                            ? const Color(0xFF6366F1)
+                            : (_paymentMethod == 'momo'
+                                ? const Color(0xFFFFDC00)
+                                : const Color(0xFF10B981))),
                     borderRadius: BorderRadius.circular(12),
+                    border: _paymentMethod == 'authorizenet'
+                        ? Border.all(color: const Color(0xFF00A4E4).withOpacity(0.5))
+                        : null,
                     boxShadow: [
                       BoxShadow(
-                        color: (_paymentMethod == 'stripe'
-                                ? const Color(0xFF6366F1)
-                                : (_paymentMethod == 'momo'
-                                    ? const Color(0xFFFFDC00)
-                                    : const Color(0xFF10B981)))
+                        color: (_paymentMethod == 'authorizenet'
+                                ? const Color(0xFF003366)
+                                : (_paymentMethod == 'stripe'
+                                    ? const Color(0xFF6366F1)
+                                    : (_paymentMethod == 'momo'
+                                        ? const Color(0xFFFFDC00)
+                                        : const Color(0xFF10B981))))
                             .withOpacity(0.35),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
@@ -2478,11 +2488,13 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: _paymentMethod == 'stripe'
-                      ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))
-                      : (_paymentMethod == 'momo'
-                          ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
-                          : const Icon(Icons.payments_rounded, color: Colors.white, size: 22)),
+                  child: _paymentMethod == 'authorizenet'
+                      ? const Text('AN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14))
+                      : (_paymentMethod == 'stripe'
+                          ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))
+                          : (_paymentMethod == 'momo'
+                              ? const Text('MoMo', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10))
+                              : const Icon(Icons.payments_rounded, color: Colors.white, size: 22))),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -2495,35 +2507,46 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                         runSpacing: 2,
                         children: [
                           Text(
-                            _paymentMethod == 'stripe'
-                                ? 'Stripe'
-                                : (_paymentMethod == 'momo'
-                                    ? 'MoMo Pay'
-                                    : 'Cash Direct Pay'),
+                            _paymentMethod == 'authorizenet'
+                                ? 'Authorize.Net'
+                                : (_paymentMethod == 'stripe'
+                                    ? 'Stripe'
+                                    : (_paymentMethod == 'momo'
+                                        ? 'MoMo Pay'
+                                        : 'Cash Direct Pay')),
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _paymentMethod == 'stripe'
-                                  ? const Color(0xFF6366F1).withOpacity(0.2)
-                                  : (_paymentMethod == 'momo'
-                                      ? const Color(0xFFFFDC00).withOpacity(0.2)
-                                      : const Color(0xFF10B981).withOpacity(0.2)),
+                              color: _paymentMethod == 'authorizenet'
+                                  ? const Color(0xFF003366).withOpacity(0.3)
+                                  : (_paymentMethod == 'stripe'
+                                      ? const Color(0xFF6366F1).withOpacity(0.2)
+                                      : (_paymentMethod == 'momo'
+                                          ? const Color(0xFFFFDC00).withOpacity(0.2)
+                                          : const Color(0xFF10B981).withOpacity(0.2))),
                               borderRadius: BorderRadius.circular(5),
+                              border: _paymentMethod == 'authorizenet'
+                                  ? Border.all(color: const Color(0xFF00A4E4).withOpacity(0.4))
+                                  : null,
                             ),
                             child: Text(
-                              _paymentMethod == 'stripe'
-                                  ? '💳 CARDS & APPLE PAY'
-                                  : (_paymentMethod == 'momo'
-                                      ? '📱 MOBILE MONEY'
-                                      : '💵 PAY ON DELIVERY'),
+                              _paymentMethod == 'authorizenet'
+                                  ? '💳 A VISA SOLUTION'
+                                  : (_paymentMethod == 'stripe'
+                                      ? '💳 CARDS & APPLE PAY'
+                                      : (_paymentMethod == 'momo'
+                                          ? '📱 MOBILE MONEY'
+                                          : '💵 PAY ON DELIVERY')),
                               style: TextStyle(
-                                color: _paymentMethod == 'stripe'
-                                    ? const Color(0xFF818CF8)
-                                    : (_paymentMethod == 'momo'
-                                        ? const Color(0xFFFFDC00)
-                                        : const Color(0xFF34D399)),
+                                color: _paymentMethod == 'authorizenet'
+                                    ? const Color(0xFF38BDF8)
+                                    : (_paymentMethod == 'stripe'
+                                        ? const Color(0xFF818CF8)
+                                        : (_paymentMethod == 'momo'
+                                            ? const Color(0xFFFFDC00)
+                                            : const Color(0xFF34D399))),
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -2533,11 +2556,13 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _paymentMethod == 'stripe'
-                            ? 'Secured card & digital wallet hold'
-                            : (_paymentMethod == 'momo'
-                                ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
-                                : 'Pay courier physical cash on parcel handover'),
+                        _paymentMethod == 'authorizenet'
+                            ? 'Secured pre-auth hold via Authorize.Net'
+                            : (_paymentMethod == 'stripe'
+                                ? 'Secured card & digital wallet hold'
+                                : (_paymentMethod == 'momo'
+                                    ? 'Prompt to ${_momoPhone != null && _momoPhone!.isNotEmpty ? _momoPhone : 'MoMo number ($_momoNetwork)'}'
+                                    : 'Pay courier physical cash on parcel handover')),
                         style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

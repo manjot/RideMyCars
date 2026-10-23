@@ -72,11 +72,20 @@ class AppConfigApiController extends Controller
                 'distance_unit' => SettingService::get('geo.distance_unit', 'km'),
             ],
             'payment_gateways' => [
+                'active_gateways' => SettingService::getActivePaymentGateways(),
                 'stripe' => [
-                    'enabled' => filter_var(SettingService::get('payment.stripe_enabled', true), FILTER_VALIDATE_BOOLEAN),
+                    'enabled' => SettingService::isStripeEnabled(),
                     'mode' => SettingService::getStripeMode(),
                     'is_live' => SettingService::isStripeLive(),
                     'publishable_key' => SettingService::getActiveStripePublishableKey(),
+                ],
+                'authorizenet' => [
+                    'enabled' => SettingService::isAuthorizeNetEnabled(),
+                    'mode' => SettingService::getActiveAuthorizeNetMode(),
+                    'is_live' => SettingService::isAuthorizeNetLive(),
+                    'api_login_id' => SettingService::getActiveAuthorizeNetApiLoginId(),
+                    'client_key' => SettingService::getActiveAuthorizeNetClientKey(),
+                    'currency' => 'USD',
                 ],
                 'momo' => [
                     'enabled' => SettingService::isExpressPayEnabled(),
@@ -93,8 +102,11 @@ class AppConfigApiController extends Controller
                     'merchant_id' => SettingService::getActiveExpressPayMerchantId(),
                     'currency' => SettingService::get('payment.expresspay_currency', 'GHS'),
                 ],
+                'cash' => [
+                    'enabled' => SettingService::isCashEnabled(),
+                ],
                 'apple_pay' => [
-                    'enabled' => filter_var(SettingService::get('payment.apple_pay_enabled', true), FILTER_VALIDATE_BOOLEAN),
+                    'enabled' => SettingService::isApplePayEnabled(),
                     'merchant_id' => SettingService::get('payment.apple_pay_merchant_id', config('services.apple_pay.merchant_id', '')),
                 ],
             ],
