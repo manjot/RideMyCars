@@ -3870,7 +3870,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                } elseif (!str_ends_with($sKey, '_enabled')) {
+                } elseif (!str_ends_with($sKey, '_enabled') && !str_starts_with($sKey, 'payment.authorizenet_')) {
                     \Illuminate\Support\Facades\DB::table('settings')->where('key', $sKey)->update([
                         'value' => $sVal['value'],
                         'label' => $sVal['label'],

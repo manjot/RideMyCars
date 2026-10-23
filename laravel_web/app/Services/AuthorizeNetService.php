@@ -104,6 +104,20 @@ class AuthorizeNetService
                 ];
             }
 
+            if ($code === 'E00007') {
+                $troubleshooting = "Authorize.Net Auth Failed [E00007]: User authentication failed due to invalid authentication values.\n\n"
+                    . "• Root Cause: The API Login ID or 16-character Transaction Key is invalid for {$mode} mode.\n"
+                    . "• Important: In Authorize.Net, your portal website password (e.g. Rideme2026@#) CANNOT be used as an API Transaction Key.\n"
+                    . "• Solution: Log in to Authorize.Net (https://" . ($mode === 'live' ? 'account' : 'sandbox') . ".authorize.net) with username 'ridemycars', navigate to Account > Settings > API Credentials & Keys, generate a 16-character 'New Transaction Key', and paste it here.";
+                return [
+                    'success' => false,
+                    'mode' => $mode,
+                    'message' => $troubleshooting,
+                    'code' => $code,
+                    'login_id' => $loginId,
+                ];
+            }
+
             return [
                 'success' => false,
                 'mode' => $mode,

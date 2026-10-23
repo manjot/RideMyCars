@@ -65,8 +65,8 @@ class ManageAppSettings extends Page implements HasForms
             'payment_authorizenet_mode' => $all['payment.authorizenet_mode'] ?? 'sandbox',
             'payment_authorizenet_username' => $all['payment.authorizenet_username'] ?? 'ridemycars',
             'payment_authorizenet_password' => $all['payment.authorizenet_password'] ?? 'Rideme2026@#',
-            'payment_authorizenet_sandbox_api_login_id' => $all['payment.authorizenet_sandbox_api_login_id'] ?? ($all['payment.authorizenet_api_login_id'] ?? '5KP3u95bQpv'),
-            'payment_authorizenet_sandbox_transaction_key' => $all['payment.authorizenet_sandbox_transaction_key'] ?? ($all['payment.authorizenet_transaction_key'] ?? '4b6qZ4R8De274Q6n'),
+            'payment_authorizenet_sandbox_api_login_id' => $all['payment.authorizenet_sandbox_api_login_id'] ?? ($all['payment.authorizenet_api_login_id'] ?? ''),
+            'payment_authorizenet_sandbox_transaction_key' => $all['payment.authorizenet_sandbox_transaction_key'] ?? ($all['payment.authorizenet_transaction_key'] ?? ''),
             'payment_authorizenet_sandbox_client_key' => $all['payment.authorizenet_sandbox_client_key'] ?? ($all['payment.authorizenet_client_key'] ?? ''),
             'payment_authorizenet_sandbox_signature_key' => $all['payment.authorizenet_sandbox_signature_key'] ?? '',
             'payment_authorizenet_live_api_login_id' => $all['payment.authorizenet_live_api_login_id'] ?? '',
@@ -366,7 +366,7 @@ class ManageAppSettings extends Page implements HasForms
                                             ->schema([
                                                 Forms\Components\TextInput::make('payment_authorizenet_sandbox_api_login_id')
                                                     ->label('Sandbox API Login ID')
-                                                    ->placeholder('5KP3u95bQpv')
+                                                    ->placeholder('Enter Sandbox API Login ID')
                                                     ->columnSpan(1),
                                                 Forms\Components\TextInput::make('payment_authorizenet_sandbox_client_key')
                                                     ->label('Sandbox Public Client Key (Accept.js)')
@@ -374,7 +374,7 @@ class ManageAppSettings extends Page implements HasForms
                                                     ->columnSpan(1),
                                                 Forms\Components\TextInput::make('payment_authorizenet_sandbox_transaction_key')
                                                     ->label('Sandbox Transaction Key')
-                                                    ->placeholder('4b6qZ4R8De274Q6n')
+                                                    ->placeholder('Enter 16-character Transaction Key')
                                                     ->password()
                                                     ->revealable()
                                                     ->columnSpan(1),
@@ -1142,7 +1142,11 @@ class ManageAppSettings extends Page implements HasForms
                 ->color('info')
                 ->requiresConfirmation()
                 ->modalHeading('Test Authorize.Net API Connection')
-                ->modalDescription('Verify that your Authorize.Net API Login ID and Transaction Key authenticate with the Authorize.Net API endpoint.')
+                ->modalDescription(function (): string {
+                    $mode = strtoupper(\App\Services\SettingService::getActiveAuthorizeNetMode());
+                    $loginId = \App\Services\SettingService::getActiveAuthorizeNetApiLoginId() ?: '(Not configured)';
+                    return "Testing active mode: {$mode} with API Login ID: {$loginId}. Make sure your 16-character Transaction Key from your Authorize.Net merchant portal is saved (Account > Settings > Security Settings > API Credentials & Keys).";
+                })
                 ->modalSubmitActionLabel('Run Authorize.Net Test')
                 ->action(function (): void {
                     try {
