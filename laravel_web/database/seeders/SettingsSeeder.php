@@ -151,7 +151,7 @@ class SettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            \App\Models\Setting::updateOrCreate(['key' => $setting['key']], $setting);
+            \App\Models\Setting::firstOrCreate(['key' => $setting['key']], $setting);
         }
     }
 }
