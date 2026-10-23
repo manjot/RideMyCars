@@ -537,8 +537,8 @@ class SettingService
      */
     public static function getActiveAuthorizeNetMode(): string
     {
-        $mode = trim((string) static::get('payment.authorizenet_mode', config('services.authorizenet.mode', env('AUTHORIZENET_MODE', 'sandbox'))));
-        return strtolower($mode ?: 'sandbox');
+        $mode = trim((string) static::get('payment.authorizenet_mode', config('services.authorizenet.mode', env('AUTHORIZENET_MODE', 'live'))));
+        return strtolower($mode ?: 'live');
     }
 
     /**
@@ -556,7 +556,7 @@ class SettingService
     {
         $mode = static::getActiveAuthorizeNetMode();
         if ($mode === 'live') {
-            return trim((string) (static::get('payment.authorizenet_live_api_login_id') ?: (static::get('payment.authorizenet_api_login_id') ?: (config('services.authorizenet.live_api_login_id') ?: env('AUTHORIZENET_LIVE_API_LOGIN_ID', '')))));
+            return trim((string) (static::get('payment.authorizenet_live_api_login_id') ?: (static::get('payment.authorizenet_api_login_id') ?: (config('services.authorizenet.live_api_login_id') ?: env('AUTHORIZENET_LIVE_API_LOGIN_ID', env('AUTHORIZENET_API_LOGIN_ID', '3mAE6w39'))))));
         }
         return trim((string) (static::get('payment.authorizenet_sandbox_api_login_id') ?: (static::get('payment.authorizenet_api_login_id') ?: (config('services.authorizenet.sandbox_api_login_id') ?: env('AUTHORIZENET_SANDBOX_API_LOGIN_ID', '')))));
     }
@@ -568,7 +568,7 @@ class SettingService
     {
         $mode = static::getActiveAuthorizeNetMode();
         if ($mode === 'live') {
-            return trim((string) (static::get('payment.authorizenet_live_transaction_key') ?: (static::get('payment.authorizenet_transaction_key') ?: (config('services.authorizenet.live_transaction_key') ?: env('AUTHORIZENET_LIVE_TRANSACTION_KEY', '')))));
+            return trim((string) (static::get('payment.authorizenet_live_transaction_key') ?: (static::get('payment.authorizenet_transaction_key') ?: (config('services.authorizenet.live_transaction_key') ?: env('AUTHORIZENET_LIVE_TRANSACTION_KEY', env('AUTHORIZENET_TRANSACTION_KEY', '9CE2FxS5w535FqdS'))))));
         }
         return trim((string) (static::get('payment.authorizenet_sandbox_transaction_key') ?: (static::get('payment.authorizenet_transaction_key') ?: (config('services.authorizenet.sandbox_transaction_key') ?: env('AUTHORIZENET_SANDBOX_TRANSACTION_KEY', '')))));
     }

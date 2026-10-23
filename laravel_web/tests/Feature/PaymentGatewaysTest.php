@@ -59,4 +59,16 @@ class PaymentGatewaysTest extends TestCase
         $gateways = SettingService::getActivePaymentGateways();
         $this->assertArrayHasKey('authorizenet', $gateways);
     }
+
+    /**
+     * Test live Authorize.Net merchant connection with real credentials.
+     */
+    public function test_authorizenet_live_authentication_connection()
+    {
+        $result = \App\Services\AuthorizeNetService::authenticateTest();
+
+        $this->assertTrue($result['success'], 'Authorize.Net live connection failed: ' . ($result['message'] ?? ''));
+        $this->assertEquals('live', $result['mode']);
+        $this->assertEquals('3mAE6w39', $result['login_id']);
+    }
 }

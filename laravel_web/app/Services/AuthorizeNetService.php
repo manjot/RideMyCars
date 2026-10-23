@@ -82,7 +82,7 @@ class AuthorizeNetService
 
         try {
             $endpoint = static::getEndpoint();
-            $response = Http::withHeaders([
+            $response = Http::withoutVerifying()->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->timeout(15)->post($endpoint, $payload);
@@ -319,7 +319,7 @@ class AuthorizeNetService
         $mode = SettingService::getActiveAuthorizeNetMode();
 
         try {
-            $response = Http::withHeaders([
+            $response = Http::withoutVerifying()->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->timeout(25)->post($endpoint, $payload);

@@ -62,15 +62,15 @@ class ManageAppSettings extends Page implements HasForms
 
             // Authorize.Net Gateway
             'payment_authorizenet_enabled' => (bool) ($all['payment.authorizenet_enabled'] ?? true),
-            'payment_authorizenet_mode' => $all['payment.authorizenet_mode'] ?? 'sandbox',
+            'payment_authorizenet_mode' => $all['payment.authorizenet_mode'] ?? 'live',
             'payment_authorizenet_username' => $all['payment.authorizenet_username'] ?? 'ridemycars',
             'payment_authorizenet_password' => $all['payment.authorizenet_password'] ?? 'Rideme2026@#',
-            'payment_authorizenet_sandbox_api_login_id' => $all['payment.authorizenet_sandbox_api_login_id'] ?? ($all['payment.authorizenet_api_login_id'] ?? ''),
-            'payment_authorizenet_sandbox_transaction_key' => $all['payment.authorizenet_sandbox_transaction_key'] ?? ($all['payment.authorizenet_transaction_key'] ?? ''),
+            'payment_authorizenet_sandbox_api_login_id' => $all['payment.authorizenet_sandbox_api_login_id'] ?? '',
+            'payment_authorizenet_sandbox_transaction_key' => $all['payment.authorizenet_sandbox_transaction_key'] ?? '',
             'payment_authorizenet_sandbox_client_key' => $all['payment.authorizenet_sandbox_client_key'] ?? ($all['payment.authorizenet_client_key'] ?? ''),
             'payment_authorizenet_sandbox_signature_key' => $all['payment.authorizenet_sandbox_signature_key'] ?? '',
-            'payment_authorizenet_live_api_login_id' => $all['payment.authorizenet_live_api_login_id'] ?? '',
-            'payment_authorizenet_live_transaction_key' => $all['payment.authorizenet_live_transaction_key'] ?? '',
+            'payment_authorizenet_live_api_login_id' => $all['payment.authorizenet_live_api_login_id'] ?? ($all['payment.authorizenet_api_login_id'] ?? '3mAE6w39'),
+            'payment_authorizenet_live_transaction_key' => $all['payment.authorizenet_live_transaction_key'] ?? ($all['payment.authorizenet_transaction_key'] ?? '9CE2FxS5w535FqdS'),
             'payment_authorizenet_live_client_key' => $all['payment.authorizenet_live_client_key'] ?? '',
             'payment_authorizenet_live_signature_key' => $all['payment.authorizenet_live_signature_key'] ?? '',
 
@@ -336,7 +336,7 @@ class ManageAppSettings extends Page implements HasForms
                                                     'sandbox' => '🧪 Sandbox / Test Mode',
                                                     'live' => '🚀 Live / Production Mode',
                                                 ])
-                                                ->default('sandbox')
+                                                ->default('live')
                                                 ->helperText('Select which key set to use dynamically for customer transactions.')
                                                 ->required(),
                                             Forms\Components\TextInput::make('payment_authorizenet_currency')

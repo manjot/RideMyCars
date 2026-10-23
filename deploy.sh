@@ -118,16 +118,16 @@ fi
 
 # Configure Authorize.Net Payment Gateway
 sed -i 's/^AUTHORIZENET_ENABLED=.*/AUTHORIZENET_ENABLED=true/' .env 2>/dev/null || true
-sed -i 's/^AUTHORIZENET_MODE=.*/AUTHORIZENET_MODE=sandbox/' .env 2>/dev/null || true
-sed -i 's/^AUTHORIZENET_API_LOGIN_ID=.*/AUTHORIZENET_API_LOGIN_ID=ridemycars/' .env 2>/dev/null || true
-sed -i 's/^AUTHORIZENET_TRANSACTION_KEY=.*/AUTHORIZENET_TRANSACTION_KEY="Rideme2026@#"/' .env 2>/dev/null || true
+sed -i 's/^AUTHORIZENET_MODE=.*/AUTHORIZENET_MODE=live/' .env 2>/dev/null || true
+sed -i 's/^AUTHORIZENET_API_LOGIN_ID=.*/AUTHORIZENET_API_LOGIN_ID=3mAE6w39/' .env 2>/dev/null || true
+sed -i 's/^AUTHORIZENET_TRANSACTION_KEY=.*/AUTHORIZENET_TRANSACTION_KEY="9CE2FxS5w535FqdS"/' .env 2>/dev/null || true
 if ! grep -q "AUTHORIZENET_API_LOGIN_ID" .env; then
     echo "" >> .env
     echo "# Authorize.Net Payment Gateway" >> .env
     echo "AUTHORIZENET_ENABLED=true" >> .env
-    echo "AUTHORIZENET_MODE=sandbox" >> .env
-    echo "AUTHORIZENET_API_LOGIN_ID=ridemycars" >> .env
-    echo "AUTHORIZENET_TRANSACTION_KEY=\"Rideme2026@#\"" >> .env
+    echo "AUTHORIZENET_MODE=live" >> .env
+    echo "AUTHORIZENET_API_LOGIN_ID=3mAE6w39" >> .env
+    echo "AUTHORIZENET_TRANSACTION_KEY=\"9CE2FxS5w535FqdS\"" >> .env
 fi
 
 

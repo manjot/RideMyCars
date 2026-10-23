@@ -3848,13 +3848,13 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 'payment.expresspay_api_key' => ['value' => $liveEpKey, 'label' => 'ExpressPay API Key'],
                 'payment.expresspay_currency' => ['value' => 'GHS', 'label' => 'ExpressPay Currency'],
                 'payment.authorizenet_enabled' => ['value' => '1', 'label' => 'Authorize.Net Gateway Enabled'],
-                'payment.authorizenet_mode' => ['value' => 'sandbox', 'label' => 'Authorize.Net Active Mode'],
-                'payment.authorizenet_login_id' => ['value' => 'ridemycars', 'label' => 'Authorize.Net API Login ID'],
-                'payment.authorizenet_transaction_key' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Transaction Key'],
-                'payment.authorizenet_sandbox_login_id' => ['value' => 'ridemycars', 'label' => 'Authorize.Net Sandbox Login ID'],
-                'payment.authorizenet_sandbox_transaction_key' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Sandbox Transaction Key'],
-                'payment.authorizenet_live_login_id' => ['value' => 'ridemycars', 'label' => 'Authorize.Net Live Login ID'],
-                'payment.authorizenet_live_transaction_key' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Live Transaction Key'],
+                'payment.authorizenet_mode' => ['value' => 'live', 'label' => 'Authorize.Net Active Mode'],
+                'payment.authorizenet_api_login_id' => ['value' => '3mAE6w39', 'label' => 'Authorize.Net API Login ID'],
+                'payment.authorizenet_transaction_key' => ['value' => '9CE2FxS5w535FqdS', 'label' => 'Authorize.Net Transaction Key'],
+                'payment.authorizenet_live_api_login_id' => ['value' => '3mAE6w39', 'label' => 'Authorize.Net Live API Login ID'],
+                'payment.authorizenet_live_transaction_key' => ['value' => '9CE2FxS5w535FqdS', 'label' => 'Authorize.Net Live Transaction Key'],
+                'payment.authorizenet_username' => ['value' => 'ridemycars', 'label' => 'Authorize.Net Merchant Username'],
+                'payment.authorizenet_password' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Merchant Password'],
                 'payment.cash_enabled' => ['value' => '1', 'label' => 'Cash on Delivery/Trip Enabled'],
             ];
 
@@ -3870,7 +3870,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                } elseif (!str_ends_with($sKey, '_enabled') && !str_starts_with($sKey, 'payment.authorizenet_')) {
+                } elseif (!str_ends_with($sKey, '_enabled')) {
                     \Illuminate\Support\Facades\DB::table('settings')->where('key', $sKey)->update([
                         'value' => $sVal['value'],
                         'label' => $sVal['label'],
@@ -4661,9 +4661,11 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                     'EXPRESSPAY_API_KEY' => 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2',
                     'EXPRESSPAY_ENABLED' => 'true',
                     'AUTHORIZENET_ENABLED' => 'true',
-                    'AUTHORIZENET_MODE' => 'sandbox',
-                    'AUTHORIZENET_API_LOGIN_ID' => 'ridemycars',
-                    'AUTHORIZENET_TRANSACTION_KEY' => 'Rideme2026@#',
+                    'AUTHORIZENET_MODE' => 'live',
+                    'AUTHORIZENET_API_LOGIN_ID' => '3mAE6w39',
+                    'AUTHORIZENET_TRANSACTION_KEY' => '9CE2FxS5w535FqdS',
+                    'AUTHORIZENET_LIVE_API_LOGIN_ID' => '3mAE6w39',
+                    'AUTHORIZENET_LIVE_TRANSACTION_KEY' => '9CE2FxS5w535FqdS',
                 ];
                 foreach ($livePaymentVars as $pKey => $pVal) {
                     if (preg_match("/^{$pKey}=.*$/m", $envContent)) {
