@@ -4019,6 +4019,15 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 $output['google_client_secret_saved'] = true;
             }
 
+            if ($request->has('set_stripe_enabled')) {
+                $stripeEnabledVal = filter_var($request->query('set_stripe_enabled'), FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+                \App\Models\Setting::updateOrCreate(
+                    ['key' => 'payment.stripe_enabled'],
+                    ['value' => $stripeEnabledVal, 'group' => 'Payment Gateways', 'label' => 'Stripe Gateway Enabled', 'type' => 'text']
+                );
+                $output['set_stripe_enabled'] = $stripeEnabledVal;
+            }
+
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;
             $output['stripe_settings_synced'] = true;
