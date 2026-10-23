@@ -3834,20 +3834,17 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $liveEpKey = 'TbUtn4Bbv4JOQbQQunRg8-K7ZczqvMTARq4ZMVNcTQ-OlWgoCxinDUleP7eqmLW-wpXAYSJN8lB2cTB9FD2';
 
             $livePaymentSettings = [
-                'payment.stripe_enabled' => ['value' => '1', 'label' => 'Stripe Gateway Enabled'],
                 'payment.stripe_mode' => ['value' => 'live', 'label' => 'Active Stripe Mode'],
                 'payment.stripe_live_publishable_key' => ['value' => $liveStripePub, 'label' => 'Stripe Live Publishable Key'],
                 'payment.stripe_live_secret_key' => ['value' => $liveStripeSec, 'label' => 'Stripe Live Secret Key'],
                 'payment.stripe_publishable_key' => ['value' => $liveStripePub, 'label' => 'Stripe Publishable Key'],
                 'payment.stripe_secret_key' => ['value' => $liveStripeSec, 'label' => 'Stripe Secret Key'],
-                'payment.expresspay_enabled' => ['value' => '1', 'label' => 'ExpressPay MoMo Gateway Enabled'],
                 'payment.expresspay_mode' => ['value' => 'live', 'label' => 'Active ExpressPay Mode'],
                 'payment.expresspay_live_merchant_id' => ['value' => $liveEpMerchant, 'label' => 'ExpressPay Live Merchant ID'],
                 'payment.expresspay_live_api_key' => ['value' => $liveEpKey, 'label' => 'ExpressPay Live API Key'],
                 'payment.expresspay_merchant_id' => ['value' => $liveEpMerchant, 'label' => 'ExpressPay Merchant ID'],
                 'payment.expresspay_api_key' => ['value' => $liveEpKey, 'label' => 'ExpressPay API Key'],
                 'payment.expresspay_currency' => ['value' => 'GHS', 'label' => 'ExpressPay Currency'],
-                'payment.authorizenet_enabled' => ['value' => '1', 'label' => 'Authorize.Net Gateway Enabled'],
                 'payment.authorizenet_mode' => ['value' => 'live', 'label' => 'Authorize.Net Active Mode'],
                 'payment.authorizenet_api_login_id' => ['value' => '3mAE6w39', 'label' => 'Authorize.Net API Login ID'],
                 'payment.authorizenet_transaction_key' => ['value' => '9CE2FxS5w535FqdS', 'label' => 'Authorize.Net Transaction Key'],
@@ -3855,7 +3852,6 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 'payment.authorizenet_live_transaction_key' => ['value' => '9CE2FxS5w535FqdS', 'label' => 'Authorize.Net Live Transaction Key'],
                 'payment.authorizenet_username' => ['value' => 'ridemycars', 'label' => 'Authorize.Net Merchant Username'],
                 'payment.authorizenet_password' => ['value' => 'Rideme2026@#', 'label' => 'Authorize.Net Merchant Password'],
-                'payment.cash_enabled' => ['value' => '1', 'label' => 'Cash on Delivery/Trip Enabled'],
             ];
 
             foreach ($livePaymentSettings as $sKey => $sVal) {
@@ -4021,13 +4017,11 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
 
             if ($request->has('set_stripe_enabled')) {
                 $stripeEnabledVal = filter_var($request->query('set_stripe_enabled'), FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
-                \App\Models\Setting::updateOrCreate(
-                    ['key' => 'payment.stripe_enabled'],
-                    ['value' => $stripeEnabledVal, 'group' => 'Payment Gateways', 'label' => 'Stripe Gateway Enabled', 'type' => 'text']
-                );
+                \App\Services\SettingService::set('payment.stripe_enabled', $stripeEnabledVal, 'Payment Gateways');
                 $output['set_stripe_enabled'] = $stripeEnabledVal;
             }
 
+            \App\Services\SettingService::flushCache();
             $rawDbSetting = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'payment.stripe_enabled')->first();
             $output['stripe_diag'] = [
                 'raw_db_val' => $rawDbSetting ? $rawDbSetting->value : null,
