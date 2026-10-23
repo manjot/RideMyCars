@@ -4022,14 +4022,6 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             }
 
             \App\Services\SettingService::flushCache();
-            $rawDbSetting = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'payment.stripe_enabled')->first();
-            $output['stripe_diag'] = [
-                'raw_db_val' => $rawDbSetting ? $rawDbSetting->value : null,
-                'setting_service_get' => \App\Services\SettingService::get('payment.stripe_enabled'),
-                'is_stripe_enabled' => \App\Services\SettingService::isStripeEnabled(),
-                'active_gateways' => array_keys(\App\Services\SettingService::getActivePaymentGateways()),
-            ];
-
             \Illuminate\Support\Facades\Cache::flush();
             $output['footer_copyright_updated'] = true;
             $output['stripe_settings_synced'] = true;
