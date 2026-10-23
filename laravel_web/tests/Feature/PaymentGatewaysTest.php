@@ -61,6 +61,40 @@ class PaymentGatewaysTest extends TestCase
     }
 
     /**
+     * Test disabling Stripe in settings omits it from active gateways.
+     */
+    public function test_disabling_stripe_gateway_hides_it_from_active_list()
+    {
+        // Explicitly disable Stripe
+        Setting::updateOrCreate(
+            ['key' => 'payment.stripe_enabled'],
+            ['value' => '0', 'group' => 'Payment Gateways']
+        );
+        SettingService::clearCache();
+
+        $this->assertFalse(SettingService::isStripeEnabled());
+
+        $gateways = SettingService::getActivePaymentGateways();
+        $this->assertArrayNotHasKey('stripe', $gateways);
+
+        $response = $this->getJson('/api/payment/gateways');
+        $response->assertStatus(200);
+        $data = $response->json();
+        $this->assertFalse($data['active_gateways']['stripe']);
+
+        // Explicitly re-enable Stripe
+        Setting::updateOrCreate(
+            ['key' => 'payment.stripe_enabled'],
+            ['value' => '1', 'group' => 'Payment Gateways']
+        );
+        SettingService::clearCache();
+
+        $this->assertTrue(SettingService::isStripeEnabled());
+        $gateways = SettingService::getActivePaymentGateways();
+        $this->assertArrayHasKey('stripe', $gateways);
+    }
+
+    /**
      * Test live Authorize.Net merchant connection with real credentials.
      */
     public function test_authorizenet_live_authentication_connection()

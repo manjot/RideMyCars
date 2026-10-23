@@ -34,7 +34,7 @@ class ManageAppSettings extends Page implements HasForms
 
         $this->form->fill([
             // Payment Gateways
-            'payment_stripe_enabled' => (bool) ($all['payment.stripe_enabled'] ?? true),
+            'payment_stripe_enabled' => filter_var($all['payment.stripe_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'payment_stripe_mode' => $all['payment.stripe_mode'] ?? 'test',
             'payment_stripe_test_publishable_key' => $all['payment.stripe_test_publishable_key'] ?? ($all['payment.stripe_publishable_key'] ?? ''),
             'payment_stripe_test_secret_key' => $all['payment.stripe_test_secret_key'] ?? ($all['payment.stripe_secret_key'] ?? ''),
@@ -45,12 +45,12 @@ class ManageAppSettings extends Page implements HasForms
             'payment_stripe_publishable_key' => $all['payment.stripe_publishable_key'] ?? '',
             'payment_stripe_secret_key' => $all['payment.stripe_secret_key'] ?? '',
             'payment_stripe_webhook_secret' => $all['payment.stripe_webhook_secret'] ?? '',
-            'payment_apple_pay_enabled' => (bool) ($all['payment.apple_pay_enabled'] ?? true),
+            'payment_apple_pay_enabled' => filter_var($all['payment.apple_pay_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'payment_apple_pay_merchant_id' => $all['payment.apple_pay_merchant_id'] ?? 'merchant.com.ridemycars',
             'payment_apple_pay_domain' => $all['payment.apple_pay_domain'] ?? 'ridemycars.com',
 
             // ExpressPay Ghana Gateway
-            'payment_expresspay_enabled' => (bool) ($all['payment.expresspay_enabled'] ?? true),
+            'payment_expresspay_enabled' => filter_var($all['payment.expresspay_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'payment_expresspay_mode' => $all['payment.expresspay_mode'] ?? 'sandbox',
             'payment_expresspay_sandbox_merchant_id' => $all['payment.expresspay_sandbox_merchant_id'] ?? ($all['payment.expresspay_merchant_id'] ?? '562786243097'),
             'payment_expresspay_sandbox_api_key' => $all['payment.expresspay_sandbox_api_key'] ?? ($all['payment.expresspay_api_key'] ?? 'DInEOn1ayqtjC420gHLJ4-IiCSoZKPR13lxkLyzqiD-PcXhMFOBwKyoUw9hzAY1-hYnIGJov5Rbz8hme7Nm'),
@@ -61,7 +61,7 @@ class ManageAppSettings extends Page implements HasForms
             'payment_expresspay_currency' => $all['payment.expresspay_currency'] ?? 'GHS',
 
             // Authorize.Net Gateway
-            'payment_authorizenet_enabled' => (bool) ($all['payment.authorizenet_enabled'] ?? true),
+            'payment_authorizenet_enabled' => filter_var($all['payment.authorizenet_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'payment_authorizenet_mode' => $all['payment.authorizenet_mode'] ?? 'live',
             'payment_authorizenet_username' => $all['payment.authorizenet_username'] ?? 'ridemycars',
             'payment_authorizenet_password' => $all['payment.authorizenet_password'] ?? 'Rideme2026@#',
@@ -75,7 +75,7 @@ class ManageAppSettings extends Page implements HasForms
             'payment_authorizenet_live_signature_key' => $all['payment.authorizenet_live_signature_key'] ?? '',
 
             // Cash on Delivery / Drop-off
-            'payment_cash_enabled' => (bool) ($all['payment.cash_enabled'] ?? true),
+            'payment_cash_enabled' => filter_var($all['payment.cash_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
 
             // SMS Gateway (Twilio Worldwide)
             'sms_twilio_enabled' => (bool) ($all['sms.twilio_enabled'] ?? true),
@@ -175,19 +175,70 @@ class ManageAppSettings extends Page implements HasForms
                                             Forms\Components\Toggle::make('payment_stripe_enabled')
                                                 ->label('Stripe (Cards & Apple Pay)')
                                                 ->helperText('Active: Visible • Inactive: Hidden')
-                                                ->default(true),
+                                                ->live()
+                                                ->afterStateUpdated(function ($state) {
+                                                    SettingService::set('payment.stripe_enabled', $state ? '1' : '0', 'Payment Gateways');
+                                                    SettingService::flushCache();
+                                                    SettingService::syncToConfig();
+
+                                                    Notification::make()
+                                                        ->title($state ? 'Stripe Gateway Activated' : 'Stripe Gateway Deactivated')
+                                                        ->body($state ? 'Stripe (Cards & Apple Pay) is now ACTIVE and visible on checkout & apps.' : 'Stripe is now INACTIVE and hidden on checkout & apps.')
+                                                        ->color($state ? 'success' : 'warning')
+                                                        ->duration(5000)
+                                                        ->send();
+                                                }),
+
                                             Forms\Components\Toggle::make('payment_authorizenet_enabled')
                                                 ->label('Authorize.Net (A Visa Solution)')
                                                 ->helperText('Active: Visible • Inactive: Hidden')
-                                                ->default(true),
+                                                ->live()
+                                                ->afterStateUpdated(function ($state) {
+                                                    SettingService::set('payment.authorizenet_enabled', $state ? '1' : '0', 'Payment Gateways');
+                                                    SettingService::flushCache();
+                                                    SettingService::syncToConfig();
+
+                                                    Notification::make()
+                                                        ->title($state ? 'Authorize.Net Gateway Activated' : 'Authorize.Net Gateway Deactivated')
+                                                        ->body($state ? 'Authorize.Net is now ACTIVE and visible on checkout & apps.' : 'Authorize.Net is now INACTIVE and hidden on checkout & apps.')
+                                                        ->color($state ? 'success' : 'warning')
+                                                        ->duration(5000)
+                                                        ->send();
+                                                }),
+
                                             Forms\Components\Toggle::make('payment_expresspay_enabled')
                                                 ->label('ExpressPay MoMo (Mobile Money)')
                                                 ->helperText('Active: Visible • Inactive: Hidden')
-                                                ->default(true),
+                                                ->live()
+                                                ->afterStateUpdated(function ($state) {
+                                                    SettingService::set('payment.expresspay_enabled', $state ? '1' : '0', 'Payment Gateways');
+                                                    SettingService::flushCache();
+                                                    SettingService::syncToConfig();
+
+                                                    Notification::make()
+                                                        ->title($state ? 'ExpressPay MoMo Activated' : 'ExpressPay MoMo Deactivated')
+                                                        ->body($state ? 'ExpressPay MoMo is now ACTIVE and visible on checkout & apps.' : 'ExpressPay MoMo is now INACTIVE and hidden on checkout & apps.')
+                                                        ->color($state ? 'success' : 'warning')
+                                                        ->duration(5000)
+                                                        ->send();
+                                                }),
+
                                             Forms\Components\Toggle::make('payment_cash_enabled')
                                                 ->label('Cash on Drop-off (Direct Pay)')
                                                 ->helperText('Active: Visible • Inactive: Hidden')
-                                                ->default(true),
+                                                ->live()
+                                                ->afterStateUpdated(function ($state) {
+                                                    SettingService::set('payment.cash_enabled', $state ? '1' : '0', 'Payment Gateways');
+                                                    SettingService::flushCache();
+                                                    SettingService::syncToConfig();
+
+                                                    Notification::make()
+                                                        ->title($state ? 'Cash Payment Activated' : 'Cash Payment Deactivated')
+                                                        ->body($state ? 'Cash on Drop-off is now ACTIVE and visible on checkout & apps.' : 'Cash on Drop-off is now INACTIVE and hidden on checkout & apps.')
+                                                        ->color($state ? 'success' : 'warning')
+                                                        ->duration(5000)
+                                                        ->send();
+                                                }),
                                         ]),
                                     ]),
 
@@ -195,9 +246,11 @@ class ManageAppSettings extends Page implements HasForms
                                     ->description('Manage Credit/Debit Card payments with dedicated Test & Live credentials.')
                                     ->schema([
                                         Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\Toggle::make('payment_stripe_enabled')
-                                                ->label('Enable Stripe Payments')
-                                                ->default(true),
+                                            Forms\Components\Placeholder::make('stripe_master_status')
+                                                ->label('Master Switch Status')
+                                                ->content(fn (Forms\Get $get) => $get('payment_stripe_enabled')
+                                                    ? '🟢 Active & Accepting Payments (Managed in Master Status Section above)'
+                                                    : '🔴 Inactive / Hidden (Turn ON in Master Status Section above to enable)'),
                                             Forms\Components\Select::make('payment_stripe_mode')
                                                 ->label('Active Environment Mode')
                                                 ->options([
@@ -270,9 +323,11 @@ class ManageAppSettings extends Page implements HasForms
                                     ->description('Manage ExpressPay Ghana merchant credentials for MTN MoMo, Telecel Cash, AirtelTigo Money, and GH Cards.')
                                     ->schema([
                                         Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\Toggle::make('payment_expresspay_enabled')
-                                                ->label('Enable ExpressPay Ghana')
-                                                ->default(true),
+                                            Forms\Components\Placeholder::make('expresspay_master_status')
+                                                ->label('Master Switch Status')
+                                                ->content(fn (Forms\Get $get) => $get('payment_expresspay_enabled')
+                                                    ? '🟢 Active & Accepting MoMo (Managed in Master Status Section above)'
+                                                    : '🔴 Inactive / Hidden (Turn ON in Master Status Section above to enable)'),
                                             Forms\Components\Select::make('payment_expresspay_mode')
                                                 ->label('Active Environment Mode')
                                                 ->options([
@@ -327,9 +382,11 @@ class ManageAppSettings extends Page implements HasForms
                                     ->description('Manage Authorize.Net Credit/Debit Card payments with dedicated Sandbox & Live API credentials.')
                                     ->schema([
                                         Forms\Components\Grid::make(3)->schema([
-                                            Forms\Components\Toggle::make('payment_authorizenet_enabled')
-                                                ->label('Enable Authorize.Net')
-                                                ->default(true),
+                                            Forms\Components\Placeholder::make('authorizenet_master_status')
+                                                ->label('Master Switch Status')
+                                                ->content(fn (Forms\Get $get) => $get('payment_authorizenet_enabled')
+                                                    ? '🟢 Active & Accepting Cards (Managed in Master Status Section above)'
+                                                    : '🔴 Inactive / Hidden (Turn ON in Master Status Section above to enable)'),
                                             Forms\Components\Select::make('payment_authorizenet_mode')
                                                 ->label('Active Environment Mode')
                                                 ->options([
@@ -418,10 +475,11 @@ class ManageAppSettings extends Page implements HasForms
                                 Forms\Components\Section::make('Cash on Service / Drop-off')
                                     ->description('Physical cash payments direct to chauffeur/courier on drop-off.')
                                     ->schema([
-                                        Forms\Components\Toggle::make('payment_cash_enabled')
-                                            ->label('Enable Cash on Drop-off')
-                                            ->helperText('When enabled, passengers and delivery customers can choose physical cash at checkout on the website and app.')
-                                            ->default(true),
+                                        Forms\Components\Placeholder::make('cash_master_status')
+                                            ->label('Master Switch Status')
+                                            ->content(fn (Forms\Get $get) => $get('payment_cash_enabled')
+                                                ? '🟢 Active & Visible at Checkout (Managed in Master Status Section above)'
+                                                : '🔴 Inactive / Hidden (Turn ON in Master Status Section above to enable)'),
                                     ]),
                             ]),
 
@@ -946,6 +1004,9 @@ class ManageAppSettings extends Page implements HasForms
         foreach ($mapping as $field => $info) {
             if (array_key_exists($field, $state)) {
                 $val = $state[$field];
+                if (is_bool($val)) {
+                    $val = $val ? '1' : '0';
+                }
                 SettingService::set($info['key'], $val, $info['group']);
             }
         }
