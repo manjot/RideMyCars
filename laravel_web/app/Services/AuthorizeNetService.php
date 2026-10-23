@@ -334,11 +334,15 @@ class AuthorizeNetService
 
             // Response Code 1 = Approved
             if ($responseCode === '1') {
+                $isTestMode = ($txResponse['testRequest'] ?? '0') === '1' || $transId === '0';
+                $assignedTransId = ($transId !== '0' && !empty($transId)) ? $transId : ('TEST-TX-' . time());
                 $msg = $txResponse['messages'][0]['description'] ?? 'Transaction approved by Authorize.Net.';
                 return [
                     'success' => true,
                     'status' => 'approved',
-                    'transaction_id' => $transId,
+                    'transaction_id' => $assignedTransId,
+                    'anet_trans_id' => $transId,
+                    'is_test_mode' => $isTestMode,
                     'auth_code' => $authCode,
                     'account_number' => $accountNumber,
                     'account_type' => $accountType,

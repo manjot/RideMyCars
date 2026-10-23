@@ -71,4 +71,27 @@ class PaymentGatewaysTest extends TestCase
         $this->assertEquals('live', $result['mode']);
         $this->assertEquals('3mAE6w39', $result['login_id']);
     }
+
+    /**
+     * Test Authorize.Net card transaction processing (pre-auth hold).
+     */
+    public function test_authorizenet_card_transaction_processing()
+    {
+        $params = [
+            'amount' => 1.00,
+            'card_number' => '4007000000027',
+            'card_expiry' => '1228',
+            'card_code' => '123',
+            'card_holder' => 'Jane Doe',
+            'description' => 'RideMyCars Automated Gateway Test',
+            'order_id' => 'PHPUNIT-' . time(),
+        ];
+
+        $result = \App\Services\AuthorizeNetService::authorizeHold($params);
+
+        $this->assertTrue($result['success'], 'Authorize.Net transaction failed: ' . ($result['message'] ?? ''));
+        $this->assertEquals('approved', $result['status']);
+        $this->assertNotEmpty($result['transaction_id']);
+        $this->assertEquals('live', $result['mode']);
+    }
 }

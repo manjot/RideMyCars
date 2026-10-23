@@ -1179,6 +1179,106 @@ class ManageAppSettings extends Page implements HasForms
                     }
                 }),
 
+            Action::make('testAuthorizeNetPayment')
+                ->label('Test Payment Transaction')
+                ->icon('heroicon-o-credit-card')
+                ->color('success')
+                ->modalHeading('Test Authorize.Net Card Transaction')
+                ->modalDescription('Process a real test authorization or charge using your Authorize.Net credentials to verify that transactions are approved and appear on your Authorize.Net Merchant Dashboard.')
+                ->modalSubmitActionLabel('Process Test Transaction')
+                ->form([
+                    Forms\Components\TextInput::make('amount')
+                        ->label('Amount (USD)')
+                        ->default('1.00')
+                        ->required()
+                        ->numeric()
+                        ->helperText('A minimal amount to verify processing.'),
+                    Forms\Components\Select::make('transaction_type')
+                        ->label('Transaction Type')
+                        ->options([
+                            'authOnlyTransaction' => '🛡️ Pre-Authorization Hold (authOnlyTransaction - Safe hold, No money taken)',
+                            'authCaptureTransaction' => '💳 Authorize & Capture (authCaptureTransaction - Immediate settlement)',
+                        ])
+                        ->default('authOnlyTransaction')
+                        ->required(),
+                    Forms\Components\TextInput::make('card_number')
+                        ->label('Card Number')
+                        ->default('4007000000027')
+                        ->helperText('Default is Authorize.Net Test Visa (4007000000027). If your portal is in Live Mode (Test Mode OFF), enter a real Visa/Mastercard.')
+                        ->required(),
+                    Forms\Components\TextInput::make('card_expiry')
+                        ->label('Expiration Date (MM/YY)')
+                        ->default('12/28')
+                        ->required(),
+                    Forms\Components\TextInput::make('card_cvv')
+                        ->label('CVV Code')
+                        ->default('123')
+                        ->required(),
+                    Forms\Components\TextInput::make('card_holder')
+                        ->label('Cardholder Name')
+                        ->default('John Doe')
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    try {
+                        SettingService::syncToConfig();
+                        $txType = $data['transaction_type'] ?? 'authOnlyTransaction';
+                        $params = [
+                            'amount' => (float) ($data['amount'] ?? 1.00),
+                            'card_number' => $data['card_number'] ?? '4007000000027',
+                            'card_expiry' => $data['card_expiry'] ?? '1228',
+                            'card_code' => $data['card_cvv'] ?? '123',
+                            'card_holder' => $data['card_holder'] ?? 'John Doe',
+                            'description' => 'RideMyCars Admin Test Payment',
+                            'order_id' => 'ADMIN-TEST-' . time(),
+                            'customer_email' => 'admin@ridemycars.com',
+                        ];
+
+                        $result = ($txType === 'authCaptureTransaction')
+                            ? \App\Services\AuthorizeNetService::createPayment($params)
+                            : \App\Services\AuthorizeNetService::authorizeHold($params);
+
+                        if ($result['success']) {
+                            $transId = $result['transaction_id'] ?? '0';
+                            $authCode = $result['auth_code'] ?? '000000';
+                            $isTest = !empty($result['is_test_mode']);
+                            $mode = strtoupper($result['mode'] ?? 'LIVE');
+
+                            $details = "Status: " . strtoupper($result['status'])
+                                . " • Trans ID: " . $transId
+                                . " • Auth Code: " . $authCode
+                                . " • Card: " . ($result['account_type'] ?? 'Card') . " " . ($result['account_number'] ?? 'XXXX');
+
+                            if ($isTest) {
+                                $details .= "\n\n💡 Note: Your Authorize.Net account currently has 'Test Mode' ON in the Authorize.Net portal. The transaction was approved successfully with test response code. To have transactions settle and show up in your live Transaction Details & Unsettled Transactions dashboard, switch Test Mode to Live in account.authorize.net (Account > Settings > Test Mode).";
+                            } else {
+                                $details .= "\n\n🎉 Live Transaction Recorded! Transaction ID: {$transId}. You can log into https://account.authorize.net and view this transaction under Account > Reports > Transaction Details or Unsettled Transactions.";
+                            }
+
+                            Notification::make()
+                                ->title("Authorize.Net Transaction Approved ({$mode})!")
+                                ->body($details)
+                                ->success()
+                                ->duration(15000)
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Authorize.Net Transaction Failed')
+                                ->body($result['message'] ?? 'Transaction was declined by Authorize.Net.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                        }
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Transaction Exception')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
+                    }
+                }),
+
             Action::make('testEmail')
                 ->label('Send Test Email')
                 ->icon('heroicon-o-envelope')
