@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import '../core/api/api_client.dart';
 import '../core/constants/api_constants.dart';
 import '../core/services/sound_service.dart';
+import '../core/services/local_notification_service.dart';
 
 class DriverProvider extends ChangeNotifier {
   final Dio _dio = ApiClient().dio;
@@ -44,6 +45,9 @@ class DriverProvider extends ChangeNotifier {
     checkAvailabilityAndInit();
     fetchEarnings();
     fetchActiveRides();
+    try {
+      LocalNotificationService.instance.syncFcmToken();
+    } catch (_) {}
   }
 
   Future<void> checkAvailabilityAndInit() async {
@@ -400,10 +404,20 @@ class DriverProvider extends ChangeNotifier {
           if (effectiveDeliveryId != null && effectiveDeliveryId > 0) 'delivery_id': effectiveDeliveryId,
           if (effectiveBookingId != null && effectiveBookingId > 0) 'driver_booking_id': effectiveBookingId,
           'action': action,
+          if (_currentLat != null) 'lat': _currentLat,
+          if (_currentLng != null) 'lng': _currentLng,
+          if (_currentLat != null) 'latitude': _currentLat,
+          if (_currentLng != null) 'longitude': _currentLng,
         }).timeout(const Duration(seconds: 8));
       } on DioException catch (dioErr) {
         debugPrint('driverRespond DioException: ${dioErr.response?.statusCode} ${dioErr.response?.data}');
         final respData = dioErr.response?.data;
+        if (respData is Map) {
+          final sMsg = respData['message'] ?? respData['error'];
+          if (sMsg != null && sMsg.toString().isNotEmpty) {
+            _errorMessage = sMsg.toString();
+          }
+        }
         if (dioErr.response?.statusCode == 410 || (respData is Map && respData['is_expired'] == true)) {
           _errorMessage = respData is Map
               ? (respData['message']?.toString() ?? 'This request has expired and is no longer available.')
@@ -423,21 +437,28 @@ class DriverProvider extends ChangeNotifier {
           try {
             res = await _dio.post('/driver/requests/$targetId/respond', data: {
               'status': action == 'accept' ? 'accepted' : 'rejected',
+              if (_currentLat != null) 'lat': _currentLat,
+              if (_currentLng != null) 'lng': _currentLng,
             }).timeout(const Duration(seconds: 6));
           } catch (fallbackErr) {
-            if (fallbackErr is DioException && fallbackErr.response?.statusCode == 410) {
+            if (fallbackErr is DioException) {
               final fbData = fallbackErr.response?.data;
-              _errorMessage = fbData is Map
-                  ? (fbData['message']?.toString() ?? 'This request has expired and is no longer available.')
-                  : 'This request has expired and is no longer available.';
-              removePendingRequestLocally(
-                assignmentId: assignmentId,
-                rideId: effectiveRideId,
-                deliveryId: effectiveDeliveryId,
-                bookingId: effectiveBookingId,
-              );
-              notifyListeners();
-              return false;
+              if (fbData is Map && fbData['message'] != null) {
+                _errorMessage = fbData['message'].toString();
+              }
+              if (fallbackErr.response?.statusCode == 410) {
+                _errorMessage = fbData is Map
+                    ? (fbData['message']?.toString() ?? 'This request has expired and is no longer available.')
+                    : 'This request has expired and is no longer available.';
+                removePendingRequestLocally(
+                  assignmentId: assignmentId,
+                  rideId: effectiveRideId,
+                  deliveryId: effectiveDeliveryId,
+                  bookingId: effectiveBookingId,
+                );
+                notifyListeners();
+                return false;
+              }
             }
           }
         }
@@ -474,10 +495,22 @@ class DriverProvider extends ChangeNotifier {
             if (effectiveRideId != null && (acceptedRide['id'] == null || acceptedRide['id'] == 0)) {
               acceptedRide['id'] = effectiveRideId;
             }
+            if (res.data['is_queued'] == true) {
+              acceptedRide['is_queued'] = true;
+            }
             _lastAcceptedRide = acceptedRide;
-            // Prepend immediately to _activeRides
+
+            // Preserve ongoing trip at index 0 if one is already in progress/motion
+            final hasOngoingTrip = _activeRides.any((r) =>
+                ['in_progress', 'started', 'arrived', 'en_route', 'driver_assigned'].contains(r['status']));
+
             _activeRides.removeWhere((r) => r['id']?.toString() == acceptedRide!['id']?.toString());
-            _activeRides.insert(0, acceptedRide);
+            if (hasOngoingTrip) {
+              acceptedRide['is_queued'] = true;
+              _activeRides.add(acceptedRide);
+            } else {
+              _activeRides.insert(0, acceptedRide);
+            }
           }
 
           _isOnline = true;
@@ -595,6 +628,27 @@ class DriverProvider extends ChangeNotifier {
             .map((e) => Map<String, dynamic>.from(e))
             .where((r) => r['status'] != 'completed' && r['status'] != 'delivered' && r['status'] != 'cancelled')
             .toList();
+        mapped.sort((a, b) {
+          int priority(dynamic status) {
+            switch (status?.toString()) {
+              case 'in_progress':
+              case 'started':
+                return 1;
+              case 'arrived':
+                return 2;
+              case 'en_route':
+                return 3;
+              case 'driver_assigned':
+              case 'confirmed':
+                return 4;
+              case 'accepted':
+                return 5;
+              default:
+                return 10;
+            }
+          }
+          return priority(a['status']).compareTo(priority(b['status']));
+        });
         if (mapped.isNotEmpty) {
           _activeRides = mapped;
         } else if (_lastAcceptedRide != null &&

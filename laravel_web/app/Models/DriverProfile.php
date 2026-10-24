@@ -55,6 +55,8 @@ class DriverProfile extends Model
         'id_card_back_image',
         'id_card_status',
         'id_card_rejection_reason',
+        'fcm_token',
+        'device_type',
     ];
 
     protected $casts = [

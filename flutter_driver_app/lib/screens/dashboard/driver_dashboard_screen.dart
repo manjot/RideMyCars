@@ -137,25 +137,38 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 ),
               );
             } else {
-              final acceptedRide = driver.lastAcceptedRide ??
-                  driver.lastAssignmentResponse?['ride'] ??
-                  driver.lastAssignmentResponse?['delivery'] ??
-                  (driver.activeRides.isNotEmpty ? driver.activeRides.first : job);
+              final isQueued = driver.lastAssignmentResponse?['is_queued'] == true ||
+                  driver.activeRides.where((r) => ['in_progress', 'started', 'arrived', 'en_route'].contains(r['status'])).length > 1;
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ActiveTripScreen(ride: Map<String, dynamic>.from(acceptedRide)),
-                ),
-              );
+              if (isQueued) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✓ Additional Ride Accepted! Queued as your next trip after current dropoff.'),
+                    backgroundColor: AppColors.success,
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+              } else {
+                final acceptedRide = driver.lastAcceptedRide ??
+                    driver.lastAssignmentResponse?['ride'] ??
+                    driver.lastAssignmentResponse?['delivery'] ??
+                    (driver.activeRides.isNotEmpty ? driver.activeRides.first : job);
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('✓ Ride Accepted! Opening navigation.'),
-                  backgroundColor: AppColors.success,
-                  duration: Duration(seconds: 3),
-                ),
-              );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ActiveTripScreen(ride: Map<String, dynamic>.from(acceptedRide)),
+                  ),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✓ Ride Accepted! Opening navigation.'),
+                    backgroundColor: AppColors.success,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
             }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -3021,24 +3034,38 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                             ),
                           );
                         } else {
-                          final acceptedRide = driver.lastAcceptedRide ??
-                              driver.lastAssignmentResponse?['ride'] ??
-                              driver.lastAssignmentResponse?['delivery'] ??
-                              (driver.activeRides.isNotEmpty ? driver.activeRides.first : job);
+                          final isQueued = driver.lastAssignmentResponse?['is_queued'] == true ||
+                              driver.activeRides.where((r) => ['in_progress', 'started', 'arrived', 'en_route'].contains(r['status'])).length > 1;
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ActiveTripScreen(ride: Map<String, dynamic>.from(acceptedRide)),
-                            ),
-                          );
+                          if (isQueued) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✓ Additional Ride Accepted! Queued as your next trip after current dropoff.'),
+                                backgroundColor: AppColors.success,
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                          } else {
+                            final acceptedRide = driver.lastAcceptedRide ??
+                                driver.lastAssignmentResponse?['ride'] ??
+                                driver.lastAssignmentResponse?['delivery'] ??
+                                (driver.activeRides.isNotEmpty ? driver.activeRides.first : job);
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('✓ Ride Accepted! Opening navigation.'),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ActiveTripScreen(ride: Map<String, dynamic>.from(acceptedRide)),
+                              ),
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✓ Ride Accepted! Opening navigation.'),
+                                backgroundColor: AppColors.success,
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
                         }
                       } else if (!ok && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

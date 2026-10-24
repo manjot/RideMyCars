@@ -24,6 +24,7 @@ class ApiConstants {
 
   // Driver
   static const String driverLocation = '/driver/location';
+  static const String driverFcmToken = '/driver/fcm-token';
   static const String driverToggleAvailability = '/driver/toggle-availability';
   static const String driverRequests = '/driver/requests';
   static const String driverRespond = '/driver/respond';

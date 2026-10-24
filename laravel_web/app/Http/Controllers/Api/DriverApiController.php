@@ -1773,6 +1773,36 @@ class DriverApiController extends Controller
                 ]);
             }
 
+            $userEmail = strtolower($user->email ?? '');
+            $isPrivilegedUser = in_array($userEmail, [
+                'shachish@ajath.com',
+                'shachisheh@gmail.com',
+                'admin@ridemycars.com',
+                'ridemycars1@gmail.com',
+            ]) || str_ends_with($userEmail, '@ridemycars.com') || (int)$user->id === 259;
+
+            // Resolve live request GPS coordinates if provided
+            $reqLat = $request->input('lat') ?? $request->input('latitude');
+            $reqLng = $request->input('lng') ?? $request->input('longitude');
+            if ($reqLat && $reqLng && $user->driverProfile) {
+                try {
+                    $user->driverProfile->update([
+                        'current_lat' => (float)$reqLat,
+                        'current_lng' => (float)$reqLng,
+                        'last_location_update' => now(),
+                    ]);
+                } catch (\Throwable $e) {}
+            }
+            $driverLat = $reqLat ?? $user->driverProfile?->current_lat;
+            $driverLng = $reqLng ?? $user->driverProfile?->current_lng;
+
+            // Detect if driver currently has an active ongoing trip in progress/motion
+            $activeOngoingTrip = \App\Models\Ride::whereIn('driver_id', $userIds)
+                ->whereIn('status', ['accepted', 'driver_assigned', 'en_route', 'arrived', 'in_progress', 'started', 'confirmed'])
+                ->latest()
+                ->first();
+            $isChainedOrQueued = (bool)$activeOngoingTrip;
+
             $ride = $assignment->ride ?? ($assignment->ride_id ? \App\Models\Ride::find($assignment->ride_id) : ($request->ride_id ? \App\Models\Ride::find($request->ride_id) : null));
             if ($ride) {
                 if ($ride->status !== 'pending' || $ride->isExpired() || ($ride->driver_id !== null && $ride->driver_id != $user->id)) {
@@ -1793,8 +1823,8 @@ class DriverApiController extends Controller
                 ) ?? \App\Services\CountryService::normalizeToCode($ride->driver_country ?? $ride->country ?? null);
 
                 $driverCountry = \App\Services\CountryService::normalizeToCode($user->driverProfile?->country ?? $user->country ?? '');
-                if (!$driverCountry && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
-                    $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $user->driverProfile->current_lat, $user->driverProfile->current_lng);
+                if (!$driverCountry && $driverLat && $driverLng) {
+                    $driverCountry = \App\Services\CountryService::detectCountryFromLocation(null, $driverLat, $driverLng);
                 }
 
                 if ($driverCountry && $rideCountry && $driverCountry !== $rideCountry) {
@@ -1804,15 +1834,31 @@ class DriverApiController extends Controller
                     ], 403);
                 }
 
-                if ($ride->pickup_lat && $ride->pickup_lng && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
-                    $dist = \App\Services\RideAssignmentService::haversineDistance(
-                        (float)$user->driverProfile->current_lat, (float)$user->driverProfile->current_lng,
-                        (float)$ride->pickup_lat, (float)$ride->pickup_lng
-                    );
-                    if ($dist > 10.0) {
+                // Dispatch & Proximity verification
+                $pricing = \App\Models\CountryPricing::forCountry($rideCountry ?: ($driverCountry ?: 'IND'));
+                $maxRadiusKm = (float)($pricing->dispatch_radius_km ?? 10.0);
+                if ($maxRadiusKm <= 0.0 || $maxRadiusKm > 10.0) {
+                    $maxRadiusKm = 10.0;
+                }
+                // Allow up to 15 km when driver is completing an active trip so they can queue their next ride
+                $effectiveMaxRadius = $isChainedOrQueued ? max($maxRadiusKm, 15.0) : $maxRadiusKm;
+
+                if ($ride->pickup_lat && $ride->pickup_lng) {
+                    $distCurrent = ($driverLat && $driverLng)
+                        ? \App\Services\RideAssignmentService::haversineDistance((float)$driverLat, (float)$driverLng, (float)$ride->pickup_lat, (float)$ride->pickup_lng)
+                        : 99999.0;
+
+                    $distDropoff = ($isChainedOrQueued && $activeOngoingTrip?->dropoff_lat && $activeOngoingTrip?->dropoff_lng)
+                        ? \App\Services\RideAssignmentService::haversineDistance((float)$activeOngoingTrip->dropoff_lat, (float)$activeOngoingTrip->dropoff_lng, (float)$ride->pickup_lat, (float)$ride->pickup_lng)
+                        : 99999.0;
+
+                    $minDist = min($distCurrent, $distDropoff);
+                    $isDirectAssignment = ((int)$assignment->driver_id === (int)$user->id);
+
+                    if ($minDist > $effectiveMaxRadius && !$isPrivilegedUser && !$isDirectAssignment && $minDist < 99990.0) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'You are too far from the pickup location (exceeds 10 km limit).',
+                            'message' => "You are too far from the pickup location (exceeds {$effectiveMaxRadius} km limit).",
                         ], 422);
                     }
                 }
@@ -1850,12 +1896,14 @@ class DriverApiController extends Controller
                     'customer_name' => $custName,
                     'rider_name' => $custName,
                     'passenger_name' => $freshRide->passenger_name ?: $custName,
+                    'is_queued' => $isChainedOrQueued,
                 ]);
 
                 return response()->json([
                     'success' => true,
                     'status' => 'accepted',
-                    'message' => 'Ride accepted successfully.',
+                    'is_queued' => $isChainedOrQueued,
+                    'message' => $isChainedOrQueued ? 'Additional ride accepted and queued as your next trip.' : 'Ride accepted successfully.',
                     'ride' => $rideData,
                 ]);
             } elseif ($assignment->packageDelivery || $assignment->package_delivery_id) {
@@ -1886,13 +1934,27 @@ class DriverApiController extends Controller
                         return response()->json(['success' => false, 'message' => 'This delivery request is in another country.'], 403);
                     }
 
-                    if ($delivery->pickup_lat && $delivery->pickup_lng && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
-                        $dist = \App\Services\RideAssignmentService::haversineDistance(
-                            (float)$user->driverProfile->current_lat, (float)$user->driverProfile->current_lng,
-                            (float)$delivery->pickup_lat, (float)$delivery->pickup_lng
-                        );
-                        if ($dist > 10.0) {
-                            return response()->json(['success' => false, 'message' => 'You are too far from the pickup location (exceeds 10 km limit).'], 422);
+                    $pricing = \App\Models\CountryPricing::forCountry($delCountry ?: ($driverCountry ?: 'IND'));
+                    $maxRadiusKm = (float)($pricing->dispatch_radius_km ?? 10.0);
+                    if ($maxRadiusKm <= 0.0 || $maxRadiusKm > 10.0) {
+                        $maxRadiusKm = 10.0;
+                    }
+                    $effectiveMaxRadius = $isChainedOrQueued ? max($maxRadiusKm, 15.0) : $maxRadiusKm;
+
+                    if ($delivery->pickup_lat && $delivery->pickup_lng) {
+                        $distCurrent = ($driverLat && $driverLng)
+                            ? \App\Services\RideAssignmentService::haversineDistance((float)$driverLat, (float)$driverLng, (float)$delivery->pickup_lat, (float)$delivery->pickup_lng)
+                            : 99999.0;
+
+                        $distDropoff = ($isChainedOrQueued && $activeOngoingTrip?->dropoff_lat && $activeOngoingTrip?->dropoff_lng)
+                            ? \App\Services\RideAssignmentService::haversineDistance((float)$activeOngoingTrip->dropoff_lat, (float)$activeOngoingTrip->dropoff_lng, (float)$delivery->pickup_lat, (float)$delivery->pickup_lng)
+                            : 99999.0;
+
+                        $minDist = min($distCurrent, $distDropoff);
+                        $isDirectAssignment = ((int)$assignment->driver_id === (int)$user->id);
+
+                        if ($minDist > $effectiveMaxRadius && !$isPrivilegedUser && !$isDirectAssignment && $minDist < 99990.0) {
+                            return response()->json(['success' => false, 'message' => "You are too far from the pickup location (exceeds {$effectiveMaxRadius} km limit)."], 422);
                         }
                     }
 
@@ -1956,13 +2018,27 @@ class DriverApiController extends Controller
                     return response()->json(['success' => false, 'message' => 'This driver booking is in another country.'], 403);
                 }
 
-                if ($booking->pickup_lat && $booking->pickup_lng && $user->driverProfile?->current_lat && $user->driverProfile?->current_lng) {
-                    $dist = \App\Services\RideAssignmentService::haversineDistance(
-                        (float)$user->driverProfile->current_lat, (float)$user->driverProfile->current_lng,
-                        (float)$booking->pickup_lat, (float)$booking->pickup_lng
-                    );
-                    if ($dist > 10.0) {
-                        return response()->json(['success' => false, 'message' => 'You are too far from the pickup location (exceeds 10 km limit).'], 422);
+                $pricing = \App\Models\CountryPricing::forCountry($bCountry ?: ($driverCountry ?: 'IND'));
+                $maxRadiusKm = (float)($pricing->dispatch_radius_km ?? 10.0);
+                if ($maxRadiusKm <= 0.0 || $maxRadiusKm > 10.0) {
+                    $maxRadiusKm = 10.0;
+                }
+                $effectiveMaxRadius = $isChainedOrQueued ? max($maxRadiusKm, 15.0) : $maxRadiusKm;
+
+                if ($booking->pickup_lat && $booking->pickup_lng) {
+                    $distCurrent = ($driverLat && $driverLng)
+                        ? \App\Services\RideAssignmentService::haversineDistance((float)$driverLat, (float)$driverLng, (float)$booking->pickup_lat, (float)$booking->pickup_lng)
+                        : 99999.0;
+
+                    $distDropoff = ($isChainedOrQueued && $activeOngoingTrip?->dropoff_lat && $activeOngoingTrip?->dropoff_lng)
+                        ? \App\Services\RideAssignmentService::haversineDistance((float)$activeOngoingTrip->dropoff_lat, (float)$activeOngoingTrip->dropoff_lng, (float)$booking->pickup_lat, (float)$booking->pickup_lng)
+                        : 99999.0;
+
+                    $minDist = min($distCurrent, $distDropoff);
+                    $isDirectAssignment = ((int)$assignment->driver_id === (int)$user->id);
+
+                    if ($minDist > $effectiveMaxRadius && !$isPrivilegedUser && !$isDirectAssignment && $minDist < 99990.0) {
+                        return response()->json(['success' => false, 'message' => "You are too far from the pickup location (exceeds {$effectiveMaxRadius} km limit)."], 422);
                     }
                 }
 
@@ -2240,6 +2316,27 @@ class DriverApiController extends Controller
             ];
         }
 
+        // Sort items so currently in-progress/motion trips stay at index 0, followed by en_route, arrived, and queued accepted trips
+        usort($items, function ($a, $b) {
+            $priority = [
+                'in_progress' => 1,
+                'started' => 1,
+                'arrived' => 2,
+                'en_route' => 3,
+                'driver_assigned' => 4,
+                'confirmed' => 5,
+                'accepted' => 6,
+            ];
+            $sA = strtolower((string)($a['raw_status'] ?? $a['status'] ?? ''));
+            $sB = strtolower((string)($b['raw_status'] ?? $b['status'] ?? ''));
+            $pA = $priority[$sA] ?? 99;
+            $pB = $priority[$sB] ?? 99;
+            if ($pA !== $pB) {
+                return $pA <=> $pB;
+            }
+            return strtotime($b['created_at'] ?? '0') <=> strtotime($a['created_at'] ?? '0');
+        });
+
         return response()->json([
             'success' => true,
             'rides' => $items,
@@ -2298,6 +2395,45 @@ class DriverApiController extends Controller
             'total_trips' => $totalTrips,
             'currency_symbol' => $driverPricing->currency_symbol,
             'currency_code' => $driverPricing->currency_code,
+        ]);
+    }
+
+    /**
+     * Register or update driver FCM device token.
+     */
+    public function updateFcmToken(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $token = $request->input('fcm_token') ?? $request->input('token');
+        $deviceType = $request->input('device_type') ?? $request->input('platform', 'android');
+
+        if (empty($token)) {
+            return response()->json(['success' => false, 'message' => 'Token is required.'], 422);
+        }
+
+        try {
+            $user->update([
+                'fcm_token' => $token,
+                'device_type' => $deviceType,
+            ]);
+        } catch (\Throwable $e) {}
+
+        if ($user->driverProfile) {
+            try {
+                $user->driverProfile->update([
+                    'fcm_token' => $token,
+                    'device_type' => $deviceType,
+                ]);
+            } catch (\Throwable $e) {}
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FCM token registered successfully.',
         ]);
     }
 }

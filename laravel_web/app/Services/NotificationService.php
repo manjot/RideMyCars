@@ -15,7 +15,7 @@ class NotificationService
      */
     public static function send(int $userId, string $type, string $title, string $message, ?int $rideId = null, ?string $link = null, array $data = []): UserNotification
     {
-        return UserNotification::create([
+        $notification = UserNotification::create([
             'user_id' => $userId,
             'type' => $type,
             'title' => $title,
@@ -25,6 +25,32 @@ class NotificationService
             'data' => $data,
             'is_read' => false,
         ]);
+
+        try {
+            $isDriverAlert = in_array($type, [
+                'ride_assignment',
+                'driver_hiring_assigned',
+                'package_delivery_assigned',
+                'backup_ride_assigned',
+                'new_ride_request',
+                'delivery_request',
+            ]);
+
+            $sound = $isDriverAlert ? 'incoming_order_ringtone' : 'default';
+            $fcmData = array_merge([
+                'type' => $type,
+                'title' => $title,
+                'body' => $message,
+                'ride_id' => (string) ($rideId ?? ''),
+                'link' => (string) ($link ?? ''),
+            ], $data);
+
+            FcmService::sendToUser($userId, $title, $message, $fcmData, $sound);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("[NotificationService] FCM trigger error: " . $e->getMessage());
+        }
+
+        return $notification;
     }
 
     /**

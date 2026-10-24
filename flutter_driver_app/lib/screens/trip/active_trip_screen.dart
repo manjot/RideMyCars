@@ -444,6 +444,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
         ),
       );
       if (confirmed != true) return;
+      if (!mounted) return;
     }
 
     setState(() => _isUpdating = true);
@@ -464,6 +465,34 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
         final completionMsg = isCash
             ? '🎉 Trip Completed! Cash collected directly from rider.'
             : '🎉 Trip Completed! Fare has been added to your earnings.';
+
+        // Check if there is an upcoming queued trip
+        final queuedRides = driver.activeRides.where((r) =>
+            r['id']?.toString() != _ride['id']?.toString() &&
+            r['status'] != 'completed' &&
+            r['status'] != 'delivered' &&
+            r['status'] != 'cancelled').toList();
+
+        if (queuedRides.isNotEmpty) {
+          final nextRide = queuedRides.first;
+          setState(() {
+            _ride = Map<String, dynamic>.from(nextRide);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$completionMsg Next queued trip loaded!'),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          final pLat = _ride['pickup_lat'] != null ? double.tryParse(_ride['pickup_lat'].toString()) : null;
+          final pLng = _ride['pickup_lng'] != null ? double.tryParse(_ride['pickup_lng'].toString()) : null;
+          final dLat = _ride['dropoff_lat'] != null ? double.tryParse(_ride['dropoff_lat'].toString()) : null;
+          final dLng = _ride['dropoff_lng'] != null ? double.tryParse(_ride['dropoff_lng'].toString()) : null;
+          _fitRouteBounds(pLat, pLng, dLat, dLng);
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(completionMsg),
@@ -1000,6 +1029,92 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               assignedPhone: (hasPoc && pocPhone != null ? pocPhone : customerPhone)?.toString(),
               assignedName: (hasPoc && pocName != null ? pocName : customerName)?.toString() ?? 'Passenger',
             ),
+          ),
+
+          // Queued Next Trip Banner
+          Consumer<DriverProvider>(
+            builder: (context, driverProv, _) {
+              final queuedRides = driverProv.activeRides.where((r) =>
+                  r['id']?.toString() != _ride['id']?.toString() &&
+                  r['status'] != 'completed' &&
+                  r['status'] != 'delivered' &&
+                  r['status'] != 'cancelled').toList();
+              if (queuedRides.isEmpty) return const SizedBox.shrink();
+
+              final nextTrip = queuedRides.first;
+              final nextPickup = nextTrip['pickup_location']?.toString() ?? 'Nearby Pickup';
+              final nextFare = nextTrip['fare'] ?? nextTrip['total_price'] ?? 0;
+
+              return Positioned(
+                top: 96,
+                left: 16,
+                right: 76,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceDark.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primary, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.playlist_add_check_rounded, color: AppColors.primary, size: 16),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'NEXT TRIP QUEUED',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                            Text(
+                              nextPickup,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$currSym$nextFare',
+                        style: const TextStyle(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
 
           // Bottom Sheet with Ride Details & Lifecycle Action

@@ -194,6 +194,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Driver Dispatch & Operations
     Route::post('/driver/location', [DriverApiController::class, 'updateLocation']);
+    Route::post('/driver/fcm-token', [DriverApiController::class, 'updateFcmToken']);
     Route::post('/driver/toggle-availability', [DriverApiController::class, 'toggleAvailability']);
     Route::get('/driver/requests', [DriverApiController::class, 'pendingRequests']);
     Route::post('/driver/respond', [DriverApiController::class, 'respondToAssignment']);

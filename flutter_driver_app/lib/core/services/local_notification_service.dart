@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../api/api_client.dart';
+import '../constants/api_constants.dart';
 
 class LocalNotificationService {
   LocalNotificationService._();
@@ -13,7 +15,7 @@ class LocalNotificationService {
   static const String channelId = 'ridemycars_alerts';
   static const String channelName = 'Ride & Booking Alerts';
   static const String channelDesc =
-      'High priority alerts for rides, bookings, and notifications';
+      'High priority alerts for incoming ride assignments and requests';
 
   final Set<int> _displayedNotificationIds = <int>{};
   bool _initialized = false;
@@ -46,7 +48,7 @@ class LocalNotificationService {
         },
       );
 
-      // Create Android High-Importance Channel
+      // Create Android High-Importance Channel with Custom Alert Ringtone
       if (Platform.isAndroid) {
         final androidPlugin = _notificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -58,6 +60,7 @@ class LocalNotificationService {
           description: channelDesc,
           importance: Importance.max,
           playSound: true,
+          sound: RawResourceAndroidNotificationSound('incoming_order_ringtone'),
           enableVibration: true,
           showBadge: true,
         );
@@ -68,11 +71,29 @@ class LocalNotificationService {
         await androidPlugin?.requestNotificationsPermission();
       }
 
-      // Setup FCM Foreground Listener if Firebase is available
+      // Request Firebase Messaging permissions
+      try {
+        final fcm = FirebaseMessaging.instance;
+        await fcm.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+        await fcm.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      } catch (e) {
+        debugPrint('[FCM] permission request error: $e');
+      }
+
+      // Setup FCM Foreground Listener
       _setupFcmListeners();
 
       _initialized = true;
-      debugPrint('[LocalNotificationService] Driver initialized successfully');
+      debugPrint('[LocalNotificationService] Driver initialized successfully with incoming_order_ringtone channel');
     } catch (e) {
       debugPrint('[LocalNotificationService] Driver init error: $e');
     }
@@ -88,12 +109,41 @@ class LocalNotificationService {
         final body = message.notification?.body ??
             message.data['message'] ??
             message.data['body'] ??
-            '';
+            'New ride request received.';
         final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        showNotification(id: id, title: title, body: body);
+        showNotification(id: id, title: title, body: body, force: true);
       });
     } catch (e) {
       debugPrint('[Driver FCM] listener init skipped/failed: $e');
+    }
+  }
+
+  /// Sync device FCM token to backend
+  Future<void> syncFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null && token.isNotEmpty) {
+        debugPrint('[FCM] Registering device token with backend: ${token.substring(0, 15)}...');
+        await ApiClient().dio.post(ApiConstants.driverFcmToken, data: {
+          'fcm_token': token,
+          'token': token,
+          'device_type': Platform.isAndroid ? 'android' : 'ios',
+        });
+        debugPrint('[FCM] Driver token registered successfully');
+      }
+
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        debugPrint('[FCM] Driver token refreshed: ${newToken.substring(0, 15)}...');
+        try {
+          await ApiClient().dio.post(ApiConstants.driverFcmToken, data: {
+            'fcm_token': newToken,
+            'token': newToken,
+            'device_type': Platform.isAndroid ? 'android' : 'ios',
+          });
+        } catch (_) {}
+      });
+    } catch (e) {
+      debugPrint('[FCM] syncFcmToken error: $e');
     }
   }
 
@@ -119,10 +169,13 @@ class LocalNotificationService {
         priority: Priority.high,
         ticker: 'Driver Partner Alert',
         playSound: true,
+        sound: RawResourceAndroidNotificationSound('incoming_order_ringtone'),
+        audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
         enableVibration: true,
         icon: '@mipmap/launcher_icon',
         visibility: NotificationVisibility.public,
-        category: AndroidNotificationCategory.status,
+        category: AndroidNotificationCategory.call,
+        fullScreenIntent: true,
       );
 
       const NotificationDetails platformDetails = NotificationDetails(
@@ -131,6 +184,7 @@ class LocalNotificationService {
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
+          sound: 'incoming_order_ringtone.mp3',
         ),
       );
 

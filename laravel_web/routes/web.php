@@ -1377,6 +1377,9 @@ Route::post('/api/driver/location', function (\Illuminate\Http\Request $request)
     ]);
 })->middleware('auth');
 
+Route::post('/api/driver/fcm-token', [\App\Http\Controllers\Api\DriverApiController::class, 'updateFcmToken']);
+Route::post('/driver/fcm-token', [\App\Http\Controllers\Api\DriverApiController::class, 'updateFcmToken']);
+
 // Polling endpoint for Rider to check ride lifecycle status
 Route::get('/api/ride/{id}/status', function (\Illuminate\Http\Request $request, $id) {
     $ride = \App\Models\Ride::with(['driver', 'driver.driverProfile', 'riderReview', 'stops'])->find($id);
@@ -4146,6 +4149,18 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         }
     } catch (\Throwable $e) {
         $output['driver_id_card_and_chauffeur_migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'fcm_token') || !\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_token')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', [
+                '--path' => 'database/migrations/2026_10_24_000001_add_fcm_token_to_users_and_driver_profiles.php',
+                '--force' => true,
+            ]);
+            $output['fcm_token_migrate'] = \Illuminate\Support\Facades\Artisan::output();
+        }
+    } catch (\Throwable $e) {
+        $output['fcm_token_migrate_err'] = $e->getMessage();
     }
 
     // Purge and sync 4 unique Ride category banner cards with distinct headings & descriptions
