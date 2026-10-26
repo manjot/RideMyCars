@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\DriverBooking;
+use App\Models\DriverCashCommission;
+use App\Models\DriverProfile;
 use App\Models\PackageDelivery;
 use App\Models\Ride;
 use App\Models\RideAssignment;
@@ -227,12 +229,7 @@ class BookingRefundService
         // 1. Payment method check
         $method = $booking->payment_method ?? '';
         if (self::isCashPayment($method)) {
-            Log::info("BookingRefundService: Driver #{$driverUser->id} collected fare in cash for {$serviceType} #{$booking->id}. No digital wallet credit applied.");
-            return [
-                'credited' => false,
-                'amount' => 0.00,
-                'reason' => 'cash_payment_collected_in_person',
-            ];
+            return self::handleCashTripCommissionDeduction($booking, $serviceType, $driverUser);
         }
 
         // 2. Idempotency check: has driver already been credited for this booking?
@@ -355,6 +352,172 @@ class BookingRefundService
                 'credited' => true,
                 'amount' => $driverFareEarned,
                 'reason' => 'success',
+                'transaction_ref' => $trxRef,
+            ];
+        });
+    }
+
+    /**
+     * Deduct platform commissions from Driver's main wallet on cash trips
+     * and record into the additional Cash Commission Wallet.
+     */
+    public static function handleCashTripCommissionDeduction($booking, string $serviceType, User $driverUser): array
+    {
+        if (class_exists(DriverCashCommission::class)) {
+            DriverCashCommission::ensureTableExists();
+        }
+
+        // Idempotency check: has commission already been recorded for this cash booking?
+        $existingCommission = DriverCashCommission::where('driver_id', $driverUser->id)
+            ->where('booking_id', $booking->id)
+            ->where('service_type', $serviceType)
+            ->first();
+
+        if ($existingCommission) {
+            Log::info("BookingRefundService: Commission already recorded for cash {$serviceType} #{$booking->id} (Amount: {$existingCommission->commission_amount}).");
+            return [
+                'credited' => false,
+                'commission_deducted' => true,
+                'amount' => (float)$existingCommission->commission_amount,
+                'reason' => 'already_recorded',
+            ];
+        }
+
+        // Calculate gross fare and vertical
+        $grossAmount = 0.00;
+        $vertical = 'RIDE_HAILING';
+        if ($booking instanceof Ride) {
+            $isRental = str_starts_with(strtolower($booking->vehicle_type ?? ''), 'car rental')
+                || str_starts_with(strtolower($booking->ride_type ?? ''), 'rental')
+                || strtolower($serviceType) === 'rental';
+            $grossAmount = floatval($booking->fare ?: ($booking->total_amount ?: 0));
+            $vertical = $isRental ? 'VEHICLE_RENTAL' : 'RIDE_HAILING';
+        } elseif ($booking instanceof PackageDelivery) {
+            $grossAmount = floatval($booking->total_price ?? 0);
+            $vertical = 'PACKAGE_DELIVERY';
+        } elseif ($booking instanceof DriverBooking) {
+            $grossAmount = floatval($booking->total_price ?: ($booking->total_amount ?: ($booking->estimated_cost ?? 0)));
+            $vertical = 'DRIVER_HIRING';
+        }
+
+        if ($grossAmount <= 0) {
+            return ['credited' => false, 'commission_deducted' => false, 'amount' => 0.00, 'reason' => 'zero_fare'];
+        }
+
+        // Calculate platform fee
+        $platformFee = round($grossAmount * 0.10, 2);
+        if (class_exists(CommissionBillingService::class)) {
+            try {
+                $calc = CommissionBillingService::calculate($grossAmount, $vertical);
+                if (isset($calc['platform_fee'])) {
+                    $platformFee = (float)$calc['platform_fee'];
+                }
+            } catch (\Throwable $ce) {
+                Log::warning("CommissionBillingService error on cash trip: " . $ce->getMessage());
+            }
+        }
+
+        $commissionRate = $grossAmount > 0 ? round(($platformFee / $grossAmount) * 100, 2) : 10.00;
+
+        return DB::transaction(function () use ($booking, $driverUser, $serviceType, $platformFee, $commissionRate, $grossAmount, $vertical) {
+            $user = User::where('id', $driverUser->id)->lockForUpdate()->first();
+            if (!$user) {
+                return ['credited' => false, 'commission_deducted' => false, 'amount' => 0.00, 'reason' => 'user_not_found'];
+            }
+
+            $balBefore = (float)($user->wallet_balance ?? 0.00);
+            $balAfter = round($balBefore - $platformFee, 2);
+
+            // Automatically deduct platform commission from driver's main wallet
+            $user->wallet_balance = $balAfter;
+            $user->save();
+
+            $currency = $booking->currency ?? WalletService::getUserCurrency($user);
+            $trxRef = 'WTX-COMM-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+
+            $verticalLabel = match (strtolower($serviceType)) {
+                'package_delivery', 'delivery' => 'Delivery',
+                'driver_booking', 'driver_hire', 'chauffeur' => 'Driver Service',
+                'rental', 'rent' => 'Rental',
+                default => 'Ride',
+            };
+
+            // 1. Record transaction in WalletTransaction ledger
+            WalletTransaction::create([
+                'user_id' => $user->id,
+                'transaction_ref' => $trxRef,
+                'type' => 'commission_deduction',
+                'amount' => $platformFee,
+                'currency' => $currency,
+                'balance_before' => $balBefore,
+                'balance_after' => $balAfter,
+                'description' => "Platform Commission Deducted for Cash {$verticalLabel} #{$booking->id} (Cash collected by driver: {$currency}{$grossAmount})",
+                'status' => 'completed',
+                'reference_id' => $booking->id,
+                'reference_type' => get_class($booking),
+                'metadata' => [
+                    'is_cash_trip' => true,
+                    'service_type' => $serviceType,
+                    'booking_id' => $booking->id,
+                    'gross_fare' => $grossAmount,
+                    'commission_rate' => $commissionRate,
+                    'platform_commission' => $platformFee,
+                    'deducted_from_main_wallet' => true,
+                    'completed_at' => now()->toIso8601String(),
+                ],
+            ]);
+
+            // 2. Increment Driver Profile's cash_commission_wallet (The additional wallet)
+            $profile = $user->driverProfile;
+            if ($profile) {
+                $currentCommissionWallet = (float)($profile->cash_commission_wallet ?? 0.00);
+                $profile->update([
+                    'cash_commission_wallet' => round($currentCommissionWallet + $platformFee, 2),
+                ]);
+            }
+
+            // 3. Record in driver_cash_commissions table
+            $tripRef = method_exists($booking, 'getTable') ? (strtoupper($booking->getTable()) . '-#' . $booking->id) : ('TRIP-#' . $booking->id);
+            DriverCashCommission::create([
+                'driver_id' => $user->id,
+                'booking_id' => $booking->id,
+                'service_type' => $serviceType,
+                'trip_ref' => $tripRef,
+                'gross_fare' => $grossAmount,
+                'commission_rate' => $commissionRate,
+                'commission_amount' => $platformFee,
+                'currency' => $currency,
+                'deducted_from_wallet_at' => now(),
+                'status' => 'deducted',
+                'notes' => "Auto-deducted from driver's main wallet balance.",
+            ]);
+
+            // 4. Send notification to driver
+            try {
+                NotificationService::send(
+                    $user->id,
+                    'commission_deducted',
+                    'Cash Commission Deducted 💸',
+                    "Platform commission of {$currency}{$platformFee} ({$commissionRate}%) for cash {$verticalLabel} #{$booking->id} was automatically deducted from your main wallet and recorded in your Commission Wallet.",
+                    $booking->id,
+                    '/wallet',
+                    [
+                        'commission_amount' => $platformFee,
+                        'gross_fare' => $grossAmount,
+                        'balance_after' => $balAfter,
+                        'currency' => $currency,
+                    ]
+                );
+            } catch (\Throwable $ne) {}
+
+            Log::info("BookingRefundService: Successfully deducted platform commission of {$currency}{$platformFee} from driver #{$user->id} for cash {$serviceType} #{$booking->id}.");
+
+            return [
+                'credited' => false,
+                'commission_deducted' => true,
+                'amount' => $platformFee,
+                'gross_fare' => $grossAmount,
+                'reason' => 'cash_commission_auto_deducted',
                 'transaction_ref' => $trxRef,
             ];
         });

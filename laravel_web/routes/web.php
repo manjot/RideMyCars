@@ -736,8 +736,15 @@ Route::get('/api/ride/categories', function (\Illuminate\Http\Request $request) 
         ];
     }
 
+    $context = [
+        'pickup_lat' => $request->input('pickup_lat'),
+        'pickup_lng' => $request->input('pickup_lng'),
+        'weather' => $request->input('weather'),
+        'traffic_level' => $request->input('traffic_level'),
+        'demand_level' => $request->input('demand_level'),
+    ];
     foreach ($categories as &$cat) {
-        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount, $country);
+        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($dist, $dur, $cat['name'], $stopsCount, $country, $context);
         $cat['fare'] = $breakdown['total_fare'];
         $cat['fare_formatted'] = $breakdown['currency_symbol'] . number_format($breakdown['total_fare'], 2);
         $cat['breakdown'] = $breakdown;
@@ -819,8 +826,14 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
         $country = $request->input('country') 
             ?? \App\Services\CountryService::detectCountryFromLocation(($request->pickup_location ?? '') . ' ' . ($request->dropoff_location ?? ''), $request->input('pickup_lat'), $request->input('pickup_lng'))
             ?? \App\Services\CountryService::getCurrentCountryCode($request);
-        $country = \App\Services\CountryService::normalizeToCode($country) ?? 'IND';
-        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
+        $context = [
+            'pickup_lat' => $request->input('pickup_lat'),
+            'pickup_lng' => $request->input('pickup_lng'),
+            'weather' => $request->input('weather'),
+            'traffic_level' => $request->input('traffic_level'),
+            'demand_level' => $request->input('demand_level'),
+        ];
+        $breakdown = \App\Services\PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country, $context);
         $amount = $rawAmount > 0 ? $rawAmount : $breakdown['total_fare'];
 
         $isForSomeoneElse = $request->boolean('is_for_someone_else');
@@ -2518,8 +2531,12 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->pluck('ride_id')
             ->toArray();
 
+        // Requirement 5: When operating in Chauffeur mode, receive ONLY Driver Hire requests
+        $isChauffeurOperating = ($profile->is_chauffeur || $profile->driver_type === 'chauffeur') 
+            && ($profile->active_chauffeur_online || $profile->chauffeur_mode);
+
         $unassignedPendingRideIds = [];
-        if ($profile->is_available && $profile->is_live) {
+        if ($profile->is_available && $profile->is_live && !$isChauffeurOperating) {
             $unassignedPendingRideIds = \App\Models\Ride::where('status', 'pending')
                 ->whereNull('driver_id')
                 ->whereNotIn('id', $rejectedRideIds)
@@ -2583,7 +2600,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         $completedDriverBookings = $driverBookings->where('booking_status', 'completed');
         
         $activeRides = $rides->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
-        $pendingRides = $rides->where('status', 'pending')->whereNotIn('id', $rejectedRideIds);
+        $pendingRides = $isChauffeurOperating ? collect() : $rides->where('status', 'pending')->whereNotIn('id', $rejectedRideIds);
         $completedRides = $rides->where('status', 'completed');
         
         $today = now()->startOfDay();
@@ -2606,9 +2623,47 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             'activeRides', 'pendingRides', 'completedRides',
             'driverBookings', 'activeDriverBookings', 'pendingDriverBookings', 'completedDriverBookings',
             'dailyEarnings', 'weeklyEarnings', 'monthlyEarnings',
-            'todayTrips', 'weekTrips', 'monthTrips'
+            'todayTrips', 'weekTrips', 'monthTrips',
+            'isChauffeurOperating'
         ));
     });
+
+    Route::post('/chauffeur-switch', function (\Illuminate\Http\Request $request) {
+        $user = auth()->user();
+        $profile = $user->driverProfile;
+        if (!$profile) {
+            return response()->json(['success' => false, 'message' => 'Driver profile not found.'], 404);
+        }
+
+        \App\Models\DriverCashCommission::ensureTableExists();
+
+        $newState = $request->has('online')
+            ? filter_var($request->input('online'), FILTER_VALIDATE_BOOLEAN)
+            : !($profile->active_chauffeur_online);
+
+        $profile->update([
+            'active_chauffeur_online' => $newState,
+            'chauffeur_mode' => $newState,
+            'last_location_update' => now(),
+        ]);
+
+        $message = $newState 
+            ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests only.'
+            : 'Active Chauffeur Switch turned OFFLINE. SMS notifications are now active for pending Driver Hire requests.';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'is_chauffeur' => (bool) ($profile->is_chauffeur || $profile->driver_type === 'chauffeur'),
+                'active_chauffeur_online' => (bool) $profile->active_chauffeur_online,
+                'chauffeur_mode' => (bool) $profile->chauffeur_mode,
+                'message' => $message,
+                'status_label' => $newState ? 'Online (Driver Hire Only)' : 'Offline (SMS Alerts Active)',
+            ]);
+        }
+
+        return redirect()->back()->with('success', $message);
+    })->name('driver.chauffeur-switch');
 
     Route::get('/incentives', function () {
         $user = auth()->user();
@@ -3270,7 +3325,9 @@ Route::post('/wallet/withdraw', function (\Illuminate\Http\Request $request) {
 
         return response()->json([
             'success' => true,
-            'message' => 'Withdrawal request submitted successfully! Your funds will be processed upon approval.',
+            'message' => 'Instant withdrawal processed! Funds have been disbursed without requiring admin approval.',
+            'is_instant' => true,
+            'wallet_balance' => (float) $user->fresh()->wallet_balance,
             'data' => $withdrawal,
         ]);
     } catch (\InvalidArgumentException $e) {
@@ -4200,6 +4257,19 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
         }
     } catch (\Throwable $e) {
         $output['fcm_token_migrate_err'] = $e->getMessage();
+    }
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('driver_cash_commissions') || !\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'cash_commission_wallet')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', [
+                '--path' => 'database/migrations/2026_10_26_000001_create_cash_commissions_and_chauffeur_switch.php',
+                '--force' => true,
+            ]);
+            $output['cash_commissions_and_chauffeur_migrate'] = \Illuminate\Support\Facades\Artisan::output();
+        }
+        $output['driver_cash_commissions_table'] = \Illuminate\Support\Facades\Schema::hasTable('driver_cash_commissions') ? 'Exists' : 'Missing';
+    } catch (\Throwable $e) {
+        $output['cash_commissions_and_chauffeur_migrate_err'] = $e->getMessage();
     }
 
     // Purge and sync 4 unique Ride category banner cards with distinct headings & descriptions

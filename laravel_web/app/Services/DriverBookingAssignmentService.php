@@ -137,7 +137,8 @@ class DriverBookingAssignmentService
 
         $maxRadius = 10.0;
 
-        // Sort and filter drivers strictly within 10 km in the same country
+        // Sort and filter drivers strictly within 10 km in the same country.
+        // Requirement 5: Prioritize active Chauffeurs operating in Online Chauffeur mode.
         $chosenDriver = $onlineDrivers->map(function ($driver) use ($pickupLat, $pickupLng) {
             $dist = RideAssignmentService::haversineDistance($pickupLat, $pickupLng, $driver->current_lat, $driver->current_lng);
             $driver->distance_km = $dist;
@@ -164,8 +165,20 @@ class DriverBookingAssignmentService
             // Must be within strict 10.0 km radius
             return $d->distance_km <= $maxRadius;
         })
-        ->sortBy('distance_km')
+        ->sort(function ($a, $b) {
+            // Priority 1: Drivers with Active Chauffeur Switch ON
+            $aChauffeur = ($a->is_chauffeur && ($a->active_chauffeur_online || $a->chauffeur_mode)) ? 1 : 0;
+            $bChauffeur = ($b->is_chauffeur && ($b->active_chauffeur_online || $b->chauffeur_mode)) ? 1 : 0;
+            if ($aChauffeur !== $bChauffeur) {
+                return $bChauffeur <=> $aChauffeur;
+            }
+            // Priority 2: Closest proximity
+            return $a->distance_km <=> $b->distance_km;
+        })
         ->first();
+
+        // Requirement 5: When Offline, an SMS notification should be sent prompting them of a pending Driver Hire request
+        self::notifyOfflineChauffeursViaSms($booking, $bookingCountry, (float) $pickupLat, (float) $pickupLng);
 
         if (!$chosenDriver) {
             return null;
@@ -180,5 +193,64 @@ class DriverBookingAssignmentService
         ]);
         \App\Services\NotificationService::notifyDriverHiringAssigned($booking, $chosenDriver->user_id);
         return $assignment;
+    }
+
+    /**
+     * Requirement 5: Prompt offline chauffeurs via SMS when a Driver Hire request is pending.
+     */
+    public static function notifyOfflineChauffeursViaSms(DriverBooking $booking, string $countryCode, float $pickupLat, float $pickupLng): void
+    {
+        try {
+            // Query Chauffeurs who are currently OFFLINE
+            $offlineChauffeurs = DriverProfile::with('user')
+                ->where('is_chauffeur', true)
+                ->where(function ($q) {
+                    $q->where('active_chauffeur_online', false)
+                      ->orWhereNull('active_chauffeur_online')
+                      ->orWhere('chauffeur_mode', false)
+                      ->orWhereNull('chauffeur_mode');
+                })
+                ->where(function ($q) use ($countryCode) {
+                    $q->where('country', $countryCode)
+                      ->orWhereNull('country')
+                      ->orWhere('country', '');
+                })
+                ->limit(5)
+                ->get();
+
+            if ($offlineChauffeurs->isEmpty()) {
+                return;
+            }
+
+            $pickupLoc = $booking->pickup_location ?: 'your area';
+            $acceptUrl = url('/driver/dashboard');
+            $smsText = "RideMyCars Chauffeur Alert: You have a pending Driver Hire request at {$pickupLoc}! Switch your Active Chauffeur Switch to ONLINE to accept: {$acceptUrl}";
+
+            $smsManager = app(\App\Services\SmsGatewayManager::class);
+
+            foreach ($offlineChauffeurs as $chauffeur) {
+                $phone = $chauffeur->user?->phone;
+                if (empty($phone)) {
+                    continue;
+                }
+
+                // Deduplication: only send once per chauffeur per booking
+                $cacheKey = "chauffeur_offline_sms_sent_{$booking->id}_{$chauffeur->id}";
+                if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                    continue;
+                }
+
+                \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addMinutes(30));
+
+                try {
+                    $smsManager->sendSms($phone, $smsText);
+                    \Illuminate\Support\Facades\Log::info("DriverBookingAssignmentService: Offline SMS prompt dispatched to Chauffeur {$chauffeur->id} ({$phone}) for booking #{$booking->id}");
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("DriverBookingAssignmentService: Failed sending offline SMS to Chauffeur {$chauffeur->id}: " . $e->getMessage());
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("DriverBookingAssignmentService::notifyOfflineChauffeursViaSms error: " . $e->getMessage());
+        }
     }
 }

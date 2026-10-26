@@ -307,16 +307,15 @@ class RideController extends Controller
         $matrix = CountryPricing::getPricingMatrixForCountry($code);
 
         $isGhana = ($code === 'GHA' || strtoupper(trim($pricing->currency_code ?? '')) === 'GHS');
-        $surgeInfo = $isGhana ? PricingService::getGhanaSurgeInfo() : [
-            'multiplier' => 1.0,
-            'tier' => 'Standard',
-            'is_surge' => false,
-            'traffic_cap' => 1.80,
-            'description' => 'Standard dynamic pricing',
-            'time' => date('H:i'),
-            'timezone' => 'UTC',
-        ];
-        $surgeMultiplier = (float)($surgeInfo['multiplier'] ?? 1.0);
+        $dynamicFactors = \App\Services\DynamicPricingService::calculateDynamicFactors(10.0, 15, $code);
+        $surgeMultiplier = (float)($dynamicFactors['multiplier'] ?? 1.0);
+        if ($isGhana) {
+            $ghanaSurge = PricingService::getGhanaSurgeInfo();
+            if (($ghanaSurge['multiplier'] ?? 1.0) > $surgeMultiplier) {
+                $surgeMultiplier = (float)$ghanaSurge['multiplier'];
+            }
+        }
+        $surgeInfo = array_merge($dynamicFactors, ['multiplier' => $surgeMultiplier]);
 
         $categories = [];
         $idx = 0;
@@ -404,16 +403,22 @@ class RideController extends Controller
         $matrix = CountryPricing::getPricingMatrixForCountry($code);
 
         $isGhana = ($code === 'GHA' || strtoupper(trim($pricing->currency_code ?? '')) === 'GHS');
-        $surgeInfo = $isGhana ? PricingService::getGhanaSurgeInfo() : [
-            'multiplier' => 1.0,
-            'tier' => 'Standard',
-            'is_surge' => false,
-            'traffic_cap' => 1.80,
-            'description' => 'Standard dynamic pricing',
-            'time' => date('H:i'),
-            'timezone' => 'UTC',
+        $context = [
+            'pickup_lat' => $pickupLat,
+            'pickup_lng' => $pickupLng,
+            'weather' => $request->input('weather'),
+            'traffic_level' => $request->input('traffic_level'),
+            'demand_level' => $request->input('demand_level'),
         ];
-        $surgeMultiplier = (float)($surgeInfo['multiplier'] ?? 1.0);
+        $dynamicFactors = \App\Services\DynamicPricingService::calculateDynamicFactors($distanceKm, $durationMin, $code, $context);
+        $surgeMultiplier = (float)($dynamicFactors['multiplier'] ?? 1.0);
+        if ($isGhana) {
+            $ghanaSurge = PricingService::getGhanaSurgeInfo();
+            if (($ghanaSurge['multiplier'] ?? 1.0) > $surgeMultiplier) {
+                $surgeMultiplier = (float)$ghanaSurge['multiplier'];
+            }
+        }
+        $surgeInfo = array_merge($dynamicFactors, ['multiplier' => $surgeMultiplier]);
         $additionalStopFee = (float)($pricing->ride_additional_stop_fee ?: 3.50);
 
         $results = [];
@@ -543,8 +548,14 @@ class RideController extends Controller
             ?? CountryService::detectCountryFromLocation(($request->pickup_location ?? '') . ' ' . ($request->dropoff_location ?? ''), $request->pickup_lat, $request->pickup_lng)
             ?? CountryService::getCurrentCountryCode($request)
             ?? 'IND';
-        $country = CountryService::normalizeToCode($country) ?? 'IND';
-        $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country);
+        $context = [
+            'pickup_lat' => $request->pickup_lat,
+            'pickup_lng' => $request->pickup_lng,
+            'weather' => $request->input('weather'),
+            'traffic_level' => $request->input('traffic_level'),
+            'demand_level' => $request->input('demand_level'),
+        ];
+        $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country, $context);
         $amount = $breakdown['total_fare'];
 
         $digitalReceipt = 'REC-' . strtoupper(Str::random(8));

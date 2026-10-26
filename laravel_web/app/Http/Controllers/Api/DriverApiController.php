@@ -2436,4 +2436,73 @@ class DriverApiController extends Controller
             'message' => 'FCM token registered successfully.',
         ]);
     }
+
+    /**
+     * Requirement 5: Active Chauffeur Switch endpoint.
+     * Allows upgraded Chauffeurs to toggle between Online (Driver Hire only) and Offline (SMS alerts active).
+     */
+    public function toggleChauffeurOnlineSwitch(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $profile = $user->driverProfile;
+        if (!$profile) {
+            return response()->json(['success' => false, 'message' => 'Driver profile not found.'], 404);
+        }
+
+        \App\Models\DriverCashCommission::ensureTableExists();
+
+        // If explicitly passed (boolean/string), use it; otherwise toggle current state
+        $newState = $request->has('online') 
+            ? filter_var($request->input('online'), FILTER_VALIDATE_BOOLEAN)
+            : !($profile->active_chauffeur_online);
+
+        $profile->update([
+            'active_chauffeur_online' => $newState,
+            'chauffeur_mode' => $newState,
+            'last_location_update' => now(),
+        ]);
+
+        $message = $newState 
+            ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests only.'
+            : 'Active Chauffeur Switch turned OFFLINE. SMS notifications are now active for pending Driver Hire requests.';
+
+        return response()->json([
+            'success' => true,
+            'is_chauffeur' => (bool) ($profile->is_chauffeur || $profile->driver_type === 'chauffeur'),
+            'active_chauffeur_online' => (bool) $profile->active_chauffeur_online,
+            'chauffeur_mode' => (bool) $profile->chauffeur_mode,
+            'message' => $message,
+            'status_label' => $newState ? 'Online (Driver Hire Only)' : 'Offline (SMS Alerts Active)',
+        ]);
+    }
+
+    /**
+     * Get current chauffeur switch status.
+     */
+    public function getChauffeurSwitchStatus(Request $request)
+    {
+        $user = self::resolveUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $profile = $user->driverProfile;
+        if (!$profile) {
+            return response()->json(['success' => false, 'message' => 'Driver profile not found.'], 404);
+        }
+
+        \App\Models\DriverCashCommission::ensureTableExists();
+
+        return response()->json([
+            'success' => true,
+            'is_chauffeur' => (bool) ($profile->is_chauffeur || $profile->driver_type === 'chauffeur'),
+            'active_chauffeur_online' => (bool) $profile->active_chauffeur_online,
+            'chauffeur_mode' => (bool) $profile->chauffeur_mode,
+            'status_label' => $profile->active_chauffeur_online ? 'Online (Driver Hire Only)' : 'Offline (SMS Alerts Active)',
+        ]);
+    }
 }

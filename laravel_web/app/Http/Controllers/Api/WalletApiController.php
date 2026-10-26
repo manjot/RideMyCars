@@ -72,7 +72,7 @@ class WalletApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Withdrawal request submitted successfully! Your funds will be processed upon approval.',
+                'message' => 'Withdrawal processed instantly! Funds have been disbursed without requiring admin approval.',
                 'data' => [
                     'id' => $withdrawal->id,
                     'ref' => $withdrawal->withdrawal_ref,
@@ -82,6 +82,8 @@ class WalletApiController extends Controller
                     'net_amount' => $withdrawal->net_amount,
                     'payout_method' => $withdrawal->payout_method,
                     'status' => $withdrawal->status,
+                    'is_instant' => true,
+                    'wallet_balance' => (float) $user->fresh()->wallet_balance,
                     'created_at' => $withdrawal->created_at->toIso8601String(),
                 ],
             ], 201);

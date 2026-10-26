@@ -94,6 +94,26 @@ class RideAssignmentService
             ->where('is_live', true)
             ->whereNotIn('user_id', $allExcluded);
 
+        // Requirement 5: Drivers upgraded to Chauffeurs operating in Chauffeur mode
+        // must NOT receive regular ride requests.
+        $query->where(function ($q) {
+            $q->where(function ($sub) {
+                $sub->where('is_chauffeur', false)
+                    ->orWhereNull('is_chauffeur');
+            })->orWhere(function ($sub) {
+                // If they are a chauffeur, only allow regular rides if Active Chauffeur Switch is OFFLINE
+                $sub->where('is_chauffeur', true)
+                    ->where(function ($cMode) {
+                        $cMode->where('active_chauffeur_online', false)
+                              ->orWhereNull('active_chauffeur_online');
+                    })
+                    ->where(function ($cMode2) {
+                        $cMode2->where('chauffeur_mode', false)
+                               ->orWhereNull('chauffeur_mode');
+                    });
+            });
+        });
+
         // Prioritize active drivers who have recent activity over ghost/seed accounts
         $onlineDrivers = $query->get()->sortByDesc(function ($driver) {
             return $driver->last_location_update ? $driver->last_location_update->timestamp : 0;

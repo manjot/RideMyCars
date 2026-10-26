@@ -15,6 +15,8 @@ class DriverEarningsScreen extends StatefulWidget {
 class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   bool _isLoadingWallet = false;
   double _walletBalance = 215.95;
+  double _commissionWalletBalance = 0.00;
+  List<dynamic> _cashCommissions = [];
   double _pendingWithdrawals = 0.0;
   String _currency = '₹';
   double _minWithdrawal = 50.0;
@@ -43,6 +45,12 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
       final bal = await WalletService.getBalance();
       if (bal != null) {
         _walletBalance = (bal['balance'] as num?)?.toDouble() ?? (bal['wallet_balance'] as num?)?.toDouble() ?? 215.95;
+        _commissionWalletBalance = (bal['commission_wallet_balance'] as num?)?.toDouble()
+            ?? (bal['commission_wallet']?['balance'] as num?)?.toDouble()
+            ?? 0.00;
+        if (bal['commission_wallet']?['recent'] is List) {
+          _cashCommissions = List<dynamic>.from(bal['commission_wallet']['recent']);
+        }
         _pendingWithdrawals = (bal['pending_withdrawals_sum'] as num?)?.toDouble() ?? 0.0;
         _currency = bal['currency']?.toString() ?? 'GH₵';
         final settings = bal['settings'] as Map<String, dynamic>?;
@@ -188,6 +196,11 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             children: [
               // Orange Hero Balance Card (Matching Reference Screenshot 1 & 2)
               _buildHeroBalanceCard(),
+
+              const SizedBox(height: 14),
+
+              // Additional Cash Commission Wallet Card (Requirement 1)
+              _buildCommissionWalletCard(),
 
               const SizedBox(height: 18),
 
@@ -451,6 +464,300 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCommissionWalletCard() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E1B4B), Color(0xFF312E81)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.indigoAccent.withOpacity(0.35), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.indigoAccent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.payments_rounded, color: Colors.indigoAccent, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Cash Commission Wallet',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          'Trips Paid in Cash',
+                          style: TextStyle(color: Colors.white54, fontSize: 10.5, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.success.withOpacity(0.4)),
+                  ),
+                  child: const Text(
+                    'Auto-Deducted',
+                    style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  _commissionWalletBalance.toStringAsFixed(2),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _currency,
+                  style: TextStyle(
+                    color: Colors.indigo.shade200,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Platform commissions recorded from trips paid in cash, automatically deducted from your main wallet.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.3),
+            ),
+            const SizedBox(height: 14),
+            const Divider(color: Colors.white12, height: 1),
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: _openCashCommissionsHistoryModal,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'View Cash Commissions (${_cashCommissions.length})',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 12),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openCashCommissionsHistoryModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceDark,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Cash Trip Commissions',
+                  style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
+                ),
+                Text(
+                  'Total: $_currency${_commissionWalletBalance.toStringAsFixed(2)}',
+                  style: const TextStyle(color: Colors.indigoAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'These platform commissions from cash trips were automatically deducted from your main wallet.',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+            ),
+            const SizedBox(height: 16),
+            if (_cashCommissions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 36),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.receipt_long_rounded, color: Colors.indigoAccent.withOpacity(0.4), size: 48),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'No cash trip commissions recorded yet',
+                        style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'When you collect trip payments in cash, platform commissions will be automatically recorded here.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _cashCommissions.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (ctx, idx) {
+                    final item = _cashCommissions[idx];
+                    final tripRef = item['trip_ref'] ?? 'Cash Trip #${item['booking_id']}';
+                    final grossFare = (item['gross_fare'] as num?)?.toDouble() ?? 0.0;
+                    final commAmt = (item['commission_amount'] as num?)?.toDouble() ?? 0.0;
+                    final rate = (item['commission_rate'] as num?)?.toDouble() ?? 10.0;
+                    final serviceType = (item['service_type'] ?? 'ride').toString().toUpperCase();
+
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundDark,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.indigoAccent.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.arrow_downward_rounded, color: Colors.indigoAccent, size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      tripRef,
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white10,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        serviceType,
+                                        style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Cash Collected: $_currency${grossFare.toStringAsFixed(2)} • Rate: ${rate.toStringAsFixed(0)}%',
+                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '-$_currency${commAmt.toStringAsFixed(2)}',
+                                style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 14),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                '✓ Deducted',
+                                style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 14),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF97316),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -772,11 +1079,11 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
             children: [
               Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
               SizedBox(width: 10),
-              Text('Request Submitted', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Instant Withdrawal Processed! 🎉', style: TextStyle(color: AppColors.textLight, fontSize: 17, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Text(
-            'Your withdrawal request of ${widget.currency}${amt.toStringAsFixed(2)} has been submitted for approval.\n\nYour wallet balance remains unchanged until admin approval.',
+            'Your withdrawal of ${widget.currency}${amt.toStringAsFixed(2)} has been processed instantly without admin approval.\n\nYour funds have been disbursed to your selected payout account.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [

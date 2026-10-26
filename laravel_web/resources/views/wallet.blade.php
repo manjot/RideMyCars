@@ -10,20 +10,27 @@
             'approved_withdrawals_sum' => 0.0,
             'withdrawals_count' => ['pending' => 0, 'approved' => 0, 'rejected' => 0, 'total' => 0],
             'settings' => \App\Services\WalletService::getSettings(),
+            'commission_wallet_balance' => 0.00,
         ]);
         $withdrawalsList = $withdrawals ?? ($currUser ? \App\Models\WalletWithdrawal::where('user_id', $currUser->id)->latest()->take(25)->get() : collect());
         $savedPayouts = $payoutMethods ?? ($currUser ? \App\Models\UserPayoutMethod::where('user_id', $currUser->id)->orderBy('is_default', 'desc')->get() : collect());
         $transactionsList = $transactions ?? ($currUser ? \App\Models\WalletTransaction::where('user_id', $currUser->id)->latest()->take(25)->get() : collect());
+        $cashCommissionsList = $currUser && class_exists(\App\Models\DriverCashCommission::class)
+            ? \App\Models\DriverCashCommission::where('driver_id', $currUser->id)->latest()->take(25)->get()
+            : collect();
+        $commissionBalance = (float)($summary['commission_wallet_balance'] ?? ($currUser->driverProfile?->cash_commission_wallet ?? 0.00));
     @endphp
 
     <main class="flex-1 w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 bg-white dark:bg-[#0a0a0a]"
           x-data="walletManager({
               initialBalance: {{ (float) ($summary['balance'] ?? 0.00) }},
+              initialCommissionBalance: {{ (float) ($commissionBalance ?? 0.00) }},
               currency: '{{ $summary['currency'] ?? '₹' }}',
               settings: {{ json_encode($summary['settings'] ?? \App\Services\WalletService::getSettings()) }},
               withdrawals: {{ json_encode($withdrawalsList) }},
               payoutMethods: {{ json_encode($savedPayouts) }},
-              transactions: {{ json_encode($transactionsList) }}
+              transactions: {{ json_encode($transactionsList) }},
+              cashCommissions: {{ json_encode($cashCommissionsList) }}
           })">
         
         <!-- Success / Error Toast Notification -->
@@ -63,61 +70,115 @@
             </div>
         </div>
 
-        <!-- HERO WALLET CARD (Matching Reference 1 & 2) -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#f97316] via-[#ea580c] to-[#c2410c] text-white p-7 sm:p-8 shadow-xl shadow-orange-500/20 mb-8 border border-white/10">
-            <!-- Decorative Background Graphic -->
-            <div class="absolute -right-8 -bottom-8 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
-            <div class="absolute -left-8 -top-8 w-40 h-40 rounded-full bg-black/10 blur-xl pointer-events-none"></div>
+        <!-- DUAL WALLET GRID: HERO WALLET + ADDITIONAL CASH COMMISSION WALLET (Requirement 1) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- HERO MAIN WALLET CARD (Matching Reference 1 & 2) -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#f97316] via-[#ea580c] to-[#c2410c] text-white p-6 sm:p-7 shadow-xl shadow-orange-500/20 border border-white/10 flex flex-col justify-between">
+                <!-- Decorative Background Graphic -->
+                <div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-8 -top-8 w-28 h-28 rounded-full bg-black/10 blur-xl pointer-events-none"></div>
 
-            <div class="relative z-10 flex flex-col items-center text-center">
-                <span class="text-xs sm:text-sm font-semibold tracking-wide uppercase text-white/80 mb-2">
-                    Wallet Balance
-                </span>
-                
-                <div class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-6 flex items-baseline justify-center gap-1.5">
-                    <span x-text="balance.toFixed(2)"></span>
-                    <span class="text-3xl sm:text-4xl font-extrabold text-white/90" x-text="currency"></span>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <span class="text-xs font-bold tracking-wide uppercase text-white/80 mb-1.5">
+                        Driver Main Wallet
+                    </span>
+                    
+                    <div class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-5 flex items-baseline justify-center gap-1.5">
+                        <span x-text="balance.toFixed(2)"></span>
+                        <span class="text-3xl sm:text-4xl font-extrabold text-white/90" x-text="currency"></span>
+                    </div>
+
+                    <!-- Action Buttons Row: Add Money & Instant Withdraw -->
+                    <div class="w-full grid grid-cols-2 gap-3 pt-2.5 border-t border-white/20">
+                        <button type="button" @click="showAddMoneyModal = true"
+                                class="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95 border border-white/20 backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                            <span>Add Money</span>
+                        </button>
+
+                        <button type="button" @click="openWithdrawModal()"
+                                id="wallet-withdraw-btn"
+                                class="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-white hover:bg-gray-100 text-orange-950 font-black text-xs sm:text-sm transition-all shadow-lg shadow-black/10 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/></svg>
+                            <span>Instant Withdraw</span>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-[10px] text-white/80 font-bold flex items-center gap-1">
+                        <span>⚡</span>
+                        <span>Instant payouts without Admin approval required</span>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Action Buttons Row: Add Money & Withdraw (Circled in Reference 1) -->
-                <div class="w-full max-w-md grid grid-cols-2 gap-3 sm:gap-4 pt-2 border-t border-white/20">
-                    <button type="button" @click="showAddMoneyModal = true"
-                            class="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-sm transition-all shadow-sm active:scale-95 border border-white/20 backdrop-blur-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
-                        <span>Add Money</span>
-                    </button>
+            <!-- ADDITIONAL WALLET: CASH TRIPS PLATFORM COMMISSION WALLET (Requirement 1) -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1e38] text-white p-6 sm:p-7 shadow-xl shadow-indigo-950/30 border border-indigo-400/20 flex flex-col justify-between">
+                <!-- Decorative Graphic -->
+                <div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-8 -top-8 w-28 h-28 rounded-full bg-brand-500/10 blur-xl pointer-events-none"></div>
 
-                    <button type="button" @click="openWithdrawModal()"
-                            id="wallet-withdraw-btn"
-                            class="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white hover:bg-gray-100 text-orange-950 font-black text-sm transition-all shadow-lg shadow-black/10 active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/></svg>
-                        <span>Withdraw</span>
-                    </button>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-xs font-bold tracking-wide uppercase text-indigo-200">
+                            Cash Trips Commission Wallet
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            Auto-Deducted
+                        </span>
+                    </div>
+                    
+                    <div class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-2 flex items-baseline justify-center gap-1.5">
+                        <span x-text="commissionBalance.toFixed(2)"></span>
+                        <span class="text-3xl sm:text-4xl font-extrabold text-indigo-300" x-text="currency"></span>
+                    </div>
+
+                    <p class="text-xs text-indigo-200/80 mb-4 max-w-sm">
+                        Records platform commissions from passenger trips paid in cash. Commissions are automatically deducted from your main wallet upon trip completion.
+                    </p>
+
+                    <!-- Commission Action & Details -->
+                    <div class="w-full pt-2.5 border-t border-indigo-500/20 flex items-center justify-between gap-3">
+                        <div class="text-left">
+                            <span class="text-[10px] text-indigo-300 font-bold block uppercase tracking-wider">Cash Trips Recorded</span>
+                            <span class="text-xs font-extrabold text-white" x-text="cashCommissions.length + ' trips recorded'"></span>
+                        </div>
+                        <button type="button" @click="activeTab = 'commissions'"
+                                class="py-2.5 px-3.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs transition-all shadow-md active:scale-95 flex items-center gap-1.5">
+                            <span>View Cash Commissions</span>
+                            <span>&rarr;</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- NAVIGATION TABS -->
-        <div class="flex items-center border-b border-gray-200 dark:border-white/10 mb-6 gap-6 sm:gap-8 text-sm font-bold">
+        <div class="flex items-center border-b border-gray-200 dark:border-white/10 mb-6 gap-4 sm:gap-6 text-sm font-bold overflow-x-auto">
             <button type="button" @click="activeTab = 'transactions'" 
-                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer shrink-0"
                     :class="activeTab === 'transactions' ? 'border-orange-500 text-orange-600 dark:text-orange-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/></svg>
                 <span>Recent Transactions</span>
             </button>
 
+            <button type="button" @click="activeTab = 'commissions'" 
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                    :class="activeTab === 'commissions' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                <span>Cash Trip Commissions (<span x-text="cashCommissions.length"></span>)</span>
+            </button>
+
             <button type="button" @click="activeTab = 'withdrawals'" 
-                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer relative"
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer relative shrink-0"
                     :class="activeTab === 'withdrawals' ? 'border-orange-500 text-orange-600 dark:text-orange-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                <span>Recent Withdrawal</span>
+                <span>Withdrawal History</span>
                 <template x-if="pendingCount > 0">
                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                 </template>
             </button>
 
             <button type="button" @click="activeTab = 'payout_methods'" 
-                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer"
+                    class="pb-3 border-b-2 transition-all flex items-center gap-2 cursor-pointer shrink-0"
                     :class="activeTab === 'payout_methods' ? 'border-orange-500 text-orange-600 dark:text-orange-400 font-black' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                 <span>Payout Accounts</span>
@@ -171,6 +232,65 @@
                             <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full"
                                   :class="trx.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 text-gray-600'">
                                 <span x-text="trx.status"></span>
+                            </span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB: CASH TRIP COMMISSIONS (Requirement 1) -->
+        <!-- ======================================================== -->
+        <div x-show="activeTab === 'commissions'" x-transition:enter="transition ease-out duration-200">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Platform Cash Trip Commissions</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">All trips where passengers paid in cash. The platform commission is automatically deducted from your main wallet.</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Commission Deducted</span>
+                    <span class="text-base font-black text-indigo-500" x-text="currency + commissionBalance.toFixed(2)"></span>
+                </div>
+            </div>
+
+            <template x-if="cashCommissions.length === 0">
+                <div class="p-8 text-center rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+                        💵
+                    </div>
+                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">No cash trip commissions recorded yet</p>
+                    <p class="text-xs text-gray-500 mt-1">When customers pay you in cash, platform commissions will be automatically recorded here and deducted from your main wallet.</p>
+                </div>
+            </template>
+
+            <div class="space-y-3">
+                <template x-for="(comm, idx) in cashCommissions" :key="comm.id || idx">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-indigo-100 dark:border-white/10 bg-white dark:bg-[#121212] shadow-sm hover:border-indigo-500/30 transition-all gap-3">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white" x-text="comm.trip_ref || ('Cash Trip #' + comm.booking_id)"></h4>
+                                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300" x-text="comm.service_type"></span>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Gross Cash Fare: <strong class="text-gray-700 dark:text-gray-200" x-text="(comm.currency || currency) + parseFloat(comm.gross_fare || 0).toFixed(2)"></strong> 
+                                    • Commission Rate: <span class="font-bold text-indigo-500" x-text="parseFloat(comm.commission_rate || 10).toFixed(0) + '%'"></span>
+                                </p>
+                                <p class="text-[11px] text-gray-400" x-text="formatDate(comm.created_at)"></p>
+                            </div>
+                        </div>
+
+                        <div class="text-right flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100 dark:border-white/5">
+                            <div class="text-base font-black text-rose-500">
+                                <span>- </span>
+                                <span x-text="(comm.currency || currency) + parseFloat(comm.commission_amount).toFixed(2)"></span>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
+                                <span>✓ Auto-Deducted</span>
                             </span>
                         </div>
                     </div>
@@ -755,13 +875,15 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('walletManager', (config = {}) => ({
             balance: config.initialBalance || 0.00,
+            commissionBalance: config.initialCommissionBalance || 0.00,
             currency: config.currency || '₹',
             settings: config.settings || { min_amount: 50, max_amount: 10000, enabled: true },
             withdrawals: config.withdrawals || [],
             payoutMethods: config.payoutMethods || [],
             transactions: config.transactions || [],
+            cashCommissions: config.cashCommissions || [],
 
-            activeTab: 'transactions', // transactions, withdrawals, payout_methods
+            activeTab: 'transactions', // transactions, commissions, withdrawals, payout_methods
             filterStatus: 'all',
 
             showWithdrawModal: false,
@@ -968,7 +1090,12 @@
                     const data = await res.json();
                     if (data.success) {
                         this.showWithdrawModal = false;
-                        this.showToast('Withdrawal request submitted! Payout will be processed upon approval.', 'success');
+                        if (data.wallet_balance !== undefined) {
+                            this.balance = parseFloat(data.wallet_balance);
+                        } else {
+                            this.balance = Math.max(0, this.balance - amt);
+                        }
+                        this.showToast(data.message || 'Instant withdrawal processed! Funds have been disbursed without requiring admin approval.', 'success');
                         
                         // Add to withdrawals list at the top
                         this.withdrawals.unshift(data.data);

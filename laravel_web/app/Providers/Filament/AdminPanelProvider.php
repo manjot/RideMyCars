@@ -78,10 +78,12 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
                 \App\Filament\Pages\ManageAppSettings::class,
+                \App\Filament\Pages\CommissionsReport::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\DashboardHeroWidget::class,
+                \App\Filament\Widgets\CommissionsOverviewWidget::class,
                 \App\Filament\Widgets\StatsOverviewWidget::class,
                 \App\Filament\Widgets\InvestorStatsOverviewWidget::class,
                 \App\Filament\Widgets\RecentRidesWidget::class,

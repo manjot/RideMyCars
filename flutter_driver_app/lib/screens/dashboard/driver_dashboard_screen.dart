@@ -96,6 +96,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final jobKey = '${assignmentId ?? 0}_${rideId ?? 0}_${deliveryId ?? 0}_${bookingId ?? 0}';
     if (_handledJobKeys.contains(jobKey)) return;
 
+    // Requirement 5: Upgraded Chauffeurs in Chauffeur mode receive ONLY Driver Hire requests!
+    if (driver.isChauffeur && driver.activeChauffeurOnline && bookingId == null) {
+      return;
+    }
+
     _dialogOpen = true;
 
     showDialog(
@@ -492,6 +497,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             children: [
               // Sticky High-Visibility Banner for Incoming Jobs (always visible when ringtone/order arrives)
               _buildIncomingJobStickyBanner(driver),
+
+              // Requirement 5: Active Chauffeur Switch for upgraded Chauffeurs
+              if (driver.isChauffeur) ...[
+                _buildChauffeurSwitchCard(driver),
+                const SizedBox(height: 14),
+              ],
 
               // Online / Offline Toggle Banner
               _buildOnlineStatusCard(driver),
@@ -1420,6 +1431,164 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
         }
       }
     }
+  }
+
+  /// Requirement 5: Active Chauffeur Switch Card for Upgraded Chauffeurs
+  Widget _buildChauffeurSwitchCard(DriverProvider driver) {
+    final isOnline = driver.activeChauffeurOnline;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isOnline
+              ? [const Color(0xFF3B0764), const Color(0xFF581C87)]
+              : [AppColors.surfaceDark, const Color(0xFF1E1B4B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isOnline ? const Color(0xFFA855F7) : Colors.white12,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isOnline ? const Color(0xFFA855F7).withOpacity(0.25) : Colors.black26,
+            blurRadius: 18,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: isOnline ? const Color(0xFFA855F7) : Colors.white10,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Text('🎩', style: TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isOnline
+                                ? const Color(0xFFA855F7).withOpacity(0.3)
+                                : Colors.white10,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'VIP CHAUFFEUR',
+                            style: TextStyle(
+                              color: Color(0xFFD8B4FE),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 9.5,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: isOnline ? AppColors.success : AppColors.warning,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isOnline ? 'CHAUFFEUR: ONLINE' : 'CHAUFFEUR: OFFLINE',
+                      style: TextStyle(
+                        color: isOnline ? Colors.white : AppColors.textLight,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Transform.scale(
+                scale: 0.88,
+                child: Switch(
+                  value: isOnline,
+                  activeColor: const Color(0xFFA855F7),
+                  activeTrackColor: const Color(0xFFA855F7).withOpacity(0.3),
+                  inactiveThumbColor: AppColors.textMuted,
+                  inactiveTrackColor: Colors.white10,
+                  onChanged: driver.isLoading
+                      ? null
+                      : (_) async {
+                          final ok = await driver.toggleChauffeurOnline();
+                          if (mounted && ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  driver.activeChauffeurOnline
+                                      ? 'Active Chauffeur Switch turned ONLINE (Driver Hire requests only).'
+                                      : 'Active Chauffeur Switch turned OFFLINE (SMS alerts active).',
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                backgroundColor: driver.activeChauffeurOnline ? const Color(0xFF7E22CE) : AppColors.warning,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isOnline ? Icons.check_circle_outline_rounded : Icons.sms_outlined,
+                  size: 16,
+                  color: isOnline ? AppColors.success : const Color(0xFFFBBF24),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isOnline
+                        ? 'Operating in Chauffeur mode: You receive Driver Hire requests only. Standard rides are suppressed.'
+                        : 'Offline mode: Whenever a customer requests a Driver Hire, you will receive an SMS prompt to switch Online.',
+                    style: TextStyle(
+                      color: isOnline ? Colors.white70 : const Color(0xFFFDE68A),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildOnlineStatusCard(DriverProvider driver) {

@@ -362,5 +362,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'update']);
     Route::delete('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'destroy']);
     Route::post('/sos/trigger', [\App\Http\Controllers\Api\SosApiController::class, 'trigger']);
+
+    // Requirement 5: Active Chauffeur Switch
+    Route::post('/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
+    Route::get('/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
 });
 

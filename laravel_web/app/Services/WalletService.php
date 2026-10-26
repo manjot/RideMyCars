@@ -78,6 +78,18 @@ class WalletService
             'total' => WalletWithdrawal::where('user_id', $user->id)->count(),
         ];
 
+        // Additional Cash Commission Wallet
+        $driverProfile = $user->driverProfile;
+        $commissionWalletBalance = (float) ($driverProfile?->cash_commission_wallet ?? 0.00);
+        $cashCommissionsCount = 0;
+        $recentCashCommissions = [];
+
+        if (class_exists(\App\Models\DriverCashCommission::class)) {
+            \App\Models\DriverCashCommission::ensureTableExists();
+            $cashCommissionsCount = \App\Models\DriverCashCommission::where('driver_id', $user->id)->count();
+            $recentCashCommissions = \App\Models\DriverCashCommission::where('driver_id', $user->id)->latest()->take(15)->get();
+        }
+
         return [
             'balance' => (float) $user->wallet_balance,
             'wallet_balance' => (float) $user->wallet_balance,
@@ -86,12 +98,19 @@ class WalletService
             'approved_withdrawals_sum' => $approvedWithdrawalsSum,
             'withdrawals_count' => $withdrawalsCount,
             'settings' => $settings,
+            'commission_wallet_balance' => $commissionWalletBalance,
+            'commission_wallet' => [
+                'balance' => $commissionWalletBalance,
+                'currency' => $currency,
+                'count' => $cashCommissionsCount,
+                'recent' => $recentCashCommissions,
+            ],
         ];
     }
 
     /**
      * Submit a new withdrawal request.
-     * Note: Balance is NOT deducted until request is approved by Admin.
+     * Note: Per platform rules, withdrawals from the main wallet are INSTANT without Admin approval.
      */
     public static function submitWithdrawal(User $user, float $amount, string $payoutMethod, array $payoutDetails, bool $saveAsDefault = false): WalletWithdrawal
     {
@@ -184,7 +203,16 @@ class WalletService
                 ]));
             }
 
-            // Create Pending Withdrawal Request (Balance remains untouched!)
+            $balanceBefore = (float) $freshUser->wallet_balance;
+            $balanceAfter = max(0.00, round($balanceBefore - $amount, 2));
+
+            // Instant deduction from driver's main wallet (Requirement 2)
+            $freshUser->wallet_balance = $balanceAfter;
+            $freshUser->save();
+
+            $instantTxRef = 'INSTANT-' . strtoupper(\Illuminate\Support\Str::random(10));
+
+            // Create INSTANT Approved Withdrawal Request (No admin approval required)
             $withdrawal = WalletWithdrawal::create([
                 'withdrawal_ref' => WalletWithdrawal::generateUniqueRef(),
                 'user_id' => $user->id,
@@ -195,16 +223,40 @@ class WalletService
                 'net_amount' => $netAmount,
                 'payout_method' => $payoutMethod,
                 'payout_details' => $payoutDetails,
-                'status' => 'pending',
+                'status' => 'approved',
+                'approved_at' => now(),
+                'transaction_reference' => $instantTxRef,
+                'admin_notes' => 'Instant withdrawal processed automatically without admin approval requirement.',
+            ]);
+
+            // Record transaction ledger entry immediately
+            $methodLabel = $payoutMethod === 'momo' ? 'Mobile Money (MoMo)' : 'Bank Transfer';
+            WalletTransaction::create([
+                'user_id' => $freshUser->id,
+                'transaction_ref' => 'WTX-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                'type' => 'withdrawal',
+                'amount' => $amount,
+                'currency' => $currency,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'description' => "Instant Payout via {$methodLabel} [Ref: {$withdrawal->withdrawal_ref}]",
+                'status' => 'completed',
+                'reference_id' => $withdrawal->id,
+                'reference_type' => WalletWithdrawal::class,
+                'metadata' => [
+                    'is_instant' => true,
+                    'payout_method' => $withdrawal->payout_method,
+                    'payout_details' => $withdrawal->payout_details,
+                    'instant_ref' => $instantTxRef,
+                ],
             ]);
 
             // Send In-App & Push Notification
-            $methodLabel = $payoutMethod === 'momo' ? 'Mobile Money' : 'Bank Account';
             NotificationService::send(
                 $user->id,
-                'withdrawal_submitted',
-                'Withdrawal Request Received',
-                "Your withdrawal request of {$currency}{$amount} via {$methodLabel} has been submitted. Ref: {$withdrawal->withdrawal_ref}",
+                'withdrawal_approved',
+                'Instant Withdrawal Processed! 🎉',
+                "Your withdrawal of {$currency}{$amount} via {$methodLabel} was processed instantly without admin approval. Reference: {$withdrawal->withdrawal_ref}",
                 null,
                 '/wallet',
                 [
@@ -212,7 +264,8 @@ class WalletService
                     'ref' => $withdrawal->withdrawal_ref,
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => 'pending',
+                    'status' => 'approved',
+                    'is_instant' => true,
                 ]
             );
 

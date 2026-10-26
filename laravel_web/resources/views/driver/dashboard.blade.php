@@ -123,8 +123,115 @@
                         <span class="animate-pulse">🚨</span>
                         <span>SOS Emergency</span>
                     </a>
+            </div>
+
+            {{-- Requirement 5: Active Chauffeur Switch for Upgraded Chauffeurs --}}
+            @if($profile->is_chauffeur || $profile->driver_type === 'chauffeur')
+            <div x-data="{
+                isChauffeurOnline: {{ ($profile->active_chauffeur_online || $profile->chauffeur_mode) ? 'true' : 'false' }},
+                loading: false,
+                statusMessage: '{{ ($profile->active_chauffeur_online || $profile->chauffeur_mode) ? 'Online: Exclusively receiving Driver Hire requests' : 'Offline: SMS alerts active for pending Driver Hire requests' }}',
+                async toggleChauffeurSwitch() {
+                    this.loading = true;
+                    try {
+                        const targetState = !this.isChauffeurOnline;
+                        const res = await fetch('{{ route('driver.chauffeur-switch') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ online: targetState })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.isChauffeurOnline = data.active_chauffeur_online;
+                            this.statusMessage = data.message;
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            alert(data.message || 'Failed to update Chauffeur status');
+                        }
+                    } catch (e) {
+                        console.error('Error toggling chauffeur switch:', e);
+                        alert('Network error while updating Chauffeur switch');
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }" class="mb-8 p-6 rounded-3xl border-2 transition-all duration-300 shadow-lg relative overflow-hidden"
+               :class="isChauffeurOnline 
+                    ? 'bg-gradient-to-r from-purple-900/20 via-purple-800/10 to-transparent border-purple-500/40' 
+                    : 'bg-gradient-to-r from-gray-800/20 via-amber-900/10 to-transparent border-amber-500/30'">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shrink-0 shadow-md transition-colors"
+                             :class="isChauffeurOnline ? 'bg-purple-600 text-white shadow-purple-600/30' : 'bg-gray-700 text-amber-400'">
+                            🎩
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 border border-purple-300 dark:border-purple-700">
+                                    Upgraded VIP Chauffeur
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase transition"
+                                      :class="isChauffeurOnline 
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' 
+                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700'">
+                                    <span class="inline-block w-2 h-2 rounded-full mr-1"
+                                          :class="isChauffeurOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+                                    <span x-text="isChauffeurOnline ? 'Active Chauffeur: ONLINE' : 'Active Chauffeur: OFFLINE'"></span>
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span>Active Chauffeur Switch</span>
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
+                                <template x-if="isChauffeurOnline">
+                                    <span>
+                                        ✅ <strong>Online Mode:</strong> You are operating as an Active Chauffeur and receiving <strong>Driver Hire requests only</strong>. Standard ride-hailing requests will not be dispatched to you.
+                                    </span>
+                                </template>
+                                <template x-if="!isChauffeurOnline">
+                                    <span>
+                                        📲 <strong>Offline Mode:</strong> Whenever a customer requests a Driver Hire in your operating zone, an <strong>SMS notification</strong> will prompt you to switch Online and accept.
+                                    </span>
+                                </template>
+                            </p>
+                            <p class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-2" x-text="statusMessage"></p>
+                        </div>
+                    </div>
+                    
+                    {{-- Toggle Switch Action --}}
+                    <div class="flex items-center gap-4 shrink-0 w-full md:w-auto justify-end">
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+                                Chauffeur Switch
+                            </span>
+                            <button type="button" 
+                                    @click="toggleChauffeurSwitch()" 
+                                    :disabled="loading"
+                                    class="relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
+                                    :class="isChauffeurOnline ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-700'">
+                                <span class="sr-only">Toggle Chauffeur Online</span>
+                                <span class="inline-block h-6 w-6 transform rounded-full bg-white transition shadow-md"
+                                      :class="isChauffeurOnline ? 'translate-x-9' : 'translate-x-1'"></span>
+                            </button>
+                        </div>
+                        <button type="button" 
+                                @click="toggleChauffeurSwitch()" 
+                                :disabled="loading"
+                                class="px-5 py-3 rounded-2xl font-bold text-xs shadow-md transition flex items-center gap-2 text-white"
+                                :class="isChauffeurOnline 
+                                    ? 'bg-gray-700 hover:bg-gray-800' 
+                                    : 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/30'">
+                            <span x-show="!loading" x-text="isChauffeurOnline ? 'Switch to Offline' : 'Switch to Online'"></span>
+                            <span x-show="loading" class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
+            @endif
 
             <!-- Mobile App Companion Banner -->
             <div class="mb-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-brand-500/5 to-transparent border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">

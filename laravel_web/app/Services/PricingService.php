@@ -167,9 +167,10 @@ class PricingService
         int $durationMinutes,
         ?string $vehicleType = null,
         int $stopsCount = 0,
-        ?string $country = null
+        ?string $country = null,
+        array $context = []
     ): float {
-        $breakdown = static::calculateTripFareWithBreakdown($distanceKm, $durationMinutes, $vehicleType, $stopsCount, $country);
+        $breakdown = static::calculateTripFareWithBreakdown($distanceKm, $durationMinutes, $vehicleType, $stopsCount, $country, $context);
         return $breakdown['total_fare'];
     }
 
@@ -234,7 +235,8 @@ class PricingService
         int $durationMinutes,
         ?string $vehicleType = null,
         int $stopsCount = 0,
-        ?string $country = null
+        ?string $country = null,
+        array $context = []
     ): array {
         $pricing = CountryPricing::forCountry($country);
         $countryCode = strtoupper($pricing->country_code ?? 'USA');
@@ -283,18 +285,34 @@ class PricingService
         $tierMultiplier = (float) ($tier['multiplier'] ?? 1.00);
         $additionalStopFee = (float) ($pricing->ride_additional_stop_fee ?: 3.50);
 
-        // Surge info: Ghana Predictable Surge Framework, or 1.0 for others
+        // Dynamic Pricing System:
+        // Automatically adjusts fares based on prevailing market conditions,
+        // including peak hours, traffic congestion, rider demand, driver availability,
+        // trip distance, weather conditions, and other relevant factors.
+        $dynamicFactors = DynamicPricingService::calculateDynamicFactors(
+            $distanceKm,
+            $durationMinutes,
+            $countryCode,
+            $context
+        );
+
         $isGhana = ($countryCode === 'GHA' || strtoupper(trim($pricing->currency_code ?? '')) === 'GHS');
-        $surgeInfo = $isGhana ? static::getGhanaSurgeInfo() : [
-            'multiplier' => 1.0,
-            'tier' => 'Standard',
-            'is_surge' => false,
-            'traffic_cap' => 1.80,
-            'description' => 'Standard dynamic pricing',
-            'time' => date('H:i'),
-            'timezone' => 'UTC',
-        ];
-        $surgeMultiplier = (float) ($surgeInfo['multiplier'] ?? 1.0);
+        $ghanaSurge = $isGhana ? static::getGhanaSurgeInfo() : null;
+
+        $surgeMultiplier = (float) ($dynamicFactors['multiplier'] ?? 1.0);
+        if ($ghanaSurge && isset($ghanaSurge['multiplier']) && $ghanaSurge['multiplier'] > $surgeMultiplier) {
+            $surgeMultiplier = (float) $ghanaSurge['multiplier'];
+        }
+
+        $trafficCap = (float) ($dynamicFactors['traffic_cap'] ?? 1.80);
+        $surgeMultiplier = min($trafficCap, max(1.00, round($surgeMultiplier, 2)));
+
+        $dynamicInfo = array_merge($dynamicFactors, [
+            'multiplier' => $surgeMultiplier,
+            'traffic_cap' => $trafficCap,
+            'is_surge' => $surgeMultiplier > 1.01,
+            'ghana_surge' => $ghanaSurge,
+        ]);
 
         $distanceFare = round($distanceKm * $perKmRate, 2);
         $durationFare = round($durationMinutes * $perMinuteRate, 2);
@@ -319,8 +337,10 @@ class PricingService
             'stops_fee' => $stopsFee,
             'subtotal' => $standardSubtotal,
             'surge_multiplier' => $surgeMultiplier,
-            'surge_info' => $surgeInfo,
-            'traffic_cap' => 1.80,
+            'surge_info' => $dynamicInfo,
+            'dynamic_pricing' => $dynamicInfo,
+            'dynamic_factors' => $dynamicFactors['factors'] ?? [],
+            'traffic_cap' => $trafficCap,
             'tax' => $serviceTax,
             'total_fare' => $finalFare,
             'grand_total' => $grandTotal,
