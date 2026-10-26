@@ -526,6 +526,10 @@ class PackageDeliveryController extends Controller
             \Illuminate\Support\Facades\Log::error("Failed to generate receipt for package delivery #{$delivery->id}: " . $e->getMessage());
         }
 
+        try {
+            \App\Services\NotificationService::notifyDeliveryCompleted($delivery);
+        } catch (\Throwable $e) {}
+
         return back()->with('success', '🎉 Delivery verified and completed successfully!');
     }
 
@@ -582,6 +586,23 @@ class PackageDeliveryController extends Controller
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error("Failed to generate receipt for package delivery #{$delivery->id}: " . $e->getMessage());
             }
+        }
+
+        // Trigger customer lifecycle notifications
+        try {
+            if ($newStatus === 'courier_accepted') {
+                \App\Services\NotificationService::notifyDeliveryAccepted($delivery);
+            } elseif ($newStatus === 'going_to_pickup') {
+                \App\Services\NotificationService::notifyDeliveryEnRoute($delivery);
+            } elseif ($newStatus === 'arrived_at_pickup') {
+                \App\Services\NotificationService::notifyDeliveryArrivedAtPickup($delivery);
+            } elseif ($newStatus === 'parcel_picked_up') {
+                \App\Services\NotificationService::notifyDeliveryPickedUp($delivery);
+            } elseif ($newStatus === 'delivered') {
+                \App\Services\NotificationService::notifyDeliveryCompleted($delivery);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Delivery notification error: " . $e->getMessage());
         }
 
         ActivityLogService::log(

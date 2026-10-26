@@ -3097,7 +3097,11 @@
                         const data = await res.json();
 
                         if (!res.ok) {
-                            this.showAppErrorModal('Booking Error', data.error || 'Could not place ride request. Please check your details.');
+                            let errorMsg = data.error || 'Could not place ride request. Please check your details.';
+                            if (errorMsg.toLowerCase().includes('api key') || errorMsg.toLowerCase().includes('sk_live') || errorMsg.toLowerCase().includes('sk_test')) {
+                                errorMsg = 'Card payment gateway is temporarily updating. Please select Authorize.Net (Credit/Debit Card), MoMo Pay, or Cash on drop-off.';
+                            }
+                            this.showAppErrorModal('Booking Error', errorMsg);
                             this.bookingStep = 'confirm_ride';
                             this.isAuthorizingPayment = false;
                             return;

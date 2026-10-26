@@ -58,9 +58,10 @@
                 <div class="flex items-center gap-3 shrink-0">
                     <button type="button" 
                             @click="showAddModal = true; editingVehicle = null;"
-                            class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer border border-amber-300/40">
-                        <svg class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                        <span>Add New Vehicle</span>
+                            class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 hover:text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer border border-amber-300"
+                            style="color: #020617 !important; background-color: #fbbf24 !important;">
+                        <svg class="w-4 h-4 stroke-[3]" style="stroke: #020617 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span style="color: #020617 !important; font-weight: 900 !important;">Add New Vehicle</span>
                     </button>
                 </div>
             </div>
@@ -332,9 +333,10 @@
                                         @csrf
                                         <button type="submit" 
                                                 onclick="return confirm('Approve rental request #{{ $ride->id }} for {{ $ride->vehicle?->make }} {{ $ride->vehicle?->model }}?')"
-                                                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/30">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                            <span>Approve Rental</span>
+                                                class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/40"
+                                                style="background-color: #059669 !important; color: #ffffff !important;">
+                                            <svg class="w-4 h-4" style="stroke: #ffffff !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span style="color: #ffffff !important; font-weight: 900 !important;">Approve Rental</span>
                                         </button>
                                     </form>
 

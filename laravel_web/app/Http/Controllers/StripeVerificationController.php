@@ -238,7 +238,7 @@ class StripeVerificationController extends Controller
             : \App\Services\SettingService::rideWaitingTimeMinutes();
 
         $isExpired = false;
-        if ($isPaymentConfirmed && in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
+        if (!$isDriverConfirmed && $isPaymentConfirmed && in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
             if (method_exists($booking, 'isExpired') && $booking->isExpired()) {
                 $isExpired = true;
                 if ($serviceType === 'ride' || $serviceType === 'rental') {
@@ -255,8 +255,12 @@ class StripeVerificationController extends Controller
             : ($waitingMinutes * 60);
         $bookingStatus = strtolower($booking->delivery_status ?? $booking->booking_status ?? $booking->status ?? 'pending');
         $driverId = $booking->courier_id ?? $booking->driver_id ?? null;
+        if ($serviceType === 'rental' && !$driverId && $booking->vehicle?->owner_id) {
+            $driverId = $booking->vehicle->owner_id;
+        }
+
         $isDriverConfirmed = in_array($bookingStatus, [
-            'accepted', 'courier_accepted', 'courier_assigned', 'assigned', 'going_to_pickup', 
+            'confirmed', 'accepted', 'courier_accepted', 'courier_assigned', 'assigned', 'going_to_pickup', 
             'arrived_at_pickup', 'parcel_picked_up', 'in_transit', 'arrived_at_destination', 
             'delivered', 'en_route', 'arrived', 'in_progress', 'completed'
         ]) || ($booking->verification_status === 'driver_verified' && !empty($driverId))
@@ -280,14 +284,19 @@ class StripeVerificationController extends Controller
 
                     $defaultVehicle = ($booking instanceof \App\Models\PackageDelivery || in_array($serviceType, ['package_delivery', 'delivery'], true))
                         ? 'Express Delivery Motorcycle / Courier Van'
-                        : 'Executive Vehicle';
+                        : ($serviceType === 'rental' ? ($booking->vehicle ? ($booking->vehicle->make . ' ' . $booking->vehicle->model) : 'Rental Fleet Vehicle') : 'Executive Vehicle');
+
+                    $displayName = $serviceType === 'rental' ? ($driverUser->name . ' (Vehicle Host)') : $driverUser->name;
+                    $photoUrl = ($serviceType === 'rental' && $booking->vehicle?->image_url)
+                        ? $booking->vehicle->image_url
+                        : ($driverUser->driverProfile?->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true'));
 
                     $driverData = [
                         'id' => $driverUser->id,
-                        'name' => $driverUser->name,
+                        'name' => $displayName,
                         'rating' => $driverUser->driverProfile ? floatval($driverUser->driverProfile->rating) : 4.95,
                         'vehicle' => $booking->car_make_model ?? ($booking->vehicle_type ?? $defaultVehicle),
-                        'photo_url' => $driverUser->driverProfile?->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
+                        'photo_url' => $photoUrl,
                         'phone' => $phone,
                         'email' => $email,
                         'whatsapp' => $cleanedWa,
@@ -313,12 +322,12 @@ class StripeVerificationController extends Controller
             'waiting_time_minutes' => $waitingMinutes,
             'waiting_time_seconds' => $waitingMinutes * 60,
             'remaining_seconds' => $remainingSeconds,
-            'is_expired' => $isExpired || ($bookingStatus === 'cancelled' && str_contains(strtolower($booking->cancellation_reason ?? ''), 'waiting period')),
+            'is_expired' => !$isDriverConfirmed && ($isExpired || ($bookingStatus === 'cancelled' && str_contains(strtolower($booking->cancellation_reason ?? ''), 'waiting period'))),
         ]);
     }
 
     /**
-     * Restart driver/courier search with a fresh 5-minute request window in place.
+     * Restart driver/courier search with a fresh dynamic waiting time request window in place.
      */
     public function retryDriverSearch(string $serviceType, int $serviceId): JsonResponse
     {
@@ -327,7 +336,11 @@ class StripeVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
         }
 
-        $freshExpiresAt = now()->addMinutes(5);
+        $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+            ? \App\Services\SettingService::getDeliveryWaitingTimeMinutes()
+            : \App\Services\SettingService::getRideWaitingTimeMinutes();
+        $freshExpiresAt = now()->addMinutes($waitingMinutes);
+        $waitingSeconds = $waitingMinutes * 60;
 
         if (in_array($serviceType, ['package_delivery', 'delivery'], true)) {
             $booking->update([
@@ -348,7 +361,19 @@ class StripeVerificationController extends Controller
             } catch (\Throwable $e) {
                 Log::warning("Retry courier assignment error: " . $e->getMessage());
             }
-        } elseif (in_array($serviceType, ['ride', 'rental'], true)) {
+        } elseif ($serviceType === 'rental') {
+            $booking->update([
+                'status' => 'pending',
+                'cancellation_reason' => null,
+                'expires_at' => $freshExpiresAt,
+            ]);
+
+            try {
+                \App\Services\NotificationService::notifyVehicleOwnerRentalRequested($booking);
+            } catch (\Throwable $e) {
+                Log::warning("Retry rental owner notification error: " . $e->getMessage());
+            }
+        } elseif ($serviceType === 'ride') {
             $booking->update([
                 'status' => 'pending',
                 'driver_id' => null,
@@ -377,16 +402,16 @@ class StripeVerificationController extends Controller
 
         ActivityLogService::log(
             'driver_search_restarted',
-            "Restarted fresh 5-minute driver search for {$serviceType} #{$serviceId}",
+            "Restarted fresh {$waitingMinutes}-minute driver search for {$serviceType} #{$serviceId}",
             $booking->customer_id ?? $booking->client_id ?? $booking->rider_id ?? Auth::id() ?? 1
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Driver search restarted successfully with a fresh 5-minute request window.',
-            'remaining_seconds' => 300,
-            'waiting_time_minutes' => 5,
-            'waiting_time_seconds' => 300,
+            'message' => "Driver search restarted successfully with a fresh {$waitingMinutes}-minute request window.",
+            'remaining_seconds' => $waitingSeconds,
+            'waiting_time_minutes' => $waitingMinutes,
+            'waiting_time_seconds' => $waitingSeconds,
             'expires_at' => $freshExpiresAt->toIso8601String(),
             'booking_status' => 'pending',
             'is_driver_confirmed' => false,
@@ -498,8 +523,12 @@ class StripeVerificationController extends Controller
                 ]
             );
 
-            // Immediately dispatch to nearby drivers for Cash on Drop-off
-            if (in_array($serviceType, ['ride', 'rental'], true)) {
+            // Immediately dispatch for Cash on Drop-off
+            if ($serviceType === 'rental') {
+                try {
+                    \App\Services\NotificationService::notifyVehicleOwnerRentalRequested($booking);
+                } catch (\Throwable $e) {}
+            } elseif ($serviceType === 'ride') {
                 try {
                     \App\Services\RideAssignmentService::assignNextDriver($booking);
                 } catch (\Throwable $e) {}
@@ -687,6 +716,46 @@ class StripeVerificationController extends Controller
             $pLng != 0 ? $pLng : null
         ) ?? \App\Services\CountryService::normalizeToCode($booking->driver_country ?? $booking->country ?? null)
           ?? 'IND';
+
+        // For vehicle rentals, confirm directly with vehicle host/owner
+        if ($serviceType === 'rental') {
+            $vehicle = $booking->vehicle;
+            $owner = $vehicle?->owner ?? User::where('role', 'owner')->first();
+            if ($owner) {
+                $booking->update([
+                    'status' => 'confirmed',
+                    'booking_status' => 'accepted',
+                    'verification_status' => 'driver_verified',
+                    'verified_at' => now(),
+                ]);
+                $phone = $owner->phone ?? $this->getFallbackDriverPhone($bookingCountry);
+                $email = $owner->email ?? 'owner@ridemycars.com';
+                $cleanedWa = $this->formatWhatsAppPhone($phone, $bookingCountry);
+                ActivityLogService::log(
+                    'host_confirmed_rental',
+                    "Vehicle host {$owner->name} confirmed rental #{$serviceId}. Contact channels unlocked.",
+                    $owner->id
+                );
+                return response()->json([
+                    'success' => true,
+                    'booking_status' => 'accepted',
+                    'is_driver_confirmed' => true,
+                    'message' => "Vehicle host {$owner->name} has confirmed your rental reservation. Contact details unlocked!",
+                    'driver' => [
+                        'id' => $owner->id,
+                        'name' => $owner->name . ' (Vehicle Host)',
+                        'phone' => $phone,
+                        'email' => $email,
+                        'whatsapp' => $cleanedWa,
+                        'masked_phone' => substr($phone, 0, 4) . ' ••• ••• ••' . substr($phone, -2),
+                        'masked_email' => substr($email, 0, 2) . '••••••@' . (explode('@', $email)[1] ?? 'ridemycars.com'),
+                        'rating' => 4.98,
+                        'vehicle' => ($vehicle ? ($vehicle->make . ' ' . $vehicle->model . ' (' . ($vehicle->year ?? '') . ')') : 'Rental Fleet Vehicle'),
+                        'photo_url' => $vehicle?->image_url ?: ('https://ui-avatars.com/api/?name=' . urlencode($owner->name) . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
+                    ],
+                ]);
+            }
+        }
 
         // Find or assign driver (strict 10km proximity and matching country)
         if (!$driverId && !$booking->driver_id) {
@@ -1173,7 +1242,9 @@ class StripeVerificationController extends Controller
         $paymentStatus = strtolower($booking->payment_status ?? 'pending');
         $isPaymentConfirmed = in_array($paymentStatus, ['paid', 'hold', 'authorized', 'pending_cash', 'cash', 'authorized_hold', 'succeeded', 'processing', 'completed']) || (($booking->payment_method ?? null) === 'cash');
         $bookingStatus = strtolower($booking->booking_status ?? $booking->status ?? 'pending');
-        $isDriverConfirmed = in_array($bookingStatus, ['accepted', 'en_route', 'arrived', 'in_progress', 'completed']) || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id));
+        $isDriverConfirmed = in_array($bookingStatus, ['confirmed', 'accepted', 'en_route', 'arrived', 'in_progress', 'completed']) 
+            || ($booking->verification_status === 'driver_verified' && !empty($booking->driver_id))
+            || ($serviceType === 'rental' && in_array($bookingStatus, ['confirmed', 'accepted']));
 
         $driver = null;
         $driverUser = null;
@@ -1185,7 +1256,19 @@ class StripeVerificationController extends Controller
             $driverUser = $booking->driver;
             $driverProfile = $booking->driverProfile;
             $vehicleInfo = ($booking->car_make_model ?? 'Executive Vehicle');
-        } elseif ($serviceType === 'ride' || $serviceType === 'rental') {
+        } elseif ($serviceType === 'rental') {
+            $booking->load(['vehicle.owner', 'driver.driverProfile']);
+            $ownerUser = $booking->vehicle?->owner;
+            if ($ownerUser) {
+                $driverUser = $ownerUser;
+                $driverProfile = null;
+                $vehicleInfo = $booking->vehicle ? ($booking->vehicle->make . ' ' . $booking->vehicle->model) : 'Rental Fleet Vehicle';
+            } else {
+                $driverUser = $booking->driver;
+                $driverProfile = $booking->driver?->driverProfile;
+                $vehicleInfo = $booking->vehicle ? ($booking->vehicle->make . ' ' . $booking->vehicle->model) : ($booking->vehicle_type ?? 'Rental Fleet Vehicle');
+            }
+        } elseif ($serviceType === 'ride') {
             $booking->load(['driver.driverProfile', 'vehicle']);
             $driverUser = $booking->driver;
             $driverProfile = $booking->driver?->driverProfile;
@@ -1204,22 +1287,27 @@ class StripeVerificationController extends Controller
             }
         }
 
-        if (($isPaymentConfirmed || !empty($booking->driver_id)) && $isDriverConfirmed && ($driverUser || $booking->driver_id)) {
+        $isDriverOrHostConfirmed = ($isPaymentConfirmed || !empty($booking->driver_id) || ($serviceType === 'rental' && $driverUser)) && $isDriverConfirmed && ($driverUser || $booking->driver_id);
+        if ($isDriverOrHostConfirmed) {
             $rawPhone = $driverUser?->phone ?? ($driverProfile?->phone ?? ($booking->driver_phone ?? $this->getFallbackDriverPhone($country)));
             $rawEmail = $driverUser?->email ?? ($driverProfile?->email ?? ($booking->driver_email ?? 'driver@ridemycars.com'));
             $cleanedWa = $this->formatWhatsAppPhone($rawPhone, $country);
+            $displayName = $serviceType === 'rental' ? (($driverUser?->name ?? 'Vehicle Host') . ' (Vehicle Host)') : ($driverUser?->name ?? 'Michael Vance');
+            $photoUrl = ($serviceType === 'rental' && $booking->vehicle?->image_url)
+                ? $booking->vehicle->image_url
+                : ($driverProfile?->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($displayName) . '&background=0F172A&color=FFFFFF&size=256&bold=true'));
 
             $driver = [
                 'id' => $driverUser?->id,
-                'name' => $driverUser?->name ?? 'Michael Vance',
+                'name' => $displayName,
                 'phone' => $rawPhone,
                 'email' => $rawEmail,
                 'whatsapp' => $cleanedWa,
                 'masked_phone' => substr($rawPhone, 0, 4) . ' ••• ••• ••' . substr($rawPhone, -2),
                 'masked_email' => substr($rawEmail, 0, 2) . '••••••@' . (explode('@', $rawEmail)[1] ?? 'ridemycars.com'),
-                'rating' => $driverProfile->rating ?? 4.95,
+                'rating' => $driverProfile->rating ?? 4.98,
                 'vehicle' => $vehicleInfo,
-                'photo_url' => $driverProfile->photo_url ?? ('https://ui-avatars.com/api/?name=' . urlencode($driverUser?->name ?? 'Michael Vance') . '&background=0F172A&color=FFFFFF&size=256&bold=true'),
+                'photo_url' => $photoUrl,
             ];
         }
 
@@ -1249,7 +1337,7 @@ class StripeVerificationController extends Controller
         }
 
         $isExpired = false;
-        if ($isPaymentConfirmed && in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
+        if (!$isDriverConfirmed && $isPaymentConfirmed && in_array($serviceType, ['ride', 'rental', 'package_delivery', 'delivery'], true)) {
             if (method_exists($booking, 'isExpired') && $booking->isExpired()) {
                 $isExpired = true;
                 if ($serviceType === 'ride' || $serviceType === 'rental') {
@@ -1296,7 +1384,7 @@ class StripeVerificationController extends Controller
             'expiresAt' => $booking->expires_at ? $booking->expires_at->toIso8601String() : null,
             'remainingSeconds' => $remainingSeconds,
             'waitingMinutes' => $waitingMinutes,
-            'isExpired' => $isExpired || ($bookingStatus === 'cancelled'),
+            'isExpired' => !$isDriverConfirmed && ($isExpired || ($bookingStatus === 'cancelled')),
             'cancellationReason' => $booking->cancellation_reason ?? $booking->rejection_reason ?? null,
             'activeGateways' => \App\Services\SettingService::getActivePaymentGateways(),
             'anetClientKey' => \App\Services\SettingService::getActiveAuthorizeNetClientKey(),

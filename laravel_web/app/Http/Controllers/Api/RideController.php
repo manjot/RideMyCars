@@ -1380,6 +1380,19 @@ class RideController extends Controller
                 ->update(['status' => 'accepted']);
         }
 
+        // Trigger customer delivery notifications
+        try {
+            if ($delStatus === 'going_to_pickup') {
+                NotificationService::notifyDeliveryEnRoute($delivery);
+            } elseif ($delStatus === 'arrived_at_pickup') {
+                NotificationService::notifyDeliveryArrivedAtPickup($delivery);
+            } elseif ($delStatus === 'in_transit') {
+                NotificationService::notifyDeliveryPickedUp($delivery);
+            } elseif ($delStatus === 'delivered') {
+                NotificationService::notifyDeliveryCompleted($delivery);
+            }
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'success' => true,
             'message' => "Package delivery status updated to {$newStatus}",

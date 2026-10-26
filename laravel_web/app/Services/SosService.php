@@ -188,6 +188,52 @@ class SosService
             $sosMessage .= " Vehicle: {$rideInfo['vehicle']}";
         }
 
+        // Broadcast SMS and in-app alerts to each trusted emergency contact
+        foreach ($contacts as $contact) {
+            $contactPhone = trim($contact->phone ?? '');
+            if (!empty($contactPhone)) {
+                try {
+                    $smsService = app(\App\Services\TwilioSmsService::class);
+                    $smsService->sendMessage($contactPhone, $sosMessage);
+                } catch (\Throwable $e) {
+                    Log::warning("SOS SMS dispatch error to {$contactPhone}: " . $e->getMessage());
+                }
+
+                // Check if this contact has an active account on RideMyCars
+                try {
+                    $cleanPhone = preg_replace('/[^0-9]/', '', $contactPhone);
+                    $targetUser = User::where('phone', $contactPhone)
+                        ->orWhere('phone', 'like', "%{$cleanPhone}%")
+                        ->first();
+
+                    if ($targetUser) {
+                        NotificationService::send(
+                            $targetUser->id,
+                            'emergency_sos_alert',
+                            "🚨 SOS ALERT: {$user->name} Needs Urgent Help!",
+                            $sosMessage,
+                            $rideId,
+                            $mapsUrl ?: '/sos',
+                            [
+                                'alert_id' => $alert->id,
+                                'sender_name' => $user->name,
+                                'sender_phone' => $user->phone,
+                                'maps_url' => $mapsUrl,
+                                'icon' => 'alert-triangle',
+                                'color' => 'red',
+                            ]
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning("SOS User notification error to contact {$contactPhone}: " . $e->getMessage());
+                }
+
+                try {
+                    $contact->update(['last_notified_at' => now()]);
+                } catch (\Throwable $e) {}
+            }
+        }
+
         // Create in-app notification for the user
         try {
             UserNotification::create([

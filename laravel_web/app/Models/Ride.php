@@ -195,9 +195,14 @@ class Ride extends Model
 
     /**
      * Check if this ride request has exceeded its driver waiting time window.
+     * Never considered expired if a driver has accepted or is already assigned.
      */
     public function isExpired(): bool
     {
+        if (!empty($this->driver_id) || in_array($this->status, ['accepted', 'assigned', 'en_route', 'arrived', 'in_progress', 'completed'], true)) {
+            return false;
+        }
+
         return !empty($this->expires_at) && $this->expires_at->isPast();
     }
 

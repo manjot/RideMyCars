@@ -91,7 +91,14 @@ class OwnerPortalController extends Controller
 
         $ride->update([
             'status' => 'confirmed',
+            'booking_status' => 'accepted',
+            'verification_status' => 'driver_verified',
+            'verified_at' => now(),
         ]);
+
+        try {
+            \App\Services\NotificationService::notifyRiderDriverAssigned($ride);
+        } catch (\Throwable $e) {}
 
         ActivityLogService::log(
             'rental_approved',

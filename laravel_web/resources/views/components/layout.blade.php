@@ -69,27 +69,29 @@
                 document.cookie = "user_tz_offset=" + tzOffset + "; path=/; max-age=" + (86400 * 30);
 
                 var detectedCode = null;
+                var lang = (navigator.language || navigator.userLanguage || '').toUpperCase();
+
                 // India detection: Asia/Kolkata, Asia/Calcutta, or timezone offset -330
                 if (tz === 'Asia/Kolkata' || tz === 'Asia/Calcutta' || tzOffset === -330) {
                     detectedCode = 'IND';
-                } else if (tz === 'Africa/Accra' || (tzOffset === 0 && tz && tz.indexOf('Accra') !== -1)) {
+                } else if (tz === 'Africa/Accra' || (tz && tz.indexOf('Accra') !== -1) || (tzOffset === 0 && lang.indexOf('GH') !== -1)) {
                     detectedCode = 'GHA';
-                } else if (tz === 'Africa/Johannesburg' || (tzOffset === -120 && tz && tz.indexOf('Johannesburg') !== -1)) {
+                } else if (tz === 'Africa/Johannesburg' || (tz && tz.indexOf('Johannesburg') !== -1) || (tzOffset === -120 && lang.indexOf('ZA') !== -1)) {
                     detectedCode = 'ZAF';
-                } else if (tz === 'Africa/Lagos' || (tzOffset === -60 && tz && tz.indexOf('Lagos') !== -1)) {
+                } else if (tz === 'Africa/Lagos' || (tz && tz.indexOf('Lagos') !== -1) || (tzOffset === -60 && lang.indexOf('NG') !== -1)) {
                     detectedCode = 'NGA';
-                } else if (tz === 'Europe/London') {
+                } else if (tz === 'Europe/London' || (tz && tz.indexOf('London') !== -1) || (lang.indexOf('GB') !== -1 && tzOffset >= -60 && tzOffset <= 0)) {
                     detectedCode = 'GBR';
-                } else if (tz === 'Asia/Dubai') {
+                } else if (tz === 'Asia/Dubai' || (tz && tz.indexOf('Dubai') !== -1)) {
                     detectedCode = 'ARE';
-                } else if (tz === 'Africa/Nairobi') {
+                } else if (tz === 'Africa/Nairobi' || (tz && tz.indexOf('Nairobi') !== -1)) {
                     detectedCode = 'KEN';
                 } else if (tz === 'Africa/Blantyre' || (tz && (tz.indexOf('Blantyre') !== -1 || tz.indexOf('Lilongwe') !== -1 || tz.indexOf('Malawi') !== -1))) {
                     detectedCode = 'MWI';
-                } else if (tz && (tz.indexOf('New_York') !== -1 || tz.indexOf('Chicago') !== -1 || tz.indexOf('Los_Angeles') !== -1 || tz.indexOf('Denver') !== -1)) {
-                    detectedCode = 'USA';
-                } else if (tz && (tz.indexOf('Toronto') !== -1 || tz.indexOf('Vancouver') !== -1)) {
+                } else if (tz && (tz.indexOf('Toronto') !== -1 || tz.indexOf('Vancouver') !== -1 || tz.indexOf('Montreal') !== -1 || tz.indexOf('Edmonton') !== -1 || tz.indexOf('Winnipeg') !== -1 || tz.indexOf('Halifax') !== -1)) {
                     detectedCode = 'CAN';
+                } else if (tz && (tz.indexOf('New_York') !== -1 || tz.indexOf('Chicago') !== -1 || tz.indexOf('Los_Angeles') !== -1 || tz.indexOf('Denver') !== -1 || tz.indexOf('Phoenix') !== -1 || tz.indexOf('Detroit') !== -1 || tz.indexOf('Indianapolis') !== -1 || tz.indexOf('Boise') !== -1 || tz.indexOf('Anchorage') !== -1 || tz.indexOf('Honolulu') !== -1 || tz.indexOf('America/Indiana') !== -1 || tz.indexOf('America/Kentucky') !== -1 || tz.indexOf('America/North_Dakota') !== -1)) {
+                    detectedCode = 'USA';
                 }
 
                 // If detected code is resolved and doesn't match the currently rendered country
@@ -120,30 +122,45 @@
                     sessionStorage.removeItem('rmc_sync_attempts');
                 }
 
-                // If timezone was inconclusive, perform fast background IP detection via api.country.is
-                if (!detectedCode && !sessionStorage.getItem('rmc_ip_lookup_done')) {
-                    sessionStorage.setItem('rmc_ip_lookup_done', '1');
-                    fetch('https://api.country.is')
+                // If timezone was inconclusive, perform first-party server IP / CDN header detection
+                if (!detectedCode && !sessionStorage.getItem('rmc_api_detect_done')) {
+                    sessionStorage.setItem('rmc_api_detect_done', '1');
+                    fetch('/api/detect-country')
                         .then(function(r) { return r.json(); })
                         .then(function(data) {
-                            if (data && data.country) {
-                                var iso = data.country.toUpperCase();
-                                document.cookie = "user_detected_country=" + iso + "; path=/; max-age=" + (86400 * 30);
-                                var map = { 'IN': 'IND', 'GH': 'GHA', 'ZA': 'ZAF', 'NG': 'NGA', 'GB': 'GBR', 'US': 'USA', 'CA': 'CAN', 'AE': 'ARE', 'KE': 'KEN', 'MW': 'MWI' };
-                                var target = map[iso] || iso;
-                                if (target && target !== serverCountry && !localStorage.getItem('rmc_manual_country')) {
-                                    document.cookie = "user_country=" + target + "; path=/; max-age=" + (86400 * 30);
-                                    var token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
-                                    fetch('/set-country', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
-                                        body: JSON.stringify({ country: target, auto: true })
-                                    }).then(function() {
-                                        window.location.reload();
-                                    });
-                                }
+                            if (data && data.country_code && data.country_code !== serverCountry && !localStorage.getItem('rmc_manual_country')) {
+                                document.cookie = "user_country=" + data.country_code + "; path=/; max-age=" + (86400 * 30);
+                                var token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+                                fetch('/set-country', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                                    body: JSON.stringify({ country: data.country_code, auto: true })
+                                }).then(function() {
+                                    window.location.reload();
+                                });
                             }
-                        }).catch(function() {});
+                        }).catch(function() {
+                            // Tertiary fallback to external GeoIP if first-party failed
+                            fetch('https://api.country.is')
+                                .then(function(r) { return r.json(); })
+                                .then(function(ext) {
+                                    if (ext && ext.country) {
+                                        var map = { 'IN': 'IND', 'GH': 'GHA', 'ZA': 'ZAF', 'NG': 'NGA', 'GB': 'GBR', 'US': 'USA', 'CA': 'CAN', 'AE': 'ARE', 'KE': 'KEN', 'MW': 'MWI' };
+                                        var target = map[ext.country.toUpperCase()] || ext.country.toUpperCase();
+                                        if (target && target !== serverCountry && !localStorage.getItem('rmc_manual_country')) {
+                                            document.cookie = "user_country=" + target + "; path=/; max-age=" + (86400 * 30);
+                                            var token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+                                            fetch('/set-country', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                                                body: JSON.stringify({ country: target, auto: true })
+                                            }).then(function() {
+                                                window.location.reload();
+                                            });
+                                        }
+                                    }
+                                }).catch(function() {});
+                        });
                 }
             } catch(e) {}
         })();

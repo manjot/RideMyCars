@@ -607,5 +607,150 @@ class NotificationService
             );
         }
     }
+
+
+    /**
+     * Notify Customer that Courier is en-route to pickup.
+     */
+    public static function notifyDeliveryEnRoute(PackageDelivery $delivery): void
+    {
+        $delivery->refresh();
+        $courier = $delivery->courier;
+        $courierName = $courier ? $courier->name : 'Your courier';
+
+        if ($delivery->customer_id) {
+            self::send(
+                $delivery->customer_id,
+                'delivery_en_route',
+                'Courier En-Route to Pickup',
+                "{$courierName} is currently en-route to pick up your package at {$delivery->pickup_location}.",
+                null,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'going_to_pickup',
+                    'courier_name' => $courierName,
+                    'icon' => 'navigation',
+                    'color' => 'amber',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that Courier has arrived at pickup location.
+     */
+    public static function notifyDeliveryArrivedAtPickup(PackageDelivery $delivery): void
+    {
+        $delivery->refresh();
+        $courier = $delivery->courier;
+        $courierName = $courier ? $courier->name : 'Your courier';
+
+        if ($delivery->customer_id) {
+            self::send(
+                $delivery->customer_id,
+                'delivery_arrived_pickup',
+                'Courier Arrived at Pickup Location',
+                "{$courierName} has arrived at the pickup location ({$delivery->pickup_location}). Please hand over the parcel.",
+                null,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'arrived_at_pickup',
+                    'courier_name' => $courierName,
+                    'icon' => 'map-pin',
+                    'color' => 'emerald',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that package was picked up and is in transit.
+     */
+    public static function notifyDeliveryPickedUp(PackageDelivery $delivery): void
+    {
+        $delivery->refresh();
+        $courier = $delivery->courier;
+        $courierName = $courier ? $courier->name : 'Your courier';
+
+        if ($delivery->customer_id) {
+            self::send(
+                $delivery->customer_id,
+                'delivery_in_transit',
+                'Package Picked Up & In Transit',
+                "Your package #{$delivery->delivery_code} has been picked up by {$courierName} and is on its way to {$delivery->dropoff_location}.",
+                null,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'in_transit',
+                    'courier_name' => $courierName,
+                    'icon' => 'truck',
+                    'color' => 'blue',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Customer that package delivery was completed.
+     */
+    public static function notifyDeliveryCompleted(PackageDelivery $delivery): void
+    {
+        $delivery->refresh();
+        $courier = $delivery->courier;
+        $courierName = $courier ? $courier->name : 'Your courier';
+
+        if ($delivery->customer_id) {
+            self::send(
+                $delivery->customer_id,
+                'delivery_completed',
+                'Package Delivered Successfully! 🎉',
+                "Your package #{$delivery->delivery_code} has been delivered successfully to {$delivery->recipient_name} at {$delivery->dropoff_location}.",
+                null,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'delivered',
+                    'courier_name' => $courierName,
+                    'icon' => 'check-circle',
+                    'color' => 'emerald',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Vehicle Owner when a new fleet rental reservation request is placed.
+     */
+    public static function notifyVehicleOwnerRentalRequested(Ride $rental): void
+    {
+        $vehicle = $rental->vehicle;
+        $ownerId = $vehicle?->owner_id;
+
+        if ($ownerId) {
+            $customerName = $rental->passenger_name ?: ($rental->rider?->name ?: 'A customer');
+            $vehicleName = $vehicle ? "{$vehicle->year} {$vehicle->make} {$vehicle->model}" : 'your vehicle';
+
+            self::send(
+                $ownerId,
+                'rental_requested',
+                'New Vehicle Rental Request! 🔑',
+                "{$customerName} has requested to rent {$vehicleName} from {$rental->pickup_date} to {$rental->return_date}. Please review and approve in your Owner Portal.",
+                $rental->id,
+                '/owner/dashboard?tab=requests',
+                [
+                    'ride_id' => $rental->id,
+                    'vehicle_id' => $vehicle?->id,
+                    'customer_name' => $customerName,
+                    'fare' => $rental->fare,
+                    'status' => 'pending',
+                    'icon' => 'key',
+                    'color' => 'amber',
+                ]
+            );
+        }
+    }
 }
 

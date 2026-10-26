@@ -130,7 +130,19 @@ class StripeService
         }
 
         // Create Payment Intent in Stripe
-        $intent = \Stripe\PaymentIntent::create($intentParams);
+        try {
+            $intent = \Stripe\PaymentIntent::create($intentParams);
+        } catch (\Stripe\Exception\AuthenticationException $e) {
+            Log::error("Stripe Authentication Error: " . $e->getMessage());
+            throw new \RuntimeException("Stripe card processing is temporarily unavailable. Please select Authorize.Net (Visa/Mastercard), MoMo Pay, or Cash.");
+        } catch (\Throwable $e) {
+            $msg = strtolower($e->getMessage());
+            if (str_contains($msg, 'api key') || str_contains($msg, 'expired') || str_contains($msg, 'authentication')) {
+                Log::error("Stripe API key issue: " . $e->getMessage());
+                throw new \RuntimeException("Stripe card processing is temporarily unavailable. Please select Authorize.Net (Visa/Mastercard), MoMo Pay, or Cash.");
+            }
+            throw $e;
+        }
 
         if ($model instanceof Ride) {
             $model->update([

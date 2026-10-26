@@ -29,10 +29,12 @@
                 <span class="px-3.5 py-1.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 font-extrabold text-xs uppercase tracking-widest border border-brand-500/20">
                     Escrow Protected Checkout
                 </span>
-                <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight"
+                    x-text="serviceType === 'rental' ? 'Payment Hold & Vehicle Reservation Confirmation' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Payment Hold & Courier Confirmation' : 'Payment Hold & Driver Confirmation')">
                     Payment Hold & Driver Confirmation
                 </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto"
+                   x-text="serviceType === 'rental' ? 'Select your payment method (Credit/Debit Card or MoMo Pay). Vehicle host contacts unlock upon reservation authorization & approval.' : 'Select your payment method (Authorize.Net, Stripe, or MoMo Pay). Driver contacts unlock upon payment authorization & confirmation.'">
                     Select your payment method (Stripe or MoMo Pay). Driver contacts unlock upon payment authorization & confirmation.
                 </p>
             </div>
@@ -59,7 +61,7 @@
                         <span>2. Payment Hold</span>
                     </div>
 
-                    <!-- Step 3: Driver Search & Confirm -->
+                    <!-- Step 3: Driver/Courier/Host Search & Confirm -->
                     <div :class="{
                             'bg-amber-500 text-white shadow-md animate-pulse': isPaymentConfirmed && !isDriverConfirmed,
                             'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300': isDriverConfirmed,
@@ -69,7 +71,7 @@
                         <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
                               :class="isDriverConfirmed ? 'bg-emerald-500 text-white' : (isPaymentConfirmed ? 'bg-amber-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-500')"
                               x-text="isDriverConfirmed ? '✓' : '3'"></span>
-                        <span>3. Driver Match</span>
+                        <span x-text="serviceType === 'rental' ? '3. Host Confirmation' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? '3. Courier Match' : '3. Driver Match')">3. Driver Match</span>
                     </div>
 
                     <!-- Step 4: Dispatched & Confirmed -->
@@ -463,7 +465,7 @@
                 </div>
             </div>
 
-            <!-- STATE B: PAYMENT HELD & ACTIVELY SEARCHING FOR DRIVER -->
+            <!-- STATE B: PAYMENT HELD & ACTIVELY SEARCHING / AWAITING CONFIRMATION -->
             <div x-show="isPaymentConfirmed && !isDriverConfirmed && bookingStatus !== 'cancelled' && !isExpired" x-transition class="space-y-6">
                 
                 <div class="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-400 dark:border-amber-600/60 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-6 relative overflow-hidden">
@@ -472,7 +474,8 @@
                     <div class="relative w-28 h-28 mx-auto flex items-center justify-center">
                         <div class="absolute inset-0 rounded-full bg-amber-400/20 animate-ping"></div>
                         <div class="absolute inset-2 rounded-full bg-amber-500/30 animate-pulse"></div>
-                        <div class="relative w-16 h-16 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-3xl font-black shadow-lg">
+                        <div class="relative w-16 h-16 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-3xl font-black shadow-lg"
+                             x-text="serviceType === 'rental' ? '🔑' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? '📦' : '🚘')">
                             🚘
                         </div>
                     </div>
@@ -480,19 +483,21 @@
                     <div class="space-y-2 max-w-md mx-auto">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span x-text="paymentMethod === 'cash' ? '💵 Cash on Drop-off Confirmed ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})' : '✓ Escrow Payment Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})'"></span>
+                            <span x-text="paymentMethod === 'cash' ? '💵 Cash on Drop-off Confirmed ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})' : (serviceType === 'rental' ? '✓ Rental Deposit Escrow Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})' : '✓ Escrow Payment Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})')"></span>
                         </span>
-                        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white"
+                            x-text="serviceType === 'rental' ? 'Vehicle Reservation Request Submitted' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Searching for Available Courier...' : 'Searching for Available Driver...')">
                             Searching for Available Driver...
                         </h3>
                         <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300">
-                            We are broadcasting your pickup request to vetted chauffeurs within <strong class="text-amber-500 font-bold">10 km</strong> of <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
+                            <span x-show="serviceType === 'rental'">Your deposit is held safely in escrow. We have notified the vehicle host to review and approve your reservation for <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. Host contact channels unlock immediately upon confirmation.</span>
+                            <span x-show="serviceType !== 'rental'">We are broadcasting your pickup request to vetted partners within <strong class="text-amber-500 font-bold">10 km</strong> of <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
                             <span x-show="paymentMethod === 'cash'">Please have {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} ready in physical cash upon completing your trip.</span>
-                            <span x-show="paymentMethod !== 'cash'">Your payment is held safely in escrow and driver contact details will appear the moment a nearby driver confirms.</span>
+                            <span x-show="paymentMethod !== 'cash'">Your payment is held safely in escrow and provider contact details will appear the moment a nearby partner confirms.</span></span>
                         </p>
                     </div>
 
-                    <!-- LIVE DRIVER REQUEST COUNTDOWN TIMER -->
+                    <!-- LIVE REQUEST COUNTDOWN TIMER -->
                     <div class="max-w-md mx-auto bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-md rounded-2xl p-5 border-2 border-amber-400 dark:border-amber-500/40 shadow-lg space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
@@ -500,7 +505,7 @@
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
                                 </span>
-                                Driver Waiting Time
+                                <span x-text="serviceType === 'rental' ? 'Host Confirmation Window' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Courier Waiting Time' : 'Driver Waiting Time')">Driver Waiting Time</span>
                             </span>
                             <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
                                   x-text="waitingMinutes + ' Min Timeout'">
@@ -521,21 +526,23 @@
                         </div>
 
                         <p class="text-[11px] text-gray-500 dark:text-gray-400 text-center">
-                            Nearby drivers have <span class="font-bold text-amber-600 dark:text-amber-400" x-text="waitingMinutes + ' minutes'">5 minutes</span> to accept. If no driver is available, this request auto-cancels and no funds are captured.
+                            <span x-show="serviceType === 'rental'">The vehicle host has <span class="font-bold text-amber-600 dark:text-amber-400" x-text="waitingMinutes + ' minutes'"></span> to confirm your reservation. If unconfirmed, this request auto-cancels and no deposit is captured.</span>
+                            <span x-show="serviceType !== 'rental'">Nearby providers have <span class="font-bold text-amber-600 dark:text-amber-400" x-text="waitingMinutes + ' minutes'"></span> to accept. If no provider is available, this request auto-cancels and no funds are captured.</span>
                         </p>
                     </div>
 
                     <!-- Live Dispatch Steps Pulse -->
                     <div class="max-w-lg mx-auto bg-white/70 dark:bg-[#161616]/70 backdrop-blur rounded-2xl p-4 border border-amber-200/60 dark:border-white/10 grid grid-cols-3 gap-2 text-center text-[11px] font-bold">
                         <div class="p-2 rounded-xl bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                             x-text="paymentMethod === 'cash' ? '✓ Cash Confirmed' : '✓ Payment Held'">
+                             x-text="paymentMethod === 'cash' ? '✓ Cash Confirmed' : (serviceType === 'rental' ? '✓ Deposit Held' : '✓ Payment Held')">
                             ✓ Payment Held
                         </div>
                         <div class="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 flex items-center justify-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                            10 km Radar
+                            <span x-text="serviceType === 'rental' ? 'Host Notified' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Courier Radar' : '10 km Radar')">10 km Radar</span>
                         </div>
-                        <div class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-400">
+                        <div class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-400"
+                             x-text="serviceType === 'rental' ? 'Awaiting Host' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Awaiting Courier' : 'Awaiting Driver')">
                             Awaiting Driver
                         </div>
                     </div>
@@ -545,10 +552,10 @@
                         <button type="button" @click="confirmDriverAssignment()"
                                 :disabled="isSimulatingMatch"
                                 class="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-2">
-                            <span x-show="!isSimulatingMatch">⚡ Connect Nearest Driver (Within 10 km)</span>
+                            <span x-show="!isSimulatingMatch" x-text="serviceType === 'rental' ? '⚡ Confirm Host Approval (Demo)' : '⚡ Connect Nearest Provider (Within 10 km)'">⚡ Connect Nearest Driver (Within 10 km)</span>
                             <span x-show="isSimulatingMatch" class="flex items-center gap-2">
                                 <svg class="animate-spin h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                Searching within 10 km...
+                                <span x-text="serviceType === 'rental' ? 'Confirming with Host...' : 'Searching within 10 km...'">Searching within 10 km...</span>
                             </span>
                         </button>
                     </div>
@@ -558,7 +565,7 @@
             </div>
 
             <!-- STATE D: REQUEST EXPIRED OR CANCELLED -->
-            <div x-show="bookingStatus === 'cancelled' || isExpired" x-transition class="space-y-6">
+            <div x-show="!isDriverConfirmed && (bookingStatus === 'cancelled' || isExpired)" x-transition class="space-y-6">
                 <div class="bg-rose-50/80 dark:bg-rose-950/30 border-2 border-rose-400 dark:border-rose-600/50 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-6">
                     <div class="w-20 h-20 mx-auto rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center text-4xl shadow-inner">
                         ⏱️
@@ -567,13 +574,14 @@
                     <div class="space-y-2 max-w-md mx-auto">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300 font-extrabold text-xs">
                             <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                            Driver Waiting Time Expired
+                            <span x-text="serviceType === 'rental' ? 'Host Confirmation Window Expired' : 'Waiting Time Expired'">Driver Waiting Time Expired</span>
                         </span>
-                        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white"
+                            x-text="serviceType === 'rental' ? 'Vehicle Host Did Not Confirm in Time' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'No Courier Available in Time' : 'No Driver Available in Time')">
                             No Driver Available in Time
                         </h3>
                         <p class="text-xs md:text-sm text-rose-800 dark:text-rose-300 leading-relaxed font-medium"
-                           x-text="cancellationReason || 'No nearby driver accepted the request within the ' + waitingMinutes + '-minute waiting period. Any payment authorization has been released.'">
+                           x-text="cancellationReason || (serviceType === 'rental' ? 'The vehicle host did not confirm within the ' + waitingMinutes + '-minute window. Any deposit authorization has been released.' : 'No nearby driver accepted the request within the ' + waitingMinutes + '-minute waiting period. Any payment authorization has been released.')">
                             No nearby driver accepted the request within the waiting period. Any payment authorization has been released.
                         </p>
                     </div>
@@ -594,7 +602,7 @@
                                 @click="retryDriverSearch()"
                                 :disabled="isRetryingSearch"
                                 class="w-full sm:w-auto px-8 py-3.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-black text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                            <span x-show="!isRetryingSearch">🔄 Try Again (Fresh 5-Min Request)</span>
+                            <span x-show="!isRetryingSearch" x-text="'🔄 Try Again (Fresh ' + waitingMinutes + '-Min Request)'">🔄 Try Again</span>
                             <span x-show="isRetryingSearch" class="inline-flex items-center gap-2" style="display: none;">
                                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -611,17 +619,35 @@
                 </div>
             </div>
 
-            <!-- STATE C: DRIVER CONFIRMED & DISPATCHED (All Contacts Unlocked) -->
+            <!-- STATE C: DRIVER / COURIER / HOST CONFIRMED & DISPATCHED (All Contacts Unlocked) -->
             <div x-show="isPaymentConfirmed && isDriverConfirmed" x-transition class="space-y-4">
                 
+                <!-- Instant Tracker Redirection Banner for Package Deliveries -->
+                <div x-show="serviceType === 'package_delivery' || serviceType === 'delivery'" class="p-4 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500 text-emerald-950 dark:text-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl animate-bounce">📦</span>
+                        <div>
+                            <div class="font-black text-sm">Courier Confirmed! Redirecting to Live Parcel Tracker...</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">PIN verification, pickup receipt, and courier live route are now active.</div>
+                        </div>
+                    </div>
+                    <a :href="'/delivery/' + serviceId + '/tracker'" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider text-center shrink-0">
+                        Open Parcel Tracker →
+                    </a>
+                </div>
+
                 <div class="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-400 dark:border-emerald-700/50 rounded-3xl p-6 shadow-sm text-emerald-900 dark:text-emerald-200 space-y-4">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
                             ✓
                         </div>
                         <div>
-                            <h3 class="font-black text-lg">🎉 Driver Confirmed & Assigned!</h3>
-                            <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                            <h3 class="font-black text-lg"
+                                x-text="serviceType === 'rental' ? '🎉 Vehicle Reservation Confirmed by Host!' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? '🎉 Courier Confirmed & Dispatched!' : '🎉 Driver Confirmed & Assigned!')">
+                                🎉 Driver Confirmed & Assigned!
+                            </h3>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5"
+                               x-text="serviceType === 'rental' ? 'Your vehicle host has confirmed your rental reservation. Deposit is secured and vehicle pickup instructions and direct host contact channels (Phone Call, WhatsApp, Email) are live.' : 'Your assigned chauffeur has confirmed your booking. Payment is secured and all direct contact channels (Phone Call, WhatsApp, Email) are now live.'">
                                 Your assigned chauffeur has confirmed your booking. Payment is secured and all direct contact channels (Phone Call, WhatsApp, Email) are now live.
                             </p>
                         </div>
@@ -630,7 +656,7 @@
                     <div class="bg-white/80 dark:bg-black/40 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800/30 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Status</span>
-                            <span class="font-black text-emerald-600 dark:text-emerald-400 uppercase" x-text="paymentMethod === 'cash' ? '💵 Cash on Drop-off' : '✓ Escrow Held / Paid'">✓ Escrow Held / Paid</span>
+                            <span class="font-black text-emerald-600 dark:text-emerald-400 uppercase" x-text="paymentMethod === 'cash' ? '💵 Cash on Drop-off' : (serviceType === 'rental' ? '✓ Deposit Escrow Held' : '✓ Escrow Held / Paid')">✓ Escrow Held / Paid</span>
                         </div>
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Amount</span>
@@ -641,7 +667,7 @@
                             <span class="font-extrabold text-gray-900 dark:text-white uppercase" x-text="paymentMethod === 'cash' ? 'Cash Direct Pay' : (paymentMethod || '{{ $paidMethod ?? 'Stripe Secure Card' }}')"></span>
                         </div>
                         <div>
-                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Driver Status</span>
+                            <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]" x-text="serviceType === 'rental' ? 'Host Status' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Courier Status' : 'Driver Status')">Driver Status</span>
                             <span class="font-black text-emerald-600 dark:text-emerald-400">✓ Confirmed</span>
                         </div>
                     </div>
@@ -867,6 +893,14 @@
             copiedPhone: false,
 
             initPage() {
+                // If package delivery and courier is already confirmed, auto-redirect to live parcel tracker
+                if (this.isPaymentConfirmed && this.isDriverConfirmed && (this.serviceType === 'package_delivery' || this.serviceType === 'delivery')) {
+                    setTimeout(() => {
+                        window.location.href = `/delivery/${this.serviceId}/tracker`;
+                    }, 1200);
+                    return;
+                }
+
                 // If payment is held and driver not yet confirmed, poll for driver acceptance and start countdown
                 if (this.isPaymentConfirmed && !this.isDriverConfirmed && !this.isExpired) {
                     this.startPolling();
@@ -917,6 +951,10 @@
                             this.isPaymentConfirmed = data.is_payment_confirmed;
                             this.isDriverConfirmed = data.is_driver_confirmed;
 
+                            if (data.waiting_time_minutes || data.waiting_minutes) {
+                                this.waitingMinutes = data.waiting_time_minutes || data.waiting_minutes;
+                            }
+
                             if (typeof data.remaining_seconds === 'number' && !this.isDriverConfirmed) {
                                 this.remainingSeconds = data.remaining_seconds;
                             }
@@ -939,6 +977,13 @@
                                 this.isExpired = false;
                                 if (this.pollingInterval) clearInterval(this.pollingInterval);
                                 if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+                                // Auto-redirect to Parcel Tracker when courier accepts delivery request
+                                if (this.serviceType === 'package_delivery' || this.serviceType === 'delivery') {
+                                    setTimeout(() => {
+                                        window.location.href = `/delivery/${this.serviceId}/tracker`;
+                                    }, 1200);
+                                }
                             }
                         }
                     }
@@ -1049,6 +1094,11 @@
                         if (data.driver) {
                             this.driver = Object.assign({}, this.driver, data.driver);
                         }
+                        if (this.serviceType === 'package_delivery' || this.serviceType === 'delivery') {
+                            setTimeout(() => {
+                                window.location.href = `/delivery/${this.serviceId}/tracker`;
+                            }, 1200);
+                        }
                     } else {
                         alert(data.message || 'No drivers currently available within 10 km of your pickup location. Your booking is active and broadcasting to nearby drivers.');
                     }
@@ -1080,9 +1130,13 @@
                         this.currentVerificationStatus = data.verification_status || 'pending';
                         this.isDriverConfirmed = false;
                         this.isPaymentConfirmed = true;
-                        this.remainingSeconds = data.remaining_seconds || 300;
+                        if (data.waiting_time_minutes || data.waiting_minutes) {
+                            this.waitingMinutes = data.waiting_time_minutes || data.waiting_minutes;
+                        }
+                        this.remainingSeconds = data.remaining_seconds || (this.waitingMinutes * 60);
                         this.cancellationReason = '';
-                        this.toastMessage = '🔄 Search restarted! Broadcasting to nearby drivers for 5 minutes.';
+                        const roleName = this.serviceType === 'rental' ? 'vehicle hosts' : (this.serviceType === 'package_delivery' || this.serviceType === 'delivery' ? 'couriers' : 'drivers');
+                        this.toastMessage = `🔄 Search restarted! Broadcasting to nearby ${roleName} for ${this.waitingMinutes} minutes.`;
                         this.showToast = true;
                         setTimeout(() => { this.showToast = false; }, 4000);
                         this.startCountdown();

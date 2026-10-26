@@ -468,6 +468,11 @@ Route::post('/signup', function (\Illuminate\Http\Request $request) {
 
     $user = \App\Models\User::create($userData);
 
+    // Credit Referrer Wallet bonus if referred
+    if (!empty($referrer)) {
+        \App\Services\ReferralService::rewardReferrerOnSignup($user, $referrer);
+    }
+
     if ($user->role === 'driver') {
         $photoPath = null;
         $frontPath = null;
@@ -679,6 +684,19 @@ Route::get('/set-country/{code}', function ($code, \Illuminate\Http\Request $req
     $normalized = \App\Services\CountryService::normalizeToCode($code) ?? 'USA';
     \App\Services\CountryService::persistCountry($normalized, true);
     return redirect()->back();
+});
+
+Route::get('/api/detect-country', function (\Illuminate\Http\Request $request) {
+    $code = \App\Services\CountryService::getCurrentCountryCode($request);
+    $pricing = \App\Models\CountryPricing::forCountry($code);
+    return response()->json([
+        'success' => true,
+        'country_code' => $code,
+        'country_name' => $pricing->country_name ?? $code,
+        'currency_code' => $pricing->currency_code ?? 'USD',
+        'currency_symbol' => $pricing->currency_symbol ?? '$',
+        'is_manual' => (bool) (session('user_country_manual') || ($request->cookie('user_country_manual') === '1')),
+    ]);
 });
 
 Route::get('/ride', function (\Illuminate\Http\Request $request) {
@@ -1060,8 +1078,29 @@ Route::post('/ride/book', function (\Illuminate\Http\Request $request) {
                     'tracking_url' => "/ride/track/{$ride->id}",
                     'polling_url' => "/api/ride/{$ride->id}/status",
                 ]);
-            } catch (\Exception $e) {
-                return response()->json(['error' => $e->getMessage()], 400);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Stripe PaymentIntent exception on ride booking #{$ride->id}: " . $e->getMessage());
+
+                $ride->update([
+                    'payment_status' => 'pending',
+                    'payment_method' => $isApplePay ? 'apple_pay' : 'stripe',
+                ]);
+                session(['active_guest_ride_id' => $ride->id]);
+
+                return response()->json([
+                    'success' => true,
+                    'requires_payment_hold' => true,
+                    'ride_id' => $ride->id,
+                    'payment_method' => $isApplePay ? 'apple_pay' : 'stripe',
+                    'expires_at' => $expiresAt->toIso8601String(),
+                    'waiting_time_minutes' => $waitingMinutes,
+                    'waiting_time_seconds' => $waitingMinutes * 60,
+                    'remaining_seconds' => $waitingMinutes * 60,
+                    'redirect_url' => "/payment/verify-details/ride/{$ride->id}",
+                    'tracking_url' => "/ride/track/{$ride->id}",
+                    'polling_url' => "/api/ride/{$ride->id}/status",
+                    'message' => 'Ride booking created! Please authorize payment hold.',
+                ]);
             }
         }
 

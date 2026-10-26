@@ -133,9 +133,14 @@ class PackageDelivery extends Model
 
     /**
      * Check if this delivery request has exceeded its waiting time window.
+     * Never considered expired if a courier has accepted or is already assigned.
      */
     public function isExpired(): bool
     {
+        if (!empty($this->courier_id) || in_array($this->delivery_status, ['accepted', 'assigned', 'courier_assigned', 'courier_accepted', 'going_to_pickup', 'arrived_at_pickup', 'parcel_picked_up', 'in_transit', 'arrived_at_destination', 'delivered'], true)) {
+            return false;
+        }
+
         return !empty($this->expires_at) && $this->expires_at->isPast();
     }
 

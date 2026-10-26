@@ -2,69 +2,15 @@
     <x-slot:title>Parcel Delivery #{{ $delivery->delivery_code }} — Live Tracker</x-slot>
 
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10"
-          x-data="{
+          x-data="deliveryTracker({
+              deliveryId: {{ $delivery->id }},
               deliveryStatus: '{{ $delivery->delivery_status }}',
               paymentStatus: '{{ strtolower($delivery->payment_status ?? 'pending') }}',
               paymentMethod: '{{ strtolower($delivery->payment_method ?? '') }}',
               isPaymentConfirmed: {{ in_array(strtolower($delivery->payment_status ?? ''), ['paid', 'hold', 'authorized']) ? 'true' : 'false' }},
-              courierData: null,
-              otpInput: '',
               remainingSeconds: {{ $delivery->remaining_seconds ?? 300 }},
-              cancellationReason: @json($delivery->cancellation_reason ?? null),
-              countdownInterval: null,
-              get isUnpaidElectronic() {
-                  const method = (this.paymentMethod || '').toLowerCase();
-                  const isElec = ['stripe', 'momo', 'card', 'mobile_money', 'apple_pay', 'pay'].some(m => method.includes(m));
-                  return isElec && !['paid', 'hold', 'authorized', 'completed'].includes((this.paymentStatus || '').toLowerCase());
-              },
-              startCountdown() {
-                  if (this.countdownInterval) clearInterval(this.countdownInterval);
-                  this.countdownInterval = setInterval(() => {
-                      if (['pending', 'searching', 'created'].includes(this.deliveryStatus) && !this.isUnpaidElectronic) {
-                          if (this.remainingSeconds > 0) {
-                              this.remainingSeconds--;
-                          } else {
-                              this.pollStatus();
-                          }
-                      }
-                  }, 1000);
-              },
-              get countdownFormatted() {
-                  const total = Math.max(0, this.remainingSeconds || 0);
-                  const mins = Math.floor(total / 60);
-                  const secs = total % 60;
-                  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-              },
-              async pollStatus() {
-                  try {
-                      const res = await fetch(`/api/package-delivery/{{ $delivery->id }}/status`);
-                      if (res.ok) {
-                          const data = await res.json();
-                          if (data.status) {
-                              this.deliveryStatus = data.status;
-                          }
-                          if (data.remaining_seconds !== undefined) {
-                              this.remainingSeconds = data.remaining_seconds;
-                          }
-                          if (data.cancellation_reason) {
-                              this.cancellationReason = data.cancellation_reason;
-                          }
-                          if (data.payment_status) {
-                              this.paymentStatus = data.payment_status;
-                              this.isPaymentConfirmed = ['paid', 'hold', 'authorized'].includes(data.payment_status.toLowerCase());
-                          }
-                          if (data.payment_method) {
-                              this.paymentMethod = data.payment_method;
-                          }
-                          if (data.courier) {
-                              this.courierData = data.courier;
-                          } else {
-                              this.courierData = null;
-                          }
-                      }
-                  } catch (e) {}
-              }
-          }"
+              cancellationReason: @json($delivery->cancellation_reason ?? null)
+          })"
           x-init="startCountdown(); pollStatus(); setInterval(() => pollStatus(), 3500);">
 
         <!-- Header -->
@@ -392,4 +338,81 @@
 
         </div>
     </main>
+
+    <script>
+    function deliveryTracker(config) {
+        return {
+            deliveryStatus: config.deliveryStatus,
+            paymentStatus: config.paymentStatus,
+            paymentMethod: config.paymentMethod,
+            isPaymentConfirmed: config.isPaymentConfirmed,
+            courierData: null,
+            otpInput: '',
+            remainingSeconds: config.remainingSeconds,
+            cancellationReason: config.cancellationReason,
+            countdownInterval: null,
+            get isUnpaidElectronic() {
+                const method = (this.paymentMethod || '').toLowerCase();
+                const elecKeys = ['stripe', 'momo', 'card', 'mobile_money', 'apple_pay', 'pay'];
+                let isElec = false;
+                for (let i = 0; i < elecKeys.length; i++) {
+                    if (method.indexOf(elecKeys[i]) !== -1) {
+                        isElec = true;
+                        break;
+                    }
+                }
+                const confirmedStatuses = ['paid', 'hold', 'authorized', 'completed'];
+                return isElec && confirmedStatuses.indexOf((this.paymentStatus || '').toLowerCase()) === -1;
+            },
+            startCountdown() {
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    if (['pending', 'searching', 'created'].indexOf(this.deliveryStatus) !== -1 && !this.isUnpaidElectronic) {
+                        if (this.remainingSeconds > 0) {
+                            this.remainingSeconds--;
+                        } else {
+                            this.pollStatus();
+                        }
+                    }
+                }, 1000);
+            },
+            get countdownFormatted() {
+                const total = Math.max(0, this.remainingSeconds || 0);
+                const mins = Math.floor(total / 60);
+                const secs = total % 60;
+                return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            },
+            async pollStatus() {
+                try {
+                    const res = await fetch('/api/package-delivery/' + config.deliveryId + '/status');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.status) {
+                            this.deliveryStatus = data.status;
+                        }
+                        if (data.remaining_seconds !== undefined) {
+                            this.remainingSeconds = data.remaining_seconds;
+                        }
+                        if (data.cancellation_reason) {
+                            this.cancellationReason = data.cancellation_reason;
+                        }
+                        if (data.payment_status) {
+                            this.paymentStatus = data.payment_status;
+                            const confirmed = ['paid', 'hold', 'authorized'];
+                            this.isPaymentConfirmed = confirmed.indexOf(data.payment_status.toLowerCase()) !== -1;
+                        }
+                        if (data.payment_method) {
+                            this.paymentMethod = data.payment_method;
+                        }
+                        if (data.courier) {
+                            this.courierData = data.courier;
+                        } else {
+                            this.courierData = null;
+                        }
+                    }
+                } catch (e) {}
+            }
+        };
+    }
+    </script>
 </x-layout>

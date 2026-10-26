@@ -155,6 +155,11 @@ class AuthController extends Controller
 
             $user = User::create($userData);
 
+            // Credit Referrer Wallet bonus if referred
+            if (!empty($referrer)) {
+                \App\Services\ReferralService::rewardReferrerOnSignup($user, $referrer);
+            }
+
             // If registering as driver, initialize driver profile
             $driverProfile = null;
             if ($role === 'driver') {
