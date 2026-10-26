@@ -314,10 +314,10 @@
                     </p>
                 </div>
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#131926] border border-slate-200 dark:border-slate-700 border-t-4 border-t-blue-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="text-3xl mb-3">🏦</div>
-                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">Multi-Currency Bank SWIFT Wire</h3>
+                    <div class="text-3xl mb-3">🇺🇸</div>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white mb-2">USA Multi-Currency Bank SWIFT Wire</h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        International wires accepted in USD, EUR, GBP, and CAD routed into an institutional escrow account managed under Ride My Cars LLC.
+                        International wires accepted in USD, EUR, GBP, and CAD routed into an institutional escrow account managed under NDFG LLC and Ride My Cars LLC (USA).
                     </p>
                 </div>
             </div>

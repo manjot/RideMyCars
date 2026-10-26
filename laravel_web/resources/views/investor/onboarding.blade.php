@@ -389,7 +389,7 @@
                                 <option value="rmc_ghana_wire">Ride My Cars LLC - Commercial Operating Wire</option>
                                 <option value="stripe">Stripe (Cards & Apple Pay Gateway)</option>
                                 <option value="momo_pay">MoMo Pay (MTN MoMo / Telecel Cash Gateway)</option>
-                                <option value="wire_swift">Bank Wire (USD / EUR / GBP / CAD SWIFT)</option>
+                                <option value="wire_swift">USA Multi-Currency Bank SWIFT Wire (USD / EUR / GBP / CAD - NDFG LLC & Ride My Cars LLC)</option>
                                 <option value="local_bank_ghana">Local Banking Rail (GHC Transfer via Ride My Cars (Ghana))</option>
                             </select>
                             <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Full settlement coordinates, Stripe checkout link, and MoMo Pay merchant push instructions will be unlocked upon administrative compliance verification.</span>
