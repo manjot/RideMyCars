@@ -29,6 +29,21 @@ class NotificationProvider extends ChangeNotifier {
     _timer?.cancel();
   }
 
+  bool _isIncomingOrderNotification(Map<String, dynamic> n) {
+    final type = (n['type'] ?? '').toString().toLowerCase();
+    final title = (n['title'] ?? '').toString().toLowerCase();
+    return type == 'ride_assignment' ||
+        type == 'driver_hiring_assigned' ||
+        type == 'driver_booking' ||
+        type == 'package_delivery_assigned' ||
+        type == 'backup_ride_assigned' ||
+        type == 'backup_ride_request' ||
+        type == 'new_ride_request' ||
+        type == 'delivery_request' ||
+        title.contains('new ride request') ||
+        title.contains('new chauffeur request') ||
+        title.contains('new parcel delivery');
+  }
 
   Future<void> fetchNotifications() async {
     try {
@@ -41,16 +56,33 @@ class NotificationProvider extends ChangeNotifier {
         if (newNotifications.isNotEmpty) {
           final topId = (newNotifications.first['id'] as num?)?.toInt() ?? 0;
           if (_lastSeenId != 0 && topId > _lastSeenId) {
-            _playChime();
+            bool triggeredOrderRingtone = false;
             for (final n in newNotifications) {
               final nId = (n['id'] as num?)?.toInt() ?? 0;
               if (nId > _lastSeenId && n['is_read'] != true) {
-                LocalNotificationService.instance.showNotification(
-                  id: nId,
-                  title: n['title'] ?? 'Driver Partner Alert',
-                  body: n['message'] ?? '',
-                );
+                final title = (n['title'] ?? 'Driver Partner Alert').toString();
+                final body = (n['message'] ?? '').toString();
+                if (_isIncomingOrderNotification(n)) {
+                  triggeredOrderRingtone = true;
+                  final orderId = n['ride_id'] ?? n['data']?['ride_id'] ?? n['data']?['booking_id'] ?? n['data']?['delivery_id'] ?? nId;
+                  await SoundService.instance.startIncomingOrderRingtone(
+                    orderType: n['type']?.toString() ?? 'ride',
+                    orderId: orderId,
+                    title: title,
+                    body: body,
+                  );
+                  LocalNotificationService.instance.onOrderPushReceived?.call();
+                } else {
+                  LocalNotificationService.instance.showNotification(
+                    id: nId,
+                    title: title,
+                    body: body,
+                  );
+                }
               }
+            }
+            if (!triggeredOrderRingtone) {
+              _playChime();
             }
           } else if (_lastSeenId == 0) {
             // First run: mark existing notifications as seen so we don't alert on old history

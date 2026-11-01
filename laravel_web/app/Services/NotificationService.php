@@ -30,8 +30,10 @@ class NotificationService
             $isDriverAlert = in_array($type, [
                 'ride_assignment',
                 'driver_hiring_assigned',
+                'driver_booking',
                 'package_delivery_assigned',
                 'backup_ride_assigned',
+                'backup_ride_request',
                 'new_ride_request',
                 'delivery_request',
             ]);

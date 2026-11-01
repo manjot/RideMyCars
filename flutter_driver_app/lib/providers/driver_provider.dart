@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,7 +9,7 @@ import '../core/constants/api_constants.dart';
 import '../core/services/sound_service.dart';
 import '../core/services/local_notification_service.dart';
 
-class DriverProvider extends ChangeNotifier {
+class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
   final Dio _dio = ApiClient().dio;
 
   bool _isOnline = false;
@@ -32,6 +33,10 @@ class DriverProvider extends ChangeNotifier {
 
   Timer? _pollingTimer;
   Timer? _locationTimer;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  DateTime? _lastStreamPollAt;
+  DateTime? _lastGpsPostAt;
+  bool _observerRegistered = false;
 
   bool get isOnline => _isOnline;
   bool get isLive => _isLive;
@@ -52,12 +57,42 @@ class DriverProvider extends ChangeNotifier {
   Map<String, dynamic>? get lastAcceptedRide => _lastAcceptedRide;
 
   void init() {
+    if (!_observerRegistered) {
+      WidgetsBinding.instance.addObserver(this);
+      _observerRegistered = true;
+    }
+    LocalNotificationService.instance.onOrderPushReceived = () {
+      if (_isOnline || _activeChauffeurOnline) {
+        pollPendingRequests();
+        fetchActiveRides();
+      }
+    };
     checkAvailabilityAndInit();
     fetchEarnings();
     fetchActiveRides();
     try {
       LocalNotificationService.instance.syncFcmToken();
     } catch (_) {}
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (_isOnline || _activeChauffeurOnline) {
+        SoundService.instance.setOnlineKeepAlive(true);
+        pollPendingRequests();
+        fetchActiveRides();
+      }
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      // Keep audio session & background location stream alive when screen locks or app is backgrounded
+      if (_isOnline || _activeChauffeurOnline) {
+        SoundService.instance.setOnlineKeepAlive(true);
+        _startBackgroundLocationStream();
+        pollPendingRequests();
+      }
+    }
   }
 
   Future<void> checkAvailabilityAndInit() async {
@@ -193,6 +228,8 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void _startDispatchLoop() {
+    SoundService.instance.setOnlineKeepAlive(true);
+    _startBackgroundLocationStream();
     pollPendingRequests();
     fetchActiveRides();
     _getCurrentLocationAndSend();
@@ -214,9 +251,87 @@ class DriverProvider extends ChangeNotifier {
     _pollingTimer = null;
     _locationTimer?.cancel();
     _locationTimer = null;
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
     _pendingRequests.clear();
+    SoundService.instance.setOnlineKeepAlive(false);
     SoundService.instance.stopRingtone();
     notifyListeners();
+  }
+
+  Future<void> _startBackgroundLocationStream() async {
+    if (_positionStreamSubscription != null) return;
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission != LocationPermission.always &&
+          permission != LocationPermission.whileInUse) {
+        return;
+      }
+
+      late LocationSettings locationSettings;
+      if (Platform.isAndroid) {
+        locationSettings = AndroidSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 0,
+          intervalDuration: const Duration(seconds: 4),
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: 'RideMyCars Driver Online',
+            notificationText:
+                'Active in background — ready to receive ride & delivery orders',
+            enableWakeLock: true,
+          ),
+        );
+      } else if (Platform.isIOS) {
+        locationSettings = AppleSettings(
+          accuracy: LocationAccuracy.high,
+          activityType: ActivityType.automotiveNavigation,
+          distanceFilter: 0,
+          allowBackgroundLocationUpdates: true,
+          pauseLocationUpdatesAutomatically: false,
+          showBackgroundLocationIndicator: true,
+        );
+      } else {
+        locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 0,
+        );
+      }
+
+      _positionStreamSubscription =
+          Geolocator.getPositionStream(locationSettings: locationSettings)
+              .listen(
+        (Position pos) {
+          _currentLat = pos.latitude;
+          _currentLng = pos.longitude;
+          final now = DateTime.now();
+          if (_isOnline || _activeChauffeurOnline) {
+            if (_lastStreamPollAt == null ||
+                now.difference(_lastStreamPollAt!).inSeconds >= 3) {
+              _lastStreamPollAt = now;
+              pollPendingRequests();
+            }
+            if (_lastGpsPostAt == null ||
+                now.difference(_lastGpsPostAt!).inSeconds >= 10) {
+              _lastGpsPostAt = now;
+              _dio.post(ApiConstants.driverLocation, data: {
+                'lat': _currentLat,
+                'lng': _currentLng,
+              }).catchError((_) => Response(requestOptions: RequestOptions()));
+            }
+          }
+        },
+        onError: (e) {
+          debugPrint('Background location stream notice: $e');
+          _positionStreamSubscription?.cancel();
+          _positionStreamSubscription = null;
+        },
+      );
+    } catch (e) {
+      debugPrint('Error starting background location stream: $e');
+    }
   }
 
   void stopDispatch() {
@@ -270,6 +385,21 @@ class DriverProvider extends ChangeNotifier {
 
   Future<void> pollPendingRequests() async {
     try {
+      // Collect IDs of already-accepted/active rides so they never ring again as pending requests
+      final Set<String> activeIds = <String>{};
+      for (final ar in _activeRides) {
+        final id = (ar['id'] ?? ar['ride_id'] ?? ar['delivery_id'] ?? ar['booking_id'] ?? '').toString();
+        if (id.isNotEmpty && id != '0') {
+          activeIds.add(id);
+        }
+      }
+      if (_lastAcceptedRide != null) {
+        final lid = (_lastAcceptedRide!['id'] ?? _lastAcceptedRide!['ride_id'] ?? '').toString();
+        if (lid.isNotEmpty && lid != '0') {
+          activeIds.add(lid);
+        }
+      }
+
       // 1. Fetch direct incoming dispatch requests (with current GPS for proximity matching)
       try {
         if (_currentLat == null || _currentLng == null) {
@@ -305,6 +435,10 @@ class DriverProvider extends ChangeNotifier {
                     if (DateTime.parse(exp.toString()).toLocal().isBefore(DateTime.now())) return false;
                   } catch (_) {}
                 }
+                final rIdStr = (j['ride_id'] ?? j['delivery_id'] ?? j['package_delivery_id'] ?? j['driver_booking_id'] ?? j['booking_id'] ?? '').toString();
+                if (rIdStr.isNotEmpty && activeIds.contains(rIdStr)) {
+                  return false;
+                }
                 final type = j['type']?.toString().toLowerCase() ?? '';
                 final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
                 if (isDriverHire) {
@@ -318,12 +452,27 @@ class DriverProvider extends ChangeNotifier {
               .toList();
           
           if (mapped.isNotEmpty) {
-            // Loud and long ringtone starts ringing continuously until driver responds
+            // Loud and long ringtone + lock-screen alert starts ringing continuously until driver responds
             final firstOrder = mapped.first;
             final orderType = firstOrder['type']?.toString() ?? 'ride';
-            final orderId = firstOrder['ride_id'] ?? firstOrder['assignment_id'] ?? firstOrder['delivery_id'] ?? firstOrder['id'];
-            SoundService.instance.startIncomingOrderRingtone(orderType: orderType, orderId: orderId);
-          } else if (_pendingRequests.isNotEmpty && mapped.isEmpty) {
+            final orderId = firstOrder['ride_id'] ?? firstOrder['assignment_id'] ?? firstOrder['delivery_id'] ?? firstOrder['driver_booking_id'] ?? firstOrder['id'];
+            final pickup = firstOrder['pickup_location'] ?? firstOrder['pickup'] ?? 'Pickup Location';
+            final dropoff = firstOrder['dropoff_location'] ?? firstOrder['dropoff'] ?? 'Destination';
+            final sym = firstOrder['currency_symbol'] ?? '';
+            final fare = firstOrder['fare'] ?? firstOrder['total_price'] ?? '';
+            final alertTitle = orderType.toLowerCase().contains('booking') || orderType.toLowerCase().contains('hire')
+                ? '🚨 New VIP Chauffeur Request! ($sym$fare)'
+                : (orderType.toLowerCase().contains('delivery')
+                    ? '🚨 New Parcel Delivery Order! ($sym$fare)'
+                    : '🚨 New Ride Order Request! ($sym$fare)');
+            final alertBody = 'Pickup: $pickup → Dropoff: $dropoff. Tap to accept!';
+            SoundService.instance.startIncomingOrderRingtone(
+              orderType: orderType,
+              orderId: orderId,
+              title: alertTitle,
+              body: alertBody,
+            );
+          } else if (_pendingRequests.isNotEmpty && mapped.isEmpty && _pendingVerifications.isEmpty) {
             // Requests cleared / expired / answered elsewhere
             SoundService.instance.stopRingtone();
           }
@@ -335,12 +484,22 @@ class DriverProvider extends ChangeNotifier {
 
       // 2. Fetch pending payment & booking verification requests (parity with web dashboard!)
       try {
-        final verifRes = await _dio.get(ApiConstants.driverPendingVerifications).timeout(const Duration(seconds: 4));
+        final verifRes = await _dio.get(
+          ApiConstants.driverPendingVerifications,
+          queryParameters: {
+            if (_currentLat != null) 'lat': _currentLat,
+            if (_currentLng != null) 'lng': _currentLng,
+          },
+        ).timeout(const Duration(seconds: 4));
         if (verifRes.statusCode == 200 && (verifRes.data['success'] == true || verifRes.data['items'] != null)) {
           final List items = verifRes.data['items'] ?? [];
           final mapped = items.map((e) => Map<String, dynamic>.from(e)).toList();
 
           mapped.removeWhere((item) {
+            final itemIdStr = (item['id'] ?? '').toString();
+            if (itemIdStr.isNotEmpty && activeIds.contains(itemIdStr)) {
+              return true;
+            }
             final type = item['type']?.toString().toLowerCase() ?? '';
             final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
             if (isDriverHire) {
@@ -351,9 +510,14 @@ class DriverProvider extends ChangeNotifier {
 
           if (mapped.isNotEmpty && mapped.length > _pendingVerifications.length) {
             final firstVerif = mapped.first;
+            final pickup = firstVerif['pickup'] ?? 'Pickup';
+            final dropoff = firstVerif['dropoff'] ?? 'Destination';
+            final formattedAmt = firstVerif['formatted_amount'] ?? '';
             SoundService.instance.startIncomingOrderRingtone(
               orderType: firstVerif['type']?.toString() ?? 'verification',
               orderId: firstVerif['id'],
+              title: '🚨 New ${firstVerif['type_label'] ?? 'Order'} Request! ($formattedAmt)',
+              body: 'Pickup: $pickup → Dropoff: $dropoff. Tap to respond!',
             );
           } else if (_pendingVerifications.isNotEmpty && mapped.isEmpty && _pendingRequests.isEmpty) {
             SoundService.instance.stopRingtone();
@@ -387,6 +551,10 @@ class DriverProvider extends ChangeNotifier {
         }
       } catch (e) {
         debugPrint('Error polling active rides: $e');
+      }
+
+      if (_pendingRequests.isEmpty && _pendingVerifications.isEmpty && SoundService.instance.isRinging) {
+        SoundService.instance.stopRingtone();
       }
 
       notifyListeners();
@@ -827,6 +995,10 @@ class DriverProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_observerRegistered) {
+      WidgetsBinding.instance.removeObserver(this);
+      _observerRegistered = false;
+    }
     _stopDispatchLoop();
     SoundService.instance.stopRingtone();
     super.dispose();

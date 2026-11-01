@@ -914,7 +914,7 @@ class StripeVerificationController extends Controller
      */
     public function getPendingVerifications(Request $request): JsonResponse
     {
-        $driver = Auth::user();
+        $driver = Auth::user() ?? \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
         $driverId = $driver ? $driver->id : null;
         $driverProfile = $driver?->driverProfile;
         $items = [];
@@ -1032,7 +1032,7 @@ class StripeVerificationController extends Controller
             ? \App\Models\RideAssignment::where('driver_id', $driverId)->where('status', 'rejected')->whereNotNull('package_delivery_id')->pluck('package_delivery_id')->toArray()
             : [];
 
-        $dp = $driverUser?->driverProfile;
+        $dp = $driverProfile;
         $canReceiveChauffeurBookings = !$dp || !$dp->is_chauffeur || $dp->active_chauffeur_online || $dp->chauffeur_mode;
 
         // Driver Bookings (only pending bookings, not rejected by this driver, and only when chauffeur is online)

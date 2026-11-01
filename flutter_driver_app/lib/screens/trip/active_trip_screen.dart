@@ -4,9 +4,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/sound_service.dart';
 import '../../providers/country_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../widgets/trip_chat_sheet.dart';
+import '../dashboard/incoming_job_dialog.dart';
 import '../safety/widgets/sos_floating_button.dart';
 
 class ActiveTripScreen extends StatefulWidget {
@@ -21,6 +23,8 @@ class ActiveTripScreen extends StatefulWidget {
 class _ActiveTripScreenState extends State<ActiveTripScreen> {
   late Map<String, dynamic> _ride;
   bool _isUpdating = false;
+  bool _dialogOpen = false;
+  final Set<String> _handledJobKeys = {};
   GoogleMapController? _mapController;
 
   @override
@@ -68,6 +72,120 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   void initState() {
     super.initState();
     _ride = widget.ride;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final driver = Provider.of<DriverProvider>(context, listen: false);
+      final currentId = (_ride['id'] ?? _ride['ride_id'] ?? '').toString();
+      if (currentId.isNotEmpty) {
+        driver.removePendingRequestLocally(
+          rideId: int.tryParse(currentId),
+          deliveryId: int.tryParse(currentId),
+          bookingId: int.tryParse(currentId),
+        );
+      }
+      if (driver.pendingRequests.isEmpty && driver.pendingVerifications.isEmpty) {
+        SoundService.instance.stopRingtone();
+      }
+    });
+  }
+
+  void _checkIncomingJobs(DriverProvider driver) {
+    if (_dialogOpen || !mounted) return;
+    final currentIdStr = (_ride['id'] ?? _ride['ride_id'] ?? '').toString();
+    final unhandled = driver.pendingRequests.where((j) {
+      final rem = j['remaining_seconds'];
+      if (rem != null && (int.tryParse(rem.toString()) ?? 1) <= 0) return false;
+      final exp = j['expires_at'];
+      if (exp != null) {
+        try {
+          if (DateTime.parse(exp.toString()).toLocal().isBefore(DateTime.now())) return false;
+        } catch (_) {}
+      }
+      final aId = int.tryParse((j['assignment_id'] ?? j['id'] ?? '').toString());
+      final rId = int.tryParse((j['ride_id'] ?? '').toString());
+      final dId = int.tryParse((j['package_delivery_id'] ?? j['delivery_id'] ?? '').toString());
+      final bId = int.tryParse((j['driver_booking_id'] ?? j['booking_id'] ?? '').toString());
+      if (currentIdStr.isNotEmpty &&
+          (rId?.toString() == currentIdStr ||
+              dId?.toString() == currentIdStr ||
+              bId?.toString() == currentIdStr)) {
+        return false;
+      }
+      final key = '${aId ?? 0}_${rId ?? 0}_${dId ?? 0}_${bId ?? 0}';
+      return !_handledJobKeys.contains(key);
+    }).toList();
+
+    if (unhandled.isNotEmpty) {
+      _openIncomingJobOnTripScreen(unhandled.first, driver);
+    }
+  }
+
+  void _openIncomingJobOnTripScreen(Map<String, dynamic> job, DriverProvider driver) {
+    if (_dialogOpen || !mounted) return;
+    final assignmentId = int.tryParse((job['assignment_id'] ?? job['id'] ?? '').toString());
+    final rideId = int.tryParse((job['ride_id'] ?? job['ride']?['id'] ?? '').toString());
+    final deliveryId = int.tryParse((job['package_delivery_id'] ?? job['delivery_id'] ?? '').toString());
+    final bookingId = int.tryParse((job['driver_booking_id'] ?? job['booking_id'] ?? '').toString());
+    final jobKey = '${assignmentId ?? 0}_${rideId ?? 0}_${deliveryId ?? 0}_${bookingId ?? 0}';
+    if (_handledJobKeys.contains(jobKey)) return;
+
+    _dialogOpen = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => IncomingJobDialog(
+        request: job,
+        onAccept: () async {
+          _handledJobKeys.add(jobKey);
+          SoundService.instance.stopRingtone();
+          bool ok = false;
+          try {
+            ok = await driver.respondToRequest(
+              assignmentId,
+              'accept',
+              rideId: rideId,
+              deliveryId: deliveryId,
+              bookingId: bookingId,
+              jobData: job,
+            );
+          } catch (_) {} finally {
+            if (dialogCtx.mounted) {
+              Navigator.of(dialogCtx, rootNavigator: true).pop();
+            }
+            _dialogOpen = false;
+          }
+          if (mounted && ok) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('✓ Next order accepted & queued after current trip!'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
+        },
+        onDecline: () async {
+          _handledJobKeys.add(jobKey);
+          SoundService.instance.stopRingtone();
+          driver.removePendingRequestLocally(
+            assignmentId: assignmentId,
+            rideId: rideId,
+            deliveryId: deliveryId,
+            bookingId: bookingId,
+          );
+          if (dialogCtx.mounted) {
+            Navigator.of(dialogCtx, rootNavigator: true).pop();
+          }
+          _dialogOpen = false;
+          await driver.respondToRequest(
+            assignmentId,
+            'reject',
+            rideId: rideId,
+            deliveryId: deliveryId,
+            bookingId: bookingId,
+          );
+        },
+      ),
+    ).then((_) => _dialogOpen = false);
   }
 
   String get _currentDestination {
@@ -916,6 +1034,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final driver = Provider.of<DriverProvider>(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkIncomingJobs(driver));
     final status = _ride['status'] ?? 'accepted';
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     final currSym = (_ride['currency_symbol'] ?? countryProv.currencySymbol).toString();

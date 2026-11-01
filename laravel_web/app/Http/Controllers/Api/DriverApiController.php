@@ -1601,6 +1601,12 @@ class DriverApiController extends Controller
                 ['status' => 'pending', 'expires_at' => $expiresAt]
             );
 
+            if ($assignment->wasRecentlyCreated) {
+                try {
+                    \App\Services\NotificationService::notifyDriverRideAssigned($pr, $user->id);
+                } catch (\Throwable $e) {}
+            }
+
             if ($assignment->status === 'rejected') {
                 continue;
             }
@@ -1726,6 +1732,20 @@ class DriverApiController extends Controller
                 ['package_delivery_id' => $pd->id, 'driver_id' => $user->id],
                 ['status' => 'pending', 'expires_at' => $dExpiresAt]
             );
+
+            if ($assignment->wasRecentlyCreated) {
+                try {
+                    \App\Services\NotificationService::send(
+                        $user->id,
+                        'package_delivery_assigned',
+                        'New Parcel Delivery Request',
+                        "New package delivery from {$pd->pickup_location} to {$pd->dropoff_location}. Tap to accept.",
+                        null,
+                        '/driver/dashboard',
+                        ['delivery_id' => $pd->id, 'type' => 'package_delivery', 'icon' => 'truck', 'color' => 'emerald']
+                    );
+                } catch (\Throwable $e) {}
+            }
 
             if ($assignment->status === 'rejected') {
                 continue;
